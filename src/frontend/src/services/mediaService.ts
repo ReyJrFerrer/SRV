@@ -128,7 +128,16 @@ export const convertBlobToDataUrl = (
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
-      const blob = new Blob([uint8Array], { type: contentType });
+      // FIX: Ensure correct ArrayBuffer is passed to Blob
+      const blob = new Blob(
+        [
+          uint8Array.buffer.slice(
+            uint8Array.byteOffset,
+            uint8Array.byteOffset + uint8Array.byteLength,
+          ) as ArrayBuffer,
+        ],
+        { type: contentType },
+      );
       const reader = new FileReader();
 
       reader.onload = () => {

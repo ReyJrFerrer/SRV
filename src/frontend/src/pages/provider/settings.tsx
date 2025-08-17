@@ -29,22 +29,22 @@ const SettingsPage: React.FC = () => {
     document.title = "Settings | SRV";
   }, []);
 
-  // Menu items, with "Profile" removed as it now has its own section
+  // Update menu items to point to correct routes
   const menuItems = [
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,
-      href: "/provider/terms",
+      href: "/provider/terms", // updated route
     },
     {
       name: "Report",
       icon: ExclamationCircleIcon,
-      href: "/provider/report",
+      href: "/provider/report", // updated route
     },
     {
       name: "Help & Support",
       icon: QuestionMarkCircleIcon,
-      href: "/provider/help",
+      href: "/provider/help", // updated route
     },
   ];
 
@@ -89,7 +89,7 @@ const SettingsPage: React.FC = () => {
                     <div className="mr-4 h-14 w-14 animate-pulse rounded-full bg-gray-200" />
                   ) : (
                     <img
-                      src={profileImageUrl || "/default-provider.svg"}
+                      src={profileImageUrl || "/default-provider.svg"} // fallback updated
                       alt="Profile"
                       className="mr-4 h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow"
                     />

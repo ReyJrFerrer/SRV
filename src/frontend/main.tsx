@@ -76,6 +76,11 @@ import ConversationPage from "./src/pages/client/chat/[providerId]";
 import ProviderConversationPage from "./src/pages/provider/chat/[clientId]";
 import NotificationsPageSP from "./src/pages/provider/notifications";
 
+// Provider Info Pages
+import ProviderTermsAndConditionsPage from "./src/pages/provider/terms";
+import ProviderReportIssuePage from "./src/pages/provider/report";
+import ProviderHelpSupportPage from "./src/pages/provider/help";
+
 // Create a client for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -186,6 +191,14 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 path="payment-commission"
                 element={<PaymentProviderCommission />}
               />
+
+              {/* Provider Info Pages */}
+              <Route
+                path="terms"
+                element={<ProviderTermsAndConditionsPage />}
+              />
+              <Route path="report" element={<ProviderReportIssuePage />} />
+              <Route path="help" element={<ProviderHelpSupportPage />} />
             </Route>
           </Routes>
         </AuthProvider>
