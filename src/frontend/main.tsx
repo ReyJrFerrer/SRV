@@ -41,14 +41,14 @@ import ClientProfilePage from "./src/pages/client/profile";
 import SettingsPageC from "./src/pages/client/settings";
 import TermsAndConditionsPage from "./src/pages/terms";
 import ReportIssuePage from "./src/pages/report";
-import HelpSupportPage from "./src/pages/help";
+import HelpSupportPage from "./src/pages/provider/inside settings/help";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
 import ProviderBookings from "./src/pages/provider/bookings";
 import ProviderChat from "./src/pages/provider/chat";
 import SettingsPageSP from "./src/pages/provider/settings";
-import ProviderProfilePage from "./src/pages/provider/profile";
+import ProviderProfilePage from "./src/pages/provider/inside settings/profile";
 
 // Provider Service Management
 import ProviderServices from "./src/pages/provider/services";
@@ -77,8 +77,8 @@ import ProviderConversationPage from "./src/pages/provider/chat/[clientId]";
 import NotificationsPageSP from "./src/pages/provider/notifications";
 
 // Provider Info Pages
-import ProviderTermsAndConditionsPage from "./src/pages/provider/terms";
-import ProviderReportIssuePage from "./src/pages/provider/report";
+import ProviderTermsAndConditionsPage from "./src/pages/provider/inside settings/terms";
+import ProviderReportIssuePage from "./src/pages/provider/inside settings/report";
 import ProviderHelpSupportPage from "./src/pages/provider/help";
 
 // Create a client for React Query

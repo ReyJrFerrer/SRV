@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import Toast from "../../components/ToastNotifications";
+import Toast from "../../../components/ToastNotifications";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -9,10 +9,10 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/provider/BottomNavigation"; // Changed to provider bottom nav
-import { useUserProfile } from "../../hooks/useUserProfile";
-import { useLogout } from "../../hooks/logout";
-import { useReputation } from "../../hooks/useReputation";
+import BottomNavigation from "../../../components/provider/BottomNavigation"; // Changed to provider bottom nav
+import { useUserProfile } from "../../../hooks/useUserProfile";
+import { useLogout } from "../../../hooks/logout";
+import { useReputation } from "../../../hooks/useReputation";
 
 // AboutReputationScoreModal: Provider version
 interface AboutReputationScoreModalProps {
