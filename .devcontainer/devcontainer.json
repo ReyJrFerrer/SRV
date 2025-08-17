@@ -78,7 +78,7 @@
 
   "features": {},
   "mounts": [],
-  "appPort": ["5173:5173", "5174:5174"],
+  "appPort": ["5173:5173"],
   "containerEnv": {
     "VITE_HOST": "0.0.0.0"
   }
