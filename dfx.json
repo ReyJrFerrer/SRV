@@ -66,6 +66,12 @@
       "type": "motoko",
       "main": "src/backend/main.mo"
     },
+
+    "admin-frontend": {
+      "dependencies": ["admin"],
+      "type": "assets",
+      "source": ["src/admin/dist/"]
+    },
     "frontend": {
       "dependencies": [
         "llm",
@@ -80,22 +86,6 @@
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]
-    },
-    "admin-frontend": {
-      "dependencies": [
-        "admin",
-        "llm",
-        "auth",
-        "booking",
-        "reputation",
-        "review",
-        "service",
-        "chat",
-        "media",
-        "remittance"
-      ],
-      "type": "assets",
-      "source": ["src/admin/dist/"]
     }
   },
   "defaults": {
