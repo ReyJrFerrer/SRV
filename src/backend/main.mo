@@ -1,7 +1,7 @@
 import LLM "mo:llm";
 import Nat64 "mo:base/Nat64";
 
-actor {
+persistent actor {
     // Counter variable to keep track of count
     private stable var counter : Nat64 = 0;
 
