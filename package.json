@@ -11,7 +11,7 @@
   "scripts": {
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "build": "npm run build --workspace=frontend && npm run build --workspace=admin",
+    "build": "dfx build frontend admin-frontend && npm run build --workspace=frontend && npm run build --workspace=admin",
     "start": "concurrently -n frontend,admin -c green,cyan \"npm run start -w frontend\" \"npm run start -w admin\"",
     "start:frontend": "npm run start -w frontend",
     "start:admin": "npm run start -w admin",
