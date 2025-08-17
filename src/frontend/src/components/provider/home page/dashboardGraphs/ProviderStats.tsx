@@ -29,7 +29,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const navigate = useNavigate();
 
   const handlePayClick = () => {
-    navigate("/provider/commission/pay");
+    navigate("/provider/payment-commission");
   };
 
   const {

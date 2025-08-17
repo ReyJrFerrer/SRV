@@ -1469,15 +1469,13 @@ const ProviderServiceDetailPage: React.FC = () => {
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
-            onClick={() => navigate("/provider/services")}
+            onClick={() => navigate(-1)}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
             <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
           </button>
-          <h1 className="truncate text-3xl font-bold tracking-tight text-black drop-shadow-sm">
-            Service Details
-          </h1>
+          <h1 className="text-2xl font-bold text-black">Service Details</h1>
           <div className="w-8"></div>
         </div>
       </header>

@@ -8,7 +8,7 @@ const HelpSupportPage: React.FC = () => {
   const goToReportPage = () => navigate("/provider/report");
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
+      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-4 shadow-2xl sm:p-10">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
@@ -58,12 +58,12 @@ const HelpSupportPage: React.FC = () => {
             <h2 className="mb-2 text-lg font-bold text-yellow-700">
               Follow us on Social Media
             </h2>
-            <div className="flex justify-center gap-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center sm:gap-6">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-700 hover:text-blue-900"
+                className="flex items-center justify-center gap-2 text-blue-700 hover:text-blue-900"
               >
                 <img
                   src="/images/external logo/fb.svg"
@@ -76,7 +76,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://instagram.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-pink-600 hover:text-pink-800"
+                className="flex items-center justify-center gap-2 text-pink-600 hover:text-pink-800"
               >
                 <img
                   src="/images/external logo/instagram.svg"
@@ -89,7 +89,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://tiktok.com/@srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-400 hover:text-blue-600"
+                className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-600"
               >
                 <img
                   src="/images/external logo/tiktok.svg"

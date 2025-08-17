@@ -267,7 +267,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gray-100">
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
           <div className="flex items-center justify-center">
-            <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
+            <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
               My Bookings
             </h1>
           </div>

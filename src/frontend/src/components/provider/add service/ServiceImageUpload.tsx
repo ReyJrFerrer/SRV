@@ -1,5 +1,5 @@
 import React from "react";
-import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { toast } from "sonner";
 
 interface ServiceImageUploadProps {
@@ -14,6 +14,8 @@ interface ServiceImageUploadProps {
   ) => void;
   handleRemoveCertification?: (index: number) => void;
 }
+
+const MAX_PDF_SIZE = 450 * 1024; // 450 KB
 
 const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
   serviceImageFiles,
@@ -36,10 +38,32 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
   const onCertificationFilesChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    handleCertificationFilesChange?.(e);
-    if (e.target.files && e.target.files.length > 0) {
-      toast.success(`${e.target.files.length} certification file(s) selected!`);
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      handleCertificationFilesChange?.(e);
+      return;
     }
+
+    // Validate PDF size
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (
+        file.type === "application/pdf" ||
+        file.name.toLowerCase().endsWith(".pdf")
+      ) {
+        if (file.size > MAX_PDF_SIZE) {
+          toast.error(
+            `PDF "${file.name}" is too large. Please upload a PDF of 450 KB or less.`,
+          );
+          // Reset the input so user can select again
+          e.target.value = "";
+          return;
+        }
+      }
+    }
+
+    handleCertificationFilesChange?.(e);
+    toast.success(`${files.length} certification file(s) selected!`);
   };
 
   return (
@@ -72,7 +96,6 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
             onChange={onImageFilesChange}
             className="block w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-200"
           />
-          <PlusCircleIcon className="h-7 w-7 text-blue-500" />
         </div>
         {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
@@ -143,7 +166,6 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
             onChange={onCertificationFilesChange}
             className="block w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-yellow-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-700 hover:file:bg-yellow-200"
           />
-          <PlusCircleIcon className="h-7 w-7 text-yellow-500" />
         </div>
         {(certificationFiles.length > 0 ||
           certificationPreviews.length > 0) && (
