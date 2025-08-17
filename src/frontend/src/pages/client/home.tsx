@@ -19,9 +19,9 @@ const ClientHomePage: React.FC = () => {
   // --- State: Service category error ---
   const { error } = useServiceManagement();
   // --- State: Location permission ---
-  const [locationStatus, setLocationStatus] = useState<
-    "pending" | "allowed" | "denied"
-  >("pending");
+  const [, setLocationStatus] = useState<"pending" | "allowed" | "denied">(
+    "pending",
+  );
   const [, setGeoLocation] = useState<{
     province: string;
     municipality: string;

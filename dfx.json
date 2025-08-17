@@ -75,10 +75,26 @@
         "review",
         "service",
         "chat",
-        "media"
+        "media",
+        "remittance"
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]
+    },
+    "admin-frontend": {
+      "dependencies": [
+        "llm",
+        "auth",
+        "booking",
+        "reputation",
+        "review",
+        "service",
+        "chat",
+        "media",
+        "remittance"
+      ],
+      "type": "assets",
+      "source": ["src/admin/dist/"]
     }
   },
   "defaults": {
