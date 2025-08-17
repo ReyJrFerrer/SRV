@@ -4,7 +4,6 @@ import { bookingCanisterService } from "./bookingCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
 import { reviewCanisterService } from "./reviewCanisterService";
 import reputationCanisterService from "./reputationCanisterService";
-import { setCanisterReferences as remittanceCanisterService } from "./remittanceCanisterService";
 
 interface CanisterInitResult {
   name: string;
@@ -44,10 +43,6 @@ export const initializeCanisterReferences = async (): Promise<{
     {
       name: "Reputation",
       task: reputationCanisterService.setCanisterReferences(),
-    },
-    {
-      name: "Remittance",
-      task: remittanceCanisterService(),
     },
   ];
 

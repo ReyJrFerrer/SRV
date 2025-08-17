@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useProviderReviews } from "../../../../hooks/reviewManagement";
-import { useRemittance } from "../../../../hooks/useRemittance";
 import { useNavigate } from "react-router-dom";
 
 // Import your new chart components
@@ -30,7 +29,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const navigate = useNavigate();
 
   const handlePayClick = () => {
-    navigate("/provider/payment-commission");
+    navigate("/provider/commission/pay");
   };
 
   const {
@@ -46,13 +45,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     error: reviewsError,
   } = useProviderReviews();
 
-  const {
-    // dashboard: remittanceDashboard,
-    loading: remittanceLoading,
-    error: remittanceError,
-    getOutstandingBalance,
-  } = useRemittance();
-
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -64,11 +56,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isLoading =
-    externalLoading || bookingLoading || reviewsLoading || remittanceLoading;
-  const hasError = error || reviewsError || remittanceError;
+  const isLoading = externalLoading || bookingLoading || reviewsLoading;
+  const hasError = error || reviewsError;
 
-  const outstandingCommission = getOutstandingBalance();
+  const outstandingCommission = 125.5; // Example value
 
   const ratingData = React.useMemo(() => {
     if (reviewAnalytics) {
@@ -319,8 +310,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats:{" "}
-            {error || reviewsError || remittanceError || "Unknown error"}
+            Error loading stats: {error || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>
