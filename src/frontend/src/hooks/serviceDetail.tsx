@@ -103,7 +103,7 @@ const formatServiceForDetailPage = (
       isNegotiable: false, // Default value, update if available from backend
     },
     location: {
-      address: `${service.location.address}, ${service.location.city}, ${service.location.state}, ${service.location.country}`,
+      address: `${service.location.city}, ${service.location.state}, ${service.location.country}`,
       coordinates: {
         latitude: service.location.latitude,
         longitude: service.location.longitude,

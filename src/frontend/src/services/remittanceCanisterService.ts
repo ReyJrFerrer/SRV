@@ -374,15 +374,20 @@ export const uploadRemittancePaymentProofs = async (
 /**
  * Uploads payment proof files and submits them for a remittance order in one transaction
  * @param orderId The remittance order ID
+ * @param amountPaid Amount paid in PHP (will be converted to centavos)
  * @param files Array of files to upload as payment proof
  * @returns Updated remittance order
  */
 export const uploadAndSubmitPaymentProof = async (
   orderId: string,
+  amountPaid: number,
   files: File[],
 ): Promise<RemittanceOrder> => {
   try {
     const actor = getRemittanceActor(true);
+
+    // Convert amount from PHP to centavos
+    const amountCentavos = Math.round(amountPaid * 100);
 
     // Convert files to the format expected by the canister
     const fileData = await Promise.all(
@@ -393,7 +398,11 @@ export const uploadAndSubmitPaymentProof = async (
       })),
     );
 
-    const result = await actor.uploadAndSubmitPaymentProof(orderId, fileData);
+    const result = await actor.uploadAndSubmitPaymentProof(
+      orderId,
+      BigInt(amountCentavos),
+      fileData,
+    );
 
     if ("err" in result) {
       throw new Error(result.err);

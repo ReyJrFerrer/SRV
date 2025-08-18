@@ -47,6 +47,7 @@ export interface RemittanceHook {
   getOrderById: (orderId: string) => Promise<RemittanceOrder | null>;
   uploadAndSubmitPayment: (
     orderId: string,
+    amountPaid: number,
     files: File[],
   ) => Promise<RemittanceOrder>;
   submitPayment: (
@@ -256,10 +257,18 @@ export const useRemittance = (): RemittanceHook => {
 
   // Upload and submit payment proof
   const uploadAndSubmitPayment = useCallback(
-    async (orderId: string, files: File[]): Promise<RemittanceOrder> => {
+    async (
+      orderId: string,
+      amountPaid: number,
+      files: File[],
+    ): Promise<RemittanceOrder> => {
       setOperationState("uploadAndSubmitPayment", true);
       try {
-        const result = await uploadAndSubmitPaymentProof(orderId, files);
+        const result = await uploadAndSubmitPaymentProof(
+          orderId,
+          amountPaid,
+          files,
+        );
         // Refresh orders after successful submission
         await loadOrders();
         return result;

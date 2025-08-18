@@ -546,9 +546,10 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Combined function: Upload payment proof files and submit them for an order
+    // Combined function: Upload payment proof files and submit them for an order with amount validation
     public shared(msg) func uploadAndSubmitPaymentProof(
         orderId: Text,
+        amountPaid: Nat, // Amount paid by provider in centavos
         files: [{
             fileName: Text;
             contentType: Text;
@@ -561,6 +562,29 @@ persistent actor RemittanceCanister {
             return #err("Anonymous principal not allowed");
         };
 
+        // Validate file constraints
+        if (files.size() != 1) {
+            return #err("Exactly one payment proof file is required");
+        };
+
+        let file = files[0];
+        
+        // Validate file size (1MB = 1,048,576 bytes)
+        let maxFileSize = 1_048_576;
+        if (file.fileData.size() > maxFileSize) {
+            return #err("File size must not exceed 1MB");
+        };
+
+        // Validate file type (must be image)
+        let validImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+        let isValidType = Array.find<Text>(validImageTypes, func(validType: Text) : Bool {
+            Text.equal(file.contentType, validType)
+        }) != null;
+        
+        if (not isValidType) {
+            return #err("File must be an image (JPEG, PNG, GIF, or WebP)");
+        };
+
         // First verify the order exists and caller has permission
         switch (orders.get(orderId)) {
             case (?order) {
@@ -570,6 +594,11 @@ persistent actor RemittanceCanister {
 
                 if (not isValidStatusTransition(order.status, #PaymentSubmitted)) {
                     return #err("Cannot submit payment proof in current status");
+                };
+
+                // Validate amount paid matches commission amount exactly
+                if (amountPaid != order.commission_amount) {
+                    return #err("Payment amount (" # Nat.toText(amountPaid / 100) # " PHP) must match the exact commission amount (" # Nat.toText(order.commission_amount / 100) # " PHP)");
                 };
             };
             case null {

@@ -191,7 +191,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 <div className="mb-2 flex items-center text-sm text-blue-700">
                   <MapPinIcon className="mr-1 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">
-                    {service.location.address}, {service.location.city}
+                    {service.location.city}
                     {service.location.state
                       ? `, ${service.location.state}`
                       : ""}
