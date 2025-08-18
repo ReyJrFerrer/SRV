@@ -83,7 +83,6 @@ Data model (minimal)
 APIs (trimmed Candid signatures)
 
 - Remittance Canister
-
   - quote_commission(amount: nat64, service_type: text, payment_method: text, ts: nat64) -> variant { ok: { rule_id: text; rule_version: nat32; commission: nat64; net: nat64; }; err: text }
   - create_order(input: { customer_id: text; amount: nat64; service_type: text; collector_id: principal; branch_id: text }) -> variant { ok: Order; err: text }
   - confirm*cash_received(order_id: text, proofs: vec text /* media*ids */) -> variant { ok: Order; err: text }
@@ -93,7 +92,6 @@ APIs (trimmed Candid signatures)
   - query_orders(filter: { status: opt vec text; collector_id: opt principal; branch_id: opt text; from: opt nat64; to: opt nat64 }, page: { cursor: opt text; size: nat32 }) -> { items: vec Order; next_cursor: opt text }
 
 - Admin Canister
-
   - upsert_commission_rules(vec CommissionRuleDraft) -> variant { ok: vec CommissionRule; err: text }
   - activate_rule(rule_id: text, version: nat32) -> variant { ok: null; err: text }
   - list_rules(filter: { service_type: opt text; active_only: opt bool }) -> vec CommissionRule
@@ -150,7 +148,6 @@ Two-day planner
 Day 1 (Backend-heavy; 6–8 hours)
 
 - Remittance Canister
-
   - Define types: Order, CommissionRuleRef, Status enum.
   - Implement quote_commission (Percentage + Flat; select rule by service_type; default rule fallback).
   - Implement create_order, confirm_cash_received (with media validation call), generate_settlement_instruction.
@@ -159,7 +156,6 @@ Day 1 (Backend-heavy; 6–8 hours)
   - Deposit ref generation: branch_code + yyyymmdd + last4(order_id) + checksum mod 97.
 
 - Admin Canister
-
   - Minimal rule CRUD: upsert_commission_rules, activate_rule, list_rules.
   - set_settings/get_settings.
   - assign_role in-memory mapping.
@@ -177,7 +173,6 @@ Deliverables end of Day 1:
 Day 2 (Frontend + admin review; 6–8 hours)
 
 - Frontend Canister (UI)
-
   - Collector screens:
     - Create Order: amount, service_type -> live commission quote -> submit.
     - Cash Received: upload screenshot -> submit confirm_cash_received.

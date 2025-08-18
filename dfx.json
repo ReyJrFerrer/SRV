@@ -80,10 +80,6 @@
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]
-    },
-    "admin-frontend": {
-      "type": "assets",
-      "source": ["src/admin/dist/"]
     }
   },
   "defaults": {
