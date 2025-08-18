@@ -76,28 +76,6 @@ const LandingPage = () => {
           onNavigateToMain={handleNavigateToMain}
         />
       )}
-
-      {/* {!isAuthenticated && (error || profileError) && (
-        <section className="bg-yellow-100 py-16 lg:py-24">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="mb-6 text-3xl font-bold text-slate-800 lg:text-4xl">
-              Login to Continue
-            </h2>
-            <div className="mx-auto mb-6 max-w-md rounded-lg bg-red-100 p-4 text-sm text-red-700">
-              Error: {error || profileError}
-            </div>
-            <button
-              onClick={login}
-              disabled={isLoading}
-              className={`transform rounded-lg bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl ${
-                isLoading ? "cursor-not-allowed opacity-70" : ""
-              }`}
-            >
-              {isLoading ? "Connecting..." : "Retry Login"}
-            </button>
-          </div>
-        </section>
-      )} */}
     </main>
   );
 };

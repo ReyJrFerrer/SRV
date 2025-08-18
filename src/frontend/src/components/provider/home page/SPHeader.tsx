@@ -84,17 +84,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
           try {
-            let { address, province } = JSON.parse(cached);
+            let { city, province } = JSON.parse(cached);
             // --- Baguio/Benguet normalization ---
             if (
-              (address === "Baguio" || address === "Baguio City") &&
+              (city === "Baguio" || city === "Baguio City") &&
               (province === "Cordillera Administrative Region" ||
                 province === "Cordillera Administrative region")
             ) {
-              address = "Baguio City";
+              city = "Baguio City";
               province = "Benguet";
             }
-            setUserAddress(address);
+            setUserAddress(city);
             setUserProvince(province);
             setLocationLoading(false);
             return;
@@ -107,44 +107,39 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           .then((res) => res.json())
           .then((data) => {
             if (data && data.address) {
-              const { road, city, town, village, county, state, municipality } =
-                data.address;
+              const {
+                city,
+                town,
+                municipality,
+                county,
+                state,
+                region,
+                province,
+              } = data.address;
               // --- Normalize Baguio/Benguet ---
-              let province =
-                county ||
-                state ||
-                data.address.region ||
-                data.address.province ||
-                "";
-              let streetPart = road || village;
               let cityPart = city || town || municipality || "";
-              // If Baguio, normalize as in Header.tsx
+              let provincePart = county || state || region || province || "";
               if (
                 (cityPart === "Baguio" || cityPart === "Baguio City") &&
-                (province === "Cordillera Administrative Region" ||
-                  province === "Cordillera Administrative region")
+                (provincePart === "Cordillera Administrative Region" ||
+                  provincePart === "Cordillera Administrative region")
               ) {
                 cityPart = "Baguio City";
-                province = "Benguet";
+                provincePart = "Benguet";
               }
-              const fullAddress = [streetPart, cityPart]
-                .filter(Boolean)
-                .join(", ");
-              const finalAddress =
-                fullAddress || cityPart || "Could not determine address";
-              setUserAddress(finalAddress);
-              setUserProvince(province);
+              setUserAddress(cityPart || "Could not determine city");
+              setUserProvince(provincePart);
               localStorage.setItem(
                 cacheKey,
-                JSON.stringify({ address: finalAddress, province }),
+                JSON.stringify({ city: cityPart, province: provincePart }),
               );
             } else {
-              setUserAddress("Could not determine address");
+              setUserAddress("Could not determine city");
               setUserProvince("");
             }
           })
           .catch(() => {
-            setUserAddress("Could not determine address");
+            setUserAddress("Could not determine city");
             setUserProvince("");
           })
           .finally(() => setLocationLoading(false));

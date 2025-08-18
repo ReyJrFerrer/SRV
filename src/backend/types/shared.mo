@@ -454,4 +454,14 @@ module {
         has_text_content: ?Bool;
         validation_flags: [Text];
     };
+
+    public type SystemSettings = {
+        corporate_gcash_account: Text;
+        settlement_deadline_hours: Nat32;
+        max_commission_rate_bps: Nat;
+        min_order_amount: Nat;
+        max_order_amount: Nat;
+        updated_by: Principal;
+        updated_at: Time.Time;
+    };
 }

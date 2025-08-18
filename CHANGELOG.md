@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add comprehensive remittance management hook with provider dashboard and analytics functionality
 - Simplify remittance system by removing FINOPS/COLLECTOR roles with direct service provider to admin workflow
 - Add intercanister communication between admin and remittance canisters for commission validation
 - Add admin canister for remittance system role management and commission rule administration

@@ -16,6 +16,7 @@ persistent actor AdminCanister {
     type CommissionRule = Types.CommissionRule;
     type CommissionFormula = Types.CommissionFormula;
     type PaymentMethod = Types.PaymentMethod;
+    type SystemSettings = Types.SystemSettings;
     type Result<T> = Types.Result<T>;
 
     // Role types - Simplified to only ADMIN
@@ -29,16 +30,6 @@ persistent actor AdminCanister {
         scope: ?Text; // Optional scope (e.g., branch_id)
         assigned_by: Principal;
         assigned_at: Time.Time;
-    };
-
-    public type SystemSettings = {
-        corporate_gcash_account: Text;
-        settlement_deadline_hours: Nat32;
-        max_commission_rate_bps: Nat; // Maximum allowed commission rate in basis points
-        min_order_amount: Nat; // Minimum order amount in centavos
-        max_order_amount: Nat; // Maximum order amount in centavos
-        updated_by: Principal;
-        updated_at: Time.Time;
     };
 
     public type CommissionRuleDraft = {

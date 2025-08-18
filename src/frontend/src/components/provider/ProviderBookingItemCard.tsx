@@ -228,6 +228,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const isCompleted = status === "Completed";
   const isInProgress = status === "InProgress";
 
+  // --- Helper: Check if booking is scheduled for a future date ---
+  const isScheduledForFuture = (() => {
+    if (!booking.requestedDate) return false;
+    const now = new Date();
+    const bookingDate = new Date(booking.requestedDate);
+    return bookingDate.getTime() > now.getTime();
+  })();
+
   // --- Card Layout ---
   return isInProgress ? (
     <div className="mb-6">
@@ -236,7 +244,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         {/* Provider Profile Image */}
         <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
           <img
-            src={serviceImage ?? undefined}
+            src={serviceImage || "/default-client.svg"}
             alt={clientName}
             className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
             onError={(e) => {
@@ -334,13 +342,27 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 {canStart && (
                   <button
                     onClick={handleStartService}
-                    disabled={isBookingActionInProgress(booking.id, "start")}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+                    disabled={
+                      isBookingActionInProgress(booking.id, "start") ||
+                      isScheduledForFuture // <-- lock if scheduled for future
+                    }
+                    className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
+                      isScheduledForFuture
+                        ? "cursor-not-allowed opacity-60"
+                        : ""
+                    }`}
+                    title={
+                      isScheduledForFuture
+                        ? "You can only start the service on the scheduled date."
+                        : undefined
+                    }
                   >
                     <ArrowPathIcon className="mr-1 h-4 w-4" />
                     {isBookingActionInProgress(booking.id, "start")
                       ? "Starting..."
-                      : "Start Service"}
+                      : isScheduledForFuture
+                        ? "Start Service (Locked)"
+                        : "Start Service"}
                   </button>
                 )}
                 {canComplete && (
@@ -384,7 +406,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         {/* Provider Profile Image */}
         <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
           <img
-            src={serviceImage ?? undefined}
+            src={serviceImage || "/default-client.svg"}
             alt={clientName}
             className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
             onError={(e) => {
@@ -482,13 +504,27 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 {canStart && (
                   <button
                     onClick={handleStartService}
-                    disabled={isBookingActionInProgress(booking.id, "start")}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+                    disabled={
+                      isBookingActionInProgress(booking.id, "start") ||
+                      isScheduledForFuture // <-- lock if scheduled for future
+                    }
+                    className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
+                      isScheduledForFuture
+                        ? "cursor-not-allowed opacity-60"
+                        : ""
+                    }`}
+                    title={
+                      isScheduledForFuture
+                        ? "You can only start the service on the scheduled date."
+                        : undefined
+                    }
                   >
                     <ArrowPathIcon className="mr-1 h-4 w-4" />
                     {isBookingActionInProgress(booking.id, "start")
                       ? "Starting..."
-                      : "Start Service"}
+                      : isScheduledForFuture
+                        ? "Start Service (Locked)"
+                        : "Start Service"}
                   </button>
                 )}
                 {canComplete && (

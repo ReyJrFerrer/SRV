@@ -13,6 +13,7 @@ import { updateServiceActor } from "../services/serviceCanisterService";
 import { updateReviewActor } from "../services/reviewCanisterService";
 import { updateReputationActor } from "../services/reputationCanisterService";
 import { updateChatActor } from "../services/chatCanisterService";
+import { updateRemittanceActor } from "../services/remittanceCanisterService";
 import {
   initializeCanisterReferences,
   shouldInitializeCanisters,
@@ -64,6 +65,7 @@ const updateAllActors = (identity: Identity | null) => {
   updateReviewActor(identity);
   updateReputationActor(identity);
   updateChatActor(identity);
+  updateRemittanceActor(identity);
 };
 
 const initializeCanisters = async (

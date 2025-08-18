@@ -5,6 +5,7 @@ import { createActor, canisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
+import { canisterId as remittanceCanisterId } from "../../../declarations/remittance";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
@@ -940,7 +941,7 @@ export const bookingCanisterService = {
         [Principal.fromText(serviceCanisterId)],
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
-        [], // Add an empty array or the appropriate Principal(s) for the fifth argument
+        [Principal.fromText(remittanceCanisterId)], // Add an empty array or the appropriate Principal(s) for the fifth argument
       );
 
       if ("ok" in result) {
