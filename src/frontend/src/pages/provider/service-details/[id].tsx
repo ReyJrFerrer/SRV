@@ -1510,7 +1510,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         )}
 
         {/* Hero Card */}
-        <section className="mt-8 relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+        <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
           <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
             {serviceImages &&
@@ -2388,13 +2388,15 @@ const ProviderServiceDetailPage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-<div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
+        <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
           <button
             onClick={
-              isUpdatingStatus || hasActiveBookings ? undefined : handleStatusToggle
+              isUpdatingStatus || hasActiveBookings
+                ? undefined
+                : handleStatusToggle
             }
             disabled={isUpdatingStatus || hasActiveBookings}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none ${
               service.status === "Available"
                 ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
                 : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`

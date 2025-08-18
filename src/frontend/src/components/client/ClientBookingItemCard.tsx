@@ -138,7 +138,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const handleCancelClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       if (onUpdateStatus) {
         await onUpdateStatus(booking.id, "Cancelled");
