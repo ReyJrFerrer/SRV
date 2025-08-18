@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import phLocations from "../../data/ph_locations.json";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -29,6 +29,7 @@ type PaymentSectionProps = {
   handleAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   paymentError: string | null;
   totalPrice: number;
+  highlight?: boolean; // <-- Add highlight prop
 };
 
 const PaymentSection: React.FC<PaymentSectionProps> = ({
@@ -39,8 +40,15 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   handleAmountChange,
   paymentError,
   totalPrice,
+  highlight = false,
 }) => (
-  <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
+  <div
+    className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
+      highlight
+        ? "border-2 border-red-500 ring-2 ring-red-200"
+        : "border border-gray-200"
+    }`}
+  >
     <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
     <div className="space-y-3">
       <div
@@ -115,6 +123,15 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 
 // --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
+  // --- Section refs for scrolling/highlighting ---
+  const barangayRef = useRef<HTMLSelectElement>(null);
+  const otherBarangayRef = useRef<HTMLInputElement>(null);
+  const streetRef = useRef<HTMLInputElement>(null);
+  const houseNumberRef = useRef<HTMLInputElement>(null);
+  const packageSectionRef = useRef<HTMLDivElement>(null);
+  const bookingSectionRef = useRef<HTMLDivElement>(null);
+  const paymentSectionRef = useRef<HTMLDivElement>(null);
+
   // --- Booking state ---
   const [packages, setPackages] = useState<
     {
@@ -526,6 +543,10 @@ const ClientBookingPageComponent: React.FC = () => {
   const handleConfirmBooking = async () => {
     setFormError(null);
     setIsSubmitting(true);
+
+    // Track which field to highlight
+    let highlightField = "";
+
     try {
       // Validate required address fields
       if (selectedBarangay === "__other__") {
@@ -537,17 +558,23 @@ const ClientBookingPageComponent: React.FC = () => {
           setFormError(
             "Please enter a valid barangay name (3-20 characters) for 'Others'.",
           );
+          highlightField = "otherBarangay";
           setIsSubmitting(false);
+          setHighlightInput(highlightField);
           return;
         }
       } else if (!selectedBarangay.trim()) {
         setFormError("Please select your Barangay before proceeding.");
+        highlightField = "barangay";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
       if (street.trim().length < 3 || street.trim().length > 20) {
         setFormError("Street Name must be between 3 and 20 characters.");
+        highlightField = "street";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
       if (
@@ -558,7 +585,9 @@ const ClientBookingPageComponent: React.FC = () => {
         setFormError(
           "House/Unit No. must be at most 15 characters and contain at least one number.",
         );
+        highlightField = "houseNumber";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
       // Require cash amount input if payment method is cash
@@ -566,26 +595,34 @@ const ClientBookingPageComponent: React.FC = () => {
         const paidAmount = parseFloat(amountPaid);
         if (!amountPaid.trim()) {
           setFormError("Please enter the cash amount before proceeding.");
+          highlightField = "paymentSection";
           setIsSubmitting(false);
+          setHighlightInput(highlightField);
           return;
         }
         if (isNaN(paidAmount) || paidAmount < totalPrice) {
           setFormError(
             `Cash amount must be at least ₱${totalPrice.toFixed(2)}.`,
           );
+          highlightField = "paymentSection";
           setIsSubmitting(false);
+          setHighlightInput(highlightField);
           return;
         }
       }
       // Validate at least one package is selected
       if (!packages.some((pkg) => pkg.checked)) {
         setFormError("Please select at least one package before proceeding.");
+        highlightField = "package";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
       if (!bookingOption) {
         setFormError("Please select a booking type (Same Day or Scheduled).");
+        highlightField = "bookingOption";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
 
@@ -594,7 +631,9 @@ const ClientBookingPageComponent: React.FC = () => {
         const timeLabel =
           bookingOption === "sameday" ? "time for today" : "time slot";
         setFormError(`Please select a ${timeLabel} before proceeding.`);
+        highlightField = "selectedTime";
         setIsSubmitting(false);
+        setHighlightInput(highlightField);
         return;
       }
 
@@ -667,10 +706,79 @@ const ClientBookingPageComponent: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  // --- Clear error message when user edits required address fields ---
+
+  // --- Highlight state and helper ---
+  const [highlightInput, setHighlightInput] = useState<string>("");
+
+  // --- Clear highlight when user edits the field ---
   useEffect(() => {
-    setFormError(null);
-  }, [selectedBarangay, street, houseNumber]);
+    if (
+      highlightInput === "barangay" &&
+      selectedBarangay &&
+      selectedBarangay !== "__other__"
+    )
+      setHighlightInput("");
+    if (
+      highlightInput === "otherBarangay" &&
+      otherBarangay &&
+      otherBarangay.trim().length >= 3 &&
+      otherBarangay.trim().length <= 20
+    )
+      setHighlightInput("");
+    if (
+      highlightInput === "street" &&
+      street &&
+      street.trim().length >= 3 &&
+      street.trim().length <= 20
+    )
+      setHighlightInput("");
+    if (
+      highlightInput === "houseNumber" &&
+      houseNumber &&
+      houseNumber.length <= 15 &&
+      /\d/.test(houseNumber)
+    )
+      setHighlightInput("");
+    if (highlightInput === "amountPaid" && amountPaid) setHighlightInput("");
+    if (highlightInput === "selectedTime" && selectedTime)
+      setHighlightInput("");
+    if (highlightInput === "package" && packages.some((pkg) => pkg.checked))
+      setHighlightInput("");
+    if (highlightInput === "bookingOption" && bookingOption)
+      setHighlightInput("");
+    if (highlightInput === "paymentSection" && !paymentError && amountPaid)
+      setHighlightInput("");
+  }, [
+    highlightInput,
+    selectedBarangay,
+    otherBarangay,
+    street,
+    houseNumber,
+    amountPaid,
+    selectedTime,
+    packages,
+    bookingOption,
+    paymentError,
+  ]);
+
+  // --- Scroll to error section on highlightInput change (mobile only) ---
+  useEffect(() => {
+    if (window.innerWidth > 768) return; // Only scroll on mobile
+    let ref: HTMLElement | null = null;
+    if (highlightInput === "barangay") ref = barangayRef.current;
+    if (highlightInput === "otherBarangay") ref = otherBarangayRef.current;
+    if (highlightInput === "street") ref = streetRef.current;
+    if (highlightInput === "houseNumber") ref = houseNumberRef.current;
+    if (highlightInput === "package") ref = packageSectionRef.current;
+    if (highlightInput === "bookingOption" || highlightInput === "selectedTime")
+      ref = bookingSectionRef.current;
+    if (highlightInput === "paymentSection") ref = paymentSectionRef.current;
+    if (ref) {
+      setTimeout(() => {
+        ref?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    }
+  }, [highlightInput]);
 
   // --- Render: Booking Page Layout ---
   // Loading, error, and not found states
@@ -726,7 +834,15 @@ const ClientBookingPageComponent: React.FC = () => {
         <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
           <div className="md:flex md:gap-x-8">
             <div className="space-y-6 md:w-1/2">
-              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+              {/* --- Highlight Select Package Section --- */}
+              <div
+                ref={packageSectionRef}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
+                  highlightInput === "package"
+                    ? "border-2 border-red-500 ring-2 ring-red-200"
+                    : "border-blue-100"
+                }`}
+              >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
                   Select Package(s) <span className="text-red-500">*</span>
@@ -761,22 +877,31 @@ const ClientBookingPageComponent: React.FC = () => {
                 ))}
               </div>
               <div className="hidden md:block">
-                <PaymentSection
-                  {...{
-                    paymentMethod,
-                    setPaymentMethod,
-                    packages,
-                    amountPaid,
-                    handleAmountChange,
-                    paymentError,
-                    totalPrice,
-                  }}
-                />
+                <div ref={paymentSectionRef}>
+                  <PaymentSection
+                    paymentMethod={paymentMethod}
+                    setPaymentMethod={setPaymentMethod}
+                    packages={packages}
+                    amountPaid={amountPaid}
+                    handleAmountChange={handleAmountChange}
+                    paymentError={paymentError}
+                    totalPrice={totalPrice}
+                    highlight={highlightInput === "paymentSection"}
+                  />
+                </div>
               </div>
             </div>
             <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
-              {/* --- Booking Schedule Section (with calendar and slot selection) --- */}
-              <div className="glass-card rounded-2xl border border-yellow-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+              {/* --- Highlight Booking Schedule Section --- */}
+              <div
+                ref={bookingSectionRef}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
+                  highlightInput === "bookingOption" ||
+                  highlightInput === "selectedTime"
+                    ? "border-2 border-red-500 ring-2 ring-red-200"
+                    : "border-yellow-100"
+                }`}
+              >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-yellow-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-yellow-400"></span>
                   Booking Schedule <span className="text-red-500">*</span>
@@ -1119,9 +1244,14 @@ const ClientBookingPageComponent: React.FC = () => {
 
                   {/* Barangay dropdown populated from ph_locations.json */}
                   <select
+                    ref={barangayRef}
                     value={selectedBarangay}
                     onChange={(e) => setSelectedBarangay(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                      highlightInput === "barangay"
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                    }`}
                   >
                     <option value="" disabled>
                       Select Barangay *
@@ -1142,34 +1272,62 @@ const ClientBookingPageComponent: React.FC = () => {
                   </select>
                   {selectedBarangay === "__other__" && (
                     <input
+                      ref={otherBarangayRef}
                       type="text"
                       placeholder="Enter your Barangay *"
                       value={otherBarangay}
                       onChange={(e) => setOtherBarangay(e.target.value)}
-                      className="mt-3 w-full rounded-xl border border-blue-400 bg-white p-3 text-sm text-gray-700 capitalize"
+                      className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                        highlightInput === "otherBarangay" ||
+                        (otherBarangay &&
+                          (otherBarangay.trim().length < 3 ||
+                            otherBarangay.trim().length > 20))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : "border-blue-400"
+                      }`}
                       minLength={3}
                       maxLength={20}
                       required
                     />
                   )}
-                  {/* Street Name input, enabled after barangay selection */}
                   <input
+                    ref={streetRef}
                     type="text"
                     placeholder="Street Name *"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                      !selectedBarangay
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                    } ${
+                      highlightInput === "street" ||
+                      (street &&
+                        (street.trim().length < 3 || street.trim().length > 20))
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                    }`}
                     disabled={!selectedBarangay}
                     minLength={3}
                     maxLength={20}
                   />
-                  {/* House/Unit No. input, enabled after street name input */}
                   <input
+                    ref={houseNumberRef}
                     type="text"
                     placeholder="House/Unit No. *"
                     value={houseNumber}
                     onChange={(e) => setHouseNumber(e.target.value)}
-                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                      !street
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                    } ${
+                      highlightInput === "houseNumber" ||
+                      (houseNumber &&
+                        (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                    }`}
                     disabled={!street}
                     maxLength={15}
                   />
@@ -1201,15 +1359,18 @@ const ClientBookingPageComponent: React.FC = () => {
                 />
               </div>
               <div className="mt-4 md:hidden">
-                <PaymentSection
-                  paymentMethod={paymentMethod}
-                  setPaymentMethod={setPaymentMethod}
-                  packages={packages}
-                  amountPaid={amountPaid}
-                  handleAmountChange={handleAmountChange}
-                  paymentError={paymentError}
-                  totalPrice={totalPrice}
-                />
+                <div ref={paymentSectionRef}>
+                  <PaymentSection
+                    paymentMethod={paymentMethod}
+                    setPaymentMethod={setPaymentMethod}
+                    packages={packages}
+                    amountPaid={amountPaid}
+                    handleAmountChange={handleAmountChange}
+                    paymentError={paymentError}
+                    totalPrice={totalPrice}
+                    highlight={highlightInput === "paymentSection"}
+                  />
+                </div>
               </div>
             </div>
           </div>
