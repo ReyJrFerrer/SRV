@@ -284,66 +284,38 @@ const AddServicePage: React.FC = () => {
           formData.servicePackages.forEach((pkg, index) => {
             if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
               if (!pkg.name.trim()) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Name is required`;
+                errors.servicePackages = `Package ${index + 1}: Name is required`;
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Name must be at least ${
-                  VALIDATION_LIMITS.MIN_TITLE_LENGTH
-                } character`;
+                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
               } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Name must be no more than ${
-                  VALIDATION_LIMITS.MAX_TITLE_LENGTH
-                } characters`;
+                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
               } else if (filter.isProfane(pkg.name)) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Name contains inappropriate language.`;
+                errors.servicePackages = `Package ${index + 1}: Name contains inappropriate language.`;
               }
 
               if (!pkg.description.trim()) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Description is required`;
+                errors.servicePackages = `Package ${index + 1}: Description is required`;
               } else if (
                 pkg.description.length <
                 VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Description must be at least ${
-                  VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
-                } character`;
+                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} characters`;
               } else if (
                 pkg.description.length >
                 VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Description must be no more than ${
-                  VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
-                } characters`;
+                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
               } else if (filter.isProfane(pkg.description)) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Description contains inappropriate language.`;
+                errors.servicePackages = `Package ${index + 1}: Description contains inappropriate language.`;
               }
-
-              if (
-                !pkg.price ||
-                Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
+              const priceNum = Number(pkg.price);
+              if (!pkg.price || isNaN(priceNum)) {
+                errors.servicePackages = `Package ${index + 1}: Price is required and must be a whole number (no decimals).`;
+              } else if (
+                priceNum < VALIDATION_LIMITS.MIN_PRICE ||
+                priceNum > VALIDATION_LIMITS.MAX_PRICE
               ) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
-              } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
-                errors.servicePackages = `Package ${
-                  index + 1
-                }: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+                errors.servicePackages = `Package ${index + 1}: Price must be between ₱${VALIDATION_LIMITS.MIN_PRICE.toLocaleString()} and ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}. Please enter a value within this range.`;
               }
             }
           });
@@ -358,6 +330,11 @@ const AddServicePage: React.FC = () => {
         }
 
         // Validate time slots
+        const isSameTime = (slot: TimeSlotUIData) =>
+          slot.startHour === slot.endHour &&
+          slot.startMinute === slot.endMinute &&
+          slot.startPeriod === slot.endPeriod;
+
         if (formData.useSameTimeForAllDays) {
           if (formData.commonTimeSlots.length === 0) {
             errors.timeSlots = "Please add at least one time slot";
@@ -373,6 +350,12 @@ const AddServicePage: React.FC = () => {
             if (!hasValidTimeSlot) {
               errors.timeSlots = "Please complete at least one time slot";
             }
+            // Check for same start and end time
+            const invalidSlots = formData.commonTimeSlots.filter(isSameTime);
+            if (invalidSlots.length > 0) {
+              errors.timeSlots =
+                "Working hours must have different start and end times.";
+            }
           }
         } else {
           // Validate per-day time slots
@@ -383,6 +366,16 @@ const AddServicePage: React.FC = () => {
           );
           if (!hasTimeSlots) {
             errors.timeSlots = "Please add time slots for your available days";
+          }
+          // Check for same start and end time in per-day slots
+          for (const day of formData.availabilitySchedule) {
+            const slots = formData.perDayTimeSlots[day] || [];
+            const invalidSlots = slots.filter(isSameTime);
+            if (invalidSlots.length > 0) {
+              errors.timeSlots =
+                "Working hours must have different start and end times.";
+              break;
+            }
           }
         }
         break;

@@ -43,6 +43,7 @@ import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 import { Toaster, toast } from "sonner";
 import { Dialog } from "@headlessui/react"; // Add this import for modal dialog
+import { useLocation} from "react-router-dom";
 
 // Helper to check if a file is a PDF based on its URL or filename
 
@@ -400,6 +401,7 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
 
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
 
   // State for image/certificate preview modal
@@ -408,6 +410,11 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   // Helper to check if file is a PDF
   const isPdfFile = (url: string) => url?.toLowerCase().endsWith(".pdf");
+
+  // Checks if user came from add service
+  const fromAddService =
+    location.state?.fromAddService ||
+    new URLSearchParams(location.search).get("from") === "add";
 
   const {
     getService,
@@ -1469,7 +1476,11 @@ const ProviderServiceDetailPage: React.FC = () => {
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              fromAddService
+                ? navigate("/provider/home")
+                : navigate(-1)
+            }
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
