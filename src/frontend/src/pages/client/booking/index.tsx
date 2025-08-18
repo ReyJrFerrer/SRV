@@ -185,15 +185,13 @@ const MyBookingsPage: React.FC = () => {
   const handleCancelBookingOnListPage = async (bookingId: string) => {
     // NOTE: window.confirm is blocking and not ideal for modern UX.
     // Consider replacing this with a custom modal component.
-    if (window.confirm("Are you sure you want to cancel this booking?")) {
-      try {
-        await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
-        // NOTE: window.alert is also blocking. Use a toast notification instead.
-        alert(`Booking has been cancelled successfully.`);
-      } catch (error) {
-        console.error("Error cancelling booking:", error);
-        alert("Failed to cancel booking. Please try again.");
-      }
+    try {
+      await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
+      // NOTE: window.alert is also blocking. Use a toast notification instead.
+      alert(`Booking has been cancelled successfully.`);
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      alert("Failed to cancel booking. Please try again.");
     }
   };
 

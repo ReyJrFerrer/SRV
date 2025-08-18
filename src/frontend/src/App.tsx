@@ -87,6 +87,3 @@ const LandingPage = () => {
 export default function App() {
   return <LandingPage />;
 }
-
-
-
