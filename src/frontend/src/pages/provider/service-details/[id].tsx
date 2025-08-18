@@ -43,7 +43,7 @@ import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 import { Toaster, toast } from "sonner";
 import { Dialog } from "@headlessui/react"; // Add this import for modal dialog
-import { useLocation} from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 // Helper to check if a file is a PDF based on its URL or filename
 
@@ -1477,9 +1477,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
             onClick={() =>
-              fromAddService
-                ? navigate("/provider/home")
-                : navigate(-1)
+              fromAddService ? navigate("/provider/home") : navigate(-1)
             }
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"

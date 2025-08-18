@@ -1186,14 +1186,12 @@ const ServiceDetailPage: React.FC = () => {
             <button
               onClick={handleBookNow}
               disabled={
-                packages.length === 0 ||
-                isOwnService ||
-                !service.isActive
+                packages.length === 0 || isOwnService || !service.isActive
               }
               className="w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
               style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
-              {service.isActive ? "Book Now": "Service Unavailable"}
+              {service.isActive ? "Book Now" : "Service Unavailable"}
             </button>
           </div>
         </div>
