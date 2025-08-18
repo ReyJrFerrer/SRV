@@ -44,9 +44,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   error = null,
   onRefresh,
   className = "",
-  maxItemsToShow = services.length,
 }) => {
-  const displayedServices = services.slice(0, maxItemsToShow);
+  // Limit displayed services to 4
+  const displayedServices = services.slice(0, 4);
   const navigate = useNavigate();
   const { updateServiceStatus, deleteService } = useServiceManagement();
 
@@ -187,107 +187,120 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       {/* Add space between the label and the listings */}
       <div className="mb-6" />
       {displayedServices.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {displayedServices.map((service) => {
-            const isActive = service.status === "Available";
-            const categoryImage = getCategoryImage(
-              service.category?.slug || service.category?.name,
-            );
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {displayedServices.map((service) => {
+              const isActive = service.status === "Available";
+              const categoryImage = getCategoryImage(
+                service.category?.slug || service.category?.name,
+              );
 
-            return (
-              <div
-                key={service.id}
-                className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-              >
-                {/* Make the entire card a button */}
-                <button
-                  type="button"
-                  className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    padding: 0,
-                  }}
-                  onClick={() =>
-                    navigate(`/provider/service-details/${service.id}`)
-                  }
-                  aria-label={`View details for ${service.title}`}
-                  tabIndex={0}
-                />
-                {/* Category image */}
-                <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
-                  <img
-                    src={categoryImage}
-                    alt={service.category?.name || "Category"}
-                    className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/images/categories/others.svg";
+              return (
+                <div
+                  key={service.id}
+                  className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  {/* Make the entire card a button */}
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
                     }}
+                    onClick={() =>
+                      navigate(`/provider/service-details/${service.id}`)
+                    }
+                    aria-label={`View details for ${service.title}`}
+                    tabIndex={0}
                   />
-                </div>
-                {/* Active badge in top right if active */}
-                {isActive && (
-                  <span
-                    className="pointer-events-none absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
-                    title="Active"
-                  >
-                    Active
-                  </span>
-                )}
-                {!isActive && (
-                  <span
-                    className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
-                  >
-                    {getStatusDisplay(service.status).text}
-                  </span>
-                )}
-                <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-                  <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
-                    {service.title}
-                  </h4>
-                  <div className="flex items-center justify-center gap-2">
-                    <StarIcon className="h-5 w-5 text-yellow-400" />
-                    <span className="font-semibold text-blue-900">
-                      {service.averageRating || "0"} / 5{" "}
-                      <span className="text-gray-500">
-                        ({service.reviewCount})
-                      </span>
+                  {/* Category image */}
+                  <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
+                    <img
+                      src={categoryImage}
+                      alt={service.category?.name || "Category"}
+                      className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/images/categories/others.svg";
+                      }}
+                    />
+                  </div>
+                  {/* Active badge in top right if active */}
+                  {isActive && (
+                    <span
+                      className="pointer-events-none absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+                      title="Active"
+                    >
+                      Active
                     </span>
+                  )}
+                  {!isActive && (
+                    <span
+                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
+                    >
+                      {getStatusDisplay(service.status).text}
+                    </span>
+                  )}
+                  <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
+                    <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
+                      {service.title}
+                    </h4>
+                    <div className="flex items-center justify-center gap-2">
+                      <StarIcon className="h-5 w-5 text-yellow-400" />
+                      <span className="font-semibold text-blue-900">
+                        {service.averageRating || "0"} / 5{" "}
+                        <span className="text-gray-500">
+                          ({service.reviewCount})
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  {/* --- Activate and Delete buttons at the bottom of the listing --- */}
+                  <div className="relative z-10 mt-4 flex w-full gap-2">
+                    <button
+                      type="button"
+                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                        isActive
+                          ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                          : "bg-green-500 text-white hover:bg-green-600"
+                      }`}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await handleToggleActive(service.id, isActive);
+                      }}
+                    >
+                      {isActive ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmId(service.id);
+                      }}
+                      disabled={deletingId === service.id}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                {/* --- Activate and Delete buttons at the bottom of the listing --- */}
-                <div className="relative z-10 mt-4 flex w-full gap-2">
-                  <button
-                    type="button"
-                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                      isActive
-                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                        : "bg-green-500 text-white hover:bg-green-600"
-                    }`}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await handleToggleActive(service.id, isActive);
-                    }}
-                  >
-                    {isActive ? "Deactivate" : "Activate"}
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteConfirmId(service.id);
-                    }}
-                    disabled={deletingId === service.id}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+          {/* View All Services Button */}
+          {services.length > 4 && (
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/provider/services"
+                className="rounded-lg bg-yellow-300 px-6 py-2.5 text-base font-semibold text-black shadow transition hover:bg-blue-600 hover:text-white"
+              >
+                View All Services
+              </Link>
+            </div>
+          )}
+        </>
       ) : (
         <div className="py-12 text-center text-gray-400">
           No services found.
