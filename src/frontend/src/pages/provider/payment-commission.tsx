@@ -335,7 +335,6 @@ const PaymentProviderCommission: React.FC = () => {
               <div className="mt-2 text-sm text-blue-600">
                 Commission for Order: {currentOrder.id}
                 <br />
-                Expected payment: ₱{currentOrder.commissionAmount.toFixed(2)}
               </div>
             )}
           </div>
@@ -375,9 +374,6 @@ const PaymentProviderCommission: React.FC = () => {
                 disabled={isSubmitting}
               />
               <div className="mt-1 flex justify-between text-xs">
-                <span className="text-blue-600">
-                  Expected: ₱{currentOrder.commissionAmount.toFixed(2)}
-                </span>
                 <span className="text-gray-400">
                   Maximum: ₱{MAX_AMOUNT.toLocaleString()}
                 </span>

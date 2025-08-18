@@ -169,6 +169,9 @@ const ProviderBookingsPage: React.FC = () => {
 
     // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
     if (activeTab === "ALL") {
+      const inProgress = filteredBookings.filter(
+        (b) => b.status?.toLowerCase() === "inprogress",
+      );
       const requested = filteredBookings.filter(
         (b) =>
           b.status?.toLowerCase() === "requested" ||
@@ -179,9 +182,6 @@ const ProviderBookingsPage: React.FC = () => {
           b.status?.toLowerCase() === "accepted" ||
           b.status?.toLowerCase() === "confirmed",
       );
-      const inProgress = filteredBookings.filter(
-        (b) => b.status?.toLowerCase() === "inprogress",
-      );
       const others = filteredBookings.filter(
         (b) =>
           b.status?.toLowerCase() !== "requested" &&
@@ -190,7 +190,7 @@ const ProviderBookingsPage: React.FC = () => {
           b.status?.toLowerCase() !== "confirmed" &&
           b.status?.toLowerCase() !== "inprogress",
       );
-      return [...requested, ...accepted, ...inProgress, ...others];
+      return [...inProgress, ...requested, ...accepted, ...others];
     }
 
     return filteredBookings;

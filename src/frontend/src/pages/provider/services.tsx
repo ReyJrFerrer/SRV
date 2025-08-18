@@ -49,125 +49,6 @@ const ServiceGalleryImage: React.FC<{ service: EnhancedService }> = ({
   />
 );
 
-// Helper to format time to 12-hour format with AM/PM
-function formatTime12h(time: string): string {
-  if (!time) return "";
-  const [hourStr, minuteStr] = time.split(":");
-  let hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-}
-
-// Helper to format schedule display
-const dayShort: Record<string, string> = {
-  Sunday: "Su",
-  Monday: "M",
-  Tuesday: "T",
-  Wednesday: "W",
-  Thursday: "Th",
-  Friday: "F",
-  Saturday: "Sa",
-};
-
-function formatSchedule(schedule?: EnhancedService["weeklySchedule"]): string {
-  if (!schedule || schedule.length === 0) return "No schedule";
-  // Group by days with same time slots
-  const dayGroups: Record<string, string[]> = {};
-  schedule.forEach((entry) => {
-    if (!entry.availability?.isAvailable || !entry.availability.slots?.length)
-      return;
-    const slotStr = entry.availability.slots
-      .map(
-        (slot) =>
-          `${formatTime12h(slot.startTime)}${
-            slot.endTime ? " - " + formatTime12h(slot.endTime) : ""
-          }`,
-      )
-      .join(", ");
-    if (!dayGroups[slotStr]) dayGroups[slotStr] = [];
-    dayGroups[slotStr].push(entry.day);
-  });
-
-  // Helper to check for common patterns
-  const allDays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const weekends = ["Sunday", "Saturday"];
-
-  // Everyday
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 7 &&
-      allDays.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Everyday at ${slotStr}`;
-    }
-  }
-  // Weekdays
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 5 &&
-      weekdays.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Weekdays at ${slotStr}`;
-    }
-  }
-  // Weekends
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 2 &&
-      weekends.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Weekends at ${slotStr}`;
-    }
-  }
-  // MWF
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 3 &&
-      ["Monday", "Wednesday", "Friday"].every((d) =>
-        dayGroups[slotStr].includes(d),
-      )
-    ) {
-      return `MWF at ${slotStr}`;
-    }
-  }
-  // TTh
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 2 &&
-      ["Tuesday", "Thursday"].every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `TTh at ${slotStr}`;
-    }
-  }
-  // Otherwise, list each day
-  const parts: string[] = [];
-  schedule.forEach((entry) => {
-    if (!entry.availability?.isAvailable || !entry.availability.slots?.length)
-      return;
-    const slotStr = entry.availability.slots
-      .map(
-        (slot) =>
-          `${formatTime12h(slot.startTime)}${
-            slot.endTime ? " - " + formatTime12h(slot.endTime) : ""
-          }`,
-      )
-      .join(", ");
-    parts.push(`${dayShort[entry.day] || entry.day} at ${slotStr}`);
-  });
-  return parts.join(" | ");
-}
-
 const MyServicesPage: React.FC = () => {
   const {
     userServices,
@@ -347,7 +228,6 @@ const MyServicesPage: React.FC = () => {
                   service.category?.slug || service.category?.name,
                 );
                 const isActive = service.status === "Available";
-                const scheduleStr = formatSchedule(service.weeklySchedule);
 
                 return (
                   <div
@@ -393,10 +273,6 @@ const MyServicesPage: React.FC = () => {
                     <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
                       {service.title}
                     </h4>
-                    {/* Service Schedule */}
-                    <div className="text-s pointer-events-none mt-1 mb-2 flex w-full items-center justify-center gap-2 font-semibold text-blue-700">
-                      <span className="text-center">{scheduleStr}</span>
-                    </div>
                     {/* Ratings */}
                     <div className="pointer-events-none mt-2 flex w-full items-center justify-center gap-4">
                       <span className="flex items-center gap-1 text-yellow-400">

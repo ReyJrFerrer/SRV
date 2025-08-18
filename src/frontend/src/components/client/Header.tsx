@@ -140,21 +140,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 1500, // delay ms
               );
               if (data && data.address) {
-                const {
-                  house_number,
-                  road,
-                  suburb,
-                  city,
-                  town,
-                  village,
-                  county,
-                  state,
-                  region,
-                  province,
-                  barangay,
-                } = data.address;
+                const { city, town, village, county, state, region, province } =
+                  data.address;
                 // Special case: Baguio
-                let cityPart = city || town || "";
+                let cityPart = city || town || village || "";
                 let provinceVal = county || state || region || province || "";
                 if (
                   (cityPart.toLowerCase() === "baguio" ||
@@ -168,20 +157,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   cityPart = "Baguio City";
                   provinceVal = "Benguet";
                 }
-                const streetPart = road || "";
-                const barangayPart = barangay || suburb || village || "";
-                const houseNumPart = house_number || "";
-                const fullAddress = [
-                  houseNumPart,
-                  streetPart,
-                  barangayPart,
-                  cityPart,
-                ]
-                  .filter(Boolean)
-                  .join(", ");
-                const finalAddress =
-                  fullAddress || "Could not determine address";
-                setUserAddress(finalAddress);
+                // Only set city/municipality and province, do not include other details
+                setUserAddress(cityPart || "Could not determine city");
                 setUserProvince(provinceVal);
                 // Cache the address for faster subsequent loads
                 if (
@@ -192,18 +169,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   localStorage.setItem(
                     `address_${location.latitude}_${location.longitude}`,
                     JSON.stringify({
-                      address: finalAddress,
+                      address: cityPart,
                       province: provinceVal,
                     }),
                   );
                 }
               } else {
-                setUserAddress("Could not determine address");
+                setUserAddress("Could not determine city");
                 setUserProvince("");
               }
               setLocationLoading(false);
             } catch (err) {
-              setUserAddress("Could not determine address");
+              setUserAddress("Could not determine city");
               setUserProvince("");
               setLocationLoading(false);
             }
