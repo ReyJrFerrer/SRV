@@ -79,9 +79,7 @@ interface UseAdminReturn {
     reason?: string,
   ) => Promise<void>;
   viewMediaItems: (mediaIds: string[]) => Promise<FrontendMediaItem[]>;
-  getOrderWithMedia: (
-    orderId: string,
-  ) => Promise<{
+  getOrderWithMedia: (orderId: string) => Promise<{
     order: FrontendRemittanceOrder;
     mediaItems: FrontendMediaItem[];
   }>;
