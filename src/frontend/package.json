@@ -6,7 +6,7 @@
   "description": "Frontend for IC Vibe application",
   "scripts": {
     "start": "vite --host 0.0.0.0 --port 5173",
-    "prebuild": "dfx generate llm && dfx generate auth && dfx generate booking && dfx generate reputation && dfx generate review && dfx generate service && dfx generate chat && dfx generate media && dfx generate remittance",
+    "prebuild": "dfx generate llm && dfx generate auth && dfx generate booking && dfx generate reputation && dfx generate review && dfx generate service && dfx generate chat && dfx generate media && dfx generate remittance && dfx generate frontend",
     "build": "tsc && vite build",
     "test": "vitest run"
   },

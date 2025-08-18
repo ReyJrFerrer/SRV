@@ -29,22 +29,22 @@ const SettingsPage: React.FC = () => {
     document.title = "Settings | SRV";
   }, []);
 
-  // Menu items, with "Profile" removed as it now has its own section
+  // Update menu items to point to correct routes
   const menuItems = [
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,
-      href: "/provider/terms",
+      href: "/provider/terms", // updated route
     },
     {
       name: "Report",
       icon: ExclamationCircleIcon,
-      href: "/provider/report",
+      href: "/provider/report", // updated route
     },
     {
       name: "Help & Support",
       icon: QuestionMarkCircleIcon,
-      href: "/provider/help",
+      href: "/provider/help", // updated route
     },
   ];
 
@@ -89,7 +89,7 @@ const SettingsPage: React.FC = () => {
                     <div className="mr-4 h-14 w-14 animate-pulse rounded-full bg-gray-200" />
                   ) : (
                     <img
-                      src={profileImageUrl || "/default-provider.svg"}
+                      src={profileImageUrl || "/default-provider.svg"} // fallback updated
                       alt="Profile"
                       className="mr-4 h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow"
                     />
@@ -106,24 +106,24 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* --- Switch to Service Provider Button --- */}
-            <div className="rounded-2xl border border-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-200 shadow-md">
+            <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-md">
               <button
                 onClick={handleSwitchToClient}
-                className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-600"
+                className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-yellow-400"
                 disabled={switching}
               >
                 <div className="flex items-center">
                   <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${switching ? "animate-spin" : ""}`}
+                    className={`mr-4 h-7 w-7 text-white transition-transform duration-300 group-hover:text-black ${switching ? "animate-spin" : ""}`}
                   />
                   <span
-                    className={`text-lg font-semibold text-gray-800 group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                    className={`text-lg font-semibold text-white group-hover:text-gray-800 ${switching ? "opacity-70" : ""}`}
                   >
-                    {switching ? "Switching..." : "Switch into SRVice Client"}
+                    {switching ? "Switching..." : "Switch into Client"}
                   </span>
                 </div>
                 <ChevronRightIcon
-                  className={`h-6 w-6 text-black group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                  className={`h-6 w-6 text-white group-hover:text-black ${switching ? "opacity-70" : ""}`}
                 />
               </button>
             </div>

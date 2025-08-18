@@ -1,11 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
+import { PlusIcon, StarIcon } from "@heroicons/react/24/solid";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  PlusIcon,
-  StarIcon,
-  WrenchScrewdriverIcon,
-} from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
-import { EnhancedService } from "../../hooks/serviceManagement";
+  EnhancedService,
+  useServiceManagement,
+} from "../../hooks/serviceManagement";
+import { toast } from "sonner";
+
+// Helper to map status to display text and className
+const getStatusDisplay = (status: string) => {
+  switch (status) {
+    case "Unavailable":
+      return { text: "Inactive", className: "bg-gray-100 text-gray-600" };
+    case "Pending":
+      return { text: "Pending", className: "bg-yellow-100 text-yellow-700" };
+    case "Rejected":
+      return { text: "Rejected", className: "bg-red-100 text-red-700" };
+    default:
+      return { text: status, className: "bg-gray-100 text-gray-600" };
+  }
+};
 
 // Helper to get category image path
 const getCategoryImage = (slugOrName?: string) => {
@@ -33,20 +47,49 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   maxItemsToShow = services.length,
 }) => {
   const displayedServices = services.slice(0, maxItemsToShow);
+  const navigate = useNavigate();
+  const { updateServiceStatus, deleteService } = useServiceManagement();
 
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case "Available":
-        return { text: "Active", className: "bg-green-100 text-green-700" };
-      case "Suspended":
-        return {
-          text: "Suspended",
-          className: "bg-yellow-100 text-yellow-700",
-        };
-      case "Unavailable":
-        return { text: "Inactive", className: "bg-red-100 text-red-700" };
-      default:
-        return { text: "Unknown", className: "bg-gray-100 text-gray-600" };
+  // State for delete confirmation dialog
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Handler for activate/deactivate
+  const handleToggleActive = async (serviceId: string, isActive: boolean) => {
+    const newStatus = isActive ? "Unavailable" : "Available";
+    try {
+      await updateServiceStatus(serviceId, newStatus);
+      toast(
+        newStatus === "Available"
+          ? "Service activated!"
+          : "Service deactivated!",
+        {
+          position: "top-center",
+          style: { background: "#fff", color: "#222" },
+        },
+      );
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to update service status. Please try again.", {
+        position: "top-center",
+      });
+    }
+  };
+
+  // Handler for delete
+  const handleDeleteService = async (serviceId: string) => {
+    setDeletingId(serviceId);
+    try {
+      await deleteService(serviceId);
+      toast.success("Service deleted!", { position: "top-center" });
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to delete service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -91,6 +134,43 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
   return (
     <>
+      {/* Centered Delete Confirmation Dialog */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Delete Service?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to delete{" "}
+              <b>
+                {services.find((s) => s.id === deleteConfirmId)?.title ||
+                  "this service"}
+              </b>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setDeleteConfirmId(null)}
+                disabled={deletingId === deleteConfirmId}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={async () => {
+                  await handleDeleteService(deleteConfirmId);
+                }}
+                disabled={deletingId === deleteConfirmId}
+              >
+                {deletingId === deleteConfirmId ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-5 pb-2">
         <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
@@ -104,81 +184,115 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <span className="ml-1 hidden sm:inline">Add new service</span>
         </Link>
       </div>
-      <div className={`rounded-2xl bg-white p-6 shadow-lg ${className} mt-2`}>
-        {displayedServices.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {displayedServices.map((service) => {
-              const isActive = service.status === "Available";
-              const categoryImage = getCategoryImage(
-                service.category?.slug || service.category?.name,
-              );
+      {/* Add space between the label and the listings */}
+      <div className="mb-6" />
+      {displayedServices.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {displayedServices.map((service) => {
+            const isActive = service.status === "Available";
+            const categoryImage = getCategoryImage(
+              service.category?.slug || service.category?.name,
+            );
 
-              return (
-                <Link
-                  key={service.id}
-                  to={`/provider/service-details/${service.id}`}
-                  className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  {/* Category image */}
-                  <div className="absolute -top-8 left-1/2 z-10 -translate-x-1/2">
-                    <img
-                      src={categoryImage}
-                      alt={service.category?.name || "Category"}
-                      className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/images/categories/others.svg";
-                      }}
-                    />
-                  </div>
-                  {/* Active badge in top right if active */}
-                  {isActive && (
-                    <span
-                      className="absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
-                      title="Active"
-                    >
-                      Active
-                    </span>
-                  )}
-                  {!isActive && (
-                    <span
-                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className}`}
-                    >
-                      {getStatusDisplay(service.status).text}
-                    </span>
-                  )}
-                  <div className="mt-10 flex flex-grow flex-col items-center">
-                    <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
-                      {service.title}
-                    </h4>
-                    <div className="mt-1 flex items-center justify-center gap-2">
-                      <StarIcon className="h-5 w-5 text-yellow-400" />
-                      <span className="font-semibold text-blue-900">
-                        {service.averageRating || "0"} / 5{" "}
-                        <span className="text-gray-500">
-                          ({service.reviewCount})
-                        </span>
+            return (
+              <div
+                key={service.id}
+                className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {/* Make the entire card a button */}
+                <button
+                  type="button"
+                  className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                  }}
+                  onClick={() =>
+                    navigate(`/provider/service-details/${service.id}`)
+                  }
+                  aria-label={`View details for ${service.title}`}
+                  tabIndex={0}
+                />
+                {/* Category image */}
+                <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
+                  <img
+                    src={categoryImage}
+                    alt={service.category?.name || "Category"}
+                    className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/images/categories/others.svg";
+                    }}
+                  />
+                </div>
+                {/* Active badge in top right if active */}
+                {isActive && (
+                  <span
+                    className="pointer-events-none absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+                    title="Active"
+                  >
+                    Active
+                  </span>
+                )}
+                {!isActive && (
+                  <span
+                    className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
+                  >
+                    {getStatusDisplay(service.status).text}
+                  </span>
+                )}
+                <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
+                  <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
+                    {service.title}
+                  </h4>
+                  <div className="flex items-center justify-center gap-2">
+                    <StarIcon className="h-5 w-5 text-yellow-400" />
+                    <span className="font-semibold text-blue-900">
+                      {service.averageRating || "0"} / 5{" "}
+                      <span className="text-gray-500">
+                        ({service.reviewCount})
                       </span>
-                    </div>
+                    </span>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="py-12 text-center text-gray-500">
-            <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
-            <p className="mb-2 text-lg">You haven't listed any services yet.</p>
-            <Link
-              to="/provider/services/add"
-              className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <PlusIcon className="mr-2 h-5 w-5" />
-              Add your first service
-            </Link>
-          </div>
-        )}
-      </div>
+                </div>
+                {/* --- Activate and Delete buttons at the bottom of the listing --- */}
+                <div className="relative z-10 mt-4 flex w-full gap-2">
+                  <button
+                    type="button"
+                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      isActive
+                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                        : "bg-green-500 text-white hover:bg-green-600"
+                    }`}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await handleToggleActive(service.id, isActive);
+                    }}
+                  >
+                    {isActive ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirmId(service.id);
+                    }}
+                    disabled={deletingId === service.id}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="py-12 text-center text-gray-400">
+          No services found.
+        </div>
+      )}
     </>
   );
 };

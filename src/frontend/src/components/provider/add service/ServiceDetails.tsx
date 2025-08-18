@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { TrashIcon } from "@heroicons/react/24/solid";
-import { ServiceCategory } from "../../services/serviceCanisterService";
+import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
+import { ServiceCategory } from "../../../services/serviceCanisterService";
 
 // Validation errors interface
 interface ValidationErrors {
   serviceOfferingTitle?: string;
   categoryId?: string;
-  servicePackages?: string; // Now a single string
+  servicePackages?: string;
   availabilitySchedule?: string;
   timeSlots?: string;
   locationMunicipalityCity?: string;
@@ -53,56 +53,65 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   addPackage,
   removePackage,
   validationErrors = {},
-  onRequestCategory,
 }) => {
-  const [newCategoryName, setNewCategoryName] = useState<string>("");
-  const [categoryRequestError, setCategoryRequestError] = useState<string>("");
+  // Local state to control error visibility
+  const [hideTitleError, setHideTitleError] = useState(false);
+  const [hideCategoryError, setHideCategoryError] = useState(false);
+  const [hidePackagesError, setHidePackagesError] = useState(false);
 
-  const handleCategoryRequestChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setNewCategoryName(e.target.value);
-    if (e.target.value) {
-      setCategoryRequestError("");
-    }
+  // Handlers to clear error messages on user action
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHideTitleError(true);
+    handleChange(e);
   };
 
-  const handleRequestCategoryClick = () => {
-    if (newCategoryName.trim()) {
-      onRequestCategory(newCategoryName);
-      setNewCategoryName("");
-      setCategoryRequestError("");
-    } else {
-      setCategoryRequestError("Please enter a category name to request.");
-    }
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setHideCategoryError(true);
+    handleChange(e);
+  };
+
+  const handlePackageInputChange = (
+    index: number,
+    field: string,
+    value: string | boolean,
+  ) => {
+    setHidePackagesError(true);
+    handlePackageChange(index, field, value);
   };
 
   return (
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col justify-between rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
+        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
           <div className="space-y-8">
-            <section className="rounded-xl border border-gray-100 bg-transparent p-0 shadow-none">
-              <h2 className="mb-6 pt-6 text-xl font-extrabold text-blue-700 sm:text-2xl md:text-3xl">
+            {/* Service Title */}
+            <section>
+              <h2 className="mb-4 text-2xl font-extrabold text-blue-700">
                 Service Details <span className="text-red-500">*</span>
               </h2>
               <div className="space-y-2">
+                <label
+                  htmlFor="serviceOfferingTitle"
+                  className="block text-sm font-medium text-blue-900"
+                >
+                  Service Title
+                </label>
                 <input
                   type="text"
                   name="serviceOfferingTitle"
                   id="serviceOfferingTitle"
                   value={formData.serviceOfferingTitle}
-                  onChange={handleChange}
+                  onChange={handleTitleChange}
                   required
-                  className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
-                    validationErrors.serviceOfferingTitle
+                  className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                    validationErrors.serviceOfferingTitle && !hideTitleError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
                       : "border-gray-300 bg-gray-50 focus:border-blue-500"
                   }`}
                   placeholder="e.g., Professional Hair Styling"
                 />
-                {validationErrors.serviceOfferingTitle && (
+                {validationErrors.serviceOfferingTitle && !hideTitleError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.serviceOfferingTitle}
                   </p>
@@ -110,19 +119,26 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               </div>
             </section>
 
-            <section className="rounded-xl border border-gray-100 bg-transparent p-0 shadow-none">
+            {/* Category */}
+            <section>
               <h2 className="mb-2 text-lg font-bold text-blue-700">
                 Category <span className="text-red-500">*</span>
               </h2>
               <div className="space-y-2">
+                <label
+                  htmlFor="categoryId"
+                  className="block text-sm font-medium text-blue-900"
+                >
+                  Select Category
+                </label>
                 <select
                   name="categoryId"
                   id="categoryId"
                   value={formData.categoryId}
-                  onChange={handleChange}
+                  onChange={handleCategoryChange}
                   required
-                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
-                    validationErrors.categoryId
+                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                    validationErrors.categoryId && !hideCategoryError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
                       : "border-gray-300 bg-gray-50 focus:border-blue-500"
                   }`}
@@ -142,7 +158,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ))
                   )}
                 </select>
-                {validationErrors.categoryId && (
+                {validationErrors.categoryId && !hideCategoryError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.categoryId}
                   </p>
@@ -150,48 +166,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               </div>
             </section>
           </div>
-
-          {/* Category Request Section */}
-          <div className="mt-auto pt-6">
-            <label
-              htmlFor="requestCategory"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Can't find your category? Request it here!
-            </label>
-            <div className="xs:flex-row xs:space-x-2 xs:space-y-0 flex flex-col space-y-2">
-              <input
-                type="text"
-                id="requestCategory"
-                value={newCategoryName}
-                onChange={handleCategoryRequestChange}
-                className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
-                  categoryRequestError
-                    ? "border-red-300 bg-red-50 focus:border-red-500"
-                    : "border-gray-300 bg-gray-50 focus:border-blue-500"
-                }`}
-                placeholder="e.g., Pet Grooming"
-              />
-              <button
-                type="button"
-                onClick={handleRequestCategoryClick}
-                className="rounded-lg bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
-              >
-                Request category
-              </button>
-            </div>
-            {categoryRequestError && (
-              <p className="mt-1 text-sm text-red-600">
-                {categoryRequestError}
-              </p>
-            )}
-          </div>
         </section>
 
         {/* Right: Service Packages */}
         <div>
-          <section className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-blue-700">
+          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
+            <h2 className="mb-4 text-xl font-bold text-blue-700">
               Service Packages <span className="text-red-500">*</span>
             </h2>
             <fieldset>
@@ -199,10 +179,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 {formData.servicePackages.map((pkg, index) => (
                   <div
                     key={pkg.id}
-                    className="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg"
+                    className="relative rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
                   >
                     <div className="mb-2 flex items-center justify-between">
-                      <h4 className="text-md font-bold text-gray-800">
+                      <h4 className="text-lg font-bold text-blue-800">
                         Package {index + 1}
                       </h4>
                       {formData.servicePackages.length > 1 && (
@@ -216,7 +196,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                         </button>
                       )}
                     </div>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <label
                           htmlFor={`pkgName-${pkg.id}`}
@@ -229,33 +209,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           id={`pkgName-${pkg.id}`}
                           value={pkg.name}
                           onChange={(e) =>
-                            handlePackageChange(index, "name", e.target.value)
-                          }
-                          required
-                          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`pkgDesc-${pkg.id}`}
-                          className="block text-xs font-medium text-gray-600"
-                        >
-                          Description<span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          id={`pkgDesc-${pkg.id}`}
-                          value={pkg.description}
-                          onChange={(e) =>
-                            handlePackageChange(
+                            handlePackageInputChange(
                               index,
-                              "description",
+                              "name",
                               e.target.value,
                             )
                           }
-                          rows={3}
                           required
-                          className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm`}
-                          placeholder="Describe what's included in this package."
+                          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                         />
                       </div>
                       <div>
@@ -270,11 +231,38 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           id={`pkgPrice-${pkg.id}`}
                           value={pkg.price}
                           onChange={(e) =>
-                            handlePackageChange(index, "price", e.target.value)
+                            handlePackageInputChange(
+                              index,
+                              "price",
+                              e.target.value,
+                            )
                           }
                           required
                           min="0"
                           className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label
+                          htmlFor={`pkgDesc-${pkg.id}`}
+                          className="block text-xs font-medium text-gray-600"
+                        >
+                          Description<span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          id={`pkgDesc-${pkg.id}`}
+                          value={pkg.description}
+                          onChange={(e) =>
+                            handlePackageInputChange(
+                              index,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          rows={3}
+                          required
+                          className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          placeholder="Describe what's included in this package."
                         />
                       </div>
                     </div>
@@ -284,11 +272,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               <button
                 type="button"
                 onClick={addPackage}
-                className="mt-6 w-full rounded-lg border border-dashed border-blue-500 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-500 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
               >
-                + Add Package
+                <PlusCircleIcon className="h-5 w-5" />
+                Add Package
               </button>
-              {validationErrors.servicePackages && (
+              {validationErrors.servicePackages && !hidePackagesError && (
                 <p className="mt-2 text-sm text-red-600">
                   {validationErrors.servicePackages}
                 </p>

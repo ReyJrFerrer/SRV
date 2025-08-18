@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
+import { Toaster, toast } from "sonner"; // Add this import
 
 // Step Components
-import ServiceDetails from "../../../components/provider/ServiceDetails";
-import ServiceAvailability from "../../../components/provider/ServiceAvailability";
-import ServiceLocation from "../../../components/provider/ServiceLocation";
-import ServiceImageUpload from "../../../components/provider/ServiceImageUpload";
+import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
+import ServiceAvailability from "../../../components/provider/add service/ServiceAvailability";
+import ServiceLocation from "../../../components/provider/add service/ServiceLocation";
+import ServiceImageUpload from "../../../components/provider/add service/ServiceImageUpload";
 
 // Service Management Hook & Types
 import {
@@ -390,16 +391,10 @@ const AddServicePage: React.FC = () => {
         // Check if using GPS location or manual address
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
-        const hasManualAddress =
-          formData.locationProvince &&
-          formData.locationMunicipalityCity &&
-          formData.locationBarangay &&
-          formData.locationStreet &&
-          formData.locationHouseNumber;
 
-        if (!hasGPSCoordinates && !hasManualAddress) {
+        if (!hasGPSCoordinates) {
           errors.locationMunicipalityCity =
-            "Please provide your service location by enabling GPS or entering address manually";
+            "Still detecting your location, please wait";
         } else if (!hasGPSCoordinates) {
           // Validate manual address fields
           if (!formData.locationProvince.trim()) {
@@ -510,6 +505,9 @@ const AddServicePage: React.FC = () => {
 
     setIsSubmitting(true);
     setValidationErrors({});
+
+    // Show toast notification when button is clicked
+    toast.loading("Creating your service...", { id: "create-service" });
 
     try {
       // Prepare service data
@@ -675,12 +673,14 @@ const AddServicePage: React.FC = () => {
       console.log("All packages created successfully");
 
       // Navigate to service details page
+      toast.success("Service created successfully!", { id: "create-service" });
       navigate(`/provider/service-details/${newService.id}`);
     } catch (error) {
       console.error("Error creating service:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create service";
       setValidationErrors({ general: errorMessage });
+      toast.error("Failed to create service.", { id: "create-service" });
     } finally {
       setIsSubmitting(false);
     }
@@ -820,9 +820,9 @@ const AddServicePage: React.FC = () => {
       case 5:
         return (
           <div className="flex flex-col items-center space-y-8">
-            <div className="w-full max-w-2xl rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+            <div className="w-full max-w-3xl rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-10 shadow-2xl">
               <div className="mb-8 flex flex-col items-center text-center">
-                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
+                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 shadow">
                   <svg
                     className="h-8 w-8 text-blue-500"
                     fill="none"
@@ -837,17 +837,16 @@ const AddServicePage: React.FC = () => {
                     />
                   </svg>
                 </div>
-                <h2 className="mb-2 text-2xl font-bold text-blue-900">
-                  Review & Submit
+                <h2 className="mb-2 text-3xl font-extrabold text-blue-900">
+                  Review &amp; Submit
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-lg text-gray-600">
                   Please review your service details before submitting.
                 </p>
               </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="rounded-lg bg-white p-4 shadow-sm">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    {/* Title icon: Identification/Document */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -862,13 +861,12 @@ const AddServicePage: React.FC = () => {
                       Service Title
                     </h3>
                   </div>
-                  <p className="break-words text-gray-600">
+                  <p className="text-lg font-semibold break-words text-blue-800">
                     {formData.serviceOfferingTitle}
                   </p>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow-sm">
+                <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    {/* Category icon: Tag */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -881,14 +879,13 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Category</h3>
                   </div>
-                  <p className="break-words text-gray-600">
+                  <p className="text-lg font-semibold break-words text-blue-800">
                     {categories.find((cat) => cat.id === formData.categoryId)
                       ?.name || "Unknown"}
                   </p>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow-sm md:col-span-2">
+                <div className="rounded-lg bg-white p-5 shadow-sm md:col-span-2">
                   <div className="mb-4 flex items-center gap-2">
-                    {/* Packages icon: Box/Package */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -912,26 +909,25 @@ const AddServicePage: React.FC = () => {
                       .map((pkg) => (
                         <div
                           key={pkg.id}
-                          className="items-center justify-between rounded border bg-gray-50 p-3 break-words"
+                          className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-center md:justify-between"
                         >
                           <div>
-                            <p className="font-medium break-words">
+                            <p className="font-medium text-blue-900">
                               {pkg.name}
                             </p>
                             <p className="text-sm break-words text-gray-600">
                               {pkg.description}
                             </p>
                           </div>
-                          <p className="font-semibold text-green-600">
+                          <p className="mt-2 text-lg font-semibold text-green-600 md:mt-0">
                             ₱{Number(pkg.price).toLocaleString()}
                           </p>
                         </div>
                       ))}
                   </div>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow-sm">
+                <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    {/* Availability icon: Calendar */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -946,20 +942,21 @@ const AddServicePage: React.FC = () => {
                       Availability
                     </h3>
                   </div>
-                  <p className="text-gray-600">
+                  <div className="font-medium text-blue-900">
                     {formData.availabilitySchedule.join(", ")}
-                  </p>
+                  </div>
                   {formData.availabilitySchedule.length > 0 && (
                     <span className="mt-1 block text-sm text-gray-500">
                       {formData.useSameTimeForAllDays
-                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slots)`
+                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${
+                            formData.commonTimeSlots.length > 1 ? "s" : ""
+                          })`
                         : "Custom hours per day"}
                     </span>
                   )}
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow-sm">
+                <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    {/* Location icon: Map Pin */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -972,38 +969,20 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Location</h3>
                   </div>
-                  <div className="break-words text-gray-600">
-                    {formData.locationAddress &&
-                    formData.locationAddress.trim() ? (
-                      <div>
-                        {[
-                          formData.locationAddress,
-                          formData.locationMunicipalityCity,
-                          formData.locationProvince,
-                        ].join(", ")}
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="font-medium">Manual Address: </span>
-                        {[
-                          formData.locationHouseNumber,
-                          formData.locationStreet,
-                          formData.locationBarangay,
-                          formData.locationMunicipalityCity,
-                          formData.locationProvince,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </div>
-                    )}
+                  <div className="font-medium break-words text-blue-900">
+                    {[
+                      formData.locationMunicipalityCity,
+                      formData.locationProvince,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                   </div>
                 </div>
               </div>
               {/* Service Images Preview */}
               {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
-                <div className="mt-8">
+                <div className="mt-10">
                   <div className="mb-2 flex items-center gap-2">
-                    {/* Images icon: Photo */}
                     <svg
                       className="h-5 w-5 text-blue-400"
                       fill="none"
@@ -1051,11 +1030,10 @@ const AddServicePage: React.FC = () => {
               {/* Certifications Preview */}
               {(certificationFiles?.length > 0 ||
                 certificationPreviews?.length > 0) && (
-                <div className="mt-8">
+                <div className="mt-10">
                   <div className="mb-2 flex items-center gap-2">
-                    {/* Certifications icon: Certificate/Award */}
                     <svg
-                      className="h-5 w-5 text-blue-400"
+                      className="h-5 w-5 text-yellow-500"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -1064,7 +1042,7 @@ const AddServicePage: React.FC = () => {
                       <circle cx="12" cy="8" r="4" />
                       <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
                     </svg>
-                    <h3 className="font-semibold text-gray-800">
+                    <h3 className="font-semibold text-yellow-700">
                       Certifications
                     </h3>
                   </div>
@@ -1074,21 +1052,26 @@ const AddServicePage: React.FC = () => {
                           const isPdf =
                             file.type === "application/pdf" ||
                             file.name.endsWith(".pdf");
+                          const src = URL.createObjectURL(file);
                           return (
                             <div
                               key={file.name + idx}
-                              className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                              className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
                             >
                               {isPdf ? (
-                                <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-500">
-                                  <span className="material-icons text-3xl">
-                                    picture_as_pdf
-                                  </span>
-                                  PDF File
-                                </div>
+                                <iframe
+                                  src={src}
+                                  title={`Certification PDF ${idx + 1}`}
+                                  className="h-full w-full rounded bg-gray-100"
+                                  style={{
+                                    minHeight: 0,
+                                    minWidth: 0,
+                                    border: "none",
+                                  }}
+                                />
                               ) : (
                                 <img
-                                  src={URL.createObjectURL(file)}
+                                  src={src}
                                   alt={`Certification ${idx + 1}`}
                                   className="h-full w-full object-cover"
                                 />
@@ -1099,15 +1082,19 @@ const AddServicePage: React.FC = () => {
                       : certificationPreviews?.map((previewUrl, idx) => (
                           <div
                             key={previewUrl}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
                           >
                             {previewUrl.endsWith(".pdf") ? (
-                              <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-500">
-                                <span className="material-icons text-3xl">
-                                  picture_as_pdf
-                                </span>
-                                PDF File
-                              </div>
+                              <iframe
+                                src={previewUrl}
+                                title={`Certification PDF ${idx + 1}`}
+                                className="h-full w-full rounded bg-gray-100"
+                                style={{
+                                  minHeight: 0,
+                                  minWidth: 0,
+                                  border: "none",
+                                }}
+                              />
                             ) : (
                               <img
                                 src={previewUrl}
@@ -1138,6 +1125,7 @@ const AddServicePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
+      <Toaster position="top-center" /> {/* Add this line */}
       <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
         <div className="container mx-auto flex items-center">
           <button
