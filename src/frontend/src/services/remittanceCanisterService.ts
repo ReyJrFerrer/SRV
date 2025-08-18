@@ -5,7 +5,6 @@ import { canisterId as authCanisterId } from "../../../declarations/auth";
 import { canisterId as mediaCanisterId } from "../../../declarations/media";
 import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
-import { canisterId as adminCanisterId } from "../../../declarations/admin";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as RemittanceService,
@@ -259,10 +258,10 @@ export const setCanisterReferences = async (): Promise<string | null> => {
     const actor = getRemittanceActor(true);
     const result = await actor.setCanisterReferences(
       [Principal.fromText(authCanisterId)],
-      [Principal.fromText(bookingCanisterId)],
       [Principal.fromText(mediaCanisterId)],
+      [Principal.fromText(bookingCanisterId)],
       [Principal.fromText(serviceCanisterId)],
-      [Principal.fromText(adminCanisterId)],
+      [],
     );
 
     if ("ok" in result) {

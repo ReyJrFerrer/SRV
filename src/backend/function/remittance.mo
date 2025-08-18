@@ -446,8 +446,8 @@ persistent actor RemittanceCanister {
             return #err("At least one proof file is required");
         };
 
-        if (files.size() > 5) {
-            return #err("Maximum 5 proof files allowed");
+        if (files.size() > 1) {
+            return #err("Maximum 1 proof file allowed");
         };
 
         switch (mediaCanisterId) {
@@ -502,14 +502,10 @@ persistent actor RemittanceCanister {
 
         switch (orders.get(orderId)) {
             case (?order) {
-                // Check if caller is the service provider
-                if (order.service_provider_id != caller) {
-                    return #err("Only the service provider can submit payment proof");
-                };
 
                 // Check status transition
                 if (not isValidStatusTransition(order.status, #PaymentSubmitted)) {
-                    return #err("Cannot submit payment proof in current status");
+                    return #err("Cannot submit payment proof in current status: " # debug_show(order.status));
                 };
 
                 // Validate proofs
@@ -588,12 +584,9 @@ persistent actor RemittanceCanister {
         // First verify the order exists and caller has permission
         switch (orders.get(orderId)) {
             case (?order) {
-                if (order.service_provider_id != caller) {
-                    return #err("Only the service provider can submit payment proof");
-                };
 
                 if (not isValidStatusTransition(order.status, #PaymentSubmitted)) {
-                    return #err("Cannot submit payment proof in current status");
+                    return #err("Cannot submit payment proof in current status: " # debug_show(order.status));
                 };
 
                 // Validate amount paid matches commission amount exactly
