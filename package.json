@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "workspaces": [
-    "src/frontend",
-    "src/admin"
+    "src/admin",
+    "src/frontend"
   ],
   "scripts": {
     "lint": "prettier --check .",
