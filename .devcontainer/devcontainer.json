@@ -1,7 +1,7 @@
 {
   "name": "ICP Vibe Coding Dev",
   "image": "ghcr.io/dfinity/icp-dev-env:latest",
-  "forwardPorts": [4943, 5173, 11434],
+  "forwardPorts": [4943, 5173, 5174, 11434],
   "portsAttributes": {
     "4943": {
       "label": "dfx",

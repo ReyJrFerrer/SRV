@@ -128,6 +128,7 @@ const ProviderBookingsPage: React.FC = () => {
     };
   }, [categorizedBookings]);
 
+  // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
   const currentBookings: ProviderEnhancedBooking[] = useMemo(() => {
     let filteredBookings = categorizedBookings[activeTab] || [];
 
@@ -136,35 +137,18 @@ const ProviderBookingsPage: React.FC = () => {
         const bookingDateString =
           (booking as any).scheduledDateTime || (booking as any).createdAt;
         if (!bookingDateString) {
-          console.warn(
-            `Booking ${booking.id} is missing a valid date property (e.g., scheduledDateTime), skipping timing filter.`,
-          );
           return false;
         }
-
         const bookingDate = new Date(bookingDateString);
         if (isNaN(bookingDate.getTime())) {
-          console.warn(
-            `Booking ${booking.id} has an invalid date string: ${bookingDateString}`,
-          );
           return false;
         }
-
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
         const isSameDay =
           bookingDate.getDate() === today.getDate() &&
           bookingDate.getMonth() === today.getMonth() &&
           bookingDate.getFullYear() === today.getFullYear();
-
-        // if (timingFilter === "Scheduled") {
-        //   const isPendingOrConfirmed =
-        //     // <analytics className="pendingRequests"></analytics> === "Pending";
-        //   const isFutureDate = bookingDate.getTime() > today.getTime();
-        //   return isPendingOrConfirmed && !isSameDay && isFutureDate;
-        // }
-
         return timingFilter === "Same Day" ? isSameDay : false;
       });
     }
@@ -181,6 +165,32 @@ const ProviderBookingsPage: React.FC = () => {
             .includes(searchTerm.toLowerCase()) ||
           booking.id.toLowerCase().includes(searchTerm.toLowerCase()),
       );
+    }
+
+    // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
+    if (activeTab === "ALL") {
+      const requested = filteredBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "requested" ||
+          b.status?.toLowerCase() === "pending",
+      );
+      const accepted = filteredBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "accepted" ||
+          b.status?.toLowerCase() === "confirmed",
+      );
+      const inProgress = filteredBookings.filter(
+        (b) => b.status?.toLowerCase() === "inprogress",
+      );
+      const others = filteredBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() !== "requested" &&
+          b.status?.toLowerCase() !== "pending" &&
+          b.status?.toLowerCase() !== "accepted" &&
+          b.status?.toLowerCase() !== "confirmed" &&
+          b.status?.toLowerCase() !== "inprogress",
+      );
+      return [...requested, ...accepted, ...inProgress, ...others];
     }
 
     return filteredBookings;
@@ -257,7 +267,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gray-100">
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
           <div className="flex items-center justify-center">
-            <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
+            <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
               My Bookings
             </h1>
           </div>
@@ -349,18 +359,18 @@ const ProviderBookingsPage: React.FC = () => {
                 <div
                   key={booking.id}
                   onClick={() => {
+                    // Make inprogress bookings viewable
                     if (
-                      activeTab === "IN PROGRESS" &&
-                      booking.status === "InProgress"
+                      (activeTab === "IN PROGRESS" ||
+                        booking.status?.toLowerCase() === "inprogress") &&
+                      booking.id
                     ) {
                       navigate(`/provider/active-service/${booking.id}`);
+                    } else if (booking.id) {
+                      navigate(`/provider/booking/${booking.id}`);
                     }
                   }}
-                  className={`w-full ${
-                    activeTab === "IN PROGRESS"
-                      ? "cursor-pointer transition-shadow hover:shadow-lg"
-                      : ""
-                  }`}
+                  className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
                 >
                   <ProviderBookingItemCard booking={booking} />
                 </div>
