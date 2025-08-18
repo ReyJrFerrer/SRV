@@ -29,125 +29,6 @@ const getCategoryImage = (slugOrName?: string) => {
   return `/images/categories/${slug}.svg`;
 };
 
-// Helper to format time to 12-hour format with AM/PM
-function formatTime12h(time: string): string {
-  if (!time) return "";
-  const [hourStr, minuteStr] = time.split(":");
-  let hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-}
-
-// Helper to format schedule display
-const dayShort: Record<string, string> = {
-  Sunday: "Su",
-  Monday: "M",
-  Tuesday: "T",
-  Wednesday: "W",
-  Thursday: "Th",
-  Friday: "F",
-  Saturday: "Sa",
-};
-
-function formatSchedule(schedule?: EnhancedService["weeklySchedule"]): string {
-  if (!schedule || schedule.length === 0) return "No schedule";
-  // Group by days with same time slots
-  const dayGroups: Record<string, string[]> = {};
-  schedule.forEach((entry) => {
-    if (!entry.availability?.isAvailable || !entry.availability.slots?.length)
-      return;
-    const slotStr = entry.availability.slots
-      .map(
-        (slot) =>
-          `${formatTime12h(slot.startTime)}${
-            slot.endTime ? "/" + formatTime12h(slot.endTime) : ""
-          }`,
-      )
-      .join(", ");
-    if (!dayGroups[slotStr]) dayGroups[slotStr] = [];
-    dayGroups[slotStr].push(entry.day);
-  });
-
-  // Helper to check for common patterns
-  const allDays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const weekends = ["Sunday", "Saturday"];
-
-  // Everyday
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 7 &&
-      allDays.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Everyday at ${slotStr}`;
-    }
-  }
-  // Weekdays
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 5 &&
-      weekdays.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Weekdays at ${slotStr}`;
-    }
-  }
-  // Weekends
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 2 &&
-      weekends.every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `Weekends at ${slotStr}`;
-    }
-  }
-  // MWF
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 3 &&
-      ["Monday", "Wednesday", "Friday"].every((d) =>
-        dayGroups[slotStr].includes(d),
-      )
-    ) {
-      return `MWF at ${slotStr}`;
-    }
-  }
-  // TTh
-  for (const slotStr in dayGroups) {
-    if (
-      dayGroups[slotStr].length === 2 &&
-      ["Tuesday", "Thursday"].every((d) => dayGroups[slotStr].includes(d))
-    ) {
-      return `TTh at ${slotStr}`;
-    }
-  }
-  // Otherwise, list each day
-  const parts: string[] = [];
-  schedule.forEach((entry) => {
-    if (!entry.availability?.isAvailable || !entry.availability.slots?.length)
-      return;
-    const slotStr = entry.availability.slots
-      .map(
-        (slot) =>
-          `${formatTime12h(slot.startTime)}${
-            slot.endTime ? "/" + formatTime12h(slot.endTime) : ""
-          }`,
-      )
-      .join(", ");
-    parts.push(`${dayShort[entry.day] || entry.day} at ${slotStr}`);
-  });
-  return parts.join(" | ");
-}
-
 interface ServiceManagementProps {
   services?: EnhancedService[];
   loading?: boolean;
@@ -303,6 +184,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <span className="ml-1 hidden sm:inline">Add new service</span>
         </Link>
       </div>
+      {/* Add space between the label and the listings */}
+      <div className="mb-6" />
       {displayedServices.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {displayedServices.map((service) => {
@@ -310,7 +193,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             const categoryImage = getCategoryImage(
               service.category?.slug || service.category?.name,
             );
-            const scheduleStr = formatSchedule(service.weeklySchedule);
 
             return (
               <div
@@ -364,10 +246,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
                     {service.title}
                   </h4>
-                  {/* Service Schedule */}
-                  <div className="mt-1 mb-2 flex w-full items-center justify-center gap-2 text-xs font-semibold text-blue-700">
-                    <span className="text-center">{scheduleStr}</span>
-                  </div>
                   <div className="flex items-center justify-center gap-2">
                     <StarIcon className="h-5 w-5 text-yellow-400" />
                     <span className="font-semibold text-blue-900">
