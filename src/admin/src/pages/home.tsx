@@ -1,108 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   AdminDashboardStats,
   ServiceProviderCommissionTable,
   PendingValidationCard,
 } from "../components";
-// import { adminServiceCanister } from "../services/adminServiceCanister"; // TODO: Will be used when implementing actual API calls
-
-// Mock data interfaces (will be replaced with actual data from hooks later)
-interface ServiceProviderData {
-  id: string;
-  name: string;
-  phone: string;
-  totalEarnings: number;
-  pendingCommission: number;
-  settledCommission: number;
-  lastActivity: Date;
-}
-
-interface PendingValidation {
-  id: string;
-  orderId: string;
-  serviceProviderName: string;
-  serviceType: string;
-  amount: number;
-  commissionAmount: number;
-  paymentMethod: string;
-  paymentProofMediaIds: string[];
-  submittedAt: Date;
-}
-
-// Mock data (will be replaced with actual API calls later)
-const mockServiceProviders: ServiceProviderData[] = [
-  {
-    id: "1",
-    name: "Juan Dela Cruz",
-    phone: "+63 917 123 4567",
-    totalEarnings: 15750.5,
-    pendingCommission: 1250.0,
-    settledCommission: 14500.5,
-    lastActivity: new Date("2025-08-17"),
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    phone: "+63 918 234 5678",
-    totalEarnings: 22300.75,
-    pendingCommission: 2100.25,
-    settledCommission: 20200.5,
-    lastActivity: new Date("2025-08-16"),
-  },
-  {
-    id: "3",
-    name: "Roberto Garcia",
-    phone: "+63 919 345 6789",
-    totalEarnings: 8900.0,
-    pendingCommission: 0.0,
-    settledCommission: 8900.0,
-    lastActivity: new Date("2025-08-15"),
-  },
-];
-
-const mockPendingValidations: PendingValidation[] = [
-  {
-    id: "1",
-    orderId: "ORD-2025081801",
-    serviceProviderName: "Juan Dela Cruz",
-    serviceType: "House Cleaning",
-    amount: 2500.0,
-    commissionAmount: 250.0,
-    paymentMethod: "GCash",
-    paymentProofMediaIds: ["media1", "media2"],
-    submittedAt: new Date("2025-08-18T09:30:00"),
-  },
-  {
-    id: "2",
-    orderId: "ORD-2025081802",
-    serviceProviderName: "Maria Santos",
-    serviceType: "Laundry Service",
-    amount: 1800.0,
-    commissionAmount: 180.0,
-    paymentMethod: "GCash",
-    paymentProofMediaIds: ["media3"],
-    submittedAt: new Date("2025-08-18T10:15:00"),
-  },
-];
+import { useAdmin } from "../hooks/useAdmin";
 
 export const AdminHomePage: React.FC = () => {
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [providersLoading, setProvidersLoading] = useState(false);
-  const [validationsLoading, setValidationsLoading] = useState(false);
+  const {
+    // Loading states
+    loading,
 
-  // State for actual data (will be managed by hooks later)
-  const [serviceProviders] =
-    useState<ServiceProviderData[]>(mockServiceProviders);
-  const [pendingValidations, setPendingValidations] = useState<
-    PendingValidation[]
-  >(mockPendingValidations);
+    // Data states
+    systemStats,
+    serviceProviders,
+    pendingValidations,
 
-  // Calculate stats from current data
+    // Action functions
+    refreshSystemStats,
+    refreshServiceProviders,
+    validatePayment,
+    viewMediaItems,
+  } = useAdmin();
+
+  // Calculate dashboard stats from current data
   const dashboardStats = {
     totalServiceProviders: serviceProviders.length,
     totalPendingValidations: pendingValidations.length,
-    totalCommissionRules: 5, // This will come from the actual API
-    totalAdminUsers: 3, // This will come from the actual API
+    totalCommissionRules: systemStats?.totalCommissionRules || 0,
+    totalAdminUsers: systemStats?.adminUsers || 0,
     totalPendingCommission: serviceProviders.reduce(
       (sum, p) => sum + p.pendingCommission,
       0,
@@ -113,93 +39,31 @@ export const AdminHomePage: React.FC = () => {
     ),
   };
 
-  // Handlers for actions (will be implemented with actual API calls later)
-  const handleRefreshStats = async () => {
-    setStatsLoading(true);
-    try {
-      // TODO: Call actual API to refresh stats
-      console.log("Refreshing dashboard stats...");
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Error refreshing stats:", error);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
+  // Load initial data on mount
+  useEffect(() => {
+    refreshSystemStats();
+    refreshServiceProviders();
+  }, [refreshSystemStats, refreshServiceProviders]);
 
-  const handleRefreshProviders = async () => {
-    setProvidersLoading(true);
-    try {
-      // TODO: Call actual API to refresh service providers
-      console.log("Refreshing service providers...");
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Error refreshing service providers:", error);
-    } finally {
-      setProvidersLoading(false);
-    }
-  };
-
+  // Handlers for actions
   const handleApprovePayment = async (orderId: string, reason?: string) => {
-    setValidationsLoading(true);
-    try {
-      console.log(
-        `Approving payment for order ${orderId}`,
-        reason ? `with reason: ${reason}` : "",
-      );
-      // TODO: Call adminServiceCanister.validatePayment(orderId, true, reason)
-
-      // Simulate API call and remove from pending validations
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setPendingValidations((prev) =>
-        prev.filter((v) => v.orderId !== orderId),
-      );
-
-      // Show success notification (TODO: implement with actual toast system)
-      alert(`Payment for order ${orderId} has been approved successfully!`);
-    } catch (error) {
-      console.error("Error approving payment:", error);
-      alert("Failed to approve payment. Please try again.");
-    } finally {
-      setValidationsLoading(false);
-    }
+    await validatePayment(orderId, true, reason);
   };
 
   const handleRejectPayment = async (orderId: string, reason: string) => {
-    setValidationsLoading(true);
-    try {
-      console.log(
-        `Rejecting payment for order ${orderId} with reason: ${reason}`,
-      );
-      // TODO: Call adminServiceCanister.validatePayment(orderId, false, reason)
-
-      // Simulate API call and remove from pending validations
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setPendingValidations((prev) =>
-        prev.filter((v) => v.orderId !== orderId),
-      );
-
-      // Show success notification (TODO: implement with actual toast system)
-      alert(`Payment for order ${orderId} has been rejected.`);
-    } catch (error) {
-      console.error("Error rejecting payment:", error);
-      alert("Failed to reject payment. Please try again.");
-    } finally {
-      setValidationsLoading(false);
-    }
+    await validatePayment(orderId, false, reason);
   };
 
   const handleViewMedia = async (mediaIds: string[]) => {
     try {
-      console.log("Viewing media items:", mediaIds);
-      // TODO: Call adminServiceCanister.getRemittanceMediaItems(mediaIds)
+      const mediaItems = await viewMediaItems(mediaIds);
       // TODO: Open modal or new tab to display media items
-      alert(`Would open media viewer for ${mediaIds.length} items`);
+      console.log("Media items loaded:", mediaItems);
+      alert(
+        `Loaded ${mediaItems.length} media items. Check console for details.`,
+      );
     } catch (error) {
       console.error("Error viewing media:", error);
-      alert("Failed to load media items.");
     }
   };
 
@@ -226,15 +90,15 @@ export const AdminHomePage: React.FC = () => {
           {/* Dashboard Stats */}
           <AdminDashboardStats
             stats={dashboardStats}
-            loading={statsLoading}
-            onRefresh={handleRefreshStats}
+            loading={loading.systemStats}
+            onRefresh={refreshSystemStats}
           />
 
           {/* Service Provider Commission Table */}
           <ServiceProviderCommissionTable
             providers={serviceProviders}
-            loading={providersLoading}
-            onRefresh={handleRefreshProviders}
+            loading={loading.serviceProviders}
+            onRefresh={refreshServiceProviders}
           />
 
           {/* Pending Validations Section */}
@@ -259,7 +123,14 @@ export const AdminHomePage: React.FC = () => {
             </div>
 
             <div className="p-6">
-              {pendingValidations.length === 0 ? (
+              {loading.pendingValidations ? (
+                <div className="py-12 text-center">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading pending validations...
+                  </p>
+                </div>
+              ) : pendingValidations.length === 0 ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 text-gray-400">
                     <svg
@@ -285,16 +156,32 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {pendingValidations.map((validation) => (
-                    <PendingValidationCard
-                      key={validation.id}
-                      validation={validation}
-                      onApprove={handleApprovePayment}
-                      onReject={handleRejectPayment}
-                      onViewMedia={handleViewMedia}
-                      loading={validationsLoading}
-                    />
-                  ))}
+                  {pendingValidations.map((validation) => {
+                    // Convert FrontendRemittanceOrder to the format expected by PendingValidationCard
+                    const validationForCard = {
+                      id: validation.id,
+                      orderId: validation.id,
+                      serviceProviderName: `Provider ${validation.serviceProviderId}`, // TODO: Get actual name
+                      serviceType: validation.serviceType,
+                      amount: validation.amount,
+                      commissionAmount: validation.commissionAmount,
+                      paymentMethod: validation.paymentMethod,
+                      paymentProofMediaIds: validation.paymentProofMediaIds,
+                      submittedAt:
+                        validation.paymentSubmittedAt || validation.createdAt,
+                    };
+
+                    return (
+                      <PendingValidationCard
+                        key={validation.id}
+                        validation={validationForCard}
+                        onApprove={handleApprovePayment}
+                        onReject={handleRejectPayment}
+                        onViewMedia={handleViewMedia}
+                        loading={loading.paymentValidation}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
