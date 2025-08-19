@@ -1,6 +1,12 @@
 // Remittance Service Canister Interface for Admin Functions
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/remittance";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { canisterId as mediaCanisterId } from "../../../declarations/media";
+import { canisterId as bookingCanisterId } from "../../../declarations/booking";
+import { canisterId as serviceCanisterId } from "../../../declarations/service";
+import { canisterId as adminCanisterId } from "../../../declarations/admin";
+
 import type {
   _SERVICE as RemittanceService,
   RemittanceOrder,
@@ -740,6 +746,30 @@ export const remittanceServiceCanister = {
         code: "CANCEL_ORDER_ERROR",
         details: error,
       });
+    }
+  },
+
+  async setCanisterReferences(): Promise<string | null> {
+    try {
+      const actor = getRemittanceActor(true);
+      const result = await actor.setCanisterReferences(
+        [Principal.fromText(authCanisterId)],
+        [Principal.fromText(mediaCanisterId)],
+        [Principal.fromText(bookingCanisterId)],
+        [Principal.fromText(serviceCanisterId)],
+        [Principal.fromText(adminCanisterId)],
+      );
+
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Failed to set canister references:", error);
+      throw new Error(
+        `Failed to set canister references: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   },
 };
