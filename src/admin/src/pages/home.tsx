@@ -19,6 +19,7 @@ export const AdminHomePage: React.FC = () => {
     // Action functions
     refreshSystemStats,
     refreshServiceProviders,
+    refreshAll,
     validatePayment,
     viewMediaItems,
   } = useAdmin();
@@ -39,11 +40,10 @@ export const AdminHomePage: React.FC = () => {
     ),
   };
 
-  // Load initial data on mount
+  // Load initial data on mount - streamlined to single toast notification
   useEffect(() => {
-    refreshSystemStats();
-    refreshServiceProviders();
-  }, [refreshSystemStats, refreshServiceProviders]);
+    refreshAll();
+  }, [refreshAll]);
 
   // Handlers for actions
   const handleApprovePayment = async (orderId: string, reason?: string) => {
@@ -91,14 +91,14 @@ export const AdminHomePage: React.FC = () => {
           <AdminDashboardStats
             stats={dashboardStats}
             loading={loading.systemStats}
-            onRefresh={refreshSystemStats}
+            onRefresh={() => refreshSystemStats(true)}
           />
 
           {/* Service Provider Commission Table */}
           <ServiceProviderCommissionTable
             providers={serviceProviders}
             loading={loading.serviceProviders}
-            onRefresh={refreshServiceProviders}
+            onRefresh={() => refreshServiceProviders(true)}
           />
 
           {/* Pending Validations Section */}

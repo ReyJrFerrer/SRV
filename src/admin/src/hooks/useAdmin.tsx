@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import {
   adminServiceCanister,
   AdminServiceError,
@@ -18,24 +19,6 @@ import {
   mediaServiceCanister,
   MediaServiceError,
 } from "../services/mediaServiceCanister";
-
-// Toast notification function (placeholder - can be replaced with actual toast library)
-const showToast = (
-  message: string,
-  type: "success" | "error" | "info" = "info",
-) => {
-  // TODO: Replace with actual toast notification system
-  if (type === "error") {
-    console.error("Toast Error:", message);
-    alert(`Error: ${message}`);
-  } else if (type === "success") {
-    console.log("Toast Success:", message);
-    alert(`Success: ${message}`);
-  } else {
-    console.info("Toast Info:", message);
-    alert(`Info: ${message}`);
-  }
-};
 
 // Interface for service provider data
 export interface ServiceProviderData {
@@ -80,13 +63,13 @@ interface UseAdminReturn {
   systemSettings: FrontendSystemSettings | null;
 
   // System Statistics
-  refreshSystemStats: () => Promise<void>;
+  refreshSystemStats: (showSuccessToast?: boolean) => Promise<void>;
 
   // Service Provider Management (mock functions for now)
-  refreshServiceProviders: () => Promise<void>;
+  refreshServiceProviders: (showSuccessToast?: boolean) => Promise<void>;
 
   // Pending Validations
-  refreshPendingValidations: () => Promise<void>;
+  refreshPendingValidations: (showSuccessToast?: boolean) => Promise<void>;
   validatePayment: (
     orderId: string,
     approved: boolean,
@@ -171,67 +154,81 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Helper function to handle errors
   const handleError = useCallback((error: unknown, context: string) => {
-    console.error(`Admin Hook Error (${context}):`, error);
-
+    console.error(`${context} Error:`, error);
     if (
       error instanceof AdminServiceError ||
       error instanceof RemittanceServiceError ||
       error instanceof MediaServiceError
     ) {
-      showToast(`${context}: ${error.message}`, "error");
+      toast.error(`${context}: ${error.message}`);
     } else if (error instanceof Error) {
-      showToast(`${context}: ${error.message}`, "error");
+      toast.error(`${context}: ${error.message}`);
     } else {
-      showToast(`${context}: An unexpected error occurred`, "error");
+      toast.error(`${context}: An unexpected error occurred`);
     }
   }, []);
 
-  // System Statistics
-  const refreshSystemStats = useCallback(async () => {
-    updateLoadingState("systemStats", true);
-    try {
-      const stats = await adminServiceCanister.getSystemStats();
-      setSystemStats(stats);
-      showToast("System statistics updated successfully", "success");
-    } catch (error) {
-      handleError(error, "Failed to refresh system statistics");
-    } finally {
-      updateLoadingState("systemStats", false);
-    }
-  }, [updateLoadingState, handleError]);
+  // System Statistics - silent by default
+  const refreshSystemStats = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("systemStats", true);
+      try {
+        const stats = await adminServiceCanister.getSystemStats();
+        setSystemStats(stats);
+        if (showSuccessToast) {
+          toast.success("System statistics updated successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh system statistics");
+      } finally {
+        updateLoadingState("systemStats", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
 
-  // Service Provider Management - now uses real remittance service
-  const refreshServiceProviders = useCallback(async () => {
-    updateLoadingState("serviceProviders", true);
-    try {
-      // Get all service providers from remittance service
-      const providers =
-        await remittanceServiceCanister.getAllServiceProviders();
-      setServiceProviders(providers);
-      showToast("Service provider data updated successfully", "success");
-    } catch (error) {
-      handleError(error, "Failed to refresh service providers");
-    } finally {
-      updateLoadingState("serviceProviders", false);
-    }
-  }, [updateLoadingState, handleError]);
+  // Service Provider Management - silent by default
+  const refreshServiceProviders = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("serviceProviders", true);
+      try {
+        // Get all service providers from remittance service
+        const providers =
+          await remittanceServiceCanister.getAllServiceProviders();
+        setServiceProviders(providers);
+        if (showSuccessToast) {
+          toast.success("Service provider data updated successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh service providers");
+      } finally {
+        updateLoadingState("serviceProviders", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
 
-  // Pending Validations - now uses real remittance service
-  const refreshPendingValidations = useCallback(async () => {
-    updateLoadingState("pendingValidations", true);
-    try {
-      const validations =
-        await remittanceServiceCanister.getPendingValidations();
-      setPendingValidations(validations);
-      showToast("Pending validations updated successfully", "success");
-    } catch (error) {
-      handleError(error, "Failed to refresh pending validations");
-      // Set empty array on error
-      setPendingValidations([]);
-    } finally {
-      updateLoadingState("pendingValidations", false);
-    }
-  }, [updateLoadingState, handleError]);
+  // Pending Validations - silent by default
+  const refreshPendingValidations = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("pendingValidations", true);
+      try {
+        const validations =
+          await remittanceServiceCanister.getPendingValidations();
+        setPendingValidations(validations);
+        if (showSuccessToast) {
+          toast.success("Pending validations updated successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh pending validations");
+        // Set empty array on error
+        setPendingValidations([]);
+      } finally {
+        updateLoadingState("pendingValidations", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
 
   const validatePayment = useCallback(
     async (orderId: string, approved: boolean, reason?: string) => {
@@ -247,9 +244,8 @@ export const useAdmin = (): UseAdminReturn => {
         setPendingValidations((prev) => prev.filter((v) => v.id !== orderId));
 
         const action = approved ? "approved" : "rejected";
-        showToast(
+        toast.success(
           `Payment for order ${orderId} has been ${action} successfully`,
-          "success",
         );
       } catch (error) {
         handleError(error, "Failed to validate payment");
@@ -309,7 +305,7 @@ export const useAdmin = (): UseAdminReturn => {
     try {
       const rules = await adminServiceCanister.listRules();
       setCommissionRules(rules);
-      showToast("Commission rules updated successfully", "success");
+      toast.success("Commission rules updated successfully");
     } catch (error) {
       handleError(error, "Failed to refresh commission rules");
     } finally {
@@ -324,9 +320,8 @@ export const useAdmin = (): UseAdminReturn => {
         const newRules =
           await adminServiceCanister.upsertCommissionRules(rules);
         setCommissionRules((prev) => [...prev, ...newRules]);
-        showToast(
+        toast.success(
           `${newRules.length} commission rule(s) created successfully`,
-          "success",
         );
       } catch (error) {
         handleError(error, "Failed to create commission rules");
@@ -356,9 +351,8 @@ export const useAdmin = (): UseAdminReturn => {
           });
           return updatedState;
         });
-        showToast(
+        toast.success(
           `${updatedRules.length} commission rule(s) updated successfully`,
-          "success",
         );
       } catch (error) {
         handleError(error, "Failed to update commission rules");
@@ -376,9 +370,8 @@ export const useAdmin = (): UseAdminReturn => {
         await adminServiceCanister.activateRule(ruleId, version);
         // Refresh the rules to get updated activation status
         await refreshCommissionRules();
-        showToast(
+        toast.success(
           `Commission rule ${ruleId} (v${version}) activated successfully`,
-          "success",
         );
       } catch (error) {
         handleError(error, "Failed to activate commission rule");
@@ -400,10 +393,7 @@ export const useAdmin = (): UseAdminReturn => {
             rule.id === ruleId ? { ...rule, isActive: false } : rule,
           ),
         );
-        showToast(
-          `Commission rule ${ruleId} deactivated successfully`,
-          "success",
-        );
+        toast.success(`Commission rule ${ruleId} deactivated successfully`);
       } catch (error) {
         handleError(error, "Failed to deactivate commission rule");
       } finally {
@@ -435,7 +425,7 @@ export const useAdmin = (): UseAdminReturn => {
     try {
       const roles = await adminServiceCanister.listUserRoles();
       setUserRoles(roles);
-      showToast("User roles updated successfully", "success");
+      toast.success("User roles updated successfully");
     } catch (error) {
       handleError(error, "Failed to refresh user roles");
     } finally {
@@ -450,7 +440,7 @@ export const useAdmin = (): UseAdminReturn => {
         await adminServiceCanister.assignRole(userId, scope);
         // Refresh user roles to get updated list
         await refreshUserRoles();
-        showToast(`Admin role assigned to user ${userId}`, "success");
+        toast.success(`Admin role assigned to user ${userId}`);
       } catch (error) {
         handleError(error, "Failed to assign admin role");
       } finally {
@@ -467,7 +457,7 @@ export const useAdmin = (): UseAdminReturn => {
         await adminServiceCanister.removeRole(userId);
         // Remove the user from state
         setUserRoles((prev) => prev.filter((role) => role.userId !== userId));
-        showToast(`Role removed from user ${userId}`, "success");
+        toast.success(`Role removed from user ${userId}`);
       } catch (error) {
         handleError(error, "Failed to remove user role");
       } finally {
@@ -507,7 +497,7 @@ export const useAdmin = (): UseAdminReturn => {
     try {
       const settings = await adminServiceCanister.getSettings();
       setSystemSettings(settings);
-      showToast("System settings updated successfully", "success");
+      toast.success("System settings updated successfully");
     } catch (error) {
       handleError(error, "Failed to refresh system settings");
     } finally {
@@ -528,7 +518,7 @@ export const useAdmin = (): UseAdminReturn => {
         await adminServiceCanister.setSettings(settings);
         // Refresh settings to get updated values
         await refreshSystemSettings();
-        showToast("System settings updated successfully", "success");
+        toast.success("System settings updated successfully");
       } catch (error) {
         handleError(error, "Failed to update system settings");
       } finally {
@@ -551,7 +541,7 @@ export const useAdmin = (): UseAdminReturn => {
 
     try {
       await Promise.allSettled(refreshPromises);
-      showToast("All admin data refreshed successfully", "success");
+      toast.success("All admin data refreshed successfully");
     } catch (error) {
       handleError(error, "Failed to refresh all data");
     }

@@ -464,4 +464,21 @@ module {
         updated_by: Principal;
         updated_at: Time.Time;
     };
+
+    // Service provider data aggregated from multiple sources
+    public type ServiceProviderData = {
+        id: Principal;
+        name: Text;
+        phone: Text;
+        total_earnings: Nat; // in centavos
+        pending_commission: Nat; // in centavos
+        settled_commission: Nat; // in centavos
+        outstanding_balance: Nat; // in centavos
+        pending_orders: Nat;
+        overdue_orders: Nat;
+        total_orders_completed: Nat;
+        average_order_value: Nat; // in centavos
+        next_deadline: ?Time.Time;
+        last_activity: Time.Time;
+    };
 }

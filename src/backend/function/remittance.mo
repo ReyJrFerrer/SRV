@@ -29,6 +29,7 @@ persistent actor RemittanceCanister {
     type MediaValidationSummary = Types.MediaValidationSummary;
     type MediaType = Types.MediaType;
     type MediaItem = Types.MediaItem;
+    type ServiceProviderData = Types.ServiceProviderData;
     type Result<T> = Types.Result<T>;
 
     // State variables
@@ -1056,6 +1057,138 @@ persistent actor RemittanceCanister {
             total_commission_paid = totalCommissionPaid;
             total_service_amount = totalServiceAmount;
             average_order_value = averageOrderValue;
+        }
+    };
+
+    // Get all service providers with their commission data (integrated with auth canister)
+    public func getAllServiceProvidersWithCommissionData() : async Result<[ServiceProviderData]> {
+        try {
+            // First, get all orders to find unique service providers
+            let allOrders = Iter.toArray(orders.vals());
+            let providerIds = Buffer.Buffer<Principal>(0);
+            
+            // Extract unique service provider IDs
+            let seenProviders = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
+            for (order in allOrders.vals()) {
+                if (seenProviders.get(order.service_provider_id) == null) {
+                    providerIds.add(order.service_provider_id);
+                    seenProviders.put(order.service_provider_id, true);
+                };
+            };
+
+            let providersData = Buffer.Buffer<ServiceProviderData>(providerIds.size());
+            
+            // Get data for each provider
+            for (providerId in providerIds.vals()) {
+                // Get provider profile from auth canister
+                let providerProfile = switch (authCanisterId) {
+                    case (?authCanister) {
+                        let authActor = actor(Principal.toText(authCanister)) : actor {
+                            getProfile: (Principal) -> async Result<Types.Profile>;
+                        };
+                        
+                        try {
+                            await authActor.getProfile(providerId)
+                        } catch (_) {
+                            #err("Failed to get provider profile")
+                        }
+                    };
+                    case null {
+                        #err("Auth canister not configured")
+                    };
+                };
+
+                // Get provider dashboard data
+                let dashboard = await getProviderDashboard(providerId);
+
+                // Calculate last activity from orders
+                let providerOrders = Array.filter<RemittanceOrder>(allOrders, func(order: RemittanceOrder) : Bool {
+                    order.service_provider_id == providerId
+                });
+
+                let lastActivity = if (providerOrders.size() > 0) {
+                    Array.foldLeft<RemittanceOrder, Time.Time>(providerOrders, 0, func(acc: Time.Time, order: RemittanceOrder) : Time.Time {
+                        if (order.updated_at > acc) order.updated_at else acc
+                    })
+                } else {
+                    Time.now()
+                };
+
+                // Calculate total earnings (settled commission + pending commission)
+                let totalEarnings = dashboard.total_commission_paid + dashboard.outstanding_balance;
+
+                // Calculate average order value from total earnings and completed orders
+                let averageOrderValue = if (dashboard.total_orders_completed > 0) {
+                    totalEarnings / dashboard.total_orders_completed
+                } else {
+                    0
+                };
+
+                // Create provider data with either real profile info or fallback
+                let providerData : ServiceProviderData = switch (providerProfile) {
+                    case (#ok(profile)) {
+                        {
+                            id = providerId;
+                            name = profile.name;
+                            phone = profile.phone;
+                            total_earnings = totalEarnings;
+                            pending_commission = dashboard.outstanding_balance;
+                            settled_commission = dashboard.total_commission_paid;
+                            outstanding_balance = dashboard.outstanding_balance;
+                            pending_orders = dashboard.pending_orders;
+                            overdue_orders = dashboard.overdue_orders;
+                            total_orders_completed = dashboard.total_orders_completed;
+                            average_order_value = averageOrderValue;
+                            next_deadline = dashboard.next_deadline;
+                            last_activity = lastActivity;
+                        }
+                    };
+                    case (#err(_)) {
+                        // Fallback if profile cannot be retrieved
+                        let principalText = Principal.toText(providerId);
+                        let shortId = if (Text.size(principalText) > 8) {
+                            Text.toArray(principalText) |> Array.tabulate<Char>(8, func(i: Nat): Char { 
+                                if (i < Array.size(Text.toArray(principalText))) {
+                                    Text.toArray(principalText)[i]
+                                } else {
+                                    '0'
+                                }
+                            }) |> Text.fromArray(_)
+                        } else {
+                            principalText
+                        };
+                        
+                        {
+                            id = providerId;
+                            name = "Provider " # shortId;
+                            phone = "+63 9XX XXX " # shortId;
+                            total_earnings = totalEarnings;
+                            pending_commission = dashboard.outstanding_balance;
+                            settled_commission = dashboard.total_commission_paid;
+                            outstanding_balance = dashboard.outstanding_balance;
+                            pending_orders = dashboard.pending_orders;
+                            overdue_orders = dashboard.overdue_orders;
+                            total_orders_completed = dashboard.total_orders_completed;
+                            average_order_value = averageOrderValue;
+                            next_deadline = dashboard.next_deadline;
+                            last_activity = lastActivity;
+                        }
+                    };
+                };
+
+                providersData.add(providerData);
+            };
+
+            // Sort providers by total earnings (descending)
+            let sortedProviders = Array.sort<ServiceProviderData>(Buffer.toArray(providersData), func(a: ServiceProviderData, b: ServiceProviderData) : {#less; #equal; #greater} {
+                if (a.total_earnings > b.total_earnings) #less
+                else if (a.total_earnings < b.total_earnings) #greater
+                else #equal
+            });
+
+            #ok(sortedProviders)
+        } catch (_) {
+            #err("Failed to get service providers data")
         }
     };
 

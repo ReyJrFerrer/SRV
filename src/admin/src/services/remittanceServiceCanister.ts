@@ -218,6 +218,25 @@ const convertSettlementInstruction = (
   expiresAt: convertTimeToDate(instruction.expires_at),
 });
 
+// Convert backend ServiceProviderData to frontend format
+const convertServiceProviderData = (data: any): ServiceProviderData => ({
+  id: data.id,
+  name: data.name,
+  phone: data.phone,
+  totalEarnings: convertCentavosToPhp(data.total_earnings),
+  pendingCommission: convertCentavosToPhp(data.pending_commission),
+  settledCommission: convertCentavosToPhp(data.settled_commission),
+  outstandingBalance: convertCentavosToPhp(data.outstanding_balance),
+  pendingOrders: Number(data.pending_orders),
+  overdueOrders: Number(data.overdue_orders),
+  totalOrdersCompleted: Number(data.total_orders_completed),
+  averageOrderValue: convertCentavosToPhp(data.average_order_value),
+  nextDeadline: data.next_deadline[0]
+    ? convertTimeToDate(data.next_deadline[0])
+    : undefined,
+  lastActivity: convertTimeToDate(data.last_activity),
+});
+
 // Error handling utility
 const handleResult = <T>(result: any, errorPrefix: string): T => {
   if ("ok" in result) {
@@ -242,59 +261,17 @@ export const remittanceServiceCanister = {
   // Service Provider Management
 
   /**
-   * Get all service providers with their commission data (mock implementation)
-   * TODO: Replace with actual canister call when backend supports this
+   * Get all service providers with their commission data
    */
   async getAllServiceProviders(): Promise<ServiceProviderData[]> {
     try {
-      // For now, return mock data since the backend doesn't have this endpoint yet
-      // In the future, this would call a backend function to get all providers
-      const mockProviders: ServiceProviderData[] = [
-        {
-          id: "sp1",
-          name: "Juan Dela Cruz",
-          phone: "+63 917 123 4567",
-          totalEarnings: 15750.5,
-          pendingCommission: 1250.0,
-          settledCommission: 14500.5,
-          outstandingBalance: 1250.0,
-          pendingOrders: 3,
-          overdueOrders: 1,
-          totalOrdersCompleted: 42,
-          averageOrderValue: 375.0,
-          lastActivity: new Date("2025-08-17"),
-        },
-        {
-          id: "sp2",
-          name: "Maria Santos",
-          phone: "+63 918 234 5678",
-          totalEarnings: 22300.75,
-          pendingCommission: 2100.25,
-          settledCommission: 20200.5,
-          outstandingBalance: 2100.25,
-          pendingOrders: 5,
-          overdueOrders: 0,
-          totalOrdersCompleted: 67,
-          averageOrderValue: 332.8,
-          lastActivity: new Date("2025-08-16"),
-        },
-        {
-          id: "sp3",
-          name: "Roberto Garcia",
-          phone: "+63 919 345 6789",
-          totalEarnings: 8900.0,
-          pendingCommission: 0.0,
-          settledCommission: 8900.0,
-          outstandingBalance: 0.0,
-          pendingOrders: 0,
-          overdueOrders: 0,
-          totalOrdersCompleted: 28,
-          averageOrderValue: 317.9,
-          lastActivity: new Date("2025-08-15"),
-        },
-      ];
+      const actor = getRemittanceActor();
+      const result = await actor.getAllServiceProvidersWithCommissionData();
 
-      return mockProviders;
+      return handleResult<any[]>(
+        result,
+        "Failed to get all service providers",
+      ).map(convertServiceProviderData);
     } catch (error) {
       console.error("Error getting all service providers:", error);
       if (error instanceof RemittanceServiceError) throw error;
@@ -411,80 +388,12 @@ export const remittanceServiceCanister = {
   > {
     try {
       const actor = getRemittanceActor();
+      const result = await actor.getAllServiceProvidersWithCommissionData();
 
-      // First, get all orders to find unique service providers
-      const allOrdersPage = await actor.queryOrders(
-        {
-          status: [],
-          service_provider_id: [],
-          from_date: [],
-          to_date: [],
-        },
-        {
-          cursor: [],
-          size: 1000, // Get a large batch to find all providers
-        },
-      );
-
-      // Extract unique service provider IDs
-      const providerIds = new Set<string>();
-      allOrdersPage.items.forEach((order) => {
-        providerIds.add(order.service_provider_id.toString());
-      });
-
-      // Get dashboard data for each provider
-      const providersData: ServiceProviderData[] = [];
-
-      for (const providerId of providerIds) {
-        try {
-          const dashboard = await this.getProviderDashboard(providerId);
-
-          // Mock provider name and phone (these would come from auth canister in real implementation)
-          const mockName = `Provider ${providerId.slice(-8)}`;
-          const mockPhone = `+63 9XX XXX ${providerId.slice(-4)}`;
-
-          // Calculate total earnings (settled commission + pending commission)
-          const totalEarnings =
-            dashboard.totalCommissionPaid + dashboard.outstandingBalance;
-
-          // Find last activity from orders
-          const lastActivity = Math.max(
-            ...dashboard.ordersAwaitingPayment.map((o) =>
-              o.updatedAt.getTime(),
-            ),
-            ...dashboard.ordersPendingValidation.map((o) =>
-              o.updatedAt.getTime(),
-            ),
-            0,
-          );
-
-          providersData.push({
-            id: providerId,
-            name: mockName,
-            phone: mockPhone,
-            totalEarnings,
-            pendingCommission: dashboard.outstandingBalance,
-            settledCommission: dashboard.totalCommissionPaid,
-            outstandingBalance: dashboard.outstandingBalance,
-            pendingOrders: dashboard.pendingOrders,
-            overdueOrders: dashboard.overdueOrders,
-            totalOrdersCompleted: dashboard.totalOrdersCompleted,
-            averageOrderValue:
-              totalEarnings / Math.max(dashboard.totalOrdersCompleted, 1),
-            nextDeadline: dashboard.nextDeadline,
-            lastActivity:
-              lastActivity > 0 ? new Date(lastActivity) : new Date(),
-          });
-        } catch (providerError) {
-          console.warn(
-            `Failed to get data for provider ${providerId}:`,
-            providerError,
-          );
-          // Continue with other providers even if one fails
-        }
-      }
-
-      return providersData.sort((a, b) => b.totalEarnings - a.totalEarnings);
+      return handleResult<any[]>(
+        result,
+        "Failed to get all service providers with commission data",
+      ).map(convertServiceProviderData);
     } catch (error) {
       console.error(
         "Error getting service providers with commission data:",

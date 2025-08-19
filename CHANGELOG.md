@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add getAllServiceProvidersWithCommissionData function to remittance canister with auth canister integration for provider details
 - Add comprehensive useAdmin React hook with granular loading states and error handling for admin dashboard functionality
 - Add comprehensive admin service canister interface with commission rules, user roles, and system settings management
 - Add comprehensive remittance management hook with provider dashboard and analytics functionality
