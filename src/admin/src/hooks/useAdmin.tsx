@@ -10,6 +10,14 @@ import {
   FrontendMediaItem,
   FrontendSystemStats,
 } from "../services/adminServiceCanister";
+import {
+  remittanceServiceCanister,
+  RemittanceServiceError,
+} from "../services/remittanceServiceCanister";
+import {
+  mediaServiceCanister,
+  MediaServiceError,
+} from "../services/mediaServiceCanister";
 
 // Toast notification function (placeholder - can be replaced with actual toast library)
 const showToast = (
@@ -29,7 +37,7 @@ const showToast = (
   }
 };
 
-// Interface for service provider data (mock data structure)
+// Interface for service provider data
 export interface ServiceProviderData {
   id: string;
   name: string;
@@ -38,6 +46,12 @@ export interface ServiceProviderData {
   pendingCommission: number;
   settledCommission: number;
   lastActivity: Date;
+  outstandingBalance?: number;
+  pendingOrders?: number;
+  overdueOrders?: number;
+  totalOrdersCompleted?: number;
+  averageOrderValue?: number;
+  nextDeadline?: Date;
 }
 
 // Granular loading states interface
@@ -117,37 +131,6 @@ interface UseAdminReturn {
   refreshAll: () => Promise<void>;
 }
 
-// Mock data for service providers (will be replaced with real API calls)
-const mockServiceProviders: ServiceProviderData[] = [
-  {
-    id: "sp1",
-    name: "Juan Dela Cruz",
-    phone: "+63 917 123 4567",
-    totalEarnings: 15750.5,
-    pendingCommission: 1250.0,
-    settledCommission: 14500.5,
-    lastActivity: new Date("2025-08-17"),
-  },
-  {
-    id: "sp2",
-    name: "Maria Santos",
-    phone: "+63 918 234 5678",
-    totalEarnings: 22300.75,
-    pendingCommission: 2100.25,
-    settledCommission: 20200.5,
-    lastActivity: new Date("2025-08-16"),
-  },
-  {
-    id: "sp3",
-    name: "Roberto Garcia",
-    phone: "+63 919 345 6789",
-    totalEarnings: 8900.0,
-    pendingCommission: 0.0,
-    settledCommission: 8900.0,
-    lastActivity: new Date("2025-08-15"),
-  },
-];
-
 export const useAdmin = (): UseAdminReturn => {
   // Initialize loading states
   const [loading, setLoading] = useState<AdminLoadingStates>({
@@ -165,8 +148,9 @@ export const useAdmin = (): UseAdminReturn => {
   const [systemStats, setSystemStats] = useState<FrontendSystemStats | null>(
     null,
   );
-  const [serviceProviders, setServiceProviders] =
-    useState<ServiceProviderData[]>(mockServiceProviders);
+  const [serviceProviders, setServiceProviders] = useState<
+    ServiceProviderData[]
+  >([]);
   const [pendingValidations, setPendingValidations] = useState<
     FrontendRemittanceOrder[]
   >([]);
@@ -189,7 +173,11 @@ export const useAdmin = (): UseAdminReturn => {
   const handleError = useCallback((error: unknown, context: string) => {
     console.error(`Admin Hook Error (${context}):`, error);
 
-    if (error instanceof AdminServiceError) {
+    if (
+      error instanceof AdminServiceError ||
+      error instanceof RemittanceServiceError ||
+      error instanceof MediaServiceError
+    ) {
       showToast(`${context}: ${error.message}`, "error");
     } else if (error instanceof Error) {
       showToast(`${context}: ${error.message}`, "error");
@@ -212,14 +200,14 @@ export const useAdmin = (): UseAdminReturn => {
     }
   }, [updateLoadingState, handleError]);
 
-  // Service Provider Management (mock for now)
+  // Service Provider Management - now uses real remittance service
   const refreshServiceProviders = useCallback(async () => {
     updateLoadingState("serviceProviders", true);
     try {
-      // TODO: Replace with actual API call to get service providers with commission data
-      // This would likely involve calling multiple services to aggregate the data
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-      setServiceProviders(mockServiceProviders);
+      // Get all service providers from remittance service
+      const providers =
+        await remittanceServiceCanister.getAllServiceProviders();
+      setServiceProviders(providers);
       showToast("Service provider data updated successfully", "success");
     } catch (error) {
       handleError(error, "Failed to refresh service providers");
@@ -228,15 +216,18 @@ export const useAdmin = (): UseAdminReturn => {
     }
   }, [updateLoadingState, handleError]);
 
-  // Pending Validations
+  // Pending Validations - now uses real remittance service
   const refreshPendingValidations = useCallback(async () => {
     updateLoadingState("pendingValidations", true);
     try {
-      const validations = await adminServiceCanister.getPendingValidations();
+      const validations =
+        await remittanceServiceCanister.getPendingValidations();
       setPendingValidations(validations);
       showToast("Pending validations updated successfully", "success");
     } catch (error) {
       handleError(error, "Failed to refresh pending validations");
+      // Set empty array on error
+      setPendingValidations([]);
     } finally {
       updateLoadingState("pendingValidations", false);
     }
@@ -246,7 +237,11 @@ export const useAdmin = (): UseAdminReturn => {
     async (orderId: string, approved: boolean, reason?: string) => {
       updateLoadingState("paymentValidation", true);
       try {
-        await adminServiceCanister.validatePayment(orderId, approved, reason);
+        await remittanceServiceCanister.validatePaymentByAdmin(
+          orderId,
+          approved,
+          reason,
+        );
 
         // Remove the validated order from pending validations
         setPendingValidations((prev) => prev.filter((v) => v.id !== orderId));
@@ -270,7 +265,7 @@ export const useAdmin = (): UseAdminReturn => {
       updateLoadingState("mediaItems", true);
       try {
         const mediaItems =
-          await adminServiceCanister.getRemittanceMediaItems(mediaIds);
+          await mediaServiceCanister.getRemittanceMediaItems(mediaIds);
         return mediaItems;
       } catch (error) {
         handleError(error, "Failed to load media items");
@@ -286,9 +281,18 @@ export const useAdmin = (): UseAdminReturn => {
     async (orderId: string) => {
       updateLoadingState("mediaItems", true);
       try {
-        const result =
-          await adminServiceCanister.getRemittanceOrderWithMedia(orderId);
-        return result;
+        // Get the order from remittance service
+        const order = await remittanceServiceCanister.getOrder(orderId);
+        if (!order) {
+          throw new Error(`Order ${orderId} not found`);
+        }
+
+        // Get the media items from media service
+        const mediaItems = await mediaServiceCanister.getRemittanceMediaItems(
+          order.paymentProofMediaIds,
+        );
+
+        return { order, mediaItems };
       } catch (error) {
         handleError(error, "Failed to load order with media");
         throw error;

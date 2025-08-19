@@ -70,7 +70,7 @@ persistent actor AdminCanister {
     // Constants
     private transient let SETTINGS_KEY : Text = "system_settings";
     private transient let DEFAULT_SETTLEMENT_HOURS : Nat32 = 24;
-    private transient let DEFAULT_GCASH_ACCOUNT : Text = "09123456789";
+    private transient let DEFAULT_GCASH_ACCOUNT : Text = "09694405454";
     private transient let MAX_COMMISSION_BPS : Nat = 1500; // 15% max
     private transient let MIN_ORDER_CENTAVOS : Nat = 100; // 1 PHP
     private transient let MAX_ORDER_CENTAVOS : Nat = 1_000_000_00; // 1M PHP

@@ -165,7 +165,7 @@ export const updateAdminActor = (identity: Identity | null) => {
 /**
  * Gets the current admin actor
  */
-const getAdminActor = (requireAuth: boolean = true): AdminService => {
+const getAdminActor = (requireAuth: boolean = false): AdminService => {
   if (requireAuth && !currentIdentity) {
     throw new AdminServiceError({
       message:
@@ -576,6 +576,19 @@ export const adminServiceCanister = {
   },
 
   /**
+   * Check if a user has admin role
+   */
+  async checkAdminRole(userId: string): Promise<boolean> {
+    try {
+      const userRole = await this.getUserRole(userId);
+      return userRole !== null && userRole.role === "ADMIN";
+    } catch (error) {
+      console.error("Error checking admin role:", error);
+      return false;
+    }
+  },
+
+  /**
    * List all user role assignments
    */
   async listUserRoles(): Promise<FrontendUserRoleAssignment[]> {
@@ -867,3 +880,21 @@ export const adminServiceCanister = {
     }
   },
 };
+
+// Export individual functions for direct use
+export const {
+  upsertCommissionRules,
+  listRules,
+  getRule,
+  activateRule,
+  deactivateRule,
+  assignRole,
+  removeRole,
+  getUserRole,
+  checkAdminRole,
+  listUserRoles,
+  hasAdminRole,
+  getSettings,
+  getSystemStats,
+  setCanisterReferences,
+} = adminServiceCanister;

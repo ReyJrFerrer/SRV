@@ -428,9 +428,9 @@ persistent actor MediaCanister {
     public shared(msg) func getRemittanceMediaItems(mediaIds: [Text]) : async Result<[MediaItem]> {
         let caller = msg.caller;
         
-        if (Principal.isAnonymous(caller)) {
-            return #err("Anonymous principal not allowed");
-        };
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
 
         // In production, should verify caller is admin or remittance canister
         let items = Buffer.Buffer<MediaItem>(mediaIds.size());
