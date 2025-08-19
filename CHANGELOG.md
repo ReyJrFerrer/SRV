@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add Progressive Web App (PWA) infrastructure with service worker, web app manifest, and offline support
+- Add push notification system with Firebase Cloud Messaging integration for real-time notifications
+- Add PWA install prompt component for native app-like installation on mobile and desktop devices
+- Add notification settings component for managing push notification preferences
 - Add full-screen image modal for viewing payment proof media in admin dashboard with download functionality
 - Add getAllServiceProvidersWithCommissionData function to remittance canister with auth canister integration for provider details
 - Add comprehensive useAdmin React hook with granular loading states and error handling for admin dashboard functionality
