@@ -82,7 +82,18 @@ export default function CreateProfilePage() {
       return;
     }
 
-    if (!formData.name.trim() || !formData.phone.trim()) {
+    // Name validation: exactly two words, each at least 3 letters, only letters
+    const nameTrimmed = formData.name.trim();
+    const nameWords = nameTrimmed.split(/\s+/);
+    if (
+      nameWords.length !== 2 ||
+      !nameWords.every((word) => word.length >= 2 && /^[A-Za-z]+$/.test(word))
+    ) {
+      setError("Please enter your full name");
+      return;
+    }
+
+    if (!formData.phone.trim()) {
       setError("All fields are required.");
       return;
     }

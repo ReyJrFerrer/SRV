@@ -1185,18 +1185,14 @@ const ServiceDetailPage: React.FC = () => {
           >
             <button
               onClick={handleBookNow}
-              disabled={packages.length === 0 || isOwnService}
+              disabled={
+                packages.length === 0 || isOwnService || !service.isActive
+              }
               className="w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
               style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
-              Book Now
+              {service.isActive ? "Book Now" : "Service Unavailable"}
             </button>
-            {isOwnService && (
-              <div className="absolute right-0 bottom-full mb-2 hidden rounded bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
-                You can't book your own service
-                <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-gray-800"></div>
-              </div>
-            )}
           </div>
         </div>
       </div>

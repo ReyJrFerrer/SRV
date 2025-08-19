@@ -1484,7 +1484,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
         {/* Active Bookings Warning */}
         {hasActiveBookings && (
-          <div className="flex items-center gap-4 rounded-xl border-l-8 border-amber-400 bg-amber-50 p-5 shadow">
+          <div className="mt-8 flex items-center gap-4 rounded-xl border-l-8 border-amber-400 bg-amber-50 p-5 shadow">
             <svg
               className="h-8 w-8 text-amber-400"
               viewBox="0 0 20 20"
@@ -1500,7 +1500,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               <h3 className="text-base font-semibold text-amber-900">
                 Service has active bookings
               </h3>
-              <p className="mt-1 text-sm text-amber-800">
+              <p className="text-sm text-amber-800">
                 This service has <b>{activeBookingsCount}</b> active booking
                 {activeBookingsCount !== 1 ? "s" : ""} and cannot be edited or
                 deleted until all bookings are completed or cancelled.
@@ -1509,11 +1509,8 @@ const ProviderServiceDetailPage: React.FC = () => {
           </div>
         )}
 
-        {/* Add space above hero section */}
-        <div className="h-8" />
-
         {/* Hero Card */}
-        <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+        <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
           <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
             {serviceImages &&
@@ -2391,17 +2388,23 @@ const ProviderServiceDetailPage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
           <button
-            onClick={handleStatusToggle}
-            disabled={isUpdatingStatus}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-6 py-3 text-lg font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+            onClick={
+              isUpdatingStatus || hasActiveBookings
+                ? undefined
+                : handleStatusToggle
+            }
+            disabled={isUpdatingStatus || hasActiveBookings}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none ${
               service.status === "Available"
-                ? "border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-400"
-                : "border-green-600 bg-green-600 text-white hover:bg-green-700 focus:ring-green-400"
-            } `}
+                ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
+                : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
+            }`}
           >
-            {service.status === "Available" ? (
+            {isUpdatingStatus ? (
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-blue-100" />
+            ) : service.status === "Available" ? (
               <LockClosedIcon className="h-6 w-6" />
             ) : (
               <LockOpenIcon className="h-6 w-6" />

@@ -138,14 +138,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleReject = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm("Sigurado ka bang gusto mong idecline?")) {
-      const success = await declineBookingById(
-        booking.id,
-        "Declined by provider",
-      );
-      if (success) {
-        navigate(`../../provider/home`);
-      }
+    const success = await declineBookingById(
+      booking.id,
+      "Declined by provider",
+    );
+    if (success) {
+      navigate(`../../provider/home`);
     }
   };
 

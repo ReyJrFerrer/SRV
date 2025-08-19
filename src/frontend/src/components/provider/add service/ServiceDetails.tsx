@@ -70,12 +70,26 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
+  // Add this helper function at the top after the imports
+  const removeDecimals = (value: string): string => {
+    return value.includes(".") ? value.split(".")[0] : value;
+  };
+
+  // Modify the handlePackageInputChange function
   const handlePackageInputChange = (
     index: number,
     field: string,
     value: string | boolean,
   ) => {
     setHidePackagesError(true);
+
+    // If the field is price, remove any decimals
+    if (field === "price") {
+      const sanitizedValue = removeDecimals(value as string);
+      handlePackageChange(index, field, sanitizedValue);
+      return;
+    }
+
     handlePackageChange(index, field, value);
   };
 
@@ -202,7 +216,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           htmlFor={`pkgName-${pkg.id}`}
                           className="block text-xs font-medium text-gray-600"
                         >
-                          Package Name<span className="text-red-500">*</span>
+                          Name<span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -239,6 +253,13 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           }
                           required
                           min="0"
+                          step="1"
+                          onKeyDown={(e) => {
+                            // Prevent decimal point
+                            if (e.key === ".") {
+                              e.preventDefault();
+                            }
+                          }}
                           className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                         />
                       </div>
@@ -264,6 +285,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           placeholder="Describe what's included in this package."
                         />
+                        {validationErrors.servicePackages &&
+                          validationErrors.servicePackages.includes(
+                            `Package ${index + 1}:`,
+                          ) && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {validationErrors.servicePackages}
+                            </p>
+                          )}
                       </div>
                     </div>
                   </div>
