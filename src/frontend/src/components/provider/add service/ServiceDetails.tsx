@@ -138,11 +138,6 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
-  // Add this helper function at the top after the imports
-  const removeDecimals = (value: string): string => {
-    return value.includes(".") ? value.split(".")[0] : value;
-  };
-
   // Modify the handlePackageInputChange function
   const handlePackageInputChange = (
     index: number,
