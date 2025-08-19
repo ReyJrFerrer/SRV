@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../../services/serviceCanisterService";
 
@@ -11,6 +11,13 @@ interface ValidationErrors {
   timeSlots?: string;
   locationMunicipalityCity?: string;
   general?: string;
+  packageFields?: {
+    [pkgId: string]: {
+      name?: string;
+      price?: string;
+      description?: string;
+    };
+  };
 }
 
 interface ServiceDetailsProps {
@@ -42,6 +49,7 @@ interface ServiceDetailsProps {
   removePackage: (id: string) => void;
   validationErrors?: ValidationErrors;
   onRequestCategory: (categoryName: string) => void;
+  scrollToErrorTrigger?: number;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -53,11 +61,71 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   addPackage,
   removePackage,
   validationErrors = {},
+  scrollToErrorTrigger,
 }) => {
   // Local state to control error visibility
   const [hideTitleError, setHideTitleError] = useState(false);
   const [hideCategoryError, setHideCategoryError] = useState(false);
   const [hidePackagesError, setHidePackagesError] = useState(false);
+  const [hidePackageFieldError, setHidePackageFieldError] = useState<{
+    [pkgId: string]: { name?: boolean; price?: boolean; description?: boolean };
+  }>({});
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const packageRefs = useRef<{ [pkgId: string]: HTMLDivElement | null }>({});
+
+  // Scroll to first error field on mobile
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      if (
+        validationErrors.packageFields &&
+        Object.keys(validationErrors.packageFields).length > 0
+      ) {
+        const firstPkgId = Object.keys(validationErrors.packageFields)[0];
+        const ref = packageRefs.current[firstPkgId];
+        if (ref) {
+          ref.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }
+  }, [validationErrors.packageFields]);
+
+  // Scroll to first error field on trigger
+  useEffect(() => {
+    if (!scrollToErrorTrigger) return;
+
+    // Reset all hide error states so errors show after Next is pressed
+    setHideTitleError(false);
+    setHideCategoryError(false);
+    setHidePackagesError(false);
+    setHidePackageFieldError({});
+
+    // Scroll to first error field
+    if (validationErrors.serviceOfferingTitle && titleRef.current) {
+      titleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      titleRef.current.focus();
+    } else if (validationErrors.categoryId && categoryRef.current) {
+      categoryRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      categoryRef.current.focus();
+    } else if (
+      validationErrors.packageFields &&
+      Object.keys(validationErrors.packageFields).length > 0
+    ) {
+      const firstPkgId = Object.keys(validationErrors.packageFields)[0];
+      const ref = packageRefs.current[firstPkgId];
+      if (ref) {
+        ref.scrollIntoView({ behavior: "smooth", block: "center" });
+        const inputEl = ref.querySelector(
+          "input,textarea",
+        ) as HTMLElement | null;
+        inputEl?.focus();
+      }
+    }
+  }, [scrollToErrorTrigger, validationErrors]);
 
   // Handlers to clear error messages on user action
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +143,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     field: string,
     value: string | boolean,
   ) => {
+    const pkgId = formData.servicePackages[index].id;
     setHidePackagesError(true);
+    setHidePackageFieldError((prev) => ({
+      ...prev,
+      [pkgId]: { ...prev[pkgId], [field]: true },
+    }));
     handlePackageChange(index, field, value);
   };
 
@@ -87,15 +160,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
           <div className="space-y-8">
             {/* Service Title */}
             <section>
-              <h2 className="mb-4 text-2xl font-extrabold text-blue-700">
-                Service Details <span className="text-red-500">*</span>
+              <h2 className="mb-2 text-xl font-bold text-blue-700">
+                Service Title <span className="text-red-500">*</span>
               </h2>
               <div className="space-y-2">
                 <label
                   htmlFor="serviceOfferingTitle"
                   className="block text-sm font-medium text-blue-900"
                 >
-                  Service Title
+                  Place a title for your service
                 </label>
                 <input
                   type="text"
@@ -104,6 +177,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   value={formData.serviceOfferingTitle}
                   onChange={handleTitleChange}
                   required
+                  ref={titleRef}
                   className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
                     validationErrors.serviceOfferingTitle && !hideTitleError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
@@ -121,7 +195,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
             {/* Category */}
             <section>
-              <h2 className="mb-2 text-lg font-bold text-blue-700">
+              <h2 className="mb-2 text-xl font-bold text-blue-700">
                 Category <span className="text-red-500">*</span>
               </h2>
               <div className="space-y-2">
@@ -137,6 +211,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   value={formData.categoryId}
                   onChange={handleCategoryChange}
                   required
+                  ref={categoryRef}
                   className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
                     validationErrors.categoryId && !hideCategoryError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
@@ -176,98 +251,147 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             </h2>
             <fieldset>
               <div className="space-y-6">
-                {formData.servicePackages.map((pkg, index) => (
-                  <div
-                    key={pkg.id}
-                    className="relative rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <h4 className="text-lg font-bold text-blue-800">
-                        Package {index + 1}
-                      </h4>
-                      {formData.servicePackages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removePackage(pkg.id)}
-                          className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
-                          title="Remove package"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      )}
+                {formData.servicePackages.map((pkg, index) => {
+                  const pkgError =
+                    validationErrors.packageFields &&
+                    validationErrors.packageFields[pkg.id];
+                  return (
+                    <div
+                      key={pkg.id}
+                      ref={(el) => {
+                        packageRefs.current[pkg.id] = el;
+                      }}
+                      className={`relative rounded-xl border bg-white p-6 shadow-md transition-shadow hover:shadow-lg ${
+                        pkgError ? "border-red-400" : "border-gray-200"
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <h4 className="text-lg font-bold text-blue-800">
+                          Package {index + 1}
+                        </h4>
+                        {formData.servicePackages.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removePackage(pkg.id)}
+                            className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
+                            title="Remove package"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor={`pkgName-${pkg.id}`}
+                            className="block text-xs font-medium text-gray-600"
+                          >
+                            Package Name<span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            id={`pkgName-${pkg.id}`}
+                            value={pkg.name}
+                            onChange={(e) =>
+                              handlePackageInputChange(
+                                index,
+                                "name",
+                                e.target.value,
+                              )
+                            }
+                            required
+                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                              pkgError &&
+                              pkgError.name &&
+                              !hidePackageFieldError[pkg.id]?.name
+                                ? "border-red-400 bg-red-50 focus:border-red-500"
+                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                            }`}
+                          />
+                          {pkgError &&
+                            pkgError.name &&
+                            !hidePackageFieldError[pkg.id]?.name && (
+                              <p className="text-xs text-red-600">
+                                {pkgError.name}
+                              </p>
+                            )}
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`pkgPrice-${pkg.id}`}
+                            className="block text-xs font-medium text-gray-600"
+                          >
+                            Price (PHP)<span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            id={`pkgPrice-${pkg.id}`}
+                            value={pkg.price}
+                            onChange={(e) =>
+                              handlePackageInputChange(
+                                index,
+                                "price",
+                                e.target.value,
+                              )
+                            }
+                            required
+                            min="0"
+                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                              pkgError &&
+                              pkgError.price &&
+                              !hidePackageFieldError[pkg.id]?.price
+                                ? "border-red-400 bg-red-50 focus:border-red-500"
+                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                            }`}
+                          />
+                          {pkgError &&
+                            pkgError.price &&
+                            !hidePackageFieldError[pkg.id]?.price && (
+                              <p className="text-xs text-red-600">
+                                {pkgError.price}
+                              </p>
+                            )}
+                        </div>
+                        <div className="md:col-span-2">
+                          <label
+                            htmlFor={`pkgDesc-${pkg.id}`}
+                            className="block text-xs font-medium text-gray-600"
+                          >
+                            Description<span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            id={`pkgDesc-${pkg.id}`}
+                            value={pkg.description}
+                            onChange={(e) =>
+                              handlePackageInputChange(
+                                index,
+                                "description",
+                                e.target.value,
+                              )
+                            }
+                            rows={3}
+                            required
+                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                              pkgError &&
+                              pkgError.description &&
+                              !hidePackageFieldError[pkg.id]?.description
+                                ? "border-red-400 bg-red-50 focus:border-red-500"
+                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                            }`}
+                            placeholder="Describe what's included in this package."
+                          />
+                          {pkgError &&
+                            pkgError.description &&
+                            !hidePackageFieldError[pkg.id]?.description && (
+                              <p className="text-xs text-red-600">
+                                {pkgError.description}
+                              </p>
+                            )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <label
-                          htmlFor={`pkgName-${pkg.id}`}
-                          className="block text-xs font-medium text-gray-600"
-                        >
-                          Package Name<span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`pkgName-${pkg.id}`}
-                          value={pkg.name}
-                          onChange={(e) =>
-                            handlePackageInputChange(
-                              index,
-                              "name",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`pkgPrice-${pkg.id}`}
-                          className="block text-xs font-medium text-gray-600"
-                        >
-                          Price (PHP)<span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          id={`pkgPrice-${pkg.id}`}
-                          value={pkg.price}
-                          onChange={(e) =>
-                            handlePackageInputChange(
-                              index,
-                              "price",
-                              e.target.value,
-                            )
-                          }
-                          required
-                          min="0"
-                          className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label
-                          htmlFor={`pkgDesc-${pkg.id}`}
-                          className="block text-xs font-medium text-gray-600"
-                        >
-                          Description<span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          id={`pkgDesc-${pkg.id}`}
-                          value={pkg.description}
-                          onChange={(e) =>
-                            handlePackageInputChange(
-                              index,
-                              "description",
-                              e.target.value,
-                            )
-                          }
-                          rows={3}
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                          placeholder="Describe what's included in this package."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <button
                 type="button"
