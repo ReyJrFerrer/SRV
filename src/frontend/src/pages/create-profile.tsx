@@ -89,9 +89,7 @@ export default function CreateProfilePage() {
       nameWords.length !== 2 ||
       !nameWords.every((word) => word.length >= 2 && /^[A-Za-z]+$/.test(word))
     ) {
-      setError(
-        "Please enter your full name",
-      );
+      setError("Please enter your full name");
       return;
     }
 

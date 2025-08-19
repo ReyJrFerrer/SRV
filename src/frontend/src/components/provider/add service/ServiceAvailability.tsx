@@ -53,7 +53,7 @@ const TimeSlotInput: React.FC<{
   onRemoveSlot: (id: string) => void;
 }> = ({ slot, onSlotChange, onRemoveSlot }) => (
   <div className="mb-2 flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 shadow-sm lg:flex-row lg:items-center">
-    <div className="flex w-full flex-col gap-2 md:flex-row sm:flex-row sm:items-center sm:gap-2">
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 md:flex-row">
       <div className="flex gap-2">
         <select
           value={slot.startHour}
