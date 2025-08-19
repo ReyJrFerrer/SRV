@@ -97,14 +97,16 @@ export default function MainPage({
                 </span>
               </div>
               <button
-                className="mt-2 flex items-center gap-1 text-blue-700 hover:underline"
+                className="mx-auto mt-2 flex w-full items-center justify-center gap-1 text-blue-700 hover:underline"
                 onClick={() => setShowHowItWorks((v) => !v)}
                 aria-expanded={showHowItWorks}
                 aria-controls="how-ii-works-section"
                 type="button"
               >
                 <InformationCircleIcon className="h-5 w-5" />
-                <span>How does Internet Identity login work?</span>
+                <span className="text-center">
+                  How does Internet Identity login work?
+                </span>
               </button>
               {/* How It Works Section (hidden by default) */}
               {showHowItWorks && (
