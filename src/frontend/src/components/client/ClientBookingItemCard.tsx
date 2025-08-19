@@ -139,20 +139,18 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (window.confirm("Are you sure you want to cancel this booking?")) {
-      try {
-        if (onUpdateStatus) {
-          await onUpdateStatus(booking.id, "Cancelled");
-        } else if (onCancelBooking) {
-          onCancelBooking(booking.id);
-        } else {
-          alert(
-            `Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`,
-          );
-        }
-      } catch (error) {
-        alert("Failed to cancel booking. Please try again.");
+    try {
+      if (onUpdateStatus) {
+        await onUpdateStatus(booking.id, "Cancelled");
+      } else if (onCancelBooking) {
+        onCancelBooking(booking.id);
+      } else {
+        alert(
+          `Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`,
+        );
       }
+    } catch (error) {
+      alert("Failed to cancel booking. Please try again.");
     }
   };
 

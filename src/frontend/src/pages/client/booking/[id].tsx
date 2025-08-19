@@ -297,12 +297,8 @@ const BookingDetailsPage: React.FC = () => {
 
   const handleCancelBooking = async () => {
     if (!specificBooking) return;
-    // NOTE: window.confirm is blocking. Consider a custom modal for better UX.
-    if (window.confirm(`Are you sure you want to cancel this booking?`)) {
-      await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
-      // NOTE: window.alert is blocking. Consider a toast notification.
-      alert(`Booking has been cancelled.`);
-    }
+    await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
+    alert(`Booking has been cancelled.`);
   };
 
   const handleChatWithProvider = async () => {

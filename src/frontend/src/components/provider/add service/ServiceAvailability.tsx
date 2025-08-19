@@ -52,8 +52,8 @@ const TimeSlotInput: React.FC<{
   ) => void;
   onRemoveSlot: (id: string) => void;
 }> = ({ slot, onSlotChange, onRemoveSlot }) => (
-  <div className="mb-2 flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 shadow-sm sm:flex-row sm:items-center">
-    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+  <div className="mb-2 flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 shadow-sm lg:flex-row lg:items-center">
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 md:flex-row">
       <div className="flex gap-2">
         <select
           value={slot.startHour}
@@ -339,12 +339,12 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
     );
   };
 
-  // Desktop: Mon-Thu, Fri-Sun
+  // Desktop (lg+): Mon-Thu, Fri-Sun
   const dayGridDesktop: DayOfWeek[][] = [
     ["Monday", "Tuesday", "Wednesday", "Thursday"],
     ["Friday", "Saturday", "Sunday"],
   ];
-  // Mobile: Mon-Wed, Thu-Sat, Sun
+  // Mobile/Tablet (md and below): Mon-Wed, Thu-Sat, Sun
   const dayGridMobile: DayOfWeek[][] = [
     ["Monday", "Tuesday", "Wednesday"],
     ["Thursday", "Friday", "Saturday"],
@@ -418,10 +418,10 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </button>
           </div>
 
-          {/* Responsive 2-row (desktop) or 3-row (mobile) grid for days */}
+          {/* Responsive 2-row (lg+) or 3-row (md and below) grid for days */}
           <div>
-            {/* Desktop */}
-            <div className="hidden flex-col gap-3 md:flex">
+            {/* Desktop (lg+) */}
+            <div className="hidden flex-col gap-3 lg:flex">
               {dayGridDesktop.map((row, rowIdx) => (
                 <div key={rowIdx} className="flex flex-1 justify-center gap-3">
                   {row.map((day) => (
@@ -449,8 +449,8 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 </div>
               ))}
             </div>
-            {/* Mobile */}
-            <div className="flex flex-col gap-3 md:hidden">
+            {/* Mobile/Tablet (md and below) */}
+            <div className="flex flex-col gap-3 lg:hidden">
               {dayGridMobile.map((row, rowIdx) => (
                 <div key={rowIdx} className="flex flex-1 justify-center gap-3">
                   {row.map((day) => (
