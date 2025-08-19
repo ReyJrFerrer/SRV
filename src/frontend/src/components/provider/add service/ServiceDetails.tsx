@@ -216,7 +216,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           htmlFor={`pkgName-${pkg.id}`}
                           className="block text-xs font-medium text-gray-600"
                         >
-                          Package Name<span className="text-red-500">*</span>
+                          Name<span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
