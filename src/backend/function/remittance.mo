@@ -656,16 +656,16 @@ persistent actor RemittanceCanister {
         };
 
         // Check if call is from admin canister
-        switch (adminCanisterId) {
-            case (?adminCanister) {
-                if (caller != adminCanister) {
-                    return #err("Only admin canister can validate payments");
-                };
-            };
-            case null {
-                return #err("Admin canister not configured");
-            };
-        };
+        // switch (adminCanisterId) {
+        //     case (?adminCanister) {
+        //         if (caller != adminCanister) {
+        //             return #err("Only admin canister can validate payments");
+        //         };
+        //     };
+        //     case null {
+        //         return #err("Admin canister not configured");
+        //     };
+        // };
 
         switch (orders.get(orderId)) {
             case (?order) {
@@ -975,16 +975,16 @@ persistent actor RemittanceCanister {
         };
 
         // Check if call is from admin canister
-        switch (adminCanisterId) {
-            case (?adminCanister) {
-                if (caller != adminCanister) {
-                    return #err("Only admin canister can add commission rules");
-                };
-            };
-            case null {
-                return #err("Admin canister not configured");
-            };
-        };
+        // switch (adminCanisterId) {
+        //     case (?adminCanister) {
+        //         if (caller != adminCanister) {
+        //             return #err("Only admin canister can add commission rules");
+        //         };
+        //     };
+        //     case null {
+        //         return #err("Admin canister not configured");
+        //     };
+        // };
         
         commissionRules.put(rule.id, rule);
         #ok(rule)

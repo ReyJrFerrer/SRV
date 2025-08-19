@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add full-screen image modal for viewing payment proof media in admin dashboard with download functionality
 - Add getAllServiceProvidersWithCommissionData function to remittance canister with auth canister integration for provider details
 - Add comprehensive useAdmin React hook with granular loading states and error handling for admin dashboard functionality
 - Add comprehensive admin service canister interface with commission rules, user roles, and system settings management
