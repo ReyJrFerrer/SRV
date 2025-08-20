@@ -1,6 +1,9 @@
 import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useNotifications, Notification } from "../../hooks/useNotifications"; // Adjust path as needed
+import {
+  useNotifications,
+  Notification,
+} from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import {
   BellAlertIcon,

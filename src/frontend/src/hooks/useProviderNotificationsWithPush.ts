@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useProviderBookingManagement } from "./useProviderBookingManagement";
+import { useAuth } from "../context/AuthContext";
+import { usePWA } from "./usePWA";
+import notificationIntegrationService from "../services/notificationIntegrationService";
 
-// --- Type Definition for a Provider Notification ---
+// Re-export the original types
 export interface ProviderNotification {
   id: string;
   message: string;
@@ -24,8 +27,7 @@ export interface ProviderNotification {
   amount?: number;
 }
 
-// --- In-memory store for provider unread count ---
-// This simple store allows multiple components to share the unread count without a full state management library.
+// In-memory store for provider unread count
 const providerNotificationStore = {
   count: 0,
   listeners: new Set<() => void>(),
@@ -41,7 +43,7 @@ const providerNotificationStore = {
   },
 };
 
-// --- localStorage Helper Functions for Provider ---
+// localStorage Helper Functions for Provider
 const PROVIDER_READ_NOTIFICATIONS_KEY = "providerReadNotificationIds";
 
 const getProviderReadIds = (): string[] => {
@@ -71,13 +73,16 @@ const setProviderReadIds = (ids: string[]) => {
   }
 };
 
-// --- The Custom Provider Hook ---
-export const useProviderNotifications = () => {
+// Enhanced provider hook with push notification integration
+export const useProviderNotificationsWithPush = () => {
   const {
     bookings,
     loading: bookingLoading,
     error: bookingError,
   } = useProviderBookingManagement();
+
+  const { identity } = useAuth();
+  const { pwaState } = usePWA();
 
   const [notifications, setNotifications] = useState<ProviderNotification[]>(
     [],
@@ -87,8 +92,32 @@ export const useProviderNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(
     providerNotificationStore.count,
   );
+  const previousNotificationIdsRef = useRef<Set<string>>(new Set());
 
-  // Subscribes to the provider notification store to keep the unread count in sync
+  // Get user ID
+  const getUserId = (): string => {
+    return identity?.getPrincipal().toString() || "anonymous";
+  };
+
+  // Initialize notification integration service
+  useEffect(() => {
+    const initializeIntegration = async () => {
+      if (identity && pwaState.pushSubscribed) {
+        await notificationIntegrationService.initialize(
+          getUserId(),
+          pwaState.pushSubscribed,
+        );
+      }
+    };
+    initializeIntegration();
+  }, [identity, pwaState.pushSubscribed]);
+
+  // Update push status when it changes
+  useEffect(() => {
+    notificationIntegrationService.updatePushStatus(pwaState.pushSubscribed);
+  }, [pwaState.pushSubscribed]);
+
+  // Subscribe to the provider notification store
   useEffect(() => {
     const unsubscribe = providerNotificationStore.subscribe(() => {
       setUnreadCount(providerNotificationStore.count);
@@ -98,7 +127,7 @@ export const useProviderNotifications = () => {
     };
   }, []);
 
-  // Generates provider-specific notifications based on the current list of bookings
+  // Generate provider-specific notifications based on bookings
   const fetchProviderNotifications = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -211,6 +240,32 @@ export const useProviderNotifications = () => {
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
         );
 
+      // Check for new notifications and send push notifications
+      const currentNotificationIds = new Set(
+        notificationsWithReadStatus.map((n) => n.id),
+      );
+      const newNotifications = allNotifications.filter(
+        (notification) =>
+          !previousNotificationIdsRef.current.has(notification.id) &&
+          !notification.read,
+      ); // Send push notifications for new unread notifications
+      if (newNotifications.length > 0) {
+        console.log(
+          `Sending ${newNotifications.length} new provider push notifications`,
+        );
+        notificationIntegrationService
+          .sendProviderNotificationsBatch(newNotifications)
+          .then((successCount) => {
+            console.log(
+              `Successfully sent ${successCount}/${newNotifications.length} provider push notifications`,
+            );
+          })
+          .catch((error) => {
+            console.error("Error sending provider push notifications:", error);
+          });
+      }
+
+      previousNotificationIdsRef.current = currentNotificationIds;
       setNotifications(notificationsWithReadStatus);
       const newUnreadCount = notificationsWithReadStatus.filter(
         (n) => !n.read,
@@ -267,5 +322,11 @@ export const useProviderNotifications = () => {
     error: error || bookingError,
     markAsRead,
     markAllAsRead,
+    // Additional properties for push notification status
+    pushEnabled: pwaState.pushSubscribed,
+    pushSupported: pwaState.pushNotificationSupported,
   };
 };
+
+// Keep the original hook for backward compatibility
+export const useProviderNotifications = useProviderNotificationsWithPush;
