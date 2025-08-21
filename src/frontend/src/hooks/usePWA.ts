@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import pwaService from "../services/pwaService";
 import pushNotificationService from "../services/pushNotificationService";
+import browserDetectionService from "../services/browserDetectionService";
 
 export interface PWAState {
   isInstallable: boolean;
@@ -10,9 +11,21 @@ export interface PWAState {
   pushPermission: NotificationPermission;
   pushSubscribed: boolean;
   updateAvailable: boolean;
+  browserInfo: {
+    name: string;
+    version: string;
+    canInstall: boolean;
+    canReceivePushNotifications: boolean;
+    installMethod: string;
+    limitations: string[];
+  };
 }
 
 export const usePWA = () => {
+  // Get browser info for initial state
+  const browserInfo = browserDetectionService.getBrowserInfo();
+  const browserCapabilities = browserDetectionService.getPWACapabilities();
+
   const [pwaState, setPwaState] = useState<PWAState>({
     isInstallable: false,
     isPWA: false,
@@ -21,6 +34,15 @@ export const usePWA = () => {
     pushPermission: "default",
     pushSubscribed: false,
     updateAvailable: false,
+    browserInfo: {
+      name: browserInfo.name,
+      version: browserInfo.version,
+      canInstall: browserCapabilities.canInstall,
+      canReceivePushNotifications:
+        browserCapabilities.canReceivePushNotifications,
+      installMethod: browserCapabilities.installMethod,
+      limitations: browserCapabilities.limitations,
+    },
   });
 
   const [loading, setLoading] = useState(true);
@@ -30,6 +52,11 @@ export const usePWA = () => {
   useEffect(() => {
     const initializePWA = async () => {
       try {
+        console.log("🔧 PWA Hook: Initializing PWA state", {
+          browser: `${browserInfo.name} ${browserInfo.version}`,
+          capabilities: browserCapabilities,
+        });
+
         // Check basic PWA state
         const isPWA = pwaService.isPWA();
         const isInstallable = pwaService.isInstallable();
@@ -42,6 +69,15 @@ export const usePWA = () => {
           await pwaService.getCurrentPushSubscription();
         const pushSubscribed = currentSubscription !== null;
 
+        console.log("📊 PWA Hook: State initialized", {
+          isPWA,
+          isInstallable,
+          pushNotificationSupported,
+          pushPermission,
+          pushSubscribed,
+          browserLimitations: browserCapabilities.limitations,
+        });
+
         setPwaState((prev) => ({
           ...prev,
           isPWA,
@@ -51,16 +87,26 @@ export const usePWA = () => {
           pushSubscribed,
         }));
 
+        // Log any browser limitations for debugging
+        if (browserCapabilities.limitations.length > 0) {
+          console.warn(
+            "⚠️ PWA Hook: Browser limitations detected:",
+            browserCapabilities.limitations,
+          );
+        }
+
         setLoading(false);
       } catch (err) {
-        console.error("Error initializing PWA:", err);
-        setError("Failed to initialize PWA features");
+        console.error("❌ PWA Hook: Error initializing PWA:", err);
+        setError(
+          `Failed to initialize PWA features: ${err instanceof Error ? err.message : "Unknown error"}`,
+        );
         setLoading(false);
       }
     };
 
     initializePWA();
-  }, []);
+  }, [browserInfo.name, browserInfo.version]);
 
   // Listen for online/offline events
   useEffect(() => {
@@ -137,7 +183,7 @@ export const usePWA = () => {
         setError(null);
 
         if (!pushNotificationService.isReady()) {
-          // Initialize with mock config for development/testing
+          // Initialize with Firebase config
           await pushNotificationService.initialize({
             apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "mock-api-key",
             authDomain:
@@ -148,6 +194,7 @@ export const usePWA = () => {
               import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
             appId: import.meta.env.VITE_FIREBASE_APP_ID || "mock-app-id",
             vapidKey:
+              import.meta.env.VITE_FIREBASE_VAPID_KEY ||
               import.meta.env.VITE_MOCK_VAPID_KEY ||
               "BEl62iUYgUivxIkv69yViEuiBIa40HI6DYAqSsHTLWPSLq3zCYDFmjHX6j7vbGV9T5S2z0zOOdmcW9GnvUAhTUo",
           });
@@ -260,6 +307,73 @@ export const usePWA = () => {
     [],
   );
 
+  /**
+   * Get browser-specific installation instructions
+   */
+  const getInstallInstructions = useCallback((): string[] => {
+    if (browserCapabilities.installMethod === "manual") {
+      if (browserInfo.name.toLowerCase().includes("safari")) {
+        return browserInfo.isMobile
+          ? [
+              "1. Tap the Share button (box with arrow) at the bottom",
+              "2. Scroll down and tap 'Add to Home Screen'",
+              "3. Tap 'Add' to install the app",
+            ]
+          : [
+              "1. Click the Share button in Safari's toolbar",
+              "2. Select 'Add to Dock' or look for app installation option",
+            ];
+      } else if (browserInfo.name.toLowerCase().includes("edge")) {
+        return [
+          "1. Click the three dots menu (⋯) in the top right",
+          "2. Click 'Apps' > 'Install this site as an app'",
+          "3. Click 'Install' to add the app to your desktop",
+        ];
+      }
+    }
+    return [
+      "Look for the install icon in your browser's address bar",
+      "Click it to install the app to your device",
+    ];
+  }, [browserInfo, browserCapabilities]);
+
+  /**
+   * Get troubleshooting tips for current browser
+   */
+  const getTroubleshootingTips = useCallback((): string[] => {
+    const tips = [];
+
+    if (browserInfo.name.toLowerCase().includes("safari")) {
+      tips.push(
+        "For push notifications, ensure iOS/Safari version is 16.4 or higher",
+      );
+      tips.push("Check Settings > Safari > Notifications are enabled");
+    }
+
+    if (browserInfo.name.toLowerCase().includes("brave")) {
+      tips.push(
+        "Enable 'Allow sites to send push notifications' in Brave settings",
+      );
+      tips.push("Check that Shields aren't blocking notification permissions");
+    }
+
+    if (browserInfo.name.toLowerCase().includes("edge")) {
+      tips.push("Make sure you're using the new Chromium-based Edge");
+      tips.push(
+        "Check notification permissions in Windows Settings > Notifications",
+      );
+    }
+
+    if (!browserCapabilities.canReceivePushNotifications) {
+      tips.push("Your browser version doesn't support web push notifications");
+      tips.push(
+        "Consider updating to a newer version or using a different browser",
+      );
+    }
+
+    return tips;
+  }, [browserInfo, browserCapabilities]);
+
   return {
     pwaState,
     loading,
@@ -270,5 +384,7 @@ export const usePWA = () => {
     updatePWA,
     sendTestNotification,
     showLocalNotification,
+    getInstallInstructions,
+    getTroubleshootingTips,
   };
 };
