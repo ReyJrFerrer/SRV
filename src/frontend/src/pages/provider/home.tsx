@@ -8,6 +8,8 @@ import BottomNavigationNextjs from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
+import PWAInstall from "../../components/PWAInstall";
+import NotificationSettings from "../../components/NotificationSettings";
 // Add location permission state
 type LocationStatus = "pending" | "allowed" | "denied";
 
@@ -232,6 +234,10 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
+      <PWAInstall />
+
+      <NotificationSettings />
+
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs />

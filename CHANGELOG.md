@@ -1,12 +1,6 @@
-# Changel### Added
+# Changelog
 
-- Convert Next.js client components to React Router DOM for improved navigation and routing
-- Replace Next.js Head component with native document.title manipulation in search results page
-- Replace Next.js Head component with native document.title manipulation in chat page
-- Replace Next.js Head component with native document.title manipulation in service pages (view-all, service detail, service reviews)
-- Replace Next.js router with React Router DOM in booking review page
-- Replace Next.js router with React Router DOM in category pages and AuthContext integration
-- Replace Next.js router with React Router DOM in all booking-related pages (index, details, confirmation, book)notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -15,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Connect existing notification hooks to PWA push notification system for real-time notifications
+- Add notification integration service to handle push notifications for both clients and providers
+- Add enhanced notification hooks with automatic push notification triggering when new notifications are detected
+- Add Progressive Web App (PWA) infrastructure with service worker, web app manifest, and offline support
+- Add push notification system with Firebase Cloud Messaging integration for real-time notifications
+- Add PWA install prompt component for native app-like installation on mobile and desktop devices
+- Add notification settings component for managing push notification preferences
+- Convert Next.js client components to React Router DOM for improved navigation and routing
+- Replace Next.js Head component with native document.title manipulation in search results page
+- Replace Next.js Head component with native document.title manipulation in chat page
+- Replace Next.js Head component with native document.title manipulation in service pages (view-all, service detail, service reviews)
+- Replace Next.js router with React Router DOM in booking review page
+- Replace Next.js router with React Router DOM in category pages and AuthContext integration
+- Replace Next.js router with React Router DOM in all booking-related pages (index, details, confirmation, book)
+- Add full-screen image modal for viewing payment proof media in admin dashboard with download functionality
+- Add getAllServiceProvidersWithCommissionData function to remittance canister with auth canister integration for provider details
+- Add comprehensive useAdmin React hook with granular loading states and error handling for admin dashboard functionality
+
+### Added
+
+- Add Progressive Web App (PWA) infrastructure with service worker, web app manifest, and offline support
+- Add push notification system with Firebase Cloud Messaging integration for real-time notifications
+- Add PWA install prompt component for native app-like installation on mobile and desktop devices
+- Add dedicated modals for PWA installation and notification settings accessible from home pages and settings
+- Add notification settings component for managing push notification preferences
+- Add full-screen image modal for viewing payment proof media in admin dashboard with download functionality
 - Add getAllServiceProvidersWithCommissionData function to remittance canister with auth canister integration for provider details
 - Add comprehensive useAdmin React hook with granular loading states and error handling for admin dashboard functionality
 - Add comprehensive admin service canister interface with commission rules, user roles, and system settings management

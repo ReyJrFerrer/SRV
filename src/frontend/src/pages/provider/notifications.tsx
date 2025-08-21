@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ProviderNotification,
   useProviderNotifications,
-} from "../../hooks/useProviderNotifications";
+} from "../../hooks/useProviderNotificationsWithPush";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import {
   BellAlertIcon,

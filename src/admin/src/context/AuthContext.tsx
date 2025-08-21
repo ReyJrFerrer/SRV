@@ -10,6 +10,10 @@ import { Identity } from "@dfinity/agent";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { updateRemittanceActor } from "../services/remittanceServiceCanister";
 import { updateMediaActor } from "../services/mediaServiceCanister";
+import {
+  initializeCanisterReferences,
+  shouldInitializeCanisters,
+} from "../services/canisterInitService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -20,7 +24,6 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   isAdmin: boolean;
-  principalId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +32,19 @@ const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
   updateRemittanceActor(identity);
   updateMediaActor(identity);
+};
+
+const initializeCanisters = async (
+  isAuthenticated: boolean,
+  identity: Identity | null,
+) => {
+  if (shouldInitializeCanisters(isAuthenticated, identity)) {
+    try {
+      await initializeCanisterReferences();
+    } catch (error) {
+      // console.warn("Failed to initialize canister references:", error);
+    }
+  }
 };
 
 export const useAuth = () => {
@@ -50,7 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [principalId, setPrincipalId] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -62,22 +77,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (isAuth) {
           const identity = client.getIdentity();
-          const principal = identity.getPrincipal();
-          const principalText = principal.toString();
-
           setIdentity(identity);
-          setPrincipalId(principalText);
-
-          // Try to update actors, but don't fail if it doesn't work
-          try {
-            updateAllAdminActors(identity);
-          } catch (actorError) {
-            console.warn(
-              "Failed to initialize admin actors on startup:",
-              actorError,
-            );
-            // Continue anyway for now
-          }
+          updateAllAdminActors(identity);
+          await initializeCanisters(isAuth, identity);
 
           // Check if user has admin privileges - COMMENTED OUT FOR NOW
           // try {
@@ -95,13 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Temporarily set all authenticated users as admin for testing
           setIsAdmin(true);
         } else {
-          try {
-            updateAllAdminActors(null);
-          } catch (actorError) {
-            console.warn("Failed to clear admin actors:", actorError);
-          }
-          setIsAdmin(false);
-          setPrincipalId(null);
+          updateAllAdminActors(null);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred");
@@ -128,20 +124,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         onSuccess: async () => {
           try {
             const identity = authClient.getIdentity();
-            const principal = identity.getPrincipal();
-            const principalText = principal.toString();
 
             setIsAuthenticated(true);
             setIdentity(identity);
-            setPrincipalId(principalText);
-
-            // Try to update actors, but don't fail if it doesn't work
-            try {
-              updateAllAdminActors(identity);
-            } catch (actorError) {
-              console.warn("Failed to initialize admin actors:", actorError);
-              // Continue anyway for now - we'll handle this gracefully
-            }
+            updateAllAdminActors(identity);
+            await initializeCanisters(true, identity);
 
             // Check admin privileges after login - COMMENTED OUT FOR NOW
             // try {
@@ -195,7 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     setIdentity(null);
     setIsAdmin(false);
-    setPrincipalId(null);
     updateAllAdminActors(null);
   };
 
@@ -208,7 +194,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     error,
     isAdmin,
-    principalId,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

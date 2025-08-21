@@ -7,7 +7,7 @@ import authCanisterService from "../../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useProviderNotifications } from "../../../hooks/useProviderNotifications";
+import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 
 // --- Props ---
 export interface HeaderProps {
