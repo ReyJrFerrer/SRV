@@ -1,4 +1,4 @@
-// Service Worker for SRV PWA
+// Service Worker for SRV PWA - Enhanced for cross-browser compatibility
 const CACHE_NAME = "srv-pwa-v1";
 const STATIC_CACHE_URLS = [
   "/",
@@ -7,52 +7,100 @@ const STATIC_CACHE_URLS = [
   "/heroImage.png",
 ];
 
+// Browser detection in service worker
+function detectBrowser() {
+  const userAgent = self.navigator.userAgent;
+  let browserInfo = {
+    name: "Unknown",
+    version: "Unknown",
+    isSafari: /Safari/.test(userAgent) && !/Chrome/.test(userAgent),
+    isChrome: /Chrome/.test(userAgent),
+    isBrave: /Brave/.test(userAgent),
+    isEdge: /Edg/.test(userAgent),
+    isFirefox: /Firefox/.test(userAgent),
+  };
+
+  console.log("🔍 SW: Browser detected:", browserInfo);
+  return browserInfo;
+}
+
 // Install event - cache resources
 self.addEventListener("install", (event) => {
-  console.log("Service Worker installing...");
+  const browser = detectBrowser();
+  console.log(`🔧 SW: Installing Service Worker (${browser.name})...`);
+
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        console.log("Caching static resources");
+        console.log("📦 SW: Caching static resources");
         return cache.addAll(
-          STATIC_CACHE_URLS.map((url) => new Request(url, { cache: "reload" })),
+          STATIC_CACHE_URLS.map(
+            (url) =>
+              new Request(url, {
+                cache: browser.isSafari ? "default" : "reload", // Safari cache handling
+              }),
+          ),
         );
       })
       .catch((error) => {
-        console.error("Failed to cache resources:", error);
+        console.error("❌ SW: Failed to cache resources:", error);
       }),
   );
-  self.skipWaiting();
+
+  // Skip waiting for better update experience, but handle Safari carefully
+  if (!browser.isSafari) {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
-  console.log("Service Worker activating...");
+  const browser = detectBrowser();
+  console.log(`✅ SW: Activating Service Worker (${browser.name})...`);
+
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log("Deleting old cache:", cacheName);
-            return caches.delete(cacheName);
-          }
-        }),
-      );
-    }),
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log("🗑️ SW: Deleting old cache:", cacheName);
+              return caches.delete(cacheName);
+            }
+          }),
+        );
+      }),
+      // Handle client claiming with browser-specific logic
+      browser.isSafari
+        ? Promise.resolve() // Safari sometimes has issues with clients.claim()
+        : self.clients.claim(),
+    ]),
   );
-  self.clients.claim();
 });
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  const browser = detectBrowser();
+
   // Skip non-GET requests
   if (event.request.method !== "GET") {
     return;
   }
 
+  // Skip chrome-extension and other non-http requests
+  if (!event.request.url.startsWith("http")) {
+    return;
+  }
+
   // Skip chrome-extension requests
   if (event.request.url.startsWith("chrome-extension://")) {
+    return;
+  }
+
+  // Safari-specific handling
+  if (browser.isSafari && event.request.url.includes("safari-extension://")) {
     return;
   }
 
@@ -80,18 +128,43 @@ self.addEventListener("fetch", (event) => {
           // Clone the response because it's a stream
           const responseToCache = response.clone();
 
-          // Add successful responses to cache
+          // Add successful responses to cache (with browser-specific handling)
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
+            // Safari sometimes has issues with certain cache operations
+            try {
+              cache.put(event.request, responseToCache);
+            } catch (cacheError) {
+              if (browser.isSafari) {
+                console.warn(
+                  "⚠️ SW: Safari cache put failed (expected):",
+                  cacheError,
+                );
+              } else {
+                console.error("❌ SW: Cache put failed:", cacheError);
+              }
+            }
           });
 
           return response;
         })
         .catch((error) => {
-          console.error("Fetch failed:", error);
+          console.error("❌ SW: Fetch failed:", error);
+
           // Return a fallback response for navigation requests
           if (event.request.mode === "navigate") {
-            return caches.match("/");
+            return caches.match("/").then((fallbackResponse) => {
+              if (fallbackResponse) {
+                return fallbackResponse;
+              }
+              // If no cached fallback, return a basic offline page
+              return new Response(
+                "App is offline. Please check your connection.",
+                {
+                  status: 503,
+                  headers: { "Content-Type": "text/plain" },
+                },
+              );
+            });
           }
           throw error;
         });
@@ -101,7 +174,8 @@ self.addEventListener("fetch", (event) => {
 
 // Push notification event handler
 self.addEventListener("push", (event) => {
-  console.log("Push event received:", event);
+  const browser = detectBrowser();
+  console.log(`🔔 SW: Push event received (${browser.name}):`, event);
 
   let notificationData = {};
 
@@ -109,7 +183,7 @@ self.addEventListener("push", (event) => {
     try {
       notificationData = event.data.json();
     } catch (error) {
-      console.error("Error parsing push data:", error);
+      console.error("❌ SW: Error parsing push data:", error);
       notificationData = {
         title: "SRV Notification",
         body: event.data.text() || "You have a new notification",
@@ -126,20 +200,40 @@ self.addEventListener("push", (event) => {
     };
   }
 
+  // Browser-specific notification options
   const options = {
     body: notificationData.body,
     icon: notificationData.icon || "/logo.svg",
     badge: notificationData.badge || "/logo.svg",
     data: notificationData.data || {},
     tag: notificationData.tag || "srv-notification",
-    requireInteraction: notificationData.requireInteraction || false,
-    actions: notificationData.actions || [],
-    vibrate: notificationData.vibrate || [100, 50, 100],
+    requireInteraction: browser.isSafari
+      ? false
+      : notificationData.requireInteraction || false, // Safari doesn't support requireInteraction well
+    vibrate: browser.isSafari
+      ? undefined
+      : notificationData.vibrate || [100, 50, 100], // Safari doesn't support vibrate
     timestamp: Date.now(),
   };
 
+  // Safari doesn't support actions in notifications
+  if (!browser.isSafari && notificationData.actions) {
+    options.actions = notificationData.actions;
+  }
+
+  console.log(`📱 SW: Showing notification (${browser.name})`, options);
+
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, options),
+    self.registration
+      .showNotification(notificationData.title, options)
+      .catch((error) => {
+        console.error("❌ SW: Failed to show notification:", error);
+        // Fallback for Safari or other issues
+        return self.registration.showNotification("SRV Notification", {
+          body: "You have a new notification",
+          icon: "/logo.svg",
+        });
+      }),
   );
 });
 
