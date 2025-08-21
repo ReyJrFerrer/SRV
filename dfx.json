@@ -82,8 +82,7 @@
         "service",
         "chat",
         "media",
-        "remittance",
-        "admin"
+        "remittance"
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]
