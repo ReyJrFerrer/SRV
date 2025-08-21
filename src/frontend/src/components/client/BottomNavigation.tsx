@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 // Assuming these hooks are available in your new project structure
 // You may need to adjust the import paths
-import { useNotifications } from "../../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 
 const BottomNavigation: React.FC = () => {
