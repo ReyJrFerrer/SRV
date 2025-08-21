@@ -155,6 +155,82 @@ export const usePWA = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Listen for visibility changes to refresh permission status (important for PWAs)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log(
+          "🔄 PWA Hook: App became visible, refreshing permission status",
+        );
+        try {
+          const refreshedPermission =
+            await pwaService.refreshNotificationPermission();
+          const currentSubscription =
+            await pwaService.getCurrentPushSubscription();
+          const pushSubscribed = currentSubscription !== null;
+
+          setPwaState((prev) => ({
+            ...prev,
+            pushPermission: refreshedPermission,
+            pushSubscribed,
+          }));
+
+          console.log("📊 PWA Hook: Permission status refreshed", {
+            permission: refreshedPermission,
+            pushSubscribed,
+          });
+        } catch (err) {
+          console.error(
+            "❌ PWA Hook: Error refreshing permission status:",
+            err,
+          );
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  /**
+   * Refresh PWA state (useful for mobile PWAs where state can change externally)
+   */
+  const refreshPWAState = useCallback(async (): Promise<void> => {
+    try {
+      console.log("🔄 PWA Hook: Manually refreshing PWA state");
+
+      const refreshedPermission =
+        await pwaService.refreshNotificationPermission();
+      const currentSubscription = await pwaService.getCurrentPushSubscription();
+      const pushSubscribed = currentSubscription !== null;
+      const isInstallable = pwaService.isInstallable();
+      const isPWA = pwaService.isPWA();
+
+      setPwaState((prev) => ({
+        ...prev,
+        pushPermission: refreshedPermission,
+        pushSubscribed,
+        isInstallable,
+        isPWA,
+      }));
+
+      console.log("✅ PWA Hook: PWA state refreshed", {
+        permission: refreshedPermission,
+        pushSubscribed,
+        isInstallable,
+        isPWA,
+      });
+    } catch (err) {
+      console.error("❌ PWA Hook: Error refreshing PWA state:", err);
+      setError(
+        `Failed to refresh PWA state: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+    }
+  }, []);
+
   /**
    * Show PWA install prompt
    */
@@ -182,7 +258,27 @@ export const usePWA = () => {
       try {
         setError(null);
 
+        console.log("🔔 PWA Hook: Attempting to enable push notifications", {
+          userId,
+          currentPermission: pwaState.pushPermission,
+          browserInfo: pwaState.browserInfo,
+        });
+
+        // Check browser capabilities first
+        if (!pwaState.browserInfo.canReceivePushNotifications) {
+          const limitationsMessage =
+            pwaState.browserInfo.limitations.join("; ");
+          console.error(
+            "❌ PWA Hook: Browser doesn't support push notifications:",
+            limitationsMessage,
+          );
+          throw new Error(
+            `Push notifications not supported: ${limitationsMessage}`,
+          );
+        }
+
         if (!pushNotificationService.isReady()) {
+          console.log("🔧 PWA Hook: Initializing push notification service");
           // Initialize with Firebase config
           await pushNotificationService.initialize({
             apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "mock-api-key",
@@ -195,25 +291,47 @@ export const usePWA = () => {
             appId: import.meta.env.VITE_FIREBASE_APP_ID || "mock-app-id",
             vapidKey:
               import.meta.env.VITE_FIREBASE_VAPID_KEY ||
-              import.meta.env.VITE_MOCK_VAPID_KEY ||
-              "BEl62iUYgUivxIkv69yViEuiBIa40HI6DYAqSsHTLWPSLq3zCYDFmjHX6j7vbGV9T5S2z0zOOdmcW9GnvUAhTUo",
+              import.meta.env.VITE_MOCK_VAPID_KEY,
           });
         }
 
-        // Request permission
+        // Request permission with improved error handling
+        console.log("📋 PWA Hook: Requesting notification permission");
         const permission = await pwaService.requestNotificationPermission();
+
+        // Update state immediately
         setPwaState((prev) => ({ ...prev, pushPermission: permission }));
 
+        console.log("📊 PWA Hook: Permission result:", permission);
+
+        if (permission === "denied") {
+          throw new Error(
+            "Notifications are blocked. Please enable notifications for this app in your device or browser settings.",
+          );
+        }
+
         if (permission !== "granted") {
-          throw new Error("Push notification permission denied");
+          // For mobile PWAs, permission might still be 'default' even if user granted it
+          if (pwaState.browserInfo.canReceivePushNotifications) {
+            console.warn(
+              "⚠️ PWA Hook: Permission not granted but browser supports push notifications",
+            );
+            throw new Error(
+              "Please enable notifications for this app. Check your device settings if you believe you already enabled them.",
+            );
+          } else {
+            throw new Error("Push notification permission was not granted");
+          }
         }
 
         // Subscribe to push notifications
+        console.log("🔐 PWA Hook: Subscribing to push notifications");
         const vapidKey = pushNotificationService.getVapidPublicKey();
         const subscription =
           await pwaService.subscribeToPushNotifications(vapidKey);
 
         // Store subscription
+        console.log("💾 PWA Hook: Storing push subscription");
         const success = await pushNotificationService.storePushSubscription(
           subscription,
           userId,
@@ -221,21 +339,30 @@ export const usePWA = () => {
 
         if (success) {
           setPwaState((prev) => ({ ...prev, pushSubscribed: true }));
+          console.log("✅ PWA Hook: Push notifications enabled successfully");
           return true;
         } else {
-          throw new Error("Failed to store push subscription");
+          throw new Error("Failed to store push subscription on server");
         }
       } catch (err) {
-        console.error("Error enabling push notifications:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to enable push notifications",
-        );
+        console.error("❌ PWA Hook: Error enabling push notifications:", err);
+
+        // Provide user-friendly error messages
+        let errorMessage = "Failed to enable push notifications";
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+
+        // Add browser-specific troubleshooting tips
+        if (pwaState.browserInfo.limitations.length > 0) {
+          errorMessage += `\n\nTroubleshooting tips:\n${pwaState.browserInfo.limitations.join("\n")}`;
+        }
+
+        setError(errorMessage);
         return false;
       }
     },
-    [],
+    [pwaState.pushPermission, pwaState.browserInfo],
   );
 
   /**
@@ -386,5 +513,6 @@ export const usePWA = () => {
     showLocalNotification,
     getInstallInstructions,
     getTroubleshootingTips,
+    refreshPWAState,
   };
 };

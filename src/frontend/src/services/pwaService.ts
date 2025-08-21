@@ -327,6 +327,8 @@ class PWAService {
       currentPermission: Notification.permission,
       canReceivePushNotifications: capabilities.canReceivePushNotifications,
       limitations: capabilities.limitations,
+      isPWA: browserInfo.isStandalone,
+      isMobile: browserInfo.isMobile,
     });
 
     if (!("Notification" in window)) {
@@ -354,13 +356,53 @@ class PWAService {
       );
     }
 
+    // Check if already granted (important for PWAs)
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      console.log("✅ PWA: Notification permission already granted");
+      return "granted";
+    }
+
     // Handle browser-specific permission request
     try {
       let permission: NotificationPermission;
 
-      if (browserInfo.name.toLowerCase().includes("safari")) {
+      // For mobile PWAs, we need to handle permission requests more carefully
+      if (browserInfo.isMobile && browserInfo.isStandalone) {
+        console.log(
+          "📱 PWA: Mobile PWA detected - using careful permission request",
+        );
+
+        // Add a small delay to ensure PWA is fully loaded
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Check permission again before requesting (mobile PWAs can change state)
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted"
+        ) {
+          console.log("✅ PWA: Permission granted during delay check");
+          return "granted";
+        }
+
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "denied"
+        ) {
+          console.warn(
+            "❌ PWA: Permission was denied - asking user to check settings",
+          );
+          throw new Error(
+            "Notifications were denied. Please enable notifications for this app in your device settings.",
+          );
+        }
+
+        // Request permission with user interaction context
+        permission = await this.requestPermissionWithRetry();
+      } else if (browserInfo.name.toLowerCase().includes("safari")) {
         console.log("🍎 PWA: Requesting Safari notification permission");
-        // Safari might need special handling
         permission = await Notification.requestPermission();
 
         if (permission === "denied") {
@@ -370,7 +412,6 @@ class PWAService {
         }
       } else if (browserInfo.name.toLowerCase().includes("brave")) {
         console.log("🦁 PWA: Requesting Brave notification permission");
-        // Brave users often need to enable notifications manually
         permission = await Notification.requestPermission();
 
         if (permission === "denied") {
@@ -385,18 +426,90 @@ class PWAService {
 
       console.log(`📊 PWA: Notification permission result: ${permission}`, {
         browser: `${browserInfo.name} ${browserInfo.version}`,
+        isPWA: browserInfo.isStandalone,
+        isMobile: browserInfo.isMobile,
       });
+
+      // Additional check for mobile PWAs
+      if (
+        browserInfo.isMobile &&
+        browserInfo.isStandalone &&
+        permission === "default"
+      ) {
+        console.warn(
+          "⚠️ PWA: Mobile PWA permission still default - may need manual settings check",
+        );
+        // Give user specific instructions for their platform
+        if (browserInfo.os.toLowerCase().includes("ios")) {
+          throw new Error(
+            "Please go to Settings > SRV > Notifications and enable 'Allow Notifications'",
+          );
+        } else {
+          throw new Error(
+            "Please check your notification settings for this app",
+          );
+        }
+      }
 
       return permission;
     } catch (error) {
       console.error("❌ PWA: Failed to request notification permission", {
         error,
         browser: `${browserInfo.name} ${browserInfo.version}`,
+        isPWA: browserInfo.isStandalone,
+        isMobile: browserInfo.isMobile,
       });
 
+      // Provide helpful error messages based on context
+      if (error instanceof Error) {
+        throw error; // Re-throw our custom errors
+      }
+
       // Return current permission state if request fails
-      return Notification.permission;
+      const currentPermission = Notification.permission;
+      if (currentPermission === "denied") {
+        throw new Error(
+          "Notifications are blocked. Please enable notifications for this app in your browser or device settings.",
+        );
+      }
+
+      return currentPermission;
     }
+  }
+
+  /**
+   * Request permission with retry logic for mobile PWAs
+   */
+  private async requestPermissionWithRetry(
+    maxRetries: number = 2,
+  ): Promise<NotificationPermission> {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        console.log(
+          `🔄 PWA: Permission request attempt ${i + 1}/${maxRetries}`,
+        );
+        const permission = await Notification.requestPermission();
+
+        if (permission !== "default") {
+          return permission;
+        }
+
+        // Wait a bit before retrying
+        if (i < maxRetries - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ PWA: Permission request attempt ${i + 1} failed:`,
+          error,
+        );
+        if (i === maxRetries - 1) {
+          throw error;
+        }
+      }
+    }
+
+    return Notification.permission;
   }
 
   /**
@@ -545,18 +658,60 @@ class PWAService {
    * Check if push notifications are supported
    */
   isPushNotificationSupported(): boolean {
-    return (
-      "Notification" in window &&
-      "PushManager" in window &&
-      "serviceWorker" in navigator
-    );
+    const capabilities = browserDetectionService.getPWACapabilities();
+
+    return capabilities.canReceivePushNotifications;
   }
 
   /**
-   * Get notification permission status
+   * Get notification permission status with PWA-specific checks
    */
   getNotificationPermission(): NotificationPermission {
+    if (!("Notification" in window)) {
+      console.warn("⚠️ PWA: Notification API not available");
+      return "denied";
+    }
+
     return Notification.permission;
+  }
+
+  /**
+   * Refresh notification permission status (useful for PWAs)
+   */
+  async refreshNotificationPermission(): Promise<NotificationPermission> {
+    const browserInfo = browserDetectionService.getBrowserInfo();
+
+    console.log("🔄 PWA: Refreshing notification permission status", {
+      browser: `${browserInfo.name} ${browserInfo.version}`,
+      currentPermission: this.getNotificationPermission(),
+      isPWA: browserInfo.isStandalone,
+      isMobile: browserInfo.isMobile,
+    });
+
+    // For PWAs, especially on mobile, permission status can change outside the app
+    const permission = this.getNotificationPermission();
+
+    // If we have a service worker registration, check if we still have a valid subscription
+    if (permission === "granted" && this.swRegistration) {
+      try {
+        const subscription =
+          await this.swRegistration.pushManager.getSubscription();
+        console.log(
+          "📊 PWA: Current push subscription status:",
+          !!subscription,
+        );
+
+        if (!subscription && this.pushSubscription) {
+          // We thought we had a subscription but we don't - clear our reference
+          console.warn("⚠️ PWA: Push subscription was cleared externally");
+          this.pushSubscription = null;
+        }
+      } catch (error) {
+        console.error("❌ PWA: Error checking push subscription:", error);
+      }
+    }
+
+    return permission;
   }
 
   /**
