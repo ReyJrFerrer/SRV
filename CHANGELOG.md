@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Enhanced PWA and push notification cross-browser compatibility with comprehensive browser detection
+- Improved VAPID key handling with Safari-specific compatibility fixes
+- Browser-specific installation instructions and troubleshooting guides
+- Enhanced service worker with browser-specific caching and push notification handling
+- Comprehensive logging and error handling for debugging PWA issues across browsers
+- Mobile PWA installation detection and improved support for iOS Safari
+- Edge browser PWA installation support with manual installation instructions
+- Brave browser push notification compatibility improvements
+- Real-time browser capability detection and limitation warnings
+- Enhanced PWA state management with browser information integration
+
+### Fixed
+
+- Safari InvalidAccessError with VAPID key conversion using improved base64 handling
+- Brave browser push service errors with enhanced notification permission handling
+- Edge browser PWA installation issues with manual installation fallbacks
+- Mobile browser PWA installation unavailability with proper device detection
+- Cross-browser service worker compatibility issues with browser-specific handling
+
+### Improved
+
 - Connect existing notification hooks to PWA push notification system for real-time notifications
 - Add notification integration service to handle push notifications for both clients and providers
 - Add enhanced notification hooks with automatic push notification triggering when new notifications are detected

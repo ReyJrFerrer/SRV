@@ -129,7 +129,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const success = await acceptBookingById(booking.id);
+    const requestedDate = new Date(booking.requestedDate);
+    const success = await acceptBookingById(booking.id, requestedDate);
     if (success) {
       navigate(`../../provider/booking/${booking.id}`);
     }
