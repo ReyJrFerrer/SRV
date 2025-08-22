@@ -198,9 +198,18 @@ export const useBookRequest = (): UseBookRequestReturn => {
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
         // IMPORTANT: Now using booking canister for availability (with conflict checking)
+        const adjustedDate = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          12,
+          0,
+          0,
+          0,
+        );
         const slots = await bookingCanisterService.getServiceAvailableSlots(
           serviceId,
-          date,
+          adjustedDate,
         );
         const availableSlots = slots || [];
 
