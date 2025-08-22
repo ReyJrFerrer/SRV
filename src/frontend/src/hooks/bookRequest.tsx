@@ -131,12 +131,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const checkSameDayAvailability = useCallback(
     async (serviceId: string): Promise<boolean> => {
       try {
-        const date = new Date();
-        // Create a new date object to avoid timezone issues
-        const now = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate(),
+        const now = new Date(); // Use actual current time
+        const todayForBackend = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
           12,
           0,
           0,
@@ -175,31 +174,15 @@ export const useBookRequest = (): UseBookRequestReturn => {
           if (!todaySchedule || !todaySchedule.availability.isAvailable) {
             return false;
           }
-
-          // Check if current time is within service hours
-          const currentHour = now.getHours();
-          const currentMinute = now.getMinutes();
-          const currentTimeStr = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
-
-          // Check if current time falls within any available time slot
-          const isWithinServiceHours = todaySchedule.availability.slots.some(
-            (slot) => {
-              const startTime = slot.startTime;
-              const endTime = slot.endTime;
-
-              // Simple time comparison (assumes HH:MM format)
-              return currentTimeStr >= startTime && currentTimeStr <= endTime;
-            },
-          );
-
-          if (!isWithinServiceHours) {
-            return false;
-          }
         }
 
         // IMPORTANT: Using booking canister for availability check (with conflict checking)
+        // Use the backend-friendly date for the API call
         const isAvailable =
-          await bookingCanisterService.checkServiceAvailability(serviceId, now);
+          await bookingCanisterService.checkServiceAvailability(
+            serviceId,
+            todayForBackend,
+          );
 
         return isAvailable || false;
       } catch (err) {

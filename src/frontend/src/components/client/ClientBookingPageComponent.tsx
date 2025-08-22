@@ -394,17 +394,7 @@ const ClientBookingPageComponent: React.FC = () => {
       } else if (bookingOption === "sameday") {
         // Load slots for today
         const date = new Date();
-        const today = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate(),
-          12,
-          0,
-          0,
-          0,
-        );
-
-        getAvailableSlots(service.id, today);
+        getAvailableSlots(service.id, date);
       }
     }
   }, [service, selectedDate, bookingOption, getAvailableSlots]);
