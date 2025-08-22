@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { useFeedback } from "../../hooks/useFeedback";
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListRow";
@@ -29,9 +30,12 @@ const ClientHomePage: React.FC = () => {
     municipality: string;
   } | null>(null);
   const { bookings } = useBookingManagement();
+  const { submitFeedback, submitting } = useFeedback();
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   // --- State: Star rating for feedback ---
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  // --- State: Feedback comment ---
+  const [feedbackComment, setFeedbackComment] = useState<string>("");
   // --- State: Button loading for provider CTA ---
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
@@ -133,12 +137,38 @@ const ClientHomePage: React.FC = () => {
                 className="mb-4 w-full rounded-lg border border-gray-300 p-3"
                 rows={4}
                 placeholder="Share your thoughts..."
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
               />
               <button
-                className="btn-primary w-full"
-                onClick={() => setShowFeedbackPopup(false)}
+                className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={async () => {
+                  if (feedbackRating === 0) {
+                    alert("Please select a rating before submitting.");
+                    return;
+                  }
+
+                  try {
+                    await submitFeedback({
+                      rating: feedbackRating,
+                      comment: feedbackComment.trim() || undefined,
+                    });
+
+                    // Reset form
+                    setFeedbackRating(0);
+                    setFeedbackComment("");
+                    setShowFeedbackPopup(false);
+
+                    // Show success message
+                    alert("Thank you for your feedback!");
+                  } catch (error) {
+                    console.error("Failed to submit feedback:", error);
+                    alert("Failed to submit feedback. Please try again.");
+                  }
+                }}
+                disabled={submitting}
               >
-                Submit Feedback
+                {submitting ? "Submitting..." : "Submit Feedback"}
               </button>
               <button
                 className="mt-2 w-full text-sm text-gray-500 hover:text-blue-700"
