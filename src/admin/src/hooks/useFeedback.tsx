@@ -5,6 +5,9 @@ import feedbackCanisterService, {
   FeedbackStats,
 } from "../services/feedbackCanisterService";
 
+// Re-export types for easier importing
+export type { AppFeedback, FeedbackStats };
+
 /**
  * Custom hook to manage feedback functionality, including submitting and retrieving feedback.
  */

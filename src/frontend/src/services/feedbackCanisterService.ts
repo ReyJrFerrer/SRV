@@ -79,23 +79,6 @@ const adaptBackendFeedback = (backendFeedback: any): AppFeedback => {
   };
 };
 
-/**
- * Converts backend FeedbackStats to frontend format
- */
-const adaptBackendFeedbackStats = (backendStats: any): FeedbackStats => {
-  return {
-    totalFeedback: Number(backendStats.totalFeedback),
-    averageRating: Number(backendStats.averageRating),
-    ratingDistribution: backendStats.ratingDistribution.map(
-      ([rating, count]: [any, any]) => [Number(rating), Number(count)],
-    ),
-    totalWithComments: Number(backendStats.totalWithComments),
-    latestFeedback: backendStats.latestFeedback?.[0]
-      ? adaptBackendFeedback(backendStats.latestFeedback[0])
-      : undefined,
-  };
-};
-
 // Feedback Service Functions
 
 /**
@@ -146,115 +129,7 @@ export const submitFeedback = async (
   }
 };
 
-/**
- * Get all feedback (admin function)
- * @param identity User identity
- * @returns Array of all feedback
- */
-export const getAllFeedback = async (
-  identity?: Identity | null,
-): Promise<AppFeedback[]> => {
-  try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getAllFeedback();
-
-    return backendFeedback.map(adaptBackendFeedback);
-  } catch (error) {
-    console.error("Failed to get all feedback:", error);
-    throw error;
-  }
-};
-
-/**
- * Get current user's feedback
- * @param identity User identity
- * @returns Array of user's feedback
- */
-export const getMyFeedback = async (
-  identity?: Identity | null,
-): Promise<AppFeedback[]> => {
-  try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getMyFeedback();
-
-    return backendFeedback.map(adaptBackendFeedback);
-  } catch (error) {
-    console.error("Failed to get user feedback:", error);
-    throw error;
-  }
-};
-
-/**
- * Get feedback statistics
- * @param identity User identity
- * @returns Feedback statistics
- */
-export const getFeedbackStats = async (
-  identity?: Identity | null,
-): Promise<FeedbackStats> => {
-  try {
-    const actor = getFeedbackActor(identity);
-    const backendStats = await actor.getFeedbackStats();
-
-    return adaptBackendFeedbackStats(backendStats);
-  } catch (error) {
-    console.error("Failed to get feedback stats:", error);
-    throw error;
-  }
-};
-
-/**
- * Get recent feedback with a limit
- * @param limit Maximum number of feedback items to return
- * @param identity User identity
- * @returns Array of recent feedback
- */
-export const getRecentFeedback = async (
-  limit: number,
-  identity?: Identity | null,
-): Promise<AppFeedback[]> => {
-  try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getRecentFeedback(BigInt(limit));
-
-    return backendFeedback.map(adaptBackendFeedback);
-  } catch (error) {
-    console.error("Failed to get recent feedback:", error);
-    throw error;
-  }
-};
-
-/**
- * Get feedback by ID
- * @param feedbackId The feedback ID
- * @param identity User identity
- * @returns The feedback item
- */
-export const getFeedbackById = async (
-  feedbackId: string,
-  identity?: Identity | null,
-): Promise<AppFeedback> => {
-  try {
-    const actor = getFeedbackActor(identity);
-    const result = await actor.getFeedbackById(feedbackId);
-
-    if ("ok" in result) {
-      return adaptBackendFeedback(result.ok);
-    } else {
-      throw new Error(result.err);
-    }
-  } catch (error) {
-    console.error("Failed to get feedback by ID:", error);
-    throw error;
-  }
-};
-
 export default {
   initializeFeedbackCanister,
   submitFeedback,
-  getAllFeedback,
-  getMyFeedback,
-  getFeedbackStats,
-  getRecentFeedback,
-  getFeedbackById,
 };
