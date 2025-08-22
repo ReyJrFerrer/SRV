@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Brave browser push notification compatibility improvements
 - Real-time browser capability detection and limitation warnings
 - Enhanced PWA state management with browser information integration
+- Time validation for same-day booking slots to prevent booking past time slots
 
 ### Fixed
 
