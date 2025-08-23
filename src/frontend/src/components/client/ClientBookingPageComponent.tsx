@@ -407,9 +407,21 @@ const ClientBookingPageComponent: React.FC = () => {
       setCheckingSlots(true);
       const availabilityMap: Record<string, boolean> = {};
 
+      const today = new Date();
+
       // Determine the date to check (either selected date for scheduled or today for same-day)
       const dateToCheck =
-        bookingOption === "sameday" ? new Date() : selectedDate;
+        bookingOption === "sameday"
+          ? new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              12,
+              0,
+              0,
+              0,
+            )
+          : selectedDate;
 
       if (!dateToCheck) {
         setCheckingSlots(false);

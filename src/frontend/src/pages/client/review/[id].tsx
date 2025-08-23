@@ -99,8 +99,9 @@ export const BookingReviewPage: React.FC = () => {
     }
 
     const trimmedFeedback = feedback.trim();
-    if (trimmedFeedback.length < 5 || trimmedFeedback.length > 500) {
-      setFormError("A comment between 5 and 500 characters is required.");
+    // Comment is now optional - only validate length if comment is provided
+    if (trimmedFeedback.length > 500) {
+      setFormError("Comment cannot exceed 500 characters.");
       return;
     }
 
@@ -149,9 +150,7 @@ export const BookingReviewPage: React.FC = () => {
 
   const isFormValid = useMemo(() => {
     const trimmedFeedback = feedback.trim();
-    return (
-      rating > 0 && trimmedFeedback.length >= 5 && trimmedFeedback.length <= 500
-    );
+    return rating > 0 && trimmedFeedback.length <= 500;
   }, [rating, feedback]);
 
   const ratingLabel = useMemo(() => {
@@ -269,7 +268,7 @@ export const BookingReviewPage: React.FC = () => {
       {/* Feedback Section */}
       <div className="mb-8 px-2 py-4 sm:px-8 sm:py-6">
         <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-yellow-800">
-          Add a quick comment:
+          Add a comment (optional):
         </h2>
         <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3">
           {feedbackOptions.map((option) => (
@@ -285,7 +284,7 @@ export const BookingReviewPage: React.FC = () => {
           ))}
         </div>
         <textarea
-          placeholder="Write your feedback... (5-500 characters)"
+          placeholder="Write your feedback... (optional, up to 500 characters)"
           className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-gray-100 sm:min-h-[80px]"
           rows={4}
           value={feedback}
