@@ -41,6 +41,10 @@
       "type": "motoko",
       "main": "src/backend/function/admin.mo"
     },
+    "feedback": {
+      "type": "motoko",
+      "main": "src/backend/function/feedback.mo"
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",
@@ -82,7 +86,8 @@
         "service",
         "chat",
         "media",
-        "remittance"
+        "remittance",
+        "feedback"
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]

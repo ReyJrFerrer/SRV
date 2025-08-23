@@ -220,6 +220,25 @@ module {
         updatedAt: Time.Time;
     };
 
+    // Feedback types - General app feedback from users
+    public type AppFeedback = {
+        id: Text;
+        userId: Principal;
+        userName: Text;
+        userPhone: Text;
+        rating: Nat; // 1-5 stars
+        comment: ?Text; // Optional written review
+        createdAt: Time.Time;
+    };
+
+    public type FeedbackStats = {
+        totalFeedback: Nat;
+        averageRating: Float;
+        ratingDistribution: [(Nat, Nat)]; // (rating, count) pairs
+        totalWithComments: Nat;
+        latestFeedback: ?AppFeedback;
+    };
+
     // Reputation types
     public type TrustLevel = {
         #New;
