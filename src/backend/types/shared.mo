@@ -242,6 +242,21 @@ module {
         latestFeedback: ?AppFeedback;
     };
 
+    // Report types - General platform issue reports from users
+    public type AppReport = {
+        id: Text;
+        userId: Principal;
+        userName: Text;
+        userPhone: Text;
+        description: Text;
+        createdAt: Time.Time;
+    };
+
+    public type ReportStats = {
+        totalReports: Nat;
+        latestReport: ?AppReport;
+    };
+
     // Reputation types
     public type TrustLevel = {
         #New;

@@ -12,6 +12,8 @@ persistent actor FeedbackCanister {
     // Type definitions
     type AppFeedback = Types.AppFeedback;
     type FeedbackStats = Types.FeedbackStats;
+    type AppReport = Types.AppReport;
+    type ReportStats = Types.ReportStats;
     type Result<T> = Types.Result<T>;
     type Profile = Types.Profile;
 
@@ -19,6 +21,11 @@ persistent actor FeedbackCanister {
     private var feedbackEntries : [(Text, AppFeedback)] = [];
     private transient var feedbacks = HashMap.HashMap<Text, AppFeedback>(10, Text.equal, Text.hash);
     private transient var nextFeedbackId : Nat = 1;
+
+    // Report state variables
+    private var reportEntries : [(Text, AppReport)] = [];
+    private transient var reports = HashMap.HashMap<Text, AppReport>(10, Text.equal, Text.hash);
+    private transient var nextReportId : Nat = 1;
 
     // Canister references
     private transient var authCanisterId : ?Principal = null;
@@ -32,6 +39,12 @@ persistent actor FeedbackCanister {
     private func generateFeedbackId() : Text {
         let id = "feedback_" # Nat.toText(nextFeedbackId);
         nextFeedbackId += 1;
+        id
+    };
+
+    private func generateReportId() : Text {
+        let id = "report_" # Nat.toText(nextReportId);
+        nextReportId += 1;
         id
     };
 
@@ -50,14 +63,22 @@ persistent actor FeedbackCanister {
         }
     };
 
+    private func validateDescription(description : Text) : Bool {
+        description.size() > 0 and description.size() <= MAX_COMMENT_LENGTH
+    };
+
     // Initialization functions
     system func preupgrade() {
         feedbackEntries := Iter.toArray(feedbacks.entries());
+        reportEntries := Iter.toArray(reports.entries());
     };
 
     system func postupgrade() {
         feedbacks := HashMap.fromIter<Text, AppFeedback>(feedbackEntries.vals(), 10, Text.equal, Text.hash);
         feedbackEntries := [];
+        
+        reports := HashMap.fromIter<Text, AppReport>(reportEntries.vals(), 10, Text.equal, Text.hash);
+        reportEntries := [];
         
         // Update nextFeedbackId to be greater than any existing ID
         var maxId : Nat = 0;
@@ -84,6 +105,32 @@ persistent actor FeedbackCanister {
             };
         };
         nextFeedbackId := maxId + 1;
+
+        // Update nextReportId to be greater than any existing ID
+        var maxReportId : Nat = 0;
+        for ((id, _) in reports.entries()) {
+            // Extract number from "report_X" format
+            let idParts = Text.split(id, #char '_');
+            switch (idParts.next()) {
+                case (?_prefix) {
+                    switch (idParts.next()) {
+                        case (?numberText) {
+                            switch (textToNat(numberText)) {
+                                case (?num) {
+                                    if (num > maxReportId) {
+                                        maxReportId := num;
+                                    };
+                                };
+                                case (null) {};
+                            };
+                        };
+                        case (null) {};
+                    };
+                };
+                case (null) {};
+            };
+        };
+        nextReportId := maxReportId + 1;
     };
 
     // Helper function to convert text to nat
@@ -302,6 +349,155 @@ persistent actor FeedbackCanister {
             sortedFeedback
         } else {
             Array.tabulate<AppFeedback>(limit, func(i) = sortedFeedback[i])
+        }
+    };
+
+    // ========== REPORT FUNCTIONS ==========
+
+    // Submit report
+    public shared(msg) func submitReport(
+        description : Text
+    ) : async Result<AppReport> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // Validate input
+        if (not validateDescription(description)) {
+            return #err("Invalid description. Must be between 1 and " # Nat.toText(MAX_COMMENT_LENGTH) # " characters");
+        };
+
+        // Get user profile from auth canister
+        switch (authCanisterId) {
+            case (?authId) {
+                let authCanister = actor(Principal.toText(authId)) : actor {
+                    getProfile : (Principal) -> async Result<Profile>;
+                };
+                
+                let profileResult = await authCanister.getProfile(caller);
+                switch (profileResult) {
+                    case (#ok(profile)) {
+                        let reportId = generateReportId();
+                        let newReport : AppReport = {
+                            id = reportId;
+                            userId = caller;
+                            userName = profile.name;
+                            userPhone = profile.phone;
+                            description = description;
+                            createdAt = Time.now();
+                        };
+                        
+                        reports.put(reportId, newReport);
+                        return #ok(newReport);
+                    };
+                    case (#err(error)) {
+                        return #err("Failed to get user profile: " # error);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Auth canister not configured");
+            };
+        };
+    };
+
+    // Get all reports (admin function)
+    public query func getAllReports() : async [AppReport] {
+        // In real implementation, should check admin permissions
+        let reportArray = Iter.toArray(reports.vals());
+        
+        // Sort by creation time (newest first)
+        Array.sort<AppReport>(reportArray, func(a, b) {
+            if (a.createdAt > b.createdAt) { #less }
+            else if (a.createdAt < b.createdAt) { #greater }
+            else { #equal }
+        })
+    };
+
+    // Get reports by user
+    public shared query(msg) func getMyReports() : async [AppReport] {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return [];
+        };
+        
+        let userReports = Array.filter<AppReport>(
+            Iter.toArray(reports.vals()),
+            func (report : AppReport) : Bool {
+                Principal.equal(report.userId, caller)
+            }
+        );
+        
+        // Sort by creation time (newest first)
+        Array.sort<AppReport>(userReports, func(a, b) {
+            if (a.createdAt > b.createdAt) { #less }
+            else if (a.createdAt < b.createdAt) { #greater }
+            else { #equal }
+        })
+    };
+
+    // Get report statistics
+    public query func getReportStats() : async ReportStats {
+        let allReports = Iter.toArray(reports.vals());
+        let totalReports = allReports.size();
+        
+        if (totalReports == 0) {
+            return {
+                totalReports = 0;
+                latestReport = null;
+            };
+        };
+        
+        // Get latest report
+        let sortedReports = Array.sort<AppReport>(allReports, func(a, b) {
+            if (a.createdAt > b.createdAt) { #less }
+            else if (a.createdAt < b.createdAt) { #greater }
+            else { #equal }
+        });
+        
+        let latestReport = if (sortedReports.size() > 0) {
+            ?sortedReports[0]
+        } else {
+            null
+        };
+        
+        return {
+            totalReports = totalReports;
+            latestReport = latestReport;
+        };
+    };
+
+    // Get report by ID
+    public query func getReportById(reportId : Text) : async Result<AppReport> {
+        switch (reports.get(reportId)) {
+            case (?report) {
+                return #ok(report);
+            };
+            case (null) {
+                return #err("Report not found");
+            };
+        };
+    };
+
+    // Get recent reports (limited number)
+    public query func getRecentReports(limit : Nat) : async [AppReport] {
+        let allReports = Iter.toArray(reports.vals());
+        
+        // Sort by creation time (newest first)
+        let sortedReports = Array.sort<AppReport>(allReports, func(a, b) {
+            if (a.createdAt > b.createdAt) { #less }
+            else if (a.createdAt < b.createdAt) { #greater }
+            else { #equal }
+        });
+        
+        // Take only the requested number of items
+        if (sortedReports.size() <= limit) {
+            sortedReports
+        } else {
+            Array.tabulate<AppReport>(limit, func(i) = sortedReports[i])
         }
     };
 }
