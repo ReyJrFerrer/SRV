@@ -53,7 +53,7 @@ const TimeSlotInput: React.FC<{
   onRemoveSlot: (id: string) => void;
 }> = ({ slot, onSlotChange, onRemoveSlot }) => (
   <div className="mb-2 flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 shadow-sm lg:flex-row lg:items-center">
-    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 md:flex-row">
+    <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
       <div className="flex gap-2">
         <select
           value={slot.startHour}
@@ -90,8 +90,8 @@ const TimeSlotInput: React.FC<{
           ))}
         </select>
       </div>
-      <span className="hidden text-gray-500 sm:inline">to</span>
-      <div className="mt-2 flex gap-2 sm:mt-0">
+      <span className="hidden text-gray-500 lg:inline">to</span>
+      <div className="mt-2 flex gap-2 lg:mt-0">
         <select
           value={slot.endHour}
           onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
@@ -131,7 +131,7 @@ const TimeSlotInput: React.FC<{
     <button
       type="button"
       onClick={() => onRemoveSlot(slot.id)}
-      className="self-end rounded-full bg-red-50 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 sm:ml-auto"
+      className="self-end rounded-full bg-red-50 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 lg:ml-auto"
       title="Remove time slot"
     >
       <TrashIcon className="h-4 w-4" />
