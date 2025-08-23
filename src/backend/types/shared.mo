@@ -190,8 +190,11 @@ module {
         status: BookingStatus;
         requestedDate: Time.Time;
         scheduledDate: ?Time.Time;
+        startedDate: ?Time.Time; // When service status changed to InProgress
         completedDate: ?Time.Time;
         price: Nat;
+        amountPaid: ?Nat; // Total amount paid by client (cash received)
+        serviceTime: ?Nat; // Duration in nanoseconds from started to completed
         location: Location;
         evidence: ?Evidence;
         notes: ?Text;  // Optional notes from client during booking creation
