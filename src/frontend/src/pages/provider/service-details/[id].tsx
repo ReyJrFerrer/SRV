@@ -2137,7 +2137,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         <span className="text-xs">Add Certificate</span>
                         <input
                           type="file"
-                          accept="image/*,application/pdf"
+                          accept="image/png, image/jpeg"
                           multiple
                           className="hidden"
                           onChange={handleCertificationUpload}
