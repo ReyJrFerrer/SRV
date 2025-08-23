@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add feedback system for users to submit ratings and reviews on app experience
+- Add AdminFeedback component to display feedback statistics and individual feedback items in admin dashboard
 - Enhanced PWA and push notification cross-browser compatibility with comprehensive browser detection
 - Improved VAPID key handling with Safari-specific compatibility fixes
 - Browser-specific installation instructions and troubleshooting guides
