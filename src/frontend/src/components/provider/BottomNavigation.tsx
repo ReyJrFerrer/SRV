@@ -58,8 +58,6 @@ const BottomNavigation: React.FC = () => {
               );
             }, [isActive, item.label]);
 
-            const isServices = item.label.toLowerCase() === "services";
-            const servicesSize = "80px";
             const defaultSize = "28px";
             const activeOtherSize = "56px";
 
@@ -106,36 +104,22 @@ const BottomNavigation: React.FC = () => {
                         : "mb-1 group-hover:scale-105 group-hover:drop-shadow-md"
                     }`}
                     style={
-                      isServices
+                      isActive
                         ? {
-                            position: "absolute",
-                            top: isActive ? "-15px" : "-20px",
-                            left: "51%",
-                            // FIX: Use a single transform for both centering and scaling
-                            transform: `translateX(-50%) scale(${isActive ? 1.1 : 1})`,
-                            height: servicesSize,
-                            width: servicesSize,
-                            maxHeight: servicesSize,
-                            maxWidth: servicesSize,
+                            height: activeOtherSize,
+                            width: activeOtherSize,
+                            maxHeight: activeOtherSize,
+                            maxWidth: activeOtherSize,
+                            margin: "0 auto",
                             pointerEvents: "none",
-                            zIndex: 10,
                           }
-                        : isActive
-                          ? {
-                              height: activeOtherSize,
-                              width: activeOtherSize,
-                              maxHeight: activeOtherSize,
-                              maxWidth: activeOtherSize,
-                              margin: "0 auto",
-                              pointerEvents: "none",
-                            }
-                          : {
-                              height: defaultSize,
-                              width: defaultSize,
-                              maxHeight: defaultSize,
-                              maxWidth: defaultSize,
-                              pointerEvents: "none",
-                            }
+                        : {
+                            height: defaultSize,
+                            width: defaultSize,
+                            maxHeight: defaultSize,
+                            maxWidth: defaultSize,
+                            pointerEvents: "none",
+                          }
                     }
                     draggable={false}
                   />
@@ -147,8 +131,6 @@ const BottomNavigation: React.FC = () => {
                       : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
                   }`}
                   style={{
-                    position: isServices ? "absolute" : "static",
-                    bottom: isServices ? "5px" : "",
                     opacity: isActive ? 1 : 0.9,
                     transform: isActive ? "scale(1.05)" : undefined,
                   }}
