@@ -405,11 +405,16 @@ export const bookingCanisterService = {
     requestedDate: Date,
     servicePackageId?: string,
     notes?: string,
+    amountToPay?: number,
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
       const canisterLocation = convertToCanisterLocation(location);
       const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
+      const amountToPayOptional: [] | [bigint] =
+        amountToPay !== undefined
+          ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
+          : [];
 
       const result = await actor.createBooking(
         serviceId,
@@ -419,6 +424,7 @@ export const bookingCanisterService = {
         requestedTimestamp,
         servicePackageId ? [servicePackageId] : [],
         notes ? [notes] : [],
+        amountToPayOptional,
       );
 
       if ("ok" in result) {

@@ -80,6 +80,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
+  const amountToPay = booking.amountPaid ? booking.amountPaid : 0;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
@@ -290,6 +291,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   </span>
                 </div>
               )}
+              {amountToPay !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
+                  </span>
+                </div>
+              )}
               {duration !== "N/A" && (
                 <div className="flex items-center">
                   <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
@@ -449,6 +458,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
                   <span className="font-semibold text-green-700">
                     ₱{price.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {amountToPay !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
                   </span>
                 </div>
               )}

@@ -699,6 +699,7 @@ const ClientBookingPageComponent: React.FC = () => {
         scheduledTime: selectedTime, // Include selectedTime for both same-day and scheduled bookings
         location: finalAddress,
         notes: notes,
+        amountToPay: parseFloat(amountPaid),
       };
       const booking = await createBookingRequest(bookingData);
       if (booking) {

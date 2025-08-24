@@ -565,6 +565,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     specificBooking?.packageDetails?.price ??
     specificBooking?.serviceDetails?.price;
   const duration = specificBooking?.duration ?? "N/A";
+  const amountToPay = specificBooking?.amountPaid ?? 0;
 
   // --- Main Page Layout ---
   return (
@@ -683,6 +684,16 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 </span>
               </div>
             )}
+            <div className="mb-2 flex items-center gap-2">
+              <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-gray-700">
+                Client's amount to pay:{" "}
+                <span className="font-semibold text-green-700">
+                  ₱{amountToPay.toFixed(2)}
+                </span>
+              </span>
+            </div>
+
             {/* Booking duration */}
             {duration !== "N/A" && (
               <div className="mb-2 flex items-center gap-2">

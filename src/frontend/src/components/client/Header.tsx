@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import ActiveService from "../../components/client/ActiveService";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -345,6 +346,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <span className="text-xl font-bold text-gray-800">{displayName}</span>
         </div>
       </div>
+      <ActiveService />
 
       {/* --- Location & Search Section --- */}
       <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
