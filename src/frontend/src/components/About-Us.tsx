@@ -112,7 +112,7 @@ export default function AboutUs({
             </div>
 
             <button
-              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""}`}
+              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""} ml-auto`}
               aria-label="Toggle menu"
               onClick={toggleMobileMenu}
             >

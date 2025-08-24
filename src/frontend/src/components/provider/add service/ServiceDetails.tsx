@@ -127,6 +127,19 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     }
   }, [scrollToErrorTrigger, validationErrors]);
 
+  // Reset error visibility when validation errors change
+  useEffect(() => {
+    if (validationErrors.serviceOfferingTitle) {
+      setHideTitleError(false);
+    }
+    if (validationErrors.categoryId) {
+      setHideCategoryError(false);
+    }
+    if (validationErrors.servicePackages) {
+      setHidePackagesError(false);
+    }
+  }, [validationErrors]);
+
   // Handlers to clear error messages on user action
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHideTitleError(true);
