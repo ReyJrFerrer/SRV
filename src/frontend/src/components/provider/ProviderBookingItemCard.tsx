@@ -154,10 +154,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (window.confirm("Mark this booking as completed?")) {
-      const success = await completeBookingById(booking.id);
-      if (success) {
-        navigate(`/provider/complete-service/${booking.id}`);
-      }
+      navigate(`/provider/complete-service/${booking.id}`);
     }
   };
 
