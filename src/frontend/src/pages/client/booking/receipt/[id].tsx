@@ -15,6 +15,14 @@ const ReceiptPage: React.FC = () => {
   const userRating = location.state?.userRating;
   const { bookings, loading: bookingLoading } = useBookingManagement();
 
+  // Helper function to format service time from nanoseconds to minutes
+  const formatServiceTime = (serviceTimeNs?: number): string => {
+    if (!serviceTimeNs) return "N/A";
+    const minutes = Math.round(serviceTimeNs / (1000000000 * 60)); // Convert nanoseconds to minutes
+    if (minutes < 1) return "< 1 minute";
+    return `${minutes} minute${minutes > 1 ? "s" : ""}`;
+  };
+
   // Set the document title
   useEffect(() => {
     document.title = "Booking Receipt | SRV-APP";
@@ -58,8 +66,9 @@ const ReceiptPage: React.FC = () => {
     });
   };
 
-  const amountPaid = booking?.price || 0;
-  const changeGiven = 0;
+  const amountPaid = booking?.amountPaid || 0;
+  const changeGiven =
+    booking?.price && amountPaid ? amountPaid - booking.price : 0;
 
   if (bookingLoading) {
     return (
@@ -131,6 +140,14 @@ const ReceiptPage: React.FC = () => {
               {booking.providerProfile?.name || "N/A"}
             </span>
           </div>
+          {booking.serviceTime && (
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-bold text-gray-600">Service Duration:</span>
+              <span className="text-gray-800">
+                {formatServiceTime(booking.serviceTime)}
+              </span>
+            </div>
+          )}
           {userRating && (
             <div className="mb-3 flex items-center justify-between">
               <span className="font-bold text-gray-600">Your Rating:</span>

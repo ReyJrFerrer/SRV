@@ -120,7 +120,7 @@ interface ProviderBookingManagementHook {
   acceptBooking: (bookingId: string, scheduledDate?: Date) => Promise<void>;
   declineBooking: (bookingId: string, reason?: string) => Promise<void>;
   startBooking: (bookingId: string) => Promise<void>;
-  completeBooking: (bookingId: string, finalPrice?: number) => Promise<void>;
+  completeBooking: (bookingId: string, amountPaid?: number) => Promise<void>;
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
   // Individual booking lookup and action functions
@@ -136,7 +136,7 @@ interface ProviderBookingManagementHook {
   startBookingById: (bookingId: string) => Promise<boolean>;
   completeBookingById: (
     bookingId: string,
-    finalPrice?: number,
+    amountPaid?: number,
   ) => Promise<boolean>;
   disputeBookingById: (bookingId: string, reason: string) => Promise<boolean>;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
@@ -886,13 +886,15 @@ export const useProviderBookingManagement =
     );
 
     const completeBooking = useCallback(
-      async (bookingId: string) => {
+      async (bookingId: string, amountPaid?: number) => {
         try {
           setLoadingState(`complete-${bookingId}`, true);
           clearError();
 
-          const updatedBooking =
-            await bookingCanisterService.completeBooking(bookingId);
+          const updatedBooking = await bookingCanisterService.completeBooking(
+            bookingId,
+            amountPaid,
+          );
 
           if (updatedBooking) {
             const enrichedBooking =
@@ -1403,9 +1405,9 @@ export const useProviderBookingManagement =
           return false;
         }
       },
-      completeBookingById: async (bookingId: string) => {
+      completeBookingById: async (bookingId: string, amountPaid?: number) => {
         try {
-          await completeBooking(bookingId);
+          await completeBooking(bookingId, amountPaid);
           return true;
         } catch {
           return false;

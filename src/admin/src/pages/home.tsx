@@ -3,6 +3,7 @@ import {
   AdminDashboardStats,
   ServiceProviderCommissionTable,
   PendingValidationCard,
+  AdminFeedback,
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
@@ -327,6 +328,12 @@ export const AdminHomePage: React.FC = () => {
             providers={serviceProviders}
             loading={loading.serviceProviders}
             onRefresh={() => refreshServiceProviders(true)}
+          />
+
+          {/* User Feedback Section */}
+          <AdminFeedback
+            loading={loading.systemStats}
+            onRefresh={() => refreshSystemStats(true)}
           />
 
           {/* Pending Validations Section */}

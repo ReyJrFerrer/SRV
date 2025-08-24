@@ -1469,7 +1469,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/provider/home")}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
@@ -2137,7 +2137,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         <span className="text-xs">Add Certificate</span>
                         <input
                           type="file"
-                          accept="image/*,application/pdf"
+                          accept="image/png, image/jpeg"
                           multiple
                           className="hidden"
                           onChange={handleCertificationUpload}

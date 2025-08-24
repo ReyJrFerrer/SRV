@@ -709,7 +709,7 @@ persistent actor ReputationCanister {
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
         // 4. Update provider reputation
-        ignore await updateUserReputation(review.providerId);
+        // ignore await updateUserReputation(review.providerId);
         
         // 5. Update client reputation (reviewer)
         ignore await updateUserReputation(review.clientId);
@@ -788,7 +788,7 @@ persistent actor ReputationCanister {
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
         // 5. Update provider reputation
-        ignore await updateUserReputation(review.providerId);
+        // ignore await updateUserReputation(review.providerId);
         
         // 6. Update client reputation (reviewer)
         ignore await updateUserReputation(review.clientId);

@@ -78,7 +78,7 @@ import NotificationsPageSP from "./src/pages/provider/notifications";
 
 // Provider Info Pages
 import ProviderTermsAndConditionsPage from "./src/pages/provider/inside settings/terms";
-import ProviderReportIssuePage from "./src/pages/provider/inside settings/report";
+import ProviderReportIssuePage from "./src/pages/report";
 import ProviderHelpSupportPage from "./src/pages/provider/help";
 
 // Create a client for React Query

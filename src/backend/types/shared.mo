@@ -190,8 +190,11 @@ module {
         status: BookingStatus;
         requestedDate: Time.Time;
         scheduledDate: ?Time.Time;
+        startedDate: ?Time.Time; // When service status changed to InProgress
         completedDate: ?Time.Time;
         price: Nat;
+        amountPaid: ?Nat; // Total amount paid by client (cash received)
+        serviceTime: ?Nat; // Duration in nanoseconds from started to completed
         location: Location;
         evidence: ?Evidence;
         notes: ?Text;  // Optional notes from client during booking creation
@@ -218,6 +221,40 @@ module {
         qualityScore: ?Float;
         createdAt: Time.Time;
         updatedAt: Time.Time;
+    };
+
+    // Feedback types - General app feedback from users
+    public type AppFeedback = {
+        id: Text;
+        userId: Principal;
+        userName: Text;
+        userPhone: Text;
+        rating: Nat; // 1-5 stars
+        comment: ?Text; // Optional written review
+        createdAt: Time.Time;
+    };
+
+    public type FeedbackStats = {
+        totalFeedback: Nat;
+        averageRating: Float;
+        ratingDistribution: [(Nat, Nat)]; // (rating, count) pairs
+        totalWithComments: Nat;
+        latestFeedback: ?AppFeedback;
+    };
+
+    // Report types - General platform issue reports from users
+    public type AppReport = {
+        id: Text;
+        userId: Principal;
+        userName: Text;
+        userPhone: Text;
+        description: Text;
+        createdAt: Time.Time;
+    };
+
+    public type ReportStats = {
+        totalReports: Nat;
+        latestReport: ?AppReport;
     };
 
     // Reputation types

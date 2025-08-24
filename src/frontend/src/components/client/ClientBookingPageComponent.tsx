@@ -393,8 +393,8 @@ const ClientBookingPageComponent: React.FC = () => {
         getAvailableSlots(service.id, selectedDate);
       } else if (bookingOption === "sameday") {
         // Load slots for today
-        const today = new Date();
-        getAvailableSlots(service.id, today);
+        const date = new Date();
+        getAvailableSlots(service.id, date);
       }
     }
   }, [service, selectedDate, bookingOption, getAvailableSlots]);
@@ -407,31 +407,63 @@ const ClientBookingPageComponent: React.FC = () => {
       setCheckingSlots(true);
       const availabilityMap: Record<string, boolean> = {};
 
+      const today = new Date();
+
       // Determine the date to check (either selected date for scheduled or today for same-day)
       const dateToCheck =
-        bookingOption === "sameday" ? new Date() : selectedDate;
+        bookingOption === "sameday"
+          ? new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              12,
+              0,
+              0,
+              0,
+            )
+          : selectedDate;
 
       if (!dateToCheck) {
         setCheckingSlots(false);
         return;
       }
 
+      // Helper function to check if a time slot has passed (for same-day booking only)
+      const isTimeSlotPassed = (startTime: string): boolean => {
+        if (bookingOption !== "sameday") return false;
+
+        const now = new Date();
+        const [startHour, startMinute] = startTime.split(":").map(Number);
+        const slotStartTime = new Date();
+        slotStartTime.setHours(startHour, startMinute, 0, 0);
+
+        return now >= slotStartTime;
+      };
+
       // Check availability for each slot
       for (const slot of availableSlots) {
         const timeSlotKey = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
-        try {
-          const isAvailable = await checkTimeSlotAvailability(
-            service.id,
-            dateToCheck,
-            timeSlotKey,
-          );
-          availabilityMap[timeSlotKey] = isAvailable;
-        } catch (error) {
-          console.error(
-            `Error checking availability for slot ${timeSlotKey}:`,
-            error,
-          );
-          availabilityMap[timeSlotKey] = false; // Default to unavailable on error
+
+        // First check if the time slot has passed (for same-day booking)
+        const hasTimePassed = isTimeSlotPassed(slot.timeSlot.startTime);
+
+        if (hasTimePassed) {
+          availabilityMap[timeSlotKey] = false;
+        } else {
+          try {
+            const isAvailable = await checkTimeSlotAvailability(
+              service.id,
+              dateToCheck,
+              timeSlotKey,
+            );
+            availabilityMap[timeSlotKey] = isAvailable;
+          } catch (error) {
+            console.error(
+              `Error checking availability for slot ${timeSlotKey}:`,
+              error,
+            );
+            availabilityMap[timeSlotKey] = false; // Default to unavailable on error
+          }
         }
       }
 
@@ -1001,6 +1033,28 @@ const ClientBookingPageComponent: React.FC = () => {
                               const isSlotAvailable =
                                 slotAvailability[time] !== false;
 
+                              // Check if the time slot has passed (for same-day booking)
+                              const isTimeSlotPassed = (): boolean => {
+                                const now = new Date();
+                                const [startHour, startMinute] =
+                                  slot.timeSlot.startTime
+                                    .split(":")
+                                    .map(Number);
+                                const slotStartTime = new Date();
+                                slotStartTime.setHours(
+                                  startHour,
+                                  startMinute,
+                                  0,
+                                  0,
+                                );
+                                return now >= slotStartTime;
+                              };
+
+                              const hasTimePassed = isTimeSlotPassed();
+                              const unavailableReason = hasTimePassed
+                                ? "Time has passed"
+                                : "This time slot is already booked";
+
                               return (
                                 <button
                                   key={index}
@@ -1016,15 +1070,13 @@ const ClientBookingPageComponent: React.FC = () => {
                                         : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                   }`}
                                   title={
-                                    !isSlotAvailable
-                                      ? "This time slot is already booked"
-                                      : ""
+                                    !isSlotAvailable ? unavailableReason : ""
                                   }
                                 >
                                   {formatted}
                                   {!isSlotAvailable && (
                                     <span className="ml-1 text-xs">
-                                      (Booked)
+                                      {hasTimePassed ? "(Passed)" : "(Booked)"}
                                     </span>
                                   )}
                                 </button>

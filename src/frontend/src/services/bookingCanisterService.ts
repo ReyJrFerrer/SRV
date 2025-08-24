@@ -180,8 +180,11 @@ export interface Booking {
   status: BookingStatus;
   requestedDate: string;
   scheduledDate?: string;
+  startedDate?: string; // When service status changed to InProgress
   completedDate?: string;
   price: number;
+  amountPaid?: number; // Total amount paid by client (cash received)
+  serviceTime?: number; // Duration in nanoseconds from started to completed
   location: Location;
   evidence?: Evidence;
   notes?: string;
@@ -367,10 +370,19 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
   scheduledDate: booking.scheduledDate[0]
     ? new Date(Number(booking.scheduledDate[0]) / 1000000).toISOString()
     : undefined,
+  startedDate: booking.startedDate[0]
+    ? new Date(Number(booking.startedDate[0]) / 1000000).toISOString()
+    : undefined,
   completedDate: booking.completedDate[0]
     ? new Date(Number(booking.completedDate[0]) / 1000000).toISOString()
     : undefined,
   price: Number(booking.price),
+  amountPaid: booking.amountPaid[0]
+    ? Number(booking.amountPaid[0]) / 100
+    : undefined, // Convert from cents back to dollars
+  serviceTime: booking.serviceTime[0]
+    ? Number(booking.serviceTime[0])
+    : undefined,
   location: convertCanisterLocation(booking.location),
   evidence: booking.evidence[0]
     ? convertCanisterEvidence(booking.evidence[0])
@@ -572,10 +584,17 @@ export const bookingCanisterService = {
   /**
    * Complete a booking
    */
-  async completeBooking(bookingId: string): Promise<Booking | null> {
+  async completeBooking(
+    bookingId: string,
+    amountPaid?: number,
+  ): Promise<Booking | null> {
     try {
       const actor = getBookingActor();
-      const result = await actor.completeBooking(bookingId);
+      const amountPaidOptional: [] | [bigint] =
+        amountPaid !== undefined
+          ? [BigInt(Math.round(amountPaid * 100))] // Convert to cents and then to BigInt
+          : [];
+      const result = await actor.completeBooking(bookingId, amountPaidOptional);
 
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
