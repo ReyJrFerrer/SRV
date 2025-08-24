@@ -106,6 +106,7 @@ const AddServicePage: React.FC = () => {
   const {
     categories,
     loading: loadingCategories,
+    userServices,
     getCategories,
     createService,
     createPackage,
@@ -255,6 +256,18 @@ const AddServicePage: React.FC = () => {
         } else if (filter.isProfane(formData.serviceOfferingTitle)) {
           errors.serviceOfferingTitle =
             "Service title contains inappropriate language.";
+        } else {
+          // Check for duplicate service titles (case-insensitive, trimmed)
+          const trimmedTitle = formData.serviceOfferingTitle
+            .trim()
+            .toLowerCase();
+          const isDuplicate = userServices.some(
+            (service) => service.title.trim().toLowerCase() === trimmedTitle,
+          );
+          if (isDuplicate) {
+            errors.serviceOfferingTitle =
+              "You already have a service with this title. Please choose a different name.";
+          }
         }
 
         // Validate category
@@ -439,6 +452,7 @@ const AddServicePage: React.FC = () => {
     serviceImageFiles,
     validateImageFiles,
     isProcessingImages,
+    userServices,
   ]);
 
   const handleNext = () => {
