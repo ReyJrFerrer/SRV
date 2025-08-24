@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useReputation } from "../../../hooks/useReputation";
+import { useUserImage } from "../../../hooks/useMediaLoader";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  CalendarDaysIcon,
+  MapPinIcon,
+  CurrencyDollarIcon,
+  ChatBubbleLeftRightIcon,
+  XCircleIcon,
+  StarIcon,
+  CheckCircleIcon,
+  PhoneIcon,
+  BriefcaseIcon,
+  ArchiveBoxIcon,
+} from "@heroicons/react/24/solid";
+import {
+  EnhancedBooking,
+  useBookingManagement,
+} from "../../../hooks/bookingManagement";
+import { reviewCanisterService } from "../../../services/reviewCanisterService";
+import { authCanisterService } from "../../../services/authCanisterService";
+import BottomNavigation from "../../../components/client/BottomNavigation";
+import { useChat } from "../../../hooks/useChat"; // Import the chat hook
+import { useAuth } from "../../../context/AuthContext"; // Import auth context
 // Reputation Score Component (from ServiceDetailPageComponent.tsx)
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number>(50); // Default score
   const [loading, setLoading] = useState<boolean>(true);
-
   useEffect(() => {
     const loadReputation = async () => {
       try {
@@ -52,29 +75,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
     </span>
   );
 };
-import { useNavigate, useParams, Link } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  CalendarDaysIcon,
-  MapPinIcon,
-  CurrencyDollarIcon,
-  ChatBubbleLeftRightIcon,
-  XCircleIcon,
-  StarIcon,
-  CheckCircleIcon,
-  PhoneIcon,
-  BriefcaseIcon,
-  ArchiveBoxIcon,
-} from "@heroicons/react/24/solid";
-import {
-  EnhancedBooking,
-  useBookingManagement,
-} from "../../../hooks/bookingManagement";
-import { reviewCanisterService } from "../../../services/reviewCanisterService";
-import { authCanisterService } from "../../../services/authCanisterService";
-import BottomNavigation from "../../../components/client/BottomNavigation";
-import { useChat } from "../../../hooks/useChat"; // Import the chat hook
-import { useAuth } from "../../../context/AuthContext"; // Import auth context
 
 type BookingStatus =
   | "Requested"
@@ -206,6 +206,11 @@ const BookingDetailsPage: React.FC = () => {
     clearError,
     isOperationInProgress,
   } = useBookingManagement();
+
+  // Call useUserImage hook early to avoid conditional hook calls
+  const { userImageUrl } = useUserImage(
+    specificBooking?.providerProfile?.profilePicture?.imageUrl || null,
+  );
 
   // Set document title
   useEffect(() => {
@@ -499,10 +504,7 @@ const BookingDetailsPage: React.FC = () => {
             <div className="flex items-center gap-5">
               <div className="flex-shrink-0">
                 <img
-                  src={
-                    providerProfile?.profilePicture?.imageUrl ||
-                    "/default-provider.svg"
-                  }
+                  src={userImageUrl || "/default-provider.svg"}
                   alt={providerProfile?.name || "Provider"}
                   className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
                 />

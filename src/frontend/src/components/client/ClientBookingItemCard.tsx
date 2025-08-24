@@ -13,6 +13,7 @@ import {
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
+import { useUserImage } from "../../hooks/useMediaLoader";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -30,6 +31,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
+  const { userImageUrl, refetch } = useUserImage(
+    booking?.providerProfile?.profilePicture?.imageUrl,
+  );
+  // Refetch provider avatar if changed
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
 
   // --- Effect: Check review status when booking is finished ---
   useEffect(() => {
@@ -65,7 +75,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const serviceTitle = booking.serviceName;
 
   // Use provider profile image directly, do not use useMediaLoader for booking image
-  let fallbackImage = booking.providerProfile?.profilePicture?.imageUrl;
+  let fallbackImage = userImageUrl;
   if (
     !fallbackImage ||
     fallbackImage === "/default-provider.svg" ||

@@ -31,7 +31,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     acceptBookingById,
     declineBookingById,
     startBookingById,
-    completeBookingById,
     isBookingActionInProgress,
   } = useProviderBookingManagement();
 
