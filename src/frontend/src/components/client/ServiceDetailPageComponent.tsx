@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   StarIcon,
   MapPinIcon,
@@ -124,7 +124,50 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   </div>
 );
 
-import { Link } from "react-router-dom";
+// --- ReviewItem Component ---
+const ReviewItem: React.FC<{
+  review: any;
+}> = ({ review }) => {
+  const { userImageUrl: clientImageUrl } = useUserImage(
+    review.clientProfile?.profilePicture?.imageUrl,
+  );
+
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-md transition-all hover:shadow-lg">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
+          <img
+            src={clientImageUrl || "/default-client.svg"}
+            alt={review.clientName || "Client"}
+            className="h-10 w-10 rounded-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = "/default-client.svg";
+            }}
+          />
+        </div>
+        <div>
+          <p className="font-bold text-gray-800">
+            {review.clientName ? review.clientName : "A Client"}
+          </p>
+          {typeof review.clientReputationScore === "number" && (
+            <span className="mt-1 flex items-center gap-1 text-xs text-blue-600">
+              Reputation Score:{" "}
+              <span className="font-bold">{review.clientReputationScore}</span>
+            </span>
+          )}
+          <div className="flex items-center">
+            <StarRatingDisplay rating={review.rating} />
+          </div>
+        </div>
+      </div>
+      <div className="w-full">
+        <p className="w-full text-base break-words text-gray-700">
+          {review.comment}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 // --- Reviews Section ---
 const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
@@ -230,52 +273,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
           </div>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {visibleReviews.slice(0, 3).map((review) => (
-              <div
-                key={review.id}
-                className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-md transition-all hover:shadow-lg"
-              >
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
-                    <img
-                      src={
-                        review.clientAvatar ||
-                        (review.clientProfile?.profilePicture?.imageUrl &&
-                        review.clientProfile.profilePicture.imageUrl !== ""
-                          ? review.clientProfile.profilePicture.imageUrl
-                          : undefined) ||
-                        "/default-client.svg"
-                      }
-                      alt={review.clientName || "Client"}
-                      className="h-10 w-10 rounded-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          "/default-client.svg";
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-800">
-                      {review.clientName ? review.clientName : "A Client"}
-                    </p>
-                    {typeof review.clientReputationScore === "number" && (
-                      <span className="mt-1 flex items-center gap-1 text-xs text-blue-600">
-                        Reputation Score:{" "}
-                        <span className="font-bold">
-                          {review.clientReputationScore}
-                        </span>
-                      </span>
-                    )}
-                    <div className="flex items-center">
-                      <StarRatingDisplay rating={review.rating} />
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full">
-                  <p className="w-full text-base break-words text-gray-700">
-                    {review.comment}
-                  </p>
-                </div>
-              </div>
+              <ReviewItem key={review.id} review={review} />
             ))}
           </div>
         </div>
