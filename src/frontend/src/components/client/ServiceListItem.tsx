@@ -9,6 +9,7 @@ import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
 import { EnrichedService } from "../../hooks/serviceInformation";
 import { useUserImage } from "../../hooks/useMediaLoader";
+import { useServiceImages } from "../../hooks/useMediaLoader";
 
 interface ServiceListItemProps {
   service: EnrichedService;
@@ -43,6 +44,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       count: totalReviews,
       loading: false,
     };
+    const { images } = useServiceImages(service.id);
 
     // Define layout classes based on props
     const itemWidthClass = isGridItem
@@ -127,10 +129,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="aspect-video w-full bg-blue-50">
             <img
               src={
-                userImageUrl &&
-                userImageUrl !== "/default-avatar.png" &&
-                userImageUrl !== "" &&
-                userImageUrl !== undefined
+                images[0]?.url ||
+                (userImageUrl &&
+                  userImageUrl !== "/default-avatar.png" &&
+                  userImageUrl !== "" &&
+                  userImageUrl !== undefined)
                   ? userImageUrl
                   : service.category?.slug
                     ? `/images/ai-sp/${service.category.slug}.svg`
