@@ -395,7 +395,7 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Compare</h3>
-              <div className="feature-image max-w-3/4 ">
+              <div className="feature-image max-w-3/4">
                 <img
                   src="/images/srv characters (SVG)/tutor.svg"
                   alt="Detailed Provider Profiles"
