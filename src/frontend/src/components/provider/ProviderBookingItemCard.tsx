@@ -33,7 +33,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     startBookingById,
     completeBookingById,
     isBookingActionInProgress,
-    refreshBookings,
   } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
@@ -155,10 +154,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (window.confirm("Mark this booking as completed?")) {
-      const success = await completeBookingById(booking.id);
-      if (success) {
-        await refreshBookings();
-      }
+      navigate(`/provider/complete-service/${booking.id}`);
     }
   };
 

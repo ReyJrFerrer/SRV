@@ -55,6 +55,7 @@ const notificationStore = {
 
 // localStorage Helper Functions
 const READ_NOTIFICATIONS_KEY = "readNotificationIds";
+const PUSH_SENT_NOTIFICATIONS_KEY = "pushSentNotificationIds";
 
 const getReadIds = (): string[] => {
   try {
@@ -71,6 +72,33 @@ const setReadIds = (ids: string[]) => {
     window.localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(ids));
   } catch (error) {
     console.error("Error writing to localStorage", error);
+  }
+};
+
+const getPushSentIds = (): string[] => {
+  try {
+    const item = window.localStorage.getItem(PUSH_SENT_NOTIFICATIONS_KEY);
+    return item ? JSON.parse(item) : [];
+  } catch (error) {
+    console.error(
+      "Error reading push sent notifications from localStorage",
+      error,
+    );
+    return [];
+  }
+};
+
+const setPushSentIds = (ids: string[]) => {
+  try {
+    window.localStorage.setItem(
+      PUSH_SENT_NOTIFICATIONS_KEY,
+      JSON.stringify(ids),
+    );
+  } catch (error) {
+    console.error(
+      "Error writing push sent notifications to localStorage",
+      error,
+    );
   }
 };
 
@@ -164,6 +192,7 @@ export const useNotificationsWithPush = () => {
         }));
 
       const readIds = getReadIds();
+      const pushSentIds = getPushSentIds();
       const allNotifications = [
         ...bookingStatusNotifications,
         ...reviewReminderNotifications,
@@ -177,25 +206,38 @@ export const useNotificationsWithPush = () => {
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
         );
 
-      // Check for new notifications and send push notifications
+      // Filter notifications that should receive push notifications:
+      // 1. Must be unread
+      // 2. Must not have been push-notified before
+      // 3. Must be a new notification (not in previous list)
       const currentNotificationIds = new Set(allNotifications.map((n) => n.id));
-      const newNotifications = allNotifications.filter(
+      const notificationsEligibleForPush = allNotifications.filter(
         (notification) =>
-          !previousNotificationIdsRef.current.has(notification.id) &&
-          !notification.read,
+          !notification.read && // Must be unread
+          !pushSentIds.includes(notification.id) && // Must not have been push-notified before
+          !previousNotificationIdsRef.current.has(notification.id), // Must be new
       );
 
-      // Send push notifications for new unread notifications
-      if (newNotifications.length > 0) {
+      // Send push notifications for eligible notifications
+      if (notificationsEligibleForPush.length > 0) {
         console.log(
-          `Sending ${newNotifications.length} new client push notifications`,
+          `Sending ${notificationsEligibleForPush.length} new client push notifications`,
         );
         notificationIntegrationService
-          .sendClientNotificationsBatch(newNotifications)
+          .sendClientNotificationsBatch(notificationsEligibleForPush)
           .then((successCount) => {
             console.log(
-              `Successfully sent ${successCount}/${newNotifications.length} client push notifications`,
+              `Successfully sent ${successCount}/${notificationsEligibleForPush.length} client push notifications`,
             );
+
+            // Mark these notifications as push-sent
+            if (successCount > 0) {
+              const newlyPushSentIds = notificationsEligibleForPush
+                .slice(0, successCount)
+                .map((n) => n.id);
+              const updatedPushSentIds = [...pushSentIds, ...newlyPushSentIds];
+              setPushSentIds(updatedPushSentIds);
+            }
           })
           .catch((error) => {
             console.error("Error sending client push notifications:", error);
@@ -239,6 +281,27 @@ export const useNotificationsWithPush = () => {
     });
   }, []);
 
+  // Marks a single notification as unread (for future use)
+  const markAsUnread = useCallback((notificationId: string) => {
+    const readIds = getReadIds();
+    const newReadIds = readIds.filter((id) => id !== notificationId);
+    setReadIds(newReadIds);
+
+    // Also remove from push-sent list to allow re-push notification
+    const pushSentIds = getPushSentIds();
+    const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
+    setPushSentIds(newPushSentIds);
+
+    setNotifications((prev) => {
+      const newNotifications = prev.map((n) =>
+        n.id === notificationId ? { ...n, read: false } : n,
+      );
+      const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+      notificationStore.setCount(newUnreadCount);
+      return newNotifications;
+    });
+  }, []);
+
   // Marks all currently loaded notifications as read
   const markAllAsRead = useCallback(() => {
     const currentIds = notifications.map((n) => n.id);
@@ -256,6 +319,7 @@ export const useNotificationsWithPush = () => {
     loading: loading || bookingLoading,
     error: error || bookingError,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
     // Additional properties for push notification status
     pushEnabled: pwaState.pushSubscribed,
