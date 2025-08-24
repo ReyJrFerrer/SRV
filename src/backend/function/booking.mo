@@ -268,7 +268,8 @@ persistent actor BookingCanister {
         location : Location,
         requestedDate : Time.Time,
         servicePackageId : ?Text,
-        notes : ?Text
+        notes : ?Text,
+        amountToPay: ?Nat
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -388,7 +389,7 @@ persistent actor BookingCanister {
             startedDate = null;
             completedDate = null;
             price = finalPrice;
-            amountPaid = null;
+            amountPaid = amountToPay;
             serviceTime = null;
             location = location;
             evidence = null;

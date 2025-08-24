@@ -31,6 +31,7 @@ export interface BookingRequest {
   location: string | Location;
   concerns?: string;
   notes?: string; // Optional notes for the booking
+  amountToPay?: number;
 }
 
 export interface UseBookRequestReturn {
@@ -396,8 +397,9 @@ export const useBookRequest = (): UseBookRequestReturn => {
           requestedDate,
           firstPackageId,
           bookingData.notes, // Pass the notes to the booking
+          bookingData.amountToPay,
         );
-
+        console.log("✅ Booking created successfully:", booking);
         return booking;
       } catch (err) {
         const errorMessage =

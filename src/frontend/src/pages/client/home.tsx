@@ -12,8 +12,8 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
-import PWAInstall from "../../components/PWAInstall";
-import NotificationSettings from "../../components/NotificationSettings";
+// import PWAInstall from "../../components/PWAInstall";
+// import NotificationSettings from "../../components/NotificationSettings";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
@@ -502,8 +502,12 @@ const ClientHomePage: React.FC = () => {
         </div>
       )}
       {/* Main content: header, categories, service list */}
-      <PWAInstall />
-      <NotificationSettings />
+
+      {/**  <PWAInstall />
+       *
+       * <NotificationSettings />
+       */}
+
       <div className="w-full max-w-full px-4 pt-4 pb-16">
         {/* Header: displays welcome and location */}
         <Header className="mb-6 w-full max-w-full" />
