@@ -17,6 +17,8 @@ import {
 } from "@heroicons/react/24/outline";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
+import { useUserImage } from "../../hooks/useMediaLoader";
+import { useEffect } from "react";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -35,6 +37,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
+  const { userImageUrl, refetch } = useUserImage(
+    booking?.clientProfile?.profilePicture?.imageUrl,
+  );
+  // Refetch provider avatar if changed
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
 
   if (!booking) {
     return (
@@ -71,10 +82,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const packageTitle = booking.packageName || "No Package Name";
   const serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
-  const serviceImage =
-    typeof booking.clientProfile?.profilePicture === "string"
-      ? booking.clientProfile?.profilePicture
-      : (booking.clientProfile?.profilePicture?.imageUrl ?? undefined);
+  const serviceImage = userImageUrl;
+
   // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;

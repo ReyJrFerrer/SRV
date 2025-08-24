@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useUserImage } from "../../../hooks/useMediaLoader";
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -263,6 +264,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [specificBooking]);
 
+  const { userImageUrl } = useUserImage(
+    specificBooking?.clientProfile?.profilePicture?.imageUrl,
+  );
+
   const {
     bookings,
     acceptBookingById,
@@ -524,19 +529,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     specificBooking?.clientProfile?.phone ||
     "Contact not available";
 
-  const getAbsoluteUrl = (url: string) => {
-    if (!url) return "/default-client.svg";
-    if (url.startsWith("http")) return url;
-    // Adjust the base URL as needed for your deployment
-    return `${window.location.origin}${url}`;
-  };
-
-  const providerImage =
-    typeof specificBooking?.clientProfile?.profilePicture === "string"
-      ? getAbsoluteUrl(specificBooking.clientProfile.profilePicture)
-      : getAbsoluteUrl(
-          specificBooking?.clientProfile?.profilePicture?.imageUrl || "",
-        );
+  const providerImage = userImageUrl || "/default-client.svg";
   const clientId =
     specificBooking?.clientProfile?.id?.toString() ||
     specificBooking?.clientId?.toString();
