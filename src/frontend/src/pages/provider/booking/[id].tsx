@@ -433,6 +433,38 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Check if today is the service date or after
+  const canStartServiceToday = () => {
+    if (!specificBooking) return false;
+
+    // Use scheduledDate if available, otherwise fall back to requestedDate
+    const serviceDate =
+      specificBooking.scheduledDate || specificBooking.requestedDate;
+    if (!serviceDate) return false;
+
+    try {
+      const serviceDateObj = new Date(serviceDate);
+      const today = new Date();
+
+      // Compare only the date part (ignore time)
+      const serviceDateOnly = new Date(
+        serviceDateObj.getFullYear(),
+        serviceDateObj.getMonth(),
+        serviceDateObj.getDate(),
+      );
+      const todayOnly = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+      );
+
+      // Allow starting service on or after the scheduled date
+      return todayOnly.getTime() >= serviceDateOnly.getTime();
+    } catch {
+      return false;
+    }
+  };
+
   // Contact client handler
   const handleContactClient = () => {
     if (!specificBooking) return;
@@ -776,11 +808,20 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {specificBooking?.canStart && (
             <button
               onClick={handleStartService}
-              disabled={isBookingActionInProgress(
-                specificBooking?.id || "",
-                "start",
-              )}
-              className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+              disabled={
+                isBookingActionInProgress(specificBooking?.id || "", "start") ||
+                !canStartServiceToday()
+              }
+              className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+                !canStartServiceToday()
+                  ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                  : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
+              } disabled:opacity-50`}
+              title={
+                !canStartServiceToday()
+                  ? "Service can only be started on or after the scheduled date"
+                  : ""
+              }
             >
               <ArrowPathIcon className="mr-2 h-5 w-5" />
               {isBookingActionInProgress(specificBooking?.id || "", "start")
