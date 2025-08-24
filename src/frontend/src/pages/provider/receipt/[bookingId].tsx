@@ -18,7 +18,6 @@ const ReceiptPage: React.FC = () => {
   const changeGiven = parseFloat(searchParams.get("change") || "0");
   const paymentMethod = searchParams.get("method") || "N/A";
 
-  // Use the enhanced hook instead of mock data
   const { getBookingById, loading, isProviderAuthenticated } =
     useProviderBookingManagement();
 
@@ -29,6 +28,14 @@ const ReceiptPage: React.FC = () => {
     }
     return null;
   }, [bookingId, getBookingById]);
+
+  // Helper function to format service time from nanoseconds to minutes
+  const formatServiceTime = (serviceTimeNs?: number): string => {
+    if (!serviceTimeNs) return "N/A";
+    const minutes = Math.round(serviceTimeNs / (1000000000 * 60)); // Convert nanoseconds to minutes
+    if (minutes < 1) return "< 1 minute";
+    return `${minutes} minute${minutes > 1 ? "s" : ""}`;
+  };
 
   // Set document title
   useEffect(() => {
@@ -137,6 +144,14 @@ const ReceiptPage: React.FC = () => {
               {booking.clientName}
             </span>
           </div>
+          {booking.serviceTime && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Service Duration:</span>
+              <span className="font-semibold text-blue-900">
+                {formatServiceTime(booking.serviceTime)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Payment Summary Section */}

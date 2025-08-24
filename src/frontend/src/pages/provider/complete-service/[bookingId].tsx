@@ -99,10 +99,8 @@ const CompleteServicePage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Use the hook's complete function with the final price if different
-      const finalPrice =
-        receivedAmount !== servicePrice ? receivedAmount : undefined;
-      const success = await completeBookingById(booking.id, finalPrice);
+      // Pass the actual cash received amount as amountPaid
+      const success = await completeBookingById(booking.id, receivedAmount);
 
       if (success) {
         setError(null); // <-- Remove error messages after successful action

@@ -32,7 +32,6 @@ persistent actor ReviewCanister {
 
     // Constants
     private transient let REVIEW_WINDOW_DAYS : Nat = 30;
-    private transient let MIN_COMMENT_LENGTH : Nat = 5;
     private transient let MAX_COMMENT_LENGTH : Nat = 500;
     private transient let MIN_RATING : Nat = 1;
     private transient let MAX_RATING : Nat = 5;
@@ -78,11 +77,6 @@ persistent actor ReviewCanister {
         return rating >= MIN_RATING and rating <= MAX_RATING;
     };
 
-    private func isValidComment(comment : Text) : Bool {
-        let length = Text.size(comment);
-        return length >= MIN_COMMENT_LENGTH and length <= MAX_COMMENT_LENGTH;
-    };
-
     private func isWithinReviewWindow(createdAt : Time.Time) : Bool {
         let now = Time.now();
         let windowInNanos = REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1_000_000_000;
@@ -117,9 +111,7 @@ persistent actor ReviewCanister {
             return #err("Invalid rating. Must be between " # Nat.toText(MIN_RATING) # " and " # Nat.toText(MAX_RATING));
         };
         
-        if (not isValidComment(comment)) {
-            return #err("Invalid comment length. Must be between " # Nat.toText(MIN_COMMENT_LENGTH) # " and " # Nat.toText(MAX_COMMENT_LENGTH) # " characters");
-        };
+        // Comment validation removed - comments are now optional
         
         // Check if booking exists and is eligible for review
         switch (bookingCanisterId) {
@@ -209,7 +201,7 @@ persistent actor ReviewCanister {
                                                     processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
                                                 };
                                                 switch (await reputationCanister.processReviewWithLLM(newReview)) {
-                                                    case (#ok(processedReview)) {
+                                                    case (#ok(_)) {
                                                         Debug.print("LLM-enhanced review processing completed successfully");
                                                         // You could use the processed review's status and quality score here
                                                     };
@@ -299,9 +291,7 @@ persistent actor ReviewCanister {
             return #err("Invalid rating. Must be between " # Nat.toText(MIN_RATING) # " and " # Nat.toText(MAX_RATING));
         };
         
-        if (not isValidComment(comment)) {
-            return #err("Invalid comment length. Must be between " # Nat.toText(MIN_COMMENT_LENGTH) # " and " # Nat.toText(MAX_COMMENT_LENGTH) # " characters");
-        };
+        // Comment validation removed - comments are now optional
         
         switch (reviews.get(reviewId)) {
             case (?existingReview) {
@@ -366,7 +356,7 @@ persistent actor ReviewCanister {
                             processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
                         };
                         switch (await reputationCanister.processReviewWithLLM(updatedReview)) {
-                            case (#ok(processedReview)) {
+                            case (#ok(_)) {
                                 Debug.print("LLM-enhanced review processing completed successfully");
                                 // You could use the processed review's status and quality score here
                             };

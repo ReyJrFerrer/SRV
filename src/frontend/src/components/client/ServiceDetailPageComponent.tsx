@@ -1,15 +1,3 @@
-// --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
-function formatTime12Hour(time: string): string {
-  if (!time) return "";
-  const [hourStr, minuteStr] = time.split(":");
-  let hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
-  if (isNaN(hour) || isNaN(minute)) return time;
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12;
-  if (hour === 0) hour = 12;
-  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-}
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -30,6 +18,19 @@ import { useServiceImages } from "../../hooks/useMediaLoader";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { ServicePackage } from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useMediaLoader";
+
+// --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
+function formatTime12Hour(time: string): string {
+  if (!time) return "";
+  const [hourStr, minuteStr] = time.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  if (isNaN(hour) || isNaN(minute)) return time;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+}
 
 // --- Provider Reputation Score Section ---
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
@@ -688,7 +689,7 @@ const ServiceDetailPage: React.FC = () => {
         <div className="mb-4 flex items-center gap-2">
           <CalendarIcon />
           <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
-          {availability?.isAvailableNow && (
+          {service?.isActive && (
             <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
               Available Now
@@ -1046,13 +1047,9 @@ const ServiceDetailPage: React.FC = () => {
                     <h2 className="m-0 p-0 text-2xl leading-tight font-extrabold text-gray-900 drop-shadow-sm">
                       {providerName}
                     </h2>
-                    {service &&
-                      service.availability &&
-                      typeof service.availability.isAvailableNow ===
-                        "boolean" &&
-                      service.availability.isAvailableNow && (
-                        <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
-                      )}
+                    {service.isActive && (
+                      <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                    )}
                   </div>
                 </div>
                 <div className="mt-1 flex w-full flex-col items-center gap-0">

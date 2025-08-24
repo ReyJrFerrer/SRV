@@ -147,8 +147,8 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
           </span>
         </div>
         <p className="mb-4 text-sm text-gray-600">
-          Upload images or PDFs of your certifications or credentials. This
-          helps build trust with clients.
+          Upload images of your certifications or credentials. This helps build
+          trust with clients.
         </p>
         <label
           htmlFor="certificationImages"
@@ -161,7 +161,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
             type="file"
             name="certificationImages"
             id="certificationImages"
-            accept="image/png, image/jpeg, image/gif, image/svg+xml,application/pdf"
+            accept="image/png, image/jpeg, image/gif, image/svg+xml"
             multiple
             onChange={onCertificationFilesChange}
             className="block w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-yellow-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-700 hover:file:bg-yellow-200"

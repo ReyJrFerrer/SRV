@@ -250,9 +250,16 @@ export const useBookRequest = (): UseBookRequestReturn => {
           return false;
         }
 
-        // Create specific datetime
-        const requestedDateTime = new Date(date);
-        requestedDateTime.setHours(hours, minutes, 0, 0);
+        // Create specific datetime with the actual time slot
+        const requestedDateTime = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          hours, // Use the actual hours from the time slot
+          minutes, // Use the actual minutes from the time slot
+          0,
+          0,
+        );
 
         // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
@@ -289,7 +296,41 @@ export const useBookRequest = (): UseBookRequestReturn => {
         // Determine requested date with enhanced debugging
         let requestedDate: Date;
         if (bookingData.bookingType === "sameday") {
+          // For same-day bookings, we need to use the current date with the selected time
           requestedDate = new Date();
+
+          // If there's a scheduled time (which should be provided for same-day bookings too)
+          if (bookingData.scheduledTime) {
+            let startHour = requestedDate.getHours(); // Use current hour as default
+            let startMinute = requestedDate.getMinutes(); // Use current minute as default
+
+            try {
+              if (bookingData.scheduledTime.includes("-")) {
+                // Time range format: "09:00-10:00"
+                const [startTime] = bookingData.scheduledTime.split("-");
+                const [hour, minute] = startTime.split(":").map(Number);
+
+                if (!isNaN(hour) && !isNaN(minute)) {
+                  startHour = hour;
+                  startMinute = minute;
+                }
+              } else {
+                // Single time format: "09:00"
+                const [hour, minute] = bookingData.scheduledTime
+                  .split(":")
+                  .map(Number);
+
+                if (!isNaN(hour) && !isNaN(minute)) {
+                  startHour = hour;
+                  startMinute = minute;
+                }
+              }
+            } catch (timeParseError) {
+              console.error("❌ Error parsing same-day time:", timeParseError);
+            }
+
+            requestedDate.setHours(startHour, startMinute, 0, 0);
+          }
         } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
           // Parse the time string (format: "HH:MM-HH:MM" or "HH:MM")
           let startHour = 9; // default

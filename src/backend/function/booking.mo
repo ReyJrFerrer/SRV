@@ -107,8 +107,11 @@ persistent actor BookingCanister {
             status = newStatus;
             requestedDate = existingBooking.requestedDate;
             scheduledDate = existingBooking.scheduledDate;
+            startedDate = if (newStatus == #InProgress) ?Time.now() else existingBooking.startedDate;
             completedDate = if (newStatus == #Completed) ?Time.now() else existingBooking.completedDate;
             price = existingBooking.price;
+            amountPaid = existingBooking.amountPaid;
+            serviceTime = existingBooking.serviceTime;
             location = existingBooking.location;
             evidence = existingBooking.evidence;
             notes = existingBooking.notes;
@@ -382,8 +385,11 @@ persistent actor BookingCanister {
             status = #Requested;
             requestedDate = requestedDate;
             scheduledDate = null;
+            startedDate = null;
             completedDate = null;
             price = finalPrice;
+            amountPaid = null;
+            serviceTime = null;
             location = location;
             evidence = null;
             notes = notes;
@@ -469,8 +475,11 @@ persistent actor BookingCanister {
                             status = updatedBooking.status;
                             requestedDate = updatedBooking.requestedDate;
                             scheduledDate = ?scheduledDate;
+                            startedDate = updatedBooking.startedDate;
                             completedDate = updatedBooking.completedDate;
                             price = updatedBooking.price;
+                            amountPaid = updatedBooking.amountPaid;
+                            serviceTime = updatedBooking.serviceTime;
                             location = updatedBooking.location;
                             evidence = updatedBooking.evidence;
                             notes = updatedBooking.notes;
@@ -589,13 +598,45 @@ persistent actor BookingCanister {
         }
     };
 
-    // Complete a booking (provider) - Enhanced with remittance integration
-    public shared(msg) func completeBooking(bookingId : Text) : async Result<Booking> {
+    // Complete a booking (provider) - Enhanced with remittance integration and payment tracking
+    public shared(msg) func completeBooking(bookingId : Text, amountPaid : ?Nat) : async Result<Booking> {
         let caller = msg.caller;
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                switch (updateBookingStatus(existingBooking, #Completed, caller, true)) {
+                // Calculate service time if booking was started
+                let calculatedServiceTime = switch (existingBooking.startedDate) {
+                    case (?startTime) {
+                        ?Int.abs(Time.now() - startTime)
+                    };
+                    case (null) {
+                        null
+                    };
+                };
+
+                // Create a booking with payment info and service time before status update
+                let bookingWithPaymentInfo : Booking = {
+                    id = existingBooking.id;
+                    clientId = existingBooking.clientId;
+                    providerId = existingBooking.providerId;
+                    serviceId = existingBooking.serviceId;
+                    servicePackageId = existingBooking.servicePackageId;
+                    status = existingBooking.status;
+                    requestedDate = existingBooking.requestedDate;
+                    scheduledDate = existingBooking.scheduledDate;
+                    startedDate = existingBooking.startedDate;
+                    completedDate = existingBooking.completedDate;
+                    price = existingBooking.price;
+                    amountPaid = amountPaid;
+                    serviceTime = calculatedServiceTime;
+                    location = existingBooking.location;
+                    evidence = existingBooking.evidence;
+                    notes = existingBooking.notes;
+                    createdAt = existingBooking.createdAt;
+                    updatedAt = existingBooking.updatedAt;
+                };
+
+                switch (updateBookingStatus(bookingWithPaymentInfo, #Completed, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
                         
@@ -800,8 +841,11 @@ persistent actor BookingCanister {
                     status = existingBooking.status;
                     requestedDate = existingBooking.requestedDate;
                     scheduledDate = existingBooking.scheduledDate;
+                    startedDate = existingBooking.startedDate;
                     completedDate = existingBooking.completedDate;
                     price = existingBooking.price;
+                    amountPaid = existingBooking.amountPaid;
+                    serviceTime = existingBooking.serviceTime;
                     location = existingBooking.location;
                     evidence = ?newEvidence;
                     notes = existingBooking.notes;
@@ -837,8 +881,11 @@ persistent actor BookingCanister {
                     status = #Disputed;
                     requestedDate = existingBooking.requestedDate;
                     scheduledDate = existingBooking.scheduledDate;
+                    startedDate = existingBooking.startedDate;
                     completedDate = existingBooking.completedDate;
                     price = existingBooking.price;
+                    amountPaid = existingBooking.amountPaid;
+                    serviceTime = existingBooking.serviceTime;
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;

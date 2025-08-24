@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import feedbackCanisterService, {
   SubmitFeedbackRequest,
+  SubmitReportRequest,
 } from "../services/feedbackCanisterService";
 
 /**
@@ -55,6 +56,33 @@ export const useFeedback = () => {
     }
   };
 
+  /**
+   * Submit report
+   */
+  const submitReport = async (
+    request: SubmitReportRequest,
+  ): Promise<boolean> => {
+    if (!isAuthenticated || !identity) {
+      setError("You must be logged in to submit a report.");
+      return false;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await feedbackCanisterService.submitReport(request, identity);
+
+      return true;
+    } catch (err) {
+      console.error("Failed to submit report:", err);
+      setError(err instanceof Error ? err.message : "Failed to submit report");
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Initialize feedback canister on mount
   useEffect(() => {
     initializeFeedbackCanister();
@@ -68,6 +96,7 @@ export const useFeedback = () => {
 
     // Actions
     submitFeedback,
+    submitReport,
 
     // Helpers
     clearError: () => setError(null),

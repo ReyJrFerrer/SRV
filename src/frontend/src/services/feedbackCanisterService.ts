@@ -29,6 +29,24 @@ export interface SubmitFeedbackRequest {
   comment?: string;
 }
 
+export interface AppReport {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhone: string;
+  description: string;
+  createdAt: Date;
+}
+
+export interface ReportStats {
+  totalReports: number;
+  latestReport?: AppReport;
+}
+
+export interface SubmitReportRequest {
+  description: string;
+}
+
 /**
  * Creates a feedback actor with the provided identity
  * @param identity The user's identity from AuthContext
@@ -76,6 +94,20 @@ const adaptBackendFeedback = (backendFeedback: any): AppFeedback => {
     rating: Number(backendFeedback.rating),
     comment: backendFeedback.comment?.[0] || undefined,
     createdAt: new Date(Number(backendFeedback.createdAt) / 1_000_000), // Convert from nanoseconds
+  };
+};
+
+/**
+ * Converts backend AppReport to frontend format
+ */
+const adaptBackendReport = (backendReport: any): AppReport => {
+  return {
+    id: backendReport.id,
+    userId: backendReport.userId.toText(),
+    userName: backendReport.userName,
+    userPhone: backendReport.userPhone,
+    description: backendReport.description,
+    createdAt: new Date(Number(backendReport.createdAt) / 1_000_000), // Convert from nanoseconds
   };
 };
 
@@ -129,7 +161,34 @@ export const submitFeedback = async (
   }
 };
 
+/**
+ * Submit user report
+ * @param request The report submission request
+ * @param identity User identity
+ * @returns The created report
+ */
+export const submitReport = async (
+  request: SubmitReportRequest,
+  identity?: Identity | null,
+): Promise<AppReport> => {
+  try {
+    const actor = getFeedbackActor(identity);
+
+    const result = await actor.submitReport(request.description);
+
+    if ("ok" in result) {
+      return adaptBackendReport(result.ok);
+    } else {
+      throw new Error(result.err);
+    }
+  } catch (error) {
+    console.error("Failed to submit report:", error);
+    throw error;
+  }
+};
+
 export default {
   initializeFeedbackCanister,
   submitFeedback,
+  submitReport,
 };

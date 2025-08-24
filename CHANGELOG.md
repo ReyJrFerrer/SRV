@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix same-day booking slot availability display to correctly show booked slots as unavailable
+
 ### Added
 
+- Add report submission functionality for users to report platform issues
+- Add validation to disable service deactivation and deletion when active bookings exist
+- Make review comments optional for booking submissions, allowing users to submit star ratings without requiring text feedback
+- Add booking completion tracking with payment amount and service duration calculation
+- Add enhanced booking completion with automatic service time calculation and payment tracking
 - Add feedback system for users to submit ratings and reviews on app experience
 - Add AdminFeedback component to display feedback statistics and individual feedback items in admin dashboard
 - Enhanced PWA and push notification cross-browser compatibility with comprehensive browser detection

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   PlusIcon,
@@ -14,6 +14,7 @@ import {
 } from "../../hooks/serviceManagement";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import { Toaster, toast } from "sonner";
+import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 
 // Helper to get category image path
 const getCategoryImage = (slugOrName?: string) => {
@@ -49,6 +50,32 @@ const ServiceGalleryImage: React.FC<{ service: EnhancedService }> = ({
   />
 );
 
+// Simple Tooltip component for validation messages
+interface TooltipProps {
+  children: React.ReactNode;
+  content: string;
+  disabled?: boolean;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
+  disabled = false,
+}) => {
+  if (disabled) {
+    return <>{children}</>;
+  }
+  return (
+    <div className="group relative">
+      {children}
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        {content}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+      </div>
+    </div>
+  );
+};
+
 const MyServicesPage: React.FC = () => {
   const {
     userServices,
@@ -62,12 +89,33 @@ const MyServicesPage: React.FC = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { bookings: providerBookings } = useProviderBookingManagement();
 
   const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "My Services | SRV Provider";
   }, []);
+
+  // Helper function to check if a service has active bookings
+  const getServiceActiveBookingsCount = useMemo(() => {
+    return (serviceId: string): number => {
+      if (!providerBookings.length) return 0;
+      const activeStatuses = ["Requested", "Accepted", "InProgress"];
+      return providerBookings.filter(
+        (booking) =>
+          booking.serviceId === serviceId &&
+          activeStatuses.includes(booking.status),
+      ).length;
+    };
+  }, [providerBookings]);
+
+  // Helper function to check if service has active bookings
+  const hasActiveBookings = useMemo(() => {
+    return (serviceId: string): boolean => {
+      return getServiceActiveBookingsCount(serviceId) > 0;
+    };
+  }, [getServiceActiveBookingsCount]);
 
   // Handler for activate/deactivate
   const handleToggleActive = async (serviceId: string, isActive: boolean) => {
@@ -287,42 +335,80 @@ const MyServicesPage: React.FC = () => {
                     </div>
                     {/* Activate/Deactivate Button */}
                     <div className="relative z-10 w-full">
-                      <button
-                        className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                          isActive
-                            ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                            : "bg-green-500 text-white hover:bg-green-600"
+                      <Tooltip
+                        content={`Cannot ${
+                          isActive ? "deactivate" : "activate"
+                        } service with ${getServiceActiveBookingsCount(service.id)} active booking${
+                          getServiceActiveBookingsCount(service.id) !== 1
+                            ? "s"
+                            : ""
                         }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleActive(service.id, isActive);
-                        }}
-                        disabled={updatingId === service.id}
+                        disabled={!hasActiveBookings(service.id)}
                       >
-                        {isActive ? (
-                          <>
-                            <LockClosedIcon className="h-5 w-5" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <LockOpenIcon className="h-5 w-5" />
-                            Activate
-                          </>
-                        )}
-                      </button>
+                        <button
+                          className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                            hasActiveBookings(service.id)
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          } ${
+                            isActive
+                              ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                              : "bg-green-500 text-white hover:bg-green-600"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!hasActiveBookings(service.id)) {
+                              handleToggleActive(service.id, isActive);
+                            }
+                          }}
+                          disabled={
+                            updatingId === service.id ||
+                            hasActiveBookings(service.id)
+                          }
+                        >
+                          {isActive ? (
+                            <>
+                              <LockClosedIcon className="h-5 w-5" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <LockOpenIcon className="h-5 w-5" />
+                              Activate
+                            </>
+                          )}
+                        </button>
+                      </Tooltip>
                       {/* Delete Button */}
-                      <button
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirmId(service.id);
-                        }}
-                        disabled={deletingId === service.id}
+                      <Tooltip
+                        content={`Cannot delete service with ${getServiceActiveBookingsCount(service.id)} active booking${
+                          getServiceActiveBookingsCount(service.id) !== 1
+                            ? "s"
+                            : ""
+                        }`}
+                        disabled={!hasActiveBookings(service.id)}
                       >
-                        <TrashIcon className="h-5 w-5" />
-                        Delete
-                      </button>
+                        <button
+                          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
+                            hasActiveBookings(service.id)
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!hasActiveBookings(service.id)) {
+                              setDeleteConfirmId(service.id);
+                            }
+                          }}
+                          disabled={
+                            deletingId === service.id ||
+                            hasActiveBookings(service.id)
+                          }
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                          Delete
+                        </button>
+                      </Tooltip>
                     </div>
                   </div>
                 );
