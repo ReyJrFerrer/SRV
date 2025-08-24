@@ -380,9 +380,9 @@ export default function MainPage({
           <div className="features-grid">
             <div className="feature-card">
               <h3 className="feature-title">Discover</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="blueBall.png"
+                  src="/images/srv characters (SVG)/girl.svg"
                   alt="Service Discovery"
                   className="feature-icon"
                 />
@@ -395,9 +395,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Compare</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4 ">
                 <img
-                  src="ovalorange.png"
+                  src="/images/srv characters (SVG)/tutor.svg"
                   alt="Detailed Provider Profiles"
                   className="feature-icon"
                 />
@@ -409,9 +409,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Book</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="capsuleguy.png"
+                  src="/images/srv characters (SVG)/tech guy.svg"
                   alt="Seamless Booking System"
                   className="feature-icon"
                 />
@@ -424,9 +424,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Get it Done</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="blueoval.png"
+                  src="/images/srv characters (SVG)/plumber.svg"
                   alt="Authentic Ratings & Reviews"
                   className="feature-icon"
                 />
