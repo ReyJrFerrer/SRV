@@ -8,7 +8,7 @@ import Nat "mo:base/Nat";
 import Char "mo:base/Char";
 import Option "mo:base/Option";
 import Types "../types/shared";
-import StaticData "../utils/staticData";
+// import StaticData "../utils/staticData";
 
 
 persistent actor AuthCanister {
@@ -78,18 +78,18 @@ persistent actor AuthCanister {
     };
 
     // Static data initialization
-    private func initializeStaticProfiles() {
-        // Add profiles from shared static data
-        for ((principal, profile) in StaticData.getSTATIC_PROFILES().vals()) {
-            profiles.put(principal, profile);
-            phoneToPrincipal.put(profile.phone, principal);
-        };
-    };
+    // private func initializeStaticProfiles() {
+    //     // Add profiles from shared static data
+    //     for ((principal, profile) in StaticData.getSTATIC_PROFILES().vals()) {
+    //         profiles.put(principal, profile);
+    //         phoneToPrincipal.put(profile.phone, principal);
+    //     };
+    // };
 
-    // Initialize static data if profiles are less than 5
-    if (profiles.size() < 5) {
-        initializeStaticProfiles();
-    };
+    // // Initialize static data if profiles are less than 5
+    // if (profiles.size() < 5) {
+    //     initializeStaticProfiles();
+    // };
     // Initialization
     system func preupgrade() {
         profileEntries := Iter.toArray(profiles.entries());
@@ -104,9 +104,9 @@ persistent actor AuthCanister {
         };
         
         // Initialize static data if profiles are less than 5
-        if (profiles.size() < 5) {
-            initializeStaticProfiles();
-        };
+        // if (profiles.size() < 5) {
+        //     initializeStaticProfiles();
+        // };
     };
 
     // Set canister references

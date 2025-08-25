@@ -145,35 +145,35 @@ persistent actor ServiceCanister {
             categories.put(id, category);
         };
 
-        // Initialize services from shared static data
-        for ((id, service) in StaticData.getStaticServices().vals()) {
-            services.put(id, service);
+        // // Initialize services from shared static data
+        // for ((id, service) in StaticData.getStaticServices().vals()) {
+        //     services.put(id, service);
             
-            // Also initialize availability data if it exists in the service
-            switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
-                case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
-                    let availability : ProviderAvailability = {
-                        providerId = service.providerId;
-                        weeklySchedule = schedule;
-                        instantBookingEnabled = instantBooking;
-                        bookingNoticeHours = noticeHours;
-                        maxBookingsPerDay = maxBookings;
-                        isActive = true;
-                        createdAt = service.createdAt;
-                        updatedAt = service.updatedAt;
-                    };
-                    serviceAvailabilities.put(id, availability);
-                };
-                case (_, _, _, _) {
-                    // Service doesn't have complete availability data
-                };
-            };
-        };
+        //     // Also initialize availability data if it exists in the service
+        //     switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+        //         case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+        //             let availability : ProviderAvailability = {
+        //                 providerId = service.providerId;
+        //                 weeklySchedule = schedule;
+        //                 instantBookingEnabled = instantBooking;
+        //                 bookingNoticeHours = noticeHours;
+        //                 maxBookingsPerDay = maxBookings;
+        //                 isActive = true;
+        //                 createdAt = service.createdAt;
+        //                 updatedAt = service.updatedAt;
+        //             };
+        //             serviceAvailabilities.put(id, availability);
+        //         };
+        //         case (_, _, _, _) {
+        //             // Service doesn't have complete availability data
+        //         };
+        //     };
+        // };
         
-        // Initialize service packages from shared static data
-        for ((id, package) in StaticData.getSTATIC_PACKAGES().vals()) {
-            servicePackages.put(id, package);
-        };
+        // // Initialize service packages from shared static data
+        // for ((id, package) in StaticData.getSTATIC_PACKAGES().vals()) {
+        //     servicePackages.put(id, package);
+        // };
     };
     // Initialize static data if categories or services are empty
     if (categories.size() < 1 or services.size() < 1) {
@@ -1637,28 +1637,28 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
 
 
     // Get daily booking count for a provider and date
-    private func getDailyBookingCount(providerId : Principal, date : Time.Time) : async Nat {
-        switch (bookingCanisterId) {
-            case (?bookingId) {
-                let bookingCanister = actor(Principal.toText(bookingId)) : actor {
-                    getDailyBookingCount : (Principal, Time.Time) -> async Nat;
-                };
+    // private func getDailyBookingCount(providerId : Principal, date : Time.Time) : async Nat {
+    //     switch (bookingCanisterId) {
+    //         case (?bookingId) {
+    //             let bookingCanister = actor(Principal.toText(bookingId)) : actor {
+    //                 getDailyBookingCount : (Principal, Time.Time) -> async Nat;
+    //             };
                 
-                await bookingCanister.getDailyBookingCount(providerId, date);
-            };
-            case (null) {
-                0
-            };
-        }
-    };
+    //             await bookingCanister.getDailyBookingCount(providerId, date);
+    //         };
+    //         case (null) {
+    //             0
+    //         };
+    //     }
+    // };
 
-    // Helper function to get start of day timestamp
-    private func getStartOfDay(timestamp : Time.Time) : Time.Time {
-        let secondsSinceEpoch = timestamp / 1_000_000_000;
-        let daysSinceEpoch = secondsSinceEpoch / 86400;
-        let startOfDaySeconds = daysSinceEpoch * 86400;
-        startOfDaySeconds * 1_000_000_000
-    };
+    // // Helper function to get start of day timestamp
+    // private func getStartOfDay(timestamp : Time.Time) : Time.Time {
+    //     let secondsSinceEpoch = timestamp / 1_000_000_000;
+    //     let daysSinceEpoch = secondsSinceEpoch / 86400;
+    //     let startOfDaySeconds = daysSinceEpoch * 86400;
+    //     startOfDaySeconds * 1_000_000_000
+    // };
 
     // Package-related functions
     
