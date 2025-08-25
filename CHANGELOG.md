@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix duplicate push notifications by tracking sent notifications in localStorage and preventing spam on navigation
 - Fix same-day booking slot availability display to correctly show booked slots as unavailable
+- Fix service media images not loading in ServiceListItem and provider services page
 
 ### Added
 

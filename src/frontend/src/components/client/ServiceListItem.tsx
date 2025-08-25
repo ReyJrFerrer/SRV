@@ -44,7 +44,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       count: totalReviews,
       loading: false,
     };
-    const { images } = useServiceImages(service.id);
+    const { images } = useServiceImages(
+      fetchedService?.id,
+      fetchedService?.media,
+    );
 
     // Define layout classes based on props
     const itemWidthClass = isGridItem
@@ -119,6 +122,33 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     };
     const { userImageUrl, refetch } = useUserImage(service.providerAvatar);
     refetch();
+
+    // Helper function to determine the image source with proper priority
+    const getImageSource = (): string => {
+      // Priority 1: Service images (if available)
+      if (images[0]?.dataUrl) {
+        return images[0].dataUrl;
+      }
+
+      // Priority 2: User avatar (if valid)
+      if (
+        userImageUrl &&
+        userImageUrl !== "/default-avatar.png" &&
+        userImageUrl !== "" &&
+        userImageUrl !== undefined
+      ) {
+        return userImageUrl;
+      }
+
+      // Priority 3: Category-specific fallback image
+      if (service.category?.slug) {
+        return `/images/ai-sp/${service.category.slug}.svg`;
+      }
+
+      // Priority 4: Default fallback
+      return "/images/ai-sp/others.svg";
+    };
+
     return (
       <Link
         to={`/client/service/${service.id}`}
@@ -128,17 +158,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           {/* Image container */}
           <div className="aspect-video w-full bg-blue-50">
             <img
-              src={
-                images[0]?.url ||
-                (userImageUrl &&
-                  userImageUrl !== "/default-avatar.png" &&
-                  userImageUrl !== "" &&
-                  userImageUrl !== undefined)
-                  ? userImageUrl
-                  : service.category?.slug
-                    ? `/images/ai-sp/${service.category.slug}.svg`
-                    : "/images/ai-sp/others.svg"
-              }
+              src={getImageSource()}
               alt={service.title}
               className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300"
               onError={(e) => {
@@ -198,14 +218,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     {service.location.state
                       ? `, ${service.location.state}`
                       : ""}
-                    {service.location.serviceDistance &&
+                    {/* {service.location.serviceDistance &&
                       service.location.serviceDistanceUnit && (
                         <>
                           {" "}
                           ( {service.location.serviceDistance}{" "}
                           {service.location.serviceDistanceUnit} )
                         </>
-                      )}
+                      )} */}
                   </span>
                 </div>
               )}

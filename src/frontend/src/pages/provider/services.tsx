@@ -15,6 +15,7 @@ import {
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
+import { useServiceImages } from "../../hooks/useMediaLoader";
 
 // Helper to get category image path
 const getCategoryImage = (slugOrName?: string) => {
@@ -36,19 +37,174 @@ const getStatusDisplay = (status: string) => {
   }
 };
 
-const ServiceGalleryImage: React.FC<{ service: EnhancedService }> = ({
+// Extract ServiceCard as a separate component to properly use hooks
+interface ServiceCardProps {
+  service: EnhancedService;
+  onToggleActive: (serviceId: string, isActive: boolean) => void;
+  onDelete: (serviceId: string) => void;
+  hasActiveBookings: (serviceId: string) => boolean;
+  getServiceActiveBookingsCount: (serviceId: string) => number;
+  updatingId: string | null;
+  deletingId: string | null;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
-}) => (
-  <img
-    src={`/images/ai-sp/${service.category?.slug || "ai-sp-1"}.svg`}
-    alt={service.title}
-    className="mb-2 h-32 w-full rounded-xl object-cover"
-    onError={(e) => {
-      e.currentTarget.onerror = null;
-      e.currentTarget.src = "/images/ai-sp/default-provider.svg";
-    }}
-  />
-);
+  onToggleActive,
+  onDelete,
+  hasActiveBookings,
+  getServiceActiveBookingsCount,
+  updatingId,
+  deletingId,
+}) => {
+  const navigate = useNavigate();
+  const { images } = useServiceImages(service.id, service.imageUrls);
+  const statusDisplay = getStatusDisplay(service.status);
+  const isActive = service.status === "Available";
+
+  return (
+    <div className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+      {/* Make the entire card a button except for the action buttons */}
+      <button
+        type="button"
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none"
+        style={{
+          background: "transparent",
+          border: "none",
+          padding: 0,
+        }}
+        onClick={() => navigate(`/provider/service-details/${service.id}`)}
+        aria-label={`View details for ${service.title}`}
+        tabIndex={0}
+      />
+
+      {/* Service gallery image at the top */}
+      <div className="pointer-events-none relative flex w-full flex-col items-center">
+        <img
+          src={
+            images[0]?.dataUrl ||
+            `/images/ai-sp/${service.category?.slug || "ai-sp-1"}.svg`
+          }
+          alt={service.title}
+          className="mb-2 h-32 w-full rounded-xl object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/images/ai-sp/default-provider.svg";
+          }}
+        />
+
+        {/* Category image at top left of service image */}
+        <img
+          src={getCategoryImage(
+            service.category?.slug || service.category?.name,
+          )}
+          alt="Category"
+          className="absolute top-2 left-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/images/categories/others.svg";
+          }}
+        />
+
+        {/* Status badge at top right of service image */}
+        <span
+          className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
+        >
+          {statusDisplay.text}
+        </span>
+      </div>
+
+      {/* Service Name */}
+      <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
+        {service.title}
+      </h4>
+
+      {/* Ratings */}
+      <div className="pointer-events-none mt-2 flex w-full items-center justify-center gap-4">
+        <span className="flex items-center gap-1 text-yellow-400">
+          <StarIcon className="h-5 w-5" />
+          <span className="font-semibold text-yellow-500">
+            {service.averageRating || "0"} / 5{" "}
+            <span className="text-gray-400">({service.reviewCount})</span>
+          </span>
+        </span>
+      </div>
+
+      {/* Activate/Deactivate Button */}
+      <div className="relative z-10 w-full">
+        <Tooltip
+          content={`Cannot ${
+            isActive ? "deactivate" : "activate"
+          } service with ${getServiceActiveBookingsCount(service.id)} active booking${
+            getServiceActiveBookingsCount(service.id) !== 1 ? "s" : ""
+          }`}
+          disabled={!hasActiveBookings(service.id)}
+        >
+          <button
+            className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            } ${
+              isActive
+                ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!hasActiveBookings(service.id)) {
+                onToggleActive(service.id, isActive);
+              }
+            }}
+            disabled={
+              updatingId === service.id || hasActiveBookings(service.id)
+            }
+          >
+            {isActive ? (
+              <>
+                <LockClosedIcon className="h-5 w-5" />
+                Deactivate
+              </>
+            ) : (
+              <>
+                <LockOpenIcon className="h-5 w-5" />
+                Activate
+              </>
+            )}
+          </button>
+        </Tooltip>
+
+        {/* Delete Button */}
+        <Tooltip
+          content={`Cannot delete service with ${getServiceActiveBookingsCount(service.id)} active booking${
+            getServiceActiveBookingsCount(service.id) !== 1 ? "s" : ""
+          }`}
+          disabled={!hasActiveBookings(service.id)}
+        >
+          <button
+            className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!hasActiveBookings(service.id)) {
+                onDelete(service.id);
+              }
+            }}
+            disabled={
+              deletingId === service.id || hasActiveBookings(service.id)
+            }
+          >
+            <TrashIcon className="h-5 w-5" />
+            Delete
+          </button>
+        </Tooltip>
+      </div>
+    </div>
+  );
+};
 
 // Simple Tooltip component for validation messages
 interface TooltipProps {
@@ -90,8 +246,6 @@ const MyServicesPage: React.FC = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { bookings: providerBookings } = useProviderBookingManagement();
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "My Services | SRV Provider";
@@ -235,24 +389,27 @@ const MyServicesPage: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 mb-4 bg-white px-4 py-3 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-extrabold text-black sm:text-2xl">
+      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between px-6">
+          <div className="flex-1"></div>
+          <h1 className="flex-1 text-center text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
             My Services
           </h1>
-          <Link
-            to="/provider/services/add"
-            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-            aria-label="Add new service"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span className="ml-1 hidden sm:inline">Add new service</span>
-          </Link>
+          <div className="flex flex-1 justify-end">
+            <Link
+              to="/provider/services/add"
+              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+              aria-label="Add new service"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span className="ml-1 hidden sm:inline">Add new service</span>
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto flex-grow p-6 pb-10">
-        <div className="mt-2">
+        <div className="mt-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -270,149 +427,18 @@ const MyServicesPage: React.FC = () => {
             </div>
           ) : userServices.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {userServices.map((service) => {
-                const statusDisplay = getStatusDisplay(service.status);
-                const categoryImage = getCategoryImage(
-                  service.category?.slug || service.category?.name,
-                );
-                const isActive = service.status === "Available";
-
-                return (
-                  <div
-                    key={service.id}
-                    className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-                  >
-                    {/* Make the entire card a button except for the action buttons */}
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none"
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        padding: 0,
-                      }}
-                      onClick={() =>
-                        navigate(`/provider/service-details/${service.id}`)
-                      }
-                      aria-label={`View details for ${service.title}`}
-                      tabIndex={0}
-                    />
-                    {/* Service gallery image at the top */}
-                    <div className="pointer-events-none relative flex w-full flex-col items-center">
-                      <ServiceGalleryImage service={service} />
-                      {/* Category image at top left of service image */}
-                      <img
-                        src={categoryImage}
-                        alt="Category"
-                        className="absolute top-2 left-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/images/categories/others.svg";
-                        }}
-                      />
-                      {/* Status badge at top right of service image */}
-                      <span
-                        className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
-                      >
-                        {statusDisplay.text}
-                      </span>
-                    </div>
-                    {/* Service Name */}
-                    <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
-                      {service.title}
-                    </h4>
-                    {/* Ratings */}
-                    <div className="pointer-events-none mt-2 flex w-full items-center justify-center gap-4">
-                      <span className="flex items-center gap-1 text-yellow-400">
-                        <StarIcon className="h-5 w-5" />
-                        <span className="font-semibold text-yellow-500">
-                          {service.averageRating || "0"} / 5{" "}
-                          <span className="text-gray-400">
-                            ({service.reviewCount})
-                          </span>
-                        </span>
-                      </span>
-                    </div>
-                    {/* Activate/Deactivate Button */}
-                    <div className="relative z-10 w-full">
-                      <Tooltip
-                        content={`Cannot ${
-                          isActive ? "deactivate" : "activate"
-                        } service with ${getServiceActiveBookingsCount(service.id)} active booking${
-                          getServiceActiveBookingsCount(service.id) !== 1
-                            ? "s"
-                            : ""
-                        }`}
-                        disabled={!hasActiveBookings(service.id)}
-                      >
-                        <button
-                          className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          } ${
-                            isActive
-                              ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                              : "bg-green-500 text-white hover:bg-green-600"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              handleToggleActive(service.id, isActive);
-                            }
-                          }}
-                          disabled={
-                            updatingId === service.id ||
-                            hasActiveBookings(service.id)
-                          }
-                        >
-                          {isActive ? (
-                            <>
-                              <LockClosedIcon className="h-5 w-5" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <LockOpenIcon className="h-5 w-5" />
-                              Activate
-                            </>
-                          )}
-                        </button>
-                      </Tooltip>
-                      {/* Delete Button */}
-                      <Tooltip
-                        content={`Cannot delete service with ${getServiceActiveBookingsCount(service.id)} active booking${
-                          getServiceActiveBookingsCount(service.id) !== 1
-                            ? "s"
-                            : ""
-                        }`}
-                        disabled={!hasActiveBookings(service.id)}
-                      >
-                        <button
-                          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              setDeleteConfirmId(service.id);
-                            }
-                          }}
-                          disabled={
-                            deletingId === service.id ||
-                            hasActiveBookings(service.id)
-                          }
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                          Delete
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </div>
-                );
-              })}
+              {userServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  onToggleActive={handleToggleActive}
+                  onDelete={setDeleteConfirmId}
+                  hasActiveBookings={hasActiveBookings}
+                  getServiceActiveBookingsCount={getServiceActiveBookingsCount}
+                  updatingId={updatingId}
+                  deletingId={deletingId}
+                />
+              ))}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
