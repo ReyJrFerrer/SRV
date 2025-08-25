@@ -173,20 +173,24 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div
-          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
-        >
-          <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-              Mark all as read
-            </button>
-          )}
+      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex-1"></div>
+          <h1 className="flex-1 text-center text-xl font-bold text-gray-900 sm:text-2xl md:text-2xl">
+            Notifications
+          </h1>
+          <div className="flex flex-1 justify-end">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+                aria-label="Mark all as read"
+              >
+                <EnvelopeOpenIcon className="h-5 w-5" />
+                <span className="ml-1 hidden sm:inline">Mark all as read</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

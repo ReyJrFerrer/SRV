@@ -71,9 +71,9 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <div className="flex items-center justify-center">
+          <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
             Settings
           </h1>
         </div>

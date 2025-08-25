@@ -235,24 +235,27 @@ const MyServicesPage: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 mb-4 bg-white px-4 py-3 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-extrabold text-black sm:text-2xl">
+      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between px-6">
+          <div className="flex-1"></div>
+          <h1 className="flex-1 text-center text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
             My Services
           </h1>
-          <Link
-            to="/provider/services/add"
-            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-            aria-label="Add new service"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span className="ml-1 hidden sm:inline">Add new service</span>
-          </Link>
+          <div className="flex flex-1 justify-end">
+            <Link
+              to="/provider/services/add"
+              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+              aria-label="Add new service"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span className="ml-1 hidden sm:inline">Add new service</span>
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto flex-grow p-6 pb-10">
-        <div className="mt-2">
+        <div className="mt-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
