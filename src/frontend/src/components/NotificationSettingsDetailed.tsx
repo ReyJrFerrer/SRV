@@ -9,16 +9,10 @@ interface NotificationSettingsDetailedProps {
 export const NotificationSettingsDetailed: React.FC<
   NotificationSettingsDetailedProps
 > = ({ className = "" }) => {
-  const {
-    pwaState,
-    enablePushNotifications,
-    disablePushNotifications,
-    sendTestNotification,
-    error,
-  } = usePWA();
+  const { pwaState, enablePushNotifications, disablePushNotifications, error } =
+    usePWA();
   const { identity } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [testSent, setTestSent] = useState(false);
 
   const getUserId = (): string => {
     return identity?.getPrincipal().toString() || "anonymous";
@@ -42,19 +36,6 @@ export const NotificationSettingsDetailed: React.FC<
       const success = await disablePushNotifications(getUserId());
       if (success) {
         //console.log("Push notifications disabled successfully");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    setLoading(true);
-    try {
-      const success = await sendTestNotification();
-      setTestSent(success);
-      if (success) {
-        setTimeout(() => setTestSent(false), 3000);
       }
     } finally {
       setLoading(false);
