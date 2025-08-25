@@ -198,14 +198,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     {service.location.state
                       ? `, ${service.location.state}`
                       : ""}
-                    {service.location.serviceDistance &&
+                    {/* {service.location.serviceDistance &&
                       service.location.serviceDistanceUnit && (
                         <>
                           {" "}
                           ( {service.location.serviceDistance}{" "}
                           {service.location.serviceDistanceUnit} )
                         </>
-                      )}
+                      )} */}
                   </span>
                 </div>
               )}
