@@ -438,33 +438,21 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
-  // Check if today is the service date or after
-  const canStartServiceToday = () => {
+  // Check if today is the service date and time, or after
+  const canStartServiceNow = () => {
     if (!specificBooking) return false;
 
     // Use scheduledDate if available, otherwise fall back to requestedDate
-    const serviceDate =
+    const serviceDateTime =
       specificBooking.scheduledDate || specificBooking.requestedDate;
-    if (!serviceDate) return false;
+    if (!serviceDateTime) return false;
 
     try {
-      const serviceDateObj = new Date(serviceDate);
-      const today = new Date();
+      const serviceDateTimeObj = new Date(serviceDateTime);
+      const now = new Date();
 
-      // Compare only the date part (ignore time)
-      const serviceDateOnly = new Date(
-        serviceDateObj.getFullYear(),
-        serviceDateObj.getMonth(),
-        serviceDateObj.getDate(),
-      );
-      const todayOnly = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-      );
-
-      // Allow starting service on or after the scheduled date
-      return todayOnly.getTime() >= serviceDateOnly.getTime();
+      // Allow starting service on or after the scheduled date and time
+      return now.getTime() >= serviceDateTimeObj.getTime();
     } catch {
       return false;
     }
@@ -814,16 +802,16 @@ const ProviderBookingDetailsPage: React.FC = () => {
               onClick={handleStartService}
               disabled={
                 isBookingActionInProgress(specificBooking?.id || "", "start") ||
-                !canStartServiceToday()
+                !canStartServiceNow()
               }
               className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
-                !canStartServiceToday()
+                !canStartServiceNow()
                   ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
                   : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
               } disabled:opacity-50`}
               title={
-                !canStartServiceToday()
-                  ? "Service can only be started on or after the scheduled date"
+                !canStartServiceNow()
+                  ? "Service can only be started on or after the scheduled date and time"
                   : ""
               }
             >
