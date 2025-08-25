@@ -325,7 +325,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Error handling
   const handleError = useCallback((error: any, operation: string) => {
-    console.error(`Error in ${operation}:`, error);
+    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     setError(`${operation}: ${errorMessage}`);
   }, []);
@@ -373,7 +373,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         }
         return null;
       } catch (error) {
-        console.error("Error fetching provider profile:", error);
+        //console.error("Error fetching provider profile:", error);
         return null;
       }
     },
@@ -472,14 +472,14 @@ export const useServiceManagement = (): ServiceManagementHook => {
               };
             });
 
-            console.log(
-              `Successfully prepared ${processedImages.length} images for service creation`,
-            );
+            // //console.log(
+            //   `Successfully prepared ${processedImages.length} images for service creation`,
+            // );
           } catch (imageError) {
-            console.warn(
-              "Image processing failed, creating service without images:",
-              imageError,
-            );
+            // //console.warn(
+            //   "Image processing failed, creating service without images:",
+            //   imageError,
+            // );
             processedImages = undefined;
           }
         }
@@ -518,14 +518,14 @@ export const useServiceManagement = (): ServiceManagementHook => {
               },
             );
 
-            console.log(
-              `Successfully prepared ${processedCertificates.length} certificates for service creation`,
-            );
+            // //console.log(
+            //   `Successfully prepared ${processedCertificates.length} certificates for service creation`,
+            // );
           } catch (certificateError) {
-            console.warn(
-              "Certificate processing failed, creating service without certificates:",
-              certificateError,
-            );
+            // //console.warn(
+            //   "Certificate processing failed, creating service without certificates:",
+            //   certificateError,
+            // );
             processedCertificates = undefined;
           }
         }
@@ -1085,7 +1085,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
           await fetchUserProfile();
           break;
         default:
-          console.warn(`Retry not implemented for operation: ${operation}`);
+        //console.warn(`Retry not implemented for operation: ${operation}`);
       }
     },
     [fetchServices, fetchCategories, fetchUserProfile],

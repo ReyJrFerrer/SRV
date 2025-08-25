@@ -458,10 +458,10 @@ const ClientBookingPageComponent: React.FC = () => {
             );
             availabilityMap[timeSlotKey] = isAvailable;
           } catch (error) {
-            console.error(
-              `Error checking availability for slot ${timeSlotKey}:`,
-              error,
-            );
+            // //console.error(
+            //   `Error checking availability for slot ${timeSlotKey}:`,
+            //   error,
+            // );
             availabilityMap[timeSlotKey] = false; // Default to unavailable on error
           }
         }
@@ -536,21 +536,21 @@ const ClientBookingPageComponent: React.FC = () => {
         0,
         0,
       );
-      console.log("DatePicker selected:", {
-        original: date.toISOString(),
-        originalDay: date.getDay(),
-        adjusted: adjustedDate.toISOString(),
-        adjustedDay: adjustedDate.getDay(),
-        dayName: [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ][adjustedDate.getDay()],
-      });
+      // //console.log("DatePicker selected:", {
+      //   original: date.toISOString(),
+      //   originalDay: date.getDay(),
+      //   adjusted: adjustedDate.toISOString(),
+      //   adjustedDay: adjustedDate.getDay(),
+      //   dayName: [
+      //     "Sunday",
+      //     "Monday",
+      //     "Tuesday",
+      //     "Wednesday",
+      //     "Thursday",
+      //     "Friday",
+      //     "Saturday",
+      //   ][adjustedDate.getDay()],
+      // });
       setSelectedDate(adjustedDate);
     } else {
       setSelectedDate(null);
@@ -576,28 +576,54 @@ const ClientBookingPageComponent: React.FC = () => {
     setFormError(null);
     setIsSubmitting(true);
 
-    // Track which field to highlight
     let highlightField = "";
 
     try {
-      // Validate required address fields
-      if (selectedBarangay === "__other__") {
-        if (
-          !otherBarangay ||
-          otherBarangay.trim().length < 3 ||
-          otherBarangay.trim().length > 20
-        ) {
-          setFormError(
-            "Please enter a valid barangay name (3-20 characters) for 'Others'.",
-          );
-          highlightField = "otherBarangay";
-          setIsSubmitting(false);
-          setHighlightInput(highlightField);
-          return;
-        }
-      } else if (!selectedBarangay.trim()) {
+      // 1. Select Packages
+      if (!packages.some((pkg) => pkg.checked)) {
+        setFormError("Please select at least one package before proceeding.");
+        highlightField = "package";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+
+      // 2. Booking Schedule (booking type and time)
+      if (!bookingOption) {
+        setFormError("Please select a booking type (Same Day or Scheduled).");
+        highlightField = "bookingOption";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+      if (!selectedTime) {
+        const timeLabel =
+          bookingOption === "sameday" ? "time for today" : "time slot";
+        setFormError(`Please select a ${timeLabel} before proceeding.`);
+        highlightField = "selectedTime";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+
+      // 3. Service Location (barangay, otherBarangay, street, houseNumber)
+      if (!selectedBarangay.trim()) {
         setFormError("Please select your Barangay before proceeding.");
         highlightField = "barangay";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+      if (
+        selectedBarangay === "__other__" &&
+        (!otherBarangay ||
+          otherBarangay.trim().length < 3 ||
+          otherBarangay.trim().length > 20)
+      ) {
+        setFormError(
+          "Please enter a valid barangay name (3-20 characters) for 'Others'.",
+        );
+        highlightField = "otherBarangay";
         setIsSubmitting(false);
         setHighlightInput(highlightField);
         return;
@@ -622,7 +648,8 @@ const ClientBookingPageComponent: React.FC = () => {
         setHighlightInput(highlightField);
         return;
       }
-      // Require cash amount input if payment method is cash
+
+      // 4. Payment Method (if cash)
       if (paymentMethod === "cash" && packages.some((pkg) => pkg.checked)) {
         const paidAmount = parseFloat(amountPaid);
         if (!amountPaid.trim()) {
@@ -642,6 +669,7 @@ const ClientBookingPageComponent: React.FC = () => {
           return;
         }
       }
+
       // Validate at least one package is selected
       if (!packages.some((pkg) => pkg.checked)) {
         setFormError("Please select at least one package before proceeding.");

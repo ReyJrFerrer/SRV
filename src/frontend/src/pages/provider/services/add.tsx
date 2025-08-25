@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
-import { Toaster, toast } from "sonner"; // Add this import
+import { Toaster, toast } from "sonner";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
@@ -21,7 +21,7 @@ import {
 import { ServiceCategory } from "../../../services/serviceCanisterService";
 import { processServiceCertificateFiles } from "../../../services/mediaService";
 
-// Define TimeSlotUIData interface to ensure type consistency
+// Type for time slots
 interface TimeSlotUIData {
   id: string;
   startHour: string;
@@ -41,11 +41,10 @@ interface ValidationErrors {
   timeSlots?: string;
   locationMunicipalityCity?: string;
   general?: string;
-  // New field to check if any inputs contain profanity
   profanity?: string;
 }
 
-// Backend validation constants (from service.mo)
+// Backend validation constants
 const VALIDATION_LIMITS = {
   MIN_TITLE_LENGTH: 3,
   MAX_TITLE_LENGTH: 100,
@@ -55,7 +54,6 @@ const VALIDATION_LIMITS = {
   MAX_PRICE: 1_000_000,
 };
 
-// Initialize the profanity filter
 const filter = new Filter();
 
 const initialServiceState = {
@@ -71,7 +69,6 @@ const initialServiceState = {
       isPopular: false,
     },
   ],
-  // Availability fields
   availabilitySchedule: [] as DayOfWeek[],
   useSameTimeForAllDays: true,
   commonTimeSlots: [
@@ -86,7 +83,6 @@ const initialServiceState = {
     },
   ],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
-  // Location fields
   locationHouseNumber: "",
   locationStreet: "",
   locationBarangay: "",
@@ -114,6 +110,7 @@ const AddServicePage: React.FC = () => {
     validateImageFiles,
   } = useServiceManagement();
 
+  // State for stepper and form data
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialServiceState);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -121,29 +118,30 @@ const AddServicePage: React.FC = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [serviceCreated, setServiceCreated] = useState(false);
+
   // Service image upload state
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
   // Certification upload state
   const [certificationFiles, setCertificationFiles] = useState<File[]>([]);
   const [certificationPreviews, setCertificationPreviews] = useState<string[]>(
     [],
   );
 
-  // Handle image file selection
+  // Used to trigger scroll/highlight on error
+  const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
+
+  // --- Image Handlers ---
   const handleImageFilesChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
-
     setIsProcessingImages(true);
-
     try {
-      // Update files immediately
       setServiceImageFiles((prev) => [...prev, ...files]);
-
-      // Generate previews using Promise.all to avoid race conditions
       const newPreviews = await Promise.all(
         files.map((file) => {
           return new Promise<string>((resolve, reject) => {
@@ -155,31 +153,21 @@ const AddServicePage: React.FC = () => {
           });
         }),
       );
-
-      // Update previews only after all files are processed
       setImagePreviews((prev) => [...prev, ...newPreviews]);
-    } catch (error) {
-      console.error("Error generating image previews:", error);
-      // Remove the files that failed to process
+    } catch {
       setServiceImageFiles((prev) => prev.slice(0, -files.length));
     } finally {
       setIsProcessingImages(false);
     }
-
     e.target.value = "";
   };
 
-  // Handle certification file selection
   const handleCertificationFilesChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
-
-    // Update files immediately
     setCertificationFiles((prev) => [...prev, ...files]);
-
-    // Generate previews using Promise.all to avoid race conditions
     try {
       const newPreviews = await Promise.all(
         files.map((file) => {
@@ -192,32 +180,25 @@ const AddServicePage: React.FC = () => {
           });
         }),
       );
-
-      // Update previews only after all files are processed
       setCertificationPreviews((prev) => [...prev, ...newPreviews]);
-    } catch (error) {
-      console.error("Error generating certification previews:", error);
-    }
-
+    } catch {}
     e.target.value = "";
   };
 
-  // Remove image by index
   const handleRemoveImage = (index: number) => {
     setServiceImageFiles((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    // Clear any processing-related errors
     if (validationErrors.general?.includes("Processing")) {
       setValidationErrors((prev) => ({ ...prev, general: undefined }));
     }
   };
 
-  // Remove certification by index
   const handleRemoveCertification = (index: number) => {
     setCertificationFiles((prev) => prev.filter((_, i) => i !== index));
     setCertificationPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // --- Initial Data Fetch ---
   useEffect(() => {
     getCategories();
     document.title = "Add Service - SRV Provider";
@@ -234,13 +215,11 @@ const AddServicePage: React.FC = () => {
     }
   }, [categories, formData.categoryId]);
 
-  // Validation function for current step
+  // --- Validation for Each Step ---
   const validateCurrentStep = useCallback((): ValidationErrors => {
     const errors: ValidationErrors = {};
-
     switch (currentStep) {
       case 1: // Service Details
-        // Validate service title
         if (!formData.serviceOfferingTitle.trim()) {
           errors.serviceOfferingTitle = "Service title is required";
         } else if (
@@ -269,13 +248,9 @@ const AddServicePage: React.FC = () => {
               "You already have a service with this title. Please choose a different name.";
           }
         }
-
-        // Validate category
         if (!formData.categoryId) {
           errors.categoryId = "Please select a category";
         }
-
-        // Validate packages
         if (formData.servicePackages.length === 0) {
           errors.servicePackages = "At least one service package is required";
         } else {
@@ -287,32 +262,28 @@ const AddServicePage: React.FC = () => {
               Number(pkg.price) >= VALIDATION_LIMITS.MIN_PRICE &&
               Number(pkg.price) <= VALIDATION_LIMITS.MAX_PRICE,
           );
-
           if (!hasValidPackage) {
             errors.servicePackages =
               "At least one complete package with valid price is required";
           }
-
-          // Check individual package validation
           formData.servicePackages.forEach((pkg, index) => {
             if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
               if (!pkg.name.trim()) {
                 errors.servicePackages = `Package ${index + 1}: Name is required`;
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
+                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
               } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
                 errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
               } else if (filter.isProfane(pkg.name)) {
                 errors.servicePackages = `Package ${index + 1}: Name contains inappropriate language.`;
               }
-
               if (!pkg.description.trim()) {
                 errors.servicePackages = `Package ${index + 1}: Description is required`;
               } else if (
                 pkg.description.length <
                 VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} characters`;
+                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
               } else if (
                 pkg.description.length >
                 VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
@@ -321,38 +292,27 @@ const AddServicePage: React.FC = () => {
               } else if (filter.isProfane(pkg.description)) {
                 errors.servicePackages = `Package ${index + 1}: Description contains inappropriate language.`;
               }
-              const priceNum = Number(pkg.price);
-              if (!pkg.price || isNaN(priceNum)) {
-                errors.servicePackages = `Package ${index + 1}: Price is required and must be a whole number (no decimals).`;
-              } else if (
-                priceNum < VALIDATION_LIMITS.MIN_PRICE ||
-                priceNum > VALIDATION_LIMITS.MAX_PRICE
+              if (
+                !pkg.price ||
+                Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
               ) {
-                errors.servicePackages = `Package ${index + 1}: Price must be between ₱${VALIDATION_LIMITS.MIN_PRICE.toLocaleString()} and ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}. Please enter a value within this range.`;
+                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+              } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
+                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
               }
             }
           });
         }
         break;
-
       case 2: // Availability
-        // Validate availability schedule
         if (formData.availabilitySchedule.length === 0) {
           errors.availabilitySchedule =
             "Please select at least one day of availability";
         }
-
-        // Validate time slots
-        const isSameTime = (slot: TimeSlotUIData) =>
-          slot.startHour === slot.endHour &&
-          slot.startMinute === slot.endMinute &&
-          slot.startPeriod === slot.endPeriod;
-
         if (formData.useSameTimeForAllDays) {
           if (formData.commonTimeSlots.length === 0) {
             errors.timeSlots = "Please add at least one time slot";
           } else {
-            // Validate each time slot
             const hasValidTimeSlot = formData.commonTimeSlots.some(
               (slot) =>
                 slot.startHour &&
@@ -363,15 +323,8 @@ const AddServicePage: React.FC = () => {
             if (!hasValidTimeSlot) {
               errors.timeSlots = "Please complete at least one time slot";
             }
-            // Check for same start and end time
-            const invalidSlots = formData.commonTimeSlots.filter(isSameTime);
-            if (invalidSlots.length > 0) {
-              errors.timeSlots =
-                "Working hours must have different start and end times.";
-            }
           }
         } else {
-          // Validate per-day time slots
           const hasTimeSlots = formData.availabilitySchedule.some(
             (day) =>
               formData.perDayTimeSlots[day] &&
@@ -380,29 +333,15 @@ const AddServicePage: React.FC = () => {
           if (!hasTimeSlots) {
             errors.timeSlots = "Please add time slots for your available days";
           }
-          // Check for same start and end time in per-day slots
-          for (const day of formData.availabilitySchedule) {
-            const slots = formData.perDayTimeSlots[day] || [];
-            const invalidSlots = slots.filter(isSameTime);
-            if (invalidSlots.length > 0) {
-              errors.timeSlots =
-                "Working hours must have different start and end times.";
-              break;
-            }
-          }
         }
         break;
-
-      case 3: // Location - Enhanced validation matching ClientBookingPageComponent
-        // Check if using GPS location or manual address
+      case 3: // Location
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
-
         if (!hasGPSCoordinates) {
           errors.locationMunicipalityCity =
             "Still detecting your location, please wait";
         } else if (!hasGPSCoordinates) {
-          // Validate manual address fields
           if (!formData.locationProvince.trim()) {
             errors.locationMunicipalityCity = "Province is required";
           } else if (!formData.locationMunicipalityCity.trim()) {
@@ -417,34 +356,27 @@ const AddServicePage: React.FC = () => {
           }
         }
         break;
-
-      case 4: // Image Upload (optional step)
-        // Don't block navigation if images are still processing
+      case 4: // Image Upload
         if (isProcessingImages) {
           errors.general =
             "Please wait for images to finish processing before continuing.";
           break;
         }
-
-        // Validate service images if any are provided
         if (serviceImageFiles.length > 0) {
           try {
             const imageErrors = validateImageFiles(serviceImageFiles);
             if (imageErrors.length > 0) {
               errors.general = imageErrors.join("; ");
             }
-          } catch (validationError) {
-            console.error("Image validation error:", validationError);
+          } catch {
             errors.general =
               "Error validating images. Please try removing and re-adding them.";
           }
         }
         break;
-
       default:
         break;
     }
-
     return errors;
   }, [
     currentStep,
@@ -455,8 +387,8 @@ const AddServicePage: React.FC = () => {
     userServices,
   ]);
 
+  // --- Navigation Handlers ---
   const handleNext = () => {
-    // Don't allow navigation if images are still processing
     if (isProcessingImages) {
       setValidationErrors({
         general:
@@ -464,19 +396,19 @@ const AddServicePage: React.FC = () => {
       });
       return;
     }
-
     const errors = validateCurrentStep();
     if (Object.keys(errors).length === 0) {
       setCurrentStep((prev) => prev + 1);
       setValidationErrors({});
     } else {
       setValidationErrors(errors);
+      setScrollToErrorTrigger((prev) => prev + 1);
     }
   };
 
   const handleBack = () => setCurrentStep((prev) => prev - 1);
 
-  // Convert time slot format for backend
+  // --- Time Slot Conversion for Backend ---
   const convertTimeSlot = (slot: TimeSlotUIData) => {
     const convertTo24Hour = (
       hour: string,
@@ -491,7 +423,6 @@ const AddServicePage: React.FC = () => {
       }
       return `${hour24.toString().padStart(2, "0")}:${minute}`;
     };
-
     return {
       startTime: convertTo24Hour(
         slot.startHour,
@@ -502,26 +433,19 @@ const AddServicePage: React.FC = () => {
     };
   };
 
-  // Handle service submission
+  // --- Service Submission Handler ---
   const handleSubmit = async () => {
     const errors = validateCurrentStep();
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       return;
     }
-
     setIsSubmitting(true);
     setValidationErrors({});
-
-    // Show toast notification when button is clicked
     toast.loading("Creating your service...", { id: "create-service" });
-
     try {
-      // Prepare service data
       let location;
-      // Always provide non-empty strings for required fields
       if (formData.locationAddress && formData.locationAddress.trim()) {
-        // Use detected address, fallback to safe defaults if missing
         let city = formData.locationMunicipalityCity?.trim() || "N/A";
         let state = formData.locationProvince?.trim() || "N/A";
         let postalCode = formData.locationPostalCode?.trim() || "0000";
@@ -543,7 +467,6 @@ const AddServicePage: React.FC = () => {
           postalCode,
         };
       } else {
-        // Manual address, fallback to safe defaults if missing
         let city = formData.locationMunicipalityCity?.trim() || "N/A";
         let state = formData.locationProvince?.trim() || "N/A";
         let postalCode = formData.locationPostalCode?.trim() || "0000";
@@ -572,8 +495,6 @@ const AddServicePage: React.FC = () => {
           postalCode,
         };
       }
-
-      // Prepare weekly schedule
       const weeklySchedule = formData.availabilitySchedule.map((day) => ({
         day,
         availability: {
@@ -583,8 +504,6 @@ const AddServicePage: React.FC = () => {
             : (formData.perDayTimeSlots[day] || []).map(convertTimeSlot),
         },
       }));
-
-      // Process service images if any were uploaded
       let processedServiceImages:
         | Array<{
             fileName: string;
@@ -592,28 +511,14 @@ const AddServicePage: React.FC = () => {
             fileData: Uint8Array;
           }>
         | undefined;
-
       if (serviceImageFiles.length > 0) {
         try {
-          console.log(
-            `Processing ${serviceImageFiles.length} service images...`,
-          );
           processedServiceImages =
             await processImageFilesForService(serviceImageFiles);
-          console.log(
-            `Successfully processed ${processedServiceImages.length} images`,
-          );
-        } catch (imageError) {
-          console.warn(
-            "Image processing failed, creating service without images:",
-            imageError,
-          );
-          // Continue with service creation without images rather than failing completely
+        } catch {
           processedServiceImages = undefined;
         }
       }
-
-      // Process service certificates if any were uploaded
       let processedServiceCertificates:
         | Array<{
             fileName: string;
@@ -621,28 +526,14 @@ const AddServicePage: React.FC = () => {
             fileData: Uint8Array;
           }>
         | undefined;
-
       if (certificationFiles.length > 0) {
         try {
-          console.log(
-            `Processing ${certificationFiles.length} service certificates...`,
-          );
           processedServiceCertificates =
             await processServiceCertificateFiles(certificationFiles);
-          console.log(
-            `Successfully processed ${processedServiceCertificates?.length || 0} certificates`,
-          );
-        } catch (certificateError) {
-          console.warn(
-            "Certificate processing failed, creating service without certificates:",
-            certificateError,
-          );
-          // Continue with service creation without certificates rather than failing completely
+        } catch {
           processedServiceCertificates = undefined;
         }
       }
-
-      // Create service
       const serviceRequest: ServiceCreateRequest = {
         title: formData.serviceOfferingTitle.trim(),
         description: `${formData.serviceOfferingTitle.trim()}`,
@@ -658,12 +549,7 @@ const AddServicePage: React.FC = () => {
         serviceImages: processedServiceImages,
         serviceCertificates: processedServiceCertificates,
       };
-
-      console.log("Creating service with data:", serviceRequest);
       const newService = await createService(serviceRequest);
-      console.log("Service created successfully:", newService);
-
-      // Create packages for the service
       const packagePromises = formData.servicePackages
         .filter((pkg) => pkg.name.trim() && pkg.description.trim() && pkg.price)
         .map((pkg) =>
@@ -674,16 +560,11 @@ const AddServicePage: React.FC = () => {
             price: Number(pkg.price),
           }),
         );
-
-      console.log("Creating packages...");
       await Promise.all(packagePromises);
-      console.log("All packages created successfully");
-
-      // Navigate to service details page
       toast.success("Service created successfully!", { id: "create-service" });
-      navigate(`/provider/service-details/${newService.id}`);
+      setServiceCreated(true);
+      navigate(`/provider/service-details/${newService.id}`, { replace: true });
     } catch (error) {
-      console.error("Error creating service:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create service";
       setValidationErrors({ general: errorMessage });
@@ -693,6 +574,7 @@ const AddServicePage: React.FC = () => {
     }
   };
 
+  // --- Input Handlers ---
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -738,16 +620,14 @@ const AddServicePage: React.FC = () => {
     }));
   };
 
-  // Placeholder function for onRequestCategory to resolve the prop error
-  const onRequestCategory = useCallback((categoryName: string) => {
-    // This function can be implemented later to handle new category requests
-    console.log("Category requested:", categoryName);
-    // You could call an API here to submit the new category request
-  }, []);
+  // --- Placeholder for category request ---
+  const onRequestCategory = useCallback((_categoryName: string) => {}, []);
 
+  // --- Step Renderer ---
   const renderStep = () => {
     switch (currentStep) {
       case 1:
+        // Service Details Step
         return (
           <ServiceDetails
             formData={formData}
@@ -759,9 +639,11 @@ const AddServicePage: React.FC = () => {
             removePackage={removePackage}
             validationErrors={validationErrors}
             onRequestCategory={onRequestCategory}
+            scrollToErrorTrigger={scrollToErrorTrigger}
           />
         );
       case 2:
+        // Availability Step
         return (
           <ServiceAvailability
             formData={formData}
@@ -770,6 +652,7 @@ const AddServicePage: React.FC = () => {
           />
         );
       case 3:
+        // Location Step
         return (
           <ServiceLocation
             formData={formData}
@@ -778,6 +661,7 @@ const AddServicePage: React.FC = () => {
           />
         );
       case 4:
+        // Image Upload Step
         return (
           <div className="space-y-6">
             <div className="text-center">
@@ -789,7 +673,6 @@ const AddServicePage: React.FC = () => {
                 step is optional but highly recommended.
               </p>
             </div>
-            {/* Display validation errors for this step */}
             {validationErrors.general && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-center">
@@ -825,6 +708,7 @@ const AddServicePage: React.FC = () => {
           </div>
         );
       case 5:
+        // Review & Submit Step
         return (
           <div className="flex flex-col items-center space-y-8">
             <div className="w-full max-w-3xl rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-10 shadow-2xl">
@@ -1130,13 +1014,21 @@ const AddServicePage: React.FC = () => {
     }
   };
 
+  // --- Main Page Layout ---
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
-      <Toaster position="top-center" /> {/* Add this line */}
+      <Toaster position="top-center" />
+      {/* Header */}
       <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
         <div className="container mx-auto flex items-center">
           <button
-            onClick={() => (currentStep === 1 ? navigate(-1) : handleBack())}
+            onClick={() =>
+              serviceCreated
+                ? navigate("/provider/home")
+                : currentStep === 1
+                  ? navigate(-1)
+                  : handleBack()
+            }
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
@@ -1146,10 +1038,12 @@ const AddServicePage: React.FC = () => {
           </h1>
         </div>
       </header>
+      {/* Main Content */}
       <main className="container mx-auto flex-grow p-4 sm:p-6">
         <div className="mt-6 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>
+        {/* Navigation Buttons */}
         <div className="mt-6 mb-8 flex justify-between">
           {currentStep > 1 && (
             <button

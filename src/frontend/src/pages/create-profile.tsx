@@ -36,7 +36,7 @@ export default function CreateProfilePage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isAuthenticated) {
-        console.warn("Not authenticated, redirecting to login...");
+        //console.warn("Not authenticated, redirecting to login...");
         navigate("/client");
       } else {
         setReauthRequired(false);
@@ -152,7 +152,7 @@ export default function CreateProfilePage() {
       } else {
         setError(errorMessage);
       }
-      console.error("Profile creation error:", err);
+      //console.error("Profile creation error:", err);
     } finally {
       setIsLoading(false);
     }

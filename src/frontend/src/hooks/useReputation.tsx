@@ -33,7 +33,7 @@ export const useReputation = () => {
   const fetchUserReputation = useCallback(
     async (userId: string): Promise<ReputationScore | null> => {
       if (!isAuthenticated || !identity) {
-        console.warn("Authentication required to fetch user reputation");
+        //console.warn("Authentication required to fetch user reputation");
         return null;
       }
 
@@ -76,9 +76,9 @@ export const useReputation = () => {
             fetchError.message.includes("No reputation score found") ||
             fetchError.message.includes("not found")
           ) {
-            console.log(
-              `📊 No reputation found for user ${userId}, using default score of 50`,
-            );
+            // //console.log(
+            //   `📊 No reputation found for user ${userId}, using default score of 50`,
+            // );
 
             return {
               userId,
@@ -94,16 +94,16 @@ export const useReputation = () => {
           }
         }
       } catch (err: any) {
-        console.error("❌ Failed to fetch user reputation:", err);
+        //console.error("❌ Failed to fetch user reputation:", err);
 
         // For network errors, still return default score to not break UI
         if (
           err.message.includes("Network error") ||
           err.message.includes("fetch")
         ) {
-          console.log(
-            `📊 Network error fetching reputation for user ${userId}, using default score of 50`,
-          );
+          // //console.log(
+          //   `📊 Network error fetching reputation for user ${userId}, using default score of 50`,
+          // );
           return {
             userId,
             trustScore: 50,
@@ -171,7 +171,7 @@ export const useReputation = () => {
       } catch (fetchError: any) {
         // If reputation doesn't exist, try to initialize it
         if (fetchError.message.includes("No reputation score found")) {
-          console.log("📊 No reputation found, initializing...");
+          //console.log("📊 No reputation found, initializing...");
 
           const initialReputation =
             await reputationCanisterService.initializeMyReputation();
@@ -192,7 +192,7 @@ export const useReputation = () => {
         }
       }
     } catch (err: any) {
-      console.error("❌ Failed to fetch reputation:", err);
+      //console.error("❌ Failed to fetch reputation:", err);
 
       // Display network error as requested
       if (

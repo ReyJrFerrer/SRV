@@ -154,7 +154,7 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Helper function to handle errors
   const handleError = useCallback((error: unknown, context: string) => {
-    console.error(`${context} Error:`, error);
+    //console.error(`${context} Error:`, error);
     if (
       error instanceof AdminServiceError ||
       error instanceof RemittanceServiceError ||

@@ -62,7 +62,7 @@ export const useChat = () => {
 
         return userName;
       } catch (error) {
-        console.error("Failed to fetch user name:", error);
+        //console.error("Failed to fetch user name:", error);
         const fallbackName = `User ${userId.slice(0, 8)}...`;
 
         // Cache the fallback name to avoid repeated failed requests
@@ -156,7 +156,7 @@ export const useChat = () => {
           await enhanceConversationsWithNames(fetchedConversations);
         setConversations(enhancedConversations);
       } catch (err) {
-        console.error("Failed to fetch conversations:", err);
+        //console.error("Failed to fetch conversations:", err);
         if (!silent) {
           setError("Could not load conversations.");
         }
@@ -195,7 +195,7 @@ export const useChat = () => {
         );
         return messagePage;
       } catch (err) {
-        console.error("Failed to fetch messages:", err);
+        //console.error("Failed to fetch messages:", err);
         throw new Error("Could not load messages.");
       }
     },
@@ -238,7 +238,7 @@ export const useChat = () => {
         // Refresh conversations to update unread counts (silently)
         await fetchConversations(true);
       } catch (err) {
-        console.error("Failed to load conversation:", err);
+        //console.error("Failed to load conversation:", err);
         if (!silent) {
           setError("Could not load conversation.");
         }
@@ -293,7 +293,7 @@ export const useChat = () => {
 
         return newMessage;
       } catch (err) {
-        console.error("Failed to send message:", err);
+        //console.error("Failed to send message:", err);
         setError(
           err instanceof Error ? err.message : "Could not send message.",
         );
@@ -333,7 +333,7 @@ export const useChat = () => {
 
         return newConversation;
       } catch (err) {
-        console.error("Failed to create conversation:", err);
+        //console.error("Failed to create conversation:", err);
         setError("Could not create conversation.");
         throw err;
       } finally {
@@ -358,7 +358,7 @@ export const useChat = () => {
         // Refresh conversations to update unread counts (silently)
         await fetchConversations(true);
       } catch (err) {
-        console.error("Failed to mark messages as read:", err);
+        //console.error("Failed to mark messages as read:", err);
       }
     },
     [isAuthenticated, identity, fetchConversations],
@@ -389,15 +389,13 @@ export const useChat = () => {
     refreshInterval.current = setInterval(() => {
       if (isAuthenticated && identity) {
         // Silently refresh conversations
-        fetchConversations(true).catch(console.error);
+        fetchConversations(true).catch;
 
         // If we have a current conversation, silently refresh its messages
         if (currentConversation) {
-          fetchMessages(currentConversation.id)
-            .then((messagePage) => {
-              setMessages(messagePage.messages);
-            })
-            .catch(console.error);
+          fetchMessages(currentConversation.id).then((messagePage) => {
+            setMessages(messagePage.messages);
+          }).catch;
         }
       }
     }, AUTO_REFRESH_INTERVAL);

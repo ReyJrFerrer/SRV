@@ -245,7 +245,7 @@ const BookingDetailsPage: React.FC = () => {
           setAverageRating(avgRating);
           setReviewCount(reviews.length);
         } catch (error) {
-          console.error("Failed to fetch review stats:", error);
+          //console.error("Failed to fetch review stats:", error);
           setAverageRating(null);
           setReviewCount(null);
         } finally {
@@ -276,7 +276,7 @@ const BookingDetailsPage: React.FC = () => {
         );
         setCanUserReview(canReview);
       } catch (error) {
-        console.error("Error checking review status:", error);
+        //console.error("Error checking review status:", error);
         setCanUserReview(true); // Default to true if check fails to allow user to try
       } finally {
         setCheckingReviewStatus(false);
@@ -358,7 +358,7 @@ const BookingDetailsPage: React.FC = () => {
         "Could not start a new conversation. Please try again later.",
       );
     } catch (error) {
-      console.error("Failed to handle chat:", error);
+      //console.error("Failed to handle chat:", error);
       setChatErrorMessage(
         error instanceof Error
           ? error.message

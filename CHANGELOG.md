@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add duplicate service title validation to prevent providers from creating services with identical names
 - Add active service call-to-action reminder components for quick access to in-progress bookings
 - Add report submission functionality for users to report platform issues
 - Add validation to disable service deactivation and deletion when active bookings exist

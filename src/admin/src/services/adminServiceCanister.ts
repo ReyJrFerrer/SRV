@@ -394,7 +394,7 @@ export const adminServiceCanister = {
 
       return createdRules.map(convertCommissionRule);
     } catch (error) {
-      console.error("Error upserting commission rules:", error);
+      //console.error("Error upserting commission rules:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to create/update commission rules: ${error}`,
@@ -425,7 +425,7 @@ export const adminServiceCanister = {
       const rules = await actor.listRules(backendFilter);
       return rules.map(convertCommissionRule);
     } catch (error) {
-      console.error("Error listing commission rules:", error);
+      //console.error("Error listing commission rules:", error);
       throw new AdminServiceError({
         message: `Failed to list commission rules: ${error}`,
         code: "LIST_RULES_ERROR",
@@ -444,7 +444,7 @@ export const adminServiceCanister = {
 
       return result[0] ? convertCommissionRule(result[0]) : null;
     } catch (error) {
-      console.error("Error getting commission rule:", error);
+      //console.error("Error getting commission rule:", error);
       throw new AdminServiceError({
         message: `Failed to get commission rule: ${error}`,
         code: "GET_RULE_ERROR",
@@ -463,7 +463,7 @@ export const adminServiceCanister = {
 
       return handleResult<string>(result, "Failed to activate commission rule");
     } catch (error) {
-      console.error("Error activating commission rule:", error);
+      //console.error("Error activating commission rule:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to activate commission rule: ${error}`,
@@ -486,7 +486,7 @@ export const adminServiceCanister = {
         "Failed to deactivate commission rule",
       );
     } catch (error) {
-      console.error("Error deactivating commission rule:", error);
+      //console.error("Error deactivating commission rule:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to deactivate commission rule: ${error}`,
@@ -513,7 +513,7 @@ export const adminServiceCanister = {
 
       return handleResult<string>(result, "Failed to assign admin role");
     } catch (error) {
-      console.error("Error assigning admin role:", error);
+      //console.error("Error assigning admin role:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to assign admin role: ${error}`,
@@ -534,7 +534,7 @@ export const adminServiceCanister = {
 
       return handleResult<string>(result, "Failed to remove user role");
     } catch (error) {
-      console.error("Error removing user role:", error);
+      //console.error("Error removing user role:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to remove user role: ${error}`,
@@ -566,7 +566,7 @@ export const adminServiceCanister = {
         assignedAt: convertTimeToDate(assignment.assigned_at),
       };
     } catch (error) {
-      console.error("Error getting user role:", error);
+      //console.error("Error getting user role:", error);
       throw new AdminServiceError({
         message: `Failed to get user role: ${error}`,
         code: "GET_USER_ROLE_ERROR",
@@ -583,7 +583,7 @@ export const adminServiceCanister = {
       const userRole = await this.getUserRole(userId);
       return userRole !== null && userRole.role === "ADMIN";
     } catch (error) {
-      console.error("Error checking admin role:", error);
+      //console.error("Error checking admin role:", error);
       return false;
     }
   },
@@ -608,7 +608,7 @@ export const adminServiceCanister = {
         assignedAt: convertTimeToDate(assignment.assigned_at),
       }));
     } catch (error) {
-      console.error("Error listing user roles:", error);
+      //console.error("Error listing user roles:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to list user roles: ${error}`,
@@ -627,7 +627,7 @@ export const adminServiceCanister = {
       const principal = Principal.fromText(userId);
       return await actor.hasRole(principal, { ADMIN: null });
     } catch (error) {
-      console.error("Error checking admin role:", error);
+      //console.error("Error checking admin role:", error);
       return false;
     }
   },
@@ -668,7 +668,7 @@ export const adminServiceCanister = {
       const result = await actor.setSettings(backendSettings);
       return handleResult<string>(result, "Failed to update system settings");
     } catch (error) {
-      console.error("Error updating system settings:", error);
+      //console.error("Error updating system settings:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to update system settings: ${error}`,
@@ -696,7 +696,7 @@ export const adminServiceCanister = {
         updatedBy: settings.updated_by.toString(),
       };
     } catch (error) {
-      console.error("Error getting system settings:", error);
+      //console.error("Error getting system settings:", error);
       throw new AdminServiceError({
         message: `Failed to get system settings: ${error}`,
         code: "GET_SETTINGS_ERROR",
@@ -725,7 +725,7 @@ export const adminServiceCanister = {
 
       return handleResult<string>(result, "Failed to validate payment");
     } catch (error) {
-      console.error("Error validating payment:", error);
+      //console.error("Error validating payment:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to validate payment: ${error}`,
@@ -749,7 +749,7 @@ export const adminServiceCanister = {
 
       return orders.map(convertRemittanceOrder);
     } catch (error) {
-      console.error("Error getting pending validations:", error);
+      //console.error("Error getting pending validations:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to get pending validations: ${error}`,
@@ -775,7 +775,7 @@ export const adminServiceCanister = {
 
       return mediaItems.map(convertMediaItem);
     } catch (error) {
-      console.error("Error getting remittance media items:", error);
+      //console.error("Error getting remittance media items:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to get remittance media items: ${error}`,
@@ -805,7 +805,7 @@ export const adminServiceCanister = {
         mediaItems: data.mediaItems.map(convertMediaItem),
       };
     } catch (error) {
-      console.error("Error getting remittance order with media:", error);
+      //console.error("Error getting remittance order with media:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to get remittance order with media: ${error}`,
@@ -838,7 +838,7 @@ export const adminServiceCanister = {
         adminUsers: Number(stats.admin_users),
       };
     } catch (error) {
-      console.error("Error getting system stats:", error);
+      //console.error("Error getting system stats:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to get system statistics: ${error}`,
@@ -870,7 +870,7 @@ export const adminServiceCanister = {
       );
       return handleResult<string>(result, "Failed to set canister references");
     } catch (error) {
-      console.error("Error setting canister references:", error);
+      //console.error("Error setting canister references:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to set canister references: ${error}`,

@@ -115,7 +115,7 @@ const ProviderHomePage: React.FC = () => {
 
         // Load provider stats
       } catch (error) {
-        console.error("Error loading provider data:", error);
+        //console.error("Error loading provider data:", error);
       } finally {
         setPageLoading(false);
       }
@@ -238,7 +238,7 @@ const ProviderHomePage: React.FC = () => {
 
       <NotificationSettings /> */}
 
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs />
 

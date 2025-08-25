@@ -140,7 +140,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error submitting review:", error);
+      //console.error("Error submitting review:", error);
       throw error;
     }
   }
@@ -157,7 +157,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error getting review:", error);
+      //console.error("Error getting review:", error);
       throw error;
     }
   }
@@ -170,7 +170,7 @@ class ReviewCanisterService {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting booking reviews:", error);
+      //console.error("Error getting booking reviews:", error);
       throw error;
     }
   }
@@ -184,7 +184,7 @@ class ReviewCanisterService {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting user reviews:", error);
+      //console.error("Error getting user reviews:", error);
       throw error;
     }
   }
@@ -209,7 +209,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating review:", error);
+      //console.error("Error updating review:", error);
       throw error;
     }
   }
@@ -224,7 +224,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error deleting review:", error);
+      //console.error("Error deleting review:", error);
       throw error;
     }
   }
@@ -242,7 +242,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating provider rating:", error);
+      //console.error("Error calculating provider rating:", error);
       throw error;
     }
   }
@@ -259,7 +259,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating service rating:", error);
+      //console.error("Error calculating service rating:", error);
       throw error;
     }
   }
@@ -277,7 +277,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating user average rating:", error);
+      //console.error("Error calculating user average rating:", error);
       throw error;
     }
   }
@@ -290,7 +290,7 @@ class ReviewCanisterService {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting all reviews:", error);
+      //console.error("Error getting all reviews:", error);
       throw error;
     }
   }
@@ -309,7 +309,7 @@ class ReviewCanisterService {
         deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
-      console.error("Error getting review statistics:", error);
+      //console.error("Error getting review statistics:", error);
       throw error;
     }
   }
@@ -326,7 +326,7 @@ class ReviewCanisterService {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error initializing static reviews:", error);
+      //console.error("Error initializing static reviews:", error);
       throw error;
     }
   }
@@ -340,7 +340,7 @@ class ReviewCanisterService {
           review.providerId === providerId && review.status === "Visible",
       );
     } catch (error) {
-      console.error("Error getting provider reviews:", error);
+      //console.error("Error getting provider reviews:", error);
       throw error;
     }
   }
@@ -354,7 +354,7 @@ class ReviewCanisterService {
           review.serviceId === serviceId && review.status === "Visible",
       );
     } catch (error) {
-      console.error("Error getting service reviews:", error);
+      //console.error("Error getting service reviews:", error);
       throw error;
     }
   }
@@ -374,7 +374,7 @@ class ReviewCanisterService {
       // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
-      console.error("Error checking if user can review booking:", error);
+      //console.error("Error checking if user can review booking:", error);
       return false;
     }
   }
@@ -392,7 +392,7 @@ class ReviewCanisterService {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("Error getting recent reviews:", error);
+      //console.error("Error getting recent reviews:", error);
       throw error;
     }
   }
@@ -418,7 +418,7 @@ class ReviewCanisterService {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("Error getting top rated reviews:", error);
+      //console.error("Error getting top rated reviews:", error);
       throw error;
     }
   }
@@ -451,7 +451,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error submitting review:", error);
+      //console.error("Error submitting review:", error);
       throw error;
     }
   },
@@ -470,7 +470,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error getting review:", error);
+      //console.error("Error getting review:", error);
       throw error;
     }
   },
@@ -485,7 +485,7 @@ export const reviewCanisterService = {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting booking reviews:", error);
+      //console.error("Error getting booking reviews:", error);
       throw error;
     }
   },
@@ -501,7 +501,7 @@ export const reviewCanisterService = {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting user reviews:", error);
+      //console.error("Error getting user reviews:", error);
       throw error;
     }
   },
@@ -528,7 +528,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating review:", error);
+      //console.error("Error updating review:", error);
       throw error;
     }
   },
@@ -545,7 +545,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error deleting review:", error);
+      //console.error("Error deleting review:", error);
       throw error;
     }
   },
@@ -565,7 +565,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating provider rating:", error);
+      //console.error("Error calculating provider rating:", error);
       throw error;
     }
   },
@@ -584,7 +584,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating service rating:", error);
+      //console.error("Error calculating service rating:", error);
       throw error;
     }
   },
@@ -604,7 +604,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error calculating user average rating:", error);
+      //console.error("Error calculating user average rating:", error);
       throw error;
     }
   },
@@ -623,7 +623,7 @@ export const reviewCanisterService = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error initializing static reviews:", error);
+      //console.error("Error initializing static reviews:", error);
       throw error;
     }
   },
@@ -638,7 +638,7 @@ export const reviewCanisterService = {
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error("Error getting all reviews:", error);
+      //console.error("Error getting all reviews:", error);
       throw error;
     }
   },
@@ -659,7 +659,7 @@ export const reviewCanisterService = {
         deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
-      console.error("Error getting review statistics:", error);
+      //console.error("Error getting review statistics:", error);
       throw error;
     }
   },
@@ -679,7 +679,7 @@ export const reviewCanisterService = {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("Error getting recent reviews:", error);
+      //console.error("Error getting recent reviews:", error);
       throw error;
     }
   },
@@ -707,7 +707,7 @@ export const reviewCanisterService = {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("Error getting top rated reviews:", error);
+      //console.error("Error getting top rated reviews:", error);
       throw error;
     }
   },
@@ -723,7 +723,7 @@ export const reviewCanisterService = {
           review.providerId === providerId && review.status === "Visible",
       );
     } catch (error) {
-      console.error("Error getting provider reviews:", error);
+      //console.error("Error getting provider reviews:", error);
       throw error;
     }
   },
@@ -739,7 +739,7 @@ export const reviewCanisterService = {
           review.serviceId === serviceId && review.status === "Visible",
       );
     } catch (error) {
-      console.error("Error getting service reviews:", error);
+      //console.error("Error getting service reviews:", error);
       throw error;
     }
   },
@@ -761,7 +761,7 @@ export const reviewCanisterService = {
       // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
-      console.error("Error checking if user can review booking:", error);
+      //console.error("Error checking if user can review booking:", error);
       return false;
     }
   },
@@ -779,11 +779,11 @@ export const reviewCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        // console.error("Error setting canister references:", result.err);
+        // //console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      // console.error("Error setting canister references:", error);
+      // //console.error("Error setting canister references:", error);
       // Reset the actor to force recreation on next call
       reviewActor = null;
       throw new Error(`Failed to set canister references: ${error}`);

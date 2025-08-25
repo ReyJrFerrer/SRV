@@ -193,11 +193,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        // console.error("Error setting chat canister references:", result.err);
+        // //console.error("Error setting chat canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      // console.error("Error setting chat canister references:", error);
+      // //console.error("Error setting chat canister references:", error);
       throw new Error(`Failed to set chat canister references: ${error}`);
     }
   },
@@ -222,11 +222,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return adaptBackendConversation(result.ok);
       } else {
-        console.error("Error creating conversation:", result.err);
+        //console.error("Error creating conversation:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error creating conversation:", error);
+      //console.error("Error creating conversation:", error);
       throw new Error(`Failed to create conversation: ${error}`);
     }
   },
@@ -262,11 +262,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return adaptBackendMessage(result.ok);
       } else {
-        console.error("Error sending message:", result.err);
+        //console.error("Error sending message:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      //console.error("Error sending message:", error);
       throw new Error(`Failed to send message: ${error}`);
     }
   },
@@ -282,11 +282,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return result.ok.map(adaptBackendConversationSummary);
       } else {
-        console.error("Error fetching conversations:", result.err);
+        //console.error("Error fetching conversations:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      //console.error("Error fetching conversations:", error);
       throw new Error(`Failed to fetch conversations: ${error}`);
     }
   },
@@ -320,11 +320,11 @@ export const chatCanisterService = {
               : undefined,
         };
       } else {
-        console.error("Error fetching conversation messages:", result.err);
+        //console.error("Error fetching conversation messages:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error fetching conversation messages:", error);
+      //console.error("Error fetching conversation messages:", error);
       throw new Error(`Failed to fetch conversation messages: ${error}`);
     }
   },
@@ -341,11 +341,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error marking messages as read:", result.err);
+        //console.error("Error marking messages as read:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error marking messages as read:", error);
+      //console.error("Error marking messages as read:", error);
       throw new Error(`Failed to mark messages as read: ${error}`);
     }
   },
@@ -364,11 +364,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return adaptBackendConversation(result.ok);
       } else {
-        console.error("Error fetching conversation:", result.err);
+        //console.error("Error fetching conversation:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error fetching conversation:", error);
+      //console.error("Error fetching conversation:", error);
       throw new Error(`Failed to fetch conversation: ${error}`);
     }
   },

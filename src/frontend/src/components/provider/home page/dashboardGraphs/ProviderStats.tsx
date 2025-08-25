@@ -182,7 +182,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         },
       ];
     } catch (err) {
-      console.error("Error calculating stats:", err);
+      //console.error("Error calculating stats:", err);
       return defaultStats;
     }
   }, [analytics, getRevenueByPeriod, ratingData]);

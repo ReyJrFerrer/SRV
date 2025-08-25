@@ -27,7 +27,7 @@ export function GreetingView({ onError, setLoading }: GreetingViewProps) {
       const res = await backendService.greet(name);
       setResponse(res);
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       onError(String(err));
     } finally {
       setLoading(false);

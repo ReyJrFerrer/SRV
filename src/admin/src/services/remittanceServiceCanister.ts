@@ -279,7 +279,7 @@ export const remittanceServiceCanister = {
         "Failed to get all service providers",
       ).map(convertServiceProviderData);
     } catch (error) {
-      console.error("Error getting all service providers:", error);
+      //console.error("Error getting all service providers:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get all service providers: ${error}`,
@@ -323,7 +323,7 @@ export const remittanceServiceCanister = {
         totalOrdersCompleted: Number(dashboard.total_orders_completed),
       };
     } catch (error) {
-      console.error("Error getting provider dashboard:", error);
+      //console.error("Error getting provider dashboard:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get provider dashboard: ${error}`,
@@ -376,7 +376,7 @@ export const remittanceServiceCanister = {
         },
       };
     } catch (error) {
-      console.error("Error getting provider analytics:", error);
+      //console.error("Error getting provider analytics:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get provider analytics: ${error}`,
@@ -401,10 +401,10 @@ export const remittanceServiceCanister = {
         "Failed to get all service providers with commission data",
       ).map(convertServiceProviderData);
     } catch (error) {
-      console.error(
-        "Error getting service providers with commission data:",
-        error,
-      );
+      // //console.error(
+      //   "Error getting service providers with commission data:",
+      //   error,
+      // );
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get service providers with commission data: ${error}`,
@@ -426,7 +426,7 @@ export const remittanceServiceCanister = {
 
       return order[0] ? convertRemittanceOrder(order[0]) : null;
     } catch (error) {
-      console.error("Error getting order:", error);
+      //console.error("Error getting order:", error);
       throw new RemittanceServiceError({
         message: `Failed to get order: ${error}`,
         code: "GET_ORDER_ERROR",
@@ -481,7 +481,7 @@ export const remittanceServiceCanister = {
           : undefined,
       };
     } catch (error) {
-      console.error("Error querying orders:", error);
+      //console.error("Error querying orders:", error);
       throw new RemittanceServiceError({
         message: `Failed to query orders: ${error}`,
         code: "QUERY_ORDERS_ERROR",
@@ -502,7 +502,7 @@ export const remittanceServiceCanister = {
 
       return orders.map(convertRemittanceOrder);
     } catch (error) {
-      console.error("Error getting orders by status:", error);
+      //console.error("Error getting orders by status:", error);
       throw new RemittanceServiceError({
         message: `Failed to get orders by status: ${error}`,
         code: "GET_ORDERS_BY_STATUS_ERROR",
@@ -520,7 +520,7 @@ export const remittanceServiceCanister = {
         PaymentSubmitted: null,
       } as RemittanceOrderStatus);
     } catch (error) {
-      console.error("Error getting pending validations:", error);
+      //console.error("Error getting pending validations:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get pending validations: ${error}`,
@@ -556,7 +556,7 @@ export const remittanceServiceCanister = {
 
       return handleResult<string>(result, "Failed to validate payment");
     } catch (error) {
-      console.error("Error validating payment:", error);
+      //console.error("Error validating payment:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to validate payment: ${error}`,
@@ -584,7 +584,7 @@ export const remittanceServiceCanister = {
       );
       return convertSettlementInstruction(instruction);
     } catch (error) {
-      console.error("Error generating settlement instruction:", error);
+      //console.error("Error generating settlement instruction:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to generate settlement instruction: ${error}`,
@@ -618,10 +618,10 @@ export const remittanceServiceCanister = {
           );
           historicalData.push(analytics);
         } catch (providerError) {
-          console.warn(
-            `Failed to get historical data for provider ${provider.id}:`,
-            providerError,
-          );
+          // //console.warn(
+          //   `Failed to get historical data for provider ${provider.id}:`,
+          //   providerError,
+          // );
         }
       }
 
@@ -629,7 +629,7 @@ export const remittanceServiceCanister = {
         (a, b) => b.totalCommissionPaid - a.totalCommissionPaid,
       );
     } catch (error) {
-      console.error("Error getting historical provider data:", error);
+      //console.error("Error getting historical provider data:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get historical provider data: ${error}`,
@@ -713,7 +713,7 @@ export const remittanceServiceCanister = {
         averageCommissionRate,
       };
     } catch (error) {
-      console.error("Error getting system remittance stats:", error);
+      //console.error("Error getting system remittance stats:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get system remittance stats: ${error}`,
@@ -739,7 +739,7 @@ export const remittanceServiceCanister = {
       );
       return convertRemittanceOrder(order);
     } catch (error) {
-      console.error("Error canceling order:", error);
+      //console.error("Error canceling order:", error);
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to cancel order: ${error}`,
@@ -766,7 +766,7 @@ export const remittanceServiceCanister = {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Failed to set canister references:", error);
+      //console.error("Failed to set canister references:", error);
       throw new Error(
         `Failed to set canister references: ${error instanceof Error ? error.message : "Unknown error"}`,
       );

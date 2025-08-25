@@ -105,7 +105,7 @@ const CategoryPage: React.FC = () => {
         }
         setCategory(foundCategory);
       } catch (error) {
-        console.error("Failed to load category data:", error);
+        //console.error("Failed to load category data:", error);
         setCategory(null);
       }
     };

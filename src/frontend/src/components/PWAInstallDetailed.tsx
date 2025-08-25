@@ -20,11 +20,11 @@ export const PWAInstallDetailed: React.FC<PWAInstallDetailedProps> = ({
       onInstall?.(result);
 
       if (result === "accepted") {
-        console.log("PWA installation accepted");
+        //console.log("PWA installation accepted");
       } else if (result === "dismissed") {
-        console.log("PWA installation dismissed");
+        //console.log("PWA installation dismissed");
       } else {
-        console.log("PWA installation not available");
+        //console.log("PWA installation not available");
       }
     } finally {
       setInstalling(false);

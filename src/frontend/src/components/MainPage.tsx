@@ -97,14 +97,16 @@ export default function MainPage({
                 </span>
               </div>
               <button
-                className="mt-2 flex items-center gap-1 text-blue-700 hover:underline"
+                className="mx-auto mt-2 flex w-full items-center justify-center gap-1 text-blue-700 hover:underline"
                 onClick={() => setShowHowItWorks((v) => !v)}
                 aria-expanded={showHowItWorks}
                 aria-controls="how-ii-works-section"
                 type="button"
               >
                 <InformationCircleIcon className="h-5 w-5" />
-                <span>How does Internet Identity login work?</span>
+                <span className="text-center">
+                  How does Internet Identity login work?
+                </span>
               </button>
               {/* How It Works Section (hidden by default) */}
               {showHowItWorks && (
@@ -157,10 +159,9 @@ export default function MainPage({
           </div>
         </div>
       )}
-      {/* Modernized Header Section */}
+      {/* Header Section */}
       <header className="site-header sticky top-0 z-40 rounded-b-2xl border-b border-blue-100 bg-white/80 shadow-lg backdrop-blur-lg">
         <div className="container mx-auto flex items-center px-4 py-3">
-          {/* Logo on the left */}
           <div className="flex items-center gap-4">
             <a
               href="/"
@@ -174,50 +175,9 @@ export default function MainPage({
               />
             </a>
           </div>
-          {/* Centered nav and login button */}
-          <div className="flex flex-1 justify-center">
-            <nav
-              className={`main-nav hidden items-center gap-6 md:flex ${isMobileMenuOpen ? "active" : ""}`}
-            >
-              <a
-                href="#"
-                className="nav-link nav-link-active font-semibold text-blue-700 hover:underline"
-                onClick={(e) => e.preventDefault()}
-              >
-                Home
-              </a>
-              <a
-                href="#"
-                className="nav-link font-semibold text-gray-700 hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigateToAbout();
-                }}
-              >
-                About
-              </a>
-              <button
-                onClick={handleLoginClick}
-                disabled={isLoginLoading}
-                className="btn-primary ml-2 flex min-h-0 items-center gap-1 px-2 py-1 text-xs"
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                    <span className="text-base">Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="h-4 w-4" />
-                    <span className="text-base">Login / Sign Up</span>
-                  </>
-                )}
-              </button>
-            </nav>
-          </div>
-          {/* Mobile menu toggle stays on the right */}
+
           <button
-            className={`mobile-menu-toggle flex-col md:hidden ${isMobileMenuOpen ? "active" : ""} rounded-lg border border-gray-300 bg-white p-2 shadow`}
+            className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""} ml-auto rounded-lg border border-gray-300 bg-white p-2 shadow md:hidden`}
             aria-label="Toggle menu"
             onClick={toggleMobileMenu}
           >
@@ -225,48 +185,74 @@ export default function MainPage({
             <span className="hamburger-line mb-1 block h-0.5 w-6 bg-blue-700"></span>
             <span className="hamburger-line block h-0.5 w-6 bg-blue-700"></span>
           </button>
-        </div>
-        {/* Mobile nav */}
-        {isMobileMenuOpen && (
-          <nav className="main-nav-mobile mt-2 flex flex-col gap-3 rounded-lg bg-white p-4 shadow md:hidden">
-            <div className="flex w-full flex-col">
-              <a
-                href="#"
-                className="nav-link nav-link-active mb-2 font-semibold text-blue-700 hover:underline"
-                onClick={(e) => e.preventDefault()}
-              >
-                Home
-              </a>
-              <a
-                href="#"
-                className="nav-link mb-2 font-semibold text-gray-700 hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigateToAbout();
-                }}
-              >
-                About
-              </a>
-              <button
-                onClick={handleLoginClick}
-                disabled={isLoginLoading}
-                className="flex flex-col items-center gap-2 rounded-lg bg-yellow-400 px-5 py-2 font-bold text-blue-900 shadow transition hover:bg-blue-600 hover:text-white"
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="h-6 w-6" />
-                    <span>Login / Sign Up</span>
-                  </>
-                )}
-              </button>
-            </div>
+
+          <nav
+            className={`main-nav ${isMobileMenuOpen ? "active" : ""} hidden flex-1 items-center justify-center gap-6 md:flex`}
+          >
+            <ul className="nav-list flex items-center gap-6">
+              <li className="nav-item">
+                <a
+                  href="#"
+                  className="nav-link nav-link-active font-semibold text-blue-700 hover:underline"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Home
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  href="#"
+                  className="nav-link font-semibold text-gray-700 hover:underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigateToAbout();
+                  }}
+                >
+                  About
+                </a>
+              </li>
+              <li className="nav-item nav-cta">
+                <button
+                  onClick={handleLoginClick}
+                  disabled={isLoginLoading}
+                  className="btn-primary ml-2 flex min-h-0 items-center gap-1 px-2 py-1 text-xs"
+                >
+                  {isLoginLoading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                      <span className="text-base">Connecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FingerPrintIcon className="h-4 w-4" />
+                      <span className="text-base">Login / Sign Up</span>
+                    </>
+                  )}
+                </button>
+              </li>
+            </ul>
           </nav>
-        )}
+
+          <div className="header-button hidden md:block">
+            <button
+              onClick={handleLoginClick}
+              disabled={isLoginLoading}
+              className="btn-primary"
+            >
+              {isLoginLoading ? (
+                <>
+                  <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <FingerPrintIcon className="mr-3 h-6 w-6" />
+                  <span>Login / Sign Up</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Hero Section */}
@@ -378,9 +364,9 @@ export default function MainPage({
           <div className="features-grid">
             <div className="feature-card">
               <h3 className="feature-title">Discover</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="blueBall.png"
+                  src="/images/srv characters (SVG)/girl.svg"
                   alt="Service Discovery"
                   className="feature-icon"
                 />
@@ -393,9 +379,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Compare</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="ovalorange.png"
+                  src="/images/srv characters (SVG)/tutor.svg"
                   alt="Detailed Provider Profiles"
                   className="feature-icon"
                 />
@@ -407,9 +393,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Book</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="capsuleguy.png"
+                  src="/images/srv characters (SVG)/tech guy.svg"
                   alt="Seamless Booking System"
                   className="feature-icon"
                 />
@@ -422,9 +408,9 @@ export default function MainPage({
 
             <div className="feature-card">
               <h3 className="feature-title">Get it Done</h3>
-              <div className="feature-image">
+              <div className="feature-image max-w-3/4">
                 <img
-                  src="blueoval.png"
+                  src="/images/srv characters (SVG)/plumber.svg"
                   alt="Authentic Ratings & Reviews"
                   className="feature-icon"
                 />

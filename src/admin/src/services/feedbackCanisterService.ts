@@ -110,9 +110,9 @@ export const initializeFeedbackCanister = async (
 
     // Set canister references (auth canister)
     await actor.setCanisterReferences([Principal.fromText(authCanisterId)]);
-    console.log("Feedback canister initialized successfully");
+    //console.log("Feedback canister initialized successfully");
   } catch (error) {
-    console.error("Failed to initialize feedback canister:", error);
+    ///console.error("Failed to initialize feedback canister:", error);
     throw error;
   }
 };
@@ -131,7 +131,7 @@ export const getAllFeedback = async (
 
     return backendFeedback.map(adaptBackendFeedback);
   } catch (error) {
-    console.error("Failed to get all feedback:", error);
+    //console.error("Failed to get all feedback:", error);
     throw error;
   }
 };
@@ -150,7 +150,7 @@ export const getMyFeedback = async (
 
     return backendFeedback.map(adaptBackendFeedback);
   } catch (error) {
-    console.error("Failed to get user feedback:", error);
+    //console.error("Failed to get user feedback:", error);
     throw error;
   }
 };
@@ -169,7 +169,7 @@ export const getFeedbackStats = async (
 
     return adaptBackendFeedbackStats(backendStats);
   } catch (error) {
-    console.error("Failed to get feedback stats:", error);
+    //console.error("Failed to get feedback stats:", error);
     throw error;
   }
 };
@@ -190,7 +190,7 @@ export const getRecentFeedback = async (
 
     return backendFeedback.map(adaptBackendFeedback);
   } catch (error) {
-    console.error("Failed to get recent feedback:", error);
+    //console.error("Failed to get recent feedback:", error);
     throw error;
   }
 };
@@ -215,7 +215,7 @@ export const getFeedbackById = async (
       throw new Error(result.err);
     }
   } catch (error) {
-    console.error("Failed to get feedback by ID:", error);
+    //console.error("Failed to get feedback by ID:", error);
     throw error;
   }
 };

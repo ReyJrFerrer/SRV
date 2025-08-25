@@ -142,10 +142,10 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           try {
             return await authCanisterService.getProfile(providerId);
           } catch (err) {
-            console.error(
-              `Failed to fetch profile for provider ${providerId}`,
-              err,
-            );
+            // //console.error(
+            //   `Failed to fetch profile for provider ${providerId}`,
+            //   err,
+            // );
             return null;
           }
         }),
@@ -172,7 +172,7 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch services"),
       );
-      console.error("Error fetching services:", err);
+      //console.error("Error fetching services:", err);
       setServices([]); // Ensure empty state on error
     } finally {
       setLoading(false);
@@ -228,10 +228,10 @@ export const useServicesByCategory = (
           try {
             return await authCanisterService.getProfile(providerId);
           } catch (err) {
-            console.error(
-              `Failed to fetch profile for provider ${providerId}`,
-              err,
-            );
+            // //console.error(
+            //   `Failed to fetch profile for provider ${providerId}`,
+            //   err,
+            // );
             return null;
           }
         }),
@@ -257,7 +257,7 @@ export const useServicesByCategory = (
       setError(
         err instanceof Error ? err : new Error("Failed to fetch services"),
       );
-      console.error("Error fetching services by category:", err);
+      //console.error("Error fetching services by category:", err);
     } finally {
       setLoading(false);
     }
@@ -323,10 +323,10 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
           try {
             return await authCanisterService.getProfile(providerId);
           } catch (err) {
-            console.error(
-              `Failed to fetch profile for provider ${providerId}`,
-              err,
-            );
+            // //console.error(
+            //   `Failed to fetch profile for provider ${providerId}`,
+            //   err,
+            // );
             return null;
           }
         }),
@@ -352,7 +352,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch top services"),
       );
-      console.error("Error fetching top services:", err);
+      //console.error("Error fetching top services:", err);
     } finally {
       setLoading(false);
     }
@@ -412,7 +412,7 @@ export const useServiceById = (
       setError(
         err instanceof Error ? err : new Error("Failed to fetch service"),
       );
-      console.error("Error fetching service:", err);
+      //console.error("Error fetching service:", err);
     } finally {
       setLoading(false);
     }
@@ -449,7 +449,7 @@ export const useCategories = (): {
 
       setCategories(canisterCategories || []);
     } catch (err) {
-      console.error("Failed to load categories from service canister:", err);
+      //console.error("Failed to load categories from service canister:", err);
       setError(
         err instanceof Error ? err : new Error("Failed to fetch categories"),
       );

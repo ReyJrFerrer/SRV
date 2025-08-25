@@ -52,10 +52,10 @@ const getProviderReadIds = (): string[] => {
     const item = window.localStorage.getItem(PROVIDER_READ_NOTIFICATIONS_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error(
-      "Error reading provider notifications from localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error reading provider notifications from localStorage",
+    //   error,
+    // );
     return [];
   }
 };
@@ -67,10 +67,10 @@ const setProviderReadIds = (ids: string[]) => {
       JSON.stringify(ids),
     );
   } catch (error) {
-    console.error(
-      "Error writing provider notifications to localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error writing provider notifications to localStorage",
+    //   error,
+    // );
   }
 };
 
@@ -81,10 +81,10 @@ const getProviderPushSentIds = (): string[] => {
     );
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error(
-      "Error reading provider push sent notifications from localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error reading provider push sent notifications from localStorage",
+    //   error,
+    // );
     return [];
   }
 };
@@ -96,10 +96,10 @@ const setProviderPushSentIds = (ids: string[]) => {
       JSON.stringify(ids),
     );
   } catch (error) {
-    console.error(
-      "Error writing provider push sent notifications to localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error writing provider push sent notifications to localStorage",
+    //   error,
+    // );
   }
 };
 
@@ -287,15 +287,15 @@ export const useProviderNotificationsWithPush = () => {
 
       // Send push notifications for eligible notifications
       if (notificationsEligibleForPush.length > 0) {
-        console.log(
-          `Sending ${notificationsEligibleForPush.length} new provider push notifications`,
-        );
+        // //console.log(
+        //   `Sending ${notificationsEligibleForPush.length} new provider push notifications`,
+        // );
         notificationIntegrationService
           .sendProviderNotificationsBatch(notificationsEligibleForPush)
           .then((successCount) => {
-            console.log(
-              `Successfully sent ${successCount}/${notificationsEligibleForPush.length} provider push notifications`,
-            );
+            // //console.log(
+            //   `Successfully sent ${successCount}/${notificationsEligibleForPush.length} provider push notifications`,
+            // );
 
             // Mark these notifications as push-sent
             if (successCount > 0) {
@@ -306,8 +306,8 @@ export const useProviderNotificationsWithPush = () => {
               setProviderPushSentIds(updatedPushSentIds);
             }
           })
-          .catch((error) => {
-            console.error("Error sending provider push notifications:", error);
+          .catch(() => {
+            //console.error("Error sending provider push notifications:", error);
           });
       }
 
@@ -319,7 +319,7 @@ export const useProviderNotificationsWithPush = () => {
       providerNotificationStore.setCount(newUnreadCount);
       setLoading(false);
     } catch (error) {
-      console.error("Error generating provider notifications:", error);
+      //console.error("Error generating provider notifications:", error);
       setError("Failed to load provider notifications");
       setLoading(false);
     }

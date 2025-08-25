@@ -62,7 +62,7 @@ const ReceiptPage: React.FC = () => {
           text: `Service completed for ${booking?.clientName}. Amount Paid: ₱${amountPaid.toFixed(2)}`,
           url: window.location.href,
         })
-        .catch(console.error);
+        .catch();
     } else {
       alert("Web Share API not supported. You can copy the URL.");
     }

@@ -116,7 +116,7 @@ const CompleteServicePage: React.FC = () => {
         setError("Failed to complete the booking. Please try again.");
       }
     } catch (error) {
-      console.error("Error completing booking:", error);
+      //console.error("Error completing booking:", error);
       setError(
         "An error occurred while completing the booking. Please try again.",
       );

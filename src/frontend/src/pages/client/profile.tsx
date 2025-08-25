@@ -566,7 +566,7 @@ const ClientProfilePage: React.FC = () => {
     setPhoneError("");
     setEditError("");
     let valid = true;
-    // Name: at least 2 words, each at least 2 chars
+    // Name: at least 2 words
     const nameTrimmed = name.trim();
     const nameWords = nameTrimmed.split(/\s+/);
     if (!nameTrimmed) {
@@ -574,9 +574,6 @@ const ClientProfilePage: React.FC = () => {
       valid = false;
     } else if (nameWords.length < 2) {
       setNameError("Please enter your full name (first and last).");
-      valid = false;
-    } else if (nameWords.some((w) => w.length < 2)) {
-      setNameError("Each part of your name must be at least 2 characters.");
       valid = false;
     }
     // Phone: must be exactly 11 digits and start with '09'

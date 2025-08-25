@@ -182,7 +182,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
       const serviceData = await serviceCanisterService.getService(serviceId);
 
       if (!serviceData) {
-        console.warn(`Service with ID "${serviceId}" not found`);
+        //console.warn(`Service with ID "${serviceId}" not found`);
         setService(null);
         setProvider(null);
         setError("Service not found");
@@ -206,7 +206,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
 
           setService(formattedService);
         } else {
-          console.warn("Provider not found for service");
+          //console.warn("Provider not found for service");
           setProvider(null);
 
           // Format service without provider data
@@ -217,7 +217,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
           setService(formattedService);
         }
       } catch (providerError) {
-        console.error("Failed to load provider information:", providerError);
+        //console.error("Failed to load provider information:", providerError);
         setProvider(null);
 
         // Still return service data even if provider fetch fails
@@ -225,7 +225,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         setService(formattedService);
       }
     } catch (serviceError) {
-      console.error("Failed to load service data:", serviceError);
+      //console.error("Failed to load service data:", serviceError);
       setService(null);
       setProvider(null);
       setError("Failed to load service data");

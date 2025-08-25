@@ -213,7 +213,7 @@ export const useReviewManagement = (
 
   // Error handling functions
   const handleReviewError = useCallback((error: any, operation: string) => {
-    console.error(`Error in ${operation}:`, error);
+    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error?.message || `Failed to ${operation}`;
     setError(errorMessage);
   }, []);
@@ -288,7 +288,7 @@ export const useReviewManagement = (
           return null;
         }
       } catch (error) {
-        console.error(`❌ Error loading profile for ${userId}:`, error);
+        //console.error(`❌ Error loading profile for ${userId}:`, error);
         return null;
       } finally {
         setLoadingState("profiles", false);
@@ -421,7 +421,7 @@ export const useReviewManagement = (
 
         return enhancedReview;
       } catch (error) {
-        console.error(`❌ Error enriching review ${review.id}:`, error);
+        //console.error(`❌ Error enriching review ${review.id}:`, error);
 
         // Return review with minimal enhancement
         return {
@@ -994,7 +994,7 @@ export const useReviewManagement = (
           await refreshReviews();
           break;
         default:
-          console.warn(`Unknown operation to retry: ${operation}`);
+        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserReviews, loadUserProfile, refreshReviews],
@@ -1007,7 +1007,7 @@ export const useReviewManagement = (
         const stats = await reviewCanisterService.getReviewStatistics();
         setStatistics(stats);
       } catch (error) {
-        console.warn("Failed to load review statistics:", error);
+        //console.warn("Failed to load review statistics:", error);
       }
     };
 
@@ -1022,7 +1022,7 @@ export const useReviewManagement = (
         const newAnalytics = calculateAnalytics();
         setAnalytics(newAnalytics);
       } catch (error) {
-        console.error("Error calculating analytics:", error);
+        //console.error("Error calculating analytics:", error);
       } finally {
         setLoadingState("analytics", false);
       }

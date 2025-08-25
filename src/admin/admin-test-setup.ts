@@ -13,6 +13,6 @@ process.removeAllListeners("warning");
 process.on("warning", (warning) => {
   // Suppress DEP0040 warnings specifically
   if ((warning as any).code !== "DEP0040") {
-    console.warn(warning.stack);
+    //console.warn(warning.stack);
   }
 });

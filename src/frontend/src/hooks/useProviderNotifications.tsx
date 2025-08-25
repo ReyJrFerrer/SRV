@@ -49,10 +49,10 @@ const getProviderReadIds = (): string[] => {
     const item = window.localStorage.getItem(PROVIDER_READ_NOTIFICATIONS_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error(
-      "Error reading provider notifications from localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error reading provider notifications from localStorage",
+    //   error,
+    // );
     return [];
   }
 };
@@ -64,10 +64,10 @@ const setProviderReadIds = (ids: string[]) => {
       JSON.stringify(ids),
     );
   } catch (error) {
-    console.error(
-      "Error writing provider notifications to localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error writing provider notifications to localStorage",
+    //   error,
+    // );
   }
 };
 
@@ -218,7 +218,7 @@ export const useProviderNotifications = () => {
       providerNotificationStore.setCount(newUnreadCount);
       setLoading(false);
     } catch (error) {
-      console.error("Error generating provider notifications:", error);
+      //console.error("Error generating provider notifications:", error);
       setError("Failed to load provider notifications");
       setLoading(false);
     }

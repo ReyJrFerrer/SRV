@@ -33,24 +33,24 @@ class PWAService {
   private async initializeServiceWorker() {
     const browserInfo = browserDetectionService.getBrowserInfo();
 
-    console.log("🔧 PWA: Initializing Service Worker", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      supportsServiceWorker: browserInfo.supportsServiceWorker,
-      isSecureContext: window.isSecureContext,
-    });
+    // //console.log("🔧 PWA: Initializing Service Worker", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   supportsServiceWorker: browserInfo.supportsServiceWorker,
+    //   isSecureContext: window.isSecureContext,
+    // });
 
     if (!browserInfo.supportsServiceWorker) {
-      console.warn("⚠️ PWA: Service Workers not supported in this browser");
+      //console.warn("⚠️ PWA: Service Workers not supported in this browser");
       return;
     }
 
     if (!window.isSecureContext) {
-      console.error("❌ PWA: Service Workers require HTTPS or localhost");
+      //console.error("❌ PWA: Service Workers require HTTPS or localhost");
       return;
     }
 
     try {
-      console.log("📝 PWA: Registering service worker...");
+      //console.log("📝 PWA: Registering service worker...");
       const registration = await navigator.serviceWorker.register("/sw.js", {
         scope: "/",
         updateViaCache: "none", // Ensure fresh updates
@@ -58,29 +58,29 @@ class PWAService {
 
       this.swRegistration = registration;
 
-      console.log("✅ PWA: Service Worker registered successfully", {
-        scope: registration.scope,
-        updateViaCache: registration.updateViaCache,
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-      });
+      // //console.log("✅ PWA: Service Worker registered successfully", {
+      //   scope: registration.scope,
+      //   updateViaCache: registration.updateViaCache,
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      // });
 
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (newWorker) {
-          console.log("🔄 PWA: Service Worker update found");
+          //console.log("🔄 PWA: Service Worker update found");
           newWorker.addEventListener("statechange", () => {
-            console.log(
-              "📊 PWA: Service Worker state changed:",
-              newWorker.state,
-            );
+            // //console.log(
+            //   "📊 PWA: Service Worker state changed:",
+            //   newWorker.state,
+            // );
             if (
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
               // New service worker installed, show update available
-              console.log(
-                "🆕 PWA: New Service Worker installed - update available",
-              );
+              // //console.log(
+              //   "🆕 PWA: New Service Worker installed - update available",
+              // );
               this.notifyUpdateAvailable();
             }
           });
@@ -89,30 +89,30 @@ class PWAService {
 
       // Handle browser-specific service worker issues
       if (browserInfo.name.toLowerCase().includes("safari")) {
-        console.log(
-          "🍎 PWA: Safari detected - setting up Safari-specific service worker handling",
-        );
+        // //console.log(
+        //   "🍎 PWA: Safari detected - setting up Safari-specific service worker handling",
+        // );
         // Safari sometimes needs a delay before service worker is ready
         setTimeout(() => {
           if (registration.active) {
-            console.log("✅ PWA: Safari service worker is active");
+            //console.log("✅ PWA: Safari service worker is active");
           }
         }, 1000);
       }
 
       if (browserInfo.name.toLowerCase().includes("edge")) {
-        console.log(
-          "🌐 PWA: Edge detected - setting up Edge-specific service worker handling",
-        );
+        // //console.log(
+        //   "🌐 PWA: Edge detected - setting up Edge-specific service worker handling",
+        // );
         // Edge might need additional time for service worker registration
       }
     } catch (error) {
-      console.error("❌ PWA: Service Worker registration failed", {
-        error,
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-        isSecureContext: window.isSecureContext,
-        protocol: window.location.protocol,
-      });
+      // //console.error("❌ PWA: Service Worker registration failed", {
+      //   error,
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      //   isSecureContext: window.isSecureContext,
+      //   protocol: window.location.protocol,
+      // });
     }
   }
 
@@ -123,16 +123,16 @@ class PWAService {
     const browserInfo = browserDetectionService.getBrowserInfo();
     const capabilities = browserDetectionService.getPWACapabilities();
 
-    console.log("🔧 PWA: Setting up install prompt", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      installMethod: capabilities.installMethod,
-      limitations: capabilities.limitations,
-    });
+    //console.log("🔧 PWA: Setting up install prompt", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   installMethod: capabilities.installMethod,
+    //   limitations: capabilities.limitations,
+    // });
 
     window.addEventListener("beforeinstallprompt", (e) => {
-      console.log("✅ PWA: Install prompt available (beforeinstallprompt)", {
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-      });
+      //console.log("✅ PWA: Install prompt available (beforeinstallprompt)", {
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      // });
       // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
       // Store the event so it can be triggered later
@@ -140,26 +140,26 @@ class PWAService {
     });
 
     window.addEventListener("appinstalled", () => {
-      console.log("🎉 PWA: App was installed", {
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-      });
+      //console.log("🎉 PWA: App was installed", {
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      // });
       this.deferredPrompt = null;
     });
 
     // Additional event listeners for different browsers
     if (browserInfo.name.toLowerCase().includes("safari")) {
       // Safari doesn't fire beforeinstallprompt, but we can detect other indicators
-      console.log("🍎 PWA: Safari detected - manual installation required");
+      //console.log("🍎 PWA: Safari detected - manual installation required");
     }
 
     if (browserInfo.name.toLowerCase().includes("edge")) {
       // Edge might need additional handling
-      console.log("🌐 PWA: Edge detected - checking additional PWA indicators");
+      //console.log("🌐 PWA: Edge detected - checking additional PWA indicators");
       setTimeout(() => {
         if (!this.deferredPrompt && capabilities.canInstall) {
-          console.log(
-            "📱 PWA: Edge PWA installation may be available through browser menu",
-          );
+          // //console.log(
+          //   "📱 PWA: Edge PWA installation may be available through browser menu",
+          // );
         }
       }, 1000);
     }
@@ -174,31 +174,31 @@ class PWAService {
     const browserInfo = browserDetectionService.getBrowserInfo();
     const capabilities = browserDetectionService.getPWACapabilities();
 
-    console.log("📱 PWA: Attempting to show install prompt", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      hasDeferredPrompt: !!this.deferredPrompt,
-      installMethod: capabilities.installMethod,
-      canInstall: capabilities.canInstall,
-    });
+    //console.log("📱 PWA: Attempting to show install prompt", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   hasDeferredPrompt: !!this.deferredPrompt,
+    //   installMethod: capabilities.installMethod,
+    //   canInstall: capabilities.canInstall,
+    // });
 
     if (!capabilities.canInstall) {
-      console.log(
-        "❌ PWA: Installation not available",
-        capabilities.limitations,
-      );
+      //console.log(
+      //   "❌ PWA: Installation not available",
+      //   capabilities.limitations,
+      // );
       return "not-available";
     }
 
     if (browserInfo.isStandalone) {
-      console.log("✅ PWA: App is already installed");
+      //console.log("✅ PWA: App is already installed");
       return "not-available";
     }
 
     // Handle Safari manual installation
     if (browserInfo.name.toLowerCase().includes("safari")) {
-      console.log(
-        "🍎 PWA: Safari detected - showing manual installation instructions",
-      );
+      //console.log(
+      //   "🍎 PWA: Safari detected - showing manual installation instructions",
+      // );
       if (browserInfo.isMobile || browserInfo.isTablet) {
         alert(
           "To install this app on iOS Safari:\n1. Tap the Share button\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' to confirm",
@@ -213,7 +213,7 @@ class PWAService {
 
     // Handle standard browsers with beforeinstallprompt
     if (!this.deferredPrompt) {
-      console.log("❌ PWA: No install prompt available");
+      //console.log("❌ PWA: No install prompt available");
 
       // For Edge and other browsers that might support PWA but don't fire the event
       if (capabilities.installMethod === "manual") {
@@ -227,16 +227,16 @@ class PWAService {
     }
 
     try {
-      console.log("🚀 PWA: Showing browser install prompt");
+      //console.log("🚀 PWA: Showing browser install prompt");
       await this.deferredPrompt.prompt();
       const choiceResult = await this.deferredPrompt.userChoice;
 
-      console.log("📊 PWA: User choice result:", choiceResult.outcome);
+      //console.log("📊 PWA: User choice result:", choiceResult.outcome);
       this.deferredPrompt = null;
 
       return choiceResult.outcome;
     } catch (error) {
-      console.error("❌ PWA: Error showing install prompt:", error);
+      //console.error("❌ PWA: Error showing install prompt:", error);
       return "dismissed";
     }
   }
@@ -301,16 +301,16 @@ class PWAService {
       iOSStandalone ||
       androidInstalled;
 
-    console.log("🔍 PWA: Detection results", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      isPWA,
-      standaloneMode,
-      displayModeStandalone,
-      displayModeMinimalUI,
-      displayModeFullscreen,
-      iOSStandalone,
-      androidInstalled,
-    });
+    //console.log("🔍 PWA: Detection results", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   isPWA,
+    //   standaloneMode,
+    //   displayModeStandalone,
+    //   displayModeMinimalUI,
+    //   displayModeFullscreen,
+    //   iOSStandalone,
+    //   androidInstalled,
+    // });
 
     return isPWA;
   }
@@ -322,35 +322,35 @@ class PWAService {
     const browserInfo = browserDetectionService.getBrowserInfo();
     const capabilities = browserDetectionService.getPWACapabilities();
 
-    console.log("🔔 PWA: Requesting notification permission", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      currentPermission: Notification.permission,
-      canReceivePushNotifications: capabilities.canReceivePushNotifications,
-      limitations: capabilities.limitations,
-      isPWA: browserInfo.isStandalone,
-      isMobile: browserInfo.isMobile,
-    });
+    //console.log("🔔 PWA: Requesting notification permission", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   currentPermission: Notification.permission,
+    //   canReceivePushNotifications: capabilities.canReceivePushNotifications,
+    //   limitations: capabilities.limitations,
+    //   isPWA: browserInfo.isStandalone,
+    //   isMobile: browserInfo.isMobile,
+    // });
 
     if (!("Notification" in window)) {
-      console.error("❌ PWA: Notification API not supported");
+      //console.error("❌ PWA: Notification API not supported");
       throw new Error("This browser does not support notifications");
     }
 
     if (!("PushManager" in window)) {
-      console.error("❌ PWA: PushManager not supported");
+      //console.error("❌ PWA: PushManager not supported");
       throw new Error("This browser does not support push notifications");
     }
 
     if (!this.swRegistration) {
-      console.error("❌ PWA: Service Worker not registered");
+      //console.error("❌ PWA: Service Worker not registered");
       throw new Error("Service Worker not registered");
     }
 
     if (!capabilities.canReceivePushNotifications) {
-      console.error(
-        "❌ PWA: Push notifications not supported by browser",
-        capabilities.limitations,
-      );
+      //console.error(
+      //   "❌ PWA: Push notifications not supported by browser",
+      //   capabilities.limitations,
+      // );
       throw new Error(
         `Push notifications not supported: ${capabilities.limitations.join(", ")}`,
       );
@@ -361,7 +361,7 @@ class PWAService {
       typeof Notification !== "undefined" &&
       Notification.permission === "granted"
     ) {
-      console.log("✅ PWA: Notification permission already granted");
+      //console.log("✅ PWA: Notification permission already granted");
       return "granted";
     }
 
@@ -371,9 +371,9 @@ class PWAService {
 
       // For mobile PWAs, we need to handle permission requests more carefully
       if (browserInfo.isMobile && browserInfo.isStandalone) {
-        console.log(
-          "📱 PWA: Mobile PWA detected - using careful permission request",
-        );
+        //console.log(
+        //   "📱 PWA: Mobile PWA detected - using careful permission request",
+        // );
 
         // Add a small delay to ensure PWA is fully loaded
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -383,7 +383,7 @@ class PWAService {
           typeof Notification !== "undefined" &&
           Notification.permission === "granted"
         ) {
-          console.log("✅ PWA: Permission granted during delay check");
+          //console.log("✅ PWA: Permission granted during delay check");
           return "granted";
         }
 
@@ -391,9 +391,9 @@ class PWAService {
           typeof Notification !== "undefined" &&
           Notification.permission === "denied"
         ) {
-          console.warn(
-            "❌ PWA: Permission was denied - asking user to check settings",
-          );
+          //console.warn(
+          //   "❌ PWA: Permission was denied - asking user to check settings",
+          // );
           throw new Error(
             "Notifications were denied. Please enable notifications for this app in your device settings.",
           );
@@ -402,33 +402,33 @@ class PWAService {
         // Request permission with user interaction context
         permission = await this.requestPermissionWithRetry();
       } else if (browserInfo.name.toLowerCase().includes("safari")) {
-        console.log("🍎 PWA: Requesting Safari notification permission");
+        //console.log("🍎 PWA: Requesting Safari notification permission");
         permission = await Notification.requestPermission();
 
         if (permission === "denied") {
-          console.warn(
-            "⚠️ PWA: Safari notification permission denied - check browser settings",
-          );
+          //console.warn(
+          //   "⚠️ PWA: Safari notification permission denied - check browser settings",
+          // );
         }
       } else if (browserInfo.name.toLowerCase().includes("brave")) {
-        console.log("🦁 PWA: Requesting Brave notification permission");
+        //console.log("🦁 PWA: Requesting Brave notification permission");
         permission = await Notification.requestPermission();
 
         if (permission === "denied") {
-          console.warn(
-            "⚠️ PWA: Brave blocks notifications by default. Enable in Settings > Shields & Privacy > Notifications",
-          );
+          //console.warn(
+          //   "⚠️ PWA: Brave blocks notifications by default. Enable in Settings > Shields & Privacy > Notifications",
+          // );
         }
       } else {
-        console.log("🌐 PWA: Requesting standard notification permission");
+        //console.log("🌐 PWA: Requesting standard notification permission");
         permission = await Notification.requestPermission();
       }
 
-      console.log(`📊 PWA: Notification permission result: ${permission}`, {
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-        isPWA: browserInfo.isStandalone,
-        isMobile: browserInfo.isMobile,
-      });
+      //console.log(`📊 PWA: Notification permission result: ${permission}`, {
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      //   isPWA: browserInfo.isStandalone,
+      //   isMobile: browserInfo.isMobile,
+      // });
 
       // Additional check for mobile PWAs
       if (
@@ -436,9 +436,9 @@ class PWAService {
         browserInfo.isStandalone &&
         permission === "default"
       ) {
-        console.warn(
-          "⚠️ PWA: Mobile PWA permission still default - may need manual settings check",
-        );
+        //console.warn(
+        //   "⚠️ PWA: Mobile PWA permission still default - may need manual settings check",
+        // );
         // Give user specific instructions for their platform
         if (browserInfo.os.toLowerCase().includes("ios")) {
           throw new Error(
@@ -453,12 +453,12 @@ class PWAService {
 
       return permission;
     } catch (error) {
-      console.error("❌ PWA: Failed to request notification permission", {
-        error,
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-        isPWA: browserInfo.isStandalone,
-        isMobile: browserInfo.isMobile,
-      });
+      //console.error("❌ PWA: Failed to request notification permission", {
+      //   error,
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      //   isPWA: browserInfo.isStandalone,
+      //   isMobile: browserInfo.isMobile,
+      // });
 
       // Provide helpful error messages based on context
       if (error instanceof Error) {
@@ -485,9 +485,9 @@ class PWAService {
   ): Promise<NotificationPermission> {
     for (let i = 0; i < maxRetries; i++) {
       try {
-        console.log(
-          `🔄 PWA: Permission request attempt ${i + 1}/${maxRetries}`,
-        );
+        //console.log(
+        //   `🔄 PWA: Permission request attempt ${i + 1}/${maxRetries}`,
+        // );
         const permission = await Notification.requestPermission();
 
         if (permission !== "default") {
@@ -499,10 +499,10 @@ class PWAService {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
-        console.warn(
-          `⚠️ PWA: Permission request attempt ${i + 1} failed:`,
-          error,
-        );
+        //console.warn(
+        //   `⚠️ PWA: Permission request attempt ${i + 1} failed:`,
+        //   error,
+        // );
         if (i === maxRetries - 1) {
           throw error;
         }
@@ -521,28 +521,28 @@ class PWAService {
     const browserInfo = browserDetectionService.getBrowserInfo();
     const capabilities = browserDetectionService.getPWACapabilities();
 
-    console.log("🔔 PWA: Attempting push notification subscription", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      os: `${browserInfo.os} ${browserInfo.osVersion}`,
-      capabilities,
-      vapidKeyLength: vapidPublicKey.length,
-    });
+    //console.log("🔔 PWA: Attempting push notification subscription", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   os: `${browserInfo.os} ${browserInfo.osVersion}`,
+    //   capabilities,
+    //   vapidKeyLength: vapidPublicKey.length,
+    // });
 
     if (!this.swRegistration) {
-      console.error("❌ PWA: Service Worker not registered");
+      //console.error("❌ PWA: Service Worker not registered");
       throw new Error("Service Worker not registered");
     }
 
     if (Notification.permission !== "granted") {
-      console.error("❌ PWA: Notification permission not granted");
+      //console.error("❌ PWA: Notification permission not granted");
       throw new Error("Notification permission not granted");
     }
 
     if (!capabilities.canReceivePushNotifications) {
-      console.error(
-        "❌ PWA: Browser does not support push notifications",
-        capabilities.limitations,
-      );
+      //console.error(
+      //   "❌ PWA: Browser does not support push notifications",
+      //   capabilities.limitations,
+      // );
       throw new Error(
         `Push notifications not supported: ${capabilities.limitations.join(", ")}`,
       );
@@ -551,20 +551,20 @@ class PWAService {
     try {
       // Convert VAPID key with Safari compatibility
       const applicationServerKey = this.convertVAPIDKey(vapidPublicKey);
-      console.log("🔑 PWA: VAPID key converted successfully", {
-        originalLength: vapidPublicKey.length,
-        convertedLength: applicationServerKey.byteLength,
-      });
+      //console.log("🔑 PWA: VAPID key converted successfully", {
+      //   originalLength: vapidPublicKey.length,
+      //   convertedLength: applicationServerKey.byteLength,
+      // });
 
       const subscriptionOptions: PushSubscriptionOptionsInit = {
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as BufferSource,
       };
 
-      console.log(
-        "📱 PWA: Subscribing to push notifications...",
-        subscriptionOptions,
-      );
+      //console.log(
+      //   "📱 PWA: Subscribing to push notifications...",
+      //   subscriptionOptions,
+      // );
       const subscription =
         await this.swRegistration.pushManager.subscribe(subscriptionOptions);
 
@@ -578,20 +578,20 @@ class PWAService {
         },
       };
 
-      console.log("✅ PWA: Push notification subscription successful", {
-        endpoint: subscription.endpoint.substring(0, 50) + "...",
-        hasP256dh: !!subscriptionData.keys.p256dh,
-        hasAuth: !!subscriptionData.keys.auth,
-      });
+      //console.log("✅ PWA: Push notification subscription successful", {
+      //   endpoint: subscription.endpoint.substring(0, 50) + "...",
+      //   hasP256dh: !!subscriptionData.keys.p256dh,
+      //   hasAuth: !!subscriptionData.keys.auth,
+      // });
 
       return subscriptionData;
     } catch (error) {
-      console.error("❌ PWA: Push notification subscription failed", {
-        error: error,
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-        browser: `${browserInfo.name} ${browserInfo.version}`,
-        vapidKeyValid: this.isValidVAPIDKey(vapidPublicKey),
-      });
+      //console.error("❌ PWA: Push notification subscription failed", {
+      //   error: error,
+      //   errorMessage: error instanceof Error ? error.message : "Unknown error",
+      //   browser: `${browserInfo.name} ${browserInfo.version}`,
+      //   vapidKeyValid: this.isValidVAPIDKey(vapidPublicKey),
+      // });
 
       // Provide more specific error messages for common issues
       if (error instanceof Error) {
@@ -648,7 +648,7 @@ class PWAService {
         };
       }
     } catch (error) {
-      console.error("Error getting push subscription:", error);
+      //console.error("Error getting push subscription:", error);
     }
 
     return null;
@@ -668,7 +668,7 @@ class PWAService {
    */
   getNotificationPermission(): NotificationPermission {
     if (!("Notification" in window)) {
-      console.warn("⚠️ PWA: Notification API not available");
+      //console.warn("⚠️ PWA: Notification API not available");
       return "denied";
     }
 
@@ -679,14 +679,14 @@ class PWAService {
    * Refresh notification permission status (useful for PWAs)
    */
   async refreshNotificationPermission(): Promise<NotificationPermission> {
-    const browserInfo = browserDetectionService.getBrowserInfo();
+    // const browserInfo = browserDetectionService.getBrowserInfo();
 
-    console.log("🔄 PWA: Refreshing notification permission status", {
-      browser: `${browserInfo.name} ${browserInfo.version}`,
-      currentPermission: this.getNotificationPermission(),
-      isPWA: browserInfo.isStandalone,
-      isMobile: browserInfo.isMobile,
-    });
+    //console.log("🔄 PWA: Refreshing notification permission status", {
+    //   browser: `${browserInfo.name} ${browserInfo.version}`,
+    //   currentPermission: this.getNotificationPermission(),
+    //   isPWA: browserInfo.isStandalone,
+    //   isMobile: browserInfo.isMobile,
+    // });
 
     // For PWAs, especially on mobile, permission status can change outside the app
     const permission = this.getNotificationPermission();
@@ -696,18 +696,18 @@ class PWAService {
       try {
         const subscription =
           await this.swRegistration.pushManager.getSubscription();
-        console.log(
-          "📊 PWA: Current push subscription status:",
-          !!subscription,
-        );
+        //console.log(
+        //   "📊 PWA: Current push subscription status:",
+        //   !!subscription,
+        // );
 
         if (!subscription && this.pushSubscription) {
           // We thought we had a subscription but we don't - clear our reference
-          console.warn("⚠️ PWA: Push subscription was cleared externally");
+          //console.warn("⚠️ PWA: Push subscription was cleared externally");
           this.pushSubscription = null;
         }
       } catch (error) {
-        console.error("❌ PWA: Error checking push subscription:", error);
+        //console.error("❌ PWA: Error checking push subscription:", error);
       }
     }
 
@@ -751,15 +751,15 @@ class PWAService {
   /**
    * Validate VAPID key format
    */
-  private isValidVAPIDKey(vapidKey: string): boolean {
-    try {
-      // VAPID keys should be base64url encoded and 65 bytes when decoded
-      const decoded = this.convertVAPIDKey(vapidKey);
-      return decoded.byteLength === 65;
-    } catch {
-      return false;
-    }
-  }
+  // private isValidVAPIDKey(vapidKey: string): boolean {
+  //   try {
+  //     // VAPID keys should be base64url encoded and 65 bytes when decoded
+  //     const decoded = this.convertVAPIDKey(vapidKey);
+  //     return decoded.byteLength === 65;
+  //   } catch {
+  //     return false;
+  //   }
+  // }
 
   /**
    * Convert VAPID key with improved Safari compatibility
@@ -779,12 +779,12 @@ class PWAService {
       const padding = "=".repeat((4 - (cleanBase64.length % 4)) % 4);
       cleanBase64 = cleanBase64 + padding;
 
-      console.log("🔑 PWA: Converting VAPID key", {
-        browser: browserInfo.name,
-        originalLength: base64String.length,
-        cleanedLength: cleanBase64.length,
-        hasPadding: padding.length > 0,
-      });
+      //console.log("🔑 PWA: Converting VAPID key", {
+      //   browser: browserInfo.name,
+      //   originalLength: base64String.length,
+      //   cleanedLength: cleanBase64.length,
+      //   hasPadding: padding.length > 0,
+      // });
 
       // For Safari, we need to be extra careful with the conversion
       let binaryString: string;
@@ -794,10 +794,10 @@ class PWAService {
         try {
           binaryString = window.atob(cleanBase64);
         } catch (safariError) {
-          console.warn(
-            "⚠️ PWA: Safari atob failed, trying alternative method",
-            safariError,
-          );
+          //console.warn(
+          //   "⚠️ PWA: Safari atob failed, trying alternative method",
+          //   safariError,
+          // );
           // Alternative method for Safari
           binaryString = this.atobPolyfill(cleanBase64);
         }
@@ -810,19 +810,19 @@ class PWAService {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      console.log("✅ PWA: VAPID key conversion successful", {
-        outputLength: bytes.length,
-        browser: browserInfo.name,
-      });
+      //console.log("✅ PWA: VAPID key conversion successful", {
+      //   outputLength: bytes.length,
+      //   browser: browserInfo.name,
+      // });
 
       return bytes;
     } catch (error) {
-      console.error("❌ PWA: VAPID key conversion failed", {
-        error,
-        browser: browserInfo.name,
-        keyLength: base64String.length,
-        keyStart: base64String.substring(0, 10) + "...",
-      });
+      // //console.error("❌ PWA: VAPID key conversion failed", {
+      //   error,
+      //   browser: browserInfo.name,
+      //   keyLength: base64String.length,
+      //   keyStart: base64String.substring(0, 10) + "...",
+      // });
       throw new Error(
         `VAPID key conversion failed for ${browserInfo.name}: ${error instanceof Error ? error.message : "Unknown error"}`,
       );

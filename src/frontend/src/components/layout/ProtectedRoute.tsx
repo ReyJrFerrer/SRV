@@ -43,7 +43,7 @@ export default function ProtectedRoute({
             return;
           }
         } catch (error) {
-          console.error("Error checking user role:", error);
+          //console.error("Error checking user role:", error);
           navigate("/");
         }
       }
