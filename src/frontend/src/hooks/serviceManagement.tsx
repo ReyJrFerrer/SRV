@@ -1085,7 +1085,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
           await fetchUserProfile();
           break;
         default:
-          //console.warn(`Retry not implemented for operation: ${operation}`);
+        //console.warn(`Retry not implemented for operation: ${operation}`);
       }
     },
     [fetchServices, fetchCategories, fetchUserProfile],

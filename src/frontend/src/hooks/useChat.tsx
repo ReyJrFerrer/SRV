@@ -393,11 +393,9 @@ export const useChat = () => {
 
         // If we have a current conversation, silently refresh its messages
         if (currentConversation) {
-          fetchMessages(currentConversation.id)
-            .then((messagePage) => {
-              setMessages(messagePage.messages);
-            })
-            .catch;
+          fetchMessages(currentConversation.id).then((messagePage) => {
+            setMessages(messagePage.messages);
+          }).catch;
         }
       }
     }, AUTO_REFRESH_INTERVAL);

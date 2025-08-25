@@ -697,7 +697,7 @@ export const useBookingManagement = (): BookingManagementHook => {
           await refreshBookings();
           break;
         default:
-          //console.warn(`Unknown operation to retry: ${operation}`);
+        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserBookings, loadUserProfile, refreshBookings],

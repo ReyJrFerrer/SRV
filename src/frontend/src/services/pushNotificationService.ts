@@ -281,7 +281,7 @@ class PushNotificationService {
         // Just close the notification
         break;
       default:
-        //console.log("Unknown notification action:", action);
+      //console.log("Unknown notification action:", action);
     }
   }
 }

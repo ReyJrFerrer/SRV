@@ -994,7 +994,7 @@ export const useReviewManagement = (
           await refreshReviews();
           break;
         default:
-          //console.warn(`Unknown operation to retry: ${operation}`);
+        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserReviews, loadUserProfile, refreshReviews],
