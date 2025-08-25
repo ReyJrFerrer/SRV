@@ -22,7 +22,7 @@ export const useFeedback = () => {
       try {
         await feedbackCanisterService.initializeFeedbackCanister(identity);
       } catch (err) {
-        console.error("Failed to initialize feedback canister:", err);
+        //console.error("Failed to initialize feedback canister:", err);
       }
     }
   }, [isAuthenticated, identity]);
@@ -46,7 +46,7 @@ export const useFeedback = () => {
 
       return true;
     } catch (err) {
-      console.error("Failed to submit feedback:", err);
+      //console.error("Failed to submit feedback:", err);
       setError(
         err instanceof Error ? err.message : "Failed to submit feedback",
       );
@@ -75,7 +75,7 @@ export const useFeedback = () => {
 
       return true;
     } catch (err) {
-      console.error("Failed to submit report:", err);
+      //console.error("Failed to submit report:", err);
       setError(err instanceof Error ? err.message : "Failed to submit report");
       return false;
     } finally {

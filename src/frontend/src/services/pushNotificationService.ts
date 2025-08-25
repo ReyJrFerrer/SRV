@@ -46,7 +46,7 @@ class PushNotificationService {
   async initialize(config: FirebaseConfig) {
     this.config = config;
     this.isInitialized = true;
-    console.log("Push Notification Service initialized");
+    //console.log("Push Notification Service initialized");
   }
 
   /**
@@ -76,7 +76,7 @@ class PushNotificationService {
     try {
       // TODO: Call your ICP canister to store the push subscription
       // This will be implemented when we connect to your existing canisters
-      console.log("Storing push subscription for user:", userId, subscription);
+      //console.log("Storing push subscription for user:", userId, subscription);
 
       // For now, store in localStorage as backup
       const subscriptions = this.getStoredSubscriptions();
@@ -89,7 +89,7 @@ class PushNotificationService {
 
       return true;
     } catch (error) {
-      console.error("Error storing push subscription:", error);
+      //console.error("Error storing push subscription:", error);
       return false;
     }
   }
@@ -100,7 +100,7 @@ class PushNotificationService {
   async removePushSubscription(userId: string): Promise<boolean> {
     try {
       // TODO: Call your ICP canister to remove the push subscription
-      console.log("Removing push subscription for user:", userId);
+      //console.log("Removing push subscription for user:", userId);
 
       // Remove from localStorage
       const subscriptions = this.getStoredSubscriptions();
@@ -109,7 +109,7 @@ class PushNotificationService {
 
       return true;
     } catch (error) {
-      console.error("Error removing push subscription:", error);
+      //console.error("Error removing push subscription:", error);
       return false;
     }
   }
@@ -119,7 +119,7 @@ class PushNotificationService {
    * For demo purposes, we'll simulate sending notifications
    */
   async sendPushNotification(
-    userId: string,
+    _userId: string,
     payload: PushNotificationPayload,
   ): Promise<boolean> {
     try {
@@ -129,7 +129,7 @@ class PushNotificationService {
 
       // In a real implementation, this would be called from your backend
       // using Firebase Admin SDK or similar service
-      console.log("Would send push notification:", { userId, payload });
+      //console.log("Would send push notification:", { userId, payload });
 
       // For development/testing, we can trigger local notifications
       if ("serviceWorker" in navigator && "Notification" in window) {
@@ -148,7 +148,7 @@ class PushNotificationService {
 
       return false;
     } catch (error) {
-      console.error("Error sending push notification:", error);
+      //console.error("Error sending push notification:", error);
       return false;
     }
   }
@@ -263,7 +263,7 @@ class PushNotificationService {
    * Handle push notification action (called from service worker)
    */
   handleNotificationAction(action: string, notification: any) {
-    console.log("Handling notification action:", action, notification);
+    //console.log("Handling notification action:", action, notification);
 
     switch (action) {
       case "view":
@@ -281,7 +281,7 @@ class PushNotificationService {
         // Just close the notification
         break;
       default:
-        console.log("Unknown notification action:", action);
+        //console.log("Unknown notification action:", action);
     }
   }
 }

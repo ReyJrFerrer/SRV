@@ -85,9 +85,32 @@ const ConversationPage: React.FC = () => {
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
           : currentConversation.clientId;
+
       getUserName(otherUserId).then(setOtherUserName);
+
+      // Fetch the other user's profile picture if we don't have it or it's the default
+      if (otherUserImage === DEFAULT_USER_IMAGE) {
+        fetchOtherUserProfile(otherUserId);
+      }
     }
-  }, [currentConversation, identity, getUserName]);
+  }, [currentConversation, identity, getUserName, otherUserImage]);
+
+  // Function to fetch the other user's profile picture
+  const fetchOtherUserProfile = async (userId: string) => {
+    try {
+      const profile = await authCanisterService.getProfile(userId);
+      if (
+        profile &&
+        profile.profilePicture &&
+        profile.profilePicture.imageUrl
+      ) {
+        setOtherUserImage(profile.profilePicture.imageUrl);
+      }
+    } catch (error) {
+      //console.error("Failed to fetch other user's profile:", error);
+      // Silently fail - user will see default avatar
+    }
+  };
 
   // Mark messages as read when conversation loads
   useEffect(() => {

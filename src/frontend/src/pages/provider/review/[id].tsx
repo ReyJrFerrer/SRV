@@ -94,7 +94,7 @@ export default function ProviderReviewView() {
           setClientReview(null);
         }
       } catch (error) {
-        console.error("Error loading booking/review data:", error);
+        //console.error("Error loading booking/review data:", error);
         setError("Failed to load booking and review data.");
       } finally {
         setLoading(false);

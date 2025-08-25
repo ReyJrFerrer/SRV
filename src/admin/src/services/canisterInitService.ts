@@ -17,7 +17,7 @@ export const initializeCanisterReferences = async (): Promise<{
   success: boolean;
   results: CanisterInitResult[];
 }> => {
-  console.log("🔧 Initializing canister references instantly...");
+  // console.log("🔧 Initializing canister references instantly...");
 
   // Initialize canister references for each service in parallel for speed
   const initializationTasks = [

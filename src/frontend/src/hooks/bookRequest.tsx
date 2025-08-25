@@ -108,7 +108,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           serviceData.providerId.toString(),
         );
       } catch (providerError) {
-        console.warn("Could not load provider profile:", providerError);
+        //console.warn("Could not load provider profile:", providerError);
       }
 
       setService(serviceData);
@@ -122,7 +122,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load service data";
       setError(errorMessage);
-      console.error("Error loading service data:", err);
+      //console.error("Error loading service data:", err);
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return isAvailable || false;
       } catch (err) {
-        console.log("Same-day booking not available for this service today");
+        //console.log("Same-day booking not available for this service today");
         return false;
       }
     },
@@ -218,7 +218,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return availableSlots;
       } catch (err) {
-        console.error("Error fetching available slots:", err);
+        //console.error("Error fetching available slots:", err);
         setAvailableSlots([]);
         return [];
       }
@@ -247,7 +247,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
         }
 
         if (isNaN(hours) || isNaN(minutes)) {
-          console.error("Invalid time slot format:", timeSlot);
+          //console.error("Invalid time slot format:", timeSlot);
           return false;
         }
 
@@ -271,7 +271,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return isAvailable || false;
       } catch (err) {
-        console.error("Error checking time slot availability:", err);
+        //console.error("Error checking time slot availability:", err);
         return false;
       }
     },
@@ -327,7 +327,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
                 }
               }
             } catch (timeParseError) {
-              console.error("❌ Error parsing same-day time:", timeParseError);
+              //console.error("❌ Error parsing same-day time:", timeParseError);
             }
 
             requestedDate.setHours(startHour, startMinute, 0, 0);
@@ -359,7 +359,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
               }
             }
           } catch (timeParseError) {
-            console.error("❌ Error parsing time:", timeParseError);
+            //console.error("❌ Error parsing time:", timeParseError);
             throw new Error("Invalid time format");
           }
 
@@ -374,11 +374,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
         // Validate that totalPrice is a valid number
         const totalPrice = Number(bookingData.totalPrice);
         if (isNaN(totalPrice) || totalPrice < 0) {
-          console.error("❌ Invalid total price for BigInt conversion:", {
-            originalPrice: bookingData.totalPrice,
-            convertedPrice: totalPrice,
-            type: typeof bookingData.totalPrice,
-          });
+          // //console.error("❌ Invalid total price for BigInt conversion:", {
+          //   originalPrice: bookingData.totalPrice,
+          //   convertedPrice: totalPrice,
+          //   type: typeof bookingData.totalPrice,
+          // });
           throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
         }
 
@@ -399,13 +399,13 @@ export const useBookRequest = (): UseBookRequestReturn => {
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
         );
-        console.log("✅ Booking created successfully:", booking);
+        //console.log("✅ Booking created successfully:", booking);
         return booking;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to create booking";
         setError(errorMessage);
-        console.error("❌ Error creating booking:", err);
+        //console.error("❌ Error creating booking:", err);
         return null;
       } finally {
         setLoading(false);

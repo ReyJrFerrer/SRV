@@ -125,9 +125,9 @@ export const initializeFeedbackCanister = async (
 
     // Set canister references (auth canister)
     await actor.setCanisterReferences([Principal.fromText(authCanisterId)]);
-    console.log("Feedback canister initialized successfully");
+    //console.log("Feedback canister initialized successfully");
   } catch (error) {
-    console.error("Failed to initialize feedback canister:", error);
+    //console.error("Failed to initialize feedback canister:", error);
     throw error;
   }
 };
@@ -156,7 +156,7 @@ export const submitFeedback = async (
       throw new Error(result.err);
     }
   } catch (error) {
-    console.error("Failed to submit feedback:", error);
+    //console.error("Failed to submit feedback:", error);
     throw error;
   }
 };
@@ -182,7 +182,7 @@ export const submitReport = async (
       throw new Error(result.err);
     }
   } catch (error) {
-    console.error("Failed to submit report:", error);
+    //console.error("Failed to submit report:", error);
     throw error;
   }
 };

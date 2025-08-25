@@ -23,7 +23,7 @@ export const useLogout = () => {
       // Navigate to home page using React Router
       navigate("/");
     } catch (error) {
-      console.error("Logout error:", error);
+      //console.error("Logout error:", error);
       // Even if there's an error, navigate to home
       navigate("/");
     } finally {

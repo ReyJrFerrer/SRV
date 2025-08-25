@@ -201,7 +201,7 @@ const ProviderBookingsPage: React.FC = () => {
     try {
       await refreshBookings();
     } catch (error) {
-      console.error("❌ Failed to retry loading bookings:", error);
+      //console.error("❌ Failed to retry loading bookings:", error);
     }
   };
 

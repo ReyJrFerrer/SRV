@@ -62,7 +62,7 @@ const getReadIds = (): string[] => {
     const item = window.localStorage.getItem(READ_NOTIFICATIONS_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error("Error reading from localStorage", error);
+    //console.error("Error reading from localStorage", error);
     return [];
   }
 };
@@ -71,7 +71,7 @@ const setReadIds = (ids: string[]) => {
   try {
     window.localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(ids));
   } catch (error) {
-    console.error("Error writing to localStorage", error);
+    //console.error("Error writing to localStorage", error);
   }
 };
 
@@ -80,10 +80,10 @@ const getPushSentIds = (): string[] => {
     const item = window.localStorage.getItem(PUSH_SENT_NOTIFICATIONS_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error(
-      "Error reading push sent notifications from localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error reading push sent notifications from localStorage",
+    //   error,
+    // );
     return [];
   }
 };
@@ -95,10 +95,10 @@ const setPushSentIds = (ids: string[]) => {
       JSON.stringify(ids),
     );
   } catch (error) {
-    console.error(
-      "Error writing push sent notifications to localStorage",
-      error,
-    );
+    // //console.error(
+    //   "Error writing push sent notifications to localStorage",
+    //   error,
+    // );
   }
 };
 
@@ -220,15 +220,15 @@ export const useNotificationsWithPush = () => {
 
       // Send push notifications for eligible notifications
       if (notificationsEligibleForPush.length > 0) {
-        console.log(
-          `Sending ${notificationsEligibleForPush.length} new client push notifications`,
-        );
+        // //console.log(
+        //   `Sending ${notificationsEligibleForPush.length} new client push notifications`,
+        // );
         notificationIntegrationService
           .sendClientNotificationsBatch(notificationsEligibleForPush)
           .then((successCount) => {
-            console.log(
-              `Successfully sent ${successCount}/${notificationsEligibleForPush.length} client push notifications`,
-            );
+            // //console.log(
+            //   `Successfully sent ${successCount}/${notificationsEligibleForPush.length} client push notifications`,
+            // );
 
             // Mark these notifications as push-sent
             if (successCount > 0) {
@@ -239,8 +239,8 @@ export const useNotificationsWithPush = () => {
               setPushSentIds(updatedPushSentIds);
             }
           })
-          .catch((error) => {
-            console.error("Error sending client push notifications:", error);
+          .catch(() => {
+            //console.error("Error sending client push notifications:", error);
           });
       }
 
@@ -250,7 +250,7 @@ export const useNotificationsWithPush = () => {
       notificationStore.setCount(newUnreadCount);
       setLoading(false);
     } catch (error) {
-      console.error("Error generating client notifications:", error);
+      //console.error("Error generating client notifications:", error);
       setError("Failed to load notifications");
       setLoading(false);
     }

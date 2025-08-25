@@ -29,7 +29,7 @@ export const NotificationSettingsDetailed: React.FC<
     try {
       const success = await enablePushNotifications(getUserId());
       if (success) {
-        console.log("Push notifications enabled successfully");
+        //console.log("Push notifications enabled successfully");
       }
     } finally {
       setLoading(false);
@@ -41,7 +41,7 @@ export const NotificationSettingsDetailed: React.FC<
     try {
       const success = await disablePushNotifications(getUserId());
       if (success) {
-        console.log("Push notifications disabled successfully");
+        //console.log("Push notifications disabled successfully");
       }
     } finally {
       setLoading(false);
@@ -144,21 +144,6 @@ export const NotificationSettingsDetailed: React.FC<
             className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Disabling..." : "Disable Push Notifications"}
-          </button>
-        )}
-
-        {/* Test Notification Button */}
-        {pwaState.pushSubscribed && (
-          <button
-            onClick={handleTestNotification}
-            disabled={loading}
-            className="w-full rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading
-              ? "Sending..."
-              : testSent
-                ? "✓ Test Sent!"
-                : "Send Test Notification"}
           </button>
         )}
       </div>

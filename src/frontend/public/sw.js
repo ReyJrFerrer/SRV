@@ -20,20 +20,20 @@ function detectBrowser() {
     isFirefox: /Firefox/.test(userAgent),
   };
 
-  console.log("🔍 SW: Browser detected:", browserInfo);
+  //console.log("🔍 SW: Browser detected:", browserInfo);
   return browserInfo;
 }
 
 // Install event - cache resources
 self.addEventListener("install", (event) => {
   const browser = detectBrowser();
-  console.log(`🔧 SW: Installing Service Worker (${browser.name})...`);
+  //console.log(`🔧 SW: Installing Service Worker (${browser.name})...`);
 
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        console.log("📦 SW: Caching static resources");
+        //console.log("📦 SW: Caching static resources");
         return cache.addAll(
           STATIC_CACHE_URLS.map(
             (url) =>
@@ -44,7 +44,7 @@ self.addEventListener("install", (event) => {
         );
       })
       .catch((error) => {
-        console.error("❌ SW: Failed to cache resources:", error);
+        //console.error("❌ SW: Failed to cache resources:", error);
       }),
   );
 
@@ -57,7 +57,7 @@ self.addEventListener("install", (event) => {
 // Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
   const browser = detectBrowser();
-  console.log(`✅ SW: Activating Service Worker (${browser.name})...`);
+  //console.log(`✅ SW: Activating Service Worker (${browser.name})...`);
 
   event.waitUntil(
     Promise.all([
@@ -66,7 +66,7 @@ self.addEventListener("activate", (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              console.log("🗑️ SW: Deleting old cache:", cacheName);
+              //console.log("🗑️ SW: Deleting old cache:", cacheName);
               return caches.delete(cacheName);
             }
           }),
@@ -135,12 +135,12 @@ self.addEventListener("fetch", (event) => {
               cache.put(event.request, responseToCache);
             } catch (cacheError) {
               if (browser.isSafari) {
-                console.warn(
-                  "⚠️ SW: Safari cache put failed (expected):",
-                  cacheError,
-                );
+                //console.warn(
+                //  "⚠️ SW: Safari cache put failed (expected):",
+                //  cacheError,
+                //);
               } else {
-                console.error("❌ SW: Cache put failed:", cacheError);
+                //console.error("❌ SW: Cache put failed:", cacheError);
               }
             }
           });
@@ -148,7 +148,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch((error) => {
-          console.error("❌ SW: Fetch failed:", error);
+          //console.error("❌ SW: Fetch failed:", error);
 
           // Return a fallback response for navigation requests
           if (event.request.mode === "navigate") {
@@ -175,7 +175,7 @@ self.addEventListener("fetch", (event) => {
 // Push notification event handler
 self.addEventListener("push", (event) => {
   const browser = detectBrowser();
-  console.log(`🔔 SW: Push event received (${browser.name}):`, event);
+  //console.log(`🔔 SW: Push event received (${browser.name}):`, event);
 
   let notificationData = {};
 
@@ -183,7 +183,7 @@ self.addEventListener("push", (event) => {
     try {
       notificationData = event.data.json();
     } catch (error) {
-      console.error("❌ SW: Error parsing push data:", error);
+      //console.error("❌ SW: Error parsing push data:", error);
       notificationData = {
         title: "SRV Notification",
         body: event.data.text() || "You have a new notification",
@@ -221,13 +221,13 @@ self.addEventListener("push", (event) => {
     options.actions = notificationData.actions;
   }
 
-  console.log(`📱 SW: Showing notification (${browser.name})`, options);
+  //console.log(`📱 SW: Showing notification (${browser.name})`, options);
 
   event.waitUntil(
     self.registration
       .showNotification(notificationData.title, options)
       .catch((error) => {
-        console.error("❌ SW: Failed to show notification:", error);
+        //console.error("❌ SW: Failed to show notification:", error);
         // Fallback for Safari or other issues
         return self.registration.showNotification("SRV Notification", {
           body: "You have a new notification",
@@ -239,7 +239,7 @@ self.addEventListener("push", (event) => {
 
 // Notification click event handler
 self.addEventListener("notificationclick", (event) => {
-  console.log("Notification clicked:", event);
+  //console.log("Notification clicked:", event);
 
   event.notification.close();
 
@@ -274,7 +274,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Background sync event (for offline actions)
 self.addEventListener("sync", (event) => {
-  console.log("Background sync:", event.tag);
+  //console.log("Background sync:", event.tag);
 
   if (event.tag === "background-notification-sync") {
     event.waitUntil(
@@ -286,7 +286,7 @@ self.addEventListener("sync", (event) => {
 
 // Message event handler (for communication with main thread)
 self.addEventListener("message", (event) => {
-  console.log("Service Worker received message:", event.data);
+  //console.log("Service Worker received message:", event.data);
 
   if (event.data && event.data.type) {
     switch (event.data.type) {
@@ -297,7 +297,7 @@ self.addEventListener("message", (event) => {
         event.ports[0].postMessage({ version: CACHE_NAME });
         break;
       default:
-        console.log("Unknown message type:", event.data.type);
+      //console.log("Unknown message type:", event.data.type);
     }
   }
 });

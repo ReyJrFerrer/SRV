@@ -154,7 +154,7 @@ const PaymentProviderCommission: React.FC = () => {
       // Refresh dashboard data
       loadDashboard();
     } catch (error) {
-      console.error("Payment submission failed:", error);
+      //console.error("Payment submission failed:", error);
       setValidationError(
         error instanceof Error
           ? error.message

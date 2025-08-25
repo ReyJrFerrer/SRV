@@ -30,10 +30,10 @@ class NotificationIntegrationService {
     this.userId = userId;
     this.pushEnabled = isPushEnabled;
     this.isInitialized = true;
-    console.log("Notification Integration Service initialized:", {
-      userId,
-      isPushEnabled,
-    });
+    // //console.log("Notification Integration Service initialized:", {
+    //   userId,
+    //   isPushEnabled,
+    // });
   }
 
   /**
@@ -59,15 +59,15 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        console.log(
-          "Push notification sent for client notification:",
-          notification.id,
-        );
+        // //console.log(
+        //   "Push notification sent for client notification:",
+        //   notification.id,
+        // );
       }
 
       return success;
     } catch (error) {
-      console.error("Error sending client push notification:", error);
+      //console.error("Error sending client push notification:", error);
       return false;
     }
   }
@@ -90,15 +90,15 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        console.log(
-          "Push notification sent for provider notification:",
-          notification.id,
-        );
+        // //console.log(
+        //   "Push notification sent for provider notification:",
+        //   notification.id,
+        // );
       }
 
       return success;
     } catch (error) {
-      console.error("Error sending provider push notification:", error);
+      //console.error("Error sending provider push notification:", error);
       return false;
     }
   }

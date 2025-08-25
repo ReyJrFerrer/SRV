@@ -162,7 +162,7 @@ const ClientHomePage: React.FC = () => {
                     // Show success message
                     alert("Thank you for your feedback!");
                   } catch (error) {
-                    console.error("Failed to submit feedback:", error);
+                    //console.error("Failed to submit feedback:", error);
                     alert("Failed to submit feedback. Please try again.");
                   }
                 }}

@@ -39,7 +39,7 @@ class BrowserDetectionService {
     const os = result.os;
     const device = result.device;
 
-    console.log("🔍 Browser Detection - Raw UA Parser result:", result);
+    //console.log("🔍 Browser Detection - Raw UA Parser result:", result);
 
     const isDesktop = device.type === undefined; // Desktop doesn't have device.type
     const isMobile = device.type === "mobile";
@@ -71,7 +71,7 @@ class BrowserDetectionService {
       isStandalone,
     };
 
-    console.log("🔍 Browser Detection - Processed info:", info);
+    //console.log("🔍 Browser Detection - Processed info:", info);
     return info;
   }
 
@@ -117,7 +117,7 @@ class BrowserDetectionService {
     const info = this.browserInfo;
     const limitations: string[] = [];
 
-    console.log("🔍 Analyzing PWA capabilities for:", info.name, info.version);
+    //console.log("🔍 Analyzing PWA capabilities for:", info.name, info.version);
 
     // Analyze installation capabilities
     let canInstall = false;
@@ -193,7 +193,7 @@ class BrowserDetectionService {
       limitations,
     };
 
-    console.log("🔍 PWA Capabilities:", capabilities);
+    //console.log("🔍 PWA Capabilities:", capabilities);
     return capabilities;
   }
 
@@ -237,31 +237,31 @@ class BrowserDetectionService {
 
   // Logging helper for debugging
   logBrowserCapabilities(): void {
-    const info = this.browserInfo;
+    // const info = this.browserInfo;
     const capabilities = this.getPWACapabilities();
 
-    console.group("🔍 Browser Detection & PWA Capabilities");
-    console.log("Browser:", `${info.name} ${info.version}`);
-    console.log("Engine:", info.engine);
-    console.log("OS:", `${info.os} ${info.osVersion}`);
-    console.log("Device:", {
-      isDesktop: info.isDesktop,
-      isMobile: info.isMobile,
-      isTablet: info.isTablet,
-    });
-    console.log("PWA Support:", {
-      supportsPWA: info.supportsPWA,
-      supportsPushNotifications: info.supportsPushNotifications,
-      supportsServiceWorker: info.supportsServiceWorker,
-      supportsWebManifest: info.supportsWebManifest,
-      isStandalone: info.isStandalone,
-    });
-    console.log("Capabilities:", capabilities);
+    //console.group("🔍 Browser Detection & PWA Capabilities");
+    //console.log("Browser:", `${info.name} ${info.version}`);
+    //console.log("Engine:", info.engine);
+    //console.log("OS:", `${info.os} ${info.osVersion}`);
+    //console.log("Device:", {
+    //   isDesktop: info.isDesktop,
+    //   isMobile: info.isMobile,
+    //   isTablet: info.isTablet,
+    // });
+    // console.log("PWA Support:", {
+    //   supportsPWA: info.supportsPWA,
+    //   supportsPushNotifications: info.supportsPushNotifications,
+    //   supportsServiceWorker: info.supportsServiceWorker,
+    //   supportsWebManifest: info.supportsWebManifest,
+    //   isStandalone: info.isStandalone,
+    // });
+    //console.log("Capabilities:", capabilities);
 
     if (capabilities.limitations.length > 0) {
-      console.warn("Limitations:", capabilities.limitations);
+      //console.warn("Limitations:", capabilities.limitations);
     }
-    console.groupEnd();
+    //console.groupEnd();
   }
 }
 

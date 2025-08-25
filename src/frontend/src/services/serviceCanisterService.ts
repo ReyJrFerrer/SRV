@@ -405,11 +405,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error creating service:", result.err);
+        //console.error("Error creating service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error creating service:", error);
+      //console.error("Error creating service:", error);
       throw new Error(`Failed to create service: ${error}`);
     }
   },
@@ -425,11 +425,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error fetching service:", result.err);
+        //console.error("Error fetching service:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching service:", error);
+      //console.error("Error fetching service:", error);
       throw new Error(`Failed to fetch service: ${error}`);
     }
   },
@@ -446,7 +446,7 @@ export const serviceCanisterService = {
 
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error("Error fetching services by provider:", error);
+      //console.error("Error fetching services by provider:", error);
       throw new Error(`Failed to fetch services by provider: ${error}`);
     }
   },
@@ -461,7 +461,7 @@ export const serviceCanisterService = {
 
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error("Error fetching services by category:", error);
+      //console.error("Error fetching services by category:", error);
       throw new Error(`Failed to fetch services by category: ${error}`);
     }
   },
@@ -483,11 +483,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error updating service status:", result.err);
+        //console.error("Error updating service status:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating service status:", error);
+      //console.error("Error updating service status:", error);
       throw new Error(`Failed to update service status: ${error}`);
     }
   },
@@ -510,7 +510,7 @@ export const serviceCanisterService = {
 
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error("Error searching services by location:", error);
+      //console.error("Error searching services by location:", error);
       throw new Error(`Failed to search services by location: ${error}`);
     }
   },
@@ -535,7 +535,7 @@ export const serviceCanisterService = {
 
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error("Error searching services with reputation filter:", error);
+      //console.error("Error searching services with reputation filter:", error);
       throw new Error(
         `Failed to search services with reputation filter: ${error}`,
       );
@@ -561,11 +561,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error updating service rating:", result.err);
+        //console.error("Error updating service rating:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating service rating:", error);
+      //console.error("Error updating service rating:", error);
       throw new Error(`Failed to update service rating: ${error}`);
     }
   },
@@ -593,11 +593,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterServiceCategory(result.ok);
       } else {
-        console.error("Error adding category:", result.err);
+        //console.error("Error adding category:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error adding category:", error);
+      //console.error("Error adding category:", error);
       throw new Error(`Failed to add category: ${error}`);
     }
   },
@@ -612,7 +612,7 @@ export const serviceCanisterService = {
 
       return categories.map(convertCanisterServiceCategory);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      //console.error("Error fetching categories:", error);
       throw new Error(`Failed to fetch categories: ${error}`);
     }
   },
@@ -627,7 +627,7 @@ export const serviceCanisterService = {
 
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error("Error fetching all services:", error);
+      //console.error("Error fetching all services:", error);
       throw new Error(`Failed to fetch all services: ${error}`);
     }
   },
@@ -658,11 +658,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error("Error setting service availability:", result.err);
+        //console.error("Error setting service availability:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error setting service availability:", error);
+      //console.error("Error setting service availability:", error);
       throw new Error(`Failed to set service availability: ${error}`);
     }
   },
@@ -682,11 +682,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error("Error fetching provider availability:", result.err);
+        //console.error("Error fetching provider availability:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching provider availability:", error);
+      //console.error("Error fetching provider availability:", error);
       throw new Error(`Failed to fetch provider availability: ${error}`);
     }
   },
@@ -704,11 +704,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error("Error fetching service availability:", result.err);
+        //console.error("Error fetching service availability:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching service availability:", error);
+      //console.error("Error fetching service availability:", error);
       throw new Error(`Failed to fetch service availability: ${error}`);
     }
   },
@@ -730,11 +730,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return result.ok.map(convertCanisterAvailableSlot);
       } else {
-        console.error("Error fetching available time slots:", result.err);
+        //console.error("Error fetching available time slots:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error fetching available time slots:", error);
+      //console.error("Error fetching available time slots:", error);
       throw new Error(`Failed to fetch available time slots: ${error}`);
     }
   },
@@ -756,11 +756,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        // console.error("Error setting canister references:", result.err);
+        // //console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      // console.error("Error setting canister references:", error);
+      // //console.error("Error setting canister references:", error);
       throw new Error(`Failed to set canister references: ${error}`);
     }
   },
@@ -786,11 +786,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error("Error creating service package:", result.err);
+        //console.error("Error creating service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error creating service package:", error);
+      //console.error("Error creating service package:", error);
       throw new Error(`Failed to create service package: ${error}`);
     }
   },
@@ -806,11 +806,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return result.ok.map(convertCanisterServicePackage);
       } else {
-        console.error("Error fetching service packages:", result.err);
+        //console.error("Error fetching service packages:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error fetching service packages:", error);
+      //console.error("Error fetching service packages:", error);
       throw new Error(`Failed to fetch service packages: ${error}`);
     }
   },
@@ -826,11 +826,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error("Error fetching package:", result.err);
+        //console.error("Error fetching package:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching package:", error);
+      //console.error("Error fetching package:", error);
       throw new Error(`Failed to fetch package: ${error}`);
     }
   },
@@ -856,11 +856,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error("Error updating service package:", result.err);
+        //console.error("Error updating service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating service package:", error);
+      //console.error("Error updating service package:", error);
       throw new Error(`Failed to update service package: ${error}`);
     }
   },
@@ -876,11 +876,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error deleting service package:", result.err);
+        //console.error("Error deleting service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error deleting service package:", error);
+      //console.error("Error deleting service package:", error);
       throw new Error(`Failed to delete service package: ${error}`);
     }
   },
@@ -925,11 +925,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error updating service:", result.err);
+        //console.error("Error updating service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating service:", error);
+      //console.error("Error updating service:", error);
       throw new Error(`Failed to update service: ${error}`);
     }
   },
@@ -945,11 +945,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error deleting service:", result.err);
+        //console.error("Error deleting service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error deleting service:", error);
+      //console.error("Error deleting service:", error);
       throw new Error(`Failed to delete service: ${error}`);
     }
   },
@@ -977,18 +977,18 @@ export const serviceCanisterService = {
         ],
       );
 
-      console.log(canisterImages);
+      //console.log(canisterImages);
 
       const result = await actor.uploadServiceImages(serviceId, canisterImages);
 
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error uploading service images:", result.err);
+        //console.error("Error uploading service images:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error uploading service images:", error);
+      //console.error("Error uploading service images:", error);
       throw new Error(`Failed to upload service images: ${error}`);
     }
   },
@@ -1007,11 +1007,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error removing service image:", result.err);
+        //console.error("Error removing service image:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error removing service image:", error);
+      //console.error("Error removing service image:", error);
       throw new Error(`Failed to remove service image: ${error}`);
     }
   },
@@ -1033,11 +1033,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error reordering service images:", result.err);
+        //console.error("Error reordering service images:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error reordering service images:", error);
+      //console.error("Error reordering service images:", error);
       throw new Error(`Failed to reorder service images: ${error}`);
     }
   },
@@ -1074,11 +1074,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error uploading service certificates:", result.err);
+        //console.error("Error uploading service certificates:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error uploading service certificates:", error);
+      //console.error("Error uploading service certificates:", error);
       throw new Error(`Failed to upload service certificates: ${error}`);
     }
   },
@@ -1100,11 +1100,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error removing service certificate:", result.err);
+        //console.error("Error removing service certificate:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error removing service certificate:", error);
+      //console.error("Error removing service certificate:", error);
       throw new Error(`Failed to remove service certificate: ${error}`);
     }
   },
@@ -1123,11 +1123,11 @@ export const serviceCanisterService = {
       if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error("Error verifying service:", result.err);
+        //console.error("Error verifying service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error verifying service:", error);
+      //console.error("Error verifying service:", error);
       throw new Error(`Failed to verify service: ${error}`);
     }
   },
