@@ -246,7 +246,7 @@ export const getProviderDashboard = async (
       overdueOrders: Number(dashboard.overdue_orders),
     };
   } catch (error) {
-    console.error("Failed to get provider dashboard:", error);
+    //console.error("Failed to get provider dashboard:", error);
     throw new Error(
       `Failed to get provider dashboard: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -270,7 +270,7 @@ export const setCanisterReferences = async (): Promise<string | null> => {
       throw new Error(result.err);
     }
   } catch (error) {
-    console.error("Failed to set canister references:", error);
+    //console.error("Failed to set canister references:", error);
     throw new Error(
       `Failed to set canister references: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -308,7 +308,7 @@ export const getProviderAnalytics = async (
       totalServiceAmount: convertCentavosToPhp(analytics.total_service_amount),
     };
   } catch (error) {
-    console.error("Failed to get provider analytics:", error);
+    //console.error("Failed to get provider analytics:", error);
     throw new Error(
       `Failed to get provider analytics: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -328,7 +328,7 @@ export const getProviderOrders = async (
     const orders = await actor.getProviderOrders(providerId);
     return orders.map(convertRemittanceOrder);
   } catch (error) {
-    console.error("Failed to get provider orders:", error);
+    //console.error("Failed to get provider orders:", error);
     throw new Error(
       `Failed to get provider orders: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -363,7 +363,7 @@ export const uploadRemittancePaymentProofs = async (
 
     return result.ok;
   } catch (error) {
-    console.error("Failed to upload remittance payment proofs:", error);
+    //console.error("Failed to upload remittance payment proofs:", error);
     throw new Error(
       `Failed to upload remittance payment proofs: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -409,7 +409,7 @@ export const uploadAndSubmitPaymentProof = async (
 
     return convertRemittanceOrder(result.ok);
   } catch (error) {
-    console.error("Failed to upload and submit payment proof:", error);
+    //console.error("Failed to upload and submit payment proof:", error);
     throw new Error(
       `Failed to upload and submit payment proof: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -436,7 +436,7 @@ export const submitPaymentProof = async (
 
     return convertRemittanceOrder(result.ok);
   } catch (error) {
-    console.error("Failed to submit payment proof:", error);
+    //console.error("Failed to submit payment proof:", error);
     throw new Error(
       `Failed to submit payment proof: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -456,7 +456,7 @@ export const getOrder = async (
     const result = await actor.getOrder(orderId);
     return result[0] ? convertRemittanceOrder(result[0]) : null;
   } catch (error) {
-    console.error("Failed to get order:", error);
+    //console.error("Failed to get order:", error);
     throw new Error(
       `Failed to get order: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -500,7 +500,7 @@ export const quoteCommission = async (
       ruleId: result.ok.rule_id,
     };
   } catch (error) {
-    console.error("Failed to quote commission:", error);
+    //console.error("Failed to quote commission:", error);
     throw new Error(
       `Failed to quote commission: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
@@ -531,7 +531,7 @@ export const generateSettlementInstruction = async (
       expiresAt: convertTimeToDate(result.ok.expires_at),
     };
   } catch (error) {
-    console.error("Failed to generate settlement instruction:", error);
+    //console.error("Failed to generate settlement instruction:", error);
     throw new Error(
       `Failed to generate settlement instruction: ${error instanceof Error ? error.message : "Unknown error"}`,
     );

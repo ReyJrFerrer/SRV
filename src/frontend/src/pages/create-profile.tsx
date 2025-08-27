@@ -36,7 +36,7 @@ export default function CreateProfilePage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isAuthenticated) {
-        console.warn("Not authenticated, redirecting to login...");
+        //console.warn("Not authenticated, redirecting to login...");
         navigate("/client");
       } else {
         setReauthRequired(false);
@@ -82,11 +82,11 @@ export default function CreateProfilePage() {
       return;
     }
 
-    // Name validation: exactly two words, each at least 3 letters, only letters
+    // Name validation: at least two words, each at least 2 letters, only letters
     const nameTrimmed = formData.name.trim();
     const nameWords = nameTrimmed.split(/\s+/);
     if (
-      nameWords.length !== 2 ||
+      nameWords.length < 2 ||
       !nameWords.every((word) => word.length >= 2 && /^[A-Za-z]+$/.test(word))
     ) {
       setError("Please enter your full name");
@@ -152,7 +152,7 @@ export default function CreateProfilePage() {
       } else {
         setError(errorMessage);
       }
-      console.error("Profile creation error:", err);
+      //console.error("Profile creation error:", err);
     } finally {
       setIsLoading(false);
     }

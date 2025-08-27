@@ -24,7 +24,7 @@ export const useClientAnalytics = () => {
         );
         setAnalytics(clientAnalytics);
       } catch (err) {
-        console.error("Failed to fetch client analytics:", err);
+        //console.error("Failed to fetch client analytics:", err);
         setError("Could not load your analytics data.");
       } finally {
         setLoading(false);

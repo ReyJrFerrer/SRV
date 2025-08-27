@@ -75,14 +75,14 @@ class ReputationCanisterService {
 
       if ("ok" in result) {
       } else {
-        // console.error(
+        // //console.error(
         //   "❌ Failed to set reputation canister references:",
         //   result.err,
         // );
         throw new Error(`Failed to set canister references: ${result.err}`);
       }
     } catch (error) {
-      // console.error("❌ Error setting reputation canister references:", error);
+      // //console.error("❌ Error setting reputation canister references:", error);
       throw error;
     }
   }
@@ -100,11 +100,11 @@ class ReputationCanisterService {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("❌ Failed to fetch reputation score:", result.err);
+        //console.error("❌ Failed to fetch reputation score:", result.err);
         throw new Error(`Failed to fetch reputation: ${result.err}`);
       }
     } catch (error) {
-      console.error("❌ Error fetching reputation score:", error);
+      //console.error("❌ Error fetching reputation score:", error);
       throw new Error("Network error: Could not fetch reputation score");
     }
   }
@@ -123,11 +123,11 @@ class ReputationCanisterService {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("❌ Failed to fetch reputation score:", result.err);
+        //console.error("❌ Failed to fetch reputation score:", result.err);
         throw new Error(`Failed to fetch reputation: ${result.err}`);
       }
     } catch (error) {
-      console.error("❌ Error fetching reputation score:", error);
+      //console.error("❌ Error fetching reputation score:", error);
       throw new Error("Network error: Could not fetch reputation score");
     }
   }
@@ -147,11 +147,11 @@ class ReputationCanisterService {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("❌ Failed to initialize reputation:", result.err);
+        //console.error("❌ Failed to initialize reputation:", result.err);
         throw new Error(`Failed to initialize reputation: ${result.err}`);
       }
     } catch (error) {
-      console.error("❌ Error initializing reputation:", error);
+      //console.error("❌ Error initializing reputation:", error);
       throw new Error("Network error: Could not initialize reputation");
     }
   }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useUserImage } from "../../../hooks/useMediaLoader";
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -263,6 +264,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [specificBooking]);
 
+  const { userImageUrl } = useUserImage(
+    specificBooking?.clientProfile?.profilePicture?.imageUrl,
+  );
+
   const {
     bookings,
     acceptBookingById,
@@ -433,6 +438,26 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Check if today is the service date and time, or after
+  const canStartServiceNow = () => {
+    if (!specificBooking) return false;
+
+    // Use scheduledDate if available, otherwise fall back to requestedDate
+    const serviceDateTime =
+      specificBooking.scheduledDate || specificBooking.requestedDate;
+    if (!serviceDateTime) return false;
+
+    try {
+      const serviceDateTimeObj = new Date(serviceDateTime);
+      const now = new Date();
+
+      // Allow starting service on or after the scheduled date and time
+      return now.getTime() >= serviceDateTimeObj.getTime();
+    } catch {
+      return false;
+    }
+  };
+
   // Contact client handler
   const handleContactClient = () => {
     if (!specificBooking) return;
@@ -524,19 +549,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     specificBooking?.clientProfile?.phone ||
     "Contact not available";
 
-  const getAbsoluteUrl = (url: string) => {
-    if (!url) return "/default-client.svg";
-    if (url.startsWith("http")) return url;
-    // Adjust the base URL as needed for your deployment
-    return `${window.location.origin}${url}`;
-  };
-
-  const providerImage =
-    typeof specificBooking?.clientProfile?.profilePicture === "string"
-      ? getAbsoluteUrl(specificBooking.clientProfile.profilePicture)
-      : getAbsoluteUrl(
-          specificBooking?.clientProfile?.profilePicture?.imageUrl || "",
-        );
+  const providerImage = userImageUrl || "/default-client.svg";
   const clientId =
     specificBooking?.clientProfile?.id?.toString() ||
     specificBooking?.clientId?.toString();
@@ -565,6 +578,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     specificBooking?.packageDetails?.price ??
     specificBooking?.serviceDetails?.price;
   const duration = specificBooking?.duration ?? "N/A";
+  const amountToPay = specificBooking?.amountPaid ?? 0;
 
   // --- Main Page Layout ---
   return (
@@ -683,6 +697,16 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 </span>
               </div>
             )}
+            <div className="mb-2 flex items-center gap-2">
+              <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-gray-700">
+                Client's amount to pay:{" "}
+                <span className="font-semibold text-green-700">
+                  ₱{amountToPay.toFixed(2)}
+                </span>
+              </span>
+            </div>
+
             {/* Booking duration */}
             {duration !== "N/A" && (
               <div className="mb-2 flex items-center gap-2">
@@ -776,11 +800,20 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {specificBooking?.canStart && (
             <button
               onClick={handleStartService}
-              disabled={isBookingActionInProgress(
-                specificBooking?.id || "",
-                "start",
-              )}
-              className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+              disabled={
+                isBookingActionInProgress(specificBooking?.id || "", "start") ||
+                !canStartServiceNow()
+              }
+              className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+                !canStartServiceNow()
+                  ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                  : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
+              } disabled:opacity-50`}
+              title={
+                !canStartServiceNow()
+                  ? "Service can only be started on or after the scheduled date and time"
+                  : ""
+              }
             >
               <ArrowPathIcon className="mr-2 h-5 w-5" />
               {isBookingActionInProgress(specificBooking?.id || "", "start")

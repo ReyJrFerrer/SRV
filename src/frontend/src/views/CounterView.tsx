@@ -19,7 +19,7 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
       const res = await backendService.getCount();
       setCount(res);
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       onError(String(err));
     } finally {
       setLoading(false);
@@ -32,7 +32,7 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
       const res = await backendService.incrementCounter();
       setCount(res);
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       onError(String(err));
     } finally {
       setLoading(false);

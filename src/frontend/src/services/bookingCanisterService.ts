@@ -405,11 +405,16 @@ export const bookingCanisterService = {
     requestedDate: Date,
     servicePackageId?: string,
     notes?: string,
+    amountToPay?: number,
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
       const canisterLocation = convertToCanisterLocation(location);
       const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
+      const amountToPayOptional: [] | [bigint] =
+        amountToPay !== undefined
+          ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
+          : [];
 
       const result = await actor.createBooking(
         serviceId,
@@ -419,16 +424,17 @@ export const bookingCanisterService = {
         requestedTimestamp,
         servicePackageId ? [servicePackageId] : [],
         notes ? [notes] : [],
+        amountToPayOptional,
       );
 
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error creating booking:", result.err);
+        //console.error("Error creating booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error creating booking:", error);
+      //console.error("Error creating booking:", error);
       throw new Error(`Failed to create booking: ${error}`);
     }
   },
@@ -444,11 +450,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error fetching booking:", result.err);
+        //console.error("Error fetching booking:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching booking:", error);
+      //console.error("Error fetching booking:", error);
       throw new Error(`Failed to fetch booking: ${error}`);
     }
   },
@@ -462,7 +468,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getClientBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching client bookings:", error);
+      //console.error("Error fetching client bookings:", error);
       throw new Error(`Failed to fetch client bookings: ${error}`);
     }
   },
@@ -476,7 +482,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getProviderBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching provider bookings:", error);
+      //console.error("Error fetching provider bookings:", error);
       throw new Error(`Failed to fetch provider bookings: ${error}`);
     }
   },
@@ -491,7 +497,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getBookingsByStatus(canisterStatus);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching bookings by status:", error);
+      //console.error("Error fetching bookings by status:", error);
       throw new Error(`Failed to fetch bookings by status: ${error}`);
     }
   },
@@ -512,11 +518,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error accepting booking:", result.err);
+        //console.error("Error accepting booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error accepting booking:", error);
+      //console.error("Error accepting booking:", error);
       throw new Error(`Failed to accept booking: ${error}`);
     }
   },
@@ -532,11 +538,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error declining booking:", result.err);
+        //console.error("Error declining booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error declining booking:", error);
+      //console.error("Error declining booking:", error);
       throw new Error(`Failed to decline booking: ${error}`);
     }
   },
@@ -552,11 +558,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error cancelling booking:", result.err);
+        //console.error("Error cancelling booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error cancelling booking:", error);
+      //console.error("Error cancelling booking:", error);
       throw new Error(`Failed to cancel booking: ${error}`);
     }
   },
@@ -572,11 +578,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error starting booking:", result.err);
+        //console.error("Error starting booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error starting booking:", error);
+      //console.error("Error starting booking:", error);
       throw new Error(`Failed to start booking: ${error}`);
     }
   },
@@ -599,11 +605,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error completing booking:", result.err);
+        //console.error("Error completing booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error completing booking:", error);
+      //console.error("Error completing booking:", error);
       throw new Error(`Failed to complete booking: ${error}`);
     }
   },
@@ -619,11 +625,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterBooking(result.ok);
       } else {
-        console.error("Error disputing booking:", result.err);
+        //console.error("Error disputing booking:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error disputing booking:", error);
+      //console.error("Error disputing booking:", error);
       throw new Error(`Failed to dispute booking: ${error}`);
     }
   },
@@ -647,11 +653,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterEvidence(result.ok);
       } else {
-        console.error("Error submitting evidence:", result.err);
+        //console.error("Error submitting evidence:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error submitting evidence:", error);
+      //console.error("Error submitting evidence:", error);
       throw new Error(`Failed to submit evidence: ${error}`);
     }
   },
@@ -670,11 +676,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error checking review eligibility:", result.err);
+        //console.error("Error checking review eligibility:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error checking review eligibility:", error);
+      //console.error("Error checking review eligibility:", error);
       throw new Error(`Failed to check review eligibility: ${error}`);
     }
   },
@@ -688,7 +694,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getClientActiveBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching client active bookings:", error);
+      //console.error("Error fetching client active bookings:", error);
       throw new Error(`Failed to fetch client active bookings: ${error}`);
     }
   },
@@ -702,7 +708,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getProviderActiveBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching provider active bookings:", error);
+      //console.error("Error fetching provider active bookings:", error);
       throw new Error(`Failed to fetch provider active bookings: ${error}`);
     }
   },
@@ -716,7 +722,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getClientCompletedBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching client completed bookings:", error);
+      //console.error("Error fetching client completed bookings:", error);
       throw new Error(`Failed to fetch client completed bookings: ${error}`);
     }
   },
@@ -732,7 +738,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getProviderCompletedBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching provider completed bookings:", error);
+      //console.error("Error fetching provider completed bookings:", error);
       throw new Error(`Failed to fetch provider completed bookings: ${error}`);
     }
   },
@@ -746,7 +752,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getDisputedBookings();
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching disputed bookings:", error);
+      //console.error("Error fetching disputed bookings:", error);
       throw new Error(`Failed to fetch disputed bookings: ${error}`);
     }
   },
@@ -769,7 +775,7 @@ export const bookingCanisterService = {
       );
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching bookings by date range:", error);
+      //console.error("Error fetching bookings by date range:", error);
       throw new Error(`Failed to fetch bookings by date range: ${error}`);
     }
   },
@@ -788,22 +794,22 @@ export const bookingCanisterService = {
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
       // DEBUG: Log the values being sent
-      console.log("DEBUG getServiceAvailableSlots:", {
-        serviceId,
-        inputDate: date.toISOString(),
-        dayOfWeek: date.getDay(),
-        dayName: [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ][date.getDay()],
-        timestamp: dateTimestamp.toString(),
-        millisTimestamp: date.getTime(),
-      });
+      // //console.log("DEBUG getServiceAvailableSlots:", {
+      //   serviceId,
+      //   inputDate: date.toISOString(),
+      //   dayOfWeek: date.getDay(),
+      //   dayName: [
+      //     "Sunday",
+      //     "Monday",
+      //     "Tuesday",
+      //     "Wednesday",
+      //     "Thursday",
+      //     "Friday",
+      //     "Saturday",
+      //   ][date.getDay()],
+      //   timestamp: dateTimestamp.toString(),
+      //   millisTimestamp: date.getTime(),
+      // });
 
       const result = await actor.getServiceAvailableSlots(
         serviceId,
@@ -811,22 +817,22 @@ export const bookingCanisterService = {
       );
 
       if ("ok" in result) {
-        console.log("DEBUG result:", {
-          slotsCount: result.ok.length,
-          slots: result.ok.map((slot) => ({
-            date: slot.date,
-            isAvailable: slot.isAvailable,
-            timeSlot: slot.timeSlot,
-            conflictingBookings: slot.conflictingBookings,
-          })),
-        });
+        // //console.log("DEBUG result:", {
+        //   slotsCount: result.ok.length,
+        //   slots: result.ok.map((slot) => ({
+        //     date: slot.date,
+        //     isAvailable: slot.isAvailable,
+        //     timeSlot: slot.timeSlot,
+        //     conflictingBookings: slot.conflictingBookings,
+        //   })),
+        // });
         return result.ok.map(convertCanisterAvailableSlot);
       } else {
-        console.error("Error fetching service available slots:", result.err);
+        //console.error("Error fetching service available slots:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching service available slots:", error);
+      //console.error("Error fetching service available slots:", error);
       throw new Error(`Failed to fetch service available slots: ${error}`);
     }
   },
@@ -844,14 +850,14 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error(
-          "Error fetching service availability settings:",
-          result.err,
-        );
+        // //console.error(
+        //   "Error fetching service availability settings:",
+        //   result.err,
+        // );
         return null;
       }
     } catch (error) {
-      console.error("Error fetching service availability settings:", error);
+      //console.error("Error fetching service availability settings:", error);
       throw new Error(
         `Failed to fetch service availability settings: ${error}`,
       );
@@ -874,11 +880,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error checking service availability:", result.err);
+        //console.error("Error checking service availability:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error checking service availability:", error);
+      //console.error("Error checking service availability:", error);
       throw new Error(`Failed to check service availability: ${error}`);
     }
   },
@@ -903,7 +909,7 @@ export const bookingCanisterService = {
       );
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching service booking conflicts:", error);
+      //console.error("Error fetching service booking conflicts:", error);
       throw new Error(`Failed to fetch service booking conflicts: ${error}`);
     }
   },
@@ -925,7 +931,7 @@ export const bookingCanisterService = {
       );
       return Number(count);
     } catch (error) {
-      console.error("Error fetching service daily booking count:", error);
+      //console.error("Error fetching service daily booking count:", error);
       throw new Error(`Failed to fetch service daily booking count: ${error}`);
     }
   },
@@ -944,7 +950,7 @@ export const bookingCanisterService = {
       const count = await actor.getDailyBookingCount(providerId, dateTimestamp);
       return Number(count);
     } catch (error) {
-      console.error("Error fetching daily booking count:", error);
+      //console.error("Error fetching daily booking count:", error);
       throw new Error(`Failed to fetch daily booking count: ${error}`);
     }
   },
@@ -966,11 +972,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        // console.error("Error setting canister references:", result.err);
+        // //console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      // console.error("Error setting canister references:", error);
+      // //console.error("Error setting canister references:", error);
       throw new Error(`Failed to set canister references: ${error}`);
     }
   },
@@ -984,7 +990,7 @@ export const bookingCanisterService = {
       const bookings = await actor.getBookingsByPackage(packageId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
-      console.error("Error fetching bookings by package:", error);
+      //console.error("Error fetching bookings by package:", error);
       throw new Error(`Failed to fetch bookings by package: ${error}`);
     }
   },
@@ -1013,11 +1019,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterClientAnalytics(result.ok);
       } else {
-        console.error("Error fetching client analytics:", result.err);
+        //console.error("Error fetching client analytics:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching client analytics:", error);
+      //console.error("Error fetching client analytics:", error);
       throw new Error(`Failed to fetch client analytics: ${error}`);
     }
   },
@@ -1046,11 +1052,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAnalytics(result.ok);
       } else {
-        console.error("Error fetching provider analytics:", result.err);
+        //console.error("Error fetching provider analytics:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching provider analytics:", error);
+      //console.error("Error fetching provider analytics:", error);
       throw new Error(`Failed to fetch provider analytics: ${error}`);
     }
   },
@@ -1079,11 +1085,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAnalytics(result.ok);
       } else {
-        console.error("Error fetching service analytics:", result.err);
+        //console.error("Error fetching service analytics:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching service analytics:", error);
+      //console.error("Error fetching service analytics:", error);
       throw new Error(`Failed to fetch service analytics: ${error}`);
     }
   },
@@ -1112,11 +1118,11 @@ export const bookingCanisterService = {
       if ("ok" in result) {
         return convertCanisterProviderAnalytics(result.ok);
       } else {
-        console.error("Error fetching package analytics:", result.err);
+        //console.error("Error fetching package analytics:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching package analytics:", error);
+      //console.error("Error fetching package analytics:", error);
       throw new Error(`Failed to fetch package analytics: ${error}`);
     }
   },

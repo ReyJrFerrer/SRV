@@ -23,7 +23,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     try {
       const success = await enablePushNotifications(getUserId());
       if (success) {
-        console.log("Push notifications enabled successfully");
+        //console.log("Push notifications enabled successfully");
         setShowModal(false);
       }
     } finally {

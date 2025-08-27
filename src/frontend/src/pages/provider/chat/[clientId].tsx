@@ -5,6 +5,7 @@ import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { ProfileImage } from "../../../components/common/ProfileImage";
+import { authCanisterService } from "../../../services/authCanisterService";
 
 const ConversationPage: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
@@ -64,9 +65,31 @@ const ConversationPage: React.FC = () => {
           : currentConversation.clientId;
 
       // Fetch the other user's name
-      getUserName(otherUserId).then(setOtherUserName).catch(console.error);
+      getUserName(otherUserId).then(setOtherUserName).catch();
+
+      // Fetch the other user's profile picture if not already set
+      if (!otherUserImageUrl) {
+        fetchOtherUserProfile(otherUserId);
+      }
     }
-  }, [currentConversation, identity, getUserName]);
+  }, [currentConversation, identity, getUserName, otherUserImageUrl]);
+
+  // Function to fetch the other user's profile picture
+  const fetchOtherUserProfile = async (userId: string) => {
+    try {
+      const profile = await authCanisterService.getProfile(userId);
+      if (
+        profile &&
+        profile.profilePicture &&
+        profile.profilePicture.imageUrl
+      ) {
+        setOtherUserImageUrl(profile.profilePicture.imageUrl);
+      }
+    } catch (error) {
+      //console.error("Failed to fetch other user's profile:", error);
+      // Silently fail - user will see default avatar
+    }
+  };
 
   // Mark messages as read when conversation loads
   useEffect(() => {
@@ -102,7 +125,7 @@ const ConversationPage: React.FC = () => {
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
     } catch (error) {
-      console.error("Failed to send message:", error);
+      //console.error("Failed to send message:", error);
     }
   };
 

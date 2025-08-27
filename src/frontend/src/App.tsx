@@ -29,7 +29,7 @@ const LandingPage = () => {
             navigate("/create-profile");
           }
         } catch (err) {
-          console.error("Profile check error:", err);
+          //console.error("Profile check error:", err);
         } finally {
           setIsCheckingProfile(false);
         }

@@ -201,7 +201,7 @@ export const getRemittanceMediaItems = async (
     const result = await actor.getRemittanceMediaItems(mediaIds);
     return handleResult(result, (items) => items.map(convertMediaItem));
   } catch (error) {
-    console.error("Failed to get remittance media items:", error);
+    //console.error("Failed to get remittance media items:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get remittance media items: ${error}`,
@@ -223,7 +223,7 @@ export const getMediaItem = async (
     const result = await actor.getMediaItem(mediaId);
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    console.error("Failed to get media item:", error);
+    //console.error("Failed to get media item:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media item: ${error}`,
@@ -243,7 +243,7 @@ export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
     const result = await actor.getFileData(mediaId);
     return handleResult(result, (data) => new Uint8Array(data));
   } catch (error) {
-    console.error("Failed to get file data:", error);
+    //console.error("Failed to get file data:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get file data: ${error}`,
@@ -265,7 +265,7 @@ export const getMediaByOwner = async (
     const items = await actor.getMediaByOwner(ownerId);
     return items.map(convertMediaItem);
   } catch (error) {
-    console.error("Failed to get media by owner:", error);
+    //console.error("Failed to get media by owner:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media by owner: ${error}`,
@@ -293,7 +293,7 @@ export const getMediaByTypeAndOwner = async (
     );
     return items.map(convertMediaItem);
   } catch (error) {
-    console.error("Failed to get media by type and owner:", error);
+    //console.error("Failed to get media by type and owner:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media by type and owner: ${error}`,
@@ -317,7 +317,7 @@ export const validateMediaItems = async (
       summaries.map(convertValidationSummary),
     );
   } catch (error) {
-    console.error("Failed to validate media items:", error);
+    //console.error("Failed to validate media items:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to validate media items: ${error}`,
@@ -351,7 +351,7 @@ export const uploadMedia = async (
     );
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    console.error("Failed to upload media:", error);
+    //console.error("Failed to upload media:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to upload media: ${error}`,
@@ -378,7 +378,7 @@ export const updateMediaMetadata = async (
     );
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    console.error("Failed to update media metadata:", error);
+    //console.error("Failed to update media metadata:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to update media metadata: ${error}`,
@@ -398,7 +398,7 @@ export const deleteMedia = async (mediaId: string): Promise<string> => {
     const result = await actor.deleteMedia(mediaId);
     return handleResult(result);
   } catch (error) {
-    console.error("Failed to delete media:", error);
+    //console.error("Failed to delete media:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to delete media: ${error}`,
@@ -429,7 +429,7 @@ export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
       userCount: Number(stats.userCount),
     };
   } catch (error) {
-    console.error("Failed to get storage stats:", error);
+    //console.error("Failed to get storage stats:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get storage stats: ${error}`,

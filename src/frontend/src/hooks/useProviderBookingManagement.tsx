@@ -286,7 +286,7 @@ export const useProviderBookingManagement =
 
     // Error handling functions
     const handleBookingError = useCallback((error: any, operation: string) => {
-      console.error(`Error in ${operation}:`, error);
+      //console.error(`Error in ${operation}:`, error);
       const errorMessage = error?.message || `Failed to ${operation}`;
       setError(errorMessage);
     }, []);
@@ -360,10 +360,10 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          console.error(
-            `❌ Error loading client profile for ${clientId}:`,
-            error,
-          );
+          // //console.error(
+          //   `❌ Error loading client profile for ${clientId}:`,
+          //   error,
+          // );
           return null;
         } finally {
           setLoadingState("clients", false);
@@ -393,10 +393,10 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          console.error(
-            `❌ Error loading service details for ${serviceId}:`,
-            error,
-          );
+          // //console.error(
+          //   `❌ Error loading service details for ${serviceId}:`,
+          //   error,
+          // );
           return null;
         } finally {
           setLoadingState("services", false);
@@ -425,10 +425,10 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          console.error(
-            `❌ Error loading package details for ${packageId}:`,
-            error,
-          );
+          // //console.error(
+          //   `❌ Error loading package details for ${packageId}:`,
+          //   error,
+          // );
           return null;
         } finally {
           setLoadingState("packages", false);
@@ -569,7 +569,7 @@ export const useProviderBookingManagement =
 
           return enhancedBooking;
         } catch (error) {
-          console.error(`❌ Error enriching booking ${booking.id}:`, error);
+          //console.error(`❌ Error enriching booking ${booking.id}:`, error);
 
           // Return booking with minimal enhancement but proper packageName handling
           return {
@@ -778,20 +778,20 @@ export const useProviderBookingManagement =
                   clientIdStr,
                   providerIdStr,
                 );
-                console.log(
-                  "Conversation created for accepted booking:",
-                  bookingId,
-                );
+                // //console.log(
+                //   "Conversation created for accepted booking:",
+                //   bookingId,
+                // );
               } else {
-                console.log("Conversation already exists between these users");
+                //console.log("Conversation already exists between these users");
               }
             } catch (chatError) {
               // Log the error but don't prevent the booking status update
-              console.error(
-                "Failed to create conversation for booking:",
-                bookingId,
-                chatError,
-              );
+              // //console.error(
+              //   "Failed to create conversation for booking:",
+              //   bookingId,
+              //   chatError,
+              // );
             }
           }
 
@@ -1243,7 +1243,7 @@ export const useProviderBookingManagement =
           clearError();
           await operation();
         } catch (error) {
-          console.error("Retry operation failed:", error);
+          //console.error("Retry operation failed:", error);
           // Error is handled by the individual operation
         }
       },
@@ -1274,7 +1274,7 @@ export const useProviderBookingManagement =
           const newAnalytics = calculateAnalytics();
           setAnalytics(newAnalytics);
         } catch (error) {
-          console.error("Error calculating analytics:", error);
+          //console.error("Error calculating analytics:", error);
         } finally {
           setLoadingState("analytics", false);
         }

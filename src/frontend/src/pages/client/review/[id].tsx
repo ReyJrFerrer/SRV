@@ -71,7 +71,7 @@ export const BookingReviewPage: React.FC = () => {
           setFeedback(userReview.comment);
         }
       } catch (error) {
-        console.error("Error loading booking/review data:", error);
+        //console.error("Error loading booking/review data:", error);
         setFormError("Could not load booking data.");
       }
     };
@@ -129,7 +129,7 @@ export const BookingReviewPage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Error submitting review:", error);
+      //console.error("Error submitting review:", error);
     } finally {
       setIsSubmitting(false);
     }

@@ -190,7 +190,7 @@ const MyBookingsPage: React.FC = () => {
       // NOTE: window.alert is also blocking. Use a toast notification instead.
       alert(`Booking has been cancelled successfully.`);
     } catch (error) {
-      console.error("Error cancelling booking:", error);
+      //console.error("Error cancelling booking:", error);
       alert("Failed to cancel booking. Please try again.");
     }
   };

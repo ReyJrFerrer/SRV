@@ -4,12 +4,12 @@ import SPHeaderNextjs from "../../components/provider/home page/SPHeader";
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
 import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
-import BottomNavigationNextjs from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
-import PWAInstall from "../../components/PWAInstall";
-import NotificationSettings from "../../components/NotificationSettings";
+// import PWAInstall from "../../components/PWAInstall";
+// import NotificationSettings from "../../components/NotificationSettings";
 // Add location permission state
 type LocationStatus = "pending" | "allowed" | "denied";
 
@@ -41,8 +41,6 @@ const ProviderHomePage: React.FC = () => {
     bookings,
     loading: bookingsLoading,
     error: bookingsError,
-    getPendingBookings,
-    getUpcomingBookings,
   } = useProviderBookingManagement();
 
   // Only create a legacy provider object for components that still need the old interface
@@ -115,7 +113,7 @@ const ProviderHomePage: React.FC = () => {
 
         // Load provider stats
       } catch (error) {
-        console.error("Error loading provider data:", error);
+        //console.error("Error loading provider data:", error);
       } finally {
         setPageLoading(false);
       }
@@ -126,14 +124,27 @@ const ProviderHomePage: React.FC = () => {
 
   // Calculate counts for pending and upcoming jobs using real booking data
   const bookingCounts = useMemo(() => {
-    const pendingBookings = getPendingBookings();
-    const upcomingBookings = getUpcomingBookings();
+    if (!bookings || bookings.length === 0) {
+      return { pendingCount: 0, upcomingCount: 0 };
+    }
 
-    const pendingCount = pendingBookings.length;
-    const upcomingCount = upcomingBookings.length;
+    const pendingBookings = bookings.filter(
+      (booking) =>
+        booking.status?.toLowerCase() === "requested" ||
+        booking.status?.toLowerCase() === "pending",
+    );
 
-    return { pendingCount, upcomingCount };
-  }, [bookings, getPendingBookings, getUpcomingBookings]);
+    const upcomingBookings = bookings.filter(
+      (booking) =>
+        booking.status?.toLowerCase() === "accepted" ||
+        booking.status?.toLowerCase() === "confirmed",
+    );
+
+    return {
+      pendingCount: pendingBookings.length,
+      upcomingCount: upcomingBookings.length,
+    };
+  }, [bookings]);
 
   // Combined loading state
   const isDataLoading = servicesLoading || bookingsLoading;
@@ -234,32 +245,34 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
-      <PWAInstall />
+      {/* <PWAInstall />
 
-      <NotificationSettings />
+      <NotificationSettings /> */}
 
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs />
 
-        <div className="mx-auto max-w-7xl p-4">
-          {/* Use legacyProvider for components that still need the old interface */}
-          {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
+        <main className="flex-grow overflow-y-auto pb-20">
+          <div className="mx-auto max-w-7xl p-4">
+            {/* Use legacyProvider for components that still need the old interface */}
+            {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
 
-          <BookingRequestsNextjs
-            pendingRequests={bookingCounts.pendingCount}
-            upcomingJobs={bookingCounts.upcomingCount}
-          />
+            <BookingRequestsNextjs
+              pendingRequests={bookingCounts.pendingCount}
+              upcomingJobs={bookingCounts.upcomingCount}
+            />
 
-          <ServiceManagementNextjs
-            services={userServices}
-            loading={servicesLoading}
-            error={servicesError}
-            onRefresh={refreshServices}
-          />
-        </div>
+            <ServiceManagementNextjs
+              services={userServices}
+              loading={servicesLoading}
+              error={servicesError}
+              onRefresh={refreshServices}
+            />
+          </div>
+        </main>
 
-        <BottomNavigationNextjs />
+        <BottomNavigation />
       </div>
     </>
   );

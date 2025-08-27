@@ -75,6 +75,69 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   </div>
 );
 
+// Individual review item component
+const ReviewItem: React.FC<{
+  review: any;
+  formatReviewDate: (date: number) => string;
+  getRelativeTime: (date: number) => string;
+}> = ({ review, formatReviewDate, getRelativeTime }) => {
+  const { userImageUrl: clientImageUrl } = useUserImage(
+    review.clientProfile?.profilePicture?.imageUrl,
+  );
+
+  return (
+    <div
+      key={review.id}
+      className="rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-md"
+    >
+      <div className="mb-3 flex items-start gap-3">
+        <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-white">
+          <img
+            src={clientImageUrl || "/default-client.svg"}
+            alt={review.clientName || "Client"}
+            className="h-full w-full rounded-full object-cover"
+          />
+        </div>
+        <div className="flex-grow">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h4 className="font-semibold text-blue-900">
+              {review.clientName || "Anonymous User"}
+            </h4>
+            {review.status !== "Visible" && (
+              <div className="mt-1 flex items-center text-xs text-blue-900 sm:mt-0">
+                <EyeSlashIcon className="mr-1 h-4 w-4" />
+                {review.status}
+              </div>
+            )}
+          </div>
+          {typeof review.clientReputationScore === "number" && (
+            <span className="mt-1 flex items-center gap-1 text-xs text-blue-900">
+              Reputation Score:{" "}
+              <span className="font-bold">{review.clientReputationScore}</span>
+            </span>
+          )}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-blue-700">
+            <p>{formatReviewDate(review.createdAt)}</p>
+            <span className="hidden sm:inline">•</span>
+            <p>{getRelativeTime(review.createdAt)}</p>
+          </div>
+        </div>
+      </div>
+      <div className="mb-2">
+        <StarRatingDisplay rating={review.rating} />
+      </div>
+      <p className="mb-3 text-base leading-relaxed text-blue-900">
+        {review.comment}
+      </p>
+      {review.qualityScore && (
+        <div className="mb-2 flex items-center text-xs text-blue-700">
+          <span>Quality Score: {(review.qualityScore * 10).toFixed(0)}%</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main reviews page component
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -350,71 +413,12 @@ const ServiceReviewsPage: React.FC = () => {
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
             {sortedAndFilteredReviews.map((review) => (
-              <div
+              <ReviewItem
                 key={review.id}
-                className="rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-md"
-              >
-                <div className="mb-3 flex items-start gap-3">
-                  <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-white">
-                    {review.clientProfile?.profilePicture?.imageUrl ? (
-                      <img
-                        src={review.clientProfile.profilePicture.imageUrl}
-                        alt={review.clientName || "Client"}
-                        className="h-full w-full rounded-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "/default-client.svg";
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src="/default-client.svg"
-                        alt="Default Client"
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <h4 className="font-semibold text-blue-900">
-                        {review.clientName || "Anonymous User"}
-                      </h4>
-                      {review.status !== "Visible" && (
-                        <div className="mt-1 flex items-center text-xs text-blue-900 sm:mt-0">
-                          <EyeSlashIcon className="mr-1 h-4 w-4" />
-                          {review.status}
-                        </div>
-                      )}
-                    </div>
-                    {typeof review.clientReputationScore === "number" && (
-                      <span className="mt-1 flex items-center gap-1 text-xs text-blue-900">
-                        Reputation Score:{" "}
-                        <span className="font-bold">
-                          {review.clientReputationScore}
-                        </span>
-                      </span>
-                    )}
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-blue-700">
-                      <p>{formatReviewDate(review.createdAt)}</p>
-                      <span className="hidden sm:inline">•</span>
-                      <p>{getRelativeTime(review.createdAt)}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <StarRatingDisplay rating={review.rating} />
-                </div>
-                <p className="mb-3 text-base leading-relaxed text-blue-900">
-                  {review.comment}
-                </p>
-                {review.qualityScore && (
-                  <div className="mb-2 flex items-center text-xs text-blue-700">
-                    <span>
-                      Quality Score: {(review.qualityScore * 10).toFixed(0)}%
-                    </span>
-                  </div>
-                )}
-              </div>
+                review={review}
+                formatReviewDate={formatReviewDate}
+                getRelativeTime={getRelativeTime}
+              />
             ))}
           </div>
         ) : (

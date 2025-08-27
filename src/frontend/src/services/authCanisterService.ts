@@ -88,7 +88,7 @@ export const authCanisterService = {
       // Convert backend profiles to frontend-compatible format
       return profiles.map((profile) => adaptBackendProfile(profile));
     } catch (error) {
-      console.error("Error fetching service providers:", error);
+      //console.error("Error fetching service providers:", error);
       throw new Error(`Failed to fetch service providers: ${error}`);
     }
   },
@@ -112,8 +112,8 @@ export const authCanisterService = {
         return null;
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
-      console.error("UserId that caused error:", userId);
+      //console.error("Error fetching profile:", error);
+      //console.error("UserId that caused error:", userId);
       throw new Error(`Failed to fetch profile: ${error}`);
     }
   },
@@ -129,11 +129,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error fetching my profile:", result.err);
+        //console.error("Error fetching my profile:", result.err);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching my profile:", error);
+      //console.error("Error fetching my profile:", error);
       throw new Error(`Failed to fetch my profile: ${error}`);
     }
   },
@@ -157,11 +157,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error creating profile:", result.err);
+        //console.error("Error creating profile:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error creating profile:", error);
+      //console.error("Error creating profile:", error);
       throw new Error(`Failed to create profile: ${error}`);
     }
   },
@@ -185,11 +185,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error updating profile:", result.err);
+        //console.error("Error updating profile:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      //console.error("Error updating profile:", error);
       throw new Error(`Failed to update profile: ${error}`);
     }
   },
@@ -206,11 +206,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error switching user role:", result.err);
+        //console.error("Error switching user role:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error switching user role:", error);
+      //console.error("Error switching user role:", error);
       throw new Error(`Failed to switch user role: ${error}`);
     }
   },
@@ -237,11 +237,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        // console.error("Error setting canister references:", result.err);
+        // //console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      // console.error("Error setting canister references:", error);
+      // //console.error("Error setting canister references:", error);
       throw new Error(`Failed to set canister references: ${error}`);
     }
   },
@@ -268,11 +268,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error uploading profile picture:", result.err);
+        //console.error("Error uploading profile picture:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
+      //console.error("Error uploading profile picture:", error);
       throw new Error(`Failed to upload profile picture: ${error}`);
     }
   },
@@ -288,11 +288,11 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
-        console.error("Error removing profile picture:", result.err);
+        //console.error("Error removing profile picture:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error removing profile picture:", error);
+      //console.error("Error removing profile picture:", error);
       throw new Error(`Failed to remove profile picture: ${error}`);
     }
   },

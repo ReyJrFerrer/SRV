@@ -7,7 +7,7 @@ import {
   MapPinIcon,
   CalendarIcon,
   CurrencyDollarIcon,
-  CameraIcon,
+  // CameraIcon,
   CheckCircleIcon,
   PaperAirplaneIcon,
   PhoneIcon,
@@ -88,10 +88,10 @@ const ActiveServicePage: React.FC = () => {
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  const handleUploadEvidence = () => {
-    // Trigger the hidden file input
-    fileInputRef.current?.click();
-  };
+  // const handleUploadEvidence = () => {
+  //   // Trigger the hidden file input
+  //   fileInputRef.current?.click();
+  // };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -297,6 +297,15 @@ const ActiveServicePage: React.FC = () => {
                   ₱{Number(booking.price).toFixed(2)}
                 </span>
               </div>
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                <span className="font-medium text-gray-700">
+                  Client's amount to pay:{" "}
+                  <span className="font-semibold text-green-700">
+                    {Number(booking.amountPaid).toFixed(2)}
+                  </span>
+                </span>
+              </div>
             </div>
           </section>
 
@@ -307,13 +316,13 @@ const ActiveServicePage: React.FC = () => {
             </h3>
             <div className="space-y-4">
               {/* Upload Work Progress Button */}
-              <button
+              {/* <button
                 type="button"
                 onClick={handleUploadEvidence}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
               >
                 <CameraIcon className="h-5 w-5" /> Upload Work Progress
-              </button>
+              </button> */}
               <input
                 ref={fileInputRef}
                 type="file"

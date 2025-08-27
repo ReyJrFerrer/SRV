@@ -37,10 +37,10 @@ persistent actor BookingCanister {
     private transient var remittanceCanisterId : ?Principal = null;
 
     // Constants
-    private transient let MIN_PRICE : Nat = 5;
-    private transient let MAX_PRICE : Nat = 1_000_000;
-    private transient let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
-    private transient let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds
+    // private transient let MIN_PRICE : Nat = 5;
+    // private transient let MAX_PRICE : Nat = 1_000_000;
+    // private transient let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
+    // private transient let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds
 
     // Helper functions
     private func generateId() : Text {
@@ -55,9 +55,9 @@ persistent actor BookingCanister {
                (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
     };
 
-    private func validatePrice(price : Nat) : Bool {
-        price >= MIN_PRICE and price <= MAX_PRICE
-    };
+    // private func validatePrice(price : Nat) : Bool {
+    //     price >= MIN_PRICE and price <= MAX_PRICE
+    // };
 
     // private func validateScheduledDate(requestedDate : Time.Time, scheduledDate : Time.Time) : Bool {
     //     let now = Time.now();
@@ -232,33 +232,6 @@ persistent actor BookingCanister {
         return await checkBookingConflictsEnhanced(serviceId, requestedDateTime, null);
     };
 
-    // DEPRECATED: Helper function to validate provider availability
-    // Use validateServiceAvailability instead for new implementations
-    private func validateProviderAvailability(providerId : Principal, requestedDateTime : Time.Time) : async Result<Bool> {
-        switch (serviceCanisterId) {
-            case (?serviceId) {
-                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
-                    isProviderAvailable : (Principal, Time.Time) -> async Types.Result<Bool>;
-                };
-                
-                switch (await serviceCanister.isProviderAvailable(providerId, requestedDateTime)) {
-                    case (#ok(isAvailable)) {
-                        if (isAvailable) {
-                            return #ok(true);
-                        } else {
-                            return #err("Provider is not available at the requested date and time");
-                        };
-                    };
-                    case (#err(msg)) {
-                        return #err("Availability check failed: " # msg);
-                    };
-                };
-            };
-            case (null) {
-                return #err("Service canister reference not set");
-            };
-        };
-    };
 
     // Create a new booking request
     public shared(msg) func createBooking(
@@ -268,7 +241,8 @@ persistent actor BookingCanister {
         location : Location,
         requestedDate : Time.Time,
         servicePackageId : ?Text,
-        notes : ?Text
+        notes : ?Text,
+        amountToPay: ?Nat
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -388,7 +362,7 @@ persistent actor BookingCanister {
             startedDate = null;
             completedDate = null;
             price = finalPrice;
-            amountPaid = null;
+            amountPaid = amountToPay;
             serviceTime = null;
             location = location;
             evidence = null;

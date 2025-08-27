@@ -201,7 +201,7 @@ const ProviderBookingsPage: React.FC = () => {
     try {
       await refreshBookings();
     } catch (error) {
-      console.error("❌ Failed to retry loading bookings:", error);
+      //console.error("❌ Failed to retry loading bookings:", error);
     }
   };
 
@@ -331,23 +331,25 @@ const ProviderBookingsPage: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="flex justify-center overflow-x-auto">
-            <nav className="flex space-x-2 pb-2 text-sm">
-              {TAB_ITEMS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveTab(tab);
-                  }}
-                  className={`flex-shrink-0 rounded-full px-4 py-2 text-center font-medium transition-colors ${
-                    activeTab === tab
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  }`}
-                >
-                  {tab} ({tabCounts[tab as keyof typeof tabCounts]})
-                </button>
-              ))}
+          <div className="w-full overflow-x-auto">
+            <nav className="flex px-4 pb-2 text-sm">
+              <div className="flex w-full min-w-max justify-between space-x-2">
+                {TAB_ITEMS.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                    }}
+                    className={`min-w-fit flex-1 rounded-full px-4 py-2 text-center font-medium whitespace-nowrap transition-colors ${
+                      activeTab === tab
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    }`}
+                  >
+                    {tab} ({tabCounts[tab as keyof typeof tabCounts]})
+                  </button>
+                ))}
+              </div>
             </nav>
           </div>
         </div>

@@ -258,7 +258,7 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           options,
         );
       } catch (error) {
-        console.error("Error uploading service images:", error);
+        //console.error("Error uploading service images:", error);
         throw error;
       }
     },
@@ -277,7 +277,7 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           imageUrl,
         );
       } catch (error) {
-        console.error("Error removing service image:", error);
+        //console.error("Error removing service image:", error);
         throw error;
       }
     },
@@ -296,7 +296,7 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           orderedImageUrls,
         );
       } catch (error) {
-        console.error("Error reordering service images:", error);
+        //console.error("Error reordering service images:", error);
         throw error;
       }
     },
@@ -308,7 +308,7 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
       try {
         return await mediaService.processServiceImageFiles(files, options);
       } catch (error) {
-        console.error("Error processing service image files:", error);
+        //console.error("Error processing service image files:", error);
         throw error;
       }
     },
@@ -439,7 +439,7 @@ export const useServiceCertificateUpload = (
           options,
         );
       } catch (error) {
-        console.error("Error uploading service certificates:", error);
+        //console.error("Error uploading service certificates:", error);
         throw error;
       }
     },
@@ -458,7 +458,7 @@ export const useServiceCertificateUpload = (
           certificateUrl,
         );
       } catch (error) {
-        console.error("Error removing service certificate:", error);
+        //console.error("Error removing service certificate:", error);
         throw error;
       }
     },
@@ -477,7 +477,7 @@ export const useServiceCertificateUpload = (
           isVerified,
         );
       } catch (error) {
-        console.error("Error verifying service:", error);
+        //console.error("Error verifying service:", error);
         throw error;
       }
     },
@@ -492,7 +492,7 @@ export const useServiceCertificateUpload = (
           options,
         );
       } catch (error) {
-        console.error("Error processing service certificate files:", error);
+        //console.error("Error processing service certificate files:", error);
         throw error;
       }
     },
@@ -504,7 +504,7 @@ export const useServiceCertificateUpload = (
       try {
         return mediaService.validateCertificateFile(file, options);
       } catch (error) {
-        console.error("Error validating certificate file:", error);
+        //console.error("Error validating certificate file:", error);
         throw error;
       }
     },

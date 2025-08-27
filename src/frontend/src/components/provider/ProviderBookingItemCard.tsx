@@ -17,6 +17,8 @@ import {
 } from "@heroicons/react/24/outline";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
+import { useUserImage } from "../../hooks/useMediaLoader";
+import { useEffect } from "react";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -31,12 +33,19 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     acceptBookingById,
     declineBookingById,
     startBookingById,
-    completeBookingById,
     isBookingActionInProgress,
-    refreshBookings,
   } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
+  const { userImageUrl, refetch } = useUserImage(
+    booking?.clientProfile?.profilePicture?.imageUrl,
+  );
+  // Refetch provider avatar if changed
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
 
   if (!booking) {
     return (
@@ -73,13 +82,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const packageTitle = booking.packageName || "No Package Name";
   const serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
-  const serviceImage =
-    typeof booking.clientProfile?.profilePicture === "string"
-      ? booking.clientProfile?.profilePicture
-      : (booking.clientProfile?.profilePicture?.imageUrl ?? undefined);
+  const serviceImage = userImageUrl;
+
   // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
+  const amountToPay = booking.amountPaid ? booking.amountPaid : 0;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
@@ -154,10 +162,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (window.confirm("Mark this booking as completed?")) {
-      const success = await completeBookingById(booking.id);
-      if (success) {
-        await refreshBookings();
-      }
+      navigate(`/provider/complete-service/${booking.id}`);
     }
   };
 
@@ -287,6 +292,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
                   <span className="font-semibold text-green-700">
                     ₱{price.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {amountToPay !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -449,6 +462,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
                   <span className="font-semibold text-green-700">
                     ₱{price.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {amountToPay !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
                   </span>
                 </div>
               )}

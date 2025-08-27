@@ -30,7 +30,7 @@ export const useFeedback = () => {
       try {
         await feedbackCanisterService.initializeFeedbackCanister(identity);
       } catch (err) {
-        console.error("Failed to initialize feedback canister:", err);
+        //console.error("Failed to initialize feedback canister:", err);
       }
     }
   }, [isAuthenticated, identity]);
@@ -50,7 +50,7 @@ export const useFeedback = () => {
       const feedback = await feedbackCanisterService.getAllFeedback(identity);
       setAllFeedback(feedback);
     } catch (err) {
-      console.error("Failed to fetch all feedback:", err);
+      //console.error("Failed to fetch all feedback:", err);
       setError("Could not load feedback");
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ export const useFeedback = () => {
       const feedback = await feedbackCanisterService.getMyFeedback(identity);
       setMyFeedback(feedback);
     } catch (err) {
-      console.error("Failed to fetch my feedback:", err);
+      //console.error("Failed to fetch my feedback:", err);
       setError("Could not load your feedback");
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ export const useFeedback = () => {
       const stats = await feedbackCanisterService.getFeedbackStats(identity);
       setFeedbackStats(stats);
     } catch (err) {
-      console.error("Failed to fetch feedback stats:", err);
+      //console.error("Failed to fetch feedback stats:", err);
       setError("Could not load feedback statistics");
     } finally {
       setLoading(false);
@@ -112,7 +112,7 @@ export const useFeedback = () => {
         );
         setAllFeedback(feedback);
       } catch (err) {
-        console.error("Failed to fetch recent feedback:", err);
+        //console.error("Failed to fetch recent feedback:", err);
         setError("Could not load recent feedback");
       } finally {
         setLoading(false);

@@ -33,7 +33,7 @@ export function LlmPromptView({ onError, setLoading }: LlmPromptViewProps) {
       const res = await backendService.sendLlmPrompt(prompt);
       setLlmResponse(res);
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       onError(String(err));
     } finally {
       setLlmLoading(false);

@@ -59,7 +59,7 @@ const getReadIds = (): string[] => {
     const item = window.localStorage.getItem(READ_NOTIFICATIONS_KEY);
     return item ? JSON.parse(item) : [];
   } catch (error) {
-    console.error("Error reading from localStorage", error);
+    //console.error("Error reading from localStorage", error);
     return [];
   }
 };
@@ -68,7 +68,7 @@ const setReadIds = (ids: string[]) => {
   try {
     window.localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(ids));
   } catch (error) {
-    console.error("Error writing to localStorage", error);
+    //console.error("Error writing to localStorage", error);
   }
 };
 

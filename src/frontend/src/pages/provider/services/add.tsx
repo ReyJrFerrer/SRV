@@ -102,6 +102,7 @@ const AddServicePage: React.FC = () => {
   const {
     categories,
     loading: loadingCategories,
+    userServices,
     getCategories,
     createService,
     createPackage,
@@ -117,6 +118,7 @@ const AddServicePage: React.FC = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [serviceCreated, setServiceCreated] = useState(false);
 
   // Service image upload state
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
@@ -233,6 +235,18 @@ const AddServicePage: React.FC = () => {
         } else if (filter.isProfane(formData.serviceOfferingTitle)) {
           errors.serviceOfferingTitle =
             "Service title contains inappropriate language.";
+        } else {
+          // Check for duplicate service titles (case-insensitive, trimmed)
+          const trimmedTitle = formData.serviceOfferingTitle
+            .trim()
+            .toLowerCase();
+          const isDuplicate = userServices.some(
+            (service) => service.title.trim().toLowerCase() === trimmedTitle,
+          );
+          if (isDuplicate) {
+            errors.serviceOfferingTitle =
+              "You already have a service with this title. Please choose a different name.";
+          }
         }
         if (!formData.categoryId) {
           errors.categoryId = "Please select a category";
@@ -370,6 +384,7 @@ const AddServicePage: React.FC = () => {
     serviceImageFiles,
     validateImageFiles,
     isProcessingImages,
+    userServices,
   ]);
 
   // --- Navigation Handlers ---
@@ -547,7 +562,8 @@ const AddServicePage: React.FC = () => {
         );
       await Promise.all(packagePromises);
       toast.success("Service created successfully!", { id: "create-service" });
-      navigate(`/provider/service-details/${newService.id}`);
+      setServiceCreated(true);
+      navigate(`/provider/service-details/${newService.id}`, { replace: true });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create service";
@@ -1006,7 +1022,13 @@ const AddServicePage: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
         <div className="container mx-auto flex items-center">
           <button
-            onClick={() => (currentStep === 1 ? navigate(-1) : handleBack())}
+            onClick={() =>
+              serviceCreated
+                ? navigate("/provider/home")
+                : currentStep === 1
+                  ? navigate(-1)
+                  : handleBack()
+            }
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />

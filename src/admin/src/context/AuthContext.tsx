@@ -42,7 +42,7 @@ const initializeCanisters = async (
     try {
       await initializeCanisterReferences();
     } catch (error) {
-      // console.warn("Failed to initialize canister references:", error);
+      // //console.warn("Failed to initialize canister references:", error);
     }
   }
 };
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           //   const hasAdminRole = await checkAdminRole(principalText);
           //   setIsAdmin(hasAdminRole);
           // } catch (adminError) {
-          //   console.warn("Failed to check admin role:", adminError);
+          //   //console.warn("Failed to check admin role:", adminError);
           //   setIsAdmin(false);
           // }
 
@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             //     return;
             //   }
             // } catch (adminError) {
-            //   console.error("Failed to verify admin privileges:", adminError);
+            //   //console.error("Failed to verify admin privileges:", adminError);
             //   setError("Failed to verify admin privileges");
             //   await logout();
             //   return;
@@ -155,7 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             setIsLoading(false);
           } catch (onSuccessError) {
-            console.error("Error in onSuccess callback:", onSuccessError);
+            //console.error("Error in onSuccess callback:", onSuccessError);
             setError("Authentication succeeded but failed to initialize");
             setIsLoading(false);
           }

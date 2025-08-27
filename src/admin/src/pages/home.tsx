@@ -267,7 +267,7 @@ export const AdminHomePage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Error viewing media:", error);
+      //console.error("Error viewing media:", error);
       setMediaModal({
         isOpen: true,
         mediaItem: null,

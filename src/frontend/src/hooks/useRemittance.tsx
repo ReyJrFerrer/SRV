@@ -112,7 +112,7 @@ export const useRemittance = (): RemittanceHook => {
     try {
       return identity.getPrincipal();
     } catch (error) {
-      console.error("Failed to get provider ID:", error);
+      //console.error("Failed to get provider ID:", error);
       return null;
     }
   }, [identity, isAuthenticated]);
@@ -134,7 +134,7 @@ export const useRemittance = (): RemittanceHook => {
   const handleError = useCallback((error: unknown, context: string) => {
     const errorMessage =
       error instanceof Error ? error.message : `Unknown error in ${context}`;
-    console.error(`Remittance hook error (${context}):`, error);
+    //console.error(`Remittance hook error (${context}):`, error);
     return errorMessage;
   }, []);
 

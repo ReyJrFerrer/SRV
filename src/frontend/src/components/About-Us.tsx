@@ -112,7 +112,7 @@ export default function AboutUs({
             </div>
 
             <button
-              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""}`}
+              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""} ml-auto`}
               aria-label="Toggle menu"
               onClick={toggleMobileMenu}
             >
@@ -191,14 +191,14 @@ export default function AboutUs({
       <section className="about-hero-section">
         <div className="container">
           <div className="about-hero-content">
-            <div className="about-hero-image">
+            <div className="about-hero-image mt-10">
               <img
                 src="about-srv.jpeg"
                 alt="SRV Service Platform"
                 className="hero-image"
               />
             </div>
-            <div className="about-hero-text">
+            <div className="about-hero-text mt-10">
               <h1 className="about-hero-title">About SRV</h1>
               <p className="about-hero-description">
                 Mobile Phone? Laptop? Computer? Any other devices? SRV

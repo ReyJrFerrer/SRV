@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix duplicate push notifications by tracking sent notifications in localStorage and preventing spam on navigation
 - Fix same-day booking slot availability display to correctly show booked slots as unavailable
+- Fix service media images not loading in ServiceListItem and provider services page
 
 ### Added
 
+- Add active service call-to-action reminder components for quick access to in-progress bookings
 - Add report submission functionality for users to report platform issues
 - Add validation to disable service deactivation and deletion when active bookings exist
 - Make review comments optional for booking submissions, allowing users to submit star ratings without requiring text feedback
