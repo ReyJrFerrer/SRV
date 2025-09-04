@@ -260,7 +260,37 @@ const ClientBookingPageComponent: React.FC = () => {
   >("detected");
   const [manualProvince, setManualProvince] = useState<string>("");
   const [manualCity, setManualCity] = useState<string>("");
-  const [manualBarangayOptions] = useState<string[]>([]);
+  const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>(
+    [],
+  );
+  // --- Update manualBarangayOptions when manualProvince or manualCity changes ---
+  useEffect(() => {
+    if (manualProvince && manualCity) {
+      const provinceObj = phLocations.provinces.find(
+        (prov: any) =>
+          prov.name.trim().toLowerCase() ===
+          manualProvince.trim().toLowerCase(),
+      );
+      const muniObj = provinceObj?.municipalities.find(
+        (muni: any) =>
+          muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
+      );
+      if (muniObj && Array.isArray(muniObj.barangays)) {
+        setManualBarangayOptions(
+          muniObj.barangays.filter(
+            (b: string) =>
+              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+          ),
+        );
+      } else {
+        setManualBarangayOptions([]);
+      }
+      setSelectedBarangay("");
+    } else {
+      setManualBarangayOptions([]);
+      setSelectedBarangay("");
+    }
+  }, [manualProvince, manualCity]);
 
   useEffect(() => {
     let foundBarangays: string[] = [];
