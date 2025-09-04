@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import phLocations from "../../data/ph_locations.json";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -11,6 +10,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
+import phLocations from "../../data/ph_locations.json";
 
 // --- Payment Section Sub-Component ---
 
@@ -175,9 +175,7 @@ const ClientBookingPageComponent: React.FC = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null,
-  );
+  const [, setMarkerPosition] = useState<[number, number] | null>(null);
   const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
   const [displayProvince, setDisplayProvince] = useState<string>("");
   // --- Detect location on mount ---
@@ -256,6 +254,14 @@ const ClientBookingPageComponent: React.FC = () => {
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
   const [otherBarangay, setOtherBarangay] = useState("");
+  // Add new state for location input mode and manual province/city selection
+  const [locationInputMode, setLocationInputMode] = useState<
+    "detected" | "manual"
+  >("detected");
+  const [manualProvince, setManualProvince] = useState<string>("");
+  const [manualCity, setManualCity] = useState<string>("");
+  const [manualBarangayOptions] = useState<string[]>([]);
+
   useEffect(() => {
     let foundBarangays: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
@@ -1265,162 +1271,334 @@ const ClientBookingPageComponent: React.FC = () => {
                 )}
               </div>
               {/* --- Service Location Section --- */}
+              {/* --- Service Location Section (uses location from Header.tsx context or manual selection) --- */}
               <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
-                {/* --- Service Location Section (uses location from Header.tsx context) --- */}
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
-                <div className="mt-2 space-y-3">
-                  {/* The Municipality/City and Province below are sourced from Header.tsx context */}
-                  <p className="text-xs text-gray-600">
-                    Your location is automatically detected.
-                  </p>
-                  <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                <div className="mb-4 flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="locationInputMode"
+                      value="detected"
+                      checked={locationInputMode === "detected"}
+                      onChange={() => setLocationInputMode("detected")}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Use Detected Location
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="locationInputMode"
+                      value="manual"
+                      checked={locationInputMode === "manual"}
+                      onChange={() => setLocationInputMode("manual")}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Choose Province & City
+                    </span>
+                  </label>
+                </div>
+                {locationInputMode === "detected" ? (
+                  <div className="mt-2 space-y-3">
+                    <p className="text-xs text-gray-600">
+                      Your location is automatically detected.
+                    </p>
+                    <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Municipality/City
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationStatus === "detecting"
+                                ? "Detecting..."
+                                : (displayMunicipality || "")
+                                      .trim()
+                                      .toLowerCase() === "baguio"
+                                  ? "Baguio City"
+                                  : displayMunicipality || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            placeholder="Municipality/City"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Province
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationStatus === "detecting"
+                                ? "Detecting..."
+                                : displayProvince ===
+                                    "Cordillera Administrative Region"
+                                  ? "Benguet"
+                                  : displayProvince || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            placeholder="Province"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Barangay dropdown populated from ph_locations.json */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {barangayOptions
+                        .filter(
+                          (b) =>
+                            b &&
+                            b.trim().toLowerCase().replace(/\s+/g, "") !==
+                              "others",
+                        )
+                        .map((barangay, idx) => (
+                          <option key={idx} value={barangay}>
+                            {barangay}
+                          </option>
+                        ))}
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
+                    <input
+                      ref={streetRef}
+                      type="text"
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!selectedBarangay}
+                      minLength={3}
+                      maxLength={20}
+                    />
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2 space-y-3">
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <label className="mb-1 block text-xs text-blue-700">
-                          Municipality/City
+                          Province *
                         </label>
-                        <input
-                          type="text"
-                          value={
-                            locationStatus === "detecting"
-                              ? "Detecting..."
-                              : (displayMunicipality || "")
-                                    .trim()
-                                    .toLowerCase() === "baguio"
-                                ? "Baguio City"
-                                : displayMunicipality || ""
-                          }
-                          readOnly
-                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
-                          placeholder="Municipality/City"
-                        />
+                        <select
+                          value={manualProvince}
+                          onChange={(e) => {
+                            setManualProvince(e.target.value);
+                            setManualCity("");
+                          }}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                        >
+                          <option value="" disabled>
+                            Select Province
+                          </option>
+                          {phLocations.provinces.map((prov: any) => (
+                            <option key={prov.name} value={prov.name}>
+                              {prov.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex-1">
                         <label className="mb-1 block text-xs text-blue-700">
-                          Province
+                          City/Municipality *
                         </label>
-                        <input
-                          type="text"
-                          value={
-                            locationStatus === "detecting"
-                              ? "Detecting..."
-                              : displayProvince ===
-                                  "Cordillera Administrative Region"
-                                ? "Benguet"
-                                : displayProvince || ""
-                          }
-                          readOnly
-                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
-                          placeholder="Province"
-                        />
+                        <select
+                          value={manualCity}
+                          onChange={(e) => setManualCity(e.target.value)}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                          disabled={!manualProvince}
+                        >
+                          <option value="" disabled>
+                            Select City/Municipality
+                          </option>
+                          {manualProvince &&
+                            phLocations.provinces
+                              .find(
+                                (prov: any) =>
+                                  prov.name.trim().toLowerCase() ===
+                                  manualProvince.trim().toLowerCase(),
+                              )
+                              ?.municipalities.map((muni: any) => (
+                                <option key={muni.name} value={muni.name}>
+                                  {muni.name}
+                                </option>
+                              ))}
+                        </select>
                       </div>
                     </div>
-                  </div>
-                  {locationStatus === "allowed" && markerPosition && (
-                    <div className="mb-2"></div>
-                  )}
-
-                  {/* Barangay dropdown populated from ph_locations.json */}
-                  <select
-                    ref={barangayRef}
-                    value={selectedBarangay}
-                    onChange={(e) => setSelectedBarangay(e.target.value)}
-                    className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                      highlightInput === "barangay"
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                  >
-                    <option value="" disabled>
-                      Select Barangay *
-                    </option>
-                    {barangayOptions
-                      .filter(
-                        (b) =>
-                          b &&
-                          b.trim().toLowerCase().replace(/\s+/g, "") !==
-                            "others",
-                      )
-                      .map((barangay, idx) => (
+                    {/* Barangay dropdown for manual selection */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!manualCity}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {manualBarangayOptions.map((barangay, idx) => (
                         <option key={idx} value={barangay}>
                           {barangay}
                         </option>
                       ))}
-                    <option value="__other__">Others</option>
-                  </select>
-                  {selectedBarangay === "__other__" && (
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
                     <input
-                      ref={otherBarangayRef}
+                      ref={streetRef}
                       type="text"
-                      placeholder="Enter your Barangay *"
-                      value={otherBarangay}
-                      onChange={(e) => setOtherBarangay(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
-                        highlightInput === "otherBarangay" ||
-                        (otherBarangay &&
-                          (otherBarangay.trim().length < 3 ||
-                            otherBarangay.trim().length > 20))
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : "border-blue-400"
+                          : ""
                       }`}
+                      disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
-                      required
                     />
-                  )}
-                  <input
-                    ref={streetRef}
-                    type="text"
-                    placeholder="Street Name *"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                      !selectedBarangay
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : "border-gray-300 bg-white text-gray-700"
-                    } ${
-                      highlightInput === "street" ||
-                      (street &&
-                        (street.trim().length < 3 || street.trim().length > 20))
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                    disabled={!selectedBarangay}
-                    minLength={3}
-                    maxLength={20}
-                  />
-                  <input
-                    ref={houseNumberRef}
-                    type="text"
-                    placeholder="House/Unit No. *"
-                    value={houseNumber}
-                    onChange={(e) => setHouseNumber(e.target.value)}
-                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                      !street
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : "border-gray-300 bg-white text-gray-700"
-                    } ${
-                      highlightInput === "houseNumber" ||
-                      (houseNumber &&
-                        (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                    disabled={!street}
-                    maxLength={15}
-                  />
-                  {/* Landmark input, always enabled */}
-                  <input
-                    type="text"
-                    placeholder="Building / Subdivision / Sitio / etc. (optional)"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                  />
-                </div>
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                )}
               </div>
               <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
