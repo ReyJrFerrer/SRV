@@ -742,12 +742,18 @@ const ClientBookingPageComponent: React.FC = () => {
       // Build address string from manual entry and header context
       const barangayValue =
         selectedBarangay === "__other__" ? otherBarangay : selectedBarangay;
+
+      const finalMunicipality =
+        locationInputMode === "manual" ? manualCity : displayMunicipality;
+      const finalProvince =
+        locationInputMode === "manual" ? manualProvince : displayProvince;
+
       const finalAddress = [
         houseNumber,
         street,
         barangayValue,
-        displayMunicipality,
-        displayProvince,
+        finalMunicipality,
+        finalProvince,
         landmark,
       ]
         .filter(Boolean)
@@ -786,6 +792,8 @@ const ClientBookingPageComponent: React.FC = () => {
               ? amountPaid || totalPrice.toFixed(2)
               : totalPrice.toFixed(2),
           landmark: landmark || "None",
+          municipality: finalMunicipality,
+          province: finalProvince,
         };
         navigate("/client/booking/confirmation", {
           state: { details: confirmationDetails },

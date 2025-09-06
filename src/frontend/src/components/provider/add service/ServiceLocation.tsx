@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MapPinIcon } from "@heroicons/react/24/solid";
+import phLocations from "../../../data/ph_locations.json"; // Adjust path as needed
 
 interface ServiceLocationProps {
   formData: {
@@ -54,7 +55,49 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   );
   const [error, setError] = useState<string | null>(null);
 
+  // New: location input mode
+  const [locationInputMode, setLocationInputMode] = useState<
+    "detected" | "manual"
+  >("detected");
+  const [manualProvince, setManualProvince] = useState<string>("");
+  const [manualCity, setManualCity] = useState<string>("");
+  const [manualCityOptions, setManualCityOptions] = useState<string[]>([]);
+
+  // Handle province dropdown change
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const province = e.target.value;
+    setManualProvince(province);
+    setManualCity("");
+    setFormData((prev: any) => ({
+      ...prev,
+      locationProvince: province,
+      locationMunicipalityCity: "",
+    }));
+    // Find province in phLocations
+    const provinceObj = phLocations.provinces.find(
+      (prov: any) => prov.name === province,
+    );
+    if (provinceObj) {
+      setManualCityOptions(provinceObj.municipalities.map((m: any) => m.name));
+    } else {
+      setManualCityOptions([]);
+    }
+  };
+
+  // Handle city dropdown change
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    setManualCity(city);
+    setFormData((prev: any) => ({
+      ...prev,
+      locationMunicipalityCity: city,
+    }));
+  };
+
+  // Only run geolocation if using detected mode
   useEffect(() => {
+    if (locationInputMode !== "detected") return;
+
     if (!navigator.geolocation) {
       setDisplayAddress("Geolocation is not supported by your browser.");
       setError("Geolocation not supported");
@@ -105,15 +148,15 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [setFormData]);
+  }, [setFormData, locationInputMode]);
 
   const hasGPSCoordinates =
     !!formData.locationLatitude && !!formData.locationLongitude;
 
-  // Optionally, you can show a local message if location is still being detected
-  const localLocationError = !hasGPSCoordinates
-    ? "Still detecting your location, please wait"
-    : undefined;
+  const localLocationError =
+    locationInputMode === "detected" && !hasGPSCoordinates
+      ? "Still detecting your location, please wait"
+      : undefined;
 
   return (
     <div className="mx-auto max-w-xl space-y-8 p-4">
@@ -126,23 +169,94 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
           </h3>
         </div>
 
-        <div className="mb-6 flex flex-col items-center justify-center">
-          <div className="flex w-full items-center gap-4 rounded-xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="mb-1 text-xs font-medium text-blue-500">
-                Using Your Current Location
-              </span>
-              <span className="text-lg font-semibold break-words text-blue-900">
-                {displayAddress}
-              </span>
+        {/* Location mode toggle */}
+        <div className="mb-6 flex gap-4">
+          <button
+            type="button"
+            className={`rounded-lg border px-4 py-2 font-semibold ${
+              locationInputMode === "detected"
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-blue-300 bg-white text-blue-700"
+            }`}
+            onClick={() => setLocationInputMode("detected")}
+          >
+            Use My Current Location
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg border px-4 py-2 font-semibold ${
+              locationInputMode === "manual"
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-blue-300 bg-white text-blue-700"
+            }`}
+            onClick={() => setLocationInputMode("manual")}
+          >
+            Choose a Different Location
+          </button>
+        </div>
+
+        {/* Detected location */}
+        {locationInputMode === "detected" && (
+          <div className="mb-6 flex flex-col items-center justify-center">
+            <div className="flex w-full items-center gap-4 rounded-xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="mb-1 text-xs font-medium text-blue-500">
+                  Using Your Current Location
+                </span>
+                <span className="text-lg font-semibold break-words text-blue-900">
+                  {displayAddress}
+                </span>
+              </div>
+            </div>
+            {error && (
+              <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Manual location selection */}
+        {locationInputMode === "manual" && (
+          <div className="mb-6 flex w-full flex-col items-center justify-center">
+            <div className="flex w-full flex-col gap-4">
+              <label className="text-sm font-medium text-blue-700">
+                Province
+                <span className="ml-1 text-red-500">*</span>
+              </label>
+              <select
+                className="rounded-md border border-blue-300 px-3 py-2"
+                value={manualProvince}
+                onChange={handleProvinceChange}
+              >
+                <option value="">Select Province</option>
+                {phLocations.provinces.map((prov: any) => (
+                  <option key={prov.name} value={prov.name}>
+                    {prov.name}
+                  </option>
+                ))}
+              </select>
+
+              <label className="text-sm font-medium text-blue-700">
+                City / Municipality
+                <span className="ml-1 text-red-500">*</span>
+              </label>
+              <select
+                className="rounded-md border border-blue-300 px-3 py-2"
+                value={manualCity}
+                onChange={handleCityChange}
+                disabled={!manualProvince}
+              >
+                <option value="">Select City / Municipality</option>
+                {manualCityOptions.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          {error && (
-            <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
-              {error}
-            </div>
-          )}
-        </div>
+        )}
 
         {(validationErrors?.locationMunicipalityCity || localLocationError) && (
           <div className="mt-2 text-center text-sm text-red-600">
