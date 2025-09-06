@@ -64,6 +64,11 @@ export default defineConfig({
       },
     },
     allowedHosts: true,
+    // 9/5/2025
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
   },
   plugins: [
     react(),
