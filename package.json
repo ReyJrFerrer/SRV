@@ -7,7 +7,6 @@
   "workspaces": [
     "src/frontend",
     "src/admin"
-  
   ],
   "scripts": {
     "lint": "prettier --check .",
