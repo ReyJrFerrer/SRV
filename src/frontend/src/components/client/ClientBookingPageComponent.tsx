@@ -1331,7 +1331,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       className="h-4 w-4 text-blue-600"
                     />
                     <span className="text-sm text-gray-700">
-                      Choose Province & City
+                      Choose Diffferent Location
                     </span>
                   </label>
                 </div>
