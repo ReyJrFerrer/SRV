@@ -631,17 +631,6 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 <PlusCircleIcon className="h-5 w-5" />
                 Add Time Slot
               </button>
-              {/* Error messages for common time slots */}
-              {getTimeValidationErrors(formData.commonTimeSlots).map(
-                (error, index) => (
-                  <div
-                    key={index}
-                    className="mt-2 flex items-center gap-2 text-sm text-red-600"
-                  >
-                    <span>⚠️ {error}</span>
-                  </div>
-                ),
-              )}
             </div>
           ) : (
             <div className="space-y-6">

@@ -465,15 +465,19 @@ const ClientBookingPageComponent: React.FC = () => {
       }
 
       // Helper function to check if a time slot has passed (for same-day booking only)
-      const isTimeSlotPassed = (startTime: string): boolean => {
+      const isTimeSlotPassed = (
+        _startTime: string,
+        endTime: string,
+      ): boolean => {
         if (bookingOption !== "sameday") return false;
 
         const now = new Date();
-        const [startHour, startMinute] = startTime.split(":").map(Number);
-        const slotStartTime = new Date();
-        slotStartTime.setHours(startHour, startMinute, 0, 0);
+        const [endHour, endMinute] = endTime.split(":").map(Number);
+        const slotEndTime = new Date();
+        slotEndTime.setHours(endHour, endMinute, 0, 0);
 
-        return now >= slotStartTime;
+        // A slot is only "passed" if the current time is past the END of the slot
+        return now >= slotEndTime;
       };
 
       // Check availability for each slot
@@ -481,7 +485,10 @@ const ClientBookingPageComponent: React.FC = () => {
         const timeSlotKey = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
 
         // First check if the time slot has passed (for same-day booking)
-        const hasTimePassed = isTimeSlotPassed(slot.timeSlot.startTime);
+        const hasTimePassed = isTimeSlotPassed(
+          slot.timeSlot.startTime,
+          slot.timeSlot.endTime,
+        );
 
         if (hasTimePassed) {
           availabilityMap[timeSlotKey] = false;
@@ -1081,18 +1088,12 @@ const ClientBookingPageComponent: React.FC = () => {
                               // Check if the time slot has passed (for same-day booking)
                               const isTimeSlotPassed = (): boolean => {
                                 const now = new Date();
-                                const [startHour, startMinute] =
-                                  slot.timeSlot.startTime
-                                    .split(":")
-                                    .map(Number);
-                                const slotStartTime = new Date();
-                                slotStartTime.setHours(
-                                  startHour,
-                                  startMinute,
-                                  0,
-                                  0,
-                                );
-                                return now >= slotStartTime;
+                                const [endHour, endMinute] =
+                                  slot.timeSlot.endTime.split(":").map(Number);
+                                const slotEndTime = new Date();
+                                slotEndTime.setHours(endHour, endMinute, 0, 0);
+                                // A slot is only "passed" if the current time is past the END of the slot
+                                return now >= slotEndTime;
                               };
 
                               const hasTimePassed = isTimeSlotPassed();

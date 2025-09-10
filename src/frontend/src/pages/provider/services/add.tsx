@@ -309,19 +309,65 @@ const AddServicePage: React.FC = () => {
           errors.availabilitySchedule =
             "Please select at least one day of availability";
         }
+
+        // Helper function to validate time slots
+        const validateTimeSlots = (timeSlots: TimeSlotUIData[]) => {
+          for (const slot of timeSlots) {
+            // Check if all fields are filled
+            if (
+              !slot.startHour ||
+              !slot.startMinute ||
+              !slot.endHour ||
+              !slot.endMinute
+            ) {
+              return "Please complete all time slot fields";
+            }
+
+            // Check if start and end times are the same
+            const convertTo24Hour = (
+              hour: string,
+              minute: string,
+              period: "AM" | "PM",
+            ) => {
+              let hour24 = parseInt(hour, 10);
+              if (period === "PM" && hour24 !== 12) {
+                hour24 += 12;
+              } else if (period === "AM" && hour24 === 12) {
+                hour24 = 0;
+              }
+              return hour24 * 60 + parseInt(minute, 10); // Convert to minutes for comparison
+            };
+
+            const startMinutes = convertTo24Hour(
+              slot.startHour,
+              slot.startMinute,
+              slot.startPeriod,
+            );
+            const endMinutes = convertTo24Hour(
+              slot.endHour,
+              slot.endMinute,
+              slot.endPeriod,
+            );
+
+            // Critical validation: Start and end times cannot be identical
+            if (startMinutes === endMinutes) {
+              return "⚠️ Start and end times cannot be the same";
+            }
+
+            if (startMinutes >= endMinutes) {
+              return "⚠️ Start time must be before end time";
+            }
+          }
+          return null;
+        };
+
         if (formData.useSameTimeForAllDays) {
           if (formData.commonTimeSlots.length === 0) {
             errors.timeSlots = "Please add at least one time slot";
           } else {
-            const hasValidTimeSlot = formData.commonTimeSlots.some(
-              (slot) =>
-                slot.startHour &&
-                slot.startMinute &&
-                slot.endHour &&
-                slot.endMinute,
-            );
-            if (!hasValidTimeSlot) {
-              errors.timeSlots = "Please complete at least one time slot";
+            const validationError = validateTimeSlots(formData.commonTimeSlots);
+            if (validationError) {
+              errors.timeSlots = validationError;
             }
           }
         } else {
@@ -332,6 +378,18 @@ const AddServicePage: React.FC = () => {
           );
           if (!hasTimeSlots) {
             errors.timeSlots = "Please add time slots for your available days";
+          } else {
+            // Validate all per-day time slots
+            for (const day of formData.availabilitySchedule) {
+              const daySlots = formData.perDayTimeSlots[day] || [];
+              if (daySlots.length > 0) {
+                const validationError = validateTimeSlots(daySlots);
+                if (validationError) {
+                  errors.timeSlots = `${day}: ${validationError}`;
+                  break;
+                }
+              }
+            }
           }
         }
         break;
@@ -397,6 +455,14 @@ const AddServicePage: React.FC = () => {
       return;
     }
     const errors = validateCurrentStep();
+
+    // Additional check specifically for time slot errors to ensure user cannot proceed
+    if (errors.timeSlots) {
+      setValidationErrors(errors);
+      setScrollToErrorTrigger((prev) => prev + 1);
+      return;
+    }
+
     if (Object.keys(errors).length === 0) {
       setCurrentStep((prev) => prev + 1);
       setValidationErrors({});

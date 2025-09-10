@@ -149,7 +149,13 @@ const ProviderBookingsPage: React.FC = () => {
           bookingDate.getDate() === today.getDate() &&
           bookingDate.getMonth() === today.getMonth() &&
           bookingDate.getFullYear() === today.getFullYear();
-        return timingFilter === "Same Day" ? isSameDay : false;
+
+        if (timingFilter === "Same Day") {
+          return isSameDay;
+        } else if (timingFilter === "Scheduled") {
+          return !isSameDay;
+        }
+        return false;
       });
     }
 
