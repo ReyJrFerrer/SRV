@@ -28,7 +28,7 @@ export default defineConfig({
           return "assets/[name]-[hash][extname]";
         },
       },
-      external: ['@rollup/rollup-darwin-x64', '@rollup/rollup-darwin-arm64']
+      external: ["@rollup/rollup-darwin-x64", "@rollup/rollup-darwin-arm64"],
     },
   },
   optimizeDeps: {
