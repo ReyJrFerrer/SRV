@@ -43,7 +43,7 @@ const CategoryPage: React.FC = () => {
   const [pendingMinRating, setPendingMinRating] = useState(0);
   // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
-  const [maxPrice, setMaxPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
   // Sync pending state with applied state when opening filter panel
@@ -128,7 +128,7 @@ const CategoryPage: React.FC = () => {
     // 2. Apply advanced filters (using applied state)
     processedServices = processedServices.filter((service) => {
       const safeRating = service.rating?.average ?? 0;
-      const priceMatch = service.price.amount >= maxPrice;
+      const priceMatch = service.price.amount <= maxPrice;
       const ratingMatch = safeRating >= minRating;
       return priceMatch && ratingMatch;
     });
