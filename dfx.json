@@ -63,9 +63,7 @@
     },
 
     "admin-frontend": {
-      "dependencies": [
-        "admin"   
-      ],
+      "dependencies": ["admin"],
       "type": "assets",
       "source": ["src/admin/dist/"]
     }
