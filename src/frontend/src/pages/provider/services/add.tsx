@@ -455,14 +455,14 @@ const AddServicePage: React.FC = () => {
       return;
     }
     const errors = validateCurrentStep();
-    
+
     // Additional check specifically for time slot errors to ensure user cannot proceed
     if (errors.timeSlots) {
       setValidationErrors(errors);
       setScrollToErrorTrigger((prev) => prev + 1);
       return;
     }
-    
+
     if (Object.keys(errors).length === 0) {
       setCurrentStep((prev) => prev + 1);
       setValidationErrors({});
