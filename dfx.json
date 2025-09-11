@@ -45,14 +45,13 @@
       "type": "motoko",
       "main": "src/backend/function/feedback.mo"
     },
-    "commission" : {
-      "type" : "motoko",
-      "main" : "src/backend/function/commission.mo"
+    "commission": {
+      "type": "motoko",
+      "main": "src/backend/function/commission.mo"
     },
-    "wallet" : {
-      "type" : "motoko",
-      "main" : "src/backend/function/wallet.mo"
-
+    "wallet": {
+      "type": "motoko",
+      "main": "src/backend/function/wallet.mo"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",

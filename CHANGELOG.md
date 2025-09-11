@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 1.1: Created src/backend/function/wallet.mo with persistent actor structure and stable Trie storage for user balances and transaction history
 - feature - 1.2: Implemented core wallet functions including get_balance(), credit(), debit(), and transfer() with proper authorization controls and transaction recording
 - feature - 1.3: Integrated commission and wallet canisters with booking system - providers must have sufficient wallet balance before accepting bookings, and commission is automatically deducted from wallet upon cash job completion
+- feature - 1.4: Updating canister configurations in dfx.json by adding commission and wallet
 
 ### Changed
 
