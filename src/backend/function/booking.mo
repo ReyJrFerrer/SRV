@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
+import Result "mo:base/Result";
 
 import Types "../types/shared";
 import StaticData "../utils/staticData";
@@ -32,6 +33,8 @@ persistent actor BookingCanister {
     private transient var serviceCanisterId : ?Principal = null;
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
+    private transient var commissionCanisterId : ?Principal = null;
+    private transient var walletCanisterId : ?Principal = null;
 
     // Constants
     // private transient let MIN_PRICE : Nat = 5;
@@ -157,13 +160,17 @@ persistent actor BookingCanister {
         auth : ?Principal,
         service : ?Principal,
         review : ?Principal,
-        reputation : ?Principal
+        reputation : ?Principal,
+        commission : ?Principal,
+        wallet : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
         serviceCanisterId := service;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
+        commissionCanisterId := commission;
+        walletCanisterId := wallet;
         return #ok("Canister references set successfully");
     };
 
@@ -417,7 +424,127 @@ persistent actor BookingCanister {
         return providerBookings;
     };
     
-    // Accept a booking request (provider) - Enhanced with conflict checking
+    // Helper function to validate commission balance for cash jobs
+    private func validateCommissionBalance(booking : Booking) : async Result<Bool> {
+        // For now, we'll check commission for all bookings since cash vs digital payment
+        // distinction isn't clearly defined yet. This can be refined later.
+        
+        // Get service information to determine category
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                };
+                
+                switch (await serviceCanister.getService(booking.serviceId)) {
+                    case (#ok(service)) {
+                        let categoryName = service.category.name;
+                        
+                        // Calculate estimated commission
+                        switch (commissionCanisterId) {
+                            case (?commissionId) {
+                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
+                                    calculate_commission : (Text, Nat) -> async Nat;
+                                };
+                                
+                                let estimatedCommission = await commissionCanister.calculate_commission(categoryName, booking.price);
+                                
+                                // Check provider's wallet balance
+                                switch (walletCanisterId) {
+                                    case (?walletId) {
+                                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                                            get_balance_of : (Principal) -> async Nat;
+                                        };
+                                        
+                                        let providerBalance = await walletCanister.get_balance_of(booking.providerId);
+                                        
+                                        if (providerBalance < estimatedCommission) {
+                                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(estimatedCommission) # ", Available balance: ₱" # Nat.toText(providerBalance) # ". Please top up your wallet before accepting this booking.");
+                                        };
+                                        
+                                        return #ok(true);
+                                    };
+                                    case (null) {
+                                        return #err("Wallet canister reference not set");
+                                    };
+                                };
+                            };
+                            case (null) {
+                                return #err("Commission canister reference not set");
+                            };
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Failed to get service information: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+    
+    // Helper function to process commission deduction for completed cash jobs
+    private func processCommissionDeduction(booking : Booking) : async Result<Bool> {
+        // Get service information to determine category
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                };
+                
+                switch (await serviceCanister.getService(booking.serviceId)) {
+                    case (#ok(service)) {
+                        let categoryName = service.category.name;
+                        
+                        // Calculate final commission based on the actual booking price
+                        switch (commissionCanisterId) {
+                            case (?commissionId) {
+                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
+                                    calculate_commission : (Text, Nat) -> async Nat;
+                                };
+                                
+                                let finalCommission = await commissionCanister.calculate_commission(categoryName, booking.price);
+                                
+                                // Deduct commission from provider's wallet
+                                switch (walletCanisterId) {
+                                    case (?walletId) {
+                                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                                            debit : (Principal, Nat) -> async Types.Result<Nat>;
+                                        };
+                                        
+                                        switch (await walletCanister.debit(booking.providerId, finalCommission)) {
+                                            case (#ok(_)) {
+                                                return #ok(true);
+                                            };
+                                            case (#err(msg)) {
+                                                return #err("Failed to deduct commission: " # msg);
+                                            };
+                                        };
+                                    };
+                                    case (null) {
+                                        return #err("Wallet canister reference not set");
+                                    };
+                                };
+                            };
+                            case (null) {
+                                return #err("Commission canister reference not set");
+                            };
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Failed to get service information: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+    
+    // Accept a booking request (provider) - Enhanced with conflict checking and commission validation
     public shared(msg) func acceptBooking(
         bookingId : Text,
         scheduledDate : Time.Time
@@ -434,6 +561,14 @@ persistent actor BookingCanister {
 
                 // Additional validation: Check service availability at scheduled time
                 switch (await validateServiceAvailability(existingBooking.serviceId, scheduledDate)) {
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
+                    case (#ok(_)) {};
+                };
+
+                // Commission and wallet balance validation for cash jobs
+                switch (await validateCommissionBalance(existingBooking)) {
                     case (#err(msg)) {
                         return #err(msg);
                     };
@@ -567,6 +702,27 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(bookingWithPaymentInfo, #Completed, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Process commission deduction for cash jobs
+                        switch (amountPaid) {
+                            case (?_) {
+                                // Cash payment received, deduct commission from provider's wallet
+                                switch (await processCommissionDeduction(updatedBooking)) {
+                                    case (#err(msg)) {
+                                        // Log the error but don't fail the booking completion
+                                        // In a production system, you might want to handle this differently
+                                        // For now, we'll continue with the booking completion
+                                    };
+                                    case (#ok(_)) {
+                                        // Commission successfully deducted
+                                    };
+                                };
+                            };
+                            case (null) {
+                                // No cash payment, no commission deduction needed
+                                // (This might be a digital payment job)
+                            };
+                        };
                         
                         // Update reputation scores for both provider and client
                         switch (reputationCanisterId) {
