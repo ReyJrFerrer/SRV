@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - feature - 1.0: Created src/backend/function/commission.mo to house the Hybrid Commission Model logic with Tier A (7% base), Tier B (5% base), and Tier C (3.5% base) progressive commission structures
+- feature - 1.1: Created src/backend/function/wallet.mo with persistent actor structure and stable Trie storage for user balances and transaction history
+- feature - 1.2: Implemented core wallet functions including get_balance(), credit(), debit(), and transfer() with proper authorization controls and transaction recording
+
+### Changed
+
+- feature - 1.0 improvement: Enhanced commission.mo with dynamic fee structure including base fees (₱25-₱50), more granular breakpoints, and realistic rates for Philippine market
+- feature - 1.0 improvement: Updated commission.mo category mapping to use actual service categories from staticData.mo (Gadget Technicians, Automobile Repairs, Photographer, etc.)
 
 ### Fixed
 
