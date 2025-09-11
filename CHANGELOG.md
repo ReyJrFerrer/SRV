@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Payment Integration Feature
+
+### Added
+
+- feature - 1.0: Created src/backend/function/commission.mo to house the Hybrid Commission Model logic with Tier A (7% base), Tier B (5% base), and Tier C (3.5% base) progressive commission structures
+
 ### Fixed
 
 - Fix duplicate push notifications by tracking sent notifications in localStorage and preventing spam on navigation
