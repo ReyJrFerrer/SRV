@@ -575,9 +575,7 @@ persistent actor BookingCanister {
                     case (#ok(_)) {};
                 };
 
-                // if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
-                //     return #err("Scheduled date must be between 1 hour and 30 days from now");
-                // };
+            
 
                 switch (updateBookingStatus(existingBooking, #Accepted, caller, true)) {
                     case (#ok(updatedBooking)) {

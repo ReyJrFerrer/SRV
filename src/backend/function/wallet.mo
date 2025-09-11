@@ -54,8 +54,8 @@ persistent actor Wallet {
 
     // System functions for upgrade persistence
     system func preupgrade() {
-        balanceEntries := Trie.toArray(balances, func(k, v) = (k, v));
-        transactionEntries := Trie.toArray(transactions, func(k, v) = (k, v));
+        balanceEntries := Trie.toArray<Principal, Nat, (Principal, Nat)>(balances, func(k, v) = (k, v));
+        transactionEntries := Trie.toArray<Text, Transaction, (Text, Transaction)>(transactions, func(k, v) = (k, v));
         authorizedEntries := Array.freeze(authorized);
     };
 
@@ -265,7 +265,7 @@ persistent actor Wallet {
             return [];
         };
 
-        let allTransactions = Trie.toArray(transactions, func(k, v) = v);
+        let allTransactions = Trie.toArray<Text, Transaction, Transaction>(transactions, func(k, v) = v);
         Array.mapFilter<Transaction, Transaction>(
             allTransactions,
             func(tx) {
