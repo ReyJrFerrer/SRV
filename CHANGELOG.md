@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 1.2: Implemented core wallet functions including get_balance(), credit(), debit(), and transfer() with proper authorization controls and transaction recording
 - feature - 1.3: Integrated commission and wallet canisters with booking system - providers must have sufficient wallet balance before accepting bookings, and commission is automatically deducted from wallet upon cash job completion
 - feature - 1.4: Updating canister configurations in dfx.json by adding commission and wallet
-- feature - 1.5: Creating the walletCanisterService, service as the interface between the backend and frontend.
+- feature - 1.5: Creating the walletCanisterService, useWallet, and wallet page.
+
 ### Changed
 
 - feature - 1.0 improvement: Enhanced commission.mo with dynamic fee structure including base fees (₱25-₱50), more granular breakpoints, and realistic rates for Philippine market

@@ -127,17 +127,16 @@ export const walletCanisterService = {
   /**
    * Transfer funds to another user
    */
-  async transfer(
-    to: Principal,
-    amount: number,
-  ): Promise<string | null> {
+  async transfer(to: Principal, amount: number): Promise<string | null> {
     try {
       const actor = getWalletActor(true); // Requires authentication
       if (!currentIdentity) {
         throw new Error("No authenticated identity available");
       }
 
-      const fromPrincipal = Principal.fromText(currentIdentity.getPrincipal().toString());
+      const fromPrincipal = Principal.fromText(
+        currentIdentity.getPrincipal().toString(),
+      );
       const result = await actor.transfer(fromPrincipal, to, BigInt(amount));
 
       if ("ok" in result) {
@@ -161,7 +160,9 @@ export const walletCanisterService = {
         throw new Error("No authenticated identity available");
       }
 
-      const userPrincipal = Principal.fromText(currentIdentity.getPrincipal().toString());
+      const userPrincipal = Principal.fromText(
+        currentIdentity.getPrincipal().toString(),
+      );
       const transactions = await actor.get_transaction_history(userPrincipal);
       return transactions.map(convertCanisterTransaction);
     } catch (error) {
@@ -180,7 +181,9 @@ export const walletCanisterService = {
       return transactions.map(convertCanisterTransaction);
     } catch (error) {
       //console.error("Error fetching transaction history for principal:", error);
-      throw new Error(`Failed to fetch transaction history for principal: ${error}`);
+      throw new Error(
+        `Failed to fetch transaction history for principal: ${error}`,
+      );
     }
   },
 };

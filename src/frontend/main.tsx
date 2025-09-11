@@ -78,6 +78,9 @@ import ProviderTermsAndConditionsPage from "./src/pages/provider/inside settings
 import ProviderReportIssuePage from "./src/pages/report";
 import ProviderHelpSupportPage from "./src/pages/provider/help";
 
+// Payment
+import WalletPage from "./src/pages/provider/wallet";
+
 // Create a client for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,6 +156,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route path="settings" element={<SettingsPageSP />} />
               <Route path="profile" element={<ProviderProfilePage />} />
               <Route path="notifications" element={<NotificationsPageSP />} />
+              <Route path="wallet" element={<WalletPage />} />
 
               {/* Service Management Routes */}
               <Route path="services" element={<ProviderServices />} />

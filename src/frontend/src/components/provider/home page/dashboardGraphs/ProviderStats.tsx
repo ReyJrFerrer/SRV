@@ -15,6 +15,8 @@ import BookingStatusPieChart from "./BookingStatusPieChart";
 import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
 import DailyBookingsBarChart from "./DailyBookingsBarChart";
 import CustomerRatingStars from "./CustomerRatingStars";
+import { useNavigate } from "react-router-dom";
+import { useWallet } from "../../../../hooks/useWallet";
 
 interface ProviderStatsProps {
   className?: string;
@@ -25,6 +27,14 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
 }) => {
+  const {balance} = useWallet();
+
+  const navigate = useNavigate();
+
+  const handleWalletClick = () => {
+    navigate("/provider/wallet");
+  };
+
   const {
     analytics,
     loading: bookingLoading,
@@ -264,6 +274,36 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
+  // --- Improved Outstanding Commission Card ---
+  const WalletCard = () => (
+    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
+      <div className="flex items-center gap-4">
+        <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
+        <div>
+          <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
+          <p className="text-3xl font-extrabold tracking-tight text-gray-900">
+            ₱ {balance.toFixed(2)}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleWalletClick}
+        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+      >
+        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+          <path
+            stroke="currentColor"
+            strokeWidth="2"
+            d="M17 9V7a5 5 0 00-10 0v2M5 12h14m-1 9H6a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Pay Commission
+      </button>
+    </div>
+  );
+
   if (hasError) {
     return (
       <div className={`p-4 ${className}`}>
@@ -281,6 +321,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <h1 className="mb-6 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
         Dashboard
       </h1>
+
+      <div className="mb-8">
+        <WalletCard />
+      </div>
 
       {isMobile ? renderCards() : renderCharts()}
     </div>
