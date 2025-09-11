@@ -5,9 +5,7 @@ import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Option "mo:base/Option";
 import Int "mo:base/Int";
-import Debug "mo:base/Debug";
 import Float "mo:base/Float";
 
 import Types "../types/shared";
@@ -34,7 +32,6 @@ persistent actor BookingCanister {
     private transient var serviceCanisterId : ?Principal = null;
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
-    private transient var remittanceCanisterId : ?Principal = null;
 
     // Constants
     // private transient let MIN_PRICE : Nat = 5;
@@ -50,9 +47,15 @@ persistent actor BookingCanister {
     };
     
     private func isBookingEligibleForReview(booking : Booking) : Bool {
-        return booking.status == #Completed and 
-               Option.isSome(booking.completedDate) and
-               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+        switch (booking.completedDate) {
+            case (?completedDate) {
+                return booking.status == #Completed and 
+                       (Time.now() - completedDate) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+            };
+            case (null) {
+                return false;
+            };
+        };
     };
 
     // private func validatePrice(price : Nat) : Bool {
@@ -154,15 +157,13 @@ persistent actor BookingCanister {
         auth : ?Principal,
         service : ?Principal,
         review : ?Principal,
-        reputation : ?Principal,
-        remittance : ?Principal
+        reputation : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
         serviceCanisterId := service;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
-        remittanceCanisterId := remittance;
         return #ok("Canister references set successfully");
     };
 
@@ -327,26 +328,31 @@ persistent actor BookingCanister {
         // If a package is specified, get its price
         var finalPrice = price;
         
-        if (Option.isSome(servicePackageId)) {
-            switch (serviceCanisterId) {
-                case (?serviceCanisterId) {
-                    let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
-                        getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+        switch (servicePackageId) {
+            case (?packageId) {
+                switch (serviceCanisterId) {
+                    case (?serviceCanisterId) {
+                        let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                            getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                        };
+                        
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(package)) {
+                                finalPrice := package.price;
+                            };
+                            case (#err(_)) {
+                                // We already validated the package exists earlier, so this shouldn't happen
+                                // But if it does, we'll use the provided price
+                            };
+                        };
                     };
-                    
-                    switch (await serviceCanister.getPackage(Option.unwrap(servicePackageId))) {
-                        case (#ok(package)) {
-                            finalPrice := package.price;
-                        };
-                        case (#err(_)) {
-                            // We already validated the package exists earlier, so this shouldn't happen
-                            // But if it does, we'll use the provided price
-                        };
+                    case (null) {
+                        // We already validated the service canister exists earlier, so this shouldn't happen
                     };
                 };
-                case (null) {
-                    // We already validated the service canister exists earlier, so this shouldn't happen
-                };
+            };
+            case (null) {
+                // No package specified, use the provided price
             };
         };
         
@@ -519,60 +525,8 @@ persistent actor BookingCanister {
         };
     };
     
-    // Helper function to create remittance order after booking completion
-    private func createRemittanceOrder(booking: Booking) : async Result<Text> {
-        switch (remittanceCanisterId, serviceCanisterId) {
-            case (?remittanceId, ?serviceId) {
-                // Get service details to determine service type
-                let serviceActor = actor(Principal.toText(serviceId)) : actor {
-                    getService: (Text) -> async Result<Types.Service>;
-                };
-                
-                try {
-                    switch (await serviceActor.getService(booking.serviceId)) {
-                        case (#ok(service)) {
-                            let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
-                                createOrder: ({
-                                    service_provider_id: Principal;
-                                    amount: Nat;
-                                    service_type: Text;
-                                    service_id: ?Text;
-                                    booking_id: ?Text;
-                                }) -> async Result<Types.RemittanceOrder>;
-                            };
-                            
-                            let createOrderInput = {
-                                service_provider_id = booking.providerId;
-                                amount = booking.price;
-                                service_type = service.category.id;
-                                service_id = ?booking.serviceId;
-                                booking_id = ?booking.id;
-                            };
-                            
-                            switch (await remittanceActor.createOrder(createOrderInput)) {
-                                case (#ok(remittanceOrder)) {
-                                    #ok("Remittance order created: " # remittanceOrder.id)
-                                };
-                                case (#err(msg)) {
-                                    #err("Failed to create remittance order: " # msg)
-                                };
-                            }
-                        };
-                        case (#err(msg)) {
-                            #err("Failed to get service details: " # msg)
-                        };
-                    }
-                } catch (_) {
-                    #err("Error communicating with service canister")
-                }
-            };
-            case (_, _) {
-                #err("Remittance or Service canister not configured")
-            };
-        }
-    };
-
-    // Complete a booking (provider) - Enhanced with remittance integration and payment tracking
+    
+    // Complete a booking (provider) - Enhanced with payment tracking
     public shared(msg) func completeBooking(bookingId : Text, amountPaid : ?Nat) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -628,19 +582,7 @@ persistent actor BookingCanister {
                             };
                         };
 
-                        // Create remittance order for commission payment
-                        switch (await createRemittanceOrder(updatedBooking)) {
-                            case (#ok(_)) {
-                                // Remittance order created successfully
-                                return #ok(updatedBooking);
-                            };
-                            case (#err(remittanceError)) {
-                                // Log the error but don't fail the booking completion
-                                // In a real system, you might want to queue this for retry
-                                Debug.print("Warning: Failed to create remittance order: " # remittanceError);
-                                return #ok(updatedBooking);
-                            };
-                        };
+                        return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
                         return #err(msg);
@@ -651,104 +593,6 @@ persistent actor BookingCanister {
                 return #err("Booking not found");
             };
         };
-    };
-
-    // Manually create remittance order for a completed booking (admin or provider)
-    public shared(msg) func createRemittanceOrderForBooking(bookingId: Text) : async Result<Text> {
-        let caller = msg.caller;
-        
-        switch (bookings.get(bookingId)) {
-            case (?booking) {
-                // Check if caller is the provider or an admin
-                if (booking.providerId != caller) {
-                    return #err("Only the service provider can create remittance order for their booking");
-                };
-
-                // Check if booking is completed
-                if (booking.status != #Completed) {
-                    return #err("Remittance order can only be created for completed bookings");
-                };
-
-                await createRemittanceOrder(booking)
-            };
-            case null {
-                #err("Booking not found: " # bookingId)
-            };
-        }
-    };
-
-    // Get booking remittance status
-    public shared(msg) func getBookingRemittanceStatus(bookingId: Text) : async Result<{
-        booking_exists: Bool;
-        booking_completed: Bool;
-        has_remittance_order: Bool;
-        remittance_orders: [Types.RemittanceOrder];
-    }> {
-        let caller = msg.caller;
-        
-        switch (bookings.get(bookingId)) {
-            case (?booking) {
-                // Check if caller is authorized (client or provider)
-                if (booking.clientId != caller and booking.providerId != caller) {
-                    return #err("Not authorized to view this booking's remittance status");
-                };
-
-                // Get remittance orders for this booking
-                var remittanceOrders: [Types.RemittanceOrder] = [];
-                
-                switch (remittanceCanisterId) {
-                    case (?remittanceId) {
-                        let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
-                            queryOrders: (Types.RemittanceOrderFilter, Types.PageRequest) -> async Types.RemittanceOrderPage;
-                        };
-                        
-                        try {
-                            let filter : Types.RemittanceOrderFilter = {
-                                status = null;
-                                service_provider_id = ?booking.providerId;
-                                from_date = null;
-                                to_date = null;
-                            };
-                            
-                            let page : Types.PageRequest = {
-                                cursor = null;
-                                size = 100;
-                            };
-                            
-                            let result = await remittanceActor.queryOrders(filter, page);
-                            
-                            // Filter orders that match this booking ID
-                            remittanceOrders := Array.filter<Types.RemittanceOrder>(result.items, func(order: Types.RemittanceOrder) : Bool {
-                                switch (order.booking_id) {
-                                    case (?bookingIdFromOrder) bookingIdFromOrder == bookingId;
-                                    case null false;
-                                }
-                            });
-                        } catch (_) {
-                            // Continue with empty array if remittance query fails
-                        };
-                    };
-                    case null {
-                        // Remittance canister not configured
-                    };
-                };
-
-                #ok({
-                    booking_exists = true;
-                    booking_completed = booking.status == #Completed;
-                    has_remittance_order = remittanceOrders.size() > 0;
-                    remittance_orders = remittanceOrders;
-                })
-            };
-            case null {
-                #ok({
-                    booking_exists = false;
-                    booking_completed = false;
-                    has_remittance_order = false;
-                    remittance_orders = [];
-                })
-            };
-        }
     };
 
     // Cancel a booking (client)
@@ -1080,7 +924,7 @@ persistent actor BookingCanister {
     };
 
     // Helper function to check if a time slot conflicts with a booking
-    private func checkSlotBookingConflict(slot: Types.AvailableSlot, booking: Booking, date: Time.Time) : Bool {
+    private func checkSlotBookingConflict(slot: Types.AvailableSlot, booking: Booking, _date: Time.Time) : Bool {
         // Parse slot time
         let slotStart = parseTimeToMinutes(slot.timeSlot.startTime);
         let slotEnd = parseTimeToMinutes(slot.timeSlot.endTime);
