@@ -9,8 +9,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useProviderReviews } from "../../../../hooks/reviewManagement";
-import { useRemittance } from "../../../../hooks/useRemittance";
-import { useNavigate } from "react-router-dom";
 
 // Import your new chart components
 import BookingStatusPieChart from "./BookingStatusPieChart";
@@ -27,12 +25,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
 }) => {
-  const navigate = useNavigate();
-
-  const handlePayClick = () => {
-    navigate("/provider/payment-commission");
-  };
-
   const {
     analytics,
     loading: bookingLoading,
@@ -46,13 +38,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     error: reviewsError,
   } = useProviderReviews();
 
-  const {
-    // dashboard: remittanceDashboard,
-    loading: remittanceLoading,
-    error: remittanceError,
-    getOutstandingBalance,
-  } = useRemittance();
-
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -64,11 +49,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isLoading =
-    externalLoading || bookingLoading || reviewsLoading || remittanceLoading;
-  const hasError = error || reviewsError || remittanceError;
-
-  const outstandingCommission = getOutstandingBalance();
+  const isLoading = externalLoading || bookingLoading || reviewsLoading;
+  const hasError = error || reviewsError;
 
   const ratingData = React.useMemo(() => {
     if (reviewAnalytics) {
@@ -192,38 +174,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     statPairs.push(stats.slice(i, i + 2));
   }
 
-  // --- Improved Outstanding Commission Card ---
-  const OutstandingCommissionCard = () => (
-    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
-      <div className="flex items-center gap-4">
-        <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
-        <div>
-          <p className="text-sm font-semibold text-blue-700">
-            Outstanding Commission
-          </p>
-          <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-            ₱{outstandingCommission.toFixed(2)}
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={handlePayClick}
-        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-      >
-        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-          <path
-            stroke="currentColor"
-            strokeWidth="2"
-            d="M17 9V7a5 5 0 00-10 0v2M5 12h14m-1 9H6a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        Pay Commission
-      </button>
-    </div>
-  );
-
   // --- Improved Stat Card ---
   const StatCard = ({
     icon,
@@ -319,8 +269,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats:{" "}
-            {error || reviewsError || remittanceError || "Unknown error"}
+            Error loading stats: {error || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>
@@ -332,10 +281,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <h1 className="mb-6 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
         Dashboard
       </h1>
-
-      <div className="mb-8">
-        <OutstandingCommissionCard />
-      </div>
 
       {isMobile ? renderCards() : renderCharts()}
     </div>

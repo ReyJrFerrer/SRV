@@ -45,6 +45,17 @@
       "type": "motoko",
       "main": "src/backend/function/feedback.mo"
     },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    },
     "backend": {
       "dependencies": [
         "llm",
@@ -63,7 +74,19 @@
     },
 
     "admin-frontend": {
-      "dependencies": ["admin"],
+      "dependencies": [
+        "admin",
+        "llm",
+        "auth",
+        "booking",
+        "reputation",
+        "review",
+        "service",
+        "chat",
+        "media",
+        "remittance",
+        "feedback"
+      ],
       "type": "assets",
       "source": ["src/admin/dist/"]
     }
