@@ -280,8 +280,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
     refreshBookings,
     clearError,
     checkCommissionValidation,
-    canAcceptCashBooking,
-    getWalletBalance,
+    // canAcceptCashBooking,
+    // getWalletBalance,
   } = useProviderBookingManagement();
 
   // Commission validation state
