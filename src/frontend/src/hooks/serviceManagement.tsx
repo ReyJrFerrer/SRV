@@ -210,7 +210,10 @@ interface ServiceManagementHook {
   organizeWeeklySchedule: (
     weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
   ) => OrganizedWeeklySchedule;
-  getCommissionQuote: (categoryId: string, price: number) => Promise<CommissionQuote>;
+  getCommissionQuote: (
+    categoryId: string,
+    price: number,
+  ) => Promise<CommissionQuote>;
 
   // Image processing utilities
   processImageFilesForService: (
@@ -1303,7 +1306,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getCommissionQuote = useCallback(
     async (categoryId: string, price: number): Promise<CommissionQuote> => {
       try {
-        const quote = await serviceCanisterService.getCommissionQuote(categoryId, price);
+        const quote = await serviceCanisterService.getCommissionQuote(
+          categoryId,
+          price,
+        );
         if (!quote) {
           throw new Error("Failed to get commission quote");
         }

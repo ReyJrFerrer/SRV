@@ -1271,9 +1271,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           price: parsedPrice,
         });
         setPackages((prev) =>
-          prev.map((p) =>
-            p.id === currentPackageId ? updatedPackage : p,
-          ),
+          prev.map((p) => (p.id === currentPackageId ? updatedPackage : p)),
         );
         toast.success("Package updated!");
       } else {
@@ -1992,7 +1990,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                                   + ₱{pkg.commissionFee.toFixed(2)} commission
                                 </div>
                                 <div className="text-sm font-medium text-green-600">
-                                  = ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
+                                  = ₱
+                                  {(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
+                                  total
                                 </div>
                               </div>
                             </div>

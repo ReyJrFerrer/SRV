@@ -18,7 +18,10 @@ import {
   ServiceCreateRequest,
 } from "../../../hooks/serviceManagement";
 
-import { ServiceCategory, CommissionQuote } from "../../../services/serviceCanisterService";
+import {
+  ServiceCategory,
+  CommissionQuote,
+} from "../../../services/serviceCanisterService";
 import { processServiceCertificateFiles } from "../../../services/mediaService";
 
 // Type for time slots
@@ -135,7 +138,9 @@ const AddServicePage: React.FC = () => {
   const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
 
   // Commission state
-  const [commissionQuotes, setCommissionQuotes] = useState<{[packageId: string]: CommissionQuote}>({});
+  const [commissionQuotes, setCommissionQuotes] = useState<{
+    [packageId: string]: CommissionQuote;
+  }>({});
   const [loadingCommissions, setLoadingCommissions] = useState(false);
 
   // --- Image Handlers ---
@@ -206,14 +211,17 @@ const AddServicePage: React.FC = () => {
   // Commission handlers
   const fetchCommissionQuotes = useCallback(async () => {
     if (!getCommissionQuote || !formData.categoryId) return;
-    
+
     setLoadingCommissions(true);
-    const quotes: {[packageId: string]: CommissionQuote} = {};
-    
+    const quotes: { [packageId: string]: CommissionQuote } = {};
+
     try {
       for (const pkg of formData.servicePackages) {
         if (pkg.name.trim() && pkg.description.trim() && pkg.price) {
-          const quote = await getCommissionQuote(formData.categoryId, Number(pkg.price));
+          const quote = await getCommissionQuote(
+            formData.categoryId,
+            Number(pkg.price),
+          );
           quotes[pkg.id] = quote;
         }
       }
@@ -900,38 +908,45 @@ const AddServicePage: React.FC = () => {
                       .map((pkg) => {
                         const commissionQuote = commissionQuotes[pkg.id];
                         return (
-                        <div
-                          key={pkg.id}
-                          className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-start md:justify-between"
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium text-blue-900">
-                              {pkg.name}
-                            </p>
-                            <p className="text-sm break-words text-gray-600">
-                              {pkg.description}
-                            </p>
-                          </div>
-                          <div className="mt-2 text-right md:mt-0">
-                            <p className="text-lg font-semibold text-green-600">
-                              ₱{Number(pkg.price).toLocaleString()}
-                            </p>
-                            {loadingCommissions && (
-                              <p className="text-xs text-gray-500">
-                                Loading commission...
+                          <div
+                            key={pkg.id}
+                            className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-start md:justify-between"
+                          >
+                            <div className="flex-1">
+                              <p className="font-medium text-blue-900">
+                                {pkg.name}
                               </p>
-                            )}
-                            {commissionQuote && (
-                              <div className="mt-1 text-base text-gray-600">
-                                <p>Commission: ₱{commissionQuote.commissionFee.toLocaleString()}</p>
-                                <p>Rate: {(commissionQuote.commissionRate)}%</p>
-                                <p className="font-medium text-blue-600">
-                                  Total: ₱{(Number(pkg.price) + commissionQuote.commissionFee).toLocaleString()}
+                              <p className="text-sm break-words text-gray-600">
+                                {pkg.description}
+                              </p>
+                            </div>
+                            <div className="mt-2 text-right md:mt-0">
+                              <p className="text-lg font-semibold text-green-600">
+                                ₱{Number(pkg.price).toLocaleString()}
+                              </p>
+                              {loadingCommissions && (
+                                <p className="text-xs text-gray-500">
+                                  Loading commission...
                                 </p>
-                              </div>
-                            )}
+                              )}
+                              {commissionQuote && (
+                                <div className="mt-1 text-base text-gray-600">
+                                  <p>
+                                    Commission: ₱
+                                    {commissionQuote.commissionFee.toLocaleString()}
+                                  </p>
+                                  <p>Rate: {commissionQuote.commissionRate}%</p>
+                                  <p className="font-medium text-blue-600">
+                                    Total: ₱
+                                    {(
+                                      Number(pkg.price) +
+                                      commissionQuote.commissionFee
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
                         );
                       })}
                   </div>
