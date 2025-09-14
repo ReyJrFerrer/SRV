@@ -331,7 +331,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
 
       // Only check for cash payment bookings that can be accepted
-      if (specificBooking.paymentMethod !== "CashOnHand" || !specificBooking.canAccept) {
+      if (
+        specificBooking.paymentMethod !== "CashOnHand" ||
+        !specificBooking.canAccept
+      ) {
         setCommissionValidation({
           estimatedCommission: 0,
           hasInsufficientBalance: false,
@@ -342,7 +345,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
 
       try {
-        setCommissionValidation(prev => ({ ...prev, loading: true }));
+        setCommissionValidation((prev) => ({ ...prev, loading: true }));
         const validation = await checkCommissionValidation(specificBooking);
         setCommissionValidation({
           ...validation,
@@ -386,7 +389,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       if (commissionValidation.hasInsufficientBalance) {
         alert(
-          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`
+          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`,
         );
         return;
       }
@@ -801,67 +804,72 @@ const ProviderBookingDetailsPage: React.FC = () => {
         <BookingProgressSection status={specificBooking?.status} />
 
         {/* Commission Validation Section for Cash Bookings */}
-        {specificBooking?.paymentMethod === "CashOnHand" && specificBooking?.canAccept && (
-          <div className="rounded-2xl bg-white p-4 shadow-lg">
-            <h3 className="mb-3 text-lg font-bold text-blue-700">
-              Commission Information
-            </h3>
-            {commissionValidation.loading ? (
-              <div className="flex items-center gap-2 text-gray-600">
-                <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                <span>Calculating commission...</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {commissionValidation.estimatedCommission > 0 && (
-                  <div className="flex items-center gap-2">
-                    <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium text-gray-700">
-                      Estimated Commission:{" "}
-                      <span className="font-semibold text-red-600">
-                        ₱{commissionValidation.estimatedCommission.toFixed(2)}
+        {specificBooking?.paymentMethod === "CashOnHand" &&
+          specificBooking?.canAccept && (
+            <div className="rounded-2xl bg-white p-4 shadow-lg">
+              <h3 className="mb-3 text-lg font-bold text-blue-700">
+                Commission Information
+              </h3>
+              {commissionValidation.loading ? (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                  <span>Calculating commission...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {commissionValidation.estimatedCommission > 0 && (
+                    <div className="flex items-center gap-2">
+                      <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
+                      <span className="font-medium text-gray-700">
+                        Estimated Commission:{" "}
+                        <span className="font-semibold text-red-600">
+                          ₱{commissionValidation.estimatedCommission.toFixed(2)}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                )}
-                
-                {commissionValidation.hasInsufficientBalance ? (
-                  <div className="rounded-lg bg-red-50 p-3">
-                    <div className="flex items-start gap-2">
-                      <XCircleIcon className="h-5 w-5 text-red-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-red-800">Insufficient Wallet Balance</p>
-                        <p className="text-sm text-red-700 mt-1">
-                          {commissionValidation.commissionValidationMessage}
-                        </p>
-                        <Link
-                          to="/provider/wallet"
-                          className="inline-flex items-center mt-2 text-sm font-medium text-red-600 hover:text-red-800 underline"
-                        >
-                          Top up your wallet →
-                        </Link>
-                      </div>
                     </div>
-                  </div>
-                ) : (
-                  commissionValidation.estimatedCommission > 0 && (
-                    <div className="rounded-lg bg-green-50 p-3">
+                  )}
+
+                  {commissionValidation.hasInsufficientBalance ? (
+                    <div className="rounded-lg bg-red-50 p-3">
                       <div className="flex items-start gap-2">
-                        <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5" />
+                        <XCircleIcon className="mt-0.5 h-5 w-5 text-red-500" />
                         <div>
-                          <p className="font-medium text-green-800">Wallet Balance Sufficient</p>
-                          <p className="text-sm text-green-700 mt-1">
+                          <p className="font-medium text-red-800">
+                            Insufficient Wallet Balance
+                          </p>
+                          <p className="mt-1 text-sm text-red-700">
                             {commissionValidation.commissionValidationMessage}
                           </p>
+                          <Link
+                            to="/provider/wallet"
+                            className="mt-2 inline-flex items-center text-sm font-medium text-red-600 underline hover:text-red-800"
+                          >
+                            Top up your wallet →
+                          </Link>
                         </div>
                       </div>
                     </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  ) : (
+                    commissionValidation.estimatedCommission > 0 && (
+                      <div className="rounded-lg bg-green-50 p-3">
+                        <div className="flex items-start gap-2">
+                          <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-500" />
+                          <div>
+                            <p className="font-medium text-green-800">
+                              Wallet Balance Sufficient
+                            </p>
+                            <p className="mt-1 text-sm text-green-700">
+                              {commissionValidation.commissionValidationMessage}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
@@ -928,17 +936,20 @@ const ProviderBookingDetailsPage: React.FC = () => {
                     specificBooking?.id || "",
                     "accept",
                   ) ||
-                  (specificBooking?.paymentMethod === "CashOnHand" && 
-                   (commissionValidation.loading || commissionValidation.hasInsufficientBalance))
+                  (specificBooking?.paymentMethod === "CashOnHand" &&
+                    (commissionValidation.loading ||
+                      commissionValidation.hasInsufficientBalance))
                 }
                 className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
-                  (specificBooking?.paymentMethod === "CashOnHand" && 
-                   (commissionValidation.loading || commissionValidation.hasInsufficientBalance))
+                  specificBooking?.paymentMethod === "CashOnHand" &&
+                  (commissionValidation.loading ||
+                    commissionValidation.hasInsufficientBalance)
                     ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
                     : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
                 } disabled:opacity-50`}
                 title={
-                  specificBooking?.paymentMethod === "CashOnHand" && commissionValidation.hasInsufficientBalance
+                  specificBooking?.paymentMethod === "CashOnHand" &&
+                  commissionValidation.hasInsufficientBalance
                     ? "Insufficient wallet balance for commission fee"
                     : ""
                 }
@@ -947,8 +958,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 {isBookingActionInProgress(specificBooking?.id || "", "accept")
                   ? "Accepting..."
                   : commissionValidation.loading
-                  ? "Checking..."
-                  : "Accept"}
+                    ? "Checking..."
+                    : "Accept"}
               </button>
             </>
           )}

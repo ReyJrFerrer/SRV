@@ -564,7 +564,10 @@ const ClientBookingPageComponent: React.FC = () => {
   const totalPrice = useMemo(() => {
     return packages
       .filter((p: any) => p.checked)
-      .reduce((sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0), 0);
+      .reduce(
+        (sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0),
+        0,
+      );
   }, [packages, hookPackages, calculateTotalPrice]);
 
   // --- Validate payment amount ---
@@ -1053,10 +1056,13 @@ const ClientBookingPageComponent: React.FC = () => {
                       </div>
                       <div className="text-base font-bold text-blue-600">
                         ₱
-                        {(pkg.price + (pkg.commissionFee || 0)).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {(pkg.price + (pkg.commissionFee || 0)).toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
                       </div>
                     </div>
                   </label>

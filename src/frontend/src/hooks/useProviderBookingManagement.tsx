@@ -1277,7 +1277,8 @@ export const useProviderBookingManagement =
             return {
               estimatedCommission: 0,
               hasInsufficientBalance: false,
-              commissionValidationMessage: "No commission validation needed for digital payments"
+              commissionValidationMessage:
+                "No commission validation needed for digital payments",
             };
           }
 
@@ -1287,21 +1288,23 @@ export const useProviderBookingManagement =
             return {
               estimatedCommission: 0,
               hasInsufficientBalance: false,
-              commissionValidationMessage: "Unable to determine service category for commission calculation"
+              commissionValidationMessage:
+                "Unable to determine service category for commission calculation",
             };
           }
 
           // Calculate commission for the booking
-          const commissionQuote = await serviceCanisterService.getCommissionQuote(
-            service.category.name, 
-            booking.price
-          );
+          const commissionQuote =
+            await serviceCanisterService.getCommissionQuote(
+              service.category.name,
+              booking.price,
+            );
 
           if (!commissionQuote) {
             return {
               estimatedCommission: 0,
               hasInsufficientBalance: false,
-              commissionValidationMessage: "Unable to calculate commission fee"
+              commissionValidationMessage: "Unable to calculate commission fee",
             };
           }
 
@@ -1318,18 +1321,19 @@ export const useProviderBookingManagement =
           return {
             estimatedCommission,
             hasInsufficientBalance,
-            commissionValidationMessage
+            commissionValidationMessage,
           };
         } catch (error) {
           //console.error("Commission validation error:", error);
           return {
             estimatedCommission: 0,
             hasInsufficientBalance: true,
-            commissionValidationMessage: "Error checking commission requirements"
+            commissionValidationMessage:
+              "Error checking commission requirements",
           };
         }
       },
-      [serviceDetails, walletBalance]
+      [serviceDetails, walletBalance],
     );
 
     const canAcceptCashBooking = useCallback(
@@ -1341,21 +1345,18 @@ export const useProviderBookingManagement =
         const validation = await checkCommissionValidation(booking);
         return !validation.hasInsufficientBalance;
       },
-      [checkCommissionValidation]
+      [checkCommissionValidation],
     );
 
-    const getWalletBalance = useCallback(
-      async (): Promise<number> => {
-        try {
-          await fetchBalance();
-          return walletBalance;
-        } catch (error) {
-          //console.error("Error fetching wallet balance:", error);
-          return 0;
-        }
-      },
-      [fetchBalance, walletBalance]
-    );
+    const getWalletBalance = useCallback(async (): Promise<number> => {
+      try {
+        await fetchBalance();
+        return walletBalance;
+      } catch (error) {
+        //console.error("Error fetching wallet balance:", error);
+        return 0;
+      }
+    }, [fetchBalance, walletBalance]);
 
     // Initialize data on mount
     useEffect(() => {
