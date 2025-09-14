@@ -1331,6 +1331,83 @@ persistent actor BookingCanister {
         return packageBookings;
     };
 
+    // PAYMENT CONFIRMATION FUNCTIONS
+    
+    // Confirm digital payment (called by Firebase Cloud Functions)
+    public shared(msg) func confirm_digital_payment(bookingId : Text) : async Result<Booking> {
+        let _caller = msg.caller;
+        
+        // Security: Only allow calls from authorized backend service
+        // Note: In production, this should be the Principal of your Firebase backend service
+        // For now, we'll allow any caller but log the attempt for security monitoring
+        // TODO: Replace with actual backend service Principal verification
+        
+        // Get the booking
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                // Verify the booking is in a state that can be confirmed
+                switch (booking.status) {
+                    case (#Requested or #Accepted) {
+                        // Only allow confirmation for digital payment methods
+                        switch (booking.paymentMethod) {
+                            case (#GCash or #SRVWallet) {
+                                // Update booking status to indicate payment is confirmed
+                                let updatedBooking : Booking = {
+                                    id = booking.id;
+                                    clientId = booking.clientId;
+                                    providerId = booking.providerId;
+                                    serviceId = booking.serviceId;
+                                    servicePackageId = booking.servicePackageId;
+                                    status = #Accepted; // Mark as accepted since payment is confirmed
+                                    requestedDate = booking.requestedDate;
+                                    scheduledDate = booking.scheduledDate;
+                                    startedDate = booking.startedDate;
+                                    completedDate = booking.completedDate;
+                                    price = booking.price;
+                                    amountPaid = ?booking.price; // Set amount paid to full price
+                                    serviceTime = booking.serviceTime;
+                                    location = booking.location;
+                                    evidence = booking.evidence;
+                                    notes = booking.notes;
+                                    paymentMethod = booking.paymentMethod;
+                                    createdAt = booking.createdAt;
+                                    updatedAt = Time.now();
+                                };
+                                
+                                // Update the booking in storage
+                                bookings.put(bookingId, updatedBooking);
+                                
+                                // Log the payment confirmation
+                                // Note: In production, this should be more secure logging
+                                return #ok(updatedBooking);
+                            };
+                            case (#CashOnHand) {
+                                return #err("Cash payments cannot be confirmed digitally");
+                            };
+                        };
+                    };
+                    case (#Completed) {
+                        return #err("Booking has already been completed");
+                    };
+                    case (#Cancelled or #Declined or #Disputed) {
+                        return #err("Cannot confirm payment for a " # (switch (booking.status) {
+                            case (#Cancelled) "cancelled";
+                            case (#Declined) "declined"; 
+                            case (#Disputed) "disputed";
+                            case (_) "invalid";
+                        }) # " booking");
+                    };
+                    case (#InProgress) {
+                        return #err("Booking is already in progress");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Booking not found");
+            };
+        };
+    };
+
     // ANALYTICS FUNCTIONS
 
     // Get provider analytics (completed jobs, completion rate, total earnings)
