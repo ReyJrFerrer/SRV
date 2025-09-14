@@ -570,7 +570,7 @@ const ClientBookingPageComponent: React.FC = () => {
     if (option === "scheduled" && service) {
       // First clear the selected date to ensure clean state
       setSelectedDate(null);
-      
+
       // Use setTimeout to ensure the state update is processed before setting new date
       setTimeout(() => {
         const nextAvailableDate = findNextAvailableBusinessDay();

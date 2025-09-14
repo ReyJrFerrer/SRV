@@ -132,6 +132,9 @@ module {
         title: Text;
         description: Text;
         price: Nat;
+        // Commission fee information
+        commissionFee: Nat; // Calculated commission fee for this package price
+        commissionRate: Float; // Effective commission rate as percentage
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };
@@ -143,6 +146,9 @@ module {
         description: Text;
         category: ServiceCategory;
         price: Nat;
+        // Commission fee information
+        commissionFee: Nat; // Calculated commission fee for this service price
+        commissionRate: Float; // Effective commission rate as percentage
         location: Location;
         status: ServiceStatus;
         createdAt: Time.Time;

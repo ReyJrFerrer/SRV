@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 1.3: Integrated commission and wallet canisters with booking system - providers must have sufficient wallet balance before accepting bookings, and commission is automatically deducted from wallet upon cash job completion
 - feature - 1.4: Updating canister configurations in dfx.json by adding commission and wallet
 - feature - 1.5: Creating the walletCanisterService, useWallet, and wallet page.
+- feature - 1.6: Integrated commission calculation into service.mo by adding commissionFee and commissionRate fields to Service and ServicePackage types, updated service creation/update functions to automatically calculate commission based on category and price, and added commission canister reference to setCanisterReferences function
+- feature - 1.7: Updated serviceCanisterService.ts to support commission functionality - added commissionFee and commissionRate fields to Service and ServicePackage interfaces, implemented getCommissionQuote() and getCommissionBreakdown() functions, and added utility functions for commission calculations and price formatting
 
 ### Changed
 

@@ -631,6 +631,7 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       try {
         const serviceData = await getService(id);
+        console.log(serviceData);
 
         if (serviceData) {
           // Ensure weeklySchedule has 'slots' array for existing data
@@ -1992,7 +1993,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                                 {pkg.title}
                               </h4>
                               <span className="text-lg font-bold text-green-600">
-                                ₱{pkg.price.toFixed(2)}
+                                ₱{pkg.price.toFixed(2)}+{pkg.commissionFee}
                               </span>
                             </div>
                             <p className="mt-1 text-sm break-words text-blue-700">

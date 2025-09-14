@@ -10,7 +10,6 @@ import Float "mo:base/Float";
 import Result "mo:base/Result";
 
 import Types "../types/shared";
-import StaticData "../utils/staticData";
 
 persistent actor BookingCanister {
     // Type definitions
@@ -128,14 +127,6 @@ persistent actor BookingCanister {
         #ok(updatedBooking)
     };
 
-    // Static data initialization
-    private func initializeStaticData() {
-        // Add bookings from shared static data
-        for ((id, booking) in StaticData.getSTATIC_BOOKINGS().vals()) {
-            bookings.put(id, booking);
-        };
-    };
-
     // Initialization
     system func preupgrade() {
         bookingEntries := Iter.toArray(bookings.entries());
@@ -149,10 +140,6 @@ persistent actor BookingCanister {
         evidences := HashMap.fromIter<Text, Evidence>(evidenceEntries.vals(), 10, Text.equal, Text.hash);
         evidenceEntries := [];
 
-        // Initialize static data if bookings are empty
-        if (bookings.size() == 0) {
-            initializeStaticData();
-        };
     };
 
     // Set canister references
