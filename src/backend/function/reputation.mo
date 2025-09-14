@@ -923,4 +923,59 @@ persistent actor ReputationCanister {
             trustLevelDistribution = distribution;
         };
     };
+
+    // Manual reputation update for admin use
+    public shared(msg) func setUserReputation(userId: Principal, reputationScore: Nat) : async Result<Text> {
+        let caller = msg.caller;
+
+        Debug.print("Reputation canister: Setting reputation for user " # Principal.toText(userId) # " to " # Nat.toText(reputationScore));
+
+        // Validate reputation score (0-100)
+        if (reputationScore > 100) {
+            Debug.print("Reputation canister: Invalid score " # Nat.toText(reputationScore) # " - must be 0-100");
+            return #err("Reputation score must be between 0 and 100");
+        };
+
+        // Convert Nat to Float for internal use
+        let trustScore = Float.fromInt(reputationScore);
+        
+        // Determine trust level based on score
+        let trustLevel = determineTrustLevel(trustScore);
+        
+        let trustLevelText = switch (trustLevel) {
+            case (#New) "New";
+            case (#Low) "Low";
+            case (#Medium) "Medium";
+            case (#High) "High";
+            case (#VeryHigh) "VeryHigh";
+        };
+        Debug.print("Reputation canister: Calculated trustScore=" # Float.toText(trustScore) # ", trustLevel=" # trustLevelText);
+        
+        // Create or update reputation score
+        let updatedScore : ReputationScore = {
+            userId = userId;
+            trustScore = trustScore;
+            trustLevel = trustLevel;
+            completedBookings = switch (reputations.get(userId)) {
+                case (?existing) existing.completedBookings;
+                case (null) 0;
+            };
+            averageRating = switch (reputations.get(userId)) {
+                case (?existing) existing.averageRating;
+                case (null) null;
+            };
+            detectionFlags = switch (reputations.get(userId)) {
+                case (?existing) existing.detectionFlags;
+                case (null) [];
+            };
+            lastUpdated = Time.now();
+        };
+        
+        reputations.put(userId, updatedScore);
+        updateReputationHistory(userId, trustScore);
+        
+        Debug.print("Reputation canister: Successfully updated reputation for user " # Principal.toText(userId));
+        
+        return #ok("User reputation updated to " # Nat.toText(reputationScore) # " successfully");
+    };
 }

@@ -440,6 +440,20 @@ const ProviderServiceDetailPage: React.FC = () => {
     service?.certificateUrls || [],
   );
 
+  // Debug: Log certificate data to check validation status
+  useEffect(() => {
+    if (serviceCertificates && serviceCertificates.length > 0) {
+      console.log("Provider Service Certificates:", serviceCertificates);
+      serviceCertificates.forEach((cert, index) => {
+        console.log(`Certificate ${index}:`, {
+          url: cert.url,
+          validationStatus: cert.validationStatus,
+          hasValidationStatus: !!cert.validationStatus
+        });
+      });
+    }
+  }, [serviceCertificates]);
+
   // Certificate upload hook
   const { uploadCertificates, removeCertificate } = useServiceCertificateUpload(
     service?.id,
@@ -2176,38 +2190,57 @@ const ProviderServiceDetailPage: React.FC = () => {
                         const url = certificate.dataUrl || certificate.url;
                         if (!url) return null;
                         return (
-                          <button
-                            key={index}
-                            className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
-                            onClick={() => {
-                              setPreviewUrl(url);
-                              setPreviewType(isPdfFile(url) ? "pdf" : "image");
-                            }}
-                            type="button"
-                            tabIndex={0}
-                            aria-label="Inspect certificate"
-                          >
-                            {certificate.error ? (
-                              <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                                <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
-                                <p className="mt-1">Failed to load</p>
-                              </div>
-                            ) : isPdfFile(url) ? (
-                              <div className="flex flex-col items-center justify-center">
-                                <DocumentIcon className="h-12 w-12 text-red-500" />
-                                <span className="mt-1 text-xs text-blue-700">
-                                  View PDF
-                                </span>
-                              </div>
-                            ) : (
-                              <img
-                                src={url}
-                                alt={`Certificate ${index + 1}`}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            )}
-                          </button>
+                          <div key={index} className="relative">
+                            <button
+                              className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none w-full"
+                              onClick={() => {
+                                setPreviewUrl(url);
+                                setPreviewType(isPdfFile(url) ? "pdf" : "image");
+                              }}
+                              type="button"
+                              tabIndex={0}
+                              aria-label="Inspect certificate"
+                            >
+                              {certificate.error ? (
+                                <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                                  <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
+                                  <p className="mt-1">Failed to load</p>
+                                </div>
+                              ) : isPdfFile(url) ? (
+                                <div className="flex flex-col items-center justify-center">
+                                  <DocumentIcon className="h-12 w-12 text-red-500" />
+                                  <span className="mt-1 text-xs text-blue-700">
+                                    View PDF
+                                  </span>
+                                </div>
+                              ) : (
+                                <img
+                                  src={url}
+                                  alt={`Certificate ${index + 1}`}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              )}
+                            </button>
+                            
+                            {/* Validation Status Badge */}
+                            <div className="absolute top-2 right-2">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium shadow-lg ${
+                                certificate.validationStatus === 'Validated' 
+                                  ? 'bg-green-100 text-green-800 border border-green-200' 
+                                  : certificate.validationStatus === 'Rejected'
+                                  ? 'bg-red-100 text-red-800 border border-red-200'
+                                  : certificate.validationStatus === 'Pending'
+                                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                  : 'bg-gray-100 text-gray-800 border border-gray-200' // Default for no status
+                              }`}>
+                                {certificate.validationStatus === 'Validated' && '✓ Validated'}
+                                {certificate.validationStatus === 'Rejected' && '✗ Rejected'}
+                                {certificate.validationStatus === 'Pending' && '⏳ Pending'}
+                                {!certificate.validationStatus && '⏳ Pending'} {/* Show pending by default */}
+                              </span>
+                            </div>
+                          </div>
                         );
                       },
                     )
@@ -2444,3 +2477,5 @@ const ProviderServiceDetailPage: React.FC = () => {
 };
 
 export default ProviderServiceDetailPage;
+
+

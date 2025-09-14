@@ -7,7 +7,11 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
+import Float "mo:base/Float";
 import Result "mo:base/Result";
+import Error "mo:base/Error";
+import Debug "mo:base/Debug";
+import Buffer "mo:base/Buffer";
 
 import Types "../types/shared";
 
@@ -18,6 +22,7 @@ persistent actor AdminCanister {
     type PaymentMethod = Types.PaymentMethod;
     type SystemSettings = Types.SystemSettings;
     type Result<T> = Types.Result<T>;
+    type Profile = Types.Profile;
 
     // Role types - Simplified to only ADMIN
     public type UserRole = {
@@ -60,12 +65,21 @@ persistent actor AdminCanister {
     private var settingsEntries : [(Text, SystemSettings)] = [];
     private transient var systemSettings = HashMap.HashMap<Text, SystemSettings>(1, Text.equal, Text.hash);
 
+    // Certificate validation storage
+    private var certificateValidationEntries : [(Text, Types.CertificateValidation)] = [];
+    private transient var certificateValidations = HashMap.HashMap<Text, Types.CertificateValidation>(10, Text.equal, Text.hash);
+
     // Counter for rule IDs
     private var ruleIdCounter : Nat = 0;
 
     // Canister references for intercanister calls
     private var remittanceCanisterId : ?Principal = null;
     private var mediaCanisterId : ?Principal = null;
+    private var authCanisterId : ?Principal = null;
+    private var serviceCanisterId : ?Principal = null;
+    private var bookingCanisterId : ?Principal = null;
+    private var reviewCanisterId : ?Principal = null;
+    private var reputationCanisterId : ?Principal = null;
 
     // Constants
     private transient let SETTINGS_KEY : Text = "system_settings";
@@ -80,6 +94,12 @@ persistent actor AdminCanister {
         let now = Int.abs(Time.now());
         ruleIdCounter += 1;
         return "rule-" # Int.toText(now) # "-" # Nat.toText(ruleIdCounter);
+    };
+
+    private func generateId() : Text {
+        let now = Int.abs(Time.now());
+        let random = Int.abs(Time.now()) % 10000;
+        return "validation-" # Int.toText(now) # "-" # Int.toText(random);
     };
 
     private func isAuthorized(caller: Principal, requiredRole: UserRole) : Bool {
@@ -195,6 +215,7 @@ persistent actor AdminCanister {
         ruleEntries := Iter.toArray(commissionRules.entries());
         roleEntries := Iter.toArray(userRoles.entries());
         settingsEntries := Iter.toArray(systemSettings.entries());
+        certificateValidationEntries := Iter.toArray(certificateValidations.entries());
     };
 
     system func postupgrade() {
@@ -206,8 +227,9 @@ persistent actor AdminCanister {
 
         systemSettings := HashMap.fromIter<Text, SystemSettings>(settingsEntries.vals(), 1, Text.equal, Text.hash);
         settingsEntries := [];
-        settingsEntries := [];
-        settingsEntries := [];
+
+        certificateValidations := HashMap.fromIter<Text, Types.CertificateValidation>(certificateValidationEntries.vals(), 10, Text.equal, Text.hash);
+        certificateValidationEntries := [];
 
         // Initialize defaults
         initializeDefaults();
@@ -646,7 +668,15 @@ persistent actor AdminCanister {
     // Canister Management
 
     // Set canister references for intercanister calls
-    public shared(msg) func setCanisterReferences(remittance: ?Principal, media: ?Principal) : async Result<Text> {
+    public shared(msg) func setCanisterReferences(
+        remittance: ?Principal,
+        media: ?Principal,
+        auth: ?Principal,
+        service: ?Principal,
+        booking: ?Principal,
+        review: ?Principal,
+        reputation: ?Principal
+    ) : async Result<Text> {
         let caller = msg.caller;
 
         // if (Principal.isAnonymous(caller)) {
@@ -659,6 +689,62 @@ persistent actor AdminCanister {
 
         remittanceCanisterId := remittance;
         mediaCanisterId := media;
+        authCanisterId := auth;
+        serviceCanisterId := service;
+        bookingCanisterId := booking;
+        reviewCanisterId := review;
+        reputationCanisterId := reputation;
+
+        // Set admin canister reference in service canister
+        switch (service) {
+            case (?serviceId) {
+                let serviceActor = actor(Principal.toText(serviceId)) : actor {
+                    setCanisterReferences: (?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal) -> async Result<Text>;
+                };
+                
+                try {
+                    let result = await serviceActor.setCanisterReferences(auth, booking, review, reputation, media, ?msg.caller);
+                    switch (result) {
+                        case (#ok(_)) {};
+                        case (#err(msg)) {
+                            Debug.print("Failed to set admin canister reference in service canister: " # msg);
+                        };
+                    };
+                } catch (_) {
+                    // Log error but don't fail
+                    Debug.print("Failed to set admin canister reference in service canister");
+                };
+            };
+            case (null) {
+                // Service canister not configured
+            };
+        };
+
+        // Set admin canister reference in booking canister
+        switch (booking) {
+            case (?bookingId) {
+                let bookingActor = actor(Principal.toText(bookingId)) : actor {
+                    setCanisterReferences: (?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal) -> async Result<Text>;
+                };
+                
+                try {
+                    let result = await bookingActor.setCanisterReferences(auth, service, review, reputation, remittance, ?msg.caller);
+                    switch (result) {
+                        case (#ok(_)) {};
+                        case (#err(msg)) {
+                            Debug.print("Failed to set admin canister reference in booking canister: " # msg);
+                        };
+                    };
+                } catch (_) {
+                    // Log error but don't fail
+                    Debug.print("Failed to set admin canister reference in booking canister");
+                };
+            };
+            case (null) {
+                // Booking canister not configured
+            };
+        };
+
         #ok("Canister references updated successfully")
     };
 
@@ -817,6 +903,922 @@ persistent actor AdminCanister {
             };
         }
     };
+
+    // User Management
+
+    // Get all users from auth canister
+    public shared(msg) func getAllUsers() : async Result<[Profile]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can get all users");
+        // };
+
+        switch (authCanisterId) {
+            case (?authId) {
+                try {
+                    let authActor = actor(Principal.toText(authId)) : actor {
+                        getAllServiceProviders() : async [Profile];
+                    };
+                    let users = await authActor.getAllServiceProviders();
+                    #ok(users)
+                } catch (msg) {
+                    #err("Failed to get users from auth canister: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Auth canister not configured")
+            };
+        }
+    };
+
+    // Service and Booking Management Functions
+
+    // Get all services offered by a user (as a provider)
+    public shared(msg) func getUserServices(userId: Principal) : async Result<[Types.Service]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user services");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                    getServicesByProvider: (Principal) -> async [Types.Service];
+                };
+                
+                try {
+                    let services = await serviceActor.getServicesByProvider(userId);
+                    #ok(services)
+                } catch (_) {
+                    #err("Failed to communicate with service canister")
+                }
+            };
+            case null {
+                #err("Service canister not configured")
+            };
+        }
+    };
+
+    // Get all bookings for a user (both as client and provider)
+    public shared(msg) func getUserBookingsCombined(userId: Principal) : async Result<{
+        clientBookings: [Types.Booking];
+        providerBookings: [Types.Booking];
+    }> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user bookings");
+        // };
+
+        switch (bookingCanisterId) {
+            case (?canisterId) {
+                let bookingActor = actor(Principal.toText(canisterId)) : actor {
+                    getClientBookings: (Principal) -> async [Types.Booking];
+                    getProviderBookings: (Principal) -> async [Types.Booking];
+                };
+                
+                try {
+                    let clientBookings = await bookingActor.getClientBookings(userId);
+                    let providerBookings = await bookingActor.getProviderBookings(userId);
+                    #ok({
+                        clientBookings = clientBookings;
+                        providerBookings = providerBookings;
+                    })
+                } catch (_) {
+                    #err("Failed to communicate with booking canister")
+                }
+            };
+            case null {
+                #err("Booking canister not configured")
+            };
+        }
+    };
+
+    // Get combined services and bookings for a user (for admin services page)
+    public shared(msg) func getUserServicesAndBookings(userId: Principal) : async Result<{
+        offeredServices: [Types.Service];
+        clientBookings: [Types.Booking];
+        providerBookings: [Types.Booking];
+    }> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user services and bookings");
+        // };
+
+        // Get services offered by this user
+        let servicesResult = await getUserServices(userId);
+        let bookingsResult = await getUserBookingsCombined(userId);
+
+        switch (servicesResult, bookingsResult) {
+            case (#ok(services), #ok(bookings)) {
+                #ok({
+                    offeredServices = services;
+                    clientBookings = bookings.clientBookings;
+                    providerBookings = bookings.providerBookings;
+                })
+            };
+            case (#err(servicesError), _) {
+                #err("Failed to get services: " # servicesError)
+            };
+            case (_, #err(bookingsError)) {
+                #err("Failed to get bookings: " # bookingsError)
+            };
+        }
+    };
+
+    // User Account Management Functions
+
+    // Lock or unlock a user account
+    public shared(msg) func lockUserAccount(userId: Principal, locked: Bool) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can lock/unlock accounts");
+        // };
+
+        switch (authCanisterId) {
+            case (?authId) {
+                try {
+                    let authActor = actor(Principal.toText(authId)) : actor {
+                        lockUserAccount: (Principal, Bool) -> async Result<Text>;
+                    };
+                    await authActor.lockUserAccount(userId, locked)
+                } catch (msg) {
+                    #err("Failed to lock/unlock user account: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Auth canister not configured")
+            };
+        }
+    };
+
+    // Delete a user account
+    public shared(msg) func deleteUserAccount(userId: Principal) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can delete accounts");
+        // };
+
+        switch (authCanisterId) {
+            case (?authId) {
+                try {
+                    let authActor = actor(Principal.toText(authId)) : actor {
+                        deleteUserAccount: (Principal) -> async Result<Text>;
+                    };
+                    await authActor.deleteUserAccount(userId)
+                } catch (msg) {
+                    #err("Failed to delete user account: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Auth canister not configured")
+            };
+        }
+    };
+
+    // Update user reputation score
+    public shared(msg) func updateUserReputation(userId: Principal, reputationScore: Nat) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can update reputation");
+        // };
+
+        // Validate reputation score (0-100)
+        if (reputationScore > 100) {
+            return #err("Reputation score must be between 0 and 100");
+        };
+
+        Debug.print("Admin updating reputation for user: " # Principal.toText(userId) # " to score: " # Nat.toText(reputationScore));
+
+        switch (reputationCanisterId) {
+            case (?reputationId) {
+                try {
+                    let reputationActor = actor(Principal.toText(reputationId)) : actor {
+                        setUserReputation: (Principal, Nat) -> async Result<Text>;
+                    };
+                    let result = await reputationActor.setUserReputation(userId, reputationScore);
+                    let resultText = switch (result) {
+                        case (#ok(msg)) "Success: " # msg;
+                        case (#err(msg)) "Error: " # msg;
+                    };
+                    Debug.print("Reputation update result: " # resultText);
+                    result
+                } catch (msg) {
+                    Debug.print("Exception updating reputation: " # Error.message(msg));
+                    #err("Failed to update user reputation: " # Error.message(msg))
+                }
+            };
+            case null {
+                Debug.print("Reputation canister not configured");
+                #err("Reputation canister not configured")
+            };
+        }
+    };
+
+    // Update user commission amount
+    public shared(msg) func updateUserCommission(userId: Principal, commissionAmount: Nat) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can update commission");
+        // };
+
+        // Validate commission amount (must be positive)
+        if (commissionAmount == 0) {
+            return #err("Commission amount must be greater than 0");
+        };
+
+        switch (authCanisterId) {
+            case (?authId) {
+                try {
+                    let authActor = actor(Principal.toText(authId)) : actor {
+                        updateUserCommission: (Principal, Nat) -> async Result<Text>;
+                    };
+                    await authActor.updateUserCommission(userId, commissionAmount)
+                } catch (msg) {
+                    #err("Failed to update user commission: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Auth canister not configured")
+            };
+        }
+    };
+
+    // Get user service count (for user list)
+    public shared(msg) func getUserServiceCount(userId: Principal) : async Result<Nat> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can get service counts");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                try {
+                    let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                        getServicesByProvider: (Principal) -> async [Types.Service];
+                    };
+                    
+                    let services = await serviceActor.getServicesByProvider(userId);
+                    #ok(services.size())
+                } catch (_) {
+                    #err("Failed to communicate with service canister")
+                }
+            };
+            case null {
+                #err("Service canister not configured")
+            };
+        }
+    };
+
+    // Get user analytics (for admin dashboard)
+    public shared(msg) func getUserAnalytics(userId: Principal) : async Result<Types.ProviderAnalytics> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user analytics");
+        // };
+
+        switch (bookingCanisterId) {
+            case (?canisterId) {
+                try {
+                    let bookingActor = actor(Principal.toText(canisterId)) : actor {
+                        getProviderAnalytics: (Principal, ?Time.Time, ?Time.Time) -> async Result<Types.ProviderAnalytics>;
+                    };
+                    
+                    // Call with admin privileges (bypass the caller check in booking canister)
+                    let result = await bookingActor.getProviderAnalytics(userId, null, null);
+                    result
+                } catch (msg) {
+                    #err("Failed to get user analytics: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Booking canister not configured")
+            };
+        }
+    };
+
+    // Helper function to get provider names for bookings
+    private func getBookingsWithProviderNames(bookings: [Types.Booking]) : async [Types.Booking] {
+        let bookingsWithNames = Buffer.Buffer<Types.Booking>(bookings.size());
+        
+        for (booking in bookings.vals()) {
+            let providerName = await getProviderName(booking.providerId);
+            let updatedBooking = {
+                booking with
+                providerName = ?providerName;
+            };
+            bookingsWithNames.add(updatedBooking);
+        };
+        
+        Buffer.toArray(bookingsWithNames)
+    };
+
+    // Helper function to get provider name from auth canister
+    private func getProviderName(providerId: Principal) : async Text {
+        Debug.print("Admin: Getting provider name for: " # Principal.toText(providerId));
+        switch (authCanisterId) {
+            case (?canisterId) {
+                Debug.print("Admin: Using auth canister: " # Principal.toText(canisterId));
+                try {
+                    let authActor = actor(Principal.toText(canisterId)) : actor {
+                        getProfile: (Principal) -> async Types.Result<Types.Profile>;
+                    };
+                    let profileResult = await authActor.getProfile(providerId);
+                    switch (profileResult) {
+                        case (#ok(profile)) { 
+                            Debug.print("Admin: Got profile name: " # profile.name);
+                            profile.name 
+                        };
+                        case (#err(err)) { 
+                            Debug.print("Admin: Error getting profile: " # err);
+                            "Unknown Provider" 
+                        };
+                    }
+                } catch (msg) {
+                    Debug.print("Admin: Exception getting profile: " # Error.message(msg));
+                    "Unknown Provider"
+                }
+            };
+            case null {
+                Debug.print("Admin: Auth canister not configured");
+                "Unknown Provider"
+            };
+        }
+    };
+
+    // Get user bookings (for admin booking history view)
+    public shared(msg) func getUserBookings(userId: Principal) : async Result<[Types.Booking]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user bookings");
+        // };
+
+        switch (bookingCanisterId) {
+            case (?canisterId) {
+                try {
+                    Debug.print("Admin: Attempting to get bookings for user: " # Principal.toText(userId));
+                    Debug.print("Admin: Using booking canister: " # Principal.toText(canisterId));
+                    
+                    let bookingActor = actor(Principal.toText(canisterId)) : actor {
+                        getClientBookings: (Principal) -> async [Types.Booking];
+                    };
+                    
+                    // Get client bookings from booking canister
+                    let bookings = await bookingActor.getClientBookings(userId);
+                    Debug.print("Admin: Retrieved " # debug_show(bookings.size()) # " bookings");
+                    
+                    // Get provider names for each booking
+                    let bookingsWithProviderNames = await getBookingsWithProviderNames(bookings);
+                    #ok(bookingsWithProviderNames)
+                } catch (msg) {
+                    Debug.print("Admin: Error getting bookings: " # Error.message(msg));
+                    #err("Failed to get user bookings: " # Error.message(msg))
+                }
+            };
+            case null {
+                Debug.print("Admin: Booking canister not configured");
+                #err("Booking canister not configured")
+            };
+        }
+    };
+
+    // Get user client analytics (for admin dashboard)
+    public shared(msg) func getUserClientAnalytics(userId: Principal) : async Result<Types.ClientAnalytics> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user client analytics");
+        // };
+
+        switch (bookingCanisterId) {
+            case (?canisterId) {
+                try {
+                    let bookingActor = actor(Principal.toText(canisterId)) : actor {
+                        getClientAnalyticsForAdmin: (Principal, ?Time.Time, ?Time.Time) -> async Result<Types.ClientAnalytics>;
+                    };
+                    
+                    // Call with admin privileges (bypass the caller check in booking canister)
+                    let result = await bookingActor.getClientAnalyticsForAdmin(userId, null, null);
+                    result
+                } catch (msg) {
+                    #err("Failed to get user client analytics: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Booking canister not configured")
+            };
+        }
+    };
+
+    // Get service by ID (for admin service details)
+    public shared(msg) func getService(serviceId: Text) : async Result<Types.Service> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view service details");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                try {
+                    let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                        getService: (Text) -> async Result<Types.Service>;
+                    };
+                    
+                    let result = await serviceActor.getService(serviceId);
+                    switch (result) {
+                        case (#ok(service)) {
+                            // Debug logging
+                            Debug.print("Admin getService - Service found: " # serviceId);
+                            Debug.print("Admin getService - ImageUrls count: " # Nat.toText(service.imageUrls.size()));
+                            Debug.print("Admin getService - CertificateUrls count: " # Nat.toText(service.certificateUrls.size()));
+                            #ok(service)
+                        };
+                        case (#err(msg)) {
+                            Debug.print("Admin getService - Error: " # msg);
+                            #err("Service canister error: " # msg)
+                        };
+                    }
+                } catch (msg) {
+                    #err("Failed to get service: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Service canister not configured")
+            };
+        }
+    };
+
+    // Get user reviews (for admin user details)
+    public shared(msg) func getUserReviews(userId: Text) : async Result<{averageRating: Float; totalReviews: Nat}> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user reviews");
+        // };
+
+        switch (reviewCanisterId) {
+            case (?canisterId) {
+                try {
+                    let reviewActor = actor(Principal.toText(canisterId)) : actor {
+                        calculateUserAverageRating: (Principal) -> async Result<Float>;
+                        getUserReviews: (Principal) -> async [Types.Review];
+                    };
+                    let userPrincipal = Principal.fromText(userId);
+                    
+                    let ratingResult = await reviewActor.calculateUserAverageRating(userPrincipal);
+                    let userReviews = await reviewActor.getUserReviews(userPrincipal);
+                    
+                    switch (ratingResult) {
+                        case (#ok(averageRating)) {
+                            #ok({
+                                averageRating = averageRating;
+                                totalReviews = userReviews.size();
+                            })
+                        };
+                        case (#err(msg)) {
+                            #err("Review canister error: " # msg)
+                        };
+                    }
+                } catch (msg) {
+                    #err("Failed to get user reviews: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Review canister not configured")
+            };
+        }
+    };
+
+    // Get user reputation (for admin user details)
+    public shared(msg) func getUserReputation(userId: Text) : async Result<{reputationScore: Nat; trustLevel: Text; completedBookings: Nat}> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view user reputation");
+        // };
+
+        switch (reputationCanisterId) {
+            case (?canisterId) {
+                try {
+                    let reputationActor = actor(Principal.toText(canisterId)) : actor {
+                        getReputationScore: (Principal) -> async Result<Types.ReputationScore>;
+                    };
+                    let userPrincipal = Principal.fromText(userId);
+                    
+                    let reputationResult = await reputationActor.getReputationScore(userPrincipal);
+                    
+                    switch (reputationResult) {
+                        case (#ok(reputation)) {
+                            #ok({
+                                reputationScore = Int.abs(Float.toInt(reputation.trustScore)); // trustScore is already 0-100
+                                trustLevel = switch (reputation.trustLevel) {
+                                    case (#New) "New";
+                                    case (#Low) "Low";
+                                    case (#Medium) "Medium";
+                                    case (#High) "High";
+                                    case (#VeryHigh) "VeryHigh";
+                                };
+                                completedBookings = reputation.completedBookings;
+                            })
+                        };
+                        case (#err(msg)) {
+                            #err("Reputation canister error: " # msg)
+                        };
+                    }
+                } catch (msg) {
+                    #err("Failed to get user reputation: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Reputation canister not configured")
+            };
+        }
+    };
+
+    // Get service packages (for admin service details)
+    public shared(msg) func getServicePackages(serviceId: Text) : async Result<[Types.ServicePackage]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view service packages");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                try {
+                    let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                        getServicePackages: (Text) -> async Result<[Types.ServicePackage]>;
+                    };
+                    
+                    let result = await serviceActor.getServicePackages(serviceId);
+                    switch (result) {
+                        case (#ok(packages)) {
+                            #ok(packages)
+                        };
+                        case (#err(msg)) {
+                            #err("Service canister error: " # msg)
+                        };
+                    }
+                } catch (msg) {
+                    #err("Failed to get service packages: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Service canister not configured")
+            };
+        }
+    };
+
+    // Delete service (for admin service management)
+    public shared(msg) func deleteService(serviceId: Text) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can delete services");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                try {
+                    let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                        deleteService: (Text) -> async Result<Text>;
+                    };
+                    
+                    let result = await serviceActor.deleteService(serviceId);
+                    result
+                } catch (msg) {
+                    #err("Failed to delete service: " # Error.message(msg))
+                }
+            };
+            case null {
+                #err("Service canister not configured")
+            };
+        }
+    };
+
+    // Certificate Validation Functions
+
+    // Create certificate validation entry
+    public shared(msg) func createCertificateValidation(
+        serviceId: Text,
+        providerId: Principal,
+        certificateUrls: [Text],
+        serviceTitle: Text
+    ) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #SERVICE)) {
+        //     return #err("Only SERVICE canister can create certificate validations");
+        // };
+
+        let validationId = generateId();
+        let now = Time.now();
+
+        let validation : Types.CertificateValidation = {
+            id = validationId;
+            serviceId = serviceId;
+            providerId = providerId;
+            certificateUrls = certificateUrls;
+            serviceTitle = serviceTitle;
+            status = #Pending;
+            submittedAt = now;
+            reviewedAt = null;
+            reviewedBy = null;
+            reviewReason = null;
+        };
+
+        certificateValidations.put(validationId, validation);
+
+        #ok(validationId)
+    };
+
+    // Get all services with certificates for validation
+    public shared(msg) func getServicesWithCertificates() : async Result<[{
+        serviceId: Text;
+        serviceTitle: Text;
+        providerId: Principal;
+        providerName: Text;
+        certificateUrls: [Text];
+        createdAt: Time.Time;
+    }]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view services with certificates");
+        // };
+
+        switch (serviceCanisterId) {
+            case (?canisterId) {
+                let serviceActor = actor(Principal.toText(canisterId)) : actor {
+                    getAllServices: () -> async [Types.Service];
+                };
+                
+                try {
+                    Debug.print("Calling getAllServices on service canister...");
+                    let services = await serviceActor.getAllServices();
+                    Debug.print("Got " # Int.toText(services.size()) # " services from service canister");
+                    
+                    let servicesWithCerts = Buffer.Buffer<{
+                        serviceId: Text;
+                        serviceTitle: Text;
+                        providerId: Principal;
+                        providerName: Text;
+                        certificateUrls: [Text];
+                        createdAt: Time.Time;
+                    }>(0);
+                    
+                    for (service in services.vals()) {
+                        if (service.certificateUrls.size() > 0) {
+                            Debug.print("Found service with certificates: " # service.title);
+                            
+                            // Filter certificate URLs to only include pending ones
+                            let pendingCertUrls = Buffer.Buffer<Text>(service.certificateUrls.size());
+                            
+                            switch (mediaCanisterId) {
+                                case (?mediaId) {
+                                    let mediaActor = actor(Principal.toText(mediaId)) : actor {
+                                        getCertificatesByValidationStatus: (?Types.CertificateValidationStatus) -> async [Types.MediaItem];
+                                    };
+                                    
+                                    try {
+                                        // Get only pending certificates
+                                        let pendingCerts = await mediaActor.getCertificatesByValidationStatus(?#Pending);
+                                        let pendingUrls = Array.map<Types.MediaItem, Text>(pendingCerts, func(item) = item.url);
+                                        
+                                        // Filter service certificate URLs to only include pending ones
+                                        for (certUrl in service.certificateUrls.vals()) {
+                                            let isPending = Array.find<Text>(pendingUrls, func(url) = url == certUrl);
+                                            switch (isPending) {
+                                                case (?_) { pendingCertUrls.add(certUrl); };
+                                                case (null) { /* Skip non-pending certificates */ };
+                                            };
+                                        };
+                                        Debug.print("Service " # service.id # " has " # Int.toText(pendingCertUrls.size()) # " pending certificates");
+                                    } catch (e) {
+                                        Debug.print("Error getting pending certificates from media canister: " # Error.message(e));
+                                        // Fallback: include all certificate URLs if media canister call fails
+                                        for (certUrl in service.certificateUrls.vals()) {
+                                            pendingCertUrls.add(certUrl);
+                                        };
+                                    };
+                                };
+                                case (null) {
+                                    Debug.print("Media canister not configured, including all certificates");
+                                    // Fallback: include all certificate URLs if media canister not configured
+                                    for (certUrl in service.certificateUrls.vals()) {
+                                        pendingCertUrls.add(certUrl);
+                                    };
+                                };
+                            };
+                            
+                            // Only add service if it has pending certificates
+                            if (pendingCertUrls.size() > 0) {
+                                // Get provider name from auth canister
+                                var providerName = "Unknown Provider";
+                                switch (authCanisterId) {
+                                    case (?authId) {
+                                        Debug.print("Fetching profile for provider: " # Principal.toText(service.providerId));
+                                        let authActor = actor(Principal.toText(authId)) : actor {
+                                            getProfile: (Principal) -> async Types.Result<Types.Profile>;
+                                        };
+                                        
+                                        try {
+                                            switch (await authActor.getProfile(service.providerId)) {
+                                                case (#ok(profile)) {
+                                                    Debug.print("Found profile with name: " # profile.name);
+                                                    providerName := profile.name;
+                                                };
+                                                case (#err(msg)) {
+                                                    Debug.print("Profile not found: " # msg);
+                                                    providerName := "Provider " # Principal.toText(service.providerId);
+                                                };
+                                            };
+                                        } catch (msg) {
+                                            Debug.print("Error fetching profile: " # Error.message(msg));
+                                            providerName := "Provider " # Principal.toText(service.providerId);
+                                        };
+                                    };
+                                    case (null) {
+                                        Debug.print("Auth canister not configured");
+                                        providerName := "Provider " # Principal.toText(service.providerId);
+                                    };
+                                };
+                                
+                                servicesWithCerts.add({
+                                    serviceId = service.id;
+                                    serviceTitle = service.title;
+                                    providerId = service.providerId;
+                                    providerName = providerName;
+                                    certificateUrls = Buffer.toArray(pendingCertUrls);
+                                    createdAt = service.createdAt;
+                                });
+                            };
+                        };
+                    };
+                    
+                    Debug.print("Returning " # Int.toText(servicesWithCerts.size()) # " services with certificates");
+                    #ok(Buffer.toArray(servicesWithCerts))
+                } catch (msg) {
+                    Debug.print("Error calling service canister: " # Error.message(msg));
+                    #err("Failed to communicate with service canister: " # Error.message(msg))
+                }
+            };
+            case (null) {
+                #err("Service canister not configured")
+            }
+        }
+    };
+
+    // Get pending certificate validations
+    public shared(msg) func getPendingCertificateValidations() : async Result<[Types.CertificateValidation]> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can view certificate validations");
+        // };
+
+        let pendingValidations = Buffer.Buffer<Types.CertificateValidation>(0);
+        
+        for ((_, validation) in certificateValidations.entries()) {
+            if (validation.status == #Pending) {
+                pendingValidations.add(validation);
+            };
+        };
+
+        #ok(Buffer.toArray(pendingValidations))
+    };
+
+    // Validate certificate (approve or reject)
+    public shared(msg) func validateCertificate(
+        validationId: Text,
+        approved: Bool,
+        reason: ?Text
+    ) : async Result<Text> {
+        let caller = msg.caller;
+
+        // if (Principal.isAnonymous(caller)) {
+        //     return #err("Anonymous principal not allowed");
+        // };
+
+        // if (not isAuthorized(caller, #ADMIN)) {
+        //     return #err("Only ADMIN users can validate certificates");
+        // };
+
+        switch (certificateValidations.get(validationId)) {
+            case (?validation) {
+                let updatedValidation : Types.CertificateValidation = {
+                    id = validation.id;
+                    serviceId = validation.serviceId;
+                    providerId = validation.providerId;
+                    certificateUrls = validation.certificateUrls;
+                    serviceTitle = validation.serviceTitle;
+                    status = if (approved) #Validated else #Rejected;
+                    submittedAt = validation.submittedAt;
+                    reviewedAt = ?Time.now();
+                    reviewedBy = ?caller;
+                    reviewReason = reason;
+                };
+
+                certificateValidations.put(validationId, updatedValidation);
+                #ok("Certificate validation updated")
+            };
+            case (null) {
+                #err("Certificate validation not found")
+            }
+        }
+    };
+
 
     // Initialize on first deployment
     initializeDefaults();

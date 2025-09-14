@@ -11,8 +11,8 @@ export interface AppFeedback {
   userId: string;
   userName: string;
   userPhone: string;
-  rating: number; // 1-5 stars
-  comment?: string; // Optional written review
+  rating: number;
+  comment?: string;
   createdAt: Date;
 }
 

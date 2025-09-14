@@ -1,10 +1,11 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 interface AdminDashboardStatsProps {
   stats: {
     totalServiceProviders: number;
     totalPendingValidations: number;
-    totalCommissionRules: number;
+    totalPendingTickets: number;
     totalAdminUsers: number;
     totalPendingCommission: number;
     totalSettledCommission: number;
@@ -63,12 +64,13 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       isAlert: stats.totalPendingValidations > 0,
     },
     {
-      title: "Commission Rules",
-      value: formatNumber(stats.totalCommissionRules),
-      subtitle: "Active rules",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
-      iconColor: "bg-purple-100",
+      title: "Pending Tickets",
+      value: formatNumber(stats.totalPendingTickets),
+      subtitle: "Awaiting resolution",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600",
+      iconColor: "bg-red-100",
+      isAlert: stats.totalPendingTickets > 0,
     },
     {
       title: "Admin Users",
@@ -109,41 +111,58 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((card, index) => (
-          <div
-            key={index}
-            className={`${card.bgColor} relative overflow-hidden rounded-lg border border-gray-200 p-6`}
-          >
-            {card.isAlert && (
-              <div className="absolute top-2 right-2">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-red-400"></div>
-              </div>
-            )}
+        {statCards.map((card, index) => {
+          const CardContent = (
+            <div
+              className={`${card.bgColor} relative overflow-hidden rounded-lg border border-gray-200 p-6 transition-all hover:shadow-md ${
+                card.title === "Pending Validations" || card.title === "Pending Tickets" ? "cursor-pointer" : ""
+              }`}
+            >
+              {card.isAlert && (
+                <div className="absolute top-2 right-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-400"></div>
+                </div>
+              )}
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="mb-1 text-sm font-medium text-gray-600">
-                  {card.title}
-                </p>
-                <p className={`text-2xl font-bold ${card.textColor}`}>
-                  {card.value}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">{card.subtitle}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="mb-1 text-sm font-medium text-gray-600">
+                    {card.title}
+                  </p>
+                  <p className={`text-2xl font-bold ${card.textColor}`}>
+                    {card.value}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">{card.subtitle}</p>
+                </div>
+
+                <div className={`${card.iconColor} rounded-full p-3`}>
+                  <div className="h-6 w-6 rounded bg-current opacity-20"></div>
+                </div>
               </div>
 
-              <div className={`${card.iconColor} rounded-full p-3`}>
-                {/* Icon placeholders - you can replace with actual icons */}
-                <div className="h-6 w-6 rounded bg-current opacity-20"></div>
-              </div>
+              {card.isAlert && (
+                <div className="mt-3 text-xs font-medium text-yellow-700">
+                  ⚠️ Requires attention
+                </div>
+              )}
+
             </div>
+          );
 
-            {card.isAlert && (
-              <div className="mt-3 text-xs font-medium text-yellow-700">
-                ⚠️ Requires attention
-              </div>
-            )}
-          </div>
-        ))}
+          return card.title === "Pending Validations" ? (
+            <Link key={index} to="/validation-inbox">
+              {CardContent}
+            </Link>
+          ) : card.title === "Pending Tickets" ? (
+            <Link key={index} to="/ticket-inbox">
+              {CardContent}
+            </Link>
+          ) : (
+            <div key={index}>
+              {CardContent}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

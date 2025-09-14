@@ -7,6 +7,7 @@ import {
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
 
 // Types for media modal
 interface MediaViewModalProps {
@@ -203,7 +204,7 @@ export const AdminHomePage: React.FC = () => {
   const dashboardStats = {
     totalServiceProviders: serviceProviders.length,
     totalPendingValidations: pendingValidations.length,
-    totalCommissionRules: systemStats?.totalCommissionRules || 0,
+    totalPendingTickets: systemStats?.totalCommissionRules || 0,
     totalAdminUsers: systemStats?.adminUsers || 0,
     totalPendingCommission: serviceProviders.reduce(
       (sum, p) => sum + p.pendingCommission,
@@ -302,13 +303,28 @@ export const AdminHomePage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Admin Dashboard
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Monitor service providers, validate payments, and manage system
-              settings
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Admin Dashboard
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">
+                  Monitor service providers, validate payments, and manage system
+                  settings
+                </p>
+              </div>
+              <div className="flex space-x-4">
+                <Link
+                  to="/users"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                  View Users
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </header>

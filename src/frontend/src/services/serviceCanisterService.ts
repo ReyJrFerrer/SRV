@@ -751,6 +751,7 @@ export const serviceCanisterService = {
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
         [Principal.fromText(mediaCanisterId)],
+        [] // admin canister reference - empty for frontend
       );
 
       if ("ok" in result) {

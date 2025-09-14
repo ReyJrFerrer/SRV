@@ -177,6 +177,10 @@ persistent actor MediaCanister {
             filePath = filePath;
             url = url;
             thumbnailUrl = null; // We'll implement thumbnail generation later
+            validationStatus = switch (mediaType) {
+                case (#ServiceCertificate) ?#Pending; // Default to pending for certificates
+                case (_) null; // Other media types don't need validation
+            };
             createdAt = Time.now();
             updatedAt = Time.now();
         };
@@ -323,6 +327,7 @@ persistent actor MediaCanister {
                     filePath = existingItem.filePath;
                     url = existingItem.url;
                     thumbnailUrl = existingItem.thumbnailUrl;
+                    validationStatus = existingItem.validationStatus;
                     createdAt = existingItem.createdAt;
                     updatedAt = Time.now();
                 };
@@ -528,5 +533,58 @@ persistent actor MediaCanister {
                 };
             };
         };
+    };
+
+    // Update certificate validation status (admin only)
+    public shared(msg) func updateCertificateValidationStatus(
+        mediaId : Text,
+        newStatus : Types.CertificateValidationStatus
+    ) : async Result<MediaItem> {
+        let caller = msg.caller;
+        
+        // TODO: Add admin authorization check here
+        // if (not isAdmin(caller)) {
+        //     return #err("Only admin can update certificate validation status");
+        // };
+
+        switch (mediaItems.get(mediaId)) {
+            case (?mediaItem) {
+                // Only allow status updates for certificates
+                if (mediaItem.mediaType != #ServiceCertificate) {
+                    return #err("Validation status can only be updated for certificates");
+                };
+
+                let updatedMediaItem : MediaItem = {
+                    id = mediaItem.id;
+                    ownerId = mediaItem.ownerId;
+                    fileName = mediaItem.fileName;
+                    fileSize = mediaItem.fileSize;
+                    contentType = mediaItem.contentType;
+                    mediaType = mediaItem.mediaType;
+                    filePath = mediaItem.filePath;
+                    url = mediaItem.url;
+                    thumbnailUrl = mediaItem.thumbnailUrl;
+                    validationStatus = ?newStatus;
+                    createdAt = mediaItem.createdAt;
+                    updatedAt = Time.now();
+                };
+
+                mediaItems.put(mediaId, updatedMediaItem);
+                return #ok(updatedMediaItem);
+            };
+            case (null) {
+                return #err("Media item not found");
+            };
+        };
+    };
+
+    // Get media items by validation status (for admin)
+    public query func getCertificatesByValidationStatus(
+        status : ?Types.CertificateValidationStatus
+    ) : async [MediaItem] {
+        let allItems = Iter.toArray(mediaItems.vals());
+        Array.filter<MediaItem>(allItems, func(item : MediaItem) : Bool {
+            item.mediaType == #ServiceCertificate and item.validationStatus == status
+        })
     };
 }

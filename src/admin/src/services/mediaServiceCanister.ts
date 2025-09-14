@@ -30,9 +30,6 @@ const createMediaActor = (identity?: Identity | null): MediaService => {
 let mediaActor: MediaService | null = null;
 let currentIdentity: Identity | null = null;
 
-/**
- * Updates the media actor with a new identity
- */
 export const updateMediaActor = (identity: Identity | null) => {
   if (currentIdentity !== identity) {
     mediaActor = createMediaActor(identity);
@@ -40,9 +37,6 @@ export const updateMediaActor = (identity: Identity | null) => {
   }
 };
 
-/**
- * Gets the current media actor
- */
 const getMediaActor = (requireAuth: boolean = true): MediaService => {
   if (requireAuth && !currentIdentity) {
     throw new Error(
@@ -201,7 +195,6 @@ export const getRemittanceMediaItems = async (
     const result = await actor.getRemittanceMediaItems(mediaIds);
     return handleResult(result, (items) => items.map(convertMediaItem));
   } catch (error) {
-    //console.error("Failed to get remittance media items:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get remittance media items: ${error}`,
@@ -223,7 +216,6 @@ export const getMediaItem = async (
     const result = await actor.getMediaItem(mediaId);
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    //console.error("Failed to get media item:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media item: ${error}`,
@@ -243,12 +235,123 @@ export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
     const result = await actor.getFileData(mediaId);
     return handleResult(result, (data) => new Uint8Array(data));
   } catch (error) {
-    //console.error("Failed to get file data:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get file data: ${error}`,
       context: "getFileData",
     });
+  }
+};
+
+export const extractMediaIdFromUrl = (url: string): string | null => {
+  try {
+    // Handle URLs in format: /media/{mediaId} or media://{mediaId}
+    if (url.startsWith("media://")) {
+      return url.replace("media://", "").split("/").pop() || null;
+    }
+
+    if (url.startsWith("/media/")) {
+      return url.replace("/media/", "").split("/").pop() || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error extracting media ID from URL:", error);
+    return null;
+  }
+};
+
+export const convertBlobToDataUrl = (
+  uint8Array: Uint8Array,
+  contentType: string,
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const blob = new Blob([uint8Array as BlobPart], { type: contentType });
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+
+      reader.onerror = () => {
+        reject(new Error("Failed to convert blob to data URL"));
+      };
+
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+// Image cache for performance
+const imageCache = new Map<string, string>();
+export const getImageDataUrl = async (
+  mediaUrl: string,
+  options: { enableCache?: boolean; fallbackImageUrl?: string } = {},
+): Promise<string> => {
+  const opts = {
+    enableCache: true,
+    fallbackImageUrl: "/placeholder-image.png",
+    ...options,
+  };
+
+  console.log("getImageDataUrl - Starting for URL:", mediaUrl);
+
+  try {
+    // Check cache first if enabled
+    if (opts.enableCache && imageCache.has(mediaUrl)) {
+      console.log("getImageDataUrl - Found in cache:", mediaUrl);
+      return imageCache.get(mediaUrl)!;
+    }
+
+    // Extract media ID from URL
+    const mediaId = extractMediaIdFromUrl(mediaUrl);
+    console.log("getImageDataUrl - Extracted media ID:", mediaId);
+    if (!mediaId) {
+      console.warn("Could not extract media ID from URL:", mediaUrl);
+      return opts.fallbackImageUrl;
+    }
+
+    // Get file data from media canister
+    console.log("getImageDataUrl - Getting media actor and calling getFileData");
+    const actor = getMediaActor();
+    const result = await actor.getFileData(mediaId);
+    console.log("getImageDataUrl - getFileData result:", result);
+
+    if ("err" in result) {
+      console.warn("Failed to retrieve image data:", result.err);
+      return opts.fallbackImageUrl;
+    }
+
+    // Get media item for content type
+    console.log("getImageDataUrl - Getting media item for content type");
+    const mediaItemResult = await actor.getMediaItem(mediaId);
+    console.log("getImageDataUrl - getMediaItem result:", mediaItemResult);
+    
+    if ("err" in mediaItemResult) {
+      console.warn("Failed to retrieve media item:", mediaItemResult.err);
+      return opts.fallbackImageUrl;
+    }
+
+    // Convert Uint8Array to data URL
+    console.log("getImageDataUrl - Converting to data URL");
+    const uint8Array = new Uint8Array(result.ok);
+    const contentType = mediaItemResult.ok.contentType;
+    console.log("getImageDataUrl - Content type:", contentType, "Data length:", uint8Array.length);
+    const dataUrl = await convertBlobToDataUrl(uint8Array, contentType);
+    console.log("getImageDataUrl - Data URL generated, length:", dataUrl.length);
+
+    // Cache the result if enabled
+    if (opts.enableCache) {
+      imageCache.set(mediaUrl, dataUrl);
+    }
+
+    return dataUrl;
+  } catch (error) {
+    console.error("Error retrieving image data:", error);
+    return opts.fallbackImageUrl;
   }
 };
 
@@ -265,7 +368,6 @@ export const getMediaByOwner = async (
     const items = await actor.getMediaByOwner(ownerId);
     return items.map(convertMediaItem);
   } catch (error) {
-    //console.error("Failed to get media by owner:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media by owner: ${error}`,
@@ -293,7 +395,6 @@ export const getMediaByTypeAndOwner = async (
     );
     return items.map(convertMediaItem);
   } catch (error) {
-    //console.error("Failed to get media by type and owner:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get media by type and owner: ${error}`,
@@ -317,7 +418,6 @@ export const validateMediaItems = async (
       summaries.map(convertValidationSummary),
     );
   } catch (error) {
-    //console.error("Failed to validate media items:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to validate media items: ${error}`,
@@ -351,7 +451,6 @@ export const uploadMedia = async (
     );
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    //console.error("Failed to upload media:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to upload media: ${error}`,
@@ -378,7 +477,6 @@ export const updateMediaMetadata = async (
     );
     return handleResult(result, convertMediaItem);
   } catch (error) {
-    //console.error("Failed to update media metadata:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to update media metadata: ${error}`,
@@ -464,4 +562,7 @@ export const mediaServiceCanister = {
   updateMediaActor,
   resetMediaActor,
   refreshMediaActor,
+  getImageDataUrl,
+  extractMediaIdFromUrl,
+  convertBlobToDataUrl,
 };

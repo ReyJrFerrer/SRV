@@ -1,6 +1,17 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AdminHomePage } from "./pages/home";
+import { UserListPage } from "./pages/userList";
+import { UserDetailsPage } from "./pages/userDetails";
+import TransactionHistoryPage from "./pages/transactionHistory";
+import ActivityHistoryPage from "./pages/activityHistory";
+import UserServicesPage from "./pages/userServices";
+import { ValidationInboxPage } from "./pages/validationInbox";
+import { TicketInboxPage } from "./pages/ticketInbox";
+import { TicketDetailsPage } from "./pages/ticketDetails";
+import { AdminChatPage } from "./pages/adminChat";
+import ServiceDetailsPage from "./pages/serviceDetails";
+import { UserBookingsPage } from "./pages/userBookings";
 
 // Login component
 const LoginPage = () => {
@@ -69,6 +80,102 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AdminHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <UserListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/provider/:id"
+        element={
+          <ProtectedRoute>
+            <UserDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id"
+        element={
+          <ProtectedRoute>
+            <UserDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/transactions"
+        element={
+          <ProtectedRoute>
+            <TransactionHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/activities"
+        element={
+          <ProtectedRoute>
+            <ActivityHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/services"
+        element={
+          <ProtectedRoute>
+            <UserServicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:userId/bookings"
+        element={
+          <ProtectedRoute>
+            <UserBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:userId/services/:serviceId"
+        element={
+          <ProtectedRoute>
+            <ServiceDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/validation-inbox"
+        element={
+          <ProtectedRoute>
+            <ValidationInboxPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ticket-inbox"
+        element={
+          <ProtectedRoute>
+            <TicketInboxPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ticket/:id"
+        element={
+          <ProtectedRoute>
+            <TicketDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat/:userId"
+        element={
+          <ProtectedRoute>
+            <AdminChatPage />
           </ProtectedRoute>
         }
       />

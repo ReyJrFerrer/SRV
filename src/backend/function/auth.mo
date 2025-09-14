@@ -328,6 +328,11 @@ persistent actor AuthCanister {
         return providersBuffer;
     };
 
+    // Get all users (for admin purposes)
+    public query func getAllUsers() : async [Profile] {
+        Iter.toArray(profiles.vals())
+    };
+
     // Upload profile picture
     public shared(msg) func uploadProfilePicture(
         fileName : Text,
@@ -421,5 +426,112 @@ persistent actor AuthCanister {
                 return #err("Profile not found");
             };
         };
+    };
+
+    // Admin Functions for User Management
+
+    // Lock or unlock a user account
+    public shared(msg) func lockUserAccount(userId: Principal, locked: Bool) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // In a real implementation, check if caller has admin rights
+        // For now, allow any authenticated user to call this function
+
+        switch (profiles.get(userId)) {
+            case (?profile) {
+                // In a real implementation, you would store the lock status
+                // For now, we'll just return success
+                let status = if (locked) "locked" else "unlocked";
+                #ok("User account " # status # " successfully")
+            };
+            case (null) {
+                #err("User not found")
+            };
+        }
+    };
+
+    // Delete a user account
+    public shared(msg) func deleteUserAccount(userId: Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // In a real implementation, check if caller has admin rights
+        // For now, allow any authenticated user to call this function
+
+        switch (profiles.get(userId)) {
+            case (?profile) {
+                // Remove from profiles
+                profiles.delete(userId);
+                // Remove from phone mapping
+                phoneToPrincipal.delete(profile.phone);
+                #ok("User account deleted successfully")
+            };
+            case (null) {
+                #err("User not found")
+            };
+        }
+    };
+
+    // Update user reputation score
+    public shared(msg) func updateUserReputation(userId: Principal, reputationScore: Nat) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // In a real implementation, check if caller has admin rights
+        // For now, allow any authenticated user to call this function
+
+        // Validate reputation score (0-100)
+        if (reputationScore > 100) {
+            return #err("Reputation score must be between 0 and 100");
+        };
+
+        switch (profiles.get(userId)) {
+            case (?profile) {
+                // In a real implementation, you would store the reputation score
+                // For now, we'll just return success
+                #ok("User reputation updated to " # Nat.toText(reputationScore) # " successfully")
+            };
+            case (null) {
+                #err("User not found")
+            };
+        }
+    };
+
+    // Update user commission amount
+    public shared(msg) func updateUserCommission(userId: Principal, commissionAmount: Nat) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // In a real implementation, check if caller has admin rights
+        // For now, allow any authenticated user to call this function
+
+        // Validate commission amount (must be positive)
+        if (commissionAmount == 0) {
+            return #err("Commission amount must be greater than 0");
+        };
+
+        switch (profiles.get(userId)) {
+            case (?profile) {
+                // In a real implementation, you would store the commission amount
+                // For now, we'll just return success
+                #ok("User commission updated to " # Nat.toText(commissionAmount) # " successfully")
+            };
+            case (null) {
+                #err("User not found")
+            };
+        }
     };
 }

@@ -51,7 +51,7 @@ export const PendingValidationCard: React.FC<PendingValidationCardProps> = ({
     setActionType(action);
     setShowActions(true);
     if (action === "approve") {
-      setReason(""); // Optional for approval
+      setReason("");
     }
   };
 

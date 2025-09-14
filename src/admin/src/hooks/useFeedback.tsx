@@ -4,13 +4,9 @@ import feedbackCanisterService, {
   AppFeedback,
   FeedbackStats,
 } from "../services/feedbackCanisterService";
-
-// Re-export types for easier importing
 export type { AppFeedback, FeedbackStats };
 
-/**
- * Custom hook to manage feedback functionality, including submitting and retrieving feedback.
- */
+
 export const useFeedback = () => {
   const { isAuthenticated, identity } = useAuth();
 
@@ -22,22 +18,18 @@ export const useFeedback = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Initialize feedback canister
-   */
+
   const initializeFeedbackCanister = useCallback(async () => {
     if (isAuthenticated && identity) {
       try {
         await feedbackCanisterService.initializeFeedbackCanister(identity);
       } catch (err) {
-        //console.error("Failed to initialize feedback canister:", err);
+        console.error("Failed to initialize feedback canister:", err);
       }
     }
   }, [isAuthenticated, identity]);
 
-  /**
-   * Fetch all feedback (admin function)
-   */
+
   const fetchAllFeedback = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       return;
@@ -50,16 +42,13 @@ export const useFeedback = () => {
       const feedback = await feedbackCanisterService.getAllFeedback(identity);
       setAllFeedback(feedback);
     } catch (err) {
-      //console.error("Failed to fetch all feedback:", err);
       setError("Could not load feedback");
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated, identity]);
 
-  /**
-   * Fetch user's own feedback
-   */
+
   const fetchMyFeedback = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       return;
@@ -72,16 +61,13 @@ export const useFeedback = () => {
       const feedback = await feedbackCanisterService.getMyFeedback(identity);
       setMyFeedback(feedback);
     } catch (err) {
-      //console.error("Failed to fetch my feedback:", err);
       setError("Could not load your feedback");
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated, identity]);
 
-  /**
-   * Fetch feedback statistics
-   */
+
   const fetchFeedbackStats = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -90,16 +76,13 @@ export const useFeedback = () => {
       const stats = await feedbackCanisterService.getFeedbackStats(identity);
       setFeedbackStats(stats);
     } catch (err) {
-      //console.error("Failed to fetch feedback stats:", err);
       setError("Could not load feedback statistics");
     } finally {
       setLoading(false);
     }
   }, [identity]);
 
-  /**
-   * Fetch recent feedback with limit
-   */
+
   const fetchRecentFeedback = useCallback(
     async (limit: number = 10) => {
       setLoading(true);
@@ -112,7 +95,6 @@ export const useFeedback = () => {
         );
         setAllFeedback(feedback);
       } catch (err) {
-        //console.error("Failed to fetch recent feedback:", err);
         setError("Could not load recent feedback");
       } finally {
         setLoading(false);
