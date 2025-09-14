@@ -1263,7 +1263,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       if (currentPackageId) {
         // Update existing package
-        await updatePackage({
+        const updatedPackage = await updatePackage({
           id: currentPackageId,
           serviceId: service.id,
           title: packageFormTitle,
@@ -1272,15 +1272,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         });
         setPackages((prev) =>
           prev.map((p) =>
-            p.id === currentPackageId
-              ? {
-                  ...p,
-                  title: packageFormTitle,
-                  description: packageFormDescription,
-                  price: parsedPrice,
-                  updatedAt: new Date().toISOString(),
-                }
-              : p,
+            p.id === currentPackageId ? updatedPackage : p,
           ),
         );
         toast.success("Package updated!");
@@ -1992,9 +1984,17 @@ const ProviderServiceDetailPage: React.FC = () => {
                               <h4 className="text-lg font-semibold break-words text-blue-900">
                                 {pkg.title}
                               </h4>
-                              <span className="text-lg font-bold text-green-600">
-                                ₱{pkg.price.toFixed(2)}+{pkg.commissionFee}
-                              </span>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-blue-600">
+                                  ₱{pkg.price.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  + ₱{pkg.commissionFee.toFixed(2)} commission
+                                </div>
+                                <div className="text-sm font-medium text-green-600">
+                                  = ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
+                                </div>
+                              </div>
                             </div>
                             <p className="mt-1 text-sm break-words text-blue-700">
                               {pkg.description}

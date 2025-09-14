@@ -6,7 +6,7 @@ import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as mediaCanisterId } from "../../../declarations/media";
-import {canisterId as commissionCanisterId} from "../../../declarations/commission"
+import { canisterId as commissionCanisterId } from "../../../declarations/commission";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ServiceService,
@@ -775,7 +775,7 @@ export const serviceCanisterService = {
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
         [Principal.fromText(mediaCanisterId)],
-        [Principal.fromText(commissionCanisterId)]
+        [Principal.fromText(commissionCanisterId)],
       );
 
       if ("ok" in result) {
@@ -1168,7 +1168,10 @@ export const serviceCanisterService = {
   ): Promise<CommissionQuote | null> {
     try {
       const actor = await getServiceActor(false);
-      const result = await actor.getCommissionQuote(categoryName, BigInt(price));
+      const result = await actor.getCommissionQuote(
+        categoryName,
+        BigInt(price),
+      );
 
       if ("ok" in result) {
         return {
@@ -1195,7 +1198,10 @@ export const serviceCanisterService = {
   ): Promise<string | null> {
     try {
       const actor = await getServiceActor(true);
-      const result = await actor.getCommissionBreakdown(categoryName, BigInt(price));
+      const result = await actor.getCommissionBreakdown(
+        categoryName,
+        BigInt(price),
+      );
 
       if ("ok" in result) {
         return result.ok;
@@ -1211,7 +1217,10 @@ export const serviceCanisterService = {
 };
 
 // Commission utility functions
-export const calculateTotalAmount = (price: number, commissionFee: number): number => {
+export const calculateTotalAmount = (
+  price: number,
+  commissionFee: number,
+): number => {
   return price + commissionFee;
 };
 
@@ -1219,18 +1228,25 @@ export const formatCommissionRate = (rate: number): string => {
   return `${rate.toFixed(2)}%`;
 };
 
-export const formatPriceWithCommission = (price: number, commissionFee: number): string => {
+export const formatPriceWithCommission = (
+  price: number,
+  commissionFee: number,
+): string => {
   const total = calculateTotalAmount(price, commissionFee);
   return `₱${price.toLocaleString()} + ₱${commissionFee.toLocaleString()} commission = ₱${total.toLocaleString()}`;
 };
 
 // Enhanced service/package with computed commission fields
-export const enhanceServiceWithCommission = (service: Service): Service & { totalAmount: number } => ({
+export const enhanceServiceWithCommission = (
+  service: Service,
+): Service & { totalAmount: number } => ({
   ...service,
   totalAmount: calculateTotalAmount(service.price, service.commissionFee),
 });
 
-export const enhancePackageWithCommission = (pkg: ServicePackage): ServicePackage & { totalAmount: number } => ({
+export const enhancePackageWithCommission = (
+  pkg: ServicePackage,
+): ServicePackage & { totalAmount: number } => ({
   ...pkg,
   totalAmount: calculateTotalAmount(pkg.price, pkg.commissionFee),
 });

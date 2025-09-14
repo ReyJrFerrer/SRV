@@ -18,7 +18,7 @@ import {
   ServiceCreateRequest,
 } from "../../../hooks/serviceManagement";
 
-import { ServiceCategory } from "../../../services/serviceCanisterService";
+import { ServiceCategory, CommissionQuote } from "../../../services/serviceCanisterService";
 import { processServiceCertificateFiles } from "../../../services/mediaService";
 
 // Type for time slots
@@ -108,6 +108,7 @@ const AddServicePage: React.FC = () => {
     createPackage,
     processImageFilesForService,
     validateImageFiles,
+    getCommissionQuote,
   } = useServiceManagement();
 
   // State for stepper and form data
@@ -132,6 +133,10 @@ const AddServicePage: React.FC = () => {
 
   // Used to trigger scroll/highlight on error
   const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
+
+  // Commission state
+  const [commissionQuotes, setCommissionQuotes] = useState<{[packageId: string]: CommissionQuote}>({});
+  const [loadingCommissions, setLoadingCommissions] = useState(false);
 
   // --- Image Handlers ---
   const handleImageFilesChange = async (
@@ -198,6 +203,28 @@ const AddServicePage: React.FC = () => {
     setCertificationPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Commission handlers
+  const fetchCommissionQuotes = useCallback(async () => {
+    if (!getCommissionQuote || !formData.categoryId) return;
+    
+    setLoadingCommissions(true);
+    const quotes: {[packageId: string]: CommissionQuote} = {};
+    
+    try {
+      for (const pkg of formData.servicePackages) {
+        if (pkg.name.trim() && pkg.description.trim() && pkg.price) {
+          const quote = await getCommissionQuote(formData.categoryId, Number(pkg.price));
+          quotes[pkg.id] = quote;
+        }
+      }
+      setCommissionQuotes(quotes);
+    } catch (error) {
+      console.error("Failed to fetch commission quotes:", error);
+    } finally {
+      setLoadingCommissions(false);
+    }
+  }, [formData.servicePackages, formData.categoryId, getCommissionQuote]);
+
   // --- Initial Data Fetch ---
   useEffect(() => {
     getCategories();
@@ -214,6 +241,13 @@ const AddServicePage: React.FC = () => {
       }
     }
   }, [categories, formData.categoryId]);
+
+  // Fetch commission quotes when reaching the review step
+  useEffect(() => {
+    if (currentStep === 4) {
+      fetchCommissionQuotes();
+    }
+  }, [currentStep, fetchCommissionQuotes]);
 
   // --- Validation for Each Step ---
   const validateCurrentStep = useCallback((): ValidationErrors => {
@@ -863,12 +897,14 @@ const AddServicePage: React.FC = () => {
                           pkg.description.trim() &&
                           pkg.price,
                       )
-                      .map((pkg) => (
+                      .map((pkg) => {
+                        const commissionQuote = commissionQuotes[pkg.id];
+                        return (
                         <div
                           key={pkg.id}
-                          className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-center md:justify-between"
+                          className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-start md:justify-between"
                         >
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-blue-900">
                               {pkg.name}
                             </p>
@@ -876,12 +912,71 @@ const AddServicePage: React.FC = () => {
                               {pkg.description}
                             </p>
                           </div>
-                          <p className="mt-2 text-lg font-semibold text-green-600 md:mt-0">
-                            ₱{Number(pkg.price).toLocaleString()}
-                          </p>
+                          <div className="mt-2 text-right md:mt-0">
+                            <p className="text-lg font-semibold text-green-600">
+                              ₱{Number(pkg.price).toLocaleString()}
+                            </p>
+                            {loadingCommissions && (
+                              <p className="text-xs text-gray-500">
+                                Loading commission...
+                              </p>
+                            )}
+                            {commissionQuote && (
+                              <div className="mt-1 text-base text-gray-600">
+                                <p>Commission: ₱{commissionQuote.commissionFee.toLocaleString()}</p>
+                                <p>Rate: {(commissionQuote.commissionRate)}%</p>
+                                <p className="font-medium text-blue-600">
+                                  Total: ₱{(Number(pkg.price) + commissionQuote.commissionFee).toLocaleString()}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                   </div>
+                  {/* Commission Summary */}
+                  {/* {Object.keys(commissionQuotes).length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <svg 
+                          className="h-6 w-6 text-blue-400" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          viewBox="0 0 24 24">
+                          <path d="M7 6h8a4 4 0 0 1 0 8h-8m0-8v12m0-8h8m-8 4h6" />
+                        </svg>
+                        Commission Summary
+                      </h4>
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        {(() => {
+                          const totalCommission = Object.values(commissionQuotes).reduce((sum, quote) => sum + quote.commissionFee, 0);
+                          const totalOriginalPrice = formData.servicePackages
+                            .filter(pkg => pkg.name.trim() && pkg.description.trim() && pkg.price && commissionQuotes[pkg.id])
+                            .reduce((sum, pkg) => sum + Number(pkg.price), 0);
+                          const totalWithCommission = totalOriginalPrice + totalCommission;
+                          
+                          return (
+                            <div className="text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Total Service Price:</span>
+                                <span>₱{totalOriginalPrice.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Total Commission:</span>
+                                <span>₱{totalCommission.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold text-blue-600 pt-1 border-t border-blue-200">
+                                <span>Total to Client:</span>
+                                <span>₱{totalWithCommission.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )} */}
                 </div>
                 <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
