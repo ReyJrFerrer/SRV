@@ -36,9 +36,7 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
               <span className="font-semibold text-gray-800">
                 {averageRating.toFixed(1)}
               </span>
-              <span className="text-gray-600">
-                ({totalReviews + 1} reviews)
-              </span>
+              <span className="text-gray-600">({totalReviews} reviews)</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
               View All Ratings and Reviews

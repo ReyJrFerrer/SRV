@@ -86,93 +86,116 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`mb-2 flex flex-col gap-2 rounded-lg border p-3 shadow-sm lg:flex-row lg:items-center ${
+      className={`mb-2 flex flex-col gap-3 rounded-lg border p-3 shadow-sm sm:gap-2 lg:flex-row lg:items-center ${
         isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
       }`}
     >
-      <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
-        <div className="flex gap-2">
-          <select
-            value={slot.startHour}
-            onChange={(e) => onSlotChange(slot.id, "startHour", e.target.value)}
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {hourOptions.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
-          </select>
-          <span className="text-gray-400">:</span>
-          <select
-            value={slot.startMinute}
-            onChange={(e) =>
-              onSlotChange(slot.id, "startMinute", e.target.value)
-            }
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {minuteOptions.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-          <select
-            value={slot.startPeriod}
-            onChange={(e) =>
-              onSlotChange(slot.id, "startPeriod", e.target.value)
-            }
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {periodOptions.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+      <div className="flex w-full flex-col gap-3 sm:gap-2 lg:flex-row lg:items-center lg:gap-2">
+        {/* Start Time */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <span className="text-sm font-medium text-gray-600 sm:hidden">
+            Start:
+          </span>
+          <div className="flex gap-1 sm:gap-2">
+            <select
+              value={slot.startHour}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startHour", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {hourOptions.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="flex items-center text-gray-400">:</span>
+            <select
+              value={slot.startMinute}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startMinute", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {minuteOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={slot.startPeriod}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startPeriod", e.target.value)
+              }
+              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {periodOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
         <span className="hidden text-gray-500 lg:inline">to</span>
-        <div className="mt-2 flex gap-2 lg:mt-0">
-          <select
-            value={slot.endHour}
-            onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {hourOptions.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
-          </select>
-          <span className="text-gray-400">:</span>
-          <select
-            value={slot.endMinute}
-            onChange={(e) => onSlotChange(slot.id, "endMinute", e.target.value)}
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {minuteOptions.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-          <select
-            value={slot.endPeriod}
-            onChange={(e) => onSlotChange(slot.id, "endPeriod", e.target.value)}
-            className="rounded-md border-gray-300 bg-white text-sm shadow-sm"
-          >
-            {periodOptions.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+        <span className="text-center text-sm font-medium text-gray-500 sm:hidden">
+          to
+        </span>
+
+        {/* End Time */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <span className="text-sm font-medium text-gray-600 sm:hidden">
+            End:
+          </span>
+          <div className="flex gap-1 sm:gap-2">
+            <select
+              value={slot.endHour}
+              onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {hourOptions.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="flex items-center text-gray-400">:</span>
+            <select
+              value={slot.endMinute}
+              onChange={(e) =>
+                onSlotChange(slot.id, "endMinute", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {minuteOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={slot.endPeriod}
+              onChange={(e) =>
+                onSlotChange(slot.id, "endPeriod", e.target.value)
+              }
+              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {periodOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="self-end rounded-full bg-red-50 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 lg:ml-auto"
+        className="self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 sm:self-end lg:ml-auto"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />
@@ -376,206 +399,254 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
     ["Monday", "Tuesday", "Wednesday", "Thursday"],
     ["Friday", "Saturday", "Sunday"],
   ];
-  // Mobile/Tablet (md and below): Mon-Wed, Thu-Sat, Sun
-  const dayGridMobile: DayOfWeek[][] = [
-    ["Monday", "Tuesday", "Wednesday"],
-    ["Thursday", "Friday", "Saturday"],
-    ["Sunday"],
-  ];
 
   return (
-    <div className="mx-auto max-w-6xl p-4">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+    <div className="mx-auto max-w-6xl p-3 sm:p-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
         {/* Working Days Section */}
-        <section className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
-          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold text-blue-700">
+        <section className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4 shadow-lg sm:p-6 lg:p-8">
+          <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-blue-700 sm:text-2xl">
             <span>Working Days</span>
-            <span className="text-base text-red-500">*</span>
+            <span className="text-sm text-red-500 sm:text-base">*</span>
           </h2>
           <p className="mb-4 text-sm text-gray-500">
             Select the days you are available to provide services.
           </p>
 
-          {/* Centered Preset Checkboxes and Clear All Button */}
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
-            {/* Desktop (lg+) - same size as day buttons */}
-            <div className="hidden lg:flex lg:gap-3">
-              <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isWeekendChecked}
-                  onChange={(e) =>
-                    handlePresetChange(["Saturday", "Sunday"], e.target.checked)
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.2em", height: "1.2em" }}
-                />
-                <span className="px-2 text-base font-medium break-words text-gray-700">
-                  Weekends
-                </span>
-              </label>
-
-              <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isWeekdayChecked}
-                  onChange={(e) =>
-                    handlePresetChange(
-                      ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                      e.target.checked,
-                    )
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.2em", height: "1.2em" }}
-                />
-                <span className="px-2 text-base font-medium break-words text-gray-700">
-                  Weekdays
-                </span>
-              </label>
-
-              <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isEverydayChecked}
-                  onChange={(e) =>
-                    handlePresetChange(allDays, e.target.checked)
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.2em", height: "1.2em" }}
-                />
-                <span className="px-2 text-base font-medium break-words text-gray-700">
-                  Everyday
-                </span>
-              </label>
-
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="flex h-16 w-28 items-center justify-center rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 shadow-sm hover:bg-gray-100"
-              >
-                Clear All
-              </button>
-            </div>
-
-            {/* Mobile/Tablet (md and below) - same size as day buttons */}
-            <div className="flex gap-3 lg:hidden">
-              <label className="flex h-14 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isWeekendChecked}
-                  onChange={(e) =>
-                    handlePresetChange(["Saturday", "Sunday"], e.target.checked)
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.1em", height: "1.1em" }}
-                />
-                <span className="px-2 text-sm font-medium break-words text-gray-700">
-                  Weekends
-                </span>
-              </label>
-
-              <label className="flex h-14 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isWeekdayChecked}
-                  onChange={(e) =>
-                    handlePresetChange(
-                      ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                      e.target.checked,
-                    )
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.1em", height: "1.1em" }}
-                />
-                <span className="px-2 text-sm font-medium break-words text-gray-700">
-                  Weekdays
-                </span>
-              </label>
-
-              <label className="flex h-14 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
-                <input
-                  type="checkbox"
-                  checked={isEverydayChecked}
-                  onChange={(e) =>
-                    handlePresetChange(allDays, e.target.checked)
-                  }
-                  className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                  style={{ width: "1.1em", height: "1.1em" }}
-                />
-                <span className="px-2 text-sm font-medium break-words text-gray-700">
-                  Everyday
-                </span>
-              </label>
-
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="flex h-14 w-24 items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100"
-              >
-                Clear All
-              </button>
-            </div>
-          </div>
-
-          {/* Responsive 2-row (lg+) or 3-row (md and below) grid for days */}
+          {/* Responsive day selection with integrated preset buttons */}
           <div>
-            {/* Desktop (lg+) */}
-            <div className="hidden flex-col gap-3 lg:flex">
-              {dayGridDesktop.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex flex-1 justify-center gap-3">
-                  {row.map((day) => (
+            {/* Mobile View (lg and below) */}
+            <div className="space-y-3 lg:hidden">
+              {/* Row 1: Weekends, Weekdays */}
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isWeekendChecked}
+                    onChange={(e) =>
+                      handlePresetChange(
+                        ["Saturday", "Sunday"],
+                        e.target.checked,
+                      )
+                    }
+                    className="mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.1em", height: "1.1em" }}
+                  />
+                  <span className="text-center text-sm font-medium text-gray-700">
+                    Weekends
+                  </span>
+                </label>
+
+                <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isWeekdayChecked}
+                    onChange={(e) =>
+                      handlePresetChange(
+                        [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                        ],
+                        e.target.checked,
+                      )
+                    }
+                    className="mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.1em", height: "1.1em" }}
+                  />
+                  <span className="text-center text-sm font-medium text-gray-700">
+                    Weekdays
+                  </span>
+                </label>
+              </div>
+
+              {/* Row 2: Everyday */}
+              <div className="grid grid-cols-1">
+                <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isEverydayChecked}
+                    onChange={(e) =>
+                      handlePresetChange(allDays, e.target.checked)
+                    }
+                    className="mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.1em", height: "1.1em" }}
+                  />
+                  <span className="text-center text-sm font-medium text-gray-700">
+                    Everyday
+                  </span>
+                </label>
+              </div>
+
+              {/* Row 3: Monday - Friday */}
+              <div className="grid grid-cols-5 gap-1">
+                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(
+                  (day) => (
                     <label
                       key={day}
-                      className={`flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border px-0 py-0 text-center shadow-sm transition ${
-                        formData.availabilitySchedule.includes(day)
+                      className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-1 text-center shadow-sm transition ${
+                        formData.availabilitySchedule.includes(day as DayOfWeek)
                           ? "border-blue-400 bg-blue-100"
                           : "border-gray-200 bg-white hover:bg-blue-50"
                       }`}
-                      style={{ minWidth: "6rem", minHeight: "4rem" }}
                     >
                       <input
                         type="checkbox"
-                        checked={formData.availabilitySchedule.includes(day)}
-                        onChange={() => handleDayToggle(day)}
-                        className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                        style={{ width: "1.2em", height: "1.2em" }}
+                        checked={formData.availabilitySchedule.includes(
+                          day as DayOfWeek,
+                        )}
+                        onChange={() => handleDayToggle(day as DayOfWeek)}
+                        className="mb-1 rounded text-blue-600 focus:ring-blue-500"
+                        style={{ width: "1.0em", height: "1.0em" }}
                       />
-                      <span className="px-2 text-base font-medium break-words text-gray-700">
-                        {day}
+                      <span className="text-xs font-medium text-gray-700">
+                        {day.slice(0, 3)}
                       </span>
                     </label>
-                  ))}
-                </div>
-              ))}
+                  ),
+                )}
+              </div>
+
+              {/* Row 4: Saturday, Sunday, Clear All */}
+              <div className="grid grid-cols-3 gap-2">
+                {["Saturday", "Sunday"].map((day) => (
+                  <label
+                    key={day}
+                    className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-2 py-2 text-center shadow-sm transition ${
+                      formData.availabilitySchedule.includes(day as DayOfWeek)
+                        ? "border-blue-400 bg-blue-100"
+                        : "border-gray-200 bg-white hover:bg-blue-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.availabilitySchedule.includes(
+                        day as DayOfWeek,
+                      )}
+                      onChange={() => handleDayToggle(day as DayOfWeek)}
+                      className="mb-1 rounded text-blue-600 focus:ring-blue-500"
+                      style={{ width: "1.1em", height: "1.1em" }}
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {day.slice(0, 3)}
+                    </span>
+                  </label>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="flex h-16 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100"
+                >
+                  Clear All
+                </button>
+              </div>
             </div>
-            {/* Mobile/Tablet (md and below) */}
-            <div className="flex flex-col gap-3 lg:hidden">
-              {dayGridMobile.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex flex-1 justify-center gap-3">
-                  {row.map((day) => (
-                    <label
-                      key={day}
-                      className={`flex h-14 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border px-0 py-0 text-center shadow-sm transition ${
-                        formData.availabilitySchedule.includes(day)
-                          ? "border-blue-400 bg-blue-100"
-                          : "border-gray-200 bg-white hover:bg-blue-50"
-                      }`}
-                      style={{ minWidth: "5.5rem", minHeight: "3.5rem" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.availabilitySchedule.includes(day)}
-                        onChange={() => handleDayToggle(day)}
-                        className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
-                        style={{ width: "1.1em", height: "1.1em" }}
-                      />
-                      <span className="px-2 text-sm font-medium break-words text-gray-700">
-                        {day}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ))}
+
+            {/* Desktop View (lg+) */}
+            <div className="hidden lg:block">
+              {/* Preset buttons row */}
+              <div className="mb-4 flex justify-center gap-3">
+                <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isWeekendChecked}
+                    onChange={(e) =>
+                      handlePresetChange(
+                        ["Saturday", "Sunday"],
+                        e.target.checked,
+                      )
+                    }
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.2em", height: "1.2em" }}
+                  />
+                  <span className="px-2 text-base font-medium text-gray-700">
+                    Weekends
+                  </span>
+                </label>
+
+                <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isWeekdayChecked}
+                    onChange={(e) =>
+                      handlePresetChange(
+                        [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                        ],
+                        e.target.checked,
+                      )
+                    }
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.2em", height: "1.2em" }}
+                  />
+                  <span className="px-2 text-base font-medium text-gray-700">
+                    Weekdays
+                  </span>
+                </label>
+
+                <label className="flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm transition hover:bg-blue-100">
+                  <input
+                    type="checkbox"
+                    checked={isEverydayChecked}
+                    onChange={(e) =>
+                      handlePresetChange(allDays, e.target.checked)
+                    }
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    style={{ width: "1.2em", height: "1.2em" }}
+                  />
+                  <span className="px-2 text-base font-medium text-gray-700">
+                    Everyday
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="flex h-16 w-28 items-center justify-center rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 shadow-sm hover:bg-gray-100"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              {/* Days grid for desktop */}
+              <div className="flex flex-col gap-3">
+                {dayGridDesktop.map((row, rowIdx) => (
+                  <div
+                    key={rowIdx}
+                    className="flex flex-1 justify-center gap-3"
+                  >
+                    {row.map((day) => (
+                      <label
+                        key={day}
+                        className={`flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border px-0 py-0 text-center shadow-sm transition ${
+                          formData.availabilitySchedule.includes(day)
+                            ? "border-blue-400 bg-blue-100"
+                            : "border-gray-200 bg-white hover:bg-blue-50"
+                        }`}
+                        style={{ minWidth: "6rem", minHeight: "4rem" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.availabilitySchedule.includes(day)}
+                          onChange={() => handleDayToggle(day)}
+                          className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                          style={{ width: "1.2em", height: "1.2em" }}
+                        />
+                        <span className="px-2 text-base font-medium text-gray-700">
+                          {day}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           {validationErrors.availabilitySchedule && (
@@ -586,11 +657,12 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
         </section>
 
         {/* Working Hours Section */}
-        <section className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
-          <h2 className="mb-2 text-2xl font-bold text-blue-700">
-            Working Hours <span className="text-base text-red-500">*</span>
+        <section className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4 shadow-lg sm:p-6 lg:p-8">
+          <h2 className="mb-2 text-xl font-bold text-blue-700 sm:text-2xl">
+            Working Hours{" "}
+            <span className="text-sm text-red-500 sm:text-base">*</span>
           </h2>
-          <div className="mb-4 flex items-center">
+          <div className="mb-4 flex items-start sm:items-center">
             <input
               type="checkbox"
               id="useSameTimeForAllDays"
@@ -601,11 +673,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   useSameTimeForAllDays: e.target.checked,
                 }))
               }
-              className="rounded text-blue-600 focus:ring-blue-500"
+              className="mt-1 rounded text-blue-600 focus:ring-blue-500 sm:mt-0"
             />
             <label
               htmlFor="useSameTimeForAllDays"
-              className="ml-2 text-base font-medium text-gray-700"
+              className="ml-2 text-sm leading-relaxed font-medium text-gray-700 sm:text-base"
             >
               Use the same working hours for all selected days
             </label>

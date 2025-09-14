@@ -209,24 +209,34 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
           <input
             type="time"
             value={templateTimeSlot.startTime}
-            onChange={(e) =>
+            onChange={(e) => {
+              const newStartTime = e.target.value;
               setTemplateTimeSlot({
                 ...templateTimeSlot,
-                startTime: e.target.value,
-              })
-            }
+                startTime: newStartTime,
+                // If start time equals end time, automatically increment end time by 1 hour
+                endTime:
+                  newStartTime === templateTimeSlot.endTime
+                    ? addHoursToTime(newStartTime, 1)
+                    : templateTimeSlot.endTime,
+              });
+            }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
           <span>-</span>
           <input
             type="time"
             value={templateTimeSlot.endTime}
-            onChange={(e) =>
-              setTemplateTimeSlot({
-                ...templateTimeSlot,
-                endTime: e.target.value,
-              })
-            }
+            onChange={(e) => {
+              const newEndTime = e.target.value;
+              // Prevent setting end time same as start time
+              if (newEndTime !== templateTimeSlot.startTime) {
+                setTemplateTimeSlot({
+                  ...templateTimeSlot,
+                  endTime: newEndTime,
+                });
+              }
+            }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -343,13 +353,24 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       type="time"
                       value={slot.startTime}
                       onChange={(e) => {
+                        const newStartTime = e.target.value;
                         const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots[slotIndex].startTime =
-                          e.target.value;
+                        const dayIndex = weeklySchedule.findIndex(
+                          (d) => d.day === dayEntry.day,
+                        );
+
+                        // Update start time
+                        newSchedule[dayIndex].availability.slots[
+                          slotIndex
+                        ].startTime = newStartTime;
+
+                        // If start time equals end time, automatically increment end time by 1 hour
+                        if (newStartTime === slot.endTime) {
+                          newSchedule[dayIndex].availability.slots[
+                            slotIndex
+                          ].endTime = addHoursToTime(newStartTime, 1);
+                        }
+
                         setWeeklySchedule(newSchedule);
                       }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
@@ -359,14 +380,17 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       type="time"
                       value={slot.endTime}
                       onChange={(e) => {
-                        const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots[slotIndex].endTime =
-                          e.target.value;
-                        setWeeklySchedule(newSchedule);
+                        const newEndTime = e.target.value;
+                        // Prevent setting end time same as start time
+                        if (newEndTime !== slot.startTime) {
+                          const newSchedule = [...weeklySchedule];
+                          newSchedule[
+                            weeklySchedule.findIndex(
+                              (d) => d.day === dayEntry.day,
+                            )
+                          ].availability.slots[slotIndex].endTime = newEndTime;
+                          setWeeklySchedule(newSchedule);
+                        }
                       }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                     />
