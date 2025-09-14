@@ -27,7 +27,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
 }) => {
-  const {balance} = useWallet();
+  const { balance } = useWallet();
 
   const navigate = useNavigate();
 
