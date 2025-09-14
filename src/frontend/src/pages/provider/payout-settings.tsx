@@ -1,0 +1,365 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import {
+  BanknotesIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
+
+const PayoutSettingsPage: React.FC = () => {
+  const { identity } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    gcashNumber: "",
+    gcashName: "",
+    businessName: "",
+    businessType: "INDIVIDUAL",
+    email: "",
+    phoneNumber: "",
+  });
+
+  // Set document title
+  useEffect(() => {
+    document.title = "Payout Settings | SRV";
+  }, []);
+
+  // Initialize form with user data
+  useEffect(() => {
+    if (identity) {
+      setFormData(prev => ({
+        ...prev,
+        email: prev.email || "",
+        phoneNumber: prev.phoneNumber || "",
+      }));
+    }
+  }, [identity]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Format GCash number
+    if (name === "gcashNumber") {
+      // Remove non-digits and limit to 11 characters
+      const cleanValue = value.replace(/\D/g, "").slice(0, 11);
+      setFormData(prev => ({ ...prev, [name]: cleanValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.gcashNumber || !formData.gcashName || !formData.email) {
+      setError("Please fill in all required fields");
+      return false;
+    }
+
+    // Validate GCash number format (should be 11 digits starting with 09)
+    const gcashRegex = /^09\d{9}$/;
+    if (!gcashRegex.test(formData.gcashNumber)) {
+      setError("Invalid GCash number. Must be 11 digits starting with 09");
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!identity) {
+      setError("You must be logged in to set up payout settings");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call Firebase Cloud Function via HTTP
+      const projectId = "devsrv-rey"; // Your Firebase project ID
+      const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
+      
+      const providerId = identity?.getPrincipal().toString();
+      if (!providerId) {
+        throw new Error("Unable to get provider ID");
+      }
+
+      const response = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            providerId: providerId,
+            gcashNumber: formData.gcashNumber,
+            gcashName: formData.gcashName,
+            businessName: formData.businessName || `${formData.gcashName} Services`,
+            businessType: formData.businessType,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber || formData.gcashNumber,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.result?.success) {
+        setSuccess(true);
+        // Optional: Store onboarding status locally
+        localStorage.setItem("provider_onboarded", "true");
+      } else {
+        throw new Error(result.result?.message || result.error || "Failed to set up payout settings");
+      }
+    } catch (err: any) {
+      console.error("Error setting up payout:", err);
+      setError(err.message || "Failed to set up payout settings. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatGCashNumber = (number: string) => {
+    if (number.length <= 4) return number;
+    if (number.length <= 7) return `${number.slice(0, 4)} ${number.slice(4)}`;
+    return `${number.slice(0, 4)} ${number.slice(4, 7)} ${number.slice(7)}`;
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-100">
+        <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+          <div className="flex items-center justify-between px-4">
+            <button
+              onClick={() => navigate("/provider/settings")}
+              className="flex items-center text-blue-600 hover:text-blue-700"
+            >
+              <ArrowLeftIcon className="mr-2 h-5 w-5" />
+              Back to Settings
+            </button>
+            <h1 className="text-xl font-extrabold text-black">Payout Settings</h1>
+            <div className="w-20" /> {/* Spacer */}
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-md p-4">
+          <div className="rounded-2xl border border-green-200 bg-white p-8 shadow-md text-center">
+            <CheckCircleIcon className="mx-auto mb-4 h-16 w-16 text-green-500" />
+            <h2 className="mb-2 text-2xl font-bold text-green-700">
+              Payout Settings Configured!
+            </h2>
+            <p className="mb-6 text-gray-600">
+              Your GCash account has been successfully linked for direct payments.
+              You can now receive payments directly to your GCash wallet.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate("/provider/wallet")}
+                className="w-full rounded-lg bg-blue-600 py-3 text-white font-semibold hover:bg-blue-700 transition-colors"
+              >
+                View Wallet
+              </button>
+              <button
+                onClick={() => navigate("/provider/settings")}
+                className="w-full rounded-lg border border-gray-300 py-3 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Back to Settings
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
+      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <div className="flex items-center justify-between px-4">
+          <button
+            onClick={() => navigate("/provider/settings")}
+            className="flex items-center text-blue-600 hover:text-blue-700"
+          >
+            <ArrowLeftIcon className="mr-2 h-5 w-5" />
+            Back
+          </button>
+          <h1 className="text-xl font-extrabold text-black">Payout Settings</h1>
+          <div className="w-16" /> {/* Spacer */}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-md p-4">
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+          <div className="p-6">
+            <div className="mb-6 text-center">
+              <BanknotesIcon className="mx-auto mb-3 h-12 w-12 text-blue-500" />
+              <h2 className="text-xl font-bold text-blue-900 mb-2">
+                Set Up Direct Payments
+              </h2>
+              <p className="text-sm text-gray-600">
+                Link your GCash account to receive payments directly when clients book your services
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex items-start">
+                <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-red-700">{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* GCash Number */}
+              <div>
+                <label htmlFor="gcashNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  GCash Number *
+                </label>
+                <input
+                  type="tel"
+                  id="gcashNumber"
+                  name="gcashNumber"
+                  value={formatGCashNumber(formData.gcashNumber)}
+                  onChange={handleInputChange}
+                  placeholder="0917 123 4567"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Enter your 11-digit GCash number starting with 09
+                </p>
+              </div>
+
+              {/* GCash Account Name */}
+              <div>
+                <label htmlFor="gcashName" className="block text-sm font-medium text-gray-700 mb-1">
+                  GCash Account Name *
+                </label>
+                <input
+                  type="text"
+                  id="gcashName"
+                  name="gcashName"
+                  value={formData.gcashName}
+                  onChange={handleInputChange}
+                  placeholder="Juan Dela Cruz"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Must match the name on your GCash account
+                </p>
+              </div>
+
+              {/* Business Name */}
+              <div>
+                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="businessName"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleInputChange}
+                  placeholder="Your Service Business Name"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Business Type */}
+              <div>
+                <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Type
+                </label>
+                <select
+                  id="businessType"
+                  name="businessType"
+                  value={formData.businessType}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="INDIVIDUAL">Individual</option>
+                  <option value="CORPORATION">Corporation</option>
+                  <option value="PARTNERSHIP">Partnership</option>
+                </select>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="your.email@example.com"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number (Optional)
+                </label>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder="0917 123 4567"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-blue-600 py-3 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? "Setting up..." : "Set Up Payout Settings"}
+              </button>
+            </form>
+
+            <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3">
+              <p className="text-xs text-blue-700">
+                <strong>Secure & Private:</strong> Your GCash information is encrypted and stored securely. 
+                We use Xendit's secure payment platform to process transactions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default PayoutSettingsPage;

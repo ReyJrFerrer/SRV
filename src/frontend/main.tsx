@@ -80,6 +80,7 @@ import ProviderHelpSupportPage from "./src/pages/provider/help";
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";
+import PayoutSettingsPage from "./src/pages/provider/payout-settings";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -157,6 +158,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route path="profile" element={<ProviderProfilePage />} />
               <Route path="notifications" element={<NotificationsPageSP />} />
               <Route path="wallet" element={<WalletPage />} />
+              <Route path="payout-settings" element={<PayoutSettingsPage />} />
 
               {/* Service Management Routes */}
               <Route path="services" element={<ProviderServices />} />

@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 2.1: Setup Firebase Cloud Functions environment - initialized Firebase Functions with JavaScript runtime, installed required dependencies (xendit-node, firebase-admin), and configured project structure for payment integration cloud functions
 - feature - 2.2: Implemented Xendit Logic in Cloud Functions - created onboardProvider.js for provider sub-account creation with GCash integration, createDirectPayment.js for xenPlatform fee splitting invoices, createTopupInvoice.js for wallet top-up payments, and xenditWebhook.js for handling payment status webhooks with automatic ICP canister synchronization and push notifications
 - feature - 2.3: Connected Booking Canister to Service - added confirm_digital_payment() function to booking.mo that securely accepts payment confirmations from Firebase Cloud Functions, validates digital payment methods (GCash/SRVWallet), updates booking status to Accepted with full payment amount, and provides comprehensive error handling for different booking states
+- feature - 2.4: Frontend Provider Onboarding - created payout-settings.tsx page with secure GCash onboarding form that calls onboardProvider Cloud Function via HTTP, added routing from provider settings page, implemented form validation for GCash number format and required fields, and integrated with AuthContext for provider identity management
 
 ### Changed
 
