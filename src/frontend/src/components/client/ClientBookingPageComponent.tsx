@@ -16,8 +16,8 @@ import phLocations from "../../data/ph_locations.json";
 
 // Payment method selection and input for cash change
 type PaymentSectionProps = {
-  paymentMethod: string;
-  setPaymentMethod: (method: string) => void;
+  paymentMethod: "CashOnHand" | "GCash" | "SRVWallet";
+  setPaymentMethod: (method: "CashOnHand" | "GCash" | "SRVWallet") => void;
   packages: {
     id: string;
     title: string;
@@ -52,9 +52,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
     <div className="space-y-3">
       <div
-        onClick={() => setPaymentMethod("cash")}
+        onClick={() => setPaymentMethod("CashOnHand")}
         className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
-          paymentMethod === "cash"
+          paymentMethod === "CashOnHand"
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300"
         }`}
@@ -63,11 +63,11 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-500" />
           <span className="font-medium text-gray-800">Cash</span>
         </div>
-        {paymentMethod === "cash" && (
+        {paymentMethod === "CashOnHand" && (
           <CheckCircleIcon className="h-6 w-6 text-blue-500" />
         )}
       </div>
-      {paymentMethod === "cash" && packages.some((p) => p.checked) && (
+      {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
         <div className="pt-2 pl-4">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
@@ -90,7 +90,14 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           )}
         </div>
       )}
-      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
+      <div
+        onClick={() => setPaymentMethod("GCash")}
+        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
+          paymentMethod === "GCash"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300"
+        }`}
+      >
         <div className="flex items-center">
           <img
             src="/images/external logo/g-cash-logo.svg"
@@ -99,9 +106,27 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             height={24}
             className="mr-3"
           />
-          <span className="font-medium text-gray-500">GCash</span>
+          <span className="font-medium text-gray-800">GCash</span>
         </div>
-        <span className="text-xs text-gray-400">Soon</span>
+        {paymentMethod === "GCash" && (
+          <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+        )}
+      </div>
+      <div
+        onClick={() => setPaymentMethod("SRVWallet")}
+        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
+          paymentMethod === "SRVWallet"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300"
+        }`}
+      >
+        <div className="flex items-center">
+          <CreditCardIcon className="mr-3 h-6 w-6 text-blue-500" />
+          <span className="font-medium text-gray-800">SRV Wallet</span>
+        </div>
+        {paymentMethod === "SRVWallet" && (
+          <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+        )}
       </div>
       <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
         <div className="flex items-center">
@@ -161,7 +186,7 @@ const ClientBookingPageComponent: React.FC = () => {
   const NOTES_CHAR_LIMIT = 50;
   // --- Payment state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"CashOnHand" | "GCash" | "SRVWallet">("CashOnHand");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   // --- Routing ---
@@ -538,7 +563,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
   // --- Validate payment amount ---
   useEffect(() => {
-    if (paymentMethod === "cash" && packages.some((p: any) => p.checked)) {
+    if (paymentMethod === "CashOnHand" && packages.some((p: any) => p.checked)) {
       const paidAmount = parseFloat(amountPaid);
       if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
         setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
@@ -729,7 +754,7 @@ const ClientBookingPageComponent: React.FC = () => {
       }
 
       // 4. Payment Method (if cash)
-      if (paymentMethod === "cash" && packages.some((pkg) => pkg.checked)) {
+      if (paymentMethod === "CashOnHand" && packages.some((pkg) => pkg.checked)) {
         const paidAmount = parseFloat(amountPaid);
         if (!amountPaid.trim()) {
           setFormError("Please enter the cash amount before proceeding.");
@@ -813,6 +838,7 @@ const ClientBookingPageComponent: React.FC = () => {
         location: finalAddress,
         notes: notes,
         amountToPay: parseFloat(amountPaid),
+        paymentMethod: paymentMethod, // Include the selected payment method
       };
       const booking = await createBookingRequest(bookingData);
       if (booking) {
@@ -831,7 +857,7 @@ const ClientBookingPageComponent: React.FC = () => {
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),
           amountToPay:
-            paymentMethod === "cash"
+            paymentMethod === "CashOnHand"
               ? amountPaid || totalPrice.toFixed(2)
               : totalPrice.toFixed(2),
           landmark: landmark || "None",

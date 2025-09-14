@@ -12,6 +12,7 @@ import type {
   _SERVICE as BookingService,
   Booking as CanisterBooking,
   BookingStatus as CanisterBookingStatus,
+  PaymentMethod as CanisterPaymentMethod,
   Location as CanisterLocation,
   Evidence as CanisterEvidence,
   AvailableSlot as CanisterAvailableSlot,
@@ -83,6 +84,8 @@ export type BookingStatus =
   | "InProgress"
   | "Completed"
   | "Disputed";
+
+export type PaymentMethod = "CashOnHand" | "GCash" | "SRVWallet";
 
 export type DayOfWeek =
   | "Monday"
@@ -190,6 +193,7 @@ export interface Booking {
   location: Location;
   evidence?: Evidence;
   notes?: string;
+  paymentMethod: PaymentMethod;
   createdAt: string;
   updatedAt: string;
   // Additional UI fields
@@ -237,6 +241,30 @@ const convertToCanisterBookingStatus = (
       return { Disputed: null };
     default:
       return { Requested: null };
+  }
+};
+
+const convertCanisterPaymentMethod = (
+  paymentMethod: CanisterPaymentMethod,
+): PaymentMethod => {
+  if ("CashOnHand" in paymentMethod) return "CashOnHand";
+  if ("GCash" in paymentMethod) return "GCash";
+  if ("SRVWallet" in paymentMethod) return "SRVWallet";
+  return "CashOnHand"; // fallback
+};
+
+const convertToCanisterPaymentMethod = (
+  paymentMethod: PaymentMethod,
+): CanisterPaymentMethod => {
+  switch (paymentMethod) {
+    case "CashOnHand":
+      return { CashOnHand: null };
+    case "GCash":
+      return { GCash: null };
+    case "SRVWallet":
+      return { SRVWallet: null };
+    default:
+      return { CashOnHand: null };
   }
 };
 
@@ -390,6 +418,7 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
     ? convertCanisterEvidence(booking.evidence[0])
     : undefined,
   notes: booking.notes[0],
+  paymentMethod: convertCanisterPaymentMethod(booking.paymentMethod),
   createdAt: new Date(Number(booking.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(booking.updatedAt) / 1000000).toISOString(),
 });
@@ -408,6 +437,7 @@ export const bookingCanisterService = {
     servicePackageId?: string,
     notes?: string,
     amountToPay?: number,
+    paymentMethod: PaymentMethod = "CashOnHand",
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
@@ -417,6 +447,7 @@ export const bookingCanisterService = {
         amountToPay !== undefined
           ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
           : [];
+      const canisterPaymentMethod = convertToCanisterPaymentMethod(paymentMethod);
 
       const result = await actor.createBooking(
         serviceId,
@@ -427,6 +458,7 @@ export const bookingCanisterService = {
         servicePackageId ? [servicePackageId] : [],
         notes ? [notes] : [],
         amountToPayOptional,
+        canisterPaymentMethod,
       );
 
       if ("ok" in result) {

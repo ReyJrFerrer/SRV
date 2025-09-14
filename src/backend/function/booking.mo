@@ -19,6 +19,7 @@ persistent actor BookingCanister {
     type Location = Types.Location;
     type Result<T> = Types.Result<T>;
     type ReputationScore = Types.ReputationScore;
+    type PaymentMethod = Types.PaymentMethod;
 
     // State variables
     private var bookingEntries : [(Text, Booking)] = [];
@@ -120,6 +121,7 @@ persistent actor BookingCanister {
             location = existingBooking.location;
             evidence = existingBooking.evidence;
             notes = existingBooking.notes;
+            paymentMethod = existingBooking.paymentMethod;
             createdAt = existingBooking.createdAt;
             updatedAt = Time.now();
         };
@@ -237,7 +239,8 @@ persistent actor BookingCanister {
         requestedDate : Time.Time,
         servicePackageId : ?Text,
         notes : ?Text,
-        amountToPay: ?Nat
+        amountToPay: ?Nat,
+        paymentMethod: PaymentMethod
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -367,6 +370,7 @@ persistent actor BookingCanister {
             location = location;
             evidence = null;
             notes = notes;
+            paymentMethod = paymentMethod;
             createdAt = Time.now();
             updatedAt = Time.now();
         };
@@ -413,8 +417,10 @@ persistent actor BookingCanister {
     
     // Helper function to validate commission balance for cash jobs
     private func validateCommissionBalance(booking : Booking) : async Result<Bool> {
-        // For now, we'll check commission for all bookings since cash vs digital payment
-        // distinction isn't clearly defined yet. This can be refined later.
+        // Only check commission balance for cash payment jobs
+        if (booking.paymentMethod != #CashOnHand) {
+            return #ok(true); // Skip commission validation for non-cash payments
+        };
         
         // Get service information to determine category
         switch (serviceCanisterId) {
@@ -474,6 +480,11 @@ persistent actor BookingCanister {
     
     // Helper function to process commission deduction for completed cash jobs
     private func processCommissionDeduction(booking : Booking) : async Result<Bool> {
+        // Only process commission deduction for cash payment jobs
+        if (booking.paymentMethod != #CashOnHand) {
+            return #ok(true); // Skip commission deduction for non-cash payments
+        };
+        
         // Get service information to determine category
         switch (serviceCanisterId) {
             case (?serviceId) {
@@ -583,6 +594,7 @@ persistent actor BookingCanister {
                             location = updatedBooking.location;
                             evidence = updatedBooking.evidence;
                             notes = updatedBooking.notes;
+                            paymentMethod = updatedBooking.paymentMethod;
                             createdAt = updatedBooking.createdAt;
                             updatedAt = updatedBooking.updatedAt;
                         };
@@ -680,6 +692,7 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
                     createdAt = existingBooking.createdAt;
                     updatedAt = existingBooking.updatedAt;
                 };
@@ -688,24 +701,15 @@ persistent actor BookingCanister {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
                         
-                        // Process commission deduction for cash jobs
-                        switch (amountPaid) {
-                            case (?_) {
-                                // Cash payment received, deduct commission from provider's wallet
-                                switch (await processCommissionDeduction(updatedBooking)) {
-                                    case (#err(msg)) {
-                                        // Log the error but don't fail the booking completion
-                                        // In a production system, you might want to handle this differently
-                                        // For now, we'll continue with the booking completion
-                                    };
-                                    case (#ok(_)) {
-                                        // Commission successfully deducted
-                                    };
-                                };
+                        // Process commission deduction for cash jobs (payment method is checked inside processCommissionDeduction)
+                        switch (await processCommissionDeduction(updatedBooking)) {
+                            case (#err(msg)) {
+                                // Log the error but don't fail the booking completion
+                                // In a production system, you might want to handle this differently
+                                // For now, we'll continue with the booking completion
                             };
-                            case (null) {
-                                // No cash payment, no commission deduction needed
-                                // (This might be a digital payment job)
+                            case (#ok(_)) {
+                                // Commission successfully deducted for cash jobs (or skipped for non-cash)
                             };
                         };
                         
@@ -808,6 +812,7 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = ?newEvidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -848,6 +853,7 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };

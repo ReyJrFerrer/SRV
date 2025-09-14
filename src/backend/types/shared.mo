@@ -204,6 +204,7 @@ module {
         location: Location;
         evidence: ?Evidence;
         notes: ?Text;  // Optional notes from client during booking creation
+        paymentMethod: PaymentMethod; // Payment method chosen by client
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };
@@ -405,6 +406,8 @@ module {
 
     public type PaymentMethod = {
         #CashOnHand;
+        #GCash;
+        #SRVWallet;
     };
 
     public type CommissionFormula = {

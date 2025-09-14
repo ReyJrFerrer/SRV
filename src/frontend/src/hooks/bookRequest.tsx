@@ -32,6 +32,7 @@ export interface BookingRequest {
   concerns?: string;
   notes?: string; // Optional notes for the booking
   amountToPay?: number;
+  paymentMethod: "CashOnHand" | "GCash" | "SRVWallet"; // Payment method chosen by client
 }
 
 export interface UseBookRequestReturn {
@@ -398,6 +399,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           firstPackageId,
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
+          bookingData.paymentMethod, // Pass the payment method to the booking
         );
         //console.log("✅ Booking created successfully:", booking);
         return booking;
@@ -453,6 +455,16 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
     if (!bookingData.location) {
       errors.push("Location is required");
+    }
+
+    if (!bookingData.paymentMethod) {
+      errors.push("Payment method is required");
+    }
+
+    // Validate payment method is one of the allowed values
+    const validPaymentMethods = ["CashOnHand", "GCash", "SRVWallet"];
+    if (bookingData.paymentMethod && !validPaymentMethods.includes(bookingData.paymentMethod)) {
+      errors.push("Invalid payment method selected");
     }
 
     return {

@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 1.3: Integrated commission and wallet canisters with booking system - providers must have sufficient wallet balance before accepting bookings, and commission is automatically deducted from wallet upon cash job completion
 - feature - 1.4: Updating canister configurations in dfx.json by adding commission and wallet
 - feature - 1.5: Creating the walletCanisterService, useWallet, and wallet page.
-- feature - 1.6: Integrated commission calculation into service.mo by adding commissionFee and commissionRate fields to Service and ServicePackage types, updated service creation/update functions to automatically calculate commission based on category and price, and added commission canister reference to setCanisterReferences function
-- feature - 1.7: Updated serviceCanisterService.ts to support commission functionality - added commissionFee and commissionRate fields to Service and ServicePackage interfaces, implemented getCommissionQuote() and getCommissionBreakdown() functions, and added utility functions for commission calculations and price formatting
+- feature - 1.5.1: Integrated commission calculation into service.mo by adding commissionFee and commissionRate fields to Service and ServicePackage types, updated service creation/update functions to automatically calculate commission based on category and price, and added commission canister reference to setCanisterReferences function
+- feature - 1.5.2: Updated serviceCanisterService.ts to support commission functionality - added commissionFee and commissionRate fields to Service and ServicePackage interfaces, implemented getCommissionQuote() and getCommissionBreakdown() functions, and added utility functions for commission calculations and price formatting
+- feature - 1.5.3: Enhanced booking.mo with PaymentMethod support - updated createBooking to include paymentMethod parameter, modified acceptBooking and completeBooking to validate commission balance and deduct commission specifically for cash jobs (#CashOnHand), added support for #GCash and #SRVWallet payment methods
+- feature - 1.5.4: Updated frontend booking system with PaymentMethod support - enhanced bookingCanisterService.ts to include paymentMethod parameter in createBooking function, updated bookRequest.tsx hook to pass payment method in BookingRequest interface, and modified ClientBookingPageComponent.tsx to provide payment method selection with Cash, GCash, and SRV Wallet options
 
 ### Changed
 
