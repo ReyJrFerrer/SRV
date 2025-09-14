@@ -67,7 +67,7 @@ const transformToEnrichedService = (
   // Calculate the lowest price from service packages, fallback to service price
   const getLowestPrice = (): number => {
     if (servicePackages && servicePackages.length > 0) {
-      return Math.min(...servicePackages.map((pkg) => pkg.price));
+      return Math.min(...servicePackages.map((pkg) => pkg.price + pkg.commissionFee));
     }
     return service.price;
   };

@@ -18,7 +18,7 @@ import {
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -34,12 +34,62 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     declineBookingById,
     startBookingById,
     isBookingActionInProgress,
+    checkCommissionValidation,
   } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
   const { userImageUrl, refetch } = useUserImage(
     booking?.clientProfile?.profilePicture?.imageUrl,
   );
+
+  // Commission validation state for cash bookings
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+    hasInsufficientBalance: boolean;
+    commissionValidationMessage?: string;
+    loading: boolean;
+  }>({
+    estimatedCommission: 0,
+    hasInsufficientBalance: false,
+    commissionValidationMessage: "",
+    loading: false,
+  });
+
+  // Check commission validation for cash bookings that can be accepted
+  useEffect(() => {
+    const validateCommission = async () => {
+      if (!booking || 
+          booking.paymentMethod !== "CashOnHand" || 
+          !booking.canAccept) {
+        setCommissionValidation({
+          estimatedCommission: 0,
+          hasInsufficientBalance: false,
+          commissionValidationMessage: "",
+          loading: false,
+        });
+        return;
+      }
+
+      try {
+        setCommissionValidation(prev => ({ ...prev, loading: true }));
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation({
+          ...validation,
+          loading: false,
+        });
+      } catch (error) {
+        setCommissionValidation({
+          estimatedCommission: 0,
+          hasInsufficientBalance: true,
+          commissionValidationMessage: "Error checking commission",
+          loading: false,
+        });
+      }
+    };
+
+    validateCommission();
+  }, [booking, checkCommissionValidation]);
+
   // Refetch provider avatar if changed
   useEffect(() => {
     if (userImageUrl) {
@@ -137,6 +187,22 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Check commission validation for cash bookings before accepting
+    if (booking.paymentMethod === "CashOnHand") {
+      if (commissionValidation.loading) {
+        alert("Please wait while we validate commission requirements.");
+        return;
+      }
+
+      if (commissionValidation.hasInsufficientBalance) {
+        alert(
+          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`
+        );
+        return;
+      }
+    }
+
     const requestedDate = new Date(booking.requestedDate);
     const success = await acceptBookingById(booking.id, requestedDate);
     if (success) {
@@ -303,6 +369,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   </span>
                 </div>
               )}
+                 <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's payment method: {booking.paymentMethod}
+                  </span>
+                </div>
+            
               {duration !== "N/A" && (
                 <div className="flex items-center">
                   <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
@@ -332,12 +405,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 </button>
                 <button
                   onClick={handleAccept}
-                  disabled={isBookingActionInProgress(booking.id, "accept")}
+                  disabled={isBookingActionInProgress(booking.id, "accept") || commissionValidation.hasInsufficientBalance}
                   className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
                 >
                   <CheckCircleIcon className="mr-1 h-4 w-4" />
                   {isBookingActionInProgress(booking.id, "accept")
                     ? "Accepting..."
+                    : commissionValidation.hasInsufficientBalance
+                    ? "Insufficient Balance"
                     : "Accept"}
                 </button>
               </div>
@@ -479,6 +554,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   Duration: {duration}
                 </div>
               )}
+                 <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    Client's payment method: {booking.paymentMethod}
+                  </span>
+                </div>
             </div>
             {notes && (
               <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
@@ -500,16 +581,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     ? "Declining..."
                     : "Decline"}
                 </button>
-                <button
-                  onClick={handleAccept}
-                  disabled={isBookingActionInProgress(booking.id, "accept")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
-                >
-                  <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "accept")
-                    ? "Accepting..."
-                    : "Accept"}
-                </button>
+               <button
+                onClick={handleAccept}
+                disabled={isBookingActionInProgress(booking.id, "accept") || commissionValidation.hasInsufficientBalance}
+                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+              >
+                <CheckCircleIcon className="mr-1 h-4 w-4" />
+                {isBookingActionInProgress(booking.id, "accept")
+                  ? "Accepting..."
+                  : commissionValidation.hasInsufficientBalance
+                  ? "Insufficient Balance"
+                  : "Accept"}
+              </button>
               </div>
             )}
             {(canStart || canComplete || isCompleted) && (

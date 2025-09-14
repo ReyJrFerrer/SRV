@@ -15,6 +15,7 @@ import {
   serviceCanisterService,
 } from "../services/serviceCanisterService";
 import chatCanisterService from "../services/chatCanisterService";
+import { useWallet } from "./useWallet";
 
 // Enhanced Provider Booking interface with client data enrichment and package support
 export interface ProviderEnhancedBooking extends Booking {
@@ -48,6 +49,11 @@ export interface ProviderEnhancedBooking extends Booking {
 
   // Revenue tracking
   estimatedRevenue?: number;
+
+  // Commission and wallet validation
+  estimatedCommission?: number;
+  hasInsufficientBalance?: boolean;
+  commissionValidationMessage?: string;
   actualRevenue?: number;
 
   // Data loading status
@@ -182,6 +188,15 @@ interface ProviderBookingManagementHook {
   // Service helper functions
   getServiceDisplayName: (booking: ProviderEnhancedBooking) => string;
   hasServiceDetails: (booking: ProviderEnhancedBooking) => boolean;
+
+  // Commission and wallet validation functions
+  checkCommissionValidation: (booking: ProviderEnhancedBooking) => Promise<{
+    estimatedCommission: number;
+    hasInsufficientBalance: boolean;
+    commissionValidationMessage?: string;
+  }>;
+  canAcceptCashBooking: (booking: ProviderEnhancedBooking) => Promise<boolean>;
+  getWalletBalance: () => Promise<number>;
 }
 
 export const useProviderBookingManagement =
@@ -239,6 +254,9 @@ export const useProviderBookingManagement =
       () => loadingStates.analytics,
       [loadingStates.analytics],
     );
+
+    // Wallet management for commission validation
+    const { balance: walletBalance, fetchBalance } = useWallet();
 
     // Utility functions for state management
     const setLoadingState = useCallback(
@@ -1250,6 +1268,95 @@ export const useProviderBookingManagement =
       [clearError],
     );
 
+    // Commission and wallet validation functions
+    const checkCommissionValidation = useCallback(
+      async (booking: ProviderEnhancedBooking) => {
+        try {
+          // Only validate for cash payment jobs
+          if (booking.paymentMethod !== "CashOnHand") {
+            return {
+              estimatedCommission: 0,
+              hasInsufficientBalance: false,
+              commissionValidationMessage: "No commission validation needed for digital payments"
+            };
+          }
+
+          // Get service details to determine category
+          const service = serviceDetails.get(booking.serviceId);
+          if (!service || !service.category || !service.category.name) {
+            return {
+              estimatedCommission: 0,
+              hasInsufficientBalance: false,
+              commissionValidationMessage: "Unable to determine service category for commission calculation"
+            };
+          }
+
+          // Calculate commission for the booking
+          const commissionQuote = await serviceCanisterService.getCommissionQuote(
+            service.category.name, 
+            booking.price
+          );
+
+          if (!commissionQuote) {
+            return {
+              estimatedCommission: 0,
+              hasInsufficientBalance: false,
+              commissionValidationMessage: "Unable to calculate commission fee"
+            };
+          }
+
+          const estimatedCommission = commissionQuote.commissionFee;
+          const hasInsufficientBalance = walletBalance < estimatedCommission;
+
+          let commissionValidationMessage = "";
+          if (hasInsufficientBalance) {
+            commissionValidationMessage = `Insufficient wallet balance. Need ₱${estimatedCommission.toFixed(2)} commission fee, but only have ₱${walletBalance.toFixed(2)}.`;
+          } else {
+            commissionValidationMessage = `Estimated commission: ₱${estimatedCommission.toFixed(2)}`;
+          }
+
+          return {
+            estimatedCommission,
+            hasInsufficientBalance,
+            commissionValidationMessage
+          };
+        } catch (error) {
+          //console.error("Commission validation error:", error);
+          return {
+            estimatedCommission: 0,
+            hasInsufficientBalance: true,
+            commissionValidationMessage: "Error checking commission requirements"
+          };
+        }
+      },
+      [serviceDetails, walletBalance]
+    );
+
+    const canAcceptCashBooking = useCallback(
+      async (booking: ProviderEnhancedBooking): Promise<boolean> => {
+        if (booking.paymentMethod !== "CashOnHand") {
+          return true; // No wallet restrictions for digital payments
+        }
+
+        const validation = await checkCommissionValidation(booking);
+        return !validation.hasInsufficientBalance;
+      },
+      [checkCommissionValidation]
+    );
+
+    const getWalletBalance = useCallback(
+      async (): Promise<number> => {
+        try {
+          await fetchBalance();
+          return walletBalance;
+        } catch (error) {
+          //console.error("Error fetching wallet balance:", error);
+          return 0;
+        }
+      },
+      [fetchBalance, walletBalance]
+    );
+
     // Initialize data on mount
     useEffect(() => {
       const initializeData = async () => {
@@ -1462,6 +1569,11 @@ export const useProviderBookingManagement =
       hasPackage,
       getServiceDisplayName,
       hasServiceDetails,
+
+      // Commission and wallet validation functions
+      checkCommissionValidation,
+      canAcceptCashBooking,
+      getWalletBalance,
     };
   };
 

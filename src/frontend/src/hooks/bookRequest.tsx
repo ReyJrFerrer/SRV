@@ -463,7 +463,10 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
     // Validate payment method is one of the allowed values
     const validPaymentMethods = ["CashOnHand", "GCash", "SRVWallet"];
-    if (bookingData.paymentMethod && !validPaymentMethods.includes(bookingData.paymentMethod)) {
+    if (
+      bookingData.paymentMethod &&
+      !validPaymentMethods.includes(bookingData.paymentMethod)
+    ) {
       errors.push("Invalid payment method selected");
     }
 

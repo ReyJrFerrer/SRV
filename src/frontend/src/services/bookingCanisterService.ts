@@ -447,7 +447,8 @@ export const bookingCanisterService = {
         amountToPay !== undefined
           ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
           : [];
-      const canisterPaymentMethod = convertToCanisterPaymentMethod(paymentMethod);
+      const canisterPaymentMethod =
+        convertToCanisterPaymentMethod(paymentMethod);
 
       const result = await actor.createBooking(
         serviceId,

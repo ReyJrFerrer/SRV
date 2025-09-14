@@ -23,6 +23,7 @@ type PaymentSectionProps = {
     title: string;
     description: string;
     price: number;
+    commissionFee?: number;
     checked: boolean;
   }[];
   amountPaid: string;
@@ -164,6 +165,7 @@ const ClientBookingPageComponent: React.FC = () => {
       title: string;
       description: string;
       price: number;
+      commissionFee?: number;
       checked: boolean;
     }[]
   >([]);
@@ -186,7 +188,9 @@ const ClientBookingPageComponent: React.FC = () => {
   const NOTES_CHAR_LIMIT = 50;
   // --- Payment state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"CashOnHand" | "GCash" | "SRVWallet">("CashOnHand");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "CashOnHand" | "GCash" | "SRVWallet"
+  >("CashOnHand");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   // --- Routing ---
@@ -275,6 +279,8 @@ const ClientBookingPageComponent: React.FC = () => {
     createBookingRequest,
     calculateTotalPrice,
   } = useBookRequest();
+
+  console.log(hookPackages);
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
@@ -558,12 +564,15 @@ const ClientBookingPageComponent: React.FC = () => {
   const totalPrice = useMemo(() => {
     return packages
       .filter((p: any) => p.checked)
-      .reduce((sum: number, pkg: any) => sum + pkg.price, 0);
+      .reduce((sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0), 0);
   }, [packages, hookPackages, calculateTotalPrice]);
 
   // --- Validate payment amount ---
   useEffect(() => {
-    if (paymentMethod === "CashOnHand" && packages.some((p: any) => p.checked)) {
+    if (
+      paymentMethod === "CashOnHand" &&
+      packages.some((p: any) => p.checked)
+    ) {
       const paidAmount = parseFloat(amountPaid);
       if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
         setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
@@ -754,7 +763,10 @@ const ClientBookingPageComponent: React.FC = () => {
       }
 
       // 4. Payment Method (if cash)
-      if (paymentMethod === "CashOnHand" && packages.some((pkg) => pkg.checked)) {
+      if (
+        paymentMethod === "CashOnHand" &&
+        packages.some((pkg) => pkg.checked)
+      ) {
         const paidAmount = parseFloat(amountPaid);
         if (!amountPaid.trim()) {
           setFormError("Please enter the cash amount before proceeding.");
@@ -1041,7 +1053,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       </div>
                       <div className="text-base font-bold text-blue-600">
                         ₱
-                        {pkg.price.toLocaleString(undefined, {
+                        {(pkg.price + (pkg.commissionFee || 0)).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

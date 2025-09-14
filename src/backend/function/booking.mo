@@ -322,8 +322,9 @@ persistent actor BookingCanister {
         
         let bookingId = generateId();
         
-        // If a package is specified, get its price
+        // If a package is specified, get its price and validate against provided price
         var finalPrice = price;
+        var packageBasePrice : Nat = 0;
         
         switch (servicePackageId) {
             case (?packageId) {
@@ -331,11 +332,48 @@ persistent actor BookingCanister {
                     case (?serviceCanisterId) {
                         let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
                             getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                            getService : (Text) -> async Types.Result<Types.Service>;
                         };
                         
                         switch (await serviceCanister.getPackage(packageId)) {
                             case (#ok(package)) {
-                                finalPrice := package.price;
+                                packageBasePrice := package.price;
+                                
+                                // Validate price: client always pays package price + commission
+                                // Get service to determine category for commission calculation
+                                switch (await serviceCanister.getService(serviceId)) {
+                                    case (#ok(service)) {
+                                        let categoryName = service.category.name;
+                                        
+                                        // Calculate commission fee
+                                        switch (commissionCanisterId) {
+                                            case (?commissionId) {
+                                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
+                                                    calculate_commission : (Text, Nat) -> async Nat;
+                                                };
+                                                
+                                                let commissionFee = await commissionCanister.calculate_commission(categoryName, package.price);
+                                                let expectedTotalPrice = package.price + commissionFee;
+                                                
+                                                if (price != expectedTotalPrice) {
+                                                    let paymentMethodText = switch (paymentMethod) {
+                                                        case (#CashOnHand) { "cash" };
+                                                        case (#GCash) { "GCash" };
+                                                        case (#SRVWallet) { "SRV Wallet" };
+                                                    };
+                                                    return #err("Price mismatch: expected ₱" # Nat.toText(expectedTotalPrice) # " (₱" # Nat.toText(package.price) # " + ₱" # Nat.toText(commissionFee) # " commission) for " # paymentMethodText # " payment, but received ₱" # Nat.toText(price));
+                                                };
+                                                finalPrice := expectedTotalPrice;
+                                            };
+                                            case (null) {
+                                                return #err("Commission canister reference not set");
+                                            };
+                                        };
+                                    };
+                                    case (#err(msg)) {
+                                        return #err("Failed to get service for commission calculation: " # msg);
+                                    };
+                                };
                             };
                             case (#err(_)) {
                                 // We already validated the package exists earlier, so this shouldn't happen
@@ -350,6 +388,9 @@ persistent actor BookingCanister {
             };
             case (null) {
                 // No package specified, use the provided price
+                // For non-package bookings, we don't validate price against commission
+                // as the price calculation might be handled differently
+                finalPrice := price;
             };
         };
         

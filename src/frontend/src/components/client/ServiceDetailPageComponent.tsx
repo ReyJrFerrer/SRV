@@ -1129,7 +1129,7 @@ const ServiceDetailPage: React.FC = () => {
                   <div className="mt-4 ml-0 flex min-w-[120px] flex-col items-end justify-between md:mt-0 md:ml-6">
                     <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
                       ₱
-                      {Number(pkg.price).toLocaleString(undefined, {
+                      {Number(pkg.price + pkg.commissionFee).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
