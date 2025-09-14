@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots
+
 ## Payment Integration Feature
 
 ### Added

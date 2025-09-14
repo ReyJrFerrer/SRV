@@ -565,6 +565,57 @@ const ClientBookingPageComponent: React.FC = () => {
     setSelectedTime(""); // Clear selected time when switching booking options
     setSlotAvailability({}); // Clear slot availability cache
     setFormError(null);
+
+    // Auto-select next available business day when switching to scheduled
+    if (option === "scheduled" && service) {
+      // First clear the selected date to ensure clean state
+      setSelectedDate(null);
+      
+      // Use setTimeout to ensure the state update is processed before setting new date
+      setTimeout(() => {
+        const nextAvailableDate = findNextAvailableBusinessDay();
+        if (nextAvailableDate) {
+          setSelectedDate(nextAvailableDate);
+        }
+      }, 0);
+    } else if (option === "sameday") {
+      // Clear selected date for same-day booking
+      setSelectedDate(null);
+    }
+  };
+
+  // Helper function to find the next available business day
+  const findNextAvailableBusinessDay = (): Date | null => {
+    if (!service?.weeklySchedule) return null;
+
+    const today = new Date();
+    let currentDate = new Date(today.setDate(today.getDate() + 1)); // Start from tomorrow
+
+    // Check up to 14 days ahead to find an available day
+    for (let i = 0; i < 14; i++) {
+      const dayName = dayIndexToName(currentDate.getDay());
+      const isAvailable = service.weeklySchedule.some(
+        (s) => s.day === dayName && s.availability.isAvailable,
+      );
+
+      if (isAvailable) {
+        // Create adjusted date to avoid timezone issues (similar to handleDateChange)
+        return new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          12,
+          0,
+          0,
+          0,
+        );
+      }
+
+      // Move to next day
+      currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+    }
+
+    return null; // No available day found within 14 days
   };
   // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
@@ -579,21 +630,6 @@ const ClientBookingPageComponent: React.FC = () => {
         0,
         0,
       );
-      // //console.log("DatePicker selected:", {
-      //   original: date.toISOString(),
-      //   originalDay: date.getDay(),
-      //   adjusted: adjustedDate.toISOString(),
-      //   adjustedDay: adjustedDate.getDay(),
-      //   dayName: [
-      //     "Sunday",
-      //     "Monday",
-      //     "Tuesday",
-      //     "Wednesday",
-      //     "Thursday",
-      //     "Friday",
-      //     "Saturday",
-      //   ][adjustedDate.getDay()],
-      // });
       setSelectedDate(adjustedDate);
     } else {
       setSelectedDate(null);
