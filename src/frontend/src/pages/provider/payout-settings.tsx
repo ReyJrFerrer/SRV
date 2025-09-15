@@ -49,6 +49,25 @@ const PayoutSettingsPage: React.FC = () => {
       // Remove non-digits and limit to 11 characters
       const cleanValue = value.replace(/\D/g, "").slice(0, 11);
       setFormData(prev => ({ ...prev, [name]: cleanValue }));
+    } else if (name === "phoneNumber") {
+      // Format phone number with +63 prefix
+      let cleanValue = value.replace(/\D/g, "");
+      
+      // If user starts typing without +63, add it automatically
+      if (cleanValue.length > 0 && !cleanValue.startsWith("63")) {
+        // If they start with 09, replace with 639
+        if (cleanValue.startsWith("09")) {
+          cleanValue = "63" + cleanValue.slice(1);
+        } else if (cleanValue.startsWith("9")) {
+          cleanValue = "63" + cleanValue;
+        } else {
+          cleanValue = "63" + cleanValue;
+        }
+      }
+      
+      // Limit to 12 digits (63 + 10 digits)
+      cleanValue = cleanValue.slice(0, 12);
+      setFormData(prev => ({ ...prev, [name]: cleanValue }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -96,7 +115,8 @@ const PayoutSettingsPage: React.FC = () => {
     try {
       // Call Firebase Cloud Function via HTTP
       const projectId = "devsrv-rey"; // Your Firebase project ID
-      const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
+    //   const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
+      const functionUrl = `http://127.0.0.1:5001/${projectId}/us-central1/onboardProvider`;
       
       const providerId = identity?.getPrincipal().toString();
       if (!providerId) {
@@ -116,7 +136,7 @@ const PayoutSettingsPage: React.FC = () => {
             businessName: formData.businessName || `${formData.gcashName} Services`,
             businessType: formData.businessType,
             email: formData.email,
-            phoneNumber: formData.phoneNumber || formData.gcashNumber,
+            phoneNumber: formData.phoneNumber ? `+${formData.phoneNumber}` : `+63${formData.gcashNumber.slice(1)}`,
           }
         }),
       });
@@ -146,6 +166,16 @@ const PayoutSettingsPage: React.FC = () => {
     if (number.length <= 4) return number;
     if (number.length <= 7) return `${number.slice(0, 4)} ${number.slice(4)}`;
     return `${number.slice(0, 4)} ${number.slice(4, 7)} ${number.slice(7)}`;
+  };
+
+  const formatPhoneNumber = (number: string) => {
+    if (!number) return "";
+    
+    // Add +63 prefix for display
+    if (number.length <= 2) return `+${number}`;
+    if (number.length <= 5) return `+${number.slice(0, 2)} ${number.slice(2)}`;
+    if (number.length <= 8) return `+${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5)}`;
+    return `+${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5, 8)} ${number.slice(8)}`;
   };
 
   if (success) {
@@ -332,11 +362,14 @@ const PayoutSettingsPage: React.FC = () => {
                   type="tel"
                   id="phoneNumber"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
+                  value={formatPhoneNumber(formData.phoneNumber)}
                   onChange={handleInputChange}
-                  placeholder="0917 123 4567"
+                  placeholder="+63 917 123 4567"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Philippines mobile number with +63 prefix
+                </p>
               </div>
 
               {/* Submit Button */}
