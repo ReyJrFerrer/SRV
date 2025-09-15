@@ -9,7 +9,7 @@ try {
   const secretKey =
     (config.xendit && config.xendit.secret_key) ||
     process.env.XENDIT_SECRET_KEY;
-  
+
   if (!secretKey) {
     console.warn("Xendit secret key not found in config or environment");
     xendit = null;
@@ -34,47 +34,45 @@ if (!admin.apps.length) {
  * Generates a Xendit Invoice to collect payment from client
  * When paid, will trigger payout to provider's GCash
  */
-exports.createDirectPayment = functions.https.onCall(async (data, context) => {
+exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
   try {
-    // Verify user is authenticated
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated to create payment",
-      );
+    // Only accept POST requests
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
     }
+
+    // Enable CORS for local development
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, POST");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+      return res.status(200).end();
+    }
+
+    const data = req.body.data || req.body;
 
     const {
       bookingId,
       providerId,
       clientId,
       amount,
-      description,
-      commissionAmount,
+      serviceTitle,
+      category,
       paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"],
     } = data;
 
     // Validate required fields
-    if (
-      !bookingId ||
-      !providerId ||
-      !clientId ||
-      !amount ||
-      !commissionAmount
-    ) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Missing required fields: bookingId, providerId, clientId, " +
-          "amount, commissionAmount",
-      );
+    if (!bookingId || !providerId || !clientId || !amount) {
+      return res.status(400).json({
+        error: "Missing required fields: bookingId, providerId, clientId, amount",
+      });
     }
 
     // Check if Xendit client is initialized
     if (!xendit) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Xendit client not initialized",
-      );
+      return res.status(500).json({
+        error: "Xendit client not initialized",
+      });
     }
 
     // Get provider's onboarding info from Firestore
@@ -87,26 +85,23 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
         .get();
 
       if (!providerDoc.exists) {
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Provider not found or not onboarded for payments",
-        );
+        return res.status(404).json({
+          error: "Provider not found or not onboarded for payments",
+        });
       }
 
       providerData = providerDoc.data();
 
       if (!providerData.xenditCustomerId || !providerData.payoutInfo) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Provider not properly onboarded for payments",
-        );
+        return res.status(400).json({
+          error: "Provider not properly onboarded for direct payments",
+        });
       }
     } catch (firestoreError) {
       console.error("Error fetching provider data:", firestoreError);
-      throw new functions.https.HttpsError(
-        "internal",
-        "Failed to fetch provider data",
-      );
+      return res.status(500).json({
+        error: "Failed to fetch provider data",
+      });
     }
 
     // Get client info if available
@@ -124,7 +119,10 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
       clientData = {};
     }
 
-    // Calculate net amount for provider (total amount - commission)
+    // Calculate commission and net amount for provider
+    // This should ideally come from the commission canister
+    const commissionRate = category === "Cleaning" ? 0.035 : 0.05; // 3.5% or 5%
+    const commissionAmount = Math.round(amount * commissionRate);
     const providerAmount = amount - commissionAmount;
 
     // Create invoice to collect payment from client
@@ -132,7 +130,7 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
     const invoiceData = {
       externalId: `booking-${bookingId}-${Date.now()}`,
       amount: amount,
-      description: description || `Payment for booking ${bookingId}`,
+      description: serviceTitle || `Payment for booking ${bookingId}`,
       invoiceDuration: 86400, // 24 hours expiry for booking payments
       currency: "PHP",
       reminderTime: 1,
@@ -150,55 +148,67 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
         invoiceExpired: ["whatsapp", "sms"],
       },
       paymentMethods: paymentMethods,
+      fees: [
+        {
+          type: "SRV_COMMISSION",
+          value: commissionAmount,
+        },
+      ],
       metadata: {
         bookingId: bookingId,
         providerId: providerId,
         clientId: clientId,
-        commissionAmount: commissionAmount.toString(),
-        providerAmount: providerAmount.toString(),
-        paymentType: "DIRECT_PAYMENT",
-        providerGcash: providerData.payoutInfo.gcashNumber,
-        providerName: providerData.payoutInfo.accountHolderName,
+        providerAmount: providerAmount,
+        commissionAmount: commissionAmount,
+        serviceTitle: serviceTitle,
+        category: category,
+        payoutInfo: {
+          xenditCustomerId: providerData.xenditCustomerId,
+          gcashNumber: providerData.payoutInfo.gcashNumber,
+          accountHolderName: providerData.payoutInfo.accountHolderName,
+        },
       },
     };
 
     console.log("Creating Xendit invoice with data:", invoiceData);
     let invoice;
     try {
-      invoice = await Invoice.createInvoice({ data: invoiceData });
-      console.log("Xendit invoice created:", invoice);
+      invoice = await Invoice.createInvoice({
+        data: invoiceData,
+      });
+      console.log("Xendit invoice created:", invoice.id);
     } catch (xenditError) {
       console.error("Xendit invoice creation error:", xenditError);
       console.error(
         "Error response:",
         xenditError.response && xenditError.response.data,
       );
-      console.error("Error details:", JSON.stringify(xenditError, null, 2));
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        `Failed to create Xendit invoice: ${xenditError.message}`,
-      );
+      return res.status(500).json({
+        error: "Failed to create payment invoice",
+        details: xenditError.message,
+        validation_errors:
+          (xenditError.response &&
+            xenditError.response.data &&
+            xenditError.response.data.errors) ||
+          [],
+      });
     }
 
-    // Store payment record in Firestore
-    const paymentRecord = {
+    // Store payment data in Firestore for tracking
+    const paymentData = {
       bookingId,
       providerId,
       clientId,
       invoiceId: invoice.id,
-      externalId: invoice.externalId,
-      amount,
-      commissionAmount,
-      providerAmount,
+      externalId: invoiceData.externalId,
+      amount: amount,
+      providerAmount: providerAmount,
+      commissionAmount: commissionAmount,
       status: "PENDING",
-      paymentUrl: invoice.invoiceUrl,
-      expiryDate: new Date(invoice.expiryDate),
       createdAt: new Date().toISOString(),
-      paymentType: "DIRECT_PAYMENT",
-      providerPayoutInfo: {
-        gcashNumber: providerData.payoutInfo.gcashNumber,
-        accountHolderName: providerData.payoutInfo.accountHolderName,
-        channelCode: providerData.payoutInfo.channelCode,
+      xenditData: {
+        invoiceUrl: invoice.invoiceUrl,
+        expiryDate: invoice.expiryDate,
       },
     };
 
@@ -207,45 +217,34 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
         .firestore()
         .collection("payments")
         .doc(invoice.id)
-        .set(paymentRecord);
-
-      // Update booking with payment info
-      await admin.firestore().collection("bookings").doc(bookingId).update({
-        paymentInvoiceId: invoice.id,
-        paymentUrl: invoice.invoiceUrl,
-        paymentStatus: "PENDING",
-        updatedAt: new Date().toISOString(),
-      });
-
-      console.log("Payment record saved to Firestore successfully");
+        .set(paymentData);
+      console.log("Payment data saved to Firestore successfully");
     } catch (firestoreError) {
-      console.error("Error saving to Firestore:", firestoreError);
+      console.error("Error saving payment to Firestore:", firestoreError);
       // Continue with success response even if Firestore fails
-      // since the Xendit invoice was created successfully
+      // since the invoice was created successfully
     }
 
-    // Log successful payment creation
+    // Log successful invoice creation
     console.log(
-      `Direct payment created for booking ${bookingId}: ${invoice.id}`,
+      `Invoice ${invoice.id} created for booking ${bookingId}, amount: ₱${amount}`,
     );
 
-    return {
-      success: true,
-      invoiceId: invoice.id,
-      paymentUrl: invoice.invoiceUrl,
-      expiryDate: invoice.expiryDate,
-      amount: amount,
-      commissionAmount: commissionAmount,
-      providerAmount: providerAmount,
-      message: "Payment invoice created successfully",
-    };
+    return res.status(200).json({
+      result: {
+        success: true,
+        invoiceId: invoice.id,
+        invoiceUrl: invoice.invoiceUrl,
+        externalId: invoiceData.externalId,
+        amount: amount,
+        providerAmount: providerAmount,
+        commissionAmount: commissionAmount,
+        expiryDate: invoice.expiryDate,
+        paymentMethods: paymentMethods,
+      },
+    });
   } catch (error) {
     console.error("Error creating direct payment:", error);
-
-    // Re-throw Firebase HTTP errors
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    }
 
     // Handle Xendit API errors
     if (
@@ -253,16 +252,20 @@ exports.createDirectPayment = functions.https.onCall(async (data, context) => {
       error.response.data &&
       error.response.data.error_code
     ) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        `Xendit error: ${error.response.data.message}`,
-      );
+      return res.status(400).json({
+        result: {
+          success: false,
+          error: `Xendit error: ${error.response.data.message}`,
+        },
+      });
     }
 
     // Handle other errors
-    throw new functions.https.HttpsError(
-      "internal",
-      `Failed to create direct payment: ${error.message}`,
-    );
+    return res.status(500).json({
+      result: {
+        success: false,
+        error: `Failed to create direct payment: ${error.message}`,
+      },
+    });
   }
 });
