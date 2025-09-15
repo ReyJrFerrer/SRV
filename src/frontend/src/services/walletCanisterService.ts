@@ -160,12 +160,12 @@ export const walletCanisterService = {
   async creditWallet(principal: Principal, amount: number): Promise<string> {
     try {
       const actor = getWalletActor(true); // Requires authentication
-      
+
       // Convert amount to bigint (assuming the amount is in the smallest unit)
       const amountBigInt = BigInt(Math.round(amount * 100)); // Convert to centavos
-      
+
       const result = await actor.credit(principal, amountBigInt);
-      
+
       if ("ok" in result) {
         return result.ok.toString();
       } else {

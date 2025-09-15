@@ -46,8 +46,8 @@ const WalletPage: React.FC = () => {
 
   // Track active invoices for payment completion checking
   const [activeInvoices, setActiveInvoices] = useState<Set<string>>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('activeTopupInvoices');
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("activeTopupInvoices");
       return stored ? new Set(JSON.parse(stored)) : new Set();
     }
     return new Set();
@@ -55,8 +55,11 @@ const WalletPage: React.FC = () => {
 
   // Persist active invoices to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('activeTopupInvoices', JSON.stringify([...activeInvoices]));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "activeTopupInvoices",
+        JSON.stringify([...activeInvoices]),
+      );
     }
   }, [activeInvoices]);
 
@@ -96,7 +99,9 @@ const WalletPage: React.FC = () => {
   const checkAndCreditCompletedPayments = async () => {
     if (!identity || activeInvoices.size === 0) return;
 
-    console.log(`🔍 Checking ${activeInvoices.size} active invoices for completion`);
+    console.log(
+      `🔍 Checking ${activeInvoices.size} active invoices for completion`,
+    );
     const completedInvoices = new Set<string>();
 
     for (const invoiceId of activeInvoices) {
@@ -104,20 +109,29 @@ const WalletPage: React.FC = () => {
         console.log(`📋 Checking invoice status: ${invoiceId}`);
         const statusResponse = await checkInvoiceStatus(invoiceId);
         console.log(`📋 Invoice ${invoiceId} status:`, statusResponse);
-        
+
         if (statusResponse.success) {
-          if (statusResponse.status === "PAID" || statusResponse.status === "SETTLED") {
+          if (
+            statusResponse.status === "PAID" ||
+            statusResponse.status === "SETTLED"
+          ) {
             // Payment completed, credit the wallet
-            const principal = Principal.fromText(identity.getPrincipal().toString());
+            const principal = Principal.fromText(
+              identity.getPrincipal().toString(),
+            );
             const amount = statusResponse.paidAmount || 0;
-            
+
             console.log(`💰 Payment completed! Amount to credit: ₱${amount}`);
-            
+
             if (amount > 0) {
               try {
-                console.log(`💳 Crediting wallet for principal: ${principal.toString()}`);
+                console.log(
+                  `💳 Crediting wallet for principal: ${principal.toString()}`,
+                );
                 await creditWallet(principal, amount);
-                toast.success(`Wallet credited with ₱${amount.toLocaleString()}`);
+                toast.success(
+                  `Wallet credited with ₱${amount.toLocaleString()}`,
+                );
                 completedInvoices.add(invoiceId);
                 console.log(`✅ Successfully credited wallet with ₱${amount}`);
               } catch (creditError) {
@@ -130,13 +144,20 @@ const WalletPage: React.FC = () => {
           } else if (statusResponse.status === "EXPIRED") {
             // Invoice expired, remove from tracking
             completedInvoices.add(invoiceId);
-            toast.warning("A top-up payment has expired. Please create a new top-up if needed.");
+            toast.warning(
+              "A top-up payment has expired. Please create a new top-up if needed.",
+            );
             console.log(`🕐 Invoice ${invoiceId} expired`);
           } else {
-            console.log(`⏳ Invoice ${invoiceId} still pending: ${statusResponse.status}`);
+            console.log(
+              `⏳ Invoice ${invoiceId} still pending: ${statusResponse.status}`,
+            );
           }
         } else {
-          console.error(`❌ Failed to get status for invoice ${invoiceId}:`, statusResponse.error);
+          console.error(
+            `❌ Failed to get status for invoice ${invoiceId}:`,
+            statusResponse.error,
+          );
         }
       } catch (error) {
         console.error(`❌ Error checking invoice ${invoiceId}:`, error);
@@ -145,9 +166,9 @@ const WalletPage: React.FC = () => {
 
     // Remove completed/expired invoices from tracking
     if (completedInvoices.size > 0) {
-      setActiveInvoices(prev => {
+      setActiveInvoices((prev) => {
         const newSet = new Set(prev);
-        completedInvoices.forEach(id => newSet.delete(id));
+        completedInvoices.forEach((id) => newSet.delete(id));
         return newSet;
       });
     }
@@ -183,15 +204,17 @@ const WalletPage: React.FC = () => {
       if (response.success && response.invoiceUrl) {
         // Extract invoice ID from the response
         const invoiceId = response.invoiceId;
-        
+
         if (invoiceId) {
           // Add to active invoices for payment monitoring
-          setActiveInvoices(prev => new Set(prev).add(invoiceId));
-          toast.success("Redirecting to payment. We'll credit your wallet automatically when payment is completed.");
+          setActiveInvoices((prev) => new Set(prev).add(invoiceId));
+          toast.success(
+            "Redirecting to payment. We'll credit your wallet automatically when payment is completed.",
+          );
         } else {
           toast.success("Redirecting to payment...");
         }
-        
+
         // Open payment URL in new tab/window
         window.open(response.invoiceUrl, "_blank");
         setShowTopUpModal(false);
@@ -215,7 +238,7 @@ const WalletPage: React.FC = () => {
     try {
       // Check for any completed payments first
       await checkAndCreditCompletedPayments();
-      
+
       // Then refresh wallet data
       await refreshWalletData();
       toast.success("Wallet data refreshed");
@@ -223,9 +246,6 @@ const WalletPage: React.FC = () => {
       toast.error("Failed to refresh wallet data");
     }
   };
-
-
-
 
   const formatTransactionDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -350,10 +370,12 @@ const WalletPage: React.FC = () => {
               <ClockIcon className="mt-0.5 h-5 w-5 text-blue-600" />
               <div className="text-sm">
                 <p className="font-medium text-blue-800">
-                  Monitoring {activeInvoices.size} payment{activeInvoices.size > 1 ? 's' : ''}
+                  Monitoring {activeInvoices.size} payment
+                  {activeInvoices.size > 1 ? "s" : ""}
                 </p>
                 <p className="mt-1 text-blue-700">
-                  We're checking for payment completion and will automatically credit your wallet.
+                  We're checking for payment completion and will automatically
+                  credit your wallet.
                 </p>
               </div>
             </div>

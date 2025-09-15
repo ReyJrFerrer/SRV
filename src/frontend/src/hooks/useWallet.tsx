@@ -148,7 +148,10 @@ export const useWallet = () => {
         setTransferLoading(true);
         setError(null);
 
-        const result = await walletCanisterService.creditWallet(principal, amount);
+        const result = await walletCanisterService.creditWallet(
+          principal,
+          amount,
+        );
 
         // Refresh balance and transactions after successful credit
         await Promise.all([fetchBalance(), fetchTransactions()]);

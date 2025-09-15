@@ -153,13 +153,12 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
       });
     }
 
-
     return res.status(200).json({
       success: true,
       status: invoice.status,
       invoiceId: invoiceId,
       amount: invoice.amount,
-      paidAmount: invoice.paidAmount || invoice.amount, 
+      paidAmount: invoice.paidAmount || invoice.amount,
       expiryDate: invoice.expiryDate,
       paidAt: invoice.paidAt,
       source: "xendit_api",

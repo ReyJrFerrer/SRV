@@ -20,3 +20,6 @@ dist/
 
 # environment variables
 .env
+
+firebase-debug.log
+firestore-debug.log
