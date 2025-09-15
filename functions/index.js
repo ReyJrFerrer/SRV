@@ -5,19 +5,21 @@
  * including Xendit integration for digital payments and wallet top-ups.
  */
 
-const {setGlobalOptions} = require("firebase-functions");
+const { setGlobalOptions } = require("firebase-functions");
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 // Import and export all payment-related functions
-const {onboardProvider} = require("./onboardProvider");
-const {createDirectPayment} = require("./createDirectPayment");
-const {createTopupInvoice} = require("./createTopupInvoice");
-const {xenditWebhook} = require("./xenditWebhook");
+const { onboardProvider } = require("./onboardProvider");
+const { createDirectPayment } = require("./createDirectPayment");
+const { createTopupInvoice } = require("./createTopupInvoice");
+const { xenditWebhook } = require("./xenditWebhook");
+const { checkProviderOnboarding } = require("./checkProviderOnboarding");
 
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
 exports.createTopupInvoice = createTopupInvoice;
 exports.xenditWebhook = xenditWebhook;
+exports.checkProviderOnboarding = checkProviderOnboarding;

@@ -14,7 +14,7 @@ const PayoutSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Form state
   const [formData, setFormData] = useState({
     gcashNumber: "",
@@ -33,7 +33,7 @@ const PayoutSettingsPage: React.FC = () => {
   // Initialize form with user data
   useEffect(() => {
     if (identity) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         email: prev.email || "",
         phoneNumber: prev.phoneNumber || "",
@@ -41,18 +41,20 @@ const PayoutSettingsPage: React.FC = () => {
     }
   }, [identity]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
-    
+
     // Format GCash number
     if (name === "gcashNumber") {
       // Remove non-digits and limit to 11 characters
       const cleanValue = value.replace(/\D/g, "").slice(0, 11);
-      setFormData(prev => ({ ...prev, [name]: cleanValue }));
+      setFormData((prev) => ({ ...prev, [name]: cleanValue }));
     } else if (name === "phoneNumber") {
       // Format phone number with +63 prefix
       let cleanValue = value.replace(/\D/g, "");
-      
+
       // If user starts typing without +63, add it automatically
       if (cleanValue.length > 0 && !cleanValue.startsWith("63")) {
         // If they start with 09, replace with 639
@@ -64,12 +66,12 @@ const PayoutSettingsPage: React.FC = () => {
           cleanValue = "63" + cleanValue;
         }
       }
-      
+
       // Limit to 12 digits (63 + 10 digits)
       cleanValue = cleanValue.slice(0, 12);
-      setFormData(prev => ({ ...prev, [name]: cleanValue }));
+      setFormData((prev) => ({ ...prev, [name]: cleanValue }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -115,9 +117,9 @@ const PayoutSettingsPage: React.FC = () => {
     try {
       // Call Firebase Cloud Function via HTTP
       const projectId = "devsrv-rey"; // Your Firebase project ID
-    //   const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
+      //   const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
       const functionUrl = `http://127.0.0.1:5001/${projectId}/us-central1/onboardProvider`;
-      
+
       const providerId = identity?.getPrincipal().toString();
       if (!providerId) {
         throw new Error("Unable to get provider ID");
@@ -133,11 +135,14 @@ const PayoutSettingsPage: React.FC = () => {
             providerId: providerId,
             gcashNumber: formData.gcashNumber,
             gcashName: formData.gcashName,
-            businessName: formData.businessName || `${formData.gcashName} Services`,
+            businessName:
+              formData.businessName || `${formData.gcashName} Services`,
             businessType: formData.businessType,
             email: formData.email,
-            phoneNumber: formData.phoneNumber ? `+${formData.phoneNumber}` : `+63${formData.gcashNumber.slice(1)}`,
-          }
+            phoneNumber: formData.phoneNumber
+              ? `+${formData.phoneNumber}`
+              : `+63${formData.gcashNumber.slice(1)}`,
+          },
         }),
       });
 
@@ -146,17 +151,23 @@ const PayoutSettingsPage: React.FC = () => {
       }
 
       const result = await response.json();
-      
+
       if (result.result?.success) {
         setSuccess(true);
         // Optional: Store onboarding status locally
         localStorage.setItem("provider_onboarded", "true");
       } else {
-        throw new Error(result.result?.message || result.error || "Failed to set up payout settings");
+        throw new Error(
+          result.result?.message ||
+            result.error ||
+            "Failed to set up payout settings",
+        );
       }
     } catch (err: any) {
       console.error("Error setting up payout:", err);
-      setError(err.message || "Failed to set up payout settings. Please try again.");
+      setError(
+        err.message || "Failed to set up payout settings. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -170,11 +181,12 @@ const PayoutSettingsPage: React.FC = () => {
 
   const formatPhoneNumber = (number: string) => {
     if (!number) return "";
-    
+
     // Add +63 prefix for display
     if (number.length <= 2) return `+${number}`;
     if (number.length <= 5) return `+${number.slice(0, 2)} ${number.slice(2)}`;
-    if (number.length <= 8) return `+${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5)}`;
+    if (number.length <= 8)
+      return `+${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5)}`;
     return `+${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5, 8)} ${number.slice(8)}`;
   };
 
@@ -190,31 +202,34 @@ const PayoutSettingsPage: React.FC = () => {
               <ArrowLeftIcon className="mr-2 h-5 w-5" />
               Back to Settings
             </button>
-            <h1 className="text-xl font-extrabold text-black">Payout Settings</h1>
+            <h1 className="text-xl font-extrabold text-black">
+              Payout Settings
+            </h1>
             <div className="w-20" /> {/* Spacer */}
           </div>
         </header>
 
         <main className="mx-auto max-w-md p-4">
-          <div className="rounded-2xl border border-green-200 bg-white p-8 shadow-md text-center">
+          <div className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-md">
             <CheckCircleIcon className="mx-auto mb-4 h-16 w-16 text-green-500" />
             <h2 className="mb-2 text-2xl font-bold text-green-700">
               Payout Settings Configured!
             </h2>
             <p className="mb-6 text-gray-600">
-              Your GCash account has been successfully linked for direct payments.
-              You can now receive payments directly to your GCash wallet.
+              Your GCash account has been successfully linked for direct
+              payments. You can now receive payments directly to your GCash
+              wallet.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => navigate("/provider/wallet")}
-                className="w-full rounded-lg bg-blue-600 py-3 text-white font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
               >
                 View Wallet
               </button>
               <button
                 onClick={() => navigate("/provider/settings")}
-                className="w-full rounded-lg border border-gray-300 py-3 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                className="w-full rounded-lg border border-gray-300 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 Back to Settings
               </button>
@@ -246,17 +261,18 @@ const PayoutSettingsPage: React.FC = () => {
           <div className="p-6">
             <div className="mb-6 text-center">
               <BanknotesIcon className="mx-auto mb-3 h-12 w-12 text-blue-500" />
-              <h2 className="text-xl font-bold text-blue-900 mb-2">
+              <h2 className="mb-2 text-xl font-bold text-blue-900">
                 Set Up Direct Payments
               </h2>
               <p className="text-sm text-gray-600">
-                Link your GCash account to receive payments directly when clients book your services
+                Link your GCash account to receive payments directly when
+                clients book your services
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex items-start">
-                <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="mb-4 flex items-start rounded-lg border border-red-200 bg-red-50 p-3">
+                <ExclamationTriangleIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-red-500" />
                 <span className="text-sm text-red-700">{error}</span>
               </div>
             )}
@@ -264,7 +280,10 @@ const PayoutSettingsPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* GCash Number */}
               <div>
-                <label htmlFor="gcashNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="gcashNumber"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   GCash Number *
                 </label>
                 <input
@@ -274,7 +293,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formatGCashNumber(formData.gcashNumber)}
                   onChange={handleInputChange}
                   placeholder="0917 123 4567"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -284,7 +303,10 @@ const PayoutSettingsPage: React.FC = () => {
 
               {/* GCash Account Name */}
               <div>
-                <label htmlFor="gcashName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="gcashName"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   GCash Account Name *
                 </label>
                 <input
@@ -294,7 +316,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.gcashName}
                   onChange={handleInputChange}
                   placeholder="Juan Dela Cruz"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -304,7 +326,10 @@ const PayoutSettingsPage: React.FC = () => {
 
               {/* Business Name */}
               <div>
-                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="businessName"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Business Name (Optional)
                 </label>
                 <input
@@ -314,13 +339,16 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.businessName}
                   onChange={handleInputChange}
                   placeholder="Your Service Business Name"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               {/* Business Type */}
               <div>
-                <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="businessType"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Business Type
                 </label>
                 <select
@@ -328,7 +356,7 @@ const PayoutSettingsPage: React.FC = () => {
                   name="businessType"
                   value={formData.businessType}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="INDIVIDUAL">Individual</option>
                   <option value="CORPORATION">Corporation</option>
@@ -338,7 +366,10 @@ const PayoutSettingsPage: React.FC = () => {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Email Address *
                 </label>
                 <input
@@ -348,14 +379,17 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="your.email@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
 
               {/* Phone Number */}
               <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="phoneNumber"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
                   Phone Number (Optional)
                 </label>
                 <input
@@ -365,7 +399,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formatPhoneNumber(formData.phoneNumber)}
                   onChange={handleInputChange}
                   placeholder="+63 917 123 4567"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Philippines mobile number with +63 prefix
@@ -376,16 +410,17 @@ const PayoutSettingsPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-blue-600 py-3 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Setting up..." : "Set Up Payout Settings"}
               </button>
             </form>
 
-            <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3">
+            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
               <p className="text-xs text-blue-700">
-                <strong>Secure & Private:</strong> Your GCash information is encrypted and stored securely. 
-                We use Xendit's secure payment platform to process transactions.
+                <strong>Secure & Private:</strong> Your GCash information is
+                encrypted and stored securely. We use Xendit's secure payment
+                platform to process transactions.
               </p>
             </div>
           </div>

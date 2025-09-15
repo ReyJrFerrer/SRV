@@ -11,6 +11,8 @@ import {
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
 import phLocations from "../../data/ph_locations.json";
+import { createDirectPayment, checkProviderOnboarding } from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
 
 // --- Payment Section Sub-Component ---
 
@@ -31,6 +33,7 @@ type PaymentSectionProps = {
   paymentError: string | null;
   totalPrice: number;
   highlight?: boolean; // <-- Add highlight prop
+  isProviderOnboarded?: boolean; // <-- Add provider onboarding status
 };
 
 const PaymentSection: React.FC<PaymentSectionProps> = ({
@@ -42,6 +45,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   paymentError,
   totalPrice,
   highlight = false,
+  isProviderOnboarded = false,
 }) => (
   <div
     className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
@@ -92,11 +96,13 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         </div>
       )}
       <div
-        onClick={() => setPaymentMethod("GCash")}
-        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
-          paymentMethod === "GCash"
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300"
+        onClick={() => isProviderOnboarded ? setPaymentMethod("GCash") : null}
+        className={`flex items-center justify-between rounded-lg border p-3 ${
+          !isProviderOnboarded 
+            ? "cursor-not-allowed opacity-50 border-gray-300" 
+            : paymentMethod === "GCash"
+            ? "cursor-pointer border-blue-500 bg-blue-50"
+            : "cursor-pointer border-gray-300"
         }`}
       >
         <div className="flex items-center">
@@ -107,11 +113,21 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             height={24}
             className="mr-3"
           />
-          <span className="font-medium text-gray-800">GCash</span>
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-800">GCash</span>
+            {!isProviderOnboarded && (
+              <span className="text-xs text-gray-500">Provider not set up for direct payments</span>
+            )}
+          </div>
         </div>
-        {paymentMethod === "GCash" && (
-          <CheckCircleIcon className="h-6 w-6 text-blue-500" />
-        )}
+        <div className="flex items-center">
+          {!isProviderOnboarded && (
+            <span className="text-xs text-gray-400 mr-2">Unavailable</span>
+          )}
+          {paymentMethod === "GCash" && isProviderOnboarded && (
+            <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+          )}
+        </div>
       </div>
       <div
         onClick={() => setPaymentMethod("SRVWallet")}
@@ -149,6 +165,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 
 // --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
+  // --- Auth context ---
+  const { identity } = useAuth();
+  
   // --- Section refs for scrolling/highlighting ---
   const barangayRef = useRef<HTMLSelectElement>(null);
   const otherBarangayRef = useRef<HTMLInputElement>(null);
@@ -193,6 +212,7 @@ const ClientBookingPageComponent: React.FC = () => {
   >("CashOnHand");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isProviderOnboarded, setIsProviderOnboarded] = useState<boolean>(false);
   // --- Routing ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
@@ -448,6 +468,24 @@ const ClientBookingPageComponent: React.FC = () => {
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
+
+  // --- Check provider onboarding status when service is loaded ---
+  useEffect(() => {
+    const checkProviderOnboardingStatus = async () => {
+      if (service?.providerId) {
+        try {
+          const isOnboarded = await checkProviderOnboarding(service.providerId.toString());
+          setIsProviderOnboarded(isOnboarded);
+        } catch (error) {
+          console.error("Error checking provider onboarding:", error);
+          setIsProviderOnboarded(false);
+        }
+      }
+    };
+
+    checkProviderOnboardingStatus();
+  }, [service?.providerId]);
+
   useEffect(() => {
     if (hookPackages.length > 0) {
       setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
@@ -855,6 +893,64 @@ const ClientBookingPageComponent: React.FC = () => {
         amountToPay: parseFloat(amountPaid),
         paymentMethod: paymentMethod, // Include the selected payment method
       };
+
+      // Handle different payment methods
+      if (paymentMethod === "GCash") {
+        // For GCash payments, create a direct payment invoice first
+        if (!identity) {
+          setFormError("You must be logged in to make digital payments.");
+          return;
+        }
+
+        // Check if provider is onboarded for direct payments
+        const isProviderOnboarded = await checkProviderOnboarding(service!.providerId.toString());
+        if (!isProviderOnboarded) {
+          setFormError("This provider hasn't set up direct payments yet. Please use cash payment or SRV Wallet.");
+          return;
+        }
+
+        const clientId = identity.getPrincipal().toString();
+        
+        // Create direct payment invoice
+        const paymentResult = await createDirectPayment({
+          bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
+          clientId: clientId,
+          providerId: service!.providerId.toString(),
+          amount: totalPrice,
+          serviceTitle: service!.title,
+          category: service!.category.toString(),
+        });
+
+        if (!paymentResult.success) {
+          setFormError(paymentResult.error || "Failed to create payment invoice. Please try again.");
+          return;
+        }
+
+        // If payment invoice was created successfully, redirect to payment
+        if (paymentResult.invoiceUrl) {
+          // Store booking data temporarily in localStorage for completion after payment
+          localStorage.setItem('pendingBooking', JSON.stringify({
+            ...bookingData,
+            invoiceId: paymentResult.invoiceId,
+            paymentUrl: paymentResult.invoiceUrl,
+          }));
+          
+          // Redirect to payment page
+          window.open(paymentResult.invoiceUrl, '_blank');
+          
+          // Show a message to user about payment process
+          navigate("/client/booking/payment-pending", {
+            state: { 
+              invoiceId: paymentResult.invoiceId,
+              invoiceUrl: paymentResult.invoiceUrl,
+              bookingData: bookingData 
+            },
+          });
+          return;
+        }
+      }
+
+      // For cash payments and SRV Wallet, proceed with normal booking creation
       const booking = await createBookingRequest(bookingData);
       if (booking) {
         setFormError(null); // Clear error after successful booking
@@ -1079,6 +1175,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     paymentError={paymentError}
                     totalPrice={totalPrice}
                     highlight={highlightInput === "paymentSection"}
+                    isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
               </div>
@@ -1747,6 +1844,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     paymentError={paymentError}
                     totalPrice={totalPrice}
                     highlight={highlightInput === "paymentSection"}
+                    isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
               </div>

@@ -31,6 +31,7 @@ import ClientServiceReviews from "./src/pages/client/service/reviews/[id]";
 import ClientBookingIndex from "./src/pages/client/booking/index";
 import ClientBookingDetails from "./src/pages/client/booking/[id]";
 import ClientBookingConfirmation from "./src/pages/client/booking/confirmation";
+import ClientPaymentPending from "./src/pages/client/booking/payment-pending";
 import ReceiptPage from "./src/pages/client/booking/receipt/[id]";
 import ClientBookService from "./src/pages/client/book/[id]";
 
@@ -135,6 +136,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route
                 path="booking/confirmation"
                 element={<ClientBookingConfirmation />}
+              />
+              <Route
+                path="booking/payment-pending"
+                element={<ClientPaymentPending />}
               />
               <Route path="booking/receipt/:id" element={<ReceiptPage />} />
               <Route path="book/:id" element={<ClientBookService />} />
