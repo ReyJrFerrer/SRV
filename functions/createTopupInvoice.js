@@ -9,7 +9,7 @@ try {
   const secretKey =
     (config.xendit && config.xendit.secret_key) ||
     process.env.XENDIT_SECRET_KEY;
-  
+
   if (!secretKey) {
     console.warn("Xendit secret key not found in config or environment");
     xendit = null;

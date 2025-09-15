@@ -7,9 +7,10 @@ const FIREBASE_PROJECT_ID = "devsrv-rey";
 const FIREBASE_REGION = "us-central1";
 
 // Use local emulator in development, production URL in production
-const BASE_URL = process.env.NODE_ENV === "development" 
-  ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/${FIREBASE_REGION}`
-  : `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
+const BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/${FIREBASE_REGION}`
+    : `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
 
 export interface DirectPaymentRequest {
   bookingId: string;
@@ -37,7 +38,9 @@ export interface PaymentResponse {
  * Create a direct payment invoice for service bookings
  * This will automatically deduct commission and pay provider directly
  */
-export async function createDirectPayment(request: DirectPaymentRequest): Promise<PaymentResponse> {
+export async function createDirectPayment(
+  request: DirectPaymentRequest,
+): Promise<PaymentResponse> {
   try {
     const response = await fetch(`${BASE_URL}/createDirectPayment`, {
       method: "POST",
@@ -67,7 +70,9 @@ export async function createDirectPayment(request: DirectPaymentRequest): Promis
 /**
  * Create a top-up invoice for wallet credits
  */
-export async function createTopupInvoice(request: TopupInvoiceRequest): Promise<PaymentResponse> {
+export async function createTopupInvoice(
+  request: TopupInvoiceRequest,
+): Promise<PaymentResponse> {
   try {
     const response = await fetch(`${BASE_URL}/createTopupInvoice`, {
       method: "POST",
@@ -119,7 +124,9 @@ export interface ProviderOnboardingResponse {
  * Check if a provider is onboarded for direct payments
  * Uses the Cloud Function to check both Xendit and Firestore records
  */
-export async function checkProviderOnboarding(providerId: string): Promise<boolean> {
+export async function checkProviderOnboarding(
+  providerId: string,
+): Promise<boolean> {
   try {
     const response = await fetch(`${BASE_URL}/checkProviderOnboarding`, {
       method: "POST",
@@ -139,14 +146,17 @@ export async function checkProviderOnboarding(providerId: string): Promise<boole
     const onboardingResult = result.result || result;
 
     if (!onboardingResult.success) {
-      console.error("Provider onboarding check failed:", onboardingResult.error);
+      console.error(
+        "Provider onboarding check failed:",
+        onboardingResult.error,
+      );
       return false;
     }
 
     return onboardingResult.isOnboarded || false;
   } catch (error: any) {
     console.error("Error checking provider onboarding:", error);
-    
+
     // Fallback to localStorage check for backwards compatibility
     try {
       return localStorage.getItem("provider_onboarded") === "true";
@@ -160,7 +170,9 @@ export async function checkProviderOnboarding(providerId: string): Promise<boole
 /**
  * Get detailed provider onboarding information
  */
-export async function getProviderOnboardingDetails(providerId: string): Promise<ProviderOnboardingResponse> {
+export async function getProviderOnboardingDetails(
+  providerId: string,
+): Promise<ProviderOnboardingResponse> {
   try {
     const response = await fetch(`${BASE_URL}/checkProviderOnboarding`, {
       method: "POST",

@@ -32,17 +32,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feature - 2.3: Connected Booking Canister to Service - added confirm_digital_payment() function to booking.mo that securely accepts payment confirmations from Firebase Cloud Functions, validates digital payment methods (GCash/SRVWallet), updates booking status to Accepted with full payment amount, and provides comprehensive error handling for different booking states
 - feature - 2.4: Frontend Provider Onboarding - created payout-settings.tsx page with secure GCash onboarding form that calls onboardProvider Cloud Function via HTTP, added routing from provider settings page, implemented form validation for GCash number format and required fields, and integrated with AuthContext for provider identity management
 - feature - 2.5: Frontend Payment Flow Integration - created Firebase service for HTTP requests to Cloud Functions, modified ClientBookingPageComponent.tsx to integrate GCash direct payments with provider onboarding validation, created payment-pending.tsx page for payment status monitoring, enhanced PaymentSection component to show provider onboarding status and disable GCash payments when providers aren't set up, and added automatic invoice creation and payment URL redirection for digital payments
+- feature - 2.5.1: Implemented checkProviderOnboarding Cloud Function - created real provider validation using Xendit Customer API with getCustomerByReferenceID, added comprehensive provider status checking with Firestore integration, implemented dual-source validation (Xendit primary, Firestore fallback) with detailed response structure including account_status, bank_account_linked, and setup completion indicators
+- feature - 2.5.2: Enhanced createDirectPayment function with robust error handling - added comprehensive provider lookup with Firestore fallback when providers not found in database, implemented commission calculation integration with service pricing, added detailed logging for debugging payment flow issues, created temporary provider data structure for Xendit integration, and added mock invoice fallback system for development mode when API permissions are pending
 
 ### Changed
 
 - feature - 1.0 improvement: Enhanced commission.mo with dynamic fee structure including base fees (₱25-₱50), more granular breakpoints, and realistic rates for Philippine market
 - feature - 1.0 improvement: Updated commission.mo category mapping to use actual service categories from staticData.mo (Gadget Technicians, Automobile Repairs, Photographer, etc.)
+- feature - 2.5 improvement: Migrated Cloud Functions from onCall to onRequest architecture for better HTTP handling and CORS support, updated all function invocations in Firebase service to use proper HTTP requests with authentication headers
+- feature - 2.5 improvement: Enhanced Cloud Functions configuration management by replacing hardcoded API keys with .runtimeconfig.json for secure environment variable handling, updated all Xendit integration functions to use runtime configuration for API keys and webhooks
 
 ### Fixed
 
 - Fix duplicate push notifications by tracking sent notifications in localStorage and preventing spam on navigation
 - Fix same-day booking slot availability display to correctly show booked slots as unavailable
 - Fix service media images not loading in ServiceListItem and provider services page
+- Fix Firebase Cloud Functions 401/404 errors by correctly configuring Firestore emulator integration and updating admin SDK initialization with proper service account credentials
+- Fix Firestore API connection issues in Cloud Functions by adding Firestore emulator configuration to firebase.json and ensuring proper admin.initializeApp() setup with emulator detection
+- Fix provider lookup failures in createDirectPayment by implementing comprehensive fallback logic that searches Firestore first, then falls back to Xendit Customer API when provider documents not found in database
+- Fix Xendit API permission errors in development environment by implementing mock invoice system that creates functional payment flow simulation when API access is restricted, allowing continued development and testing without blocking payment integration progress
 
 ### Added
 
