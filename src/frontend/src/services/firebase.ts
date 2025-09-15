@@ -19,6 +19,26 @@ export interface DirectPaymentRequest {
   amount: number;
   serviceTitle: string;
   category: string;
+  // Add full booking data for storage
+  bookingData?: {
+    serviceId: string;
+    serviceName: string;
+    packages: Array<{
+      id: string;
+      title: string;
+      description: string;
+      price: number;
+      commissionFee?: number;
+    }>;
+    totalPrice: number;
+    bookingType: "sameday" | "scheduled";
+    scheduledDate?: Date;
+    scheduledTime?: string;
+    location: string; // Always string in this context
+    notes?: string;
+    amountToPay?: number;
+    paymentMethod: "CashOnHand" | "GCash" | "SRVWallet";
+  };
 }
 
 export interface TopupInvoiceRequest {
@@ -31,6 +51,31 @@ export interface PaymentResponse {
   invoiceUrl?: string;
   invoiceId?: string;
   message?: string;
+  error?: string;
+}
+
+export interface PaymentDataResponse {
+  success: boolean;
+  bookingData?: {
+    serviceId: string;
+    serviceName: string;
+    providerId: string;
+    packages: Array<{
+      id: string;
+      title: string;
+      description: string;
+      price: number;
+      commissionFee?: number;
+    }>;
+    totalPrice: number;
+    bookingType: "sameday" | "scheduled";
+    scheduledDate?: string; // ISO string
+    scheduledTime?: string;
+    location: string;
+    notes?: string;
+    amountToPay?: number;
+    paymentMethod: "CashOnHand" | "GCash" | "SRVWallet";
+  };
   error?: string;
 }
 
@@ -197,6 +242,82 @@ export async function getProviderOnboardingDetails(
       isOnboarded: false,
       providerId: providerId,
       error: error.message || "Failed to check provider onboarding status",
+    };
+  }
+}
+
+/**
+ * Get payment/booking data from Firestore using invoice ID
+ * This retrieves the booking data that was stored when the invoice was created
+ */
+export async function getPaymentData(
+  invoiceId: string,
+): Promise<PaymentDataResponse> {
+  try {
+    const response = await fetch(`${BASE_URL}/getPaymentData`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: { invoiceId },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.result || result;
+  } catch (error: any) {
+    console.error("Error getting payment data:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to retrieve payment data",
+    };
+  }
+}
+
+export interface InvoiceStatusResponse {
+  success: boolean;
+  status?: "PENDING" | "PAID" | "SETTLED" | "EXPIRED";
+  description?: string;
+  paidAmount?: number;
+  paidAt?: string;
+  paymentMethod?: string;
+  error?: string;
+}
+
+/**
+ * Check the real payment status of an invoice from Xendit
+ * This provides accurate payment status instead of relying on localStorage
+ */
+export async function checkInvoiceStatus(
+  invoiceId: string,
+): Promise<InvoiceStatusResponse> {
+  try {
+    const response = await fetch(`${BASE_URL}/checkInvoiceStatus`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: { invoiceId },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.result || result;
+  } catch (error: any) {
+    console.error("Error checking invoice status:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to check invoice status",
     };
   }
 }

@@ -54,17 +54,15 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     const data = req.body.data || req.body;
     console.log("Extracted data:", JSON.stringify(data, null, 2));
 
-    const {
-      bookingId,
-      providerId,
-      clientId,
-      amount,
-      serviceTitle,
-      category,
-      paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"],
-    } = data;
-
-    // Fix category if it's an object
+  const {
+    bookingId,
+    clientId,
+    providerId,
+    amount,
+    serviceTitle,
+    category,
+    bookingData, // New: receive full booking data
+  } = req.body.data;    // Fix category if it's an object
     const categoryStr =
       typeof category === "object"
         ? JSON.stringify(category)
@@ -225,6 +223,9 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     const commissionAmount = Math.round(amount * commissionRate);
     const providerAmount = amount - commissionAmount;
 
+    // Define payment methods for the invoice
+    const paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"];
+
     // Create invoice to collect payment from client
     const { Invoice } = xendit;
     const invoiceData = {
@@ -333,6 +334,23 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         invoiceUrl: invoice.invoiceUrl,
         expiryDate: invoice.expiryDate,
       },
+      // Add booking data if provided
+      ...(bookingData && {
+        serviceId: bookingData.serviceId,
+        serviceTitle: bookingData.serviceName || serviceTitle,
+        packages: bookingData.packages,
+        bookingType: bookingData.bookingType,
+        scheduledDate: bookingData.scheduledDate 
+          ? (typeof bookingData.scheduledDate === 'string' 
+              ? bookingData.scheduledDate 
+              : new Date(bookingData.scheduledDate).toISOString()) 
+          : null,
+        scheduledTime: bookingData.scheduledTime,
+        location: bookingData.location,
+        notes: bookingData.notes,
+        amountToPay: bookingData.amountToPay,
+        paymentMethod: bookingData.paymentMethod,
+      }),
     };
 
     try {

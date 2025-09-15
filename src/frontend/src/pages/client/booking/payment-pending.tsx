@@ -7,6 +7,9 @@ import {
   ExclamationTriangleIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import { useBookRequest, BookingRequest } from "../../../hooks/bookRequest";
+import { useAuth } from "../../../context/AuthContext";
+import { getPaymentData, checkInvoiceStatus } from "../../../services/firebase";
 
 interface PaymentPendingState {
   invoiceId: string;
@@ -24,10 +27,15 @@ interface PaymentPendingState {
 const PaymentPendingPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { identity } = useAuth();
+  const { createBookingRequest } = useBookRequest();
+  
   const [paymentStatus, setPaymentStatus] = useState<
-    "pending" | "completed" | "failed"
+    "pending" | "completed" | "failed" | "creating_booking" | "booking_success" | "booking_failed"
   >("pending");
   const [statusMessage, setStatusMessage] = useState<string>("");
+  const [bookingCreationError, setBookingCreationError] = useState<string | null>(null);
+  const [isCreatingBooking, setIsCreatingBooking] = useState<boolean>(false);
 
   // Get data from navigation state
   const state = location.state as PaymentPendingState | null;
@@ -37,60 +45,156 @@ const PaymentPendingPage: React.FC = () => {
     document.title = "Payment Pending | SRV";
   }, []);
 
-  // Check for payment completion in localStorage (set by webhook or user return)
+  // Check for payment completion using real invoice status from Xendit API
   useEffect(() => {
-    const checkPaymentStatus = () => {
-      if (state?.invoiceId) {
-        const paymentResult = localStorage.getItem(
-          `payment_${state.invoiceId}`,
-        );
-        if (paymentResult) {
-          const result = JSON.parse(paymentResult);
-          if (result.status === "PAID") {
-            setPaymentStatus("completed");
-            setStatusMessage(
-              "Payment successful! Your booking has been confirmed.",
-            );
-            // Clean up
-            localStorage.removeItem(`payment_${state.invoiceId}`);
-            localStorage.removeItem("pendingBooking");
-          } else if (
-            result.status === "FAILED" ||
-            result.status === "EXPIRED"
-          ) {
-            setPaymentStatus("failed");
-            setStatusMessage("Payment was unsuccessful. Please try again.");
-            localStorage.removeItem(`payment_${state.invoiceId}`);
+    const checkPaymentStatus = async () => {
+      if (state?.invoiceId && paymentStatus === "pending") {
+        try {
+          console.log(`🔍 Checking invoice status for: ${state.invoiceId}`);
+          const statusResponse = await checkInvoiceStatus(state.invoiceId);
+          
+          if (!statusResponse.success) {
+            console.error("Failed to check invoice status:", statusResponse.error);
+            return;
           }
+
+          console.log(`📋 Invoice status: ${statusResponse.status}`);
+
+          if (statusResponse.status === "PAID" || statusResponse.status === "SETTLED") {
+            // Only proceed if we haven't already started creating booking
+            if (!isCreatingBooking && paymentStatus === "pending") {
+              setPaymentStatus("completed");
+              setStatusMessage(
+                "Payment successful! Creating your booking...",
+              );
+              
+              // Now create the actual booking in the ICP canister
+              await createActualBooking();
+            }
+          } else if (statusResponse.status === "EXPIRED") {
+            setPaymentStatus("failed");
+            setStatusMessage("Payment expired. Please create a new booking.");
+          }
+          // For PENDING status, continue polling
+        } catch (error) {
+          console.error("Error checking payment status:", error);
         }
       }
     };
 
-    // Check immediately
-    checkPaymentStatus();
+    // Only start checking if payment is still pending
+    if (paymentStatus === "pending") {
+      // Check immediately
+      checkPaymentStatus();
 
-    // Poll every 5 seconds for payment status updates
-    const interval = setInterval(checkPaymentStatus, 5000);
+      // Poll every 10 seconds for payment status updates
+      const interval = setInterval(() => {
+        // Double-check status before making API call
+        if (paymentStatus === "pending") {
+          checkPaymentStatus();
+        }
+      }, 10000);
 
-    return () => clearInterval(interval);
-  }, [state?.invoiceId]);
-
-  // Redirect to booking confirmation if payment is completed
-  useEffect(() => {
-    if (paymentStatus === "completed") {
-      setTimeout(() => {
-        navigate("/client/booking/confirmation", {
-          state: {
-            details: {
-              ...state?.bookingData,
-              paymentMethod: "GCash",
-              amountToPay: state?.bookingData.totalPrice.toFixed(2),
-            },
-          },
-        });
-      }, 3000);
+      return () => clearInterval(interval);
     }
-  }, [paymentStatus, navigate, state?.bookingData]);
+  }, [state?.invoiceId]); // Remove paymentStatus from dependency array
+
+  // Function to create the actual booking after payment success
+  const createActualBooking = async () => {
+    // Prevent duplicate booking creation
+    if (isCreatingBooking || paymentStatus === "creating_booking" || paymentStatus === "booking_success") {
+      console.log("Booking creation already in progress or completed");
+      return;
+    }
+
+    try {
+      setIsCreatingBooking(true);
+      setPaymentStatus("creating_booking");
+      setStatusMessage("Creating your booking...");
+
+      // Get the booking data from Firestore using the invoice ID
+      if (!state?.invoiceId) {
+        throw new Error("Invoice ID not found. Please try again.");
+      }
+
+      console.log(`🔍 Fetching payment data for invoice: ${state.invoiceId}`);
+      const paymentDataResponse = await getPaymentData(state.invoiceId);
+      
+      if (!paymentDataResponse.success || !paymentDataResponse.bookingData) {
+        throw new Error("Booking data not found. Please contact support.");
+      }
+
+      const { bookingData } = paymentDataResponse;
+      console.log("✅ Retrieved booking data:", bookingData);
+
+      // Convert the payment data back to BookingRequest format
+      const bookingRequest: BookingRequest = {
+        serviceId: bookingData.serviceId,
+        serviceName: bookingData.serviceName,
+        providerId: bookingData.providerId,
+        packages: bookingData.packages,
+        totalPrice: bookingData.totalPrice,
+        bookingType: bookingData.bookingType,
+        scheduledDate: bookingData.scheduledDate ? new Date(bookingData.scheduledDate) : undefined,
+        scheduledTime: bookingData.scheduledTime,
+        location: bookingData.location,
+        notes: bookingData.notes,
+        amountToPay: bookingData.amountToPay,
+        paymentMethod: bookingData.paymentMethod,
+      };
+      
+      // Ensure we have valid identity
+      if (!identity) {
+        throw new Error("Authentication required. Please log in again.");
+      }
+
+      // Create the booking in the ICP canister
+      const booking = await createBookingRequest(bookingRequest);
+      
+      if (booking) {
+        setPaymentStatus("booking_success");
+        setStatusMessage("Booking created successfully!");
+        
+        // Navigate to confirmation page after a short delay
+        setTimeout(() => {
+          navigate("/client/booking/confirmation", {
+            state: {
+              details: {
+                serviceName: bookingData.serviceName,
+                providerName: "Provider", // We could fetch this if needed
+                packages: bookingData.packages,
+                bookingType: bookingData.bookingType,
+                date: bookingData.scheduledDate 
+                  ? new Date(bookingData.scheduledDate).toLocaleDateString() 
+                  : new Date().toLocaleDateString(),
+                time: bookingData.scheduledTime || "",
+                location: bookingData.location,
+                notes: bookingData.notes || "",
+                amountToPay: "0.00", // GCash payment already processed
+                packagePrice: bookingData.totalPrice.toFixed(2),
+                landmark: "",
+                paymentMethod: "GCash",
+              },
+            },
+          });
+        }, 2000);
+      } else {
+        throw new Error("Failed to create booking. Please contact support.");
+      }
+    } catch (error) {
+      console.error("Error creating booking:", error);
+      setPaymentStatus("booking_failed");
+      setStatusMessage("Payment successful, but booking creation failed.");
+      setBookingCreationError(error instanceof Error ? error.message : "Unknown error occurred");
+    } finally {
+      setIsCreatingBooking(false);
+    }
+  };
+
+  // Set document title
+  useEffect(() => {
+    document.title = "Payment Pending | SRV";
+  }, []);
 
   if (!state) {
     return (
@@ -116,10 +220,6 @@ const PaymentPendingPage: React.FC = () => {
   };
 
   const handleCancelPayment = () => {
-    // Clean up localStorage
-    localStorage.removeItem(`payment_${state.invoiceId}`);
-    localStorage.removeItem("pendingBooking");
-
     // Navigate back to booking page
     navigate(-1);
   };
@@ -159,11 +259,44 @@ const PaymentPendingPage: React.FC = () => {
 
               {paymentStatus === "completed" && (
                 <>
-                  <CheckCircleIcon className="mx-auto mb-3 h-16 w-16 text-green-500" />
-                  <h2 className="mb-2 text-xl font-bold text-green-700">
+                  <ClockIcon className="mx-auto mb-3 h-16 w-16 animate-pulse text-blue-500" />
+                  <h2 className="mb-2 text-xl font-bold text-blue-700">
                     Payment Successful!
                   </h2>
                   <p className="text-sm text-gray-600">{statusMessage}</p>
+                </>
+              )}
+
+              {paymentStatus === "creating_booking" && (
+                <>
+                  <ClockIcon className="mx-auto mb-3 h-16 w-16 animate-pulse text-orange-500" />
+                  <h2 className="mb-2 text-xl font-bold text-orange-700">
+                    Creating Booking...
+                  </h2>
+                  <p className="text-sm text-gray-600">{statusMessage}</p>
+                </>
+              )}
+
+              {paymentStatus === "booking_success" && (
+                <>
+                  <CheckCircleIcon className="mx-auto mb-3 h-16 w-16 text-green-500" />
+                  <h2 className="mb-2 text-xl font-bold text-green-700">
+                    Booking Created Successfully!
+                  </h2>
+                  <p className="text-sm text-gray-600">{statusMessage}</p>
+                </>
+              )}
+
+              {paymentStatus === "booking_failed" && (
+                <>
+                  <ExclamationTriangleIcon className="mx-auto mb-3 h-16 w-16 text-red-500" />
+                  <h2 className="mb-2 text-xl font-bold text-red-700">
+                    Booking Creation Failed
+                  </h2>
+                  <p className="text-sm text-gray-600">{statusMessage}</p>
+                  {bookingCreationError && (
+                    <p className="mt-2 text-xs text-red-600">{bookingCreationError}</p>
+                  )}
                 </>
               )}
 
@@ -232,29 +365,51 @@ const PaymentPendingPage: React.FC = () => {
                 </>
               )}
 
-              {paymentStatus === "completed" && (
+              {(paymentStatus === "completed" || paymentStatus === "creating_booking") && (
                 <div className="text-center">
                   <p className="mb-3 text-sm text-gray-600">
-                    Redirecting to booking confirmation in 3 seconds...
+                    Please wait while we process your booking...
                   </p>
-                  <button
-                    onClick={() =>
-                      navigate("/client/booking/confirmation", {
-                        state: {
-                          details: {
-                            ...state.bookingData,
-                            paymentMethod: "GCash",
-                            amountToPay:
-                              state.bookingData.totalPrice.toFixed(2),
-                          },
-                        },
-                      })
-                    }
-                    className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white transition-colors hover:bg-green-700"
-                  >
-                    View Booking Confirmation
-                  </button>
+                  <div className="rounded-lg bg-blue-50 py-3">
+                    <ClockIcon className="mx-auto h-6 w-6 animate-pulse text-blue-500" />
+                  </div>
                 </div>
+              )}
+
+              {paymentStatus === "booking_success" && (
+                <div className="text-center">
+                  <p className="mb-3 text-sm text-gray-600">
+                    Redirecting to booking confirmation...
+                  </p>
+                  <div className="rounded-lg bg-green-50 py-3">
+                    <CheckCircleIcon className="mx-auto h-6 w-6 text-green-500" />
+                  </div>
+                </div>
+              )}
+
+              {paymentStatus === "booking_failed" && (
+                <>
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
+                    <p className="mb-2 text-sm font-medium text-red-800">
+                      Your payment was successful, but we couldn't create your booking automatically.
+                    </p>
+                    <p className="text-xs text-red-600">
+                      Please contact our support team with your payment confirmation.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate("/client/support")}
+                    className="w-full rounded-lg bg-red-600 py-3 font-semibold text-white transition-colors hover:bg-red-700"
+                  >
+                    Contact Support
+                  </button>
+                  <button
+                    onClick={() => navigate("/client")}
+                    className="w-full rounded-lg border border-gray-300 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    Go to Home
+                  </button>
+                </>
               )}
 
               {paymentStatus === "failed" && (

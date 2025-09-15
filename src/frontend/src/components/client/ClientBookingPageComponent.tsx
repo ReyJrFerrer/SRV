@@ -931,6 +931,10 @@ const ClientBookingPageComponent: React.FC = () => {
           amount: totalPrice,
           serviceTitle: service!.title,
           category: service!.category.toString(),
+          bookingData: {
+            ...bookingData,
+            location: typeof bookingData.location === 'string' ? bookingData.location : finalAddress, // Ensure location is string
+          }, // Pass the full booking data
         });
 
         if (!paymentResult.success) {
@@ -943,16 +947,6 @@ const ClientBookingPageComponent: React.FC = () => {
 
         // If payment invoice was created successfully, redirect to payment
         if (paymentResult.invoiceUrl) {
-          // Store booking data temporarily in localStorage for completion after payment
-          localStorage.setItem(
-            "pendingBooking",
-            JSON.stringify({
-              ...bookingData,
-              invoiceId: paymentResult.invoiceId,
-              paymentUrl: paymentResult.invoiceUrl,
-            }),
-          );
-
           // Redirect to payment page
           window.open(paymentResult.invoiceUrl, "_blank");
 

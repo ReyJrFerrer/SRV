@@ -16,6 +16,8 @@ const { createDirectPayment } = require("./createDirectPayment");
 const { createTopupInvoice } = require("./createTopupInvoice");
 const { xenditWebhook } = require("./xenditWebhook");
 const { checkProviderOnboarding } = require("./checkProviderOnboarding");
+const { getPaymentData } = require("./getPaymentData");
+const { checkInvoiceStatus } = require("./checkInvoiceStatus");
 
 // Export all functions
 exports.onboardProvider = onboardProvider;
@@ -23,3 +25,5 @@ exports.createDirectPayment = createDirectPayment;
 exports.createTopupInvoice = createTopupInvoice;
 exports.xenditWebhook = xenditWebhook;
 exports.checkProviderOnboarding = checkProviderOnboarding;
+exports.getPaymentData = getPaymentData;
+exports.checkInvoiceStatus = checkInvoiceStatus;
