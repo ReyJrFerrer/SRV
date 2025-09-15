@@ -15,8 +15,13 @@ import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useWallet } from "../../hooks/useWallet";
 import { Transaction } from "../../services/walletCanisterService";
 import { Toaster, toast } from "sonner";
-import { createTopupInvoice, TopupInvoiceRequest } from "../../services/firebase";
+import {
+  createTopupInvoice,
+  TopupInvoiceRequest,
+  checkInvoiceStatus,
+} from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { Principal } from "@dfinity/principal";
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +35,7 @@ const WalletPage: React.FC = () => {
     formatCurrency,
     getTransactionDisplay,
     refreshWalletData,
+    creditWallet,
     isAuthenticated,
   } = useWallet();
 
@@ -37,6 +43,22 @@ const WalletPage: React.FC = () => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
+
+  // Track active invoices for payment completion checking
+  const [activeInvoices, setActiveInvoices] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('activeTopupInvoices');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    }
+    return new Set();
+  });
+
+  // Persist active invoices to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeTopupInvoices', JSON.stringify([...activeInvoices]));
+    }
+  }, [activeInvoices]);
 
   // Predefined top-up amounts
   const predefinedAmounts = [100, 250, 500, 1000, 2500, 5000];
@@ -52,8 +74,83 @@ const WalletPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Periodically check for completed payments
+  useEffect(() => {
+    if (activeInvoices.size === 0) return;
+
+    const interval = setInterval(() => {
+      checkAndCreditCompletedPayments();
+    }, 15000); // Check every 15 seconds
+
+    // Check immediately
+    checkAndCreditCompletedPayments();
+
+    return () => clearInterval(interval);
+  }, [activeInvoices.size]);
+
   const handleTopUpClick = () => {
     setShowTopUpModal(true);
+  };
+
+  // Function to check for completed payments and credit wallet
+  const checkAndCreditCompletedPayments = async () => {
+    if (!identity || activeInvoices.size === 0) return;
+
+    console.log(`🔍 Checking ${activeInvoices.size} active invoices for completion`);
+    const completedInvoices = new Set<string>();
+
+    for (const invoiceId of activeInvoices) {
+      try {
+        console.log(`📋 Checking invoice status: ${invoiceId}`);
+        const statusResponse = await checkInvoiceStatus(invoiceId);
+        console.log(`📋 Invoice ${invoiceId} status:`, statusResponse);
+        
+        if (statusResponse.success) {
+          if (statusResponse.status === "PAID" || statusResponse.status === "SETTLED") {
+            // Payment completed, credit the wallet
+            const principal = Principal.fromText(identity.getPrincipal().toString());
+            const amount = statusResponse.paidAmount || 0;
+            
+            console.log(`💰 Payment completed! Amount to credit: ₱${amount}`);
+            
+            if (amount > 0) {
+              try {
+                console.log(`💳 Crediting wallet for principal: ${principal.toString()}`);
+                await creditWallet(principal, amount);
+                toast.success(`Wallet credited with ₱${amount.toLocaleString()}`);
+                completedInvoices.add(invoiceId);
+                console.log(`✅ Successfully credited wallet with ₱${amount}`);
+              } catch (creditError) {
+                console.error("❌ Failed to credit wallet:", creditError);
+                toast.error("Failed to credit wallet. Please try refreshing.");
+              }
+            } else {
+              console.warn(`⚠️ Payment completed but amount is 0 or undefined`);
+            }
+          } else if (statusResponse.status === "EXPIRED") {
+            // Invoice expired, remove from tracking
+            completedInvoices.add(invoiceId);
+            toast.warning("A top-up payment has expired. Please create a new top-up if needed.");
+            console.log(`🕐 Invoice ${invoiceId} expired`);
+          } else {
+            console.log(`⏳ Invoice ${invoiceId} still pending: ${statusResponse.status}`);
+          }
+        } else {
+          console.error(`❌ Failed to get status for invoice ${invoiceId}:`, statusResponse.error);
+        }
+      } catch (error) {
+        console.error(`❌ Error checking invoice ${invoiceId}:`, error);
+      }
+    }
+
+    // Remove completed/expired invoices from tracking
+    if (completedInvoices.size > 0) {
+      setActiveInvoices(prev => {
+        const newSet = new Set(prev);
+        completedInvoices.forEach(id => newSet.delete(id));
+        return newSet;
+      });
+    }
   };
 
   const handleTopUpSubmit = async () => {
@@ -84,7 +181,17 @@ const WalletPage: React.FC = () => {
       const response = await createTopupInvoice(request);
 
       if (response.success && response.invoiceUrl) {
-        toast.success("Redirecting to payment...");
+        // Extract invoice ID from the response
+        const invoiceId = response.invoiceId;
+        
+        if (invoiceId) {
+          // Add to active invoices for payment monitoring
+          setActiveInvoices(prev => new Set(prev).add(invoiceId));
+          toast.success("Redirecting to payment. We'll credit your wallet automatically when payment is completed.");
+        } else {
+          toast.success("Redirecting to payment...");
+        }
+        
         // Open payment URL in new tab/window
         window.open(response.invoiceUrl, "_blank");
         setShowTopUpModal(false);
@@ -106,12 +213,19 @@ const WalletPage: React.FC = () => {
 
   const handleRefresh = async () => {
     try {
+      // Check for any completed payments first
+      await checkAndCreditCompletedPayments();
+      
+      // Then refresh wallet data
       await refreshWalletData();
       toast.success("Wallet data refreshed");
     } catch (err) {
       toast.error("Failed to refresh wallet data");
     }
   };
+
+
+
 
   const formatTransactionDate = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -229,6 +343,23 @@ const WalletPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Active Payments Monitoring */}
+        {activeInvoices.size > 0 && (
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <ClockIcon className="mt-0.5 h-5 w-5 text-blue-600" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800">
+                  Monitoring {activeInvoices.size} payment{activeInvoices.size > 1 ? 's' : ''}
+                </p>
+                <p className="mt-1 text-blue-700">
+                  We're checking for payment completion and will automatically credit your wallet.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
@@ -334,7 +465,7 @@ const WalletPage: React.FC = () => {
 
       {/* Top-Up Modal */}
       {showTopUpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -384,7 +515,7 @@ const WalletPage: React.FC = () => {
                 </label>
                 <div className="mt-2">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
                       ₱
                     </span>
                     <input
@@ -396,7 +527,7 @@ const WalletPage: React.FC = () => {
                       min="50"
                       max="50000"
                       step="0.01"
-                      className="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-7 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
@@ -418,8 +549,10 @@ const WalletPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleTopUpSubmit}
-                  disabled={topUpLoading || !topUpAmount || parseFloat(topUpAmount) < 50}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    topUpLoading || !topUpAmount || parseFloat(topUpAmount) < 50
+                  }
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {topUpLoading ? "Processing..." : "Continue to Payment"}
                 </button>

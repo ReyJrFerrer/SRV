@@ -131,6 +131,43 @@ export const useWallet = () => {
   );
 
   /**
+   * Credit funds to a user's wallet
+   * This function calls the wallet canister's credit function
+   */
+  const creditWallet = useCallback(
+    async (principal: Principal, amount: number): Promise<string> => {
+      if (!isAuthenticated || !identity) {
+        throw new Error("Authentication required for crediting wallet");
+      }
+
+      if (amount <= 0) {
+        throw new Error("Credit amount must be greater than 0");
+      }
+
+      try {
+        setTransferLoading(true);
+        setError(null);
+
+        const result = await walletCanisterService.creditWallet(principal, amount);
+
+        // Refresh balance and transactions after successful credit
+        await Promise.all([fetchBalance(), fetchTransactions()]);
+
+        return result;
+      } catch (err) {
+        console.error("Failed to credit wallet:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to credit wallet";
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } finally {
+        setTransferLoading(false);
+      }
+    },
+    [isAuthenticated, identity, fetchBalance, fetchTransactions],
+  );
+
+  /**
    * Refresh all wallet data
    */
   const refreshWalletData = useCallback(async () => {
@@ -221,6 +258,7 @@ export const useWallet = () => {
     fetchTransactions,
     getBalanceOf,
     transfer,
+    creditWallet,
     refreshWalletData,
 
     // Utilities

@@ -153,7 +153,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
               xenditCustomer.metadata?.business_name || "Provider Business",
             email: xenditCustomer.email || "provider@srv.com",
             mobileNumber: xenditCustomer.mobileNumber || "09000000000",
-            name: 
+            name:
               xenditCustomer.metadata?.business_name ||
               `${xenditCustomer.individualDetail?.givenNames || "Provider"} ${xenditCustomer.individualDetail?.surname || ""}`.trim(),
           };

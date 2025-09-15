@@ -103,7 +103,8 @@ export const walletCanisterService = {
     try {
       const actor = getWalletActor(true); // Requires authentication
       const balance = await actor.get_balance();
-      return Number(balance);
+      // Convert from centavos to pesos (divide by 100)
+      return Number(balance) / 100;
     } catch (error) {
       //console.error("Error fetching wallet balance:", error);
       throw new Error(`Failed to fetch wallet balance: ${error}`);
@@ -117,7 +118,8 @@ export const walletCanisterService = {
     try {
       const actor = getWalletActor();
       const balance = await actor.get_balance_of(principal);
-      return Number(balance);
+      // Convert from centavos to pesos (divide by 100)
+      return Number(balance) / 100;
     } catch (error) {
       //console.error("Error fetching balance for principal:", error);
       throw new Error(`Failed to fetch balance for principal: ${error}`);
@@ -147,6 +149,31 @@ export const walletCanisterService = {
     } catch (error) {
       //console.error("Error transferring funds:", error);
       throw new Error(`Failed to transfer funds: ${error}`);
+    }
+  },
+
+  /**
+   * Credit (add funds to) a user's wallet
+   * This function is typically called by authorized controllers (like admin functions)
+   * to add funds to a user's wallet after external payments
+   */
+  async creditWallet(principal: Principal, amount: number): Promise<string> {
+    try {
+      const actor = getWalletActor(true); // Requires authentication
+      
+      // Convert amount to bigint (assuming the amount is in the smallest unit)
+      const amountBigInt = BigInt(Math.round(amount * 100)); // Convert to centavos
+      
+      const result = await actor.credit(principal, amountBigInt);
+      
+      if ("ok" in result) {
+        return result.ok.toString();
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error crediting wallet:", error);
+      throw new Error(`Failed to credit wallet: ${error}`);
     }
   },
 

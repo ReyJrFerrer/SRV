@@ -153,30 +153,13 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
       });
     }
 
-    // Update Firestore with the latest status
-    try {
-      const db = admin.firestore();
-      await db
-        .collection("payments")
-        .doc(invoiceId)
-        .update({
-          status: invoice.status,
-          lastChecked: new Date().toISOString(),
-          xenditData: {
-            ...invoice,
-          },
-        });
-      console.log("Updated payment status in Firestore");
-    } catch (firestoreError) {
-      console.warn("Failed to update Firestore:", firestoreError);
-      // Continue even if Firestore update fails
-    }
 
     return res.status(200).json({
       success: true,
       status: invoice.status,
       invoiceId: invoiceId,
       amount: invoice.amount,
+      paidAmount: invoice.paidAmount || invoice.amount, 
       expiryDate: invoice.expiryDate,
       paidAt: invoice.paidAt,
       source: "xendit_api",
