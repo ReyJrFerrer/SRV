@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const { Xendit } = require("xendit-node");
-const admin = require("firebase-admin");
+const { admin } = require("./firebase-admin");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -24,24 +24,34 @@ try {
   xendit = null;
 }
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
 /**
  * Cloud Function to create wallet top-up invoice
  * Generates a Xendit Invoice for wallet top-ups using Invoice API
  */
-exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
+exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
+  console.log("=== createTopupInvoice function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request body:", JSON.stringify(req.body, null, 2));
+
   try {
-    // Verify user is authenticated
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated to create top-up invoice",
-      );
+    // Only accept POST requests
+    if (req.method !== "POST") {
+      console.log("Invalid method, returning 405");
+      return res.status(405).json({ error: "Method not allowed" });
     }
+
+    // Enable CORS for local development
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, POST");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+      console.log("OPTIONS request, returning 200");
+      return res.status(200).end();
+    }
+
+    console.log("Processing POST request...");
+    const data = req.body.data || req.body;
+    console.log("Extracted data:", JSON.stringify(data, null, 2));
 
     const {
       providerId,
@@ -49,12 +59,18 @@ exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
       paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"],
     } = data;
 
+    console.log("Extracted fields:", {
+      providerId,
+      amount,
+      paymentMethods,
+    });
+
     // Validate required fields
     if (!providerId || !amount) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Missing required fields: providerId, amount",
-      );
+      console.log("Missing required fields");
+      return res.status(400).json({
+        error: "Missing required fields: providerId, amount",
+      });
     }
 
     // Validate amount (minimum top-up amount)
@@ -62,43 +78,115 @@ exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
     const maxTopupAmount = 50000; // Maximum ₱50,000
 
     if (amount < minTopupAmount || amount > maxTopupAmount) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        `Top-up amount must be between ₱${minTopupAmount} and ` +
-          `₱${maxTopupAmount}`,
-      );
+      console.log("Invalid amount range");
+      return res.status(400).json({
+        error: `Top-up amount must be between ₱${minTopupAmount} and ₱${maxTopupAmount}`,
+      });
     }
 
     // Check if Xendit client is initialized
     if (!xendit) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Xendit client not initialized",
-      );
+      console.log("Xendit client not initialized");
+      return res.status(500).json({
+        error: "Xendit client not initialized",
+      });
     }
+
+    console.log("Xendit client is ready, proceeding with provider lookup...");
 
     // Get provider info to validate they exist
     let providerData;
     try {
+      console.log("Attempting to connect to Firestore...");
+      console.log("Admin apps:", admin.apps.length);
+      console.log("Functions emulator env:", process.env.FUNCTIONS_EMULATOR);
+      console.log(
+        "Firestore host:",
+        admin.firestore()._settings?.host || "default",
+      );
+
       const providerDoc = await admin
         .firestore()
         .collection("providers")
         .doc(providerId)
         .get();
 
+      console.log("Firestore query completed, checking if provider exists...");
       if (!providerDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Provider not found");
-      }
+        console.log(
+          "Provider document not found in Firestore, checking Xendit directly...",
+        );
 
-      providerData = providerDoc.data();
+        // Fallback: Check if provider exists in Xendit Customer API
+        try {
+          const { Customer } = xendit;
+          const customerResponse = await Customer.getCustomerByReferenceID({
+            referenceId: providerId,
+          });
+
+          let xenditCustomer = null;
+          if (
+            customerResponse &&
+            customerResponse.data &&
+            customerResponse.data.length > 0
+          ) {
+            xenditCustomer = customerResponse.data[0];
+          } else if (customerResponse && customerResponse.id) {
+            xenditCustomer = customerResponse;
+          }
+
+          if (!xenditCustomer) {
+            console.log("Provider not found in Xendit either");
+            return res.status(404).json({
+              error: "Provider not found or not onboarded for payments",
+            });
+          }
+
+          console.log("Provider found in Xendit:", xenditCustomer.id);
+
+          // Create a temporary provider data structure from Xendit data
+          providerData = {
+            xenditCustomerId: xenditCustomer.id,
+            xenditReferenceId: xenditCustomer.referenceId,
+            // Set defaults for missing data
+            businessName:
+              xenditCustomer.metadata?.business_name || "Provider Business",
+            email: xenditCustomer.email || "provider@srv.com",
+            mobileNumber: xenditCustomer.mobileNumber || "09000000000",
+            name: 
+              xenditCustomer.metadata?.business_name ||
+              `${xenditCustomer.individualDetail?.givenNames || "Provider"} ${xenditCustomer.individualDetail?.surname || ""}`.trim(),
+          };
+
+          console.log(
+            "Created temporary provider data from Xendit:",
+            JSON.stringify(providerData, null, 2),
+          );
+        } catch (xenditError) {
+          console.error("Error checking Xendit for provider:", xenditError);
+          return res.status(404).json({
+            error: "Provider not found or not onboarded for payments",
+          });
+        }
+      } else {
+        providerData = providerDoc.data();
+        console.log(
+          "Provider data retrieved from Firestore:",
+          JSON.stringify(providerData, null, 2),
+        );
+      }
     } catch (firestoreError) {
+      console.error("=== Firestore Error ===");
       console.error("Error fetching provider data:", firestoreError);
-      // Continue with minimal data if Firestore fails
-      providerData = {
-        gcashName: "Provider",
-        email: "provider@srv.com",
-        gcashNumber: "09000000000",
-      };
+      console.error("Error code:", firestoreError.code);
+      console.error("Error message:", firestoreError.message);
+      return res.status(500).json({
+        result: {
+          success: false,
+          error: "Failed to fetch provider data from Firestore",
+          details: firestoreError.message,
+        },
+      });
     }
 
     // Create top-up invoice using Invoice API
@@ -138,18 +226,45 @@ exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
     let invoice;
     try {
       invoice = await Invoice.createInvoice({ data: invoiceData });
-      console.log("Xendit invoice created:", invoice);
+      console.log("Xendit invoice created:", invoice.id);
     } catch (xenditError) {
       console.error("Xendit invoice creation error:", xenditError);
       console.error(
         "Error response:",
         xenditError.response && xenditError.response.data,
       );
-      console.error("Error details:", JSON.stringify(xenditError, null, 2));
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        `Failed to create Xendit invoice: ${xenditError.message}`,
-      );
+
+      // Check if it's a permission error and we're in development
+      if (xenditError.status === 403 && process.env.FUNCTIONS_EMULATOR) {
+        console.log(
+          "Permission error in development mode, creating mock invoice...",
+        );
+
+        // Create a mock invoice for development
+        invoice = {
+          id: `invoice_mock_topup_${Date.now()}`,
+          externalId: invoiceData.externalId,
+          amount: invoiceData.amount,
+          invoiceUrl: `https://checkout.xendit.co/web/mock-topup-${Date.now()}`,
+          expiryDate: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+          status: "PENDING",
+          currency: "PHP",
+          description: invoiceData.description,
+          created: new Date().toISOString(),
+        };
+
+        console.log("Mock invoice created for development:", invoice.id);
+      } else {
+        return res.status(500).json({
+          error: "Failed to create top-up invoice",
+          details: xenditError.message,
+          validation_errors:
+            (xenditError.response &&
+              xenditError.response.data &&
+              xenditError.response.data.errors) ||
+            [],
+        });
+      }
     }
 
     // Store top-up record in Firestore
@@ -180,25 +295,24 @@ exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
 
     // Log successful top-up invoice creation
     console.log(
-      `Wallet top-up invoice created for provider ${providerId}: ` +
-        `${invoice.id}`,
+      `Wallet top-up invoice created for provider ${providerId}: ${invoice.id}`,
     );
 
-    return {
-      success: true,
-      invoiceId: invoice.id,
-      paymentUrl: invoice.invoiceUrl,
-      expiryDate: invoice.expiryDate,
-      amount: amount,
-      message: "Top-up invoice created successfully",
-    };
+    return res.status(200).json({
+      result: {
+        success: true,
+        invoiceId: invoice.id,
+        invoiceUrl: invoice.invoiceUrl, // Changed from paymentUrl to invoiceUrl
+        expiryDate: invoice.expiryDate,
+        amount: amount,
+        message: "Top-up invoice created successfully",
+      },
+    });
   } catch (error) {
-    console.error("Error creating top-up invoice:", error);
-
-    // Re-throw Firebase HTTP errors
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    }
+    console.error("=== Error in createTopupInvoice ===");
+    console.error("Error details:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
 
     // Handle Xendit API errors
     if (
@@ -206,16 +320,22 @@ exports.createTopupInvoice = functions.https.onCall(async (data, context) => {
       error.response.data &&
       error.response.data.error_code
     ) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        `Xendit error: ${error.response.data.message}`,
-      );
+      console.error("Xendit API error:", error.response.data);
+      return res.status(400).json({
+        result: {
+          success: false,
+          error: `Xendit error: ${error.response.data.message}`,
+        },
+      });
     }
 
     // Handle other errors
-    throw new functions.https.HttpsError(
-      "internal",
-      `Failed to create top-up invoice: ${error.message}`,
-    );
+    console.error("Returning 500 error");
+    return res.status(500).json({
+      result: {
+        success: false,
+        error: `Failed to create top-up invoice: ${error.message}`,
+      },
+    });
   }
 });

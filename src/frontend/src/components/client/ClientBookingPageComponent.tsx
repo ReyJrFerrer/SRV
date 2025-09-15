@@ -933,7 +933,10 @@ const ClientBookingPageComponent: React.FC = () => {
           category: service!.category.toString(),
           bookingData: {
             ...bookingData,
-            location: typeof bookingData.location === 'string' ? bookingData.location : finalAddress, // Ensure location is string
+            location:
+              typeof bookingData.location === "string"
+                ? bookingData.location
+                : finalAddress, // Ensure location is string
           }, // Pass the full booking data
         });
 

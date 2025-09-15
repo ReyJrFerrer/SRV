@@ -42,8 +42,9 @@ export interface DirectPaymentRequest {
 }
 
 export interface TopupInvoiceRequest {
-  userId: string;
+  providerId: string;
   amount: number;
+  paymentMethods?: string[];
 }
 
 export interface PaymentResponse {

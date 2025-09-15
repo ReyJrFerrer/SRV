@@ -54,15 +54,15 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     const data = req.body.data || req.body;
     console.log("Extracted data:", JSON.stringify(data, null, 2));
 
-  const {
-    bookingId,
-    clientId,
-    providerId,
-    amount,
-    serviceTitle,
-    category,
-    bookingData, // New: receive full booking data
-  } = req.body.data;    // Fix category if it's an object
+    const {
+      bookingId,
+      clientId,
+      providerId,
+      amount,
+      serviceTitle,
+      category,
+      bookingData, // New: receive full booking data
+    } = req.body.data; // Fix category if it's an object
     const categoryStr =
       typeof category === "object"
         ? JSON.stringify(category)
@@ -340,10 +340,10 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         serviceTitle: bookingData.serviceName || serviceTitle,
         packages: bookingData.packages,
         bookingType: bookingData.bookingType,
-        scheduledDate: bookingData.scheduledDate 
-          ? (typeof bookingData.scheduledDate === 'string' 
-              ? bookingData.scheduledDate 
-              : new Date(bookingData.scheduledDate).toISOString()) 
+        scheduledDate: bookingData.scheduledDate
+          ? typeof bookingData.scheduledDate === "string"
+            ? bookingData.scheduledDate
+            : new Date(bookingData.scheduledDate).toISOString()
           : null,
         scheduledTime: bookingData.scheduledTime,
         location: bookingData.location,

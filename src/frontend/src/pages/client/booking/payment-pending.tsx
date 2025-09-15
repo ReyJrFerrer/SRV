@@ -29,12 +29,19 @@ const PaymentPendingPage: React.FC = () => {
   const navigate = useNavigate();
   const { identity } = useAuth();
   const { createBookingRequest } = useBookRequest();
-  
+
   const [paymentStatus, setPaymentStatus] = useState<
-    "pending" | "completed" | "failed" | "creating_booking" | "booking_success" | "booking_failed"
+    | "pending"
+    | "completed"
+    | "failed"
+    | "creating_booking"
+    | "booking_success"
+    | "booking_failed"
   >("pending");
   const [statusMessage, setStatusMessage] = useState<string>("");
-  const [bookingCreationError, setBookingCreationError] = useState<string | null>(null);
+  const [bookingCreationError, setBookingCreationError] = useState<
+    string | null
+  >(null);
   const [isCreatingBooking, setIsCreatingBooking] = useState<boolean>(false);
 
   // Get data from navigation state
@@ -52,22 +59,26 @@ const PaymentPendingPage: React.FC = () => {
         try {
           console.log(`🔍 Checking invoice status for: ${state.invoiceId}`);
           const statusResponse = await checkInvoiceStatus(state.invoiceId);
-          
+
           if (!statusResponse.success) {
-            console.error("Failed to check invoice status:", statusResponse.error);
+            console.error(
+              "Failed to check invoice status:",
+              statusResponse.error,
+            );
             return;
           }
 
           console.log(`📋 Invoice status: ${statusResponse.status}`);
 
-          if (statusResponse.status === "PAID" || statusResponse.status === "SETTLED") {
+          if (
+            statusResponse.status === "PAID" ||
+            statusResponse.status === "SETTLED"
+          ) {
             // Only proceed if we haven't already started creating booking
             if (!isCreatingBooking && paymentStatus === "pending") {
               setPaymentStatus("completed");
-              setStatusMessage(
-                "Payment successful! Creating your booking...",
-              );
-              
+              setStatusMessage("Payment successful! Creating your booking...");
+
               // Now create the actual booking in the ICP canister
               await createActualBooking();
             }
@@ -102,7 +113,11 @@ const PaymentPendingPage: React.FC = () => {
   // Function to create the actual booking after payment success
   const createActualBooking = async () => {
     // Prevent duplicate booking creation
-    if (isCreatingBooking || paymentStatus === "creating_booking" || paymentStatus === "booking_success") {
+    if (
+      isCreatingBooking ||
+      paymentStatus === "creating_booking" ||
+      paymentStatus === "booking_success"
+    ) {
       console.log("Booking creation already in progress or completed");
       return;
     }
@@ -119,7 +134,7 @@ const PaymentPendingPage: React.FC = () => {
 
       console.log(`🔍 Fetching payment data for invoice: ${state.invoiceId}`);
       const paymentDataResponse = await getPaymentData(state.invoiceId);
-      
+
       if (!paymentDataResponse.success || !paymentDataResponse.bookingData) {
         throw new Error("Booking data not found. Please contact support.");
       }
@@ -135,14 +150,16 @@ const PaymentPendingPage: React.FC = () => {
         packages: bookingData.packages,
         totalPrice: bookingData.totalPrice,
         bookingType: bookingData.bookingType,
-        scheduledDate: bookingData.scheduledDate ? new Date(bookingData.scheduledDate) : undefined,
+        scheduledDate: bookingData.scheduledDate
+          ? new Date(bookingData.scheduledDate)
+          : undefined,
         scheduledTime: bookingData.scheduledTime,
         location: bookingData.location,
         notes: bookingData.notes,
         amountToPay: bookingData.amountToPay,
         paymentMethod: bookingData.paymentMethod,
       };
-      
+
       // Ensure we have valid identity
       if (!identity) {
         throw new Error("Authentication required. Please log in again.");
@@ -150,11 +167,11 @@ const PaymentPendingPage: React.FC = () => {
 
       // Create the booking in the ICP canister
       const booking = await createBookingRequest(bookingRequest);
-      
+
       if (booking) {
         setPaymentStatus("booking_success");
         setStatusMessage("Booking created successfully!");
-        
+
         // Navigate to confirmation page after a short delay
         setTimeout(() => {
           navigate("/client/booking/confirmation", {
@@ -164,8 +181,8 @@ const PaymentPendingPage: React.FC = () => {
                 providerName: "Provider", // We could fetch this if needed
                 packages: bookingData.packages,
                 bookingType: bookingData.bookingType,
-                date: bookingData.scheduledDate 
-                  ? new Date(bookingData.scheduledDate).toLocaleDateString() 
+                date: bookingData.scheduledDate
+                  ? new Date(bookingData.scheduledDate).toLocaleDateString()
                   : new Date().toLocaleDateString(),
                 time: bookingData.scheduledTime || "",
                 location: bookingData.location,
@@ -185,7 +202,9 @@ const PaymentPendingPage: React.FC = () => {
       console.error("Error creating booking:", error);
       setPaymentStatus("booking_failed");
       setStatusMessage("Payment successful, but booking creation failed.");
-      setBookingCreationError(error instanceof Error ? error.message : "Unknown error occurred");
+      setBookingCreationError(
+        error instanceof Error ? error.message : "Unknown error occurred",
+      );
     } finally {
       setIsCreatingBooking(false);
     }
@@ -295,7 +314,9 @@ const PaymentPendingPage: React.FC = () => {
                   </h2>
                   <p className="text-sm text-gray-600">{statusMessage}</p>
                   {bookingCreationError && (
-                    <p className="mt-2 text-xs text-red-600">{bookingCreationError}</p>
+                    <p className="mt-2 text-xs text-red-600">
+                      {bookingCreationError}
+                    </p>
                   )}
                 </>
               )}
@@ -365,7 +386,8 @@ const PaymentPendingPage: React.FC = () => {
                 </>
               )}
 
-              {(paymentStatus === "completed" || paymentStatus === "creating_booking") && (
+              {(paymentStatus === "completed" ||
+                paymentStatus === "creating_booking") && (
                 <div className="text-center">
                   <p className="mb-3 text-sm text-gray-600">
                     Please wait while we process your booking...
@@ -391,10 +413,12 @@ const PaymentPendingPage: React.FC = () => {
                 <>
                   <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
                     <p className="mb-2 text-sm font-medium text-red-800">
-                      Your payment was successful, but we couldn't create your booking automatically.
+                      Your payment was successful, but we couldn't create your
+                      booking automatically.
                     </p>
                     <p className="text-xs text-red-600">
-                      Please contact our support team with your payment confirmation.
+                      Please contact our support team with your payment
+                      confirmation.
                     </p>
                   </div>
                   <button

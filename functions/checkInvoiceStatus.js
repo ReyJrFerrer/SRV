@@ -18,7 +18,9 @@ try {
     xendit = new Xendit({
       secretKey: secretKey,
     });
-    console.log("Xendit client initialized successfully for invoice status check");
+    console.log(
+      "Xendit client initialized successfully for invoice status check",
+    );
   }
 } catch (error) {
   console.error("Failed to initialize Xendit client:", error);
@@ -33,7 +35,7 @@ if (admin.apps.length === 0) {
     admin.initializeApp({
       projectId: "devsrv-rey",
     });
-    
+
     // Set Firestore emulator settings
     const db = admin.firestore();
     db.settings({
@@ -51,9 +53,9 @@ if (admin.apps.length === 0) {
  */
 exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
   if (req.method !== "POST") {
-    return res.status(405).json({ 
-      success: false, 
-      error: "Method not allowed" 
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
     });
   }
 
@@ -71,12 +73,14 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
 
     // Check if Xendit client is initialized
     if (!xendit) {
-      console.log("Xendit client not initialized, checking Firestore for cached status");
-      
+      console.log(
+        "Xendit client not initialized, checking Firestore for cached status",
+      );
+
       // Fallback: Check Firestore for payment status
       const db = admin.firestore();
       const paymentDoc = await db.collection("payments").doc(invoiceId).get();
-      
+
       if (!paymentDoc.exists) {
         return res.status(404).json({
           success: false,
@@ -97,12 +101,12 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
     // Check if this is a mock invoice (development mode)
     if (invoiceId.startsWith("invoice_mock_")) {
       console.log("Mock invoice detected, simulating status check");
-      
+
       // For development, we can simulate different statuses
       // In a real scenario, this would be "PAID" after webhook processing
       const db = admin.firestore();
       const paymentDoc = await db.collection("payments").doc(invoiceId).get();
-      
+
       if (paymentDoc.exists) {
         const paymentData = paymentDoc.data();
         return res.status(200).json({
@@ -118,20 +122,20 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
     // Fetch invoice status from Xendit
     const { Invoice } = xendit;
     let invoice;
-    
+
     try {
       invoice = await Invoice.getInvoiceById({
         invoiceId: invoiceId,
       });
-      
+
       console.log(`✅ Invoice status fetched: ${invoice.status}`);
     } catch (xenditError) {
       console.error("Error fetching invoice from Xendit:", xenditError);
-      
+
       // Fallback to Firestore if Xendit fails
       const db = admin.firestore();
       const paymentDoc = await db.collection("payments").doc(invoiceId).get();
-      
+
       if (!paymentDoc.exists) {
         return res.status(404).json({
           success: false,
@@ -152,13 +156,16 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
     // Update Firestore with the latest status
     try {
       const db = admin.firestore();
-      await db.collection("payments").doc(invoiceId).update({
-        status: invoice.status,
-        lastChecked: new Date().toISOString(),
-        xenditData: {
-          ...invoice,
-        },
-      });
+      await db
+        .collection("payments")
+        .doc(invoiceId)
+        .update({
+          status: invoice.status,
+          lastChecked: new Date().toISOString(),
+          xenditData: {
+            ...invoice,
+          },
+        });
       console.log("Updated payment status in Firestore");
     } catch (firestoreError) {
       console.warn("Failed to update Firestore:", firestoreError);
@@ -174,7 +181,6 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
       paidAt: invoice.paidAt,
       source: "xendit_api",
     });
-
   } catch (error) {
     console.error("❌ Error checking invoice status:", error);
     return res.status(500).json({

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BanknotesIcon,
@@ -15,9 +15,12 @@ import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useWallet } from "../../hooks/useWallet";
 import { Transaction } from "../../services/walletCanisterService";
 import { Toaster, toast } from "sonner";
+import { createTopupInvoice, TopupInvoiceRequest } from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
+  const { identity } = useAuth();
   const {
     balance,
     transactions,
@@ -29,6 +32,14 @@ const WalletPage: React.FC = () => {
     refreshWalletData,
     isAuthenticated,
   } = useWallet();
+
+  // Top-up modal state
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [topUpLoading, setTopUpLoading] = useState(false);
+
+  // Predefined top-up amounts
+  const predefinedAmounts = [100, 250, 500, 1000, 2500, 5000];
 
   useEffect(() => {
     document.title = "My Wallet | SRV Provider";
@@ -42,8 +53,55 @@ const WalletPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   const handleTopUpClick = () => {
-    // For now, this is manual - will be automated in Phase 2
-    toast.info("Top-up feature will be available soon!");
+    setShowTopUpModal(true);
+  };
+
+  const handleTopUpSubmit = async () => {
+    if (!identity) {
+      toast.error("Please authenticate first");
+      return;
+    }
+
+    const amount = parseFloat(topUpAmount);
+    if (!amount || amount < 50) {
+      toast.error("Minimum top-up amount is ₱50");
+      return;
+    }
+
+    if (amount > 50000) {
+      toast.error("Maximum top-up amount is ₱50,000");
+      return;
+    }
+
+    setTopUpLoading(true);
+    try {
+      const providerId = identity.getPrincipal().toString();
+      const request: TopupInvoiceRequest = {
+        providerId,
+        amount,
+      };
+
+      const response = await createTopupInvoice(request);
+
+      if (response.success && response.invoiceUrl) {
+        toast.success("Redirecting to payment...");
+        // Open payment URL in new tab/window
+        window.open(response.invoiceUrl, "_blank");
+        setShowTopUpModal(false);
+        setTopUpAmount("");
+      } else {
+        throw new Error(response.error || "Failed to create top-up invoice");
+      }
+    } catch (error: any) {
+      console.error("Top-up error:", error);
+      toast.error(error.message || "Failed to initiate top-up");
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
+
+  const handlePredefinedAmount = (amount: number) => {
+    setTopUpAmount(amount.toString());
   };
 
   const handleRefresh = async () => {
@@ -273,6 +331,103 @@ const WalletPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Top-Up Modal */}
+      {showTopUpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Top Up Wallet
+              </h3>
+              <button
+                onClick={() => {
+                  setShowTopUpModal(false);
+                  setTopUpAmount("");
+                }}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Predefined amounts */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Quick amounts
+                </label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {predefinedAmounts.map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => handlePredefinedAmount(amount)}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        topUpAmount === amount.toString()
+                          ? "border-blue-500 bg-blue-50 text-blue-600"
+                          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      ₱{amount.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom amount input */}
+              <div>
+                <label
+                  htmlFor="topup-amount"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Or enter custom amount
+                </label>
+                <div className="mt-2">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      ₱
+                    </span>
+                    <input
+                      id="topup-amount"
+                      type="number"
+                      value={topUpAmount}
+                      onChange={(e) => setTopUpAmount(e.target.value)}
+                      placeholder="0.00"
+                      min="50"
+                      max="50000"
+                      step="0.01"
+                      className="w-full rounded-lg border border-gray-300 pl-7 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Minimum: ₱50 • Maximum: ₱50,000
+                  </p>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowTopUpModal(false);
+                    setTopUpAmount("");
+                  }}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleTopUpSubmit}
+                  disabled={topUpLoading || !topUpAmount || parseFloat(topUpAmount) < 50}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {topUpLoading ? "Processing..." : "Continue to Payment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNavigation />
     </div>
