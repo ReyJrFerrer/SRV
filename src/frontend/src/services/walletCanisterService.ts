@@ -97,21 +97,6 @@ const convertCanisterTransaction = (
 // Wallet Canister Service Functions (Non-Admin Only)
 export const walletCanisterService = {
   /**
-   * Get current user's wallet balance
-   */
-  async getBalance(): Promise<number> {
-    try {
-      const actor = getWalletActor(true); // Requires authentication
-      const balance = await actor.get_balance();
-      // Convert from centavos to pesos (divide by 100)
-      return Number(balance) / 100;
-    } catch (error) {
-      //console.error("Error fetching wallet balance:", error);
-      throw new Error(`Failed to fetch wallet balance: ${error}`);
-    }
-  },
-
-  /**
    * Get balance for a specific principal
    */
   async getBalanceOf(principal: Principal): Promise<number> {

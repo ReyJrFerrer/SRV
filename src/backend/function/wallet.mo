@@ -118,15 +118,6 @@ persistent actor Wallet {
         }
     };
 
-    // Public function: Get balance (Query)
-    public query func get_balance() : async Nat {
-        let caller = Principal.fromActor(Wallet);
-        switch (Trie.get(balances, principalKey(caller), Principal.equal)) {
-            case (?balance) { balance };
-            case null { 0 };
-        }
-    };
-
     // Public function: Get balance for specific principal (Query)
     public query func get_balance_of(principal: Principal) : async Nat {
         switch (Trie.get(balances, principalKey(principal), Principal.equal)) {

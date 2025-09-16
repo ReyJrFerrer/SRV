@@ -36,7 +36,8 @@ export const useWallet = () => {
 
     try {
       setError(null);
-      const currentBalance = await walletCanisterService.getBalance();
+      const currentBalance = await walletCanisterService.getBalanceOf(identity.getPrincipal());
+     
       setBalance(currentBalance);
     } catch (err) {
       console.error("Failed to fetch wallet balance:", err);
