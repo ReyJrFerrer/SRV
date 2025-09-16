@@ -8,6 +8,7 @@ import {
   GlobeAltIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  WalletIcon,
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
 import phLocations from "../../data/ph_locations.json";
@@ -109,15 +110,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         }`}
       >
         <div className="flex items-center">
-          <img
-            src="/images/external logo/g-cash-logo.svg"
-            alt="GCash"
-            width={24}
-            height={24}
-            className="mr-3"
-          />
+          <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />   
           <div className="flex flex-col">
-            <span className="font-medium text-gray-800">GCash</span>
+            <span className="font-medium text-gray-800">E-Wallet (GCash and PayMaya)</span>
             {!isProviderOnboarded && (
               <span className="text-xs text-gray-500">
                 Provider not set up for direct payments
@@ -143,7 +138,13 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         }`}
       >
         <div className="flex items-center">
-          <CreditCardIcon className="mr-3 h-6 w-6 text-blue-500" />
+           <img
+            src="/logo.svg"
+            alt="SRV"
+            width={24}
+            height={24}
+            className="mr-3"
+          />
           <span className="font-medium text-gray-800">SRV Wallet</span>
         </div>
         {paymentMethod === "SRVWallet" && (

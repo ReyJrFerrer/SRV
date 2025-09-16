@@ -328,7 +328,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             strokeLinejoin="round"
           />
         </svg>
-        Pay Commission
+        View Wallet
       </button>
     </div>
   );

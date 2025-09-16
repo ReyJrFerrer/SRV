@@ -249,12 +249,12 @@ persistent actor Wallet {
 
     // Public function: Get transaction history for a user (Query)
     public query func get_transaction_history(principal: Principal) : async [Transaction] {
-        let caller = Principal.fromActor(Wallet);
+        // let caller = Principal.fromActor(Wallet);
         
-        // Users can see their own transactions, authorized controllers can see any
-        if (not (Principal.equal(caller, principal) or isAuthorized(caller))) {
-            return [];
-        };
+        // // Users can see their own transactions, authorized controllers can see any
+        // if (not (Principal.equal(caller, principal) or isAuthorized(caller))) {
+        //     return [];
+        // };
 
         let allTransactions = Trie.toArray<Text, Transaction, Transaction>(transactions, func(k, v) = v);
         Array.mapFilter<Transaction, Transaction>(

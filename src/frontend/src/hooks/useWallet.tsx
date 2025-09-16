@@ -36,8 +36,10 @@ export const useWallet = () => {
 
     try {
       setError(null);
-      const currentBalance = await walletCanisterService.getBalanceOf(identity.getPrincipal());
-     
+      const currentBalance = await walletCanisterService.getBalanceOf(
+        identity.getPrincipal(),
+      );
+
       setBalance(currentBalance);
     } catch (err) {
       console.error("Failed to fetch wallet balance:", err);
@@ -149,6 +151,9 @@ export const useWallet = () => {
         setTransferLoading(true);
         setError(null);
 
+        /**
+         * 
+         */
         const result = await walletCanisterService.creditWallet(
           principal,
           amount,

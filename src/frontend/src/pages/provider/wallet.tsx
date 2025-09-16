@@ -460,7 +460,7 @@ const WalletPage: React.FC = () => {
                       <div className="text-right">
                         <span className={`font-medium ${display.color}`}>
                           {display.sign}
-                          {formatCurrency(transaction.amount)}
+                          {formatCurrency(transaction.amount / 100)}
                         </span>
                       </div>
                     </div>
