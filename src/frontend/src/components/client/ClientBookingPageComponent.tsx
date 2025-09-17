@@ -110,9 +110,11 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         }`}
       >
         <div className="flex items-center">
-          <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />   
+          <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />
           <div className="flex flex-col">
-            <span className="font-medium text-gray-800">E-Wallet (GCash and PayMaya)</span>
+            <span className="font-medium text-gray-800">
+              E-Wallet (GCash and PayMaya)
+            </span>
             {!isProviderOnboarded && (
               <span className="text-xs text-gray-500">
                 Provider not set up for direct payments
@@ -138,7 +140,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         }`}
       >
         <div className="flex items-center">
-           <img
+          <img
             src="/logo.svg"
             alt="SRV"
             width={24}

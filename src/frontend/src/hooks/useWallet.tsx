@@ -152,7 +152,7 @@ export const useWallet = () => {
         setError(null);
 
         /**
-         * 
+         *
          */
         const result = await walletCanisterService.creditWallet(
           principal,

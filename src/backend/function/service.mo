@@ -8,7 +8,7 @@ import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
-
+import Nat32 "mo:base/Nat32";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
@@ -78,11 +78,16 @@ persistent actor ServiceCanister {
         return #ok("Canister references set successfully");
     };
 
+     // Counter for ensuring unique IDs
+    private var idCounter : Nat = 0;
+
     // Helper functions
-    func generateId() : Text {
+      private func generateId(caller : Principal) : Text {
         let now = Int.abs(Time.now());
-        let random = Int.abs(Time.now()) % 10000;
-        return Int.toText(now) # "-" # Int.toText(random);
+        idCounter += 1;
+        let callerText = Principal.toText(caller);
+        let callerHash = Nat32.toNat(Text.hash(callerText));
+        return Int.toText(now) # "-" # Nat.toText(idCounter) # "-" # Nat.toText(callerHash);
     };
 
     func calculateDistance(loc1 : Location, loc2 : Location) : Float {
@@ -371,7 +376,7 @@ persistent actor ServiceCanister {
             };
         };
         
-        let serviceId = generateId();
+        let serviceId = generateId(caller);
         
         // Calculate commission fee and rate
         let (commissionFee, commissionRate) = await calculateCommissionInfo(category.name, price);
@@ -1358,7 +1363,7 @@ persistent actor ServiceCanister {
             case (null) {};
         };
         
-        let categoryId = generateId();
+        let categoryId = generateId(caller);
         
         let newCategory : ServiceCategory = {
             id = categoryId;
@@ -1733,7 +1738,7 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                     return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
                 };
                 
-                let packageId = generateId();
+                let packageId = generateId(caller);
                 
                 // Calculate commission fee and rate for the package
                 let (commissionFee, commissionRate) = await calculateCommissionInfo(service.category.name, price);
