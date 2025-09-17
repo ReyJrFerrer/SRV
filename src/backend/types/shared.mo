@@ -205,6 +205,15 @@ module {
         evidence: ?Evidence;
         notes: ?Text;  // Optional notes from client during booking creation
         paymentMethod: PaymentMethod; // Payment method chosen by client
+        // Payment status tracking fields for Phase 3 Payment Holding and Release
+        paymentStatus: ?Text; // PENDING, PAID_HELD, RELEASED, COMPLETED
+        paymentId: ?Text; // Reference to external payment (Xendit invoice ID)
+        heldAmount: ?Nat; // Amount held in escrow for digital payments
+        releasedAmount: ?Nat; // Amount released to provider
+        commissionRetained: ?Nat; // Commission amount retained by platform
+        paymentReleased: ?Bool; // Flag indicating if payment has been released
+        releasedAt: ?Time.Time; // Timestamp when payment was released
+        payoutId: ?Text; // Reference to payout transaction (Xendit payout ID)
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };

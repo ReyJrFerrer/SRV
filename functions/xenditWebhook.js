@@ -174,7 +174,7 @@ async function handleWalletTopupPaid(webhookData) {
 }
 
 /**
- * Handle direct payment completion and trigger payout to provider
+ * Handle direct payment completion and hold payment until booking completion
  * @param {Object} webhookData - Webhook data from Xendit
  */
 async function handleDirectPaymentPaid(webhookData) {
@@ -182,12 +182,15 @@ async function handleDirectPaymentPaid(webhookData) {
   const actualPaidAmount = paidAmount || amount;
 
   try {
-    // Update payment record
+    // Update payment record with HELD status instead of COMPLETED
     try {
       await admin.firestore().collection("payments").doc(id).update({
-        status: "COMPLETED",
+        status: "HELD", // Payment is held, not completed
+        paymentStatus: "HELD",
         paidAmount: actualPaidAmount,
         paidAt: new Date().toISOString(),
+        heldAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     } catch (firestoreError) {
       console.error("Error updating payment record:", firestoreError);
@@ -213,26 +216,90 @@ async function handleDirectPaymentPaid(webhookData) {
       return; // Cannot continue without payment data
     }
 
-    const { bookingId, providerId, clientId } = paymentData;
+    const {
+      bookingId,
+      providerId,
+      clientId,
+      commissionAmount,
+      providerAmount,
+    } = paymentData;
 
-    // Update booking status to PAID
+    // Update booking status to PAID_HELD (payment received but held)
     try {
-      await admin.firestore().collection("bookings").doc(bookingId).update({
-        paymentStatus: "PAID",
-        paidAmount: actualPaidAmount,
-        paidAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      await admin
+        .firestore()
+        .collection("bookings")
+        .doc(bookingId)
+        .update({
+          paymentStatus: "PAID_HELD",
+          heldAmount: actualPaidAmount,
+          commissionAmount: commissionAmount || 0,
+          providerAmount:
+            providerAmount || actualPaidAmount - (commissionAmount || 0),
+          paidAt: new Date().toISOString(),
+          heldAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
     } catch (error) {
       console.error("Error updating booking:", error);
     }
 
-    // Trigger payout to provider's GCash
-    await processProviderPayout(paymentData, actualPaidAmount);
+    // Create payment state audit trail
+    try {
+      await admin
+        .firestore()
+        .collection("payment_audit_trail")
+        .add({
+          paymentId: id,
+          bookingId,
+          providerId,
+          clientId,
+          state: "PAID_HELD",
+          previousState: "PENDING",
+          amount: actualPaidAmount,
+          commissionAmount: commissionAmount || 0,
+          providerAmount:
+            providerAmount || actualPaidAmount - (commissionAmount || 0),
+          timestamp: new Date().toISOString(),
+          metadata: {
+            xenditInvoiceId: id,
+            paymentMethod: "DIGITAL",
+            reason: "Payment received and held until booking completion",
+          },
+        });
+    } catch (error) {
+      console.error("Error creating payment audit trail:", error);
+    }
 
-    // Call ICP canister to confirm digital payment
-    // Note: This would typically make a call to your ICP backend
-    // For now, we'll store the confirmation and let the backend sync
+    // Store held payment data for later release
+    try {
+      await admin
+        .firestore()
+        .collection("held_payments")
+        .doc(id)
+        .set({
+          paymentId: id,
+          bookingId,
+          providerId,
+          clientId,
+          heldAmount: actualPaidAmount,
+          commissionAmount: commissionAmount || 0,
+          providerAmount:
+            providerAmount || actualPaidAmount - (commissionAmount || 0),
+          status: "HELD",
+          heldAt: new Date().toISOString(),
+          paymentData: paymentData, // Store original payment data for payout
+          metadata: {
+            xenditInvoiceId: id,
+            originalAmount: amount,
+            actualPaidAmount: actualPaidAmount,
+          },
+        });
+    } catch (error) {
+      console.error("Error storing held payment:", error);
+    }
+
+    // Call ICP canister to confirm digital payment (but mark as held)
     try {
       await admin.firestore().collection("payment_confirmations").add({
         bookingId,
@@ -241,14 +308,15 @@ async function handleDirectPaymentPaid(webhookData) {
         invoiceId: id,
         amount: actualPaidAmount,
         paymentMethod: "DIGITAL",
+        status: "HELD",
         confirmedAt: new Date().toISOString(),
       });
     } catch (error) {
       console.error("Error saving payment confirmation:", error);
     }
 
-    // Send notifications to both client and provider
-    await sendPaymentNotifications(
+    // Send notifications about held payment
+    await sendHeldPaymentNotifications(
       bookingId,
       clientId,
       providerId,
@@ -256,8 +324,8 @@ async function handleDirectPaymentPaid(webhookData) {
     );
 
     console.log(
-      `Direct payment completed for booking ${bookingId}: ` +
-        `₱${actualPaidAmount}`,
+      `Direct payment held for booking ${bookingId}: ` +
+        `₱${actualPaidAmount} (Payment will be released upon booking completion)`,
     );
   } catch (error) {
     console.error(`Error handling direct payment ${id}:`, error);
@@ -513,6 +581,91 @@ async function sendPaymentNotifications(
   } catch (error) {
     console.error(
       `Error sending payment notifications for booking ${bookingId}:`,
+      error,
+    );
+  }
+}
+
+/**
+ * Send held payment notifications to client and provider
+ * @param {string} bookingId - Booking ID
+ * @param {string} clientId - Client ID
+ * @param {string} providerId - Provider ID
+ * @param {number} amount - Payment amount
+ */
+async function sendHeldPaymentNotifications(
+  bookingId,
+  clientId,
+  providerId,
+  amount,
+) {
+  try {
+    // Send notification to client
+    const clientDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(clientId)
+      .get();
+
+    if (clientDoc.exists) {
+      const clientData = clientDoc.data();
+      const clientFcmToken = clientData.fcmToken;
+
+      if (clientFcmToken) {
+        const clientMessage = {
+          token: clientFcmToken,
+          notification: {
+            title: "Payment Received & Secured",
+            body:
+              `Your payment of ₱${amount.toLocaleString()} has been received. ` +
+              "Funds will be released to the provider upon service completion.",
+          },
+          data: {
+            type: "PAYMENT_HELD",
+            bookingId: bookingId,
+            amount: amount.toString(),
+            status: "HELD",
+          },
+        };
+
+        await admin.messaging().send(clientMessage);
+      }
+    }
+
+    // Send notification to provider
+    const providerDoc = await admin
+      .firestore()
+      .collection("providers")
+      .doc(providerId)
+      .get();
+
+    if (providerDoc.exists) {
+      const providerData = providerDoc.data();
+      const providerFcmToken = providerData.fcmToken;
+
+      if (providerFcmToken) {
+        const providerMessage = {
+          token: providerFcmToken,
+          notification: {
+            title: "Payment Secured",
+            body:
+              `Payment of ₱${amount.toLocaleString()} has been secured for your booking. ` +
+              "Complete the service to receive payment.",
+          },
+          data: {
+            type: "PAYMENT_HELD",
+            bookingId: bookingId,
+            amount: amount.toString(),
+            status: "HELD",
+          },
+        };
+
+        await admin.messaging().send(providerMessage);
+      }
+    }
+  } catch (error) {
+    console.error(
+      `Error sending held payment notifications for booking ${bookingId}:`,
       error,
     );
   }

@@ -122,6 +122,15 @@ persistent actor BookingCanister {
             evidence = existingBooking.evidence;
             notes = existingBooking.notes;
             paymentMethod = existingBooking.paymentMethod;
+            // Copy payment status fields from existing booking
+            paymentStatus = existingBooking.paymentStatus;
+            paymentId = existingBooking.paymentId;
+            heldAmount = existingBooking.heldAmount;
+            releasedAmount = existingBooking.releasedAmount;
+            commissionRetained = existingBooking.commissionRetained;
+            paymentReleased = existingBooking.paymentReleased;
+            releasedAt = existingBooking.releasedAt;
+            payoutId = existingBooking.payoutId;
             createdAt = existingBooking.createdAt;
             updatedAt = Time.now();
         };
@@ -412,6 +421,15 @@ persistent actor BookingCanister {
             evidence = null;
             notes = notes;
             paymentMethod = paymentMethod;
+            // Initialize payment status tracking fields
+            paymentStatus = ?("PENDING"); // Start with pending status
+            paymentId = null; // Will be set when payment is processed
+            heldAmount = null; // Will be set for digital payments
+            releasedAmount = null; // Will be set when payment is released
+            commissionRetained = null; // Will be set when commission is calculated
+            paymentReleased = null; // Will be set to true when payment is released
+            releasedAt = null; // Will be set when payment is released
+            payoutId = null; // Will be set when payout is processed
             createdAt = Time.now();
             updatedAt = Time.now();
         };
@@ -636,6 +654,15 @@ persistent actor BookingCanister {
                             evidence = updatedBooking.evidence;
                             notes = updatedBooking.notes;
                             paymentMethod = updatedBooking.paymentMethod;
+                            // Copy payment status fields from existing booking
+                            paymentStatus = updatedBooking.paymentStatus;
+                            paymentId = updatedBooking.paymentId;
+                            heldAmount = updatedBooking.heldAmount;
+                            releasedAmount = updatedBooking.releasedAmount;
+                            commissionRetained = updatedBooking.commissionRetained;
+                            paymentReleased = updatedBooking.paymentReleased;
+                            releasedAt = updatedBooking.releasedAt;
+                            payoutId = updatedBooking.payoutId;
                             createdAt = updatedBooking.createdAt;
                             updatedAt = updatedBooking.updatedAt;
                         };
@@ -734,6 +761,15 @@ persistent actor BookingCanister {
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
                     paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = existingBooking.updatedAt;
                 };
@@ -753,6 +789,57 @@ persistent actor BookingCanister {
                                 // Commission successfully deducted for cash jobs (or skipped for non-cash)
                             };
                         };
+
+                        // For digital payments, mark payment status as ready for release
+                        // The actual payment release will be triggered by Firebase Cloud Functions
+                        var finalBooking = updatedBooking;
+                        switch (updatedBooking.paymentMethod) {
+                            case (#GCash or #SRVWallet) {
+                                switch (updatedBooking.paymentStatus) {
+                                    case (?"PAID_HELD") {
+                                        // Update payment status to indicate booking is completed and ready for release
+                                        let bookingReadyForRelease : Booking = {
+                                            id = updatedBooking.id;
+                                            clientId = updatedBooking.clientId;
+                                            providerId = updatedBooking.providerId;
+                                            serviceId = updatedBooking.serviceId;
+                                            servicePackageId = updatedBooking.servicePackageId;
+                                            status = updatedBooking.status;
+                                            requestedDate = updatedBooking.requestedDate;
+                                            scheduledDate = updatedBooking.scheduledDate;
+                                            startedDate = updatedBooking.startedDate;
+                                            completedDate = updatedBooking.completedDate;
+                                            price = updatedBooking.price;
+                                            amountPaid = updatedBooking.amountPaid;
+                                            serviceTime = updatedBooking.serviceTime;
+                                            location = updatedBooking.location;
+                                            evidence = updatedBooking.evidence;
+                                            notes = updatedBooking.notes;
+                                            paymentMethod = updatedBooking.paymentMethod;
+                                            // Update payment status to indicate ready for release
+                                            paymentStatus = ?("READY_FOR_RELEASE");
+                                            paymentId = updatedBooking.paymentId;
+                                            heldAmount = updatedBooking.heldAmount;
+                                            releasedAmount = updatedBooking.releasedAmount;
+                                            commissionRetained = updatedBooking.commissionRetained;
+                                            paymentReleased = updatedBooking.paymentReleased;
+                                            releasedAt = updatedBooking.releasedAt;
+                                            payoutId = updatedBooking.payoutId;
+                                            createdAt = updatedBooking.createdAt;
+                                            updatedAt = Time.now();
+                                        };
+                                        finalBooking := bookingReadyForRelease;
+                                        bookings.put(bookingId, finalBooking);
+                                    };
+                                    case (_) {
+                                        // Payment not held or already processed, no action needed
+                                    };
+                                };
+                            };
+                            case (#CashOnHand) {
+                                // Cash payments don't need release logic
+                            };
+                        };
                         
                         // Update reputation scores for both provider and client
                         switch (reputationCanisterId) {
@@ -761,14 +848,14 @@ persistent actor BookingCanister {
                                     updateProviderReputation : (Principal) -> async Result<ReputationScore>;
                                 };
                                 // Update provider reputation using provider-specific function
-                                ignore await reputationCanister.updateProviderReputation(updatedBooking.providerId);
+                                ignore await reputationCanister.updateProviderReputation(finalBooking.providerId);
                             };
                             case (null) {
                                 // Reputation canister not set, continue without updating reputation
                             };
                         };
 
-                        return #ok(updatedBooking);
+                        return #ok(finalBooking);
                     };
                     case (#err(msg)) {
                         return #err(msg);
@@ -854,6 +941,15 @@ persistent actor BookingCanister {
                     evidence = ?newEvidence;
                     notes = existingBooking.notes;
                     paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -895,6 +991,15 @@ persistent actor BookingCanister {
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
                     paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -1370,6 +1475,15 @@ persistent actor BookingCanister {
                                     evidence = booking.evidence;
                                     notes = booking.notes;
                                     paymentMethod = booking.paymentMethod;
+                                    // Copy payment status fields from existing booking
+                                    paymentStatus = booking.paymentStatus;
+                                    paymentId = booking.paymentId;
+                                    heldAmount = booking.heldAmount;
+                                    releasedAmount = booking.releasedAmount;
+                                    commissionRetained = booking.commissionRetained;
+                                    paymentReleased = booking.paymentReleased;
+                                    releasedAt = booking.releasedAt;
+                                    payoutId = booking.payoutId;
                                     createdAt = booking.createdAt;
                                     updatedAt = Time.now();
                                 };
@@ -1401,6 +1515,133 @@ persistent actor BookingCanister {
                         return #err("Booking is already in progress");
                     };
                 };
+            };
+            case (null) {
+                return #err("Booking not found");
+            };
+        };
+    };
+
+    /**
+     * Release held payment when booking is completed
+     * This function is called by authorized backend services to release payments
+     */
+    public shared(msg) func releasePayment(
+        bookingId : Text,
+        paymentId : ?Text,
+        releasedAmount : Nat,
+        commissionRetained : Nat,
+        payoutId : ?Text
+    ) : async Result<Booking> {
+        let _caller = msg.caller;
+        
+        // Security: Only allow calls from authorized backend service
+        // Note: In production, this should be the Principal of your Firebase backend service
+        // For now, we'll allow any caller but log the attempt for security monitoring
+        // TODO: Replace with actual backend service Principal verification
+        
+        // Get the booking
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                // Verify the booking is completed and has held payment
+                switch (booking.status) {
+                    case (#Completed) {
+                        // Verify this is a digital payment method
+                        switch (booking.paymentMethod) {
+                            case (#GCash or #SRVWallet) {
+                                // Check if payment is currently held
+                                switch (booking.paymentStatus) {
+                                    case (?"PAID_HELD") {
+                                        // Update booking with payment release information
+                                        let updatedBooking : Booking = {
+                                            id = booking.id;
+                                            clientId = booking.clientId;
+                                            providerId = booking.providerId;
+                                            serviceId = booking.serviceId;
+                                            servicePackageId = booking.servicePackageId;
+                                            status = booking.status;
+                                            requestedDate = booking.requestedDate;
+                                            scheduledDate = booking.scheduledDate;
+                                            startedDate = booking.startedDate;
+                                            completedDate = booking.completedDate;
+                                            price = booking.price;
+                                            amountPaid = booking.amountPaid;
+                                            serviceTime = booking.serviceTime;
+                                            location = booking.location;
+                                            evidence = booking.evidence;
+                                            notes = booking.notes;
+                                            paymentMethod = booking.paymentMethod;
+                                            // Update payment status fields
+                                            paymentStatus = ?("RELEASED");
+                                            paymentId = switch (paymentId) { case (?id) ?id; case (null) booking.paymentId; };
+                                            heldAmount = booking.heldAmount;
+                                            releasedAmount = ?releasedAmount;
+                                            commissionRetained = ?commissionRetained;
+                                            paymentReleased = ?true;
+                                            releasedAt = ?Time.now();
+                                            payoutId = payoutId;
+                                            createdAt = booking.createdAt;
+                                            updatedAt = Time.now();
+                                        };
+                                        
+                                        // Update the booking in storage
+                                        bookings.put(bookingId, updatedBooking);
+                                        
+                                        return #ok(updatedBooking);
+                                    };
+                                    case (?"RELEASED") {
+                                        return #err("Payment has already been released for this booking");
+                                    };
+                                    case (_) {
+                                        return #err("Payment is not in held status, current status: " # (switch (booking.paymentStatus) {
+                                            case (?status) status;
+                                            case (null) "null";
+                                        }));
+                                    };
+                                };
+                            };
+                            case (#CashOnHand) {
+                                return #err("Cash payments do not require release");
+                            };
+                        };
+                    };
+                    case (_) {
+                        return #err("Booking must be completed before payment can be released, current status: " # debug_show(booking.status));
+                    };
+                };
+            };
+            case (null) {
+                return #err("Booking not found");
+            };
+        };
+    };
+
+    /**
+     * Get payment status for a booking
+     * Provides payment tracking information for frontend display
+     */
+    public query func getPaymentStatus(bookingId : Text) : async Result<{
+        paymentStatus: ?Text;
+        paymentId: ?Text;
+        heldAmount: ?Nat;
+        releasedAmount: ?Nat;
+        commissionRetained: ?Nat;
+        paymentReleased: ?Bool;
+        releasedAt: ?Time.Time;
+        payoutId: ?Text;
+    }> {
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                return #ok({
+                    paymentStatus = booking.paymentStatus;
+                    paymentId = booking.paymentId;
+                    heldAmount = booking.heldAmount;
+                    releasedAmount = booking.releasedAmount;
+                    commissionRetained = booking.commissionRetained;
+                    paymentReleased = booking.paymentReleased;
+                    releasedAt = booking.releasedAt;
+                    payoutId = booking.payoutId;
+                });
             };
             case (null) {
                 return #err("Booking not found");

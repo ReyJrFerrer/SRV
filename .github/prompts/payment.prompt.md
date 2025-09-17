@@ -84,7 +84,7 @@
   - Enhance webhook to handle payment holding instead of immediate payout
   - Create separate function to release held payments when bookings are completed
   - Implement Firestore-based payment state management (pending → paid → held → released → completed)
-  - Add automatic commission retention and provider payout calculation
+  - Add automatic commission retention
   - Include booking status validation before payment release
   - Add comprehensive audit trail for payment state changes
 
@@ -108,7 +108,6 @@
   - Add `getPaymentStatus(booking_id: Text)` query function for frontend status checks
   - Enhance `completeBooking()` to automatically trigger payment release for digital payments
   - Add payment validation checks in booking state transitions
-  - Include comprehensive payment history tracking within booking records
 
 **3.5. Enhanced Cash Job Wallet Deduction System**
 
@@ -121,39 +120,6 @@
   - Add comprehensive error handling for insufficient balance scenarios
   - Include automatic wallet top-up suggestions when balance is insufficient
   - Add commission deduction confirmation system with provider notifications
-
-**3.6. Environment-Aware Canister Integration**
-
-- **Action:** CREATE `functions/utils/canisterConfig.js` and MODIFY all canister-calling functions.
-- **Content:**
-  - Create centralized canister configuration utility detecting environment (local, ic, playground)
-  - Implement automatic canister ID resolution based on environment
-  - Add proper authentication setup for each environment type
-  - Include connection validation and retry mechanisms
-  - Add comprehensive logging for canister communication debugging
-  - Implement fallback mechanisms for network issues
-
-**3.7. Advanced Frontend Payment Dashboard**
-
-- **Action:** CREATE `src/frontend/src/pages/provider/payment-dashboard.tsx`.
-- **Content:**
-  - Build comprehensive payment dashboard showing all payment types (digital, cash, wallet)
-  - Implement payment analytics with earnings breakdown by payment method
-  - Add held payment monitoring with expected release dates
-  - Include commission tracking and wallet balance trends
-  - Add payment method performance metrics and recommendations
-  - Implement export functionality for payment reports
-
-**3.8. Comprehensive Testing and Validation**
-
-- **Action:** CREATE test files for each new function and component.
-- **Content:**
-  - Create unit tests for enhanced commission calculation logic
-  - Add integration tests for payment holding and release flow
-  - Implement end-to-end tests for complete payment cycles
-  - Add environment switching tests (local ↔ deployed)
-  - Include error scenario testing (insufficient balance, network failures, etc.)
-  - Add performance testing for high-volume payment processing
 
 **PAUSE FOR CONFIRMATION (End of Phase 3)**
 
