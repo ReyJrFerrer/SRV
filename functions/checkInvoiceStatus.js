@@ -94,6 +94,7 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
         status: paymentData.status || "PENDING",
         invoiceId: invoiceId,
         amount: paymentData.amount,
+        paymentChannel: paymentData.paymentChannel || "GCash",
         source: "firestore_cache",
       });
     }
@@ -114,6 +115,7 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
           status: paymentData.status || "PENDING",
           invoiceId: invoiceId,
           amount: paymentData.amount,
+          paymentChannel: paymentData.paymentChannel || "GCash",
           source: "mock_development",
         });
       }
@@ -149,6 +151,7 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
         status: paymentData.status || "PENDING",
         invoiceId: invoiceId,
         amount: paymentData.amount,
+        paymentChannel: paymentData.paymentChannel || "GCash",
         source: "firestore_fallback",
       });
     }
@@ -161,6 +164,8 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
       paidAmount: invoice.paidAmount || invoice.amount,
       expiryDate: invoice.expiryDate,
       paidAt: invoice.paidAt,
+      paymentChannel: invoice.paymentChannel || "GCash", // Default to GCash for Xendit payments
+      paymentMethod: invoice.paymentMethod,
       source: "xendit_api",
     });
   } catch (error) {

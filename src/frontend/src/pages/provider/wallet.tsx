@@ -32,10 +32,13 @@ const WalletPage: React.FC = () => {
     loading,
     error,
     transactionLoading,
+    loadMoreLoading,
+    hasMoreTransactions,
     formatCurrency,
     getTransactionDisplay,
     refreshWalletData,
     creditWallet,
+    loadMoreTransactions,
     isAuthenticated,
   } = useWallet();
 
@@ -43,6 +46,9 @@ const WalletPage: React.FC = () => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
+
+  // Running balance toggle state
+  const [showRunningBalance, setShowRunningBalance] = useState(false);
 
   // Track active invoices for payment completion checking
   const [activeInvoices, setActiveInvoices] = useState<Set<string>>(() => {
@@ -128,7 +134,12 @@ const WalletPage: React.FC = () => {
                 console.log(
                   `💳 Crediting wallet for principal: ${principal.toString()}`,
                 );
-                await creditWallet(principal, amount);
+                
+                // Get payment channel info from the status response
+                const paymentChannel = statusResponse.paymentChannel || "GCash";
+                const description = `Wallet Topup. Transfer from ${paymentChannel}`;
+                
+                await creditWallet(principal, amount, paymentChannel, description);
                 toast.success(
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
@@ -286,9 +297,35 @@ const WalletPage: React.FC = () => {
     }
   };
 
+  // Group transactions by date
+  const groupTransactionsByDate = (transactions: Transaction[]) => {
+    const groups: { [key: string]: Transaction[] } = {};
+    
+    transactions.forEach((transaction) => {
+      const date = new Date(transaction.timestamp);
+      const dateKey = date.toLocaleDateString("en-US", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(transaction);
+    });
+    
+    return groups;
+  };
+
+
+
   if (!isAuthenticated) {
     return null; // Will redirect to login
   }
+
+  const transactionGroups = groupTransactionsByDate(transactions);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -311,8 +348,8 @@ const WalletPage: React.FC = () => {
       </div>
 
       <div className="mx-auto max-w-md px-4 py-6">
-        {/* Wallet Balance Card */}
-        <div className="mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+        {/* Wallet Balance Card - Sticky */}
+        <div className="sticky top-0 z-10 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Available Balance</p>
@@ -393,34 +430,37 @@ const WalletPage: React.FC = () => {
         )}
 
         {/* Transaction History */}
-        <div className="rounded-2xl bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Transaction History
-              </h2>
-              {transactionLoading && (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-              )}
-            </div>
-          </div>
-
-          <div className="divide-y divide-gray-100">
-            {loading && transactions.length === 0 ? (
-              // Loading skeleton
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="px-6 py-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200"></div>
-                    <div className="flex-1">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200"></div>
-                      <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-gray-200"></div>
+        <div className="space-y-4">
+          {loading && transactions.length === 0 ? (
+            // Loading skeleton
+            <div className="rounded-2xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 px-6 py-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Transaction History
+                </h2>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200"></div>
+                      <div className="flex-1">
+                        <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200"></div>
+                        <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-gray-200"></div>
+                      </div>
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
                     </div>
-                    <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
                   </div>
-                </div>
-              ))
-            ) : transactions.length === 0 ? (
+                ))}
+              </div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="rounded-2xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 px-6 py-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Transaction History
+                </h2>
+              </div>
               <div className="px-6 py-12 text-center">
                 <ClockIcon className="mx-auto h-12 w-12 text-gray-300" />
                 <p className="mt-4 text-gray-500">No transactions yet</p>
@@ -428,50 +468,99 @@ const WalletPage: React.FC = () => {
                   Your transaction history will appear here
                 </p>
               </div>
-            ) : (
-              transactions.map((transaction) => {
-                const display = getTransactionDisplay(transaction);
-                return (
-                  <div key={transaction.id} className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                        {getTransactionIcon(transaction)}
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">
-                            {display.type}
-                          </span>
-                          {transaction.transactionType === "Transfer" && (
-                            <span className="text-xs text-gray-500">
-                              • Transfer
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          {transaction.description}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {formatTransactionDate(transaction.timestamp)}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <span className={`font-medium ${display.color}`}>
-                          {display.sign}
-                          {formatCurrency(transaction.amount / 100)}
+            </div>
+          ) : (
+            Object.entries(transactionGroups).map(([dateKey, dayTransactions]) => (
+              <div key={dateKey} className="rounded-2xl bg-white shadow-sm">
+                {/* Date Header */}
+                <div className="border-b border-gray-100 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {dateKey}
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      {/* Running Balance Toggle */}
+                      <button
+                        onClick={() => setShowRunningBalance(!showRunningBalance)}
+                        className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                      >
+                        <span>Show Running Balance</span>
+                        <span className={`transform transition-transform ${showRunningBalance ? 'rotate-180' : ''}`}>
+                          ▼
                         </span>
-                      </div>
+                      </button>
+                      {transactionLoading && (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                      )}
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
+                </div>
+
+                {/* Transactions for this date */}
+                <div className="divide-y divide-gray-100">
+                  {dayTransactions.map((transaction) => {
+                    const display = getTransactionDisplay(transaction);
+                    return (
+                      <div key={transaction.id} className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                            {getTransactionIcon(transaction)}
+                          </div>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900">
+                                {display.type}
+                              </span>
+                              {transaction.transactionType === "Transfer" && (
+                                <span className="text-xs text-gray-500">
+                                  • Transfer
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {transaction.description}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {formatTransactionDate(transaction.timestamp)}
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <span className={`font-medium ${display.color}`}>
+                              {display.sign}
+                              {formatCurrency(transaction.amount / 100)}
+                            </span>
+                            {showRunningBalance && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Balance: {formatCurrency(transaction.runningBalance / 100)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Load More Button (if needed) */}
+        {/* Load More Button */}
+        {transactions.length > 0 && hasMoreTransactions && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={loadMoreTransactions}
+              disabled={loadMoreLoading}
+              className="rounded-lg bg-white px-6 py-3 text-sm font-medium text-blue-600 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loadMoreLoading ? "Loading..." : "Load More Transactions"}
+            </button>
+          </div>
+        )}
+
+        {/* Refresh Button */}
         {transactions.length > 0 && (
           <div className="mt-4 text-center">
             <button
@@ -479,7 +568,7 @@ const WalletPage: React.FC = () => {
               disabled={transactionLoading}
               className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-              {transactionLoading ? "Loading..." : "Refresh Transactions"}
+              {transactionLoading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
         )}
@@ -487,8 +576,8 @@ const WalletPage: React.FC = () => {
 
       {/* Top-Up Modal */}
       {showTopUpModal && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white/95 backdrop-blur-md p-6 shadow-xl border border-white/20">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 Top Up Wallet
@@ -498,7 +587,7 @@ const WalletPage: React.FC = () => {
                   setShowTopUpModal(false);
                   setTopUpAmount("");
                 }}
-                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100/50 hover:text-gray-600"
               >
                 <XCircleIcon className="h-6 w-6" />
               </button>
@@ -517,8 +606,8 @@ const WalletPage: React.FC = () => {
                       onClick={() => handlePredefinedAmount(amount)}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         topUpAmount === amount.toString()
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                          ? "border-blue-500 bg-blue-50/80 text-blue-600"
+                          : "border-gray-200 bg-white/80 text-gray-700 hover:bg-gray-50/80"
                       }`}
                     >
                       ₱{amount.toLocaleString()}
@@ -549,7 +638,7 @@ const WalletPage: React.FC = () => {
                       min="50"
                       max="50000"
                       step="0.01"
-                      className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-7 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-7 text-sm bg-white/80 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
@@ -565,7 +654,7 @@ const WalletPage: React.FC = () => {
                     setShowTopUpModal(false);
                     setTopUpAmount("");
                   }}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 hover:bg-gray-50/80"
                 >
                   Cancel
                 </button>

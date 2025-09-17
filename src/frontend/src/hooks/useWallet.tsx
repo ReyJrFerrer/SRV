@@ -13,11 +13,16 @@ export const useWallet = () => {
   const { isAuthenticated, identity } = useAuth();
 
   const [balance, setBalance] = useState<number>(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [transferLoading, setTransferLoading] = useState(false);
   const [transactionLoading, setTransactionLoading] = useState(false);
+  const [loadMoreLoading, setLoadMoreLoading] = useState(false);
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(false);
+
+  const TRANSACTIONS_PER_PAGE = 10;
 
   // Update the wallet actor when authentication state changes
   useEffect(() => {
@@ -55,7 +60,8 @@ export const useWallet = () => {
    */
   const fetchTransactions = useCallback(async () => {
     if (!isAuthenticated || !identity) {
-      setTransactions([]);
+      setAllTransactions([]);
+      setDisplayedTransactions([]);
       return;
     }
 
@@ -68,15 +74,41 @@ export const useWallet = () => {
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
-      setTransactions(sortedTransactions);
+      
+      setAllTransactions(sortedTransactions);
+      // Show only first 10 transactions
+      setDisplayedTransactions(sortedTransactions.slice(0, TRANSACTIONS_PER_PAGE));
+      setHasMoreTransactions(sortedTransactions.length > TRANSACTIONS_PER_PAGE);
     } catch (err) {
       console.error("Failed to fetch transaction history:", err);
       setError("Could not load transaction history.");
-      setTransactions([]);
+      setAllTransactions([]);
+      setDisplayedTransactions([]);
     } finally {
       setTransactionLoading(false);
     }
   }, [isAuthenticated, identity]);
+
+  /**
+   * Load more transactions
+   */
+  const loadMoreTransactions = useCallback(async () => {
+    if (!hasMoreTransactions || loadMoreLoading) return;
+
+    try {
+      setLoadMoreLoading(true);
+      const currentCount = displayedTransactions.length;
+      const nextBatch = allTransactions.slice(currentCount, currentCount + TRANSACTIONS_PER_PAGE);
+      
+      setDisplayedTransactions(prev => [...prev, ...nextBatch]);
+      setHasMoreTransactions(currentCount + TRANSACTIONS_PER_PAGE < allTransactions.length);
+    } catch (err) {
+      console.error("Failed to load more transactions:", err);
+      setError("Could not load more transactions.");
+    } finally {
+      setLoadMoreLoading(false);
+    }
+  }, [hasMoreTransactions, loadMoreLoading, displayedTransactions.length, allTransactions]);
 
   /**
    * Get balance for a specific principal
@@ -138,7 +170,12 @@ export const useWallet = () => {
    * This function calls the wallet canister's credit function
    */
   const creditWallet = useCallback(
-    async (principal: Principal, amount: number): Promise<string> => {
+    async (
+      principal: Principal, 
+      amount: number, 
+      paymentChannel?: string, 
+      description?: string
+    ): Promise<string> => {
       if (!isAuthenticated || !identity) {
         throw new Error("Authentication required for crediting wallet");
       }
@@ -157,6 +194,8 @@ export const useWallet = () => {
         const result = await walletCanisterService.creditWallet(
           principal,
           amount,
+          paymentChannel,
+          description,
         );
 
         // Refresh balance and transactions after successful credit
@@ -248,7 +287,8 @@ export const useWallet = () => {
       refreshWalletData();
     } else {
       setBalance(0);
-      setTransactions([]);
+      setAllTransactions([]);
+      setDisplayedTransactions([]);
       setLoading(false);
     }
   }, [isAuthenticated, identity, refreshWalletData]);
@@ -256,11 +296,13 @@ export const useWallet = () => {
   return {
     // State
     balance,
-    transactions,
+    transactions: displayedTransactions,
     loading,
     error,
     transferLoading,
     transactionLoading,
+    loadMoreLoading,
+    hasMoreTransactions,
 
     // Actions
     fetchBalance,
@@ -269,6 +311,7 @@ export const useWallet = () => {
     transfer,
     creditWallet,
     refreshWalletData,
+    loadMoreTransactions,
 
     // Utilities
     formatCurrency,

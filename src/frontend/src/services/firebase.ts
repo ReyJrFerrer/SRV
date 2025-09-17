@@ -287,6 +287,7 @@ export interface InvoiceStatusResponse {
   paidAmount?: number;
   paidAt?: string;
   paymentMethod?: string;
+  paymentChannel?: string;
   error?: string;
 }
 

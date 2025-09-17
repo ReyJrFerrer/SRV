@@ -70,6 +70,8 @@ export interface Transaction {
   transactionType: TransactionType;
   timestamp: string;
   description: string;
+  paymentChannel?: string;
+  runningBalance: number;
 }
 
 // Helper functions to convert between canister and frontend types
@@ -92,6 +94,8 @@ const convertCanisterTransaction = (
   transactionType: convertCanisterTransactionType(transaction.transaction_type),
   timestamp: new Date(Number(transaction.timestamp) / 1000000).toISOString(),
   description: transaction.description,
+  paymentChannel: (transaction as any).payment_channel?.[0] || undefined,
+  runningBalance: Number((transaction as any).running_balance || 0),
 });
 
 // Wallet Canister Service Functions (Non-Admin Only)
@@ -142,14 +146,24 @@ export const walletCanisterService = {
    * This function is typically called by authorized controllers (like admin functions)
    * to add funds to a user's wallet after external payments
    */
-  async creditWallet(principal: Principal, amount: number): Promise<string> {
+  async creditWallet(
+    principal: Principal, 
+    amount: number, 
+    paymentChannel?: string, 
+    description?: string
+  ): Promise<string> {
     try {
       const actor = getWalletActor(true); // Requires authentication
 
       // Convert amount to bigint (assuming the amount is in the smallest unit)
       const amountBigInt = BigInt(Math.round(amount * 100)); // Convert to centavos
 
-      const result = await actor.credit(principal, amountBigInt);
+      const result = await (actor as any).credit(
+        principal, 
+        amountBigInt,
+        paymentChannel ? [paymentChannel] : [],
+        description ? [description] : []
+      );
 
       if ("ok" in result) {
         return result.ok.toString();

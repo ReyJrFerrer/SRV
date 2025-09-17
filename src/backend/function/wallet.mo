@@ -26,6 +26,8 @@ persistent actor Wallet {
         transaction_type: TransactionType;
         timestamp: Int;
         description: Text;
+        payment_channel: ?Text; // For payment source like "GCash", "Bank", etc.
+        running_balance: Nat; // Running balance after this transaction
     };
 
     // Key type for Trie
@@ -93,7 +95,9 @@ persistent actor Wallet {
         to: ?Principal, 
         amount: Nat, 
         txType: TransactionType, 
-        description: Text
+        description: Text,
+        paymentChannel: ?Text,
+        runningBalance: Nat
     ) : Text {
         let txId = generateTransactionId();
         let transaction : Transaction = {
@@ -104,6 +108,8 @@ persistent actor Wallet {
             transaction_type = txType;
             timestamp = Time.now();
             description = description;
+            payment_channel = paymentChannel;
+            running_balance = runningBalance;
         };
         transactions := Trie.put(transactions, textKey(txId), Text.equal, transaction).0;
         txId
@@ -127,8 +133,8 @@ persistent actor Wallet {
     };
 
     // Public function: Credit a user's balance (Update)
-    public func credit(principal: Principal, amount: Nat) : async WalletResult<Nat> {
-        let caller = Principal.fromActor(Wallet);
+    public func credit(principal: Principal, amount: Nat, paymentChannel: ?Text, description: ?Text) : async WalletResult<Nat> {
+        let _caller = Principal.fromActor(Wallet);
         
         // if (not isAuthorized(caller)) {
         //     return #err("Unauthorized: Only authorized controllers can credit balances");
@@ -146,12 +152,19 @@ persistent actor Wallet {
         let newBalance = currentBalance + amount;
         balances := Trie.put(balances, principalKey(principal), Principal.equal, newBalance).0;
 
+        let finalDescription = switch (description) {
+            case (?desc) { desc };
+            case null { "Wallet Topup" };
+        };
+
         let txId = recordTransaction(
             null, 
             ?principal, 
             amount, 
             #Credit, 
-            "Balance credited by controller"
+            finalDescription,
+            paymentChannel,
+            newBalance
         );
 
         #ok(newBalance)
@@ -183,7 +196,9 @@ persistent actor Wallet {
                     null, 
                     amount, 
                     #Debit, 
-                    "Balance debited by controller"
+                    "Balance debited by controller",
+                    null,
+                    newBalance
                 );
 
                 #ok(newBalance)
@@ -236,7 +251,9 @@ persistent actor Wallet {
                     ?to, 
                     amount, 
                     #Transfer, 
-                    "Transfer between users"
+                    "Transfer between users",
+                    null,
+                    newFromBalance  // Use sender's new balance as reference
                 );
 
                 #ok(txId)
