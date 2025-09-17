@@ -14,7 +14,9 @@ export const useWallet = () => {
 
   const [balance, setBalance] = useState<number>(0);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
+  const [displayedTransactions, setDisplayedTransactions] = useState<
+    Transaction[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [transferLoading, setTransferLoading] = useState(false);
@@ -74,10 +76,12 @@ export const useWallet = () => {
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
-      
+
       setAllTransactions(sortedTransactions);
       // Show only first 10 transactions
-      setDisplayedTransactions(sortedTransactions.slice(0, TRANSACTIONS_PER_PAGE));
+      setDisplayedTransactions(
+        sortedTransactions.slice(0, TRANSACTIONS_PER_PAGE),
+      );
       setHasMoreTransactions(sortedTransactions.length > TRANSACTIONS_PER_PAGE);
     } catch (err) {
       console.error("Failed to fetch transaction history:", err);
@@ -98,17 +102,27 @@ export const useWallet = () => {
     try {
       setLoadMoreLoading(true);
       const currentCount = displayedTransactions.length;
-      const nextBatch = allTransactions.slice(currentCount, currentCount + TRANSACTIONS_PER_PAGE);
-      
-      setDisplayedTransactions(prev => [...prev, ...nextBatch]);
-      setHasMoreTransactions(currentCount + TRANSACTIONS_PER_PAGE < allTransactions.length);
+      const nextBatch = allTransactions.slice(
+        currentCount,
+        currentCount + TRANSACTIONS_PER_PAGE,
+      );
+
+      setDisplayedTransactions((prev) => [...prev, ...nextBatch]);
+      setHasMoreTransactions(
+        currentCount + TRANSACTIONS_PER_PAGE < allTransactions.length,
+      );
     } catch (err) {
       console.error("Failed to load more transactions:", err);
       setError("Could not load more transactions.");
     } finally {
       setLoadMoreLoading(false);
     }
-  }, [hasMoreTransactions, loadMoreLoading, displayedTransactions.length, allTransactions]);
+  }, [
+    hasMoreTransactions,
+    loadMoreLoading,
+    displayedTransactions.length,
+    allTransactions,
+  ]);
 
   /**
    * Get balance for a specific principal
@@ -171,10 +185,10 @@ export const useWallet = () => {
    */
   const creditWallet = useCallback(
     async (
-      principal: Principal, 
-      amount: number, 
-      paymentChannel?: string, 
-      description?: string
+      principal: Principal,
+      amount: number,
+      paymentChannel?: string,
+      description?: string,
     ): Promise<string> => {
       if (!isAuthenticated || !identity) {
         throw new Error("Authentication required for crediting wallet");

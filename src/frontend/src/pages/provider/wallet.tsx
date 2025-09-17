@@ -47,6 +47,9 @@ const WalletPage: React.FC = () => {
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
 
+  // Commission info modal state
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+
   // Running balance toggle state
   const [showRunningBalance, setShowRunningBalance] = useState(false);
 
@@ -134,12 +137,17 @@ const WalletPage: React.FC = () => {
                 console.log(
                   `💳 Crediting wallet for principal: ${principal.toString()}`,
                 );
-                
+
                 // Get payment channel info from the status response
                 const paymentChannel = statusResponse.paymentChannel || "GCash";
                 const description = `Wallet Topup. Transfer from ${paymentChannel}`;
-                
-                await creditWallet(principal, amount, paymentChannel, description);
+
+                await creditWallet(
+                  principal,
+                  amount,
+                  paymentChannel,
+                  description,
+                );
                 toast.success(
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
@@ -300,7 +308,7 @@ const WalletPage: React.FC = () => {
   // Group transactions by date
   const groupTransactionsByDate = (transactions: Transaction[]) => {
     const groups: { [key: string]: Transaction[] } = {};
-    
+
     transactions.forEach((transaction) => {
       const date = new Date(transaction.timestamp);
       const dateKey = date.toLocaleDateString("en-US", {
@@ -309,17 +317,15 @@ const WalletPage: React.FC = () => {
         month: "short",
         day: "numeric",
       });
-      
+
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
       groups[dateKey].push(transaction);
     });
-    
+
     return groups;
   };
-
-
 
   if (!isAuthenticated) {
     return null; // Will redirect to login
@@ -381,22 +387,16 @@ const WalletPage: React.FC = () => {
               Earnings
             </button>
           </div>
-        </div>
 
-        {/* Commission Notice */}
-        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-start gap-3">
-            <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-yellow-600" />
-            <div className="text-sm">
-              <p className="font-medium text-yellow-800">
-                Commission Deduction
-              </p>
-              <p className="mt-1 text-yellow-700">
-                Service commissions are automatically deducted from your wallet
-                upon job completion. Ensure sufficient balance before accepting
-                cash bookings.
-              </p>
-            </div>
+          {/* Commission Info Button */}
+          <div className="mt-3 flex justify-center">
+            <button
+              onClick={() => setShowCommissionModal(true)}
+              className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/80 backdrop-blur-sm hover:bg-white/20 hover:text-white"
+            >
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              Commission Info
+            </button>
           </div>
         </div>
 
@@ -470,80 +470,89 @@ const WalletPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            Object.entries(transactionGroups).map(([dateKey, dayTransactions]) => (
-              <div key={dateKey} className="rounded-2xl bg-white shadow-sm">
-                {/* Date Header */}
-                <div className="border-b border-gray-100 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {dateKey}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      {/* Running Balance Toggle */}
-                      <button
-                        onClick={() => setShowRunningBalance(!showRunningBalance)}
-                        className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
-                      >
-                        <span>Show Running Balance</span>
-                        <span className={`transform transition-transform ${showRunningBalance ? 'rotate-180' : ''}`}>
-                          ▼
-                        </span>
-                      </button>
-                      {transactionLoading && (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                      )}
+            Object.entries(transactionGroups).map(
+              ([dateKey, dayTransactions]) => (
+                <div key={dateKey} className="rounded-2xl bg-white shadow-sm">
+                  {/* Date Header */}
+                  <div className="border-b border-gray-100 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {dateKey}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        {/* Running Balance Toggle */}
+                        <button
+                          onClick={() =>
+                            setShowRunningBalance(!showRunningBalance)
+                          }
+                          className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                        >
+                          <span>Show Running Balance</span>
+                          <span
+                            className={`transform transition-transform ${showRunningBalance ? "rotate-180" : ""}`}
+                          >
+                            ▼
+                          </span>
+                        </button>
+                        {transactionLoading && (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Transactions for this date */}
-                <div className="divide-y divide-gray-100">
-                  {dayTransactions.map((transaction) => {
-                    const display = getTransactionDisplay(transaction);
-                    return (
-                      <div key={transaction.id} className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                            {getTransactionIcon(transaction)}
-                          </div>
+                  {/* Transactions for this date */}
+                  <div className="divide-y divide-gray-100">
+                    {dayTransactions.map((transaction) => {
+                      const display = getTransactionDisplay(transaction);
+                      return (
+                        <div key={transaction.id} className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                              {getTransactionIcon(transaction)}
+                            </div>
 
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900">
-                                {display.type}
-                              </span>
-                              {transaction.transactionType === "Transfer" && (
-                                <span className="text-xs text-gray-500">
-                                  • Transfer
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900">
+                                  {display.type}
                                 </span>
+                                {transaction.transactionType === "Transfer" && (
+                                  <span className="text-xs text-gray-500">
+                                    • Transfer
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500">
+                                {transaction.description}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {formatTransactionDate(transaction.timestamp)}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <span className={`font-medium ${display.color}`}>
+                                {display.sign}
+                                {formatCurrency(transaction.amount / 100)}
+                              </span>
+                              {showRunningBalance && (
+                                <p className="mt-1 text-xs text-gray-500">
+                                  Balance:{" "}
+                                  {formatCurrency(
+                                    transaction.runningBalance / 100,
+                                  )}
+                                </p>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500">
-                              {transaction.description}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {formatTransactionDate(transaction.timestamp)}
-                            </p>
-                          </div>
-
-                          <div className="text-right">
-                            <span className={`font-medium ${display.color}`}>
-                              {display.sign}
-                              {formatCurrency(transaction.amount / 100)}
-                            </span>
-                            {showRunningBalance && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Balance: {formatCurrency(transaction.runningBalance / 100)}
-                              </p>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              ),
+            )
           )}
         </div>
 
@@ -576,8 +585,8 @@ const WalletPage: React.FC = () => {
 
       {/* Top-Up Modal */}
       {showTopUpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white/95 backdrop-blur-md p-6 shadow-xl border border-white/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 Top Up Wallet
@@ -638,7 +647,7 @@ const WalletPage: React.FC = () => {
                       min="50"
                       max="50000"
                       step="0.01"
-                      className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-7 text-sm bg-white/80 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pr-3 pl-7 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
@@ -654,7 +663,7 @@ const WalletPage: React.FC = () => {
                     setShowTopUpModal(false);
                     setTopUpAmount("");
                   }}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white/80 hover:bg-gray-50/80"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white/80 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50/80"
                 >
                   Cancel
                 </button>
@@ -666,6 +675,73 @@ const WalletPage: React.FC = () => {
                   className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {topUpLoading ? "Processing..." : "Continue to Payment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Commission Info Modal */}
+      {showCommissionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white/95 backdrop-blur-md p-6 shadow-xl border border-white/20">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Commission Information
+              </h3>
+              <button
+                onClick={() => setShowCommissionModal(false)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100/50 hover:text-gray-600"
+              >
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-lg bg-yellow-50/80 border border-yellow-200/80 p-4">
+                <div className="flex items-start gap-3">
+                  <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-yellow-600" />
+                  <div className="text-sm">
+                    <p className="font-medium text-yellow-800">
+                      Automatic Commission Deduction
+                    </p>
+                    <p className="mt-2 text-yellow-700">
+                      Service commissions are automatically deducted from your wallet
+                      upon job completion. This ensures transparent and accurate commission processing.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-900">Important Notes:</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">•</span>
+                    <span>Ensure sufficient balance before accepting cash bookings</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">•</span>
+                    <span>Commission rates vary by service category and booking value</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">•</span>
+                    <span>You can top up your wallet anytime to maintain adequate balance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">•</span>
+                    <span>Digital payments (GCash) are processed differently without requiring pre-deduction</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowCommissionModal(false)}
+                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Got it
                 </button>
               </div>
             </div>

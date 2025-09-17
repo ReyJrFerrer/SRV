@@ -147,10 +147,10 @@ export const walletCanisterService = {
    * to add funds to a user's wallet after external payments
    */
   async creditWallet(
-    principal: Principal, 
-    amount: number, 
-    paymentChannel?: string, 
-    description?: string
+    principal: Principal,
+    amount: number,
+    paymentChannel?: string,
+    description?: string,
   ): Promise<string> {
     try {
       const actor = getWalletActor(true); // Requires authentication
@@ -159,10 +159,10 @@ export const walletCanisterService = {
       const amountBigInt = BigInt(Math.round(amount * 100)); // Convert to centavos
 
       const result = await (actor as any).credit(
-        principal, 
+        principal,
         amountBigInt,
         paymentChannel ? [paymentChannel] : [],
-        description ? [description] : []
+        description ? [description] : [],
       );
 
       if ("ok" in result) {
