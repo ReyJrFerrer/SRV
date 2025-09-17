@@ -216,7 +216,9 @@ const AddServicePage: React.FC = () => {
     const quotes: { [packageId: string]: CommissionQuote } = {};
 
     console.log(formData.categoryId);
-    const categoryForCommission = categories.find((cat) => cat.id === formData.categoryId)?.name || "Default Category";
+    const categoryForCommission =
+      categories.find((cat) => cat.id === formData.categoryId)?.name ||
+      "Default Category";
 
     try {
       for (const pkg of formData.servicePackages) {

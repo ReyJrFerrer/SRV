@@ -68,8 +68,9 @@
 **Goal:** Enhance payment flows with dynamic commission integration, implement payment holding/release mechanism, improve frontend payment tracking, and create comprehensive cash job wallet deduction system.
 
 **3.1. Enhanced Direct Payment with Dynamic Commission Integration**
+
 - **Action:** MODIFY `functions/createDirectPayment.js`.
-- **Content:** 
+- **Content:**
   - Add environment detection (local vs deployed/playground) for proper canister ID resolution
   - Implement automatic payout creation within the function (not just webhook)
   - Add payment holding logic where payments are collected but payouts are held until booking completion
@@ -77,6 +78,7 @@
   - Add metadata tracking for payment status transitions (held → released → completed)
 
 **3.2. Payment Holding and Release Mechanism**
+
 - **Action:** MODIFY `functions/xenditWebhook.js` and CREATE `functions/releaseHeldPayment.js`.
 - **Content:**
   - Enhance webhook to handle payment holding instead of immediate payout
@@ -87,6 +89,7 @@
   - Add comprehensive audit trail for payment state changes
 
 **3.3. Frontend Payment Progress Enhancement**
+
 - **Action:** MODIFY `src/frontend/src/pages/provider/bookings.tsx` and related booking components.
 - **Content:**
   - Add payment progress tracking UI component showing: Payment Pending → Payment Received → Payment Held → Payment Released → Payment Completed
@@ -97,6 +100,7 @@
   - Implement payment status badges and progress indicators
 
 **3.4. Enhanced Booking Canister for Payment Integration**
+
 - **Action:** MODIFY `src/backend/function/booking.mo`.
 - **Content:**
   - Add payment status tracking fields to Booking type (paymentStatus, paymentId, heldAmount, releaseDate)
@@ -107,6 +111,7 @@
   - Include comprehensive payment history tracking within booking records
 
 **3.5. Enhanced Cash Job Wallet Deduction System**
+
 - **Action:** MODIFY `src/backend/function/wallet.mo` and CREATE `functions/processCashCommission.js`.
 - **Content:**
   - Enhance wallet.mo with `deductCommission(provider: Principal, booking_id: Text, amount: Nat)` function
@@ -118,6 +123,7 @@
   - Add commission deduction confirmation system with provider notifications
 
 **3.6. Environment-Aware Canister Integration**
+
 - **Action:** CREATE `functions/utils/canisterConfig.js` and MODIFY all canister-calling functions.
 - **Content:**
   - Create centralized canister configuration utility detecting environment (local, ic, playground)
@@ -128,6 +134,7 @@
   - Implement fallback mechanisms for network issues
 
 **3.7. Advanced Frontend Payment Dashboard**
+
 - **Action:** CREATE `src/frontend/src/pages/provider/payment-dashboard.tsx`.
 - **Content:**
   - Build comprehensive payment dashboard showing all payment types (digital, cash, wallet)
@@ -138,6 +145,7 @@
   - Implement export functionality for payment reports
 
 **3.8. Comprehensive Testing and Validation**
+
 - **Action:** CREATE test files for each new function and component.
 - **Content:**
   - Create unit tests for enhanced commission calculation logic

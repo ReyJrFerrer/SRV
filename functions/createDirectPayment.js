@@ -1,9 +1,7 @@
 const functions = require("firebase-functions");
 const { Xendit } = require("xendit-node");
 const { admin } = require("./firebase-admin");
-const { 
-  detectEnvironment 
-} = require("./utils/canisterConfig");
+const { detectEnvironment } = require("./utils/canisterConfig");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -65,8 +63,8 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       serviceTitle,
       category,
       bookingData, // New: receive full booking data
-    } = req.body.data; 
-    
+    } = req.body.data;
+
     console.log("Extracted fields:", {
       bookingId,
       providerId,
@@ -80,11 +78,10 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     if (!bookingId || !providerId || !clientId) {
       console.log("Missing required fields");
       return res.status(400).json({
-        error:
-          "Missing required fields: bookingId, providerId, clientId",
+        error: "Missing required fields: bookingId, providerId, clientId",
       });
     }
-    
+
     // Calculate totals from selected packages
     if (!packages || !Array.isArray(packages) || packages.length === 0) {
       console.log("No packages provided");
@@ -94,7 +91,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     }
 
     // Calculate amounts from packages
-    const selectedPackages = packages.filter(pkg => pkg.checked);
+    const selectedPackages = packages.filter((pkg) => pkg.checked);
     if (selectedPackages.length === 0) {
       console.log("No packages selected");
       return res.status(400).json({
@@ -102,8 +99,14 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       });
     }
 
-    const totalAmount = selectedPackages.reduce((sum, pkg) => sum + (pkg.price || 0), 0);
-    const totalCommission = selectedPackages.reduce((sum, pkg) => sum + (pkg.commissionFee || 0), 0);
+    const totalAmount = selectedPackages.reduce(
+      (sum, pkg) => sum + (pkg.price || 0),
+      0,
+    );
+    const totalCommission = selectedPackages.reduce(
+      (sum, pkg) => sum + (pkg.commissionFee || 0),
+      0,
+    );
     const providerAmount = totalAmount; // Provider gets the base package price
     const clientPaymentAmount = totalAmount + totalCommission; // Client pays base price + commission
 
@@ -248,23 +251,28 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
 
     // Use package-based commission calculation (packages contain pre-calculated commission fees)
     console.log("Using package-based commission calculation...");
-    
+
     const commissionAmount = Number(totalCommission);
-    const categoryStr = packages.length > 0 && packages[0].category ? 
-      (typeof packages[0].category === "object" ? JSON.stringify(packages[0].category) : String(packages[0].category)) 
-      : "General";
-    
+    const categoryStr =
+      packages.length > 0 && packages[0].category
+        ? typeof packages[0].category === "object"
+          ? JSON.stringify(packages[0].category)
+          : String(packages[0].category)
+        : "General";
+
     // Create commission breakdown from packages for metadata
     const commissionBreakdown = {
-      packages: selectedPackages.map(pkg => ({
+      packages: selectedPackages.map((pkg) => ({
         title: pkg.title, // Changed from name to title
         price: pkg.price,
         commissionFee: pkg.commissionFee,
-        commissionRate: pkg.commissionFee ? (pkg.commissionFee / pkg.price * 100) : 0
+        commissionRate: pkg.commissionFee
+          ? (pkg.commissionFee / pkg.price) * 100
+          : 0,
       })),
       totalPackagePrice: totalAmount,
       totalCommissionFee: totalCommission,
-      totalClientPayment: clientPaymentAmount
+      totalClientPayment: clientPaymentAmount,
     };
 
     // Define payment methods for the invoice
@@ -273,7 +281,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     // Create invoice to collect payment from client with payment holding logic
     const { Invoice } = xendit;
     const currentEnvironment = detectEnvironment();
-    
+
     const invoiceData = {
       externalId: `booking-${bookingId}-${Date.now()}`,
       amount: Number(clientPaymentAmount), // Convert to regular number for Xendit
@@ -451,7 +459,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         method: "package-based",
         environment: currentEnvironment,
         paymentHolding: true,
-      }
+      },
     );
 
     return res.status(200).json({
@@ -514,7 +522,10 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     }
 
     // Handle canister connection errors
-    if (error.message && (error.message.includes("canister") || error.message.includes("agent"))) {
+    if (
+      error.message &&
+      (error.message.includes("canister") || error.message.includes("agent"))
+    ) {
       console.error("Canister connection error:", error);
       return res.status(503).json({
         result: {

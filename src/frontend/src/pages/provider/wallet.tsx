@@ -684,8 +684,8 @@ const WalletPage: React.FC = () => {
 
       {/* Commission Info Modal */}
       {showCommissionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white/95 backdrop-blur-md p-6 shadow-xl border border-white/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 Commission Information
@@ -699,7 +699,7 @@ const WalletPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-lg bg-yellow-50/80 border border-yellow-200/80 p-4">
+              <div className="rounded-lg border border-yellow-200/80 bg-yellow-50/80 p-4">
                 <div className="flex items-start gap-3">
                   <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-yellow-600" />
                   <div className="text-sm">
@@ -707,8 +707,9 @@ const WalletPage: React.FC = () => {
                       Automatic Commission Deduction
                     </p>
                     <p className="mt-2 text-yellow-700">
-                      Service commissions are automatically deducted from your wallet
-                      upon job completion. This ensures transparent and accurate commission processing.
+                      Service commissions are automatically deducted from your
+                      wallet upon job completion. This ensures transparent and
+                      accurate commission processing.
                     </p>
                   </div>
                 </div>
@@ -718,20 +719,31 @@ const WalletPage: React.FC = () => {
                 <h4 className="font-medium text-gray-900">Important Notes:</h4>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>Ensure sufficient balance before accepting cash bookings</span>
+                    <span className="mt-1 text-blue-500">•</span>
+                    <span>
+                      Ensure sufficient balance before accepting cash bookings
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>Commission rates vary by service category and booking value</span>
+                    <span className="mt-1 text-blue-500">•</span>
+                    <span>
+                      Commission rates vary by service category and booking
+                      value
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>You can top up your wallet anytime to maintain adequate balance</span>
+                    <span className="mt-1 text-blue-500">•</span>
+                    <span>
+                      You can top up your wallet anytime to maintain adequate
+                      balance
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>Digital payments (GCash) are processed differently without requiring pre-deduction</span>
+                    <span className="mt-1 text-blue-500">•</span>
+                    <span>
+                      Digital payments (GCash) are processed differently without
+                      requiring pre-deduction
+                    </span>
                   </li>
                 </ul>
               </div>
