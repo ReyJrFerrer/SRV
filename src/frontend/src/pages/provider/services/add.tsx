@@ -344,6 +344,28 @@ const AddServicePage: React.FC = () => {
               }
             }
           });
+
+          // Check for duplicate package names
+          const packageNames = formData.servicePackages
+            .filter((pkg) => pkg.name.trim())
+            .map((pkg) => pkg.name.trim().toLowerCase());
+
+          const duplicateNames = packageNames.filter(
+            (name, index) => packageNames.indexOf(name) !== index,
+          );
+
+          if (duplicateNames.length > 0) {
+            const duplicateName = duplicateNames[0];
+            const duplicateIndices = formData.servicePackages
+              .map((pkg, index) =>
+                pkg.name.trim().toLowerCase() === duplicateName
+                  ? index + 1
+                  : null,
+              )
+              .filter((index) => index !== null);
+
+            errors.servicePackages = `Package names must be unique. "${formData.servicePackages.find((pkg) => pkg.name.trim().toLowerCase() === duplicateName)?.name.trim()}" is used in packages ${duplicateIndices.join(", ")}.`;
+          }
         }
         break;
       case 2: // Availability
