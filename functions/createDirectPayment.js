@@ -1,6 +1,9 @@
 const functions = require("firebase-functions");
 const { Xendit } = require("xendit-node");
 const { admin } = require("./firebase-admin");
+const { 
+  detectEnvironment 
+} = require("./utils/canisterConfig");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -58,33 +61,59 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       bookingId,
       clientId,
       providerId,
-      amount,
+      packages, // Changed from amount to packages array
       serviceTitle,
       category,
       bookingData, // New: receive full booking data
-    } = req.body.data; // Fix category if it's an object
-    const categoryStr =
-      typeof category === "object"
-        ? JSON.stringify(category)
-        : String(category || "General");
-
+    } = req.body.data; 
+    
     console.log("Extracted fields:", {
       bookingId,
       providerId,
       clientId,
-      amount,
+      packages: packages ? packages.length : 0,
       serviceTitle,
-      category: categoryStr,
+      category,
     });
 
     // Validate required fields
-    if (!bookingId || !providerId || !clientId || !amount) {
+    if (!bookingId || !providerId || !clientId) {
       console.log("Missing required fields");
       return res.status(400).json({
         error:
-          "Missing required fields: bookingId, providerId, clientId, amount",
+          "Missing required fields: bookingId, providerId, clientId",
       });
     }
+    
+    // Calculate totals from selected packages
+    if (!packages || !Array.isArray(packages) || packages.length === 0) {
+      console.log("No packages provided");
+      return res.status(400).json({
+        error: "At least one package must be selected",
+      });
+    }
+
+    // Calculate amounts from packages
+    const selectedPackages = packages.filter(pkg => pkg.checked);
+    if (selectedPackages.length === 0) {
+      console.log("No packages selected");
+      return res.status(400).json({
+        error: "At least one package must be selected",
+      });
+    }
+
+    const totalAmount = selectedPackages.reduce((sum, pkg) => sum + (pkg.price || 0), 0);
+    const totalCommission = selectedPackages.reduce((sum, pkg) => sum + (pkg.commissionFee || 0), 0);
+    const providerAmount = totalAmount; // Provider gets the base package price
+    const clientPaymentAmount = totalAmount + totalCommission; // Client pays base price + commission
+
+    console.log("Package calculation:", {
+      selectedPackages: selectedPackages.length,
+      totalAmount,
+      totalCommission,
+      providerAmount,
+      clientPaymentAmount,
+    });
 
     // Check if Xendit client is initialized
     if (!xendit) {
@@ -217,20 +246,37 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       clientData = {};
     }
 
-    // Calculate commission and net amount for provider
-    // This should ideally come from the commission canister
-    const commissionRate = categoryStr.includes("Cleaning") ? 0.035 : 0.05; // 3.5% or 5%
-    const commissionAmount = Math.round(amount * commissionRate);
-    const providerAmount = amount - commissionAmount;
+    // Use package-based commission calculation (packages contain pre-calculated commission fees)
+    console.log("Using package-based commission calculation...");
+    
+    const commissionAmount = Number(totalCommission);
+    const categoryStr = packages.length > 0 && packages[0].category ? 
+      (typeof packages[0].category === "object" ? JSON.stringify(packages[0].category) : String(packages[0].category)) 
+      : "General";
+    
+    // Create commission breakdown from packages for metadata
+    const commissionBreakdown = {
+      packages: selectedPackages.map(pkg => ({
+        title: pkg.title, // Changed from name to title
+        price: pkg.price,
+        commissionFee: pkg.commissionFee,
+        commissionRate: pkg.commissionFee ? (pkg.commissionFee / pkg.price * 100) : 0
+      })),
+      totalPackagePrice: totalAmount,
+      totalCommissionFee: totalCommission,
+      totalClientPayment: clientPaymentAmount
+    };
 
     // Define payment methods for the invoice
     const paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"];
 
-    // Create invoice to collect payment from client
+    // Create invoice to collect payment from client with payment holding logic
     const { Invoice } = xendit;
+    const currentEnvironment = detectEnvironment();
+    
     const invoiceData = {
       externalId: `booking-${bookingId}-${Date.now()}`,
-      amount: amount,
+      amount: Number(clientPaymentAmount), // Convert to regular number for Xendit
       description: serviceTitle || `Payment for booking ${bookingId}`,
       invoiceDuration: 86400, // 24 hours expiry for booking payments
       currency: "PHP",
@@ -252,22 +298,35 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       fees: [
         {
           type: "SRV_COMMISSION",
-          value: commissionAmount,
+          value: Number(commissionAmount), // Convert to regular number for Xendit
         },
       ],
       metadata: {
         bookingId: bookingId,
         providerId: providerId,
         clientId: clientId,
-        providerAmount: providerAmount,
-        commissionAmount: commissionAmount,
+        providerAmount: Number(providerAmount), // Convert to regular number
+        commissionAmount: Number(commissionAmount), // Convert to regular number
         serviceTitle: serviceTitle,
         category: categoryStr,
+        environment: currentEnvironment,
+        paymentHoldEnabled: true, // Enable payment holding until booking completion
+        autoPayoutEnabled: false, // Disable auto payout, use holding mechanism
+        commissionCalculation: {
+          method: "package-based",
+          breakdown: commissionBreakdown,
+          calculated_at: new Date().toISOString(),
+        },
         payoutInfo: {
           xenditCustomerId: providerData.xenditCustomerId,
           gcashNumber: providerData.payoutInfo.gcashNumber,
           accountHolderName: providerData.payoutInfo.accountHolderName,
         },
+        paymentStatus: "pending", // Track payment status progression
+        timestamps: {
+          created: new Date().toISOString(),
+        },
+        selectedPackages: selectedPackages, // Store package details
       },
     };
 
@@ -318,22 +377,38 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       }
     }
 
-    // Store payment data in Firestore for tracking
+    // Store payment data in Firestore for tracking with payment holding logic
     const paymentData = {
       bookingId,
       providerId,
       clientId,
       invoiceId: invoice.id,
       externalId: invoiceData.externalId,
-      amount: amount,
-      providerAmount: providerAmount,
-      commissionAmount: commissionAmount,
-      status: "PENDING",
+      amount: Number(clientPaymentAmount), // Total amount client pays
+      providerAmount: Number(providerAmount), // Amount provider receives
+      commissionAmount: Number(commissionAmount), // Commission SRV takes
+      status: "PENDING", // Payment status: PENDING → PAID → HELD → RELEASED → COMPLETED
+      paymentStatus: "pending", // Detailed payment tracking
+      paymentHoldEnabled: true,
+      environment: currentEnvironment,
       createdAt: new Date().toISOString(),
       xenditData: {
         invoiceUrl: invoice.invoiceUrl,
         expiryDate: invoice.expiryDate,
       },
+      commission: {
+        calculation_method: "package-based",
+        breakdown: commissionBreakdown,
+        tier: commissionBreakdown?.tier || "unknown",
+        base_fee: commissionBreakdown?.base_fee || 0,
+      },
+      statusHistory: [
+        {
+          status: "pending",
+          timestamp: new Date().toISOString(),
+          description: "Payment invoice created and waiting for client payment",
+        },
+      ],
       // Add booking data if provided
       ...(bookingData && {
         serviceId: bookingData.serviceId,
@@ -366,9 +441,17 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
       // since the invoice was created successfully
     }
 
-    // Log successful invoice creation
+    // Log successful invoice creation with commission details
     console.log(
-      `Invoice ${invoice.id} created for booking ${bookingId}, amount: ₱${amount}`,
+      `Enhanced invoice ${invoice.id} created for booking ${bookingId}`,
+      {
+        amount: `₱${clientPaymentAmount}`,
+        commission: `₱${commissionAmount}`,
+        providerAmount: `₱${providerAmount}`,
+        method: "package-based",
+        environment: currentEnvironment,
+        paymentHolding: true,
+      }
     );
 
     return res.status(200).json({
@@ -377,11 +460,22 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoiceUrl,
         externalId: invoiceData.externalId,
-        amount: amount,
+        amount: clientPaymentAmount,
         providerAmount: providerAmount,
         commissionAmount: commissionAmount,
         expiryDate: invoice.expiryDate,
         paymentMethods: paymentMethods,
+        paymentHolding: {
+          enabled: true,
+          description: "Payment will be held until booking completion",
+          statusFlow: "pending → paid → held → released → completed",
+        },
+        commission: {
+          calculation_method: "package-based",
+          breakdown_available: !!commissionBreakdown,
+          tier: commissionBreakdown?.tier || "calculated",
+        },
+        environment: currentEnvironment,
       },
     });
   } catch (error) {
@@ -401,16 +495,44 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         result: {
           success: false,
           error: `Xendit error: ${error.response.data.message}`,
+          error_type: "xendit_api_error",
+        },
+      });
+    }
+
+    // Handle commission calculation errors
+    if (error.message && error.message.includes("commission")) {
+      console.error("Commission calculation error:", error);
+      return res.status(500).json({
+        result: {
+          success: false,
+          error: "Commission calculation failed",
+          error_type: "commission_error",
+          details: error.message,
+        },
+      });
+    }
+
+    // Handle canister connection errors
+    if (error.message && (error.message.includes("canister") || error.message.includes("agent"))) {
+      console.error("Canister connection error:", error);
+      return res.status(503).json({
+        result: {
+          success: false,
+          error: "Canister service temporarily unavailable",
+          error_type: "canister_connection_error",
+          details: error.message,
         },
       });
     }
 
     // Handle other errors
-    console.error("Returning 500 error");
+    console.error("Returning 500 error for unknown error type");
     return res.status(500).json({
       result: {
         success: false,
         error: `Failed to create direct payment: ${error.message}`,
+        error_type: "unknown_error",
       },
     });
   }

@@ -215,11 +215,14 @@ const AddServicePage: React.FC = () => {
     setLoadingCommissions(true);
     const quotes: { [packageId: string]: CommissionQuote } = {};
 
+    console.log(formData.categoryId);
+    const categoryForCommission = categories.find((cat) => cat.id === formData.categoryId)?.name || "Default Category";
+
     try {
       for (const pkg of formData.servicePackages) {
         if (pkg.name.trim() && pkg.description.trim() && pkg.price) {
           const quote = await getCommissionQuote(
-            formData.categoryId,
+            categoryForCommission,
             Number(pkg.price),
           );
           quotes[pkg.id] = quote;

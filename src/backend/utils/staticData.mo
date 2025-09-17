@@ -29,7 +29,7 @@ module {
             id = "cat-002";
             name = "Cleaning Services";
             description = "Professional cleaning and housekeeping services";
-            parentId = ?("cat-001");
+            parentId = null;
             slug = "cleaning-services";
             imageUrl = "/images/CLeaningServices-CoverImage.jpeg";
         }),

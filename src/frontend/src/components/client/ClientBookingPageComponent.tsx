@@ -926,14 +926,15 @@ const ClientBookingPageComponent: React.FC = () => {
 
         const clientId = identity.getPrincipal().toString();
 
-        // Create direct payment invoice
+        // Create direct payment invoice with selected packages
+
         const paymentResult = await createDirectPayment({
           bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
           clientId: clientId,
           providerId: service!.providerId.toString(),
-          amount: totalPrice,
+          packages: packages,
           serviceTitle: service!.title,
-          category: service!.category.toString(),
+          category: service!.category.name.toString(),
           bookingData: {
             ...bookingData,
             location:

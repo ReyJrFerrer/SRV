@@ -16,7 +16,15 @@ export interface DirectPaymentRequest {
   bookingId: string;
   clientId: string;
   providerId: string;
-  amount: number;
+  packages: Array<{
+    id: string;
+    title: string; // Changed from name to title to match component structure
+    description: string;
+    price: number;
+    commissionFee?: number; // Made optional to match component structure
+    checked: boolean;
+    category?: any;
+  }>; // Changed from amount to packages array
   serviceTitle: string;
   category: string;
   // Add full booking data for storage
