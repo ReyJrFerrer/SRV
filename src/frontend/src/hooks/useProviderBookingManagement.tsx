@@ -1282,33 +1282,17 @@ export const useProviderBookingManagement =
             };
           }
 
-          // Get service details to determine category
-          const service = serviceDetails.get(booking.serviceId);
-          if (!service || !service.category || !service.category.name) {
-            return {
-              estimatedCommission: 0,
-              hasInsufficientBalance: false,
-              commissionValidationMessage:
-                "Unable to determine service category for commission calculation",
-            };
-          }
+          let estimatedCommission = 0;
 
-          // Calculate commission for the booking
-          const commissionQuote =
-            await serviceCanisterService.getCommissionQuote(
-              service.category.name,
-              booking.price,
-            );
+          // Check if this is a package booking or regular service booking
+          if (booking.servicePackageId && booking.packageDetails) {
+            // Package booking - use commission from package (convert from centavos to pesos)
+            estimatedCommission = booking.packageDetails.commissionFee / 100;
+          } else if (booking.serviceDetails) {
+            // Regular service booking - use commission from service (convert from centavos to pesos)
+            estimatedCommission = booking.serviceDetails.commissionFee / 100;
+          } 
 
-          if (!commissionQuote) {
-            return {
-              estimatedCommission: 0,
-              hasInsufficientBalance: false,
-              commissionValidationMessage: "Unable to calculate commission fee",
-            };
-          }
-
-          const estimatedCommission = commissionQuote.commissionFee;
           const hasInsufficientBalance = walletBalance < estimatedCommission;
 
           let commissionValidationMessage = "";
@@ -1333,7 +1317,7 @@ export const useProviderBookingManagement =
           };
         }
       },
-      [serviceDetails, walletBalance],
+      [serviceDetails, packageDetails, walletBalance],
     );
 
     const canAcceptCashBooking = useCallback(

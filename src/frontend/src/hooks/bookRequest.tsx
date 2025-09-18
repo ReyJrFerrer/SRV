@@ -33,6 +33,7 @@ export interface BookingRequest {
   notes?: string; // Optional notes for the booking
   amountToPay?: number;
   paymentMethod: "CashOnHand" | "GCash" | "SRVWallet"; // Payment method chosen by client
+  paymentId?: string; // Optional payment ID for e-wallet payments (Xendit invoice ID)
 }
 
 export interface UseBookRequestReturn {
@@ -400,6 +401,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
           bookingData.paymentMethod, // Pass the payment method to the booking
+          bookingData.paymentId, // Pass the payment ID (Xendit invoice ID) for e-wallet payments
         );
         //console.log("✅ Booking created successfully:", booking);
         return booking;

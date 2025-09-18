@@ -13,6 +13,8 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { releaseHeldPayment } from "../../../services/firebase";
+import bookingCanisterService from "../../../services/bookingCanisterService";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
@@ -82,14 +84,6 @@ const CompleteServicePage: React.FC = () => {
   const handleSubmitPayment = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    const receivedAmount = parseFloat(cashReceived);
-
-    if (isNaN(receivedAmount) || receivedAmount < servicePrice) {
-      setError(
-        `Cash received must be a number and at least ₱${servicePrice.toFixed(2)}.`,
-      );
-      return;
-    }
 
     if (!booking) {
       setError("Booking not found. Please try again.");
@@ -99,24 +93,100 @@ const CompleteServicePage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Pass the actual cash received amount as amountPaid
-      const success = await completeBookingById(booking.id, receivedAmount);
+      let success = false;
+      let amountPaid = 0;
+
+      // Handle different payment methods
+      if (booking.paymentMethod === "CashOnHand") {
+        // Cash payment handling
+        const receivedAmount = parseFloat(cashReceived);
+
+        if (isNaN(receivedAmount) || receivedAmount < servicePrice) {
+          setError(
+            `Cash received must be a number and at least ₱${servicePrice.toFixed(2)}.`,
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        amountPaid = receivedAmount;
+        success = await completeBookingById(booking.id, receivedAmount);
+      } else if (booking.paymentMethod === "GCash" || booking.paymentMethod === "SRVWallet") {
+        // Digital payment handling - complete booking first
+        amountPaid = servicePrice; // Full service price for digital payments
+        success = await completeBookingById(booking.id, amountPaid);
+
+        if (success) {
+          // For digital payments, trigger payment release to provider
+          try {
+            const releaseResult = await releaseHeldPayment({
+              bookingId: booking.id,
+              invoiceId: booking.paymentId, // Use the invoice ID from booking
+              reason: "Service completed successfully",
+              skipValidation: true, // Skip Firestore validation for ICP bookings
+              bookingData: {
+                id: booking.id,
+                clientId: booking.clientId.toString(),
+                providerId: booking.providerId.toString(),
+                status: "Completed", // We just completed it
+                paymentMethod: booking.paymentMethod,
+                price: booking.price,
+                completedAt: new Date().toISOString(),
+              },
+            });
+
+            if (!releaseResult.success) {
+              console.warn("Payment release failed:", releaseResult.error);
+              // Don't fail the entire flow if payment release fails
+              // This can be handled asynchronously or retried later
+            } else {
+              // If Cloud Function succeeded, update the canister with payment release info
+              try {
+                await bookingCanisterService.releasePayment(
+                  booking.id,
+                  releaseResult.bookingData?.payoutId, // Use payoutId as paymentId
+                  releaseResult.bookingData?.releasedAmount,
+                  releaseResult.bookingData?.commissionRetained,
+                  releaseResult.payoutData?.payoutId,
+                );
+                console.log("Payment release updated in canister successfully");
+              } catch (canisterError) {
+                console.warn("Error updating canister with payment release:", canisterError);
+                // Don't fail the flow if canister update fails - this can be handled later
+              }
+            }
+          } catch (releaseError) {
+            console.warn("Error releasing payment:", releaseError);
+            // Don't fail the booking completion if payment release fails
+          }
+        }
+      } else {
+        setError("Unsupported payment method.");
+        setIsSubmitting(false);
+        return;
+      }
 
       if (success) {
-        setError(null); // <-- Remove error messages after successful action
-        // Navigate to the receipt page with query parameters
+        setError(null);
+        
+        // Navigate to the receipt page with appropriate parameters
         const searchParams = new URLSearchParams({
           price: servicePrice.toFixed(2),
-          paid: receivedAmount.toFixed(2),
-          change: changeDue.toFixed(2),
-          method: "Cash",
+          paid: amountPaid.toFixed(2),
+          method: booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod,
         });
+
+        // Add change for cash payments
+        if (booking.paymentMethod === "CashOnHand") {
+          searchParams.append("change", changeDue.toFixed(2));
+        }
+
         navigate(`/provider/receipt/${booking.id}?${searchParams.toString()}`);
       } else {
         setError("Failed to complete the booking. Please try again.");
       }
     } catch (error) {
-      //console.error("Error completing booking:", error);
+      console.error("Error completing booking:", error);
       setError(
         "An error occurred while completing the booking. Please try again.",
       );
@@ -198,44 +268,75 @@ const CompleteServicePage: React.FC = () => {
               </span>
             </div>
 
-            <form onSubmit={handleSubmitPayment} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="cashReceived"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Cash Received from Client:
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    id="cashReceived"
-                    name="cashReceived"
-                    value={cashReceived}
-                    onChange={handleCashReceivedChange}
-                    className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    required
-                    maxLength={10}
-                  />
-                  <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400">
-                    Max: ₱{MAX_CASH_RECEIVED.toLocaleString()}
-                  </span>
-                </div>
-              </div>
+            {/* Payment Method Information */}
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-medium text-gray-600">
+                Payment Method:
+              </span>
+              <span className="text-sm font-semibold text-gray-800">
+                {booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod}
+              </span>
+            </div>
 
-              {parseFloat(cashReceived) >= servicePrice && servicePrice > 0 && (
-                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
-                  <span className="text-sm font-medium text-green-700">
-                    Change Due:
-                  </span>
-                  <span className="text-lg font-semibold text-green-700">
-                    ₱{changeDue.toFixed(2)}
-                  </span>
+            <form onSubmit={handleSubmitPayment} className="space-y-4">
+              {/* Cash Payment Form - Only show for cash payments */}
+              {booking.paymentMethod === "CashOnHand" && (
+                <>
+                  <div>
+                    <label
+                      htmlFor="cashReceived"
+                      className="mb-1 block text-sm font-medium text-gray-700"
+                    >
+                      Cash Received from Client:
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        id="cashReceived"
+                        name="cashReceived"
+                        value={cashReceived}
+                        onChange={handleCashReceivedChange}
+                        className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0.00"
+                        inputMode="decimal"
+                        required
+                        maxLength={10}
+                      />
+                      <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400">
+                        Max: ₱{MAX_CASH_RECEIVED.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {parseFloat(cashReceived) >= servicePrice && servicePrice > 0 && (
+                    <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
+                      <span className="text-sm font-medium text-green-700">
+                        Change Due:
+                      </span>
+                      <span className="text-lg font-semibold text-green-700">
+                        ₱{changeDue.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Digital Payment Information */}
+              {(booking.paymentMethod === "GCash" || booking.paymentMethod === "SRVWallet") && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      Payment Already Processed
+                    </span>
+                  </div>
+                  <p className="text-sm text-green-600">
+                    The client has already paid ₱{servicePrice.toFixed(2)} via {booking.paymentMethod}. 
+                    Completing this service will automatically release the payment to you after commission deduction.
+                  </p>
                 </div>
               )}
 
@@ -255,8 +356,11 @@ const CompleteServicePage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <CheckCircleIcon className="h-5 w-5" /> Confirm Payment &
-                    Complete
+                    <CheckCircleIcon className="h-5 w-5" />
+                    {booking.paymentMethod === "CashOnHand" 
+                      ? "Confirm Payment & Complete"
+                      : "Complete Service & Release Payment"
+                    }
                   </>
                 )}
               </button>

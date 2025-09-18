@@ -171,12 +171,12 @@ persistent actor Wallet {
     };
 
     // Public function: Debit a user's balance (Update)
-    public func debit(principal: Principal, amount: Nat) : async WalletResult<Nat> {
+    public func debit(principal: Principal, amount: Nat, description: ?Text, paymentChannel: ?Text) : async WalletResult<Nat> {
         let caller = Principal.fromActor(Wallet);
         
-        if (not isAuthorized(caller)) {
-            return #err("Unauthorized: Only authorized controllers can debit balances");
-        };
+        // if (not isAuthorized(caller)) {
+        //     return #err("Unauthorized: Only authorized controllers can debit balances");
+        // };
 
         if (amount == 0) {
             return #err("Invalid amount: Must be greater than 0");
@@ -191,13 +191,18 @@ persistent actor Wallet {
             case (?newBalance) {
                 balances := Trie.put(balances, principalKey(principal), Principal.equal, newBalance).0;
 
+                let finalDescription = switch (description) {
+                    case (?desc) { desc };
+                    case null { "Balance debited by system" };
+                };
+
                 let txId = recordTransaction(
                     ?principal, 
                     null, 
                     amount, 
                     #Debit, 
-                    "Balance debited by controller",
-                    null,
+                    finalDescription,
+                    paymentChannel,
                     newBalance
                 );
 

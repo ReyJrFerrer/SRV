@@ -158,6 +158,7 @@ const PaymentPendingPage: React.FC = () => {
         notes: bookingData.notes,
         amountToPay: bookingData.amountToPay,
         paymentMethod: bookingData.paymentMethod,
+        paymentId: state.invoiceId, // Pass the invoice ID for e-wallet payment tracking
       };
 
       // Ensure we have valid identity
@@ -168,9 +169,12 @@ const PaymentPendingPage: React.FC = () => {
       // Create the booking in the ICP canister
       const booking = await createBookingRequest(bookingRequest);
 
+      
       if (booking) {
         setPaymentStatus("booking_success");
         setStatusMessage("Booking created successfully!");
+        console.log(booking)
+
 
         // Navigate to confirmation page after a short delay
         setTimeout(() => {

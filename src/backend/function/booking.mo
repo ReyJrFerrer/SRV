@@ -249,7 +249,8 @@ persistent actor BookingCanister {
         servicePackageId : ?Text,
         notes : ?Text,
         amountToPay: ?Nat,
-        paymentMethod: PaymentMethod
+        paymentMethod: PaymentMethod,
+        paymentId: ?Text  // Optional payment ID for e-wallet payments (Xendit invoice ID)
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -422,9 +423,15 @@ persistent actor BookingCanister {
             notes = notes;
             paymentMethod = paymentMethod;
             // Initialize payment status tracking fields
-            paymentStatus = ?("PENDING"); // Start with pending status
-            paymentId = null; // Will be set when payment is processed
-            heldAmount = null; // Will be set for digital payments
+            paymentStatus = switch (paymentId) {
+                case (?_) ?("PAID_HELD"); // Payment already processed and held for e-wallet
+                case (null) ?("PENDING"); // Cash or payment to be processed later
+            };
+            paymentId = paymentId; // Store the provided payment ID (Xendit invoice ID for e-wallet)
+            heldAmount = switch (paymentId) {
+                case (?_) ?finalPrice; // Full amount held for digital payments
+                case (null) null; // No amount held for cash payments
+            };
             releasedAmount = null; // Will be set when payment is released
             commissionRetained = null; // Will be set when commission is calculated
             paymentReleased = null; // Will be set to true when payment is released
@@ -481,53 +488,61 @@ persistent actor BookingCanister {
             return #ok(true); // Skip commission validation for non-cash payments
         };
         
-        // Get service information to determine category
+        // Get service information and commission fee
         switch (serviceCanisterId) {
             case (?serviceId) {
                 let serviceCanister = actor(Principal.toText(serviceId)) : actor {
                     getService : (Text) -> async Types.Result<Types.Service>;
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
                 };
                 
-                switch (await serviceCanister.getService(booking.serviceId)) {
-                    case (#ok(service)) {
-                        let categoryName = service.category.name;
-                        
-                        // Calculate estimated commission
-                        switch (commissionCanisterId) {
-                            case (?commissionId) {
-                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
-                                    calculate_commission : (Text, Nat) -> async Nat;
-                                };
-                                
-                                let estimatedCommission = await commissionCanister.calculate_commission(categoryName, booking.price);
-                                
-                                // Check provider's wallet balance
-                                switch (walletCanisterId) {
-                                    case (?walletId) {
-                                        let walletCanister = actor(Principal.toText(walletId)) : actor {
-                                            get_balance_of : (Principal) -> async Nat;
-                                        };
-                                        
-                                        let providerBalance = await walletCanister.get_balance_of(booking.providerId);
-                                        
-                                        if (providerBalance < estimatedCommission) {
-                                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(estimatedCommission) # ", Available balance: ₱" # Nat.toText(providerBalance) # ". Please top up your wallet before accepting this booking.");
-                                        };
-                                        
-                                        return #ok(true);
-                                    };
-                                    case (null) {
-                                        return #err("Wallet canister reference not set");
-                                    };
-                                };
+                // Check if this is a package booking or regular service booking
+                var estimatedCommission : Nat = 0;
+                
+                switch (booking.servicePackageId) {
+                    case (?packageId) {
+                        // Package booking - get commission from package
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(pkg)) {
+                                // Commission already in centavos from package
+                                estimatedCommission := pkg.commissionFee * 100 ;
                             };
-                            case (null) {
-                                return #err("Commission canister reference not set");
+                            case (#err(msg)) {
+                                return #err("Failed to get package information: " # msg);
                             };
                         };
                     };
-                    case (#err(msg)) {
-                        return #err("Failed to get service information: " # msg);
+                    case (null) {
+                        // Regular service booking - get commission from service
+                        switch (await serviceCanister.getService(booking.serviceId)) {
+                            case (#ok(service)) {
+                                // Commission already in centavos from service
+                                estimatedCommission := service.commissionFee * 100;
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to get service information: " # msg);
+                            };
+                        };
+                    };
+                };
+                
+                // Check provider's wallet balance
+                switch (walletCanisterId) {
+                    case (?walletId) {
+                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                            get_balance_of : (Principal) -> async Nat;
+                        };
+                        
+                        let providerBalance = await walletCanister.get_balance_of(booking.providerId);
+                        
+                        if (providerBalance < estimatedCommission) {
+                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(estimatedCommission / 100) # ", Available balance: ₱" # Nat.toText(providerBalance / 100) # ". Please top up your wallet before accepting this booking.");
+                        };
+                        
+                        return #ok(true);
+                    };
+                    case (null) {
+                        return #err("Wallet canister reference not set");
                     };
                 };
             };
@@ -544,54 +559,65 @@ persistent actor BookingCanister {
             return #ok(true); // Skip commission deduction for non-cash payments
         };
         
-        // Get service information to determine category
+        // Get service information and commission fee
         switch (serviceCanisterId) {
             case (?serviceId) {
                 let serviceCanister = actor(Principal.toText(serviceId)) : actor {
                     getService : (Text) -> async Types.Result<Types.Service>;
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
                 };
                 
-                switch (await serviceCanister.getService(booking.serviceId)) {
-                    case (#ok(service)) {
-                        let categoryName = service.category.name;
-                        
-                        // Calculate final commission based on the actual booking price
-                        switch (commissionCanisterId) {
-                            case (?commissionId) {
-                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
-                                    calculate_commission : (Text, Nat) -> async Nat;
-                                };
-                                
-                                let finalCommission = await commissionCanister.calculate_commission(categoryName, booking.price);
-                                
-                                // Deduct commission from provider's wallet
-                                switch (walletCanisterId) {
-                                    case (?walletId) {
-                                        let walletCanister = actor(Principal.toText(walletId)) : actor {
-                                            debit : (Principal, Nat) -> async Types.Result<Nat>;
-                                        };
-                                        
-                                        switch (await walletCanister.debit(booking.providerId, finalCommission)) {
-                                            case (#ok(_)) {
-                                                return #ok(true);
-                                            };
-                                            case (#err(msg)) {
-                                                return #err("Failed to deduct commission: " # msg);
-                                            };
-                                        };
-                                    };
-                                    case (null) {
-                                        return #err("Wallet canister reference not set");
-                                    };
-                                };
+                // Check if this is a package booking or regular service booking
+                var finalCommission : Nat = 0;
+                var serviceTitle : Text = "";
+                
+                switch (booking.servicePackageId) {
+                    case (?packageId) {
+                        // Package booking - get commission from package
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(pkg)) {
+                                finalCommission := pkg.commissionFee * 100;
+                                serviceTitle := pkg.title;
                             };
-                            case (null) {
-                                return #err("Commission canister reference not set");
+                            case (#err(msg)) {
+                                return #err("Failed to get package information: " # msg);
                             };
                         };
                     };
-                    case (#err(msg)) {
-                        return #err("Failed to get service information: " # msg);
+                    case (null) {
+                        // Regular service booking - get commission from service
+                        switch (await serviceCanister.getService(booking.serviceId)) {
+                            case (#ok(service)) {
+                                finalCommission := service.commissionFee * 100;
+                                serviceTitle := service.title;
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to get service information: " # msg);
+                            };
+                        };
+                    };
+                };
+                
+                // Deduct commission from provider's wallet
+                switch (walletCanisterId) {
+                    case (?walletId) {
+                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                            debit : (Principal, Nat, ?Text, ?Text) -> async Types.Result<Nat>;
+                        };
+                        
+                        let commissionDescription = "Commission fee for booking #" # booking.id # " - " # serviceTitle;
+                        
+                        switch (await walletCanister.debit(booking.providerId, finalCommission, ?commissionDescription, ?"SRV_COMMISSION")) {
+                            case (#ok(_)) {
+                                return #ok(true);
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to deduct commission: " # msg);
+                            };
+                        };
+                    };
+                    case (null) {
+                        return #err("Wallet canister reference not set");
                     };
                 };
             };
@@ -776,19 +802,22 @@ persistent actor BookingCanister {
 
                 switch (updateBookingStatus(bookingWithPaymentInfo, #Completed, caller, true)) {
                     case (#ok(updatedBooking)) {
-                        bookings.put(bookingId, updatedBooking);
                         
                         // Process commission deduction for cash jobs (payment method is checked inside processCommissionDeduction)
                         switch (await processCommissionDeduction(updatedBooking)) {
                             case (#err(msg)) {
-                                // Log the error but don't fail the booking completion
-                                // In a production system, you might want to handle this differently
-                                // For now, we'll continue with the booking completion
+                                // Commission deduction failed - this is critical for cash jobs
+                                // Revert the booking status and return an error
+                                return #err("Failed to complete booking: " # msg # ". Commission could not be deducted from wallet.");
                             };
                             case (#ok(_)) {
                                 // Commission successfully deducted for cash jobs (or skipped for non-cash)
+                                // Continue with booking completion
                             };
                         };
+
+                        // Only update booking in storage after successful commission deduction
+                        bookings.put(bookingId, updatedBooking);
 
                         // For digital payments, mark payment status as ready for release
                         // The actual payment release will be triggered by Firebase Cloud Functions
@@ -1437,91 +1466,6 @@ persistent actor BookingCanister {
     };
 
     // PAYMENT CONFIRMATION FUNCTIONS
-    
-    // Confirm digital payment (called by Firebase Cloud Functions)
-    public shared(msg) func confirm_digital_payment(bookingId : Text) : async Result<Booking> {
-        let _caller = msg.caller;
-        
-        // Security: Only allow calls from authorized backend service
-        // Note: In production, this should be the Principal of your Firebase backend service
-        // For now, we'll allow any caller but log the attempt for security monitoring
-        // TODO: Replace with actual backend service Principal verification
-        
-        // Get the booking
-        switch (bookings.get(bookingId)) {
-            case (?booking) {
-                // Verify the booking is in a state that can be confirmed
-                switch (booking.status) {
-                    case (#Requested or #Accepted) {
-                        // Only allow confirmation for digital payment methods
-                        switch (booking.paymentMethod) {
-                            case (#GCash or #SRVWallet) {
-                                // Update booking status to indicate payment is confirmed
-                                let updatedBooking : Booking = {
-                                    id = booking.id;
-                                    clientId = booking.clientId;
-                                    providerId = booking.providerId;
-                                    serviceId = booking.serviceId;
-                                    servicePackageId = booking.servicePackageId;
-                                    status = #Accepted; // Mark as accepted since payment is confirmed
-                                    requestedDate = booking.requestedDate;
-                                    scheduledDate = booking.scheduledDate;
-                                    startedDate = booking.startedDate;
-                                    completedDate = booking.completedDate;
-                                    price = booking.price;
-                                    amountPaid = ?booking.price; // Set amount paid to full price
-                                    serviceTime = booking.serviceTime;
-                                    location = booking.location;
-                                    evidence = booking.evidence;
-                                    notes = booking.notes;
-                                    paymentMethod = booking.paymentMethod;
-                                    // Copy payment status fields from existing booking
-                                    paymentStatus = booking.paymentStatus;
-                                    paymentId = booking.paymentId;
-                                    heldAmount = booking.heldAmount;
-                                    releasedAmount = booking.releasedAmount;
-                                    commissionRetained = booking.commissionRetained;
-                                    paymentReleased = booking.paymentReleased;
-                                    releasedAt = booking.releasedAt;
-                                    payoutId = booking.payoutId;
-                                    createdAt = booking.createdAt;
-                                    updatedAt = Time.now();
-                                };
-                                
-                                // Update the booking in storage
-                                bookings.put(bookingId, updatedBooking);
-                                
-                                // Log the payment confirmation
-                                // Note: In production, this should be more secure logging
-                                return #ok(updatedBooking);
-                            };
-                            case (#CashOnHand) {
-                                return #err("Cash payments cannot be confirmed digitally");
-                            };
-                        };
-                    };
-                    case (#Completed) {
-                        return #err("Booking has already been completed");
-                    };
-                    case (#Cancelled or #Declined or #Disputed) {
-                        return #err("Cannot confirm payment for a " # (switch (booking.status) {
-                            case (#Cancelled) "cancelled";
-                            case (#Declined) "declined"; 
-                            case (#Disputed) "disputed";
-                            case (_) "invalid";
-                        }) # " booking");
-                    };
-                    case (#InProgress) {
-                        return #err("Booking is already in progress");
-                    };
-                };
-            };
-            case (null) {
-                return #err("Booking not found");
-            };
-        };
-    };
-
     /**
      * Release held payment when booking is completed
      * This function is called by authorized backend services to release payments

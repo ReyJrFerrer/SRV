@@ -194,6 +194,7 @@ export interface Booking {
   evidence?: Evidence;
   notes?: string;
   paymentMethod: PaymentMethod;
+  paymentId?: string; // Reference to external payment (Xendit invoice ID)
   createdAt: string;
   updatedAt: string;
   // Additional UI fields
@@ -419,6 +420,7 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
     : undefined,
   notes: booking.notes[0],
   paymentMethod: convertCanisterPaymentMethod(booking.paymentMethod),
+  paymentId: booking.paymentId[0], // Xendit invoice ID
   createdAt: new Date(Number(booking.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(booking.updatedAt) / 1000000).toISOString(),
 });
@@ -438,6 +440,7 @@ export const bookingCanisterService = {
     notes?: string,
     amountToPay?: number,
     paymentMethod: PaymentMethod = "CashOnHand",
+    paymentId?: string,
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
@@ -460,6 +463,7 @@ export const bookingCanisterService = {
         notes ? [notes] : [],
         amountToPayOptional,
         canisterPaymentMethod,
+        paymentId ? [paymentId] : [],
       );
 
       if ("ok" in result) {
@@ -1160,6 +1164,80 @@ export const bookingCanisterService = {
     } catch (error) {
       //console.error("Error fetching package analytics:", error);
       throw new Error(`Failed to fetch package analytics: ${error}`);
+    }
+  },
+
+  /**
+   * Release held payment for a completed booking
+   * This function is called after the Firebase Cloud Function has processed the payment release
+   */
+  async releasePayment(
+    bookingId: string,
+    paymentId?: string,
+    releasedAmount?: number,
+    commissionRetained?: number,
+    payoutId?: string,
+  ): Promise<Booking | null> {
+    try {
+      const actor = getBookingActor(true); // Requires authentication
+
+      const result = await actor.releasePayment(
+        bookingId,
+        paymentId ? [paymentId] : [],
+        BigInt(Math.round((releasedAmount || 0) * 100)), // Convert to cents
+        BigInt(Math.round((commissionRetained || 0) * 100)), // Convert to cents
+        payoutId ? [payoutId] : [],
+      );
+
+      if ("ok" in result) {
+        return convertCanisterBooking(result.ok);
+      } else {
+        console.error("Error releasing payment:", result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error releasing payment:", error);
+      throw new Error(`Failed to release payment: ${error}`);
+    }
+  },
+
+  /**
+   * Get payment status for a booking
+   */
+  async getPaymentStatus(bookingId: string): Promise<{
+    paymentStatus?: string;
+    paymentId?: string;
+    heldAmount?: number;
+    releasedAmount?: number;
+    commissionRetained?: number;
+    paymentReleased?: boolean;
+    releasedAt?: Date;
+    payoutId?: string;
+  } | null> {
+    try {
+      const actor = getBookingActor();
+
+      const result = await actor.getPaymentStatus(bookingId);
+
+      if ("ok" in result) {
+        const data = result.ok;
+        return {
+          paymentStatus: data.paymentStatus[0],
+          paymentId: data.paymentId[0],
+          heldAmount: data.heldAmount[0] ? Number(data.heldAmount[0]) / 100 : undefined, // Convert from cents
+          releasedAmount: data.releasedAmount[0] ? Number(data.releasedAmount[0]) / 100 : undefined, // Convert from cents
+          commissionRetained: data.commissionRetained[0] ? Number(data.commissionRetained[0]) / 100 : undefined, // Convert from cents
+          paymentReleased: data.paymentReleased[0],
+          releasedAt: data.releasedAt[0] ? new Date(Number(data.releasedAt[0]) / 1000000) : undefined,
+          payoutId: data.payoutId[0],
+        };
+      } else {
+        console.error("Error getting payment status:", result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error getting payment status:", error);
+      throw new Error(`Failed to get payment status: ${error}`);
     }
   },
 };

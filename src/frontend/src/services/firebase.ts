@@ -299,6 +299,47 @@ export interface InvoiceStatusResponse {
   error?: string;
 }
 
+export interface ReleasePaymentRequest {
+  bookingId: string;
+  invoiceId?: string; // Xendit invoice ID for payment lookup
+  reason?: string;
+  // Add support for ICP-based bookings
+  skipValidation?: boolean;
+  bookingData?: {
+    id: string;
+    clientId: string;
+    providerId: string;
+    status: string;
+    paymentMethod: string;
+    price: number;
+    completedAt?: string;
+  };
+}
+
+export interface ReleasePaymentResponse {
+  success: boolean;
+  message?: string;
+  payoutData?: {
+    payoutId: string;
+    amount: number;
+    commissionRetained: number;
+    netProviderAmount: number;
+    status: string;
+    channelCode: string;
+    accountHolderName: string;
+    accountNumber: string;
+  };
+  bookingData?: {
+    bookingId: string;
+    paymentReleased: boolean;
+    releasedAt: string;
+    releasedAmount: number;
+    commissionRetained: number;
+    payoutId: string;
+  };
+  error?: string;
+}
+
 /**
  * Check the real payment status of an invoice from Xendit
  * This provides accurate payment status instead of relying on localStorage
@@ -328,6 +369,57 @@ export async function checkInvoiceStatus(
     return {
       success: false,
       error: error.message || "Failed to check invoice status",
+    };
+  }
+}
+
+/**
+ * Release held payment for a completed booking
+ * This triggers the payout to the provider after commission deduction
+ */
+export async function releaseHeldPayment(
+  request: ReleasePaymentRequest,
+): Promise<ReleasePaymentResponse> {
+  try {
+    console.log("🔄 Releasing held payment:", request);
+    
+    const response = await fetch(`${BASE_URL}/releaseHeldPayment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: request, // Wrap in data object to match other functions
+      }),
+    });
+
+    console.log("📡 Response status:", response.status);
+
+    if (!response.ok) {
+      // Try to get error details from response
+      let errorDetails;
+      try {
+        errorDetails = await response.json();
+        console.error("❌ Server error response:", errorDetails);
+      } catch (e) {
+        console.error("❌ Failed to parse error response");
+      }
+      
+      throw new Error(
+        `HTTP error! status: ${response.status}${
+          errorDetails?.error ? ` - ${errorDetails.error}` : ""
+        }${errorDetails?.details ? ` (${errorDetails.details})` : ""}`
+      );
+    }
+
+    const result = await response.json();
+    console.log("✅ Payment release response:", result);
+    return result.result || result;
+  } catch (error: any) {
+    console.error("❌ Error releasing held payment:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to release held payment",
     };
   }
 }

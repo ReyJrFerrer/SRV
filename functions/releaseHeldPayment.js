@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const { Xendit } = require("xendit-node");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -24,64 +25,265 @@ try {
   xendit = null;
 }
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
+// Ensure Firebase Admin is initialized
+if (admin.apps.length === 0) {
+  // Check if we're in the emulator environment
+  if (process.env.FUNCTIONS_EMULATOR) {
+    console.log("🔥 Running in emulator mode");
+    admin.initializeApp({
+      projectId: "devsrv-rey",
+    });
+
+    // Set Firestore emulator settings
+    const db = admin.firestore();
+    db.settings({
+      host: "127.0.0.1:8080",
+      ssl: false,
+    });
+  } else {
+    admin.initializeApp();
+  }
+}
+
+/**
+ * Get payment data by invoice ID (same logic as getPaymentData.js)
+ * @param {string} invoiceId - Invoice ID
+ * @returns {Object|null} Payment data or null if not found
+ */
+async function getPaymentDataByInvoiceId(invoiceId) {
+  try {
+    console.log(`🔍 Fetching payment data for invoice: ${invoiceId}`);
+
+    const db = admin.firestore();
+
+    // Get the payment document from Firestore
+    const paymentDoc = await db.collection("payments").doc(invoiceId).get();
+
+    if (!paymentDoc.exists) {
+      console.log(`❌ Payment document not found for invoice: ${invoiceId}`);
+      return null;
+    }
+
+    const paymentData = paymentDoc.data();
+    console.log(`✅ Payment data found for invoice: ${invoiceId}`);
+
+    return {
+      id: paymentDoc.id,
+      ...paymentData,
+    };
+  } catch (error) {
+    console.error("❌ Error fetching payment data:", error);
+    return null;
+  }
+}
+
+/**
+ * Check invoice status (same logic as checkInvoiceStatus.js)
+ * @param {string} invoiceId - Invoice ID
+ * @returns {Object} Status result
+ */
+async function checkInvoiceStatus(invoiceId) {
+  try {
+    console.log(`🔍 Checking status for invoice: ${invoiceId}`);
+
+    // Check if Xendit client is initialized
+    if (!xendit) {
+      console.log(
+        "Xendit client not initialized, checking Firestore for cached status",
+      );
+
+      // Fallback: Check Firestore for payment status
+      const db = admin.firestore();
+      const paymentDoc = await db.collection("payments").doc(invoiceId).get();
+
+      if (!paymentDoc.exists) {
+        return {
+          success: false,
+          error: "Invoice not found",
+        };
+      }
+
+      const paymentData = paymentDoc.data();
+      return {
+        success: true,
+        status: paymentData.status || "PENDING",
+        invoiceId: invoiceId,
+        amount: paymentData.amount,
+        paymentChannel: paymentData.paymentChannel || "GCash",
+        source: "firestore_cache",
+      };
+    }
+
+    // Check if this is a mock invoice (development mode)
+    if (invoiceId.startsWith("invoice_mock_")) {
+      console.log("Mock invoice detected, simulating status check");
+
+      const db = admin.firestore();
+      const paymentDoc = await db.collection("payments").doc(invoiceId).get();
+
+      if (paymentDoc.exists) {
+        const paymentData = paymentDoc.data();
+        return {
+          success: true,
+          status: paymentData.status || "PENDING",
+          invoiceId: invoiceId,
+          amount: paymentData.amount,
+          paymentChannel: paymentData.paymentChannel || "GCash",
+          source: "mock_development",
+        };
+      }
+    }
+
+    // Fetch invoice status from Xendit
+    const { Invoice } = xendit;
+    let invoice;
+
+    try {
+      invoice = await Invoice.getInvoiceById({
+        invoiceId: invoiceId,
+      });
+
+      console.log(`✅ Invoice status fetched: ${invoice.status}`);
+    } catch (xenditError) {
+      console.error("Error fetching invoice from Xendit:", xenditError);
+
+      // Fallback to Firestore if Xendit fails
+      const db = admin.firestore();
+      const paymentDoc = await db.collection("payments").doc(invoiceId).get();
+
+      if (!paymentDoc.exists) {
+        return {
+          success: false,
+          error: "Invoice not found in Xendit or Firestore",
+        };
+      }
+
+      const paymentData = paymentDoc.data();
+      return {
+        success: true,
+        status: paymentData.status || "PENDING",
+        invoiceId: invoiceId,
+        amount: paymentData.amount,
+        paymentChannel: paymentData.paymentChannel || "GCash",
+        source: "firestore_fallback",
+      };
+    }
+
+    return {
+      success: true,
+      status: invoice.status,
+      invoiceId: invoiceId,
+      amount: invoice.amount,
+      paidAmount: invoice.paidAmount || invoice.amount,
+      expiryDate: invoice.expiryDate,
+      paidAt: invoice.paidAt,
+      paymentChannel: invoice.paymentChannel || "GCash",
+      paymentMethod: invoice.paymentMethod,
+      source: "xendit_api",
+    };
+  } catch (error) {
+    console.error("❌ Error checking invoice status:", error);
+    return {
+      success: false,
+      error: error.message || "Internal server error",
+    };
+  }
 }
 
 /**
  * Cloud Function to release held payments when bookings are completed
- * This function validates booking completion and processes provider payouts
+ * This function uses invoiceId to directly fetch payment data and process payout
  */
 exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
   try {
     // Only accept POST requests
     if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
-    }
-
-    const { bookingId, reason = "Booking completed" } = req.body;
-
-    if (!bookingId) {
-      return res
-        .status(400)
-        .json({ error: "Missing required field: bookingId" });
-    }
-
-    console.log(`Processing payment release for booking: ${bookingId}`);
-
-    // Validate booking completion status
-    const bookingValidation = await validateBookingCompletion(bookingId);
-    if (!bookingValidation.valid) {
-      return res.status(400).json({
-        error: "Booking validation failed",
-        details: bookingValidation.reason,
+      return res.status(405).json({ 
+        success: false,
+        error: "Method Not Allowed" 
       });
     }
 
-    // Find held payment for this booking
-    const heldPayment = await findHeldPaymentByBooking(bookingId);
-    if (!heldPayment) {
+    // Enable CORS for local development
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, POST");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+      return res.status(200).end();
+    }
+
+    // Extract data from request body
+    const requestData = req.body.data || req.body;
+    const { invoiceId, reason = "Booking completed" } = requestData;
+
+    console.log("📦 Request received:", {
+      invoiceId,
+      reason,
+    });
+
+    if (!invoiceId) {
+      console.error("❌ Missing invoiceId in request");
+      return res.status(400).json({ 
+        success: false,
+        error: "Missing required field: invoiceId",
+      });
+    }
+
+    console.log(`🔄 Processing payment release for invoice: ${invoiceId}`);
+
+    // Get payment data directly using invoiceId
+    const paymentData = await getPaymentDataByInvoiceId(invoiceId);
+    if (!paymentData) {
+      console.log(`❌ No payment data found for invoice: ${invoiceId}`);
       return res.status(404).json({
-        error: "No held payment found for this booking",
+        success: false,
+        error: "Payment data not found for this invoice",
       });
     }
+
+    console.log("💳 Payment data found:", {
+      invoiceId: paymentData.id,
+      bookingId: paymentData.bookingId,
+      amount: paymentData.amount,
+      providerAmount: paymentData.providerAmount,
+      commissionAmount: paymentData.commissionAmount,
+    });
+
+    // Verify payment status
+    const invoiceStatus = await checkInvoiceStatus(invoiceId);
+    if (!invoiceStatus.success || 
+        (invoiceStatus.status !== "PAID" && invoiceStatus.status !== "SETTLED")) {
+      console.error("❌ Payment not eligible for release:", {
+        success: invoiceStatus.success,
+        status: invoiceStatus.status,
+      });
+      return res.status(400).json({
+        success: false,
+        error: "Payment not eligible for release",
+        details: `Payment status is ${invoiceStatus.status || 'unknown'}`,
+      });
+    }
+
+    console.log("✅ Payment status verified:", invoiceStatus.status);
 
     // Process payment release
-    const releaseResult = await processPaymentRelease(heldPayment, reason);
+    const releaseResult = await processPaymentRelease(paymentData, reason);
 
     if (releaseResult.success) {
+      console.log("✅ Payment release successful");
+
       res.status(200).json({
         success: true,
         message: "Payment released successfully",
-        paymentId: heldPayment.paymentId,
-        bookingId: bookingId,
-        amount: heldPayment.heldAmount,
-        providerAmount: heldPayment.providerAmount,
-        commissionAmount: heldPayment.commissionAmount,
+        invoiceId: invoiceId,
+        bookingId: paymentData.bookingId,
+        amount: paymentData.amount,
+        providerAmount: paymentData.providerAmount,
+        commissionAmount: paymentData.commissionAmount,
         payoutId: releaseResult.payoutId,
       });
     } else {
+      console.error("❌ Payment release failed:", releaseResult.error);
       res.status(500).json({
         success: false,
         error: "Failed to release payment",
@@ -89,8 +291,9 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error in releaseHeldPayment function:", error);
+    console.error("❌ Error in releaseHeldPayment function:", error);
     res.status(500).json({
+      success: false,
       error: "Internal Server Error",
       details: error.message,
     });
@@ -98,125 +301,21 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
 });
 
 /**
- * Validate that the booking is completed and eligible for payment release
- * @param {string} bookingId - Booking ID to validate
- * @returns {Object} Validation result with valid flag and reason
- */
-async function validateBookingCompletion(bookingId) {
-  try {
-    // Get booking details from Firestore
-    const bookingDoc = await admin
-      .firestore()
-      .collection("bookings")
-      .doc(bookingId)
-      .get();
-
-    if (!bookingDoc.exists) {
-      return {
-        valid: false,
-        reason: "Booking not found",
-      };
-    }
-
-    const booking = bookingDoc.data();
-
-    // Check booking status
-    if (booking.status !== "Completed") {
-      return {
-        valid: false,
-        reason: `Booking status is '${booking.status}', must be 'Completed'`,
-      };
-    }
-
-    // Check payment status
-    if (booking.paymentStatus !== "PAID_HELD") {
-      return {
-        valid: false,
-        reason: `Payment status is '${booking.paymentStatus}', must be 'PAID_HELD'`,
-      };
-    }
-
-    // Additional validation: Check if payment was already released
-    if (booking.paymentReleased === true) {
-      return {
-        valid: false,
-        reason: "Payment has already been released for this booking",
-      };
-    }
-
-    // Check if booking has required completion timestamp
-    if (!booking.completedAt) {
-      return {
-        valid: false,
-        reason: "Booking completion timestamp is missing",
-      };
-    }
-
-    return {
-      valid: true,
-      booking: booking,
-    };
-  } catch (error) {
-    console.error(`Error validating booking ${bookingId}:`, error);
-    return {
-      valid: false,
-      reason: `Validation error: ${error.message}`,
-    };
-  }
-}
-
-/**
- * Find held payment record by booking ID
- * @param {string} bookingId - Booking ID
- * @returns {Object|null} Held payment data or null if not found
- */
-async function findHeldPaymentByBooking(bookingId) {
-  try {
-    const heldPaymentQuery = await admin
-      .firestore()
-      .collection("held_payments")
-      .where("bookingId", "==", bookingId)
-      .where("status", "==", "HELD")
-      .get();
-
-    if (heldPaymentQuery.empty) {
-      console.log(`No held payment found for booking: ${bookingId}`);
-      return null;
-    }
-
-    // Should only be one held payment per booking
-    const heldPaymentDoc = heldPaymentQuery.docs[0];
-    return {
-      id: heldPaymentDoc.id,
-      ...heldPaymentDoc.data(),
-    };
-  } catch (error) {
-    console.error(
-      `Error finding held payment for booking ${bookingId}:`,
-      error,
-    );
-    return null;
-  }
-}
-
-/**
  * Process the payment release including payout and status updates
- * @param {Object} heldPayment - Held payment data
+ * @param {Object} paymentData - Payment data from payments collection
  * @param {string} reason - Reason for release
  * @returns {Object} Release result with success flag and details
  */
-async function processPaymentRelease(heldPayment, reason) {
+async function processPaymentRelease(paymentData, reason) {
   const {
-    id: heldPaymentId,
-    paymentId,
+    id: invoiceId,
     bookingId,
     providerId,
     clientId,
-    heldAmount,
+    amount: totalAmount,
     providerAmount,
     commissionAmount,
-    paymentData,
-  } = heldPayment;
+  } = paymentData;
 
   let payoutId = null;
 
@@ -226,13 +325,13 @@ async function processPaymentRelease(heldPayment, reason) {
       .firestore()
       .collection("payment_audit_trail")
       .add({
-        paymentId,
+        invoiceId,
         bookingId,
         providerId,
         clientId,
         state: "RELEASING",
         previousState: "PAID_HELD",
-        amount: heldAmount,
+        amount: totalAmount,
         commissionAmount: commissionAmount,
         providerAmount: providerAmount,
         timestamp: new Date().toISOString(),
@@ -242,7 +341,7 @@ async function processPaymentRelease(heldPayment, reason) {
         },
       });
 
-    // Process provider payout
+    // Process provider payout using payment data
     const payoutResult = await processProviderPayout(
       paymentData,
       providerAmount,
@@ -253,23 +352,9 @@ async function processPaymentRelease(heldPayment, reason) {
       payoutId = payoutResult.payoutId;
     }
 
-    // Update held payment status
-    await admin
-      .firestore()
-      .collection("held_payments")
-      .doc(heldPaymentId)
-      .update({
-        status: "RELEASED",
-        releasedAt: new Date().toISOString(),
-        releasedAmount: providerAmount,
-        commissionRetained: commissionAmount,
-        payoutId: payoutId,
-        releaseReason: reason,
-        updatedAt: new Date().toISOString(),
-      });
-
-    // Update payment record
-    await admin.firestore().collection("payments").doc(paymentId).update({
+    // Update payment record to mark as released
+    const db = admin.firestore();
+    await db.collection("payments").doc(invoiceId).update({
       status: "COMPLETED",
       paymentStatus: "RELEASED",
       releasedAt: new Date().toISOString(),
@@ -277,6 +362,13 @@ async function processPaymentRelease(heldPayment, reason) {
       commissionRetained: commissionAmount,
       payoutId: payoutId,
       updatedAt: new Date().toISOString(),
+      statusHistory: FieldValue.arrayUnion({
+        status: "released",
+        timestamp: new Date().toISOString(),
+        description: `Payment released to provider: ₱${providerAmount}, Commission retained: ₱${commissionAmount}`,
+        reason: reason,
+        payoutId: payoutId,
+      }),
     });
 
     // Update booking record
@@ -295,13 +387,13 @@ async function processPaymentRelease(heldPayment, reason) {
       .firestore()
       .collection("payment_audit_trail")
       .add({
-        paymentId,
+        invoiceId,
         bookingId,
         providerId,
         clientId,
         state: "RELEASED",
         previousState: "RELEASING",
-        amount: heldAmount,
+        amount: totalAmount,
         commissionAmount: commissionAmount,
         providerAmount: providerAmount,
         timestamp: new Date().toISOString(),
@@ -344,13 +436,13 @@ async function processPaymentRelease(heldPayment, reason) {
         .firestore()
         .collection("payment_audit_trail")
         .add({
-          paymentId,
+          invoiceId,
           bookingId,
           providerId,
           clientId,
           state: "RELEASE_FAILED",
           previousState: "PAID_HELD",
-          amount: heldAmount,
+          amount: totalAmount,
           commissionAmount: commissionAmount,
           providerAmount: providerAmount,
           timestamp: new Date().toISOString(),
@@ -373,15 +465,33 @@ async function processPaymentRelease(heldPayment, reason) {
 
 /**
  * Process payout to provider's account
- * @param {Object} paymentData - Original payment data
+ * @param {Object} paymentData - Payment data from payments collection
  * @param {number} providerAmount - Amount to pay to provider
  * @param {string} bookingId - Booking ID for reference
  * @returns {Object} Payout result
  */
 async function processProviderPayout(paymentData, providerAmount, bookingId) {
-  const { providerId, providerPayoutInfo } = paymentData;
+  const { providerId } = paymentData;
 
   try {
+    // Get provider's payout information from the provider document
+    const providerDoc = await admin
+      .firestore()
+      .collection("providers")
+      .doc(providerId)
+      .get();
+
+    if (!providerDoc.exists) {
+      console.error(`Provider ${providerId} not found`);
+      return {
+        success: false,
+        error: "Provider not found",
+      };
+    }
+
+    const providerData = providerDoc.data();
+    const providerPayoutInfo = providerData.payoutInfo || providerData.onboardingData?.payoutInfo;
+
     // Check if Xendit client is available and provider has payout info
     if (!xendit || !providerPayoutInfo) {
       console.error(
@@ -390,6 +500,15 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
       return {
         success: false,
         error: "Missing Xendit client or provider payout information",
+      };
+    }
+
+    // Validate required payout information
+    if (!providerPayoutInfo.gcashNumber || !providerPayoutInfo.accountHolderName) {
+      console.error("Provider payout info incomplete:", providerPayoutInfo);
+      return {
+        success: false,
+        error: "Provider payout information is incomplete",
       };
     }
 
@@ -422,6 +541,7 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
       .set({
         providerId,
         bookingId,
+        invoiceId: paymentData.id,
         payoutId: payout.id,
         referenceId: payout.referenceId,
         amount: providerAmount,
@@ -457,11 +577,16 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
     await admin.firestore().collection("failed_payouts").add({
       providerId,
       bookingId,
+      invoiceId: paymentData.id,
       amount: providerAmount,
       type: "RELEASE_PAYOUT",
       error: error.message,
       createdAt: new Date().toISOString(),
-      payoutInfo: providerPayoutInfo,
+      paymentData: {
+        amount: paymentData.amount,
+        commissionAmount: paymentData.commissionAmount,
+        providerAmount: paymentData.providerAmount,
+      },
     });
 
     return {
