@@ -528,20 +528,20 @@ export const useProviderBookingManagement =
           // Load all package details for multiple packages
           let packageDetails: ServicePackage | null = null;
           let packageNames: string[] = [];
-          
+
           if (booking.servicePackageId && booking.servicePackageId.length > 0) {
-            const packagePromises = booking.servicePackageId.map(packageId => 
-              loadPackageDetails(packageId)
+            const packagePromises = booking.servicePackageId.map((packageId) =>
+              loadPackageDetails(packageId),
             );
             const packages = await Promise.all(packagePromises);
-            
+
             // Use the first package as the primary package details
-            packageDetails = packages.find(pkg => pkg !== null) || null;
-            
+            packageDetails = packages.find((pkg) => pkg !== null) || null;
+
             // Collect all package names
             packageNames = packages
-              .filter(pkg => pkg !== null)
-              .map(pkg => pkg!.title);
+              .filter((pkg) => pkg !== null)
+              .map((pkg) => pkg!.title);
           }
 
           const formattedLocation = formatLocationString(booking.location);
@@ -571,9 +571,10 @@ export const useProviderBookingManagement =
             // Service and package data - using servicePackageId array
             serviceDetails: serviceDetails || undefined,
             packageDetails: packageDetails || undefined,
-            packageName: packageNames.length > 0 
-              ? packageNames.join(", ") // Join multiple package names
-              : packageDetails?.title,
+            packageName:
+              packageNames.length > 0
+                ? packageNames.join(", ") // Join multiple package names
+                : packageDetails?.title,
             description: packageDetails?.description,
 
             // Status flags
@@ -599,7 +600,10 @@ export const useProviderBookingManagement =
             // Data loading status
             isClientDataLoaded: !!clientProfile,
             isServiceDataLoaded: !!serviceDetails || !booking.serviceId,
-            isPackageDataLoaded: !!packageDetails || !booking.servicePackageId || booking.servicePackageId.length === 0, // Consider loaded if no packages
+            isPackageDataLoaded:
+              !!packageDetails ||
+              !booking.servicePackageId ||
+              booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
 
           return enhancedBooking;
@@ -642,7 +646,10 @@ export const useProviderBookingManagement =
     // Enhanced helper functions for better package handling using servicePackageId array
     const getPackageDisplayName = useCallback(
       (booking: ProviderEnhancedBooking): string => {
-        if (!booking.servicePackageId || booking.servicePackageId.length === 0) {
+        if (
+          !booking.servicePackageId ||
+          booking.servicePackageId.length === 0
+        ) {
           return "No Package Selected";
         }
 
@@ -1314,10 +1321,12 @@ export const useProviderBookingManagement =
                 estimatedCommission += packageDetail.commissionFee;
               }
             }
-            
+
             // If we don't have all package details loaded, use primary package details as fallback
             if (estimatedCommission === 0 && booking.packageDetails) {
-              estimatedCommission = booking.packageDetails.commissionFee * booking.servicePackageId.length;
+              estimatedCommission =
+                booking.packageDetails.commissionFee *
+                booking.servicePackageId.length;
             }
           } else if (booking.serviceDetails) {
             // Regular service booking - use commission from service (convert from centavos to pesos)
@@ -1330,9 +1339,7 @@ export const useProviderBookingManagement =
           if (hasInsufficientBalance) {
             commissionValidationMessage = `Insufficient wallet balance. Need ₱${estimatedCommission.toFixed(2)} commission fee, but only have ₱${walletBalance.toFixed(2)}.`;
           } else {
-            commissionValidationMessage = `${(
-              walletBalance 
-            ).toFixed(2)}`;
+            commissionValidationMessage = `${walletBalance.toFixed(2)}`;
           }
 
           return {

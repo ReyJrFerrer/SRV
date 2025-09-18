@@ -1290,7 +1290,9 @@ export const bookingCanisterService = {
    * Utility function to get the first package ID (for backwards compatibility)
    */
   getFirstPackageId(booking: Booking): string | undefined {
-    return booking.servicePackageId.length > 0 ? booking.servicePackageId[0] : undefined;
+    return booking.servicePackageId.length > 0
+      ? booking.servicePackageId[0]
+      : undefined;
   },
 
   /**

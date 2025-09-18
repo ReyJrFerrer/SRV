@@ -667,7 +667,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
       <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center px-4 py-3">
           <button
-            onClick={() => navigate('/provider/bookings')}
+            onClick={() => navigate("/provider/bookings")}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
             aria-label="Back"
           >
@@ -856,10 +856,20 @@ const ProviderBookingDetailsPage: React.FC = () => {
                           <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-500" />
                           <div>
                             <p className="font-medium text-green-800">
-                              Wallet Balance Sufficient: ₱{commissionValidation.commissionValidationMessage}
+                              Wallet Balance Sufficient: ₱
+                              {commissionValidation.commissionValidationMessage}
                             </p>
                             <p className="mt-1 text-sm text-green-700">
-                              Result: ₱{commissionValidation.commissionValidationMessage} -  ₱{commissionValidation.estimatedCommission.toFixed(2)} = ₱{Number(commissionValidation.commissionValidationMessage) - commissionValidation.estimatedCommission}
+                              Result: ₱
+                              {commissionValidation.commissionValidationMessage}{" "}
+                              - ₱
+                              {commissionValidation.estimatedCommission.toFixed(
+                                2,
+                              )}{" "}
+                              = ₱
+                              {Number(
+                                commissionValidation.commissionValidationMessage,
+                              ) - commissionValidation.estimatedCommission}
                             </p>
                           </div>
                         </div>

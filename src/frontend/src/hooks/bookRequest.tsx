@@ -385,7 +385,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
         }
 
         // Extract all package IDs for multiple package booking
-        const packageIds = bookingData.packages.map(pkg => pkg.id);
+        const packageIds = bookingData.packages.map((pkg) => pkg.id);
 
         // Create booking through canister
         const booking = await bookingCanisterService.createBooking(

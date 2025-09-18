@@ -373,20 +373,20 @@ export const useBookingManagement = (): BookingManagementHook => {
         // Load all package details for multiple packages
         let packageDetails: ServicePackage | null = null;
         let packageNames: string[] = [];
-        
+
         if (booking.servicePackageId && booking.servicePackageId.length > 0) {
-          const packagePromises = booking.servicePackageId.map(packageId => 
-            loadPackageDetails(packageId)
+          const packagePromises = booking.servicePackageId.map((packageId) =>
+            loadPackageDetails(packageId),
           );
           const packages = await Promise.all(packagePromises);
-          
+
           // Use the first package as the primary package details
-          packageDetails = packages.find(pkg => pkg !== null) || null;
-          
+          packageDetails = packages.find((pkg) => pkg !== null) || null;
+
           // Collect all package names
           packageNames = packages
-            .filter(pkg => pkg !== null)
-            .map(pkg => pkg!.title);
+            .filter((pkg) => pkg !== null)
+            .map((pkg) => pkg!.title);
         }
 
         const formattedLocation = formatLocationString(booking.location);
@@ -408,13 +408,16 @@ export const useBookingManagement = (): BookingManagementHook => {
             packageNames.length > 0
               ? packageNames.join(", ") // Join multiple package names
               : booking.packageName ||
-                (booking.servicePackageId.length > 0 ? "Unknown Package" : undefined),
+                (booking.servicePackageId.length > 0
+                  ? "Unknown Package"
+                  : undefined),
 
           // Additional enhanced fields
           formattedLocation,
           isProviderDataLoaded: !!providerProfile,
           isServiceDataLoaded: !!serviceDetails,
-          isPackageDataLoaded: !!packageDetails || booking.servicePackageId.length === 0, // Consider loaded if no packages
+          isPackageDataLoaded:
+            !!packageDetails || booking.servicePackageId.length === 0, // Consider loaded if no packages
         };
 
         return enhancedBooking;
@@ -428,7 +431,9 @@ export const useBookingManagement = (): BookingManagementHook => {
           serviceName: booking.serviceName || "Unknown Service",
           packageName:
             booking.packageName ||
-            (booking.servicePackageId.length > 0 ? "Loading Package..." : undefined),
+            (booking.servicePackageId.length > 0
+              ? "Loading Package..."
+              : undefined),
           formattedLocation: formatLocationString(booking.location),
           isProviderDataLoaded: false,
           isServiceDataLoaded: false,
