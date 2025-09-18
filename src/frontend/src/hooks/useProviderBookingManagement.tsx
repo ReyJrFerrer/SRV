@@ -1291,7 +1291,7 @@ export const useProviderBookingManagement =
           } else if (booking.serviceDetails) {
             // Regular service booking - use commission from service (convert from centavos to pesos)
             estimatedCommission = booking.serviceDetails.commissionFee / 100;
-          } 
+          }
 
           const hasInsufficientBalance = walletBalance < estimatedCommission;
 

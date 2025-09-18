@@ -1224,11 +1224,19 @@ export const bookingCanisterService = {
         return {
           paymentStatus: data.paymentStatus[0],
           paymentId: data.paymentId[0],
-          heldAmount: data.heldAmount[0] ? Number(data.heldAmount[0]) / 100 : undefined, // Convert from cents
-          releasedAmount: data.releasedAmount[0] ? Number(data.releasedAmount[0]) / 100 : undefined, // Convert from cents
-          commissionRetained: data.commissionRetained[0] ? Number(data.commissionRetained[0]) / 100 : undefined, // Convert from cents
+          heldAmount: data.heldAmount[0]
+            ? Number(data.heldAmount[0]) / 100
+            : undefined, // Convert from cents
+          releasedAmount: data.releasedAmount[0]
+            ? Number(data.releasedAmount[0]) / 100
+            : undefined, // Convert from cents
+          commissionRetained: data.commissionRetained[0]
+            ? Number(data.commissionRetained[0]) / 100
+            : undefined, // Convert from cents
           paymentReleased: data.paymentReleased[0],
-          releasedAt: data.releasedAt[0] ? new Date(Number(data.releasedAt[0]) / 1000000) : undefined,
+          releasedAt: data.releasedAt[0]
+            ? new Date(Number(data.releasedAt[0]) / 1000000)
+            : undefined,
           payoutId: data.payoutId[0],
         };
       } else {

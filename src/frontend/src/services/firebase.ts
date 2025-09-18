@@ -382,7 +382,7 @@ export async function releaseHeldPayment(
 ): Promise<ReleasePaymentResponse> {
   try {
     console.log("🔄 Releasing held payment:", request);
-    
+
     const response = await fetch(`${BASE_URL}/releaseHeldPayment`, {
       method: "POST",
       headers: {
@@ -404,11 +404,11 @@ export async function releaseHeldPayment(
       } catch (e) {
         console.error("❌ Failed to parse error response");
       }
-      
+
       throw new Error(
         `HTTP error! status: ${response.status}${
           errorDetails?.error ? ` - ${errorDetails.error}` : ""
-        }${errorDetails?.details ? ` (${errorDetails.details})` : ""}`
+        }${errorDetails?.details ? ` (${errorDetails.details})` : ""}`,
       );
     }
 

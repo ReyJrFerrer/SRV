@@ -111,7 +111,10 @@ const CompleteServicePage: React.FC = () => {
 
         amountPaid = receivedAmount;
         success = await completeBookingById(booking.id, receivedAmount);
-      } else if (booking.paymentMethod === "GCash" || booking.paymentMethod === "SRVWallet") {
+      } else if (
+        booking.paymentMethod === "GCash" ||
+        booking.paymentMethod === "SRVWallet"
+      ) {
         // Digital payment handling - complete booking first
         amountPaid = servicePrice; // Full service price for digital payments
         success = await completeBookingById(booking.id, amountPaid);
@@ -151,7 +154,10 @@ const CompleteServicePage: React.FC = () => {
                 );
                 console.log("Payment release updated in canister successfully");
               } catch (canisterError) {
-                console.warn("Error updating canister with payment release:", canisterError);
+                console.warn(
+                  "Error updating canister with payment release:",
+                  canisterError,
+                );
                 // Don't fail the flow if canister update fails - this can be handled later
               }
             }
@@ -168,12 +174,15 @@ const CompleteServicePage: React.FC = () => {
 
       if (success) {
         setError(null);
-        
+
         // Navigate to the receipt page with appropriate parameters
         const searchParams = new URLSearchParams({
           price: servicePrice.toFixed(2),
           paid: amountPaid.toFixed(2),
-          method: booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod,
+          method:
+            booking.paymentMethod === "CashOnHand"
+              ? "Cash"
+              : booking.paymentMethod,
         });
 
         // Add change for cash payments
@@ -274,7 +283,9 @@ const CompleteServicePage: React.FC = () => {
                 Payment Method:
               </span>
               <span className="text-sm font-semibold text-gray-800">
-                {booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod}
+                {booking.paymentMethod === "CashOnHand"
+                  ? "Cash"
+                  : booking.paymentMethod}
               </span>
             </div>
 
@@ -311,31 +322,35 @@ const CompleteServicePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {parseFloat(cashReceived) >= servicePrice && servicePrice > 0 && (
-                    <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
-                      <span className="text-sm font-medium text-green-700">
-                        Change Due:
-                      </span>
-                      <span className="text-lg font-semibold text-green-700">
-                        ₱{changeDue.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
+                  {parseFloat(cashReceived) >= servicePrice &&
+                    servicePrice > 0 && (
+                      <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
+                        <span className="text-sm font-medium text-green-700">
+                          Change Due:
+                        </span>
+                        <span className="text-lg font-semibold text-green-700">
+                          ₱{changeDue.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                 </>
               )}
 
               {/* Digital Payment Information */}
-              {(booking.paymentMethod === "GCash" || booking.paymentMethod === "SRVWallet") && (
+              {(booking.paymentMethod === "GCash" ||
+                booking.paymentMethod === "SRVWallet") && (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <CheckCircleIcon className="h-5 w-5 text-green-600" />
                     <span className="text-sm font-medium text-green-700">
                       Payment Already Processed
                     </span>
                   </div>
                   <p className="text-sm text-green-600">
-                    The client has already paid ₱{servicePrice.toFixed(2)} via {booking.paymentMethod}. 
-                    Completing this service will automatically release the payment to you after commission deduction.
+                    The client has already paid ₱{servicePrice.toFixed(2)} via{" "}
+                    {booking.paymentMethod}. Completing this service will
+                    automatically release the payment to you after commission
+                    deduction.
                   </p>
                 </div>
               )}
@@ -357,10 +372,9 @@ const CompleteServicePage: React.FC = () => {
                 ) : (
                   <>
                     <CheckCircleIcon className="h-5 w-5" />
-                    {booking.paymentMethod === "CashOnHand" 
+                    {booking.paymentMethod === "CashOnHand"
                       ? "Confirm Payment & Complete"
-                      : "Complete Service & Release Payment"
-                    }
+                      : "Complete Service & Release Payment"}
                   </>
                 )}
               </button>

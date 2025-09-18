@@ -101,15 +101,16 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       )}
       <div
         // onClick={() => (isProviderOnboarded ? setPaymentMethod("GCash") : null)}
-        className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50 ` 
-        //   ${
-        //   !isProviderOnboarded
-        //     ? "cursor-not-allowed border-gray-300 opacity-50"
-        //     : paymentMethod === "GCash"
-        //       ? "cursor-pointer border-blue-500 bg-blue-50"
-        //       : "cursor-pointer border-gray-300"
-        // }
-         }
+        className={
+          `flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`
+          //   ${
+          //   !isProviderOnboarded
+          //     ? "cursor-not-allowed border-gray-300 opacity-50"
+          //     : paymentMethod === "GCash"
+          //       ? "cursor-pointer border-blue-500 bg-blue-50"
+          //       : "cursor-pointer border-gray-300"
+          // }
+        }
       >
         <div className="flex items-center">
           <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />
@@ -123,11 +124,8 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
               </span>
             )} */}
           </div>
-           
         </div>
 
-       
-       
         <div className="flex items-center">
           {/* {!isProviderOnboarded && (
             <span className="mr-2 text-xs text-gray-400">Unavailable</span>
@@ -136,11 +134,11 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             <CheckCircleIcon className="h-6 w-6 text-blue-500" />
           )} */}
         </div>
-         <span className="text-xs text-gray-400">Soon</span>
+        <span className="text-xs text-gray-400">Soon</span>
       </div>
       <div
         // onClick={() => setPaymentMethod("SRVWallet")}
-        className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50 `}
+        className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`}
       >
         <div className="flex items-center">
           <img

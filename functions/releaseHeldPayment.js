@@ -198,9 +198,9 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
   try {
     // Only accept POST requests
     if (req.method !== "POST") {
-      return res.status(405).json({ 
+      return res.status(405).json({
         success: false,
-        error: "Method Not Allowed" 
+        error: "Method Not Allowed",
       });
     }
 
@@ -223,7 +223,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
 
     if (!invoiceId) {
       console.error("❌ Missing invoiceId in request");
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: "Missing required field: invoiceId",
       });
@@ -251,8 +251,10 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
 
     // Verify payment status
     const invoiceStatus = await checkInvoiceStatus(invoiceId);
-    if (!invoiceStatus.success || 
-        (invoiceStatus.status !== "PAID" && invoiceStatus.status !== "SETTLED")) {
+    if (
+      !invoiceStatus.success ||
+      (invoiceStatus.status !== "PAID" && invoiceStatus.status !== "SETTLED")
+    ) {
       console.error("❌ Payment not eligible for release:", {
         success: invoiceStatus.success,
         status: invoiceStatus.status,
@@ -260,7 +262,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Payment not eligible for release",
-        details: `Payment status is ${invoiceStatus.status || 'unknown'}`,
+        details: `Payment status is ${invoiceStatus.status || "unknown"}`,
       });
     }
 
@@ -354,22 +356,25 @@ async function processPaymentRelease(paymentData, reason) {
 
     // Update payment record to mark as released
     const db = admin.firestore();
-    await db.collection("payments").doc(invoiceId).update({
-      status: "COMPLETED",
-      paymentStatus: "RELEASED",
-      releasedAt: new Date().toISOString(),
-      releasedAmount: providerAmount,
-      commissionRetained: commissionAmount,
-      payoutId: payoutId,
-      updatedAt: new Date().toISOString(),
-      statusHistory: FieldValue.arrayUnion({
-        status: "released",
-        timestamp: new Date().toISOString(),
-        description: `Payment released to provider: ₱${providerAmount}, Commission retained: ₱${commissionAmount}`,
-        reason: reason,
+    await db
+      .collection("payments")
+      .doc(invoiceId)
+      .update({
+        status: "COMPLETED",
+        paymentStatus: "RELEASED",
+        releasedAt: new Date().toISOString(),
+        releasedAmount: providerAmount,
+        commissionRetained: commissionAmount,
         payoutId: payoutId,
-      }),
-    });
+        updatedAt: new Date().toISOString(),
+        statusHistory: FieldValue.arrayUnion({
+          status: "released",
+          timestamp: new Date().toISOString(),
+          description: `Payment released to provider: ₱${providerAmount}, Commission retained: ₱${commissionAmount}`,
+          reason: reason,
+          payoutId: payoutId,
+        }),
+      });
 
     // Update booking record
     await admin.firestore().collection("bookings").doc(bookingId).update({
@@ -490,7 +495,8 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
     }
 
     const providerData = providerDoc.data();
-    const providerPayoutInfo = providerData.payoutInfo || providerData.onboardingData?.payoutInfo;
+    const providerPayoutInfo =
+      providerData.payoutInfo || providerData.onboardingData?.payoutInfo;
 
     // Check if Xendit client is available and provider has payout info
     if (!xendit || !providerPayoutInfo) {
@@ -504,7 +510,10 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
     }
 
     // Validate required payout information
-    if (!providerPayoutInfo.gcashNumber || !providerPayoutInfo.accountHolderName) {
+    if (
+      !providerPayoutInfo.gcashNumber ||
+      !providerPayoutInfo.accountHolderName
+    ) {
       console.error("Provider payout info incomplete:", providerPayoutInfo);
       return {
         success: false,
@@ -574,20 +583,23 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
     );
 
     // Store failed payout attempt for manual processing
-    await admin.firestore().collection("failed_payouts").add({
-      providerId,
-      bookingId,
-      invoiceId: paymentData.id,
-      amount: providerAmount,
-      type: "RELEASE_PAYOUT",
-      error: error.message,
-      createdAt: new Date().toISOString(),
-      paymentData: {
-        amount: paymentData.amount,
-        commissionAmount: paymentData.commissionAmount,
-        providerAmount: paymentData.providerAmount,
-      },
-    });
+    await admin
+      .firestore()
+      .collection("failed_payouts")
+      .add({
+        providerId,
+        bookingId,
+        invoiceId: paymentData.id,
+        amount: providerAmount,
+        type: "RELEASE_PAYOUT",
+        error: error.message,
+        createdAt: new Date().toISOString(),
+        paymentData: {
+          amount: paymentData.amount,
+          commissionAmount: paymentData.commissionAmount,
+          providerAmount: paymentData.providerAmount,
+        },
+      });
 
     return {
       success: false,

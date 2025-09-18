@@ -169,12 +169,10 @@ const PaymentPendingPage: React.FC = () => {
       // Create the booking in the ICP canister
       const booking = await createBookingRequest(bookingRequest);
 
-      
       if (booking) {
         setPaymentStatus("booking_success");
         setStatusMessage("Booking created successfully!");
-        console.log(booking)
-
+        console.log(booking);
 
         // Navigate to confirmation page after a short delay
         setTimeout(() => {
