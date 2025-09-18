@@ -3,7 +3,9 @@ import { useProviderBookingManagement } from "./useProviderBookingManagement";
 import { useAuth } from "../context/AuthContext";
 import { usePWA } from "./usePWA";
 import notificationIntegrationService from "../services/notificationIntegrationService";
-import notificationCanisterService, { updateNotificationActor } from "../services/notificationCanisterService";
+import notificationCanisterService, {
+  updateNotificationActor,
+} from "../services/notificationCanisterService";
 
 // Re-export the original types
 export interface ProviderNotification {
@@ -51,11 +53,11 @@ const PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY = "providerPushSentNotificationIds";
 const getProviderReadIds = async (): Promise<string[]> => {
   try {
     // Get all provider notifications from canister and filter for read ones
-    const notifications = await notificationCanisterService.getUserNotifications(
-      undefined, 
-      { userType: "provider" }
-    );
-    return notifications.filter(n => n.read).map(n => n.id);
+    const notifications =
+      await notificationCanisterService.getUserNotifications(undefined, {
+        userType: "provider",
+      });
+    return notifications.filter((n) => n.read).map((n) => n.id);
   } catch (error) {
     console.error("Error reading provider notifications from canister", error);
     // Fallback to localStorage
@@ -75,7 +77,10 @@ const setProviderReadIds = async (ids: string[]) => {
       await notificationCanisterService.markAsRead(id);
     }
   } catch (error) {
-    console.error("Error marking provider notifications as read in canister", error);
+    console.error(
+      "Error marking provider notifications as read in canister",
+      error,
+    );
     // Fallback to localStorage
     try {
       window.localStorage.setItem(
@@ -83,7 +88,10 @@ const setProviderReadIds = async (ids: string[]) => {
         JSON.stringify(ids),
       );
     } catch (fallbackError) {
-      console.error("Error writing provider notifications to localStorage", fallbackError);
+      console.error(
+        "Error writing provider notifications to localStorage",
+        fallbackError,
+      );
     }
   }
 };
@@ -91,15 +99,17 @@ const setProviderReadIds = async (ids: string[]) => {
 const getProviderPushSentIds = async (): Promise<string[]> => {
   try {
     // Get provider notifications that are marked as push-sent from the canister
-    const notifications = await notificationCanisterService.getNotificationsForPush(
-      undefined
-    );
+    const notifications =
+      await notificationCanisterService.getNotificationsForPush(undefined);
     // Filter for provider notifications and check metadata for pushSent status
-    return notifications.filter(n => 
-      n.userType === "provider" && n.metadata?.pushSent === true
-    ).map(n => n.id);
+    return notifications
+      .filter((n) => n.userType === "provider" && n.metadata?.pushSent === true)
+      .map((n) => n.id);
   } catch (error) {
-    console.error("Error reading provider push sent notifications from canister", error);
+    console.error(
+      "Error reading provider push sent notifications from canister",
+      error,
+    );
     // Fallback to localStorage
     try {
       const item = window.localStorage.getItem(
@@ -119,7 +129,10 @@ const setProviderPushSentIds = async (ids: string[]) => {
       await notificationCanisterService.markAsPushSent(id);
     }
   } catch (error) {
-    console.error("Error marking provider notifications as push sent in canister", error);
+    console.error(
+      "Error marking provider notifications as push sent in canister",
+      error,
+    );
     // Fallback to localStorage
     try {
       window.localStorage.setItem(
@@ -127,7 +140,10 @@ const setProviderPushSentIds = async (ids: string[]) => {
         JSON.stringify(ids),
       );
     } catch (fallbackError) {
-      console.error("Error writing provider push sent notifications to localStorage", fallbackError);
+      console.error(
+        "Error writing provider push sent notifications to localStorage",
+        fallbackError,
+      );
     }
   }
 };
@@ -198,38 +214,42 @@ export const useProviderNotificationsWithPush = () => {
 
     try {
       // Fetch notifications from canister first
-      const canisterNotifications = await notificationCanisterService.getUserNotifications(
-        identity?.getPrincipal().toString(),
-        { userType: "provider" }
-      );
+      const canisterNotifications =
+        await notificationCanisterService.getUserNotifications(
+          identity?.getPrincipal().toString(),
+          { userType: "provider" },
+        );
 
       // Convert canister notifications to provider notification format
-      const notificationsFromCanister: ProviderNotification[] = canisterNotifications.map(notif => ({
-        id: notif.id,
-        message: notif.message,
-        type: notif.type as any,
-        timestamp: notif.timestamp,
-        read: notif.read,
-        href: notif.href,
-        clientName: notif.clientName,
-        bookingId: notif.bookingId,
-        amount: notif.metadata?.amount || undefined,
-      }));
+      const notificationsFromCanister: ProviderNotification[] =
+        canisterNotifications.map((notif) => ({
+          id: notif.id,
+          message: notif.message,
+          type: notif.type as any,
+          timestamp: notif.timestamp,
+          read: notif.read,
+          href: notif.href,
+          clientName: notif.clientName,
+          bookingId: notif.bookingId,
+          amount: notif.metadata?.amount || undefined,
+        }));
 
       // For backward compatibility, still generate some notifications from booking data
       // But only if they don't already exist in the canister
       const existingNotificationBookingIds = new Set(
         canisterNotifications
-          .filter(n => n.bookingId)
-          .map(n => n.bookingId!)
+          .filter((n) => n.bookingId)
+          .map((n) => n.bookingId!),
       );
 
       // Generate additional notifications for bookings not covered by canister
       const additionalNotifications: ProviderNotification[] = [];
-      
+
       // Only generate for bookings that don't have canister notifications
-      const uncoveredBookings = bookings.filter(b => !existingNotificationBookingIds.has(b.id));
-      
+      const uncoveredBookings = bookings.filter(
+        (b) => !existingNotificationBookingIds.has(b.id),
+      );
+
       if (uncoveredBookings.length > 0) {
         // 4. Service completion reminders (for InProgress bookings)
         const serviceReminders = uncoveredBookings
@@ -259,14 +279,16 @@ export const useProviderNotificationsWithPush = () => {
 
       // Handle push notifications for new notifications
       if (pwaState.pushSubscribed) {
-        const currentNotificationIds = new Set(allNotifications.map((n) => n.id));
+        const currentNotificationIds = new Set(
+          allNotifications.map((n) => n.id),
+        );
         const newNotificationIds = Array.from(currentNotificationIds).filter(
           (id) => !previousNotificationIdsRef.current.has(id),
         );
 
         if (newNotificationIds.length > 0) {
-          const newNotifications = allNotifications.filter((n) =>
-            newNotificationIds.includes(n.id) && !n.read
+          const newNotifications = allNotifications.filter(
+            (n) => newNotificationIds.includes(n.id) && !n.read,
           );
 
           // Send push notifications for new notifications
@@ -277,7 +299,10 @@ export const useProviderNotificationsWithPush = () => {
                 console.log(`Sent ${successCount} provider push notifications`);
               })
               .catch((error) => {
-                console.error("Error sending provider push notifications:", error);
+                console.error(
+                  "Error sending provider push notifications:",
+                  error,
+                );
               });
           }
         }
@@ -312,8 +337,13 @@ export const useProviderNotificationsWithPush = () => {
     } catch (error) {
       console.error("Error marking provider notification as read:", error);
       // If it's a frontend-generated notification (not in canister), just update locally
-      if (notificationId.startsWith('reminder-') || notificationId.startsWith('new-booking-')) {
-        console.log("Frontend-generated provider notification, updating locally only");
+      if (
+        notificationId.startsWith("reminder-") ||
+        notificationId.startsWith("new-booking-")
+      ) {
+        console.log(
+          "Frontend-generated provider notification, updating locally only",
+        );
       } else {
         // For other errors, try localStorage fallback
         const readIds = await getProviderReadIds();

@@ -66,10 +66,13 @@ class NotificationIntegrationService {
             href: notification.href,
             providerName: notification.providerName,
             clientName: notification.clientName,
-          }
+          },
         );
       } catch (canisterError) {
-        console.warn("Failed to create notification in canister:", canisterError);
+        console.warn(
+          "Failed to create notification in canister:",
+          canisterError,
+        );
         // Continue with push notification even if canister creation fails
       }
 
@@ -119,10 +122,13 @@ class NotificationIntegrationService {
             href: notification.href,
             clientName: notification.clientName,
             amount: notification.amount,
-          }
+          },
         );
       } catch (canisterError) {
-        console.warn("Failed to create provider notification in canister:", canisterError);
+        console.warn(
+          "Failed to create provider notification in canister:",
+          canisterError,
+        );
         // Continue with push notification even if canister creation fails
       }
 
@@ -137,7 +143,10 @@ class NotificationIntegrationService {
         try {
           await notificationCanisterService.markAsPushSent(notification.id);
         } catch (markError) {
-          console.warn("Failed to mark provider notification as push sent:", markError);
+          console.warn(
+            "Failed to mark provider notification as push sent:",
+            markError,
+          );
         }
       }
 

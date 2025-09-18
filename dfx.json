@@ -53,9 +53,9 @@
       "type": "motoko",
       "main": "src/backend/function/wallet.mo"
     },
-    "notification" : {
-      "type" : "motoko",
-      "main" : "src/backend/function/notification.mo"
+    "notification": {
+      "type": "motoko",
+      "main": "src/backend/function/notification.mo"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
@@ -99,7 +99,7 @@
         "remittance",
         "feedback",
         "commission",
-        "wallet", 
+        "wallet",
         "notification"
       ],
       "type": "assets",

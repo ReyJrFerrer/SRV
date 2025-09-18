@@ -83,11 +83,13 @@ class PushNotificationService {
       };
 
       // Store push subscription in notification canister
-      await notificationCanisterService.storePushSubscription(canisterSubscription);
+      await notificationCanisterService.storePushSubscription(
+        canisterSubscription,
+      );
       return true;
     } catch (error) {
       console.error("Error storing push subscription:", error);
-      
+
       // Fallback to localStorage
       try {
         const subscriptions = this.getStoredSubscriptions();
@@ -96,10 +98,16 @@ class PushNotificationService {
           timestamp: Date.now(),
           active: true,
         };
-        localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
+        localStorage.setItem(
+          "push-subscriptions",
+          JSON.stringify(subscriptions),
+        );
         return true;
       } catch (fallbackError) {
-        console.error("Error storing push subscription in localStorage:", fallbackError);
+        console.error(
+          "Error storing push subscription in localStorage:",
+          fallbackError,
+        );
         return false;
       }
     }
@@ -112,7 +120,7 @@ class PushNotificationService {
     try {
       // Remove push subscription from notification canister
       await notificationCanisterService.removePushSubscription();
-      
+
       // Also remove from localStorage as cleanup
       const subscriptions = this.getStoredSubscriptions();
       delete subscriptions[userId];
@@ -121,15 +129,21 @@ class PushNotificationService {
       return true;
     } catch (error) {
       console.error("Error removing push subscription:", error);
-      
+
       // Fallback to localStorage cleanup only
       try {
         const subscriptions = this.getStoredSubscriptions();
         delete subscriptions[userId];
-        localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
+        localStorage.setItem(
+          "push-subscriptions",
+          JSON.stringify(subscriptions),
+        );
         return true;
       } catch (fallbackError) {
-        console.error("Error removing push subscription from localStorage:", fallbackError);
+        console.error(
+          "Error removing push subscription from localStorage:",
+          fallbackError,
+        );
         return false;
       }
     }

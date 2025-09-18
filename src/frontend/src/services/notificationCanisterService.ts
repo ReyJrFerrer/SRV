@@ -8,7 +8,6 @@ import type {
   UserType as CanisterUserType,
   Notification as CanisterNotification,
   NotificationFilter as CanisterNotificationFilter,
-
 } from "../../../declarations/notification/notification.did";
 import { Identity } from "@dfinity/agent";
 
@@ -57,7 +56,9 @@ export interface PushSubscriptionData {
  * @param identity The user's identity from AuthContext
  * @returns An authenticated NotificationService actor
  */
-const createNotificationActor = (identity?: Identity | null): NotificationService => {
+const createNotificationActor = (
+  identity?: Identity | null,
+): NotificationService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
@@ -89,7 +90,9 @@ export const updateNotificationActor = (identity: Identity | null) => {
  * Gets the current notification actor
  * Throws error if no authenticated identity is available for auth-required operations
  */
-const getNotificationActor = (requireAuth: boolean = false): NotificationService => {
+const getNotificationActor = (
+  requireAuth: boolean = false,
+): NotificationService => {
   if (requireAuth && !currentIdentity) {
     throw new Error(
       "Authentication required: Please log in to perform this action",
@@ -106,14 +109,24 @@ const getNotificationActor = (requireAuth: boolean = false): NotificationService
 /**
  * Convert frontend notification filter to canister format
  */
-const convertToCanisterFilter = (filter?: NotificationFilter): [CanisterNotificationFilter] | [] => {
+const convertToCanisterFilter = (
+  filter?: NotificationFilter,
+): [CanisterNotificationFilter] | [] => {
   if (!filter) return [];
 
   const canisterFilter: CanisterNotificationFilter = {
-    userType: filter.userType ? [{ [filter.userType]: null } as CanisterUserType] : [],
-    notificationType: filter.notificationType ? [{ [filter.notificationType]: null } as CanisterNotificationType] : [],
-    status: filter.status ? [{ [filter.status]: null } as CanisterNotificationStatus] : [],
-    fromDate: filter.fromDate ? [BigInt(filter.fromDate.getTime() * 1000000)] : [],
+    userType: filter.userType
+      ? [{ [filter.userType]: null } as CanisterUserType]
+      : [],
+    notificationType: filter.notificationType
+      ? [{ [filter.notificationType]: null } as CanisterNotificationType]
+      : [],
+    status: filter.status
+      ? [{ [filter.status]: null } as CanisterNotificationStatus]
+      : [],
+    fromDate: filter.fromDate
+      ? [BigInt(filter.fromDate.getTime() * 1000000)]
+      : [],
     toDate: filter.toDate ? [BigInt(filter.toDate.getTime() * 1000000)] : [],
     limit: filter.limit ? [BigInt(filter.limit)] : [],
     offset: filter.offset ? [BigInt(filter.offset)] : [],
@@ -125,16 +138,24 @@ const convertToCanisterFilter = (filter?: NotificationFilter): [CanisterNotifica
 /**
  * Convert canister notification to frontend format
  */
-const convertToFrontendNotification = (canisterNotif: CanisterNotification): FrontendNotification => {
+const convertToFrontendNotification = (
+  canisterNotif: CanisterNotification,
+): FrontendNotification => {
   // Convert notification type to string
   const notificationType = Object.keys(canisterNotif.notificationType)[0];
-  
+
   // Determine if read
-  const isRead = 'read' in canisterNotif.status || 'push_sent_and_read' in canisterNotif.status;
-  
+  const isRead =
+    "read" in canisterNotif.status ||
+    "push_sent_and_read" in canisterNotif.status;
+
   // Parse metadata if available
   let metadata: any = {};
-  if (canisterNotif.metadata && canisterNotif.metadata.length > 0 && canisterNotif.metadata[0]) {
+  if (
+    canisterNotif.metadata &&
+    canisterNotif.metadata.length > 0 &&
+    canisterNotif.metadata[0]
+  ) {
     try {
       metadata = JSON.parse(canisterNotif.metadata[0]);
     } catch (e) {
@@ -143,15 +164,17 @@ const convertToFrontendNotification = (canisterNotif: CanisterNotification): Fro
   }
 
   // Determine user type
-  const userType = 'client' in canisterNotif.userType ? 'client' : 'provider';
+  const userType = "client" in canisterNotif.userType ? "client" : "provider";
 
   // Generate href based on notification type and user type
-  let href = '/';
-  const bookingId = canisterNotif.relatedEntityId && canisterNotif.relatedEntityId.length > 0 
-    ? canisterNotif.relatedEntityId[0] : undefined;
+  let href = "/";
+  const bookingId =
+    canisterNotif.relatedEntityId && canisterNotif.relatedEntityId.length > 0
+      ? canisterNotif.relatedEntityId[0]
+      : undefined;
 
   if (bookingId) {
-    if (userType === 'provider') {
+    if (userType === "provider") {
       href = `/provider/booking/${bookingId}`;
     } else {
       href = `/client/booking/${bookingId}`;
@@ -160,18 +183,21 @@ const convertToFrontendNotification = (canisterNotif: CanisterNotification): Fro
 
   // Override href for specific types
   switch (notificationType) {
-    case 'review_reminder':
-    case 'review_request':
+    case "review_reminder":
+    case "review_request":
       if (bookingId) {
-        href = userType === 'provider' ? `/provider/booking/${bookingId}` : `/client/review/${bookingId}`;
+        href =
+          userType === "provider"
+            ? `/provider/booking/${bookingId}`
+            : `/client/review/${bookingId}`;
       }
       break;
-    case 'payment_completed':
+    case "payment_completed":
       if (bookingId) {
         href = `/provider/receipt/${bookingId}`;
       }
       break;
-    case 'service_completion_reminder':
+    case "service_completion_reminder":
       if (bookingId) {
         href = `/provider/active-service/${bookingId}`;
       }
@@ -183,7 +209,9 @@ const convertToFrontendNotification = (canisterNotif: CanisterNotification): Fro
     message: canisterNotif.message,
     type: notificationType,
     title: canisterNotif.title,
-    timestamp: new Date(Number(canisterNotif.createdAt) / 1000000).toISOString(),
+    timestamp: new Date(
+      Number(canisterNotif.createdAt) / 1000000,
+    ).toISOString(),
     read: isRead,
     href: href,
     userType: userType as "client" | "provider",
@@ -199,13 +227,21 @@ export const notificationCanisterService = {
   /**
    * Get notifications for current user
    */
-  async getUserNotifications(userId?: string, filter?: NotificationFilter): Promise<FrontendNotification[]> {
+  async getUserNotifications(
+    userId?: string,
+    filter?: NotificationFilter,
+  ): Promise<FrontendNotification[]> {
     try {
       const actor = getNotificationActor();
-      const userPrincipal = userId ? Principal.fromText(userId) : (currentIdentity?.getPrincipal() || Principal.anonymous());
+      const userPrincipal = userId
+        ? Principal.fromText(userId)
+        : currentIdentity?.getPrincipal() || Principal.anonymous();
       const canisterFilter = convertToCanisterFilter(filter);
-      
-      const notifications = await actor.getUserNotifications(userPrincipal, canisterFilter);
+
+      const notifications = await actor.getUserNotifications(
+        userPrincipal,
+        canisterFilter,
+      );
       return notifications.map(convertToFrontendNotification);
     } catch (error) {
       console.error("Error fetching user notifications:", error);
@@ -220,8 +256,8 @@ export const notificationCanisterService = {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.markAsRead(notificationId);
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
@@ -237,8 +273,8 @@ export const notificationCanisterService = {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.markAsPushSent(notificationId);
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
@@ -250,11 +286,15 @@ export const notificationCanisterService = {
   /**
    * Get notifications eligible for push (requires authentication)
    */
-  async getNotificationsForPush(userId?: string): Promise<FrontendNotification[]> {
+  async getNotificationsForPush(
+    userId?: string,
+  ): Promise<FrontendNotification[]> {
     try {
       const actor = getNotificationActor();
-      const userPrincipal = userId ? Principal.fromText(userId) : (currentIdentity?.getPrincipal() || Principal.anonymous());
-      
+      const userPrincipal = userId
+        ? Principal.fromText(userId)
+        : currentIdentity?.getPrincipal() || Principal.anonymous();
+
       const notifications = await actor.getNotificationsForPush(userPrincipal);
       return notifications.map(convertToFrontendNotification);
     } catch (error) {
@@ -266,17 +306,19 @@ export const notificationCanisterService = {
   /**
    * Store push subscription (requires authentication)
    */
-  async storePushSubscription(subscriptionData: PushSubscriptionData): Promise<void> {
+  async storePushSubscription(
+    subscriptionData: PushSubscriptionData,
+  ): Promise<void> {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.storePushSubscription(
         subscriptionData.endpoint,
         subscriptionData.p256dh,
         subscriptionData.auth,
-        subscriptionData.userAgent ? [subscriptionData.userAgent] : []
+        subscriptionData.userAgent ? [subscriptionData.userAgent] : [],
       );
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
@@ -292,8 +334,8 @@ export const notificationCanisterService = {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.removePushSubscription();
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
@@ -309,7 +351,7 @@ export const notificationCanisterService = {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.getPushSubscription();
-      
+
       if (result && result.length > 0) {
         const subscription = result[0];
         if (subscription) {
@@ -317,11 +359,14 @@ export const notificationCanisterService = {
             endpoint: subscription.endpoint,
             p256dh: subscription.p256dh,
             auth: subscription.auth,
-            userAgent: subscription.userAgent && subscription.userAgent.length > 0 ? subscription.userAgent[0] : undefined,
+            userAgent:
+              subscription.userAgent && subscription.userAgent.length > 0
+                ? subscription.userAgent[0]
+                : undefined,
           };
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error("Error getting push subscription:", error);
@@ -335,8 +380,10 @@ export const notificationCanisterService = {
   async getNotificationStats(userId?: string): Promise<NotificationStats> {
     try {
       const actor = getNotificationActor();
-      const userPrincipal = userId ? Principal.fromText(userId) : (currentIdentity?.getPrincipal() || Principal.anonymous());
-      
+      const userPrincipal = userId
+        ? Principal.fromText(userId)
+        : currentIdentity?.getPrincipal() || Principal.anonymous();
+
       const result = await actor.getNotificationStats(userPrincipal);
       return {
         total: Number(result.total),
@@ -357,11 +404,11 @@ export const notificationCanisterService = {
     try {
       const actor = getNotificationActor(true);
       const result = await actor.markAllAsRead();
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
-      
+
       return Number(result.ok);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
@@ -372,13 +419,21 @@ export const notificationCanisterService = {
   /**
    * Check if user can receive notifications (rate limiting check)
    */
-  async canReceiveNotification(userId: string, notificationType: string): Promise<boolean> {
+  async canReceiveNotification(
+    userId: string,
+    notificationType: string,
+  ): Promise<boolean> {
     try {
       const actor = getNotificationActor();
       const userPrincipal = Principal.fromText(userId);
-      const canisterNotifType = { [notificationType]: null } as CanisterNotificationType;
-      
-      return await actor.canReceiveNotification(userPrincipal, canisterNotifType);
+      const canisterNotifType = {
+        [notificationType]: null,
+      } as CanisterNotificationType;
+
+      return await actor.canReceiveNotification(
+        userPrincipal,
+        canisterNotifType,
+      );
     } catch (error) {
       console.error("Error checking notification rate limit:", error);
       return false;
@@ -395,15 +450,17 @@ export const notificationCanisterService = {
     title: string,
     message: string,
     relatedEntityId?: string,
-    metadata?: any
+    metadata?: any,
   ): Promise<string> {
     try {
       const actor = getNotificationActor(true);
       const userPrincipal = Principal.fromText(targetUserId);
       const canisterUserType = { [userType]: null } as CanisterUserType;
-      const canisterNotifType = { [notificationType]: null } as CanisterNotificationType;
+      const canisterNotifType = {
+        [notificationType]: null,
+      } as CanisterNotificationType;
       const metadataString = metadata ? JSON.stringify(metadata) : null;
-      
+
       const result = await actor.createNotification(
         userPrincipal,
         canisterUserType,
@@ -411,13 +468,13 @@ export const notificationCanisterService = {
         title,
         message,
         relatedEntityId ? [relatedEntityId] : [],
-        metadataString ? [metadataString] : []
+        metadataString ? [metadataString] : [],
       );
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
-      
+
       return result.ok;
     } catch (error) {
       console.error("Error creating notification:", error);
