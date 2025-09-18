@@ -181,7 +181,7 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
-  servicePackageId?: string;
+  servicePackageId: string[]; // Array of package IDs for multiple package bookings
   status: BookingStatus;
   requestedDate: string;
   scheduledDate?: string;
@@ -393,7 +393,7 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
   clientId: booking.clientId,
   providerId: booking.providerId,
   serviceId: booking.serviceId,
-  servicePackageId: booking.servicePackageId[0],
+  servicePackageId: booking.servicePackageId, // Now directly assign the array
   status: convertCanisterBookingStatus(booking.status),
   requestedDate: new Date(
     Number(booking.requestedDate) / 1000000,
@@ -428,6 +428,35 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
 // Booking Canister Service Functions
 export const bookingCanisterService = {
   /**
+   * Create a new booking with a single package (backwards compatibility)
+   */
+  async createBookingWithPackage(
+    serviceId: string,
+    providerId: Principal,
+    price: number,
+    location: Location,
+    requestedDate: Date,
+    servicePackageId: string,
+    notes?: string,
+    amountToPay?: number,
+    paymentMethod: PaymentMethod = "CashOnHand",
+    paymentId?: string,
+  ): Promise<Booking | null> {
+    return this.createBooking(
+      serviceId,
+      providerId,
+      price,
+      location,
+      requestedDate,
+      [servicePackageId], // Convert single package to array
+      notes,
+      amountToPay,
+      paymentMethod,
+      paymentId,
+    );
+  },
+
+  /**
    * Create a new booking
    */
   async createBooking(
@@ -436,7 +465,7 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
-    servicePackageId?: string,
+    servicePackageIds: string[] = [], // Array of package IDs for multiple package bookings
     notes?: string,
     amountToPay?: number,
     paymentMethod: PaymentMethod = "CashOnHand",
@@ -459,7 +488,7 @@ export const bookingCanisterService = {
         BigInt(price),
         canisterLocation,
         requestedTimestamp,
-        servicePackageId ? [servicePackageId] : [],
+        servicePackageIds, // Send the array directly
         notes ? [notes] : [],
         amountToPayOptional,
         canisterPaymentMethod,
@@ -1247,6 +1276,38 @@ export const bookingCanisterService = {
       console.error("Error getting payment status:", error);
       throw new Error(`Failed to get payment status: ${error}`);
     }
+  },
+
+  // Utility functions for working with multiple packages
+  /**
+   * Utility function to check if a booking has a specific package
+   */
+  hasPackage(booking: Booking, packageId: string): boolean {
+    return booking.servicePackageId.includes(packageId);
+  },
+
+  /**
+   * Utility function to get the first package ID (for backwards compatibility)
+   */
+  getFirstPackageId(booking: Booking): string | undefined {
+    return booking.servicePackageId.length > 0 ? booking.servicePackageId[0] : undefined;
+  },
+
+  /**
+   * Utility function to check if a booking has multiple packages
+   */
+  hasMultiplePackages(booking: Booking): boolean {
+    return booking.servicePackageId.length > 1;
+  },
+
+  /**
+   * Utility function to get all package IDs as a formatted string
+   */
+  getPackageIdsDisplay(booking: Booking): string {
+    if (booking.servicePackageId.length === 0) {
+      return "No packages";
+    }
+    return booking.servicePackageId.join(", ");
   },
 };
 

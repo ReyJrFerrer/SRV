@@ -962,7 +962,6 @@ const AddServicePage: React.FC = () => {
                                     Commission: ₱
                                     {commissionQuote.commissionFee.toLocaleString()}
                                   </p>
-                                  <p>Rate: {commissionQuote.commissionRate}%</p>
                                   <p className="font-medium text-blue-600">
                                     Total: ₱
                                     {(

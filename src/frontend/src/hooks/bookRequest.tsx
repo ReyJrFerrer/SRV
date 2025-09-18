@@ -384,11 +384,8 @@ export const useBookRequest = (): UseBookRequestReturn => {
           throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
         }
 
-        // Get the first package ID (you might want to modify this based on your business logic)
-        const firstPackageId =
-          bookingData.packages.length > 0
-            ? bookingData.packages[0].id
-            : undefined;
+        // Extract all package IDs for multiple package booking
+        const packageIds = bookingData.packages.map(pkg => pkg.id);
 
         // Create booking through canister
         const booking = await bookingCanisterService.createBooking(
@@ -397,7 +394,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           totalPrice, // This should now be a valid number
           location,
           requestedDate,
-          firstPackageId,
+          packageIds, // Send array of all package IDs
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
           bookingData.paymentMethod, // Pass the payment method to the booking

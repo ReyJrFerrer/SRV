@@ -49,7 +49,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   paymentError,
   totalPrice,
   highlight = false,
-  isProviderOnboarded = false,
+  // isProviderOnboarded = false,
 }) => (
   <div
     className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
@@ -973,6 +973,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
       // For cash payments and SRV Wallet, proceed with normal booking creation
       const booking = await createBookingRequest(bookingData);
+
       if (booking) {
         setFormError(null); // Clear error after successful booking
         const confirmationDetails = {

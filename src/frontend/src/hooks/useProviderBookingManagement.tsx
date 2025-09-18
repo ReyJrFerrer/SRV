@@ -517,17 +517,32 @@ export const useProviderBookingManagement =
     const enrichBookingWithClientData = useCallback(
       async (booking: Booking): Promise<ProviderEnhancedBooking> => {
         try {
-          // Load all data in parallel - use servicePackageId
-          const [clientProfile, serviceDetails, packageDetails] =
-            await Promise.all([
-              loadClientProfile(booking.clientId.toString()),
-              booking.serviceId
-                ? loadServiceDetails(booking.serviceId)
-                : Promise.resolve(null),
-              booking.servicePackageId
-                ? loadPackageDetails(booking.servicePackageId)
-                : Promise.resolve(null),
-            ]);
+          // Load client and service data in parallel
+          const [clientProfile, serviceDetails] = await Promise.all([
+            loadClientProfile(booking.clientId.toString()),
+            booking.serviceId
+              ? loadServiceDetails(booking.serviceId)
+              : Promise.resolve(null),
+          ]);
+
+          // Load all package details for multiple packages
+          let packageDetails: ServicePackage | null = null;
+          let packageNames: string[] = [];
+          
+          if (booking.servicePackageId && booking.servicePackageId.length > 0) {
+            const packagePromises = booking.servicePackageId.map(packageId => 
+              loadPackageDetails(packageId)
+            );
+            const packages = await Promise.all(packagePromises);
+            
+            // Use the first package as the primary package details
+            packageDetails = packages.find(pkg => pkg !== null) || null;
+            
+            // Collect all package names
+            packageNames = packages
+              .filter(pkg => pkg !== null)
+              .map(pkg => pkg!.title);
+          }
 
           const formattedLocation = formatLocationString(booking.location);
           const timeUntilService = booking.scheduledDate
@@ -553,10 +568,12 @@ export const useProviderBookingManagement =
             timeUntilService,
             isOverdue,
 
-            // Service and package data - using servicePackageId
+            // Service and package data - using servicePackageId array
             serviceDetails: serviceDetails || undefined,
             packageDetails: packageDetails || undefined,
-            packageName: packageDetails?.title,
+            packageName: packageNames.length > 0 
+              ? packageNames.join(", ") // Join multiple package names
+              : packageDetails?.title,
             description: packageDetails?.description,
 
             // Status flags
@@ -582,7 +599,7 @@ export const useProviderBookingManagement =
             // Data loading status
             isClientDataLoaded: !!clientProfile,
             isServiceDataLoaded: !!serviceDetails || !booking.serviceId,
-            isPackageDataLoaded: !!packageDetails || !booking.servicePackageId, // Consider loaded if no servicePackageId
+            isPackageDataLoaded: !!packageDetails || !booking.servicePackageId || booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
 
           return enhancedBooking;
@@ -622,10 +639,10 @@ export const useProviderBookingManagement =
       ],
     );
 
-    // Enhanced helper functions for better package handling using servicePackageId
+    // Enhanced helper functions for better package handling using servicePackageId array
     const getPackageDisplayName = useCallback(
       (booking: ProviderEnhancedBooking): string => {
-        if (!booking.servicePackageId) {
+        if (!booking.servicePackageId || booking.servicePackageId.length === 0) {
           return "No Package Selected";
         }
 
@@ -641,14 +658,18 @@ export const useProviderBookingManagement =
           return "Loading Package...";
         }
 
-        return `Package ID: ${booking.servicePackageId}`;
+        if (booking.servicePackageId.length === 1) {
+          return `Package ID: ${booking.servicePackageId[0]}`;
+        } else {
+          return `${booking.servicePackageId.length} Packages Selected`;
+        }
       },
       [],
     );
 
     const hasPackage = useCallback(
       (booking: ProviderEnhancedBooking): boolean => {
-        return !!booking.servicePackageId;
+        return booking.servicePackageId && booking.servicePackageId.length > 0;
       },
       [],
     );
@@ -1285,12 +1306,22 @@ export const useProviderBookingManagement =
           let estimatedCommission = 0;
 
           // Check if this is a package booking or regular service booking
-          if (booking.servicePackageId && booking.packageDetails) {
-            // Package booking - use commission from package (convert from centavos to pesos)
-            estimatedCommission = booking.packageDetails.commissionFee / 100;
+          if (booking.servicePackageId && booking.servicePackageId.length > 0) {
+            // Multiple package booking - sum commissions from all packages
+            for (const packageId of booking.servicePackageId) {
+              const packageDetail = packageDetails.get(packageId);
+              if (packageDetail) {
+                estimatedCommission += packageDetail.commissionFee;
+              }
+            }
+            
+            // If we don't have all package details loaded, use primary package details as fallback
+            if (estimatedCommission === 0 && booking.packageDetails) {
+              estimatedCommission = booking.packageDetails.commissionFee * booking.servicePackageId.length;
+            }
           } else if (booking.serviceDetails) {
             // Regular service booking - use commission from service (convert from centavos to pesos)
-            estimatedCommission = booking.serviceDetails.commissionFee / 100;
+            estimatedCommission = booking.serviceDetails.commissionFee;
           }
 
           const hasInsufficientBalance = walletBalance < estimatedCommission;
@@ -1299,7 +1330,9 @@ export const useProviderBookingManagement =
           if (hasInsufficientBalance) {
             commissionValidationMessage = `Insufficient wallet balance. Need ₱${estimatedCommission.toFixed(2)} commission fee, but only have ₱${walletBalance.toFixed(2)}.`;
           } else {
-            commissionValidationMessage = `Estimated commission: ₱${estimatedCommission.toFixed(2)}`;
+            commissionValidationMessage = `${(
+              walletBalance 
+            ).toFixed(2)}`;
           }
 
           return {

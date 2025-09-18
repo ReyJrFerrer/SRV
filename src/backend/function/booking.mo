@@ -246,7 +246,7 @@ persistent actor BookingCanister {
         price : Nat,
         location : Location,
         requestedDate : Time.Time,
-        servicePackageId : ?Text,
+        servicePackageIds : [Text],  // Array of package IDs for multiple package bookings
         notes : ?Text,
         amountToPay: ?Nat,
         paymentMethod: PaymentMethod,
@@ -280,27 +280,19 @@ persistent actor BookingCanister {
                             return #err("Service does not belong to the specified provider");
                         };
                         
-                        // If a package is specified, validate it exists and belongs to this service
-                        switch (servicePackageId) {
-                            case (?packageId) {
+                        // If packages are specified, validate they exist and belong to this service
+                        if (servicePackageIds.size() > 0) {
+                            for (packageId in servicePackageIds.vals()) {
                                 switch (await serviceCanister.getPackage(packageId)) {
                                     case (#ok(package)) {
                                         if (package.serviceId != serviceId) {
-                                            return #err("Package does not belong to the specified service");
-                                        };
-                                        
-                                        // If price doesn't match package price, use package price
-                                        if (price != package.price) {
-                                            // We'll override the price with the package price later
+                                            return #err("Package " # packageId # " does not belong to the specified service");
                                         };
                                     };
                                     case (#err(msg)) {
-                                        return #err("Package not found: " # msg);
+                                        return #err("Package " # packageId # " not found: " # msg);
                                     };
                                 };
-                            };
-                            case (null) {
-                                // No package specified, continue with regular service booking
                             };
                         };
                     };
@@ -313,15 +305,6 @@ persistent actor BookingCanister {
                 return #err("Service canister reference not set");
             };
         };
-
-        // if (not validatePrice(price)) {
-        //     return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
-        // };
-
-        // if (not validateScheduledDate(requestedDate, requestedDate)) {
-        //     return #err("Requested date must be between 1 hour and 30 days from now");
-        // };
-
         // Validate service availability using new service-based approach
         switch (await validateServiceAvailability(serviceId, requestedDate)) {
             case (#err(msg)) {
@@ -332,76 +315,42 @@ persistent actor BookingCanister {
         
         let bookingId = generateId();
         
-        // If a package is specified, get its price and validate against provided price
+        // If packages are specified, calculate total price from all packages
         var finalPrice = price;
-        var packageBasePrice : Nat = 0;
+        var totalPackagePrice : Nat = 0;
         
-        switch (servicePackageId) {
-            case (?packageId) {
-                switch (serviceCanisterId) {
-                    case (?serviceCanisterId) {
-                        let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
-                            getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
-                            getService : (Text) -> async Types.Result<Types.Service>;
-                        };
-                        
+        if (servicePackageIds.size() > 0) {
+            switch (serviceCanisterId) {
+                case (?serviceCanisterId) {
+                    let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                        getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                        getService : (Text) -> async Types.Result<Types.Service>;
+                    };
+                    
+                    for (packageId in servicePackageIds.vals()) {
                         switch (await serviceCanister.getPackage(packageId)) {
                             case (#ok(package)) {
-                                packageBasePrice := package.price;
-                                
-                                // Validate price: client always pays package price + commission
-                                // Get service to determine category for commission calculation
-                                switch (await serviceCanister.getService(serviceId)) {
-                                    case (#ok(service)) {
-                                        let categoryName = service.category.name;
-                                        
-                                        // Calculate commission fee
-                                        switch (commissionCanisterId) {
-                                            case (?commissionId) {
-                                                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
-                                                    calculate_commission : (Text, Nat) -> async Nat;
-                                                };
-                                                
-                                                let commissionFee = await commissionCanister.calculate_commission(categoryName, package.price);
-                                                let expectedTotalPrice = package.price + commissionFee;
-                                                
-                                                if (price != expectedTotalPrice) {
-                                                    let paymentMethodText = switch (paymentMethod) {
-                                                        case (#CashOnHand) { "cash" };
-                                                        case (#GCash) { "GCash" };
-                                                        case (#SRVWallet) { "SRV Wallet" };
-                                                    };
-                                                    return #err("Price mismatch: expected ₱" # Nat.toText(expectedTotalPrice) # " (₱" # Nat.toText(package.price) # " + ₱" # Nat.toText(commissionFee) # " commission) for " # paymentMethodText # " payment, but received ₱" # Nat.toText(price));
-                                                };
-                                                finalPrice := expectedTotalPrice;
-                                            };
-                                            case (null) {
-                                                return #err("Commission canister reference not set");
-                                            };
-                                        };
-                                    };
-                                    case (#err(msg)) {
-                                        return #err("Failed to get service for commission calculation: " # msg);
-                                    };
-                                };
+                                totalPackagePrice += package.price;
                             };
                             case (#err(_)) {
-                                // We already validated the package exists earlier, so this shouldn't happen
+                                // We already validated the packages exist earlier, so this shouldn't happen
                                 // But if it does, we'll use the provided price
                             };
                         };
                     };
-                    case (null) {
-                        // We already validated the service canister exists earlier, so this shouldn't happen
+                    
+                    // Use the calculated total package price if packages were found
+                    if (totalPackagePrice > 0) {
+                        finalPrice := totalPackagePrice;
                     };
                 };
+                case (null) {
+                    // We already validated the service canister exists earlier, so this shouldn't happen
+                };
             };
-            case (null) {
-                // No package specified, use the provided price
-                // For non-package bookings, we don't validate price against commission
-                // as the price calculation might be handled differently
-                finalPrice := price;
-            };
+        } else {
+            // No packages specified, use the provided price
+            finalPrice := price;
         };
         
         let newBooking : Booking = {
@@ -409,7 +358,7 @@ persistent actor BookingCanister {
             clientId = caller;
             providerId = providerId;
             serviceId = serviceId;
-            servicePackageId = servicePackageId;
+            servicePackageId = servicePackageIds;
             status = #Requested;
             requestedDate = requestedDate;
             scheduledDate = null;
@@ -497,31 +446,28 @@ persistent actor BookingCanister {
                 };
                 
                 // Check if this is a package booking or regular service booking
-                var estimatedCommission : Nat = 0;
+                var totalEstimatedCommission : Nat = 0;
                 
-                switch (booking.servicePackageId) {
-                    case (?packageId) {
-                        // Package booking - get commission from package
+                if (booking.servicePackageId.size() > 0) {
+                    // Multiple package booking - get commission from all packages
+                    for (packageId in booking.servicePackageId.vals()) {
                         switch (await serviceCanister.getPackage(packageId)) {
                             case (#ok(pkg)) {
-                                // Commission already in centavos from package
-                                estimatedCommission := pkg.commissionFee * 100 ;
+                                totalEstimatedCommission += pkg.commissionFee * 100;
                             };
                             case (#err(msg)) {
-                                return #err("Failed to get package information: " # msg);
+                                return #err("Failed to get package information for " # packageId # ": " # msg);
                             };
                         };
                     };
-                    case (null) {
-                        // Regular service booking - get commission from service
-                        switch (await serviceCanister.getService(booking.serviceId)) {
-                            case (#ok(service)) {
-                                // Commission already in centavos from service
-                                estimatedCommission := service.commissionFee * 100;
-                            };
-                            case (#err(msg)) {
-                                return #err("Failed to get service information: " # msg);
-                            };
+                } else {
+                    // Regular service booking - get commission from service
+                    switch (await serviceCanister.getService(booking.serviceId)) {
+                        case (#ok(service)) {
+                            totalEstimatedCommission := service.commissionFee * 100;
+                        };
+                        case (#err(msg)) {
+                            return #err("Failed to get service information: " # msg);
                         };
                     };
                 };
@@ -535,8 +481,8 @@ persistent actor BookingCanister {
                         
                         let providerBalance = await walletCanister.get_balance_of(booking.providerId);
                         
-                        if (providerBalance < estimatedCommission) {
-                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(estimatedCommission / 100) # ", Available balance: ₱" # Nat.toText(providerBalance / 100) # ". Please top up your wallet before accepting this booking.");
+                        if (providerBalance < totalEstimatedCommission) {
+                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(totalEstimatedCommission / 100) # ", Available balance: ₱" # Nat.toText(providerBalance / 100) # ". Please top up your wallet before accepting this booking.");
                         };
                         
                         return #ok(true);
@@ -568,32 +514,31 @@ persistent actor BookingCanister {
                 };
                 
                 // Check if this is a package booking or regular service booking
-                var finalCommission : Nat = 0;
-                var serviceTitle : Text = "";
+                var totalCommission : Nat = 0;
+                var serviceDescriptions : [Text] = [];
                 
-                switch (booking.servicePackageId) {
-                    case (?packageId) {
-                        // Package booking - get commission from package
+                if (booking.servicePackageId.size() > 0) {
+                    // Multiple package booking - get commission from all packages
+                    for (packageId in booking.servicePackageId.vals()) {
                         switch (await serviceCanister.getPackage(packageId)) {
                             case (#ok(pkg)) {
-                                finalCommission := pkg.commissionFee * 100;
-                                serviceTitle := pkg.title;
+                                totalCommission += pkg.commissionFee * 100;
+                                serviceDescriptions := Array.append(serviceDescriptions, [pkg.title]);
                             };
                             case (#err(msg)) {
-                                return #err("Failed to get package information: " # msg);
+                                return #err("Failed to get package information for " # packageId # ": " # msg);
                             };
                         };
                     };
-                    case (null) {
-                        // Regular service booking - get commission from service
-                        switch (await serviceCanister.getService(booking.serviceId)) {
-                            case (#ok(service)) {
-                                finalCommission := service.commissionFee * 100;
-                                serviceTitle := service.title;
-                            };
-                            case (#err(msg)) {
-                                return #err("Failed to get service information: " # msg);
-                            };
+                } else {
+                    // Regular service booking - get commission from service
+                    switch (await serviceCanister.getService(booking.serviceId)) {
+                        case (#ok(service)) {
+                            totalCommission := service.commissionFee * 100;
+                            serviceDescriptions := [service.title];
+                        };
+                        case (#err(msg)) {
+                            return #err("Failed to get service information: " # msg);
                         };
                     };
                 };
@@ -605,9 +550,15 @@ persistent actor BookingCanister {
                             debit : (Principal, Nat, ?Text, ?Text) -> async Types.Result<Nat>;
                         };
                         
-                        let commissionDescription = "Commission fee for booking #" # booking.id # " - " # serviceTitle;
+                        let serviceDescriptionsText = if (serviceDescriptions.size() > 0) {
+                            Array.foldLeft<Text, Text>(serviceDescriptions, "", func(acc, desc) {
+                                if (acc == "") desc else acc # ", " # desc
+                            });
+                        } else "Unknown Service";
                         
-                        switch (await walletCanister.debit(booking.providerId, finalCommission, ?commissionDescription, ?"SRV_COMMISSION")) {
+                        let commissionDescription = "Commission fee for booking #" # booking.id # " - " # serviceDescriptionsText;
+                        
+                        switch (await walletCanister.debit(booking.providerId, totalCommission, ?commissionDescription, ?"SRV_COMMISSION")) {
                             case (#ok(_)) {
                                 return #ok(true);
                             };
@@ -1455,10 +1406,7 @@ persistent actor BookingCanister {
         let packageBookings = Array.filter<Booking>(
             Iter.toArray(bookings.vals()),
             func (booking : Booking) : Bool {
-                switch (booking.servicePackageId) {
-                    case (?id) id == servicePackageId;
-                    case (null) false;
-                }
+                Array.find<Text>(booking.servicePackageId, func(id: Text): Bool { id == servicePackageId }) != null
             }
         );
         
@@ -1697,15 +1645,12 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -1805,15 +1750,12 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -1951,15 +1893,12 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -2040,10 +1979,7 @@ persistent actor BookingCanister {
             Iter.toArray(bookings.vals()),
             func (booking : Booking) : Bool {
                 let bookingDate = booking.createdAt;
-                let matchesPackage = switch (booking.servicePackageId) {
-                    case (?id) id == packageId;
-                    case (null) false;
-                };
+                let matchesPackage = Array.find<Text>(booking.servicePackageId, func(id: Text): Bool { id == packageId }) != null;
                 return matchesPackage 
                     and bookingDate >= actualStartDate 
                     and bookingDate <= actualEndDate;

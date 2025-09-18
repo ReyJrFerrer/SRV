@@ -192,7 +192,7 @@ module {
         clientId: Principal;
         providerId: Principal;
         serviceId: Text;
-        servicePackageId: ?Text;  // ID of the package if booking a package
+        servicePackageId: [Text];  // Array of package IDs for multiple package bookings
         status: BookingStatus;
         requestedDate: Time.Time;
         scheduledDate: ?Time.Time;

@@ -17,7 +17,7 @@ import {
 
 // Extended Booking interface with package support (using servicePackageId from backend)
 export interface Booking extends BaseBooking {
-  servicePackageId?: string; // This field exists in backend
+  servicePackageId: string[]; // Array of package IDs for multiple package bookings
   packageName?: string; // This we'll populate from service data
 }
 
@@ -362,21 +362,36 @@ export const useBookingManagement = (): BookingManagementHook => {
   const enrichBookingWithAllData = useCallback(
     async (booking: Booking): Promise<EnhancedBooking> => {
       try {
-        // Load all data in parallel - use servicePackageId
-        const [providerProfile, serviceDetails, packageDetails] =
-          await Promise.all([
-            loadProviderProfile(booking.providerId.toString()),
-            booking.serviceId
-              ? loadServiceDetails(booking.serviceId)
-              : Promise.resolve(null),
-            booking.servicePackageId
-              ? loadPackageDetails(booking.servicePackageId)
-              : Promise.resolve(null),
-          ]);
+        // Load provider and service data
+        const [providerProfile, serviceDetails] = await Promise.all([
+          loadProviderProfile(booking.providerId.toString()),
+          booking.serviceId
+            ? loadServiceDetails(booking.serviceId)
+            : Promise.resolve(null),
+        ]);
+
+        // Load all package details for multiple packages
+        let packageDetails: ServicePackage | null = null;
+        let packageNames: string[] = [];
+        
+        if (booking.servicePackageId && booking.servicePackageId.length > 0) {
+          const packagePromises = booking.servicePackageId.map(packageId => 
+            loadPackageDetails(packageId)
+          );
+          const packages = await Promise.all(packagePromises);
+          
+          // Use the first package as the primary package details
+          packageDetails = packages.find(pkg => pkg !== null) || null;
+          
+          // Collect all package names
+          packageNames = packages
+            .filter(pkg => pkg !== null)
+            .map(pkg => pkg!.title);
+        }
 
         const formattedLocation = formatLocationString(booking.location);
 
-        // Enhanced mapping with proper packageName handling using servicePackageId
+        // Enhanced mapping with proper packageName handling using servicePackageId array
         const enhancedBooking: EnhancedBooking = {
           ...booking,
           // Enhanced data objects
@@ -390,15 +405,16 @@ export const useBookingManagement = (): BookingManagementHook => {
           serviceName:
             serviceDetails?.title || booking.serviceName || "Unknown Service",
           packageName:
-            packageDetails?.title ||
-            booking.packageName ||
-            (booking.servicePackageId ? "Unknown Package" : undefined),
+            packageNames.length > 0
+              ? packageNames.join(", ") // Join multiple package names
+              : booking.packageName ||
+                (booking.servicePackageId.length > 0 ? "Unknown Package" : undefined),
 
           // Additional enhanced fields
           formattedLocation,
           isProviderDataLoaded: !!providerProfile,
           isServiceDataLoaded: !!serviceDetails,
-          isPackageDataLoaded: !!packageDetails || !booking.servicePackageId, // Consider loaded if no servicePackageId
+          isPackageDataLoaded: !!packageDetails || booking.servicePackageId.length === 0, // Consider loaded if no packages
         };
 
         return enhancedBooking;
@@ -412,7 +428,7 @@ export const useBookingManagement = (): BookingManagementHook => {
           serviceName: booking.serviceName || "Unknown Service",
           packageName:
             booking.packageName ||
-            (booking.servicePackageId ? "Loading Package..." : undefined),
+            (booking.servicePackageId.length > 0 ? "Loading Package..." : undefined),
           formattedLocation: formatLocationString(booking.location),
           isProviderDataLoaded: false,
           isServiceDataLoaded: false,
@@ -428,10 +444,10 @@ export const useBookingManagement = (): BookingManagementHook => {
     ],
   );
 
-  // Enhanced helper functions for better package handling using servicePackageId
+  // Enhanced helper functions for better package handling using servicePackageId array
   const getPackageDisplayName = useCallback(
     (booking: EnhancedBooking): string => {
-      if (!booking.servicePackageId) {
+      if (!booking.servicePackageId || booking.servicePackageId.length === 0) {
         return "No Package Selected";
       }
 
@@ -447,13 +463,17 @@ export const useBookingManagement = (): BookingManagementHook => {
         return "Loading Package...";
       }
 
-      return `Package ID: ${booking.servicePackageId}`;
+      if (booking.servicePackageId.length === 1) {
+        return `Package ID: ${booking.servicePackageId[0]}`;
+      } else {
+        return `${booking.servicePackageId.length} Packages Selected`;
+      }
     },
     [],
   );
 
   const hasPackage = useCallback((booking: EnhancedBooking): boolean => {
-    return !!booking.servicePackageId;
+    return booking.servicePackageId && booking.servicePackageId.length > 0;
   }, []);
 
   // Service helper functions
