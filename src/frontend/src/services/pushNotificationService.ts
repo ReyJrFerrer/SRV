@@ -1,6 +1,7 @@
 import { PushSubscriptionData } from "./pwaService";
 import { Notification } from "../hooks/useNotifications";
 import { ProviderNotification } from "../hooks/useProviderNotifications";
+import notificationCanisterService from "./notificationCanisterService";
 
 // Firebase configuration will be set later
 interface FirebaseConfig {
@@ -74,23 +75,33 @@ class PushNotificationService {
     userId: string,
   ): Promise<boolean> {
     try {
-      // TODO: Call your ICP canister to store the push subscription
-      // This will be implemented when we connect to your existing canisters
-      //console.log("Storing push subscription for user:", userId, subscription);
-
-      // For now, store in localStorage as backup
-      const subscriptions = this.getStoredSubscriptions();
-      subscriptions[userId] = {
-        ...subscription,
-        timestamp: Date.now(),
-        active: true,
+      // Convert PWA subscription format to canister format
+      const canisterSubscription = {
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
       };
-      localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
 
+      // Store push subscription in notification canister
+      await notificationCanisterService.storePushSubscription(canisterSubscription);
       return true;
     } catch (error) {
-      //console.error("Error storing push subscription:", error);
-      return false;
+      console.error("Error storing push subscription:", error);
+      
+      // Fallback to localStorage
+      try {
+        const subscriptions = this.getStoredSubscriptions();
+        subscriptions[userId] = {
+          ...subscription,
+          timestamp: Date.now(),
+          active: true,
+        };
+        localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
+        return true;
+      } catch (fallbackError) {
+        console.error("Error storing push subscription in localStorage:", fallbackError);
+        return false;
+      }
     }
   }
 
@@ -99,18 +110,28 @@ class PushNotificationService {
    */
   async removePushSubscription(userId: string): Promise<boolean> {
     try {
-      // TODO: Call your ICP canister to remove the push subscription
-      //console.log("Removing push subscription for user:", userId);
-
-      // Remove from localStorage
+      // Remove push subscription from notification canister
+      await notificationCanisterService.removePushSubscription();
+      
+      // Also remove from localStorage as cleanup
       const subscriptions = this.getStoredSubscriptions();
       delete subscriptions[userId];
       localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
 
       return true;
     } catch (error) {
-      //console.error("Error removing push subscription:", error);
-      return false;
+      console.error("Error removing push subscription:", error);
+      
+      // Fallback to localStorage cleanup only
+      try {
+        const subscriptions = this.getStoredSubscriptions();
+        delete subscriptions[userId];
+        localStorage.setItem("push-subscriptions", JSON.stringify(subscriptions));
+        return true;
+      } catch (fallbackError) {
+        console.error("Error removing push subscription from localStorage:", fallbackError);
+        return false;
+      }
     }
   }
 

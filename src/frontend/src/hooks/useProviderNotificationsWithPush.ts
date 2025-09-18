@@ -3,6 +3,7 @@ import { useProviderBookingManagement } from "./useProviderBookingManagement";
 import { useAuth } from "../context/AuthContext";
 import { usePWA } from "./usePWA";
 import notificationIntegrationService from "../services/notificationIntegrationService";
+import notificationCanisterService, { updateNotificationActor } from "../services/notificationCanisterService";
 
 // Re-export the original types
 export interface ProviderNotification {
@@ -43,63 +44,91 @@ const providerNotificationStore = {
   },
 };
 
-// localStorage Helper Functions for Provider
+// Canister Helper Functions for Provider (replacing localStorage)
 const PROVIDER_READ_NOTIFICATIONS_KEY = "providerReadNotificationIds";
 const PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY = "providerPushSentNotificationIds";
 
-const getProviderReadIds = (): string[] => {
+const getProviderReadIds = async (): Promise<string[]> => {
   try {
-    const item = window.localStorage.getItem(PROVIDER_READ_NOTIFICATIONS_KEY);
-    return item ? JSON.parse(item) : [];
+    // Get all provider notifications from canister and filter for read ones
+    const notifications = await notificationCanisterService.getUserNotifications(
+      undefined, 
+      { userType: "provider" }
+    );
+    return notifications.filter(n => n.read).map(n => n.id);
   } catch (error) {
-    // //console.error(
-    //   "Error reading provider notifications from localStorage",
-    //   error,
-    // );
-    return [];
+    console.error("Error reading provider notifications from canister", error);
+    // Fallback to localStorage
+    try {
+      const item = window.localStorage.getItem(PROVIDER_READ_NOTIFICATIONS_KEY);
+      return item ? JSON.parse(item) : [];
+    } catch {
+      return [];
+    }
   }
 };
 
-const setProviderReadIds = (ids: string[]) => {
+const setProviderReadIds = async (ids: string[]) => {
   try {
-    window.localStorage.setItem(
-      PROVIDER_READ_NOTIFICATIONS_KEY,
-      JSON.stringify(ids),
-    );
+    // Mark notifications as read in canister
+    for (const id of ids) {
+      await notificationCanisterService.markAsRead(id);
+    }
   } catch (error) {
-    // //console.error(
-    //   "Error writing provider notifications to localStorage",
-    //   error,
-    // );
+    console.error("Error marking provider notifications as read in canister", error);
+    // Fallback to localStorage
+    try {
+      window.localStorage.setItem(
+        PROVIDER_READ_NOTIFICATIONS_KEY,
+        JSON.stringify(ids),
+      );
+    } catch (fallbackError) {
+      console.error("Error writing provider notifications to localStorage", fallbackError);
+    }
   }
 };
 
-const getProviderPushSentIds = (): string[] => {
+const getProviderPushSentIds = async (): Promise<string[]> => {
   try {
-    const item = window.localStorage.getItem(
-      PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY,
+    // Get provider notifications that are marked as push-sent from the canister
+    const notifications = await notificationCanisterService.getNotificationsForPush(
+      undefined
     );
-    return item ? JSON.parse(item) : [];
+    // Filter for provider notifications and check metadata for pushSent status
+    return notifications.filter(n => 
+      n.userType === "provider" && n.metadata?.pushSent === true
+    ).map(n => n.id);
   } catch (error) {
-    // //console.error(
-    //   "Error reading provider push sent notifications from localStorage",
-    //   error,
-    // );
-    return [];
+    console.error("Error reading provider push sent notifications from canister", error);
+    // Fallback to localStorage
+    try {
+      const item = window.localStorage.getItem(
+        PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY,
+      );
+      return item ? JSON.parse(item) : [];
+    } catch {
+      return [];
+    }
   }
 };
 
-const setProviderPushSentIds = (ids: string[]) => {
+const setProviderPushSentIds = async (ids: string[]) => {
   try {
-    window.localStorage.setItem(
-      PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY,
-      JSON.stringify(ids),
-    );
+    // Mark notifications as push-sent in canister
+    for (const id of ids) {
+      await notificationCanisterService.markAsPushSent(id);
+    }
   } catch (error) {
-    // //console.error(
-    //   "Error writing provider push sent notifications to localStorage",
-    //   error,
-    // );
+    console.error("Error marking provider notifications as push sent in canister", error);
+    // Fallback to localStorage
+    try {
+      window.localStorage.setItem(
+        PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY,
+        JSON.stringify(ids),
+      );
+    } catch (fallbackError) {
+      console.error("Error writing provider push sent notifications to localStorage", fallbackError);
+    }
   }
 };
 
@@ -128,6 +157,11 @@ export const useProviderNotificationsWithPush = () => {
   const getUserId = (): string => {
     return identity?.getPrincipal().toString() || "anonymous";
   };
+
+  // Update notification actor when identity changes
+  useEffect(() => {
+    updateNotificationActor(identity);
+  }, [identity]);
 
   // Initialize notification integration service
   useEffect(() => {
@@ -158,168 +192,106 @@ export const useProviderNotificationsWithPush = () => {
   }, []);
 
   // Generate provider-specific notifications based on bookings
-  const fetchProviderNotifications = useCallback(() => {
+  const fetchProviderNotifications = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // 1. New booking requests
-      const newBookingRequests = bookings
-        .filter((booking) => booking.status === "Requested")
-        .map((booking) => ({
-          id: `new-booking-${booking.id}`,
-          message: `New booking request for ${booking.serviceDetails?.title} from`,
-          type: "new_booking_request" as const,
-          timestamp: booking.createdAt,
-          read: false,
-          href: `/provider/booking/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-        }));
-
-      // 2. Booking confirmations (when provider accepts)
-      const bookingConfirmations = bookings
-        .filter((booking) => booking.status === "Accepted")
-        .map((booking) => ({
-          id: `confirmation-${booking.id}`,
-          message: `Booking confirmed for ${booking.serviceDetails?.title} with`,
-          type: "booking_confirmation" as const,
-          timestamp: booking.updatedAt,
-          read: false,
-          href: `/provider/booking/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-        }));
-
-      // 3. Payment completed notifications
-      const paymentCompletions = bookings
-        .filter((booking) => booking.status === "Completed")
-        .map((booking) => ({
-          id: `payment-${booking.id}`,
-          message: `Payment of ₱${booking.price.toFixed(2)} received for service completed with`,
-          type: "payment_completed" as const,
-          timestamp: booking.completedDate || booking.updatedAt,
-          read: false,
-          href: `/provider/receipt/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-          amount: booking.price,
-        }));
-
-      // 4. Service completion reminders (for InProgress bookings)
-      const serviceReminders = bookings
-        .filter((booking) => booking.status === "InProgress")
-        .map((booking) => ({
-          id: `reminder-${booking.id}`,
-          message: `Don't forget to complete the service for`,
-          type: "service_completion_reminder" as const,
-          timestamp: new Date().toISOString(),
-          read: false,
-          href: `/provider/active-service/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-        }));
-
-      // 5. Review requests (for completed but unreviewed bookings)
-      const reviewRequests = bookings
-        .filter((booking) => booking.status === "Completed")
-        .map((booking) => ({
-          id: `review-request-${booking.id}`,
-          message: `Please ask for a review from`,
-          type: "review_request" as const,
-          timestamp: booking.completedDate || booking.updatedAt,
-          read: false,
-          href: `/provider/booking/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-        }));
-
-      // 6. Booking cancellations
-      const bookingCancellations = bookings
-        .filter((booking) => booking.status === "Cancelled")
-        .map((booking) => ({
-          id: `cancelled-${booking.id}`,
-          message: `Booking for ${booking.serviceDetails?.title} was cancelled by`,
-          type: "booking_cancelled" as const,
-          timestamp: booking.updatedAt,
-          read: false,
-          href: `/provider/booking/${booking.id}`,
-          clientName: booking.clientName,
-          bookingId: booking.id,
-        }));
-
-      // Combine all notifications
-      const allNotifications = [
-        ...newBookingRequests,
-        ...bookingConfirmations,
-        ...paymentCompletions,
-        ...serviceReminders,
-        ...reviewRequests,
-        ...bookingCancellations,
-      ];
-
-      // Apply read status from localStorage
-      const readIds = getProviderReadIds();
-      const pushSentIds = getProviderPushSentIds();
-      const notificationsWithReadStatus = allNotifications
-        .map((notif) => ({
-          ...notif,
-          read: readIds.includes(notif.id),
-        }))
-        .sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-        );
-
-      // Filter notifications that should receive push notifications:
-      // 1. Must be unread
-      // 2. Must not have been push-notified before
-      // 3. Must be a new notification (not in previous list)
-      const currentNotificationIds = new Set(
-        notificationsWithReadStatus.map((n) => n.id),
-      );
-      const notificationsEligibleForPush = notificationsWithReadStatus.filter(
-        (notification) =>
-          !notification.read && // Must be unread
-          !pushSentIds.includes(notification.id) && // Must not have been push-notified before
-          !previousNotificationIdsRef.current.has(notification.id), // Must be new
+      // Fetch notifications from canister first
+      const canisterNotifications = await notificationCanisterService.getUserNotifications(
+        identity?.getPrincipal().toString(),
+        { userType: "provider" }
       );
 
-      // Send push notifications for eligible notifications
-      if (notificationsEligibleForPush.length > 0) {
-        // //console.log(
-        //   `Sending ${notificationsEligibleForPush.length} new provider push notifications`,
-        // );
-        notificationIntegrationService
-          .sendProviderNotificationsBatch(notificationsEligibleForPush)
-          .then((successCount) => {
-            // //console.log(
-            //   `Successfully sent ${successCount}/${notificationsEligibleForPush.length} provider push notifications`,
-            // );
+      // Convert canister notifications to provider notification format
+      const notificationsFromCanister: ProviderNotification[] = canisterNotifications.map(notif => ({
+        id: notif.id,
+        message: notif.message,
+        type: notif.type as any,
+        timestamp: notif.timestamp,
+        read: notif.read,
+        href: notif.href,
+        clientName: notif.clientName,
+        bookingId: notif.bookingId,
+        amount: notif.metadata?.amount || undefined,
+      }));
 
-            // Mark these notifications as push-sent
-            if (successCount > 0) {
-              const newlyPushSentIds = notificationsEligibleForPush
-                .slice(0, successCount)
-                .map((n) => n.id);
-              const updatedPushSentIds = [...pushSentIds, ...newlyPushSentIds];
-              setProviderPushSentIds(updatedPushSentIds);
-            }
-          })
-          .catch(() => {
-            //console.error("Error sending provider push notifications:", error);
-          });
+      // For backward compatibility, still generate some notifications from booking data
+      // But only if they don't already exist in the canister
+      const existingNotificationBookingIds = new Set(
+        canisterNotifications
+          .filter(n => n.bookingId)
+          .map(n => n.bookingId!)
+      );
+
+      // Generate additional notifications for bookings not covered by canister
+      const additionalNotifications: ProviderNotification[] = [];
+      
+      // Only generate for bookings that don't have canister notifications
+      const uncoveredBookings = bookings.filter(b => !existingNotificationBookingIds.has(b.id));
+      
+      if (uncoveredBookings.length > 0) {
+        // 4. Service completion reminders (for InProgress bookings)
+        const serviceReminders = uncoveredBookings
+          .filter((booking) => booking.status === "InProgress")
+          .map((booking) => ({
+            id: `reminder-${booking.id}`,
+            message: `Don't forget to complete the service for`,
+            type: "service_completion_reminder" as const,
+            timestamp: new Date().toISOString(),
+            read: false,
+            href: `/provider/active-service/${booking.id}`,
+            clientName: booking.clientName,
+            bookingId: booking.id,
+          }));
+
+        additionalNotifications.push(...serviceReminders);
       }
 
-      previousNotificationIdsRef.current = currentNotificationIds;
-      setNotifications(notificationsWithReadStatus);
-      const newUnreadCount = notificationsWithReadStatus.filter(
-        (n) => !n.read,
-      ).length;
+      // Combine canister notifications with additional frontend-generated ones
+      const allNotifications = [
+        ...notificationsFromCanister,
+        ...additionalNotifications,
+      ].sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      );
+
+      // Handle push notifications for new notifications
+      if (pwaState.pushSubscribed) {
+        const currentNotificationIds = new Set(allNotifications.map((n) => n.id));
+        const newNotificationIds = Array.from(currentNotificationIds).filter(
+          (id) => !previousNotificationIdsRef.current.has(id),
+        );
+
+        if (newNotificationIds.length > 0) {
+          const newNotifications = allNotifications.filter((n) =>
+            newNotificationIds.includes(n.id) && !n.read
+          );
+
+          // Send push notifications for new notifications
+          if (newNotifications.length > 0) {
+            notificationIntegrationService
+              .sendProviderNotificationsBatch(newNotifications)
+              .then((successCount) => {
+                console.log(`Sent ${successCount} provider push notifications`);
+              })
+              .catch((error) => {
+                console.error("Error sending provider push notifications:", error);
+              });
+          }
+        }
+
+        // Update the previous notification IDs
+        previousNotificationIdsRef.current = currentNotificationIds;
+      }
+
+      setNotifications(allNotifications);
+      const newUnreadCount = allNotifications.filter((n) => !n.read).length;
       providerNotificationStore.setCount(newUnreadCount);
       setLoading(false);
     } catch (error) {
-      //console.error("Error generating provider notifications:", error);
+      console.error("Error generating provider notifications:", error);
       setError("Failed to load provider notifications");
       setLoading(false);
     }
@@ -333,11 +305,22 @@ export const useProviderNotificationsWithPush = () => {
   }, [bookingLoading, fetchProviderNotifications]);
 
   // Marks a single notification as read
-  const markAsRead = useCallback((notificationId: string) => {
-    const readIds = getProviderReadIds();
-    if (!readIds.includes(notificationId)) {
-      const newReadIds = [...readIds, notificationId];
-      setProviderReadIds(newReadIds);
+  const markAsRead = useCallback(async (notificationId: string) => {
+    try {
+      // Try to mark as read in canister first
+      await notificationCanisterService.markAsRead(notificationId);
+    } catch (error) {
+      console.error("Error marking provider notification as read:", error);
+      // If it's a frontend-generated notification (not in canister), just update locally
+      if (notificationId.startsWith('reminder-') || notificationId.startsWith('new-booking-')) {
+        console.log("Frontend-generated provider notification, updating locally only");
+      } else {
+        // For other errors, try localStorage fallback
+        const readIds = await getProviderReadIds();
+        if (!readIds.includes(notificationId)) {
+          await setProviderReadIds([...readIds, notificationId]);
+        }
+      }
     }
 
     setNotifications((prev) => {
@@ -351,15 +334,20 @@ export const useProviderNotificationsWithPush = () => {
   }, []);
 
   // Marks a single notification as unread (for future use)
-  const markAsUnread = useCallback((notificationId: string) => {
-    const readIds = getProviderReadIds();
-    const newReadIds = readIds.filter((id) => id !== notificationId);
-    setProviderReadIds(newReadIds);
+  const markAsUnread = useCallback(async (notificationId: string) => {
+    try {
+      // For unread, we need to get current read IDs and remove this one
+      const readIds = await getProviderReadIds();
+      const newReadIds = readIds.filter((id) => id !== notificationId);
+      await setProviderReadIds(newReadIds);
 
-    // Also remove from push-sent list to allow re-push notification
-    const pushSentIds = getProviderPushSentIds();
-    const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
-    setProviderPushSentIds(newPushSentIds);
+      // Also remove from push-sent list to allow re-push notification
+      const pushSentIds = await getProviderPushSentIds();
+      const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
+      await setProviderPushSentIds(newPushSentIds);
+    } catch (error) {
+      console.error("Error marking provider notification as unread:", error);
+    }
 
     setNotifications((prev) => {
       const newNotifications = prev.map((n) =>
@@ -372,11 +360,18 @@ export const useProviderNotificationsWithPush = () => {
   }, []);
 
   // Marks all currently loaded notifications as read
-  const markAllAsRead = useCallback(() => {
-    const currentIds = notifications.map((n) => n.id);
-    const readIds = getProviderReadIds();
-    const newReadIds = Array.from(new Set([...readIds, ...currentIds]));
-    setProviderReadIds(newReadIds);
+  const markAllAsRead = useCallback(async () => {
+    try {
+      // Use canister's markAllAsRead method
+      await notificationCanisterService.markAllAsRead();
+    } catch (error) {
+      console.error("Error marking all provider notifications as read:", error);
+      // Fallback to individual marking
+      const currentIds = notifications.map((n) => n.id);
+      const readIds = await getProviderReadIds();
+      const newReadIds = Array.from(new Set([...readIds, ...currentIds]));
+      await setProviderReadIds(newReadIds);
+    }
 
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     providerNotificationStore.setCount(0);

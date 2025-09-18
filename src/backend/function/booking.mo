@@ -35,6 +35,7 @@ persistent actor BookingCanister {
     private transient var reputationCanisterId : ?Principal = null;
     private transient var commissionCanisterId : ?Principal = null;
     private transient var walletCanisterId : ?Principal = null;
+    private transient var notificationCanisterId : ?Principal = null;
 
     // Constants
     // private transient let MIN_PRICE : Nat = 5;
@@ -138,6 +139,75 @@ persistent actor BookingCanister {
         #ok(updatedBooking)
     };
 
+    // Helper function to create notifications
+    private func createNotification(
+        targetUserId: Principal,
+        userType: Text,
+        notificationType: Text,
+        title: Text,
+        message: Text,
+        relatedEntityId: ?Text,
+        metadata: ?Text
+    ) : async () {
+        switch (notificationCanisterId) {
+            case (?canisterId) {
+                try {
+                    let notificationCanister = actor(Principal.toText(canisterId)) : actor {
+                        createNotification: (
+                            Principal, 
+                            {#client; #provider}, 
+                            {
+                                #booking_accepted; #booking_declined; #review_reminder; #generic;
+                                #new_booking_request; #booking_confirmation; #payment_completed;
+                                #service_completion_reminder; #review_request; #chat_message;
+                                #booking_cancelled; #booking_completed; #payment_received;
+                                #payment_failed; #provider_message; #system_announcement;
+                                #service_rescheduled; #service_reminder; #promo_offer;
+                                #provider_on_the_way; #booking_rescheduled; #client_no_show;
+                                #payment_issue;
+                            }, 
+                            Text, 
+                            Text, 
+                            ?Text, 
+                            ?Text
+                        ) -> async {#ok: Text; #err: Text};
+                    };
+                    
+                    let userTypeVariant = if (userType == "client") { #client } else { #provider };
+                    let notificationTypeVariant = switch (notificationType) {
+                        case ("booking_accepted") { #booking_accepted };
+                        case ("booking_declined") { #booking_declined };
+                        case ("new_booking_request") { #new_booking_request };
+                        case ("booking_confirmation") { #booking_confirmation };
+                        case ("payment_completed") { #payment_completed };
+                        case ("service_completion_reminder") { #service_completion_reminder };
+                        case ("booking_cancelled") { #booking_cancelled };
+                        case ("booking_completed") { #booking_completed };
+                        case ("payment_received") { #payment_received };
+                        case ("review_request") { #review_request };
+                        case (_) { #generic };
+                    };
+                    
+                    let _result = await notificationCanister.createNotification(
+                        targetUserId,
+                        userTypeVariant,
+                        notificationTypeVariant,
+                        title,
+                        message,
+                        relatedEntityId,
+                        metadata
+                    );
+                } catch (_error) {
+                    // Log error but don't fail the booking operation
+                    // In a real implementation, you might want to add proper logging
+                };
+            };
+            case (null) {
+                // Notification canister not set, skip notification creation
+            };
+        };
+    };
+
     // Initialization
     system func preupgrade() {
         bookingEntries := Iter.toArray(bookings.entries());
@@ -160,7 +230,8 @@ persistent actor BookingCanister {
         review : ?Principal,
         reputation : ?Principal,
         commission : ?Principal,
-        wallet : ?Principal
+        wallet : ?Principal,
+        notification : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
@@ -169,6 +240,7 @@ persistent actor BookingCanister {
         reputationCanisterId := reputation;
         commissionCanisterId := commission;
         walletCanisterId := wallet;
+        notificationCanisterId := notification;
         return #ok("Canister references set successfully");
     };
 
@@ -391,6 +463,18 @@ persistent actor BookingCanister {
         };
         
         bookings.put(bookingId, newBooking);
+        
+        // Create notification for the provider about new booking request
+        await createNotification(
+            providerId,
+            "provider",
+            "new_booking_request",
+            "New Booking Request",
+            "You have received a new booking request for " # serviceId,
+            ?bookingId,
+            ?("{\"serviceId\":\"" # serviceId # "\",\"clientId\":\"" # Principal.toText(caller) # "\"}")
+        );
+        
         return #ok(newBooking);
     };
     
@@ -645,6 +729,18 @@ persistent actor BookingCanister {
                         };
                         
                         bookings.put(bookingId, finalBooking);
+                        
+                        // Create notification for the client about booking acceptance
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "booking_accepted",
+                            "Booking Accepted",
+                            "Your booking has been accepted by the provider",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(finalBooking);
                     };
                     case (#err(msg)) {
@@ -667,6 +763,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #Declined, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the client about booking decline
+                        await createNotification(
+                            updatedBooking.clientId,
+                            "client",
+                            "booking_declined",
+                            "Booking Declined",
+                            "Your booking request has been declined by the provider",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(updatedBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
@@ -689,6 +797,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #InProgress, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the client about service starting
+                        await createNotification(
+                            updatedBooking.clientId,
+                            "client",
+                            "service_reminder",
+                            "Service Started",
+                            "Your service provider has started working on your booking",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(updatedBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
@@ -835,6 +955,28 @@ persistent actor BookingCanister {
                             };
                         };
 
+                        // Create notification for the client about booking completion
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "booking_completed",
+                            "Service Completed",
+                            "Your booking has been completed successfully",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+
+                        // Create review request notification for the client
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "review_request",
+                            "Review Request",
+                            "Please review your completed service",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+
                         return #ok(finalBooking);
                     };
                     case (#err(msg)) {
@@ -857,6 +999,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #Cancelled, caller, false)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the provider about booking cancellation
+                        await createNotification(
+                            updatedBooking.providerId,
+                            "provider",
+                            "booking_cancelled",
+                            "Booking Cancelled",
+                            "A booking has been cancelled by the client",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"clientId\":\"" # Principal.toText(updatedBooking.clientId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {

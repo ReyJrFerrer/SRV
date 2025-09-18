@@ -7,6 +7,7 @@ import { canisterId as reputationCanisterId } from "../../../declarations/reputa
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
 import { canisterId as commissionCanisterId } from "../../../declarations/commission";
 import { canisterId as walletCanisterId } from "../../../declarations/wallet";
+import {canisterId as notificationCanisterId} from "../../../declarations/notification";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
@@ -1036,6 +1037,7 @@ export const bookingCanisterService = {
         [Principal.fromText(reputationCanisterId)],
         [Principal.fromText(commissionCanisterId)],
         [Principal.fromText(walletCanisterId)],
+        [Principal.fromText(notificationCanisterId)]
       );
 
       if ("ok" in result) {

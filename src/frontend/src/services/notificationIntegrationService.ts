@@ -3,6 +3,7 @@ import pushNotificationService, {
 } from "./pushNotificationService";
 import { Notification } from "../hooks/useNotifications";
 import { ProviderNotification } from "../hooks/useProviderNotifications";
+import notificationCanisterService from "./notificationCanisterService";
 
 /**
  * Service to integrate existing notification hooks with PWA push notifications
@@ -52,6 +53,26 @@ class NotificationIntegrationService {
     }
 
     try {
+      // Create notification in canister first
+      try {
+        await notificationCanisterService.createNotification(
+          this.userId!,
+          "client",
+          notification.type,
+          "SRV Notification",
+          notification.message,
+          notification.bookingId,
+          {
+            href: notification.href,
+            providerName: notification.providerName,
+            clientName: notification.clientName,
+          }
+        );
+      } catch (canisterError) {
+        console.warn("Failed to create notification in canister:", canisterError);
+        // Continue with push notification even if canister creation fails
+      }
+
       const payload = this.convertClientNotificationToPush(notification);
       const success = await pushNotificationService.sendPushNotification(
         this.userId!,
@@ -59,15 +80,17 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        // //console.log(
-        //   "Push notification sent for client notification:",
-        //   notification.id,
-        // );
+        // Mark as push sent in canister
+        try {
+          await notificationCanisterService.markAsPushSent(notification.id);
+        } catch (markError) {
+          console.warn("Failed to mark notification as push sent:", markError);
+        }
       }
 
       return success;
     } catch (error) {
-      //console.error("Error sending client push notification:", error);
+      console.error("Error sending client push notification:", error);
       return false;
     }
   }
@@ -83,6 +106,26 @@ class NotificationIntegrationService {
     }
 
     try {
+      // Create notification in canister first
+      try {
+        await notificationCanisterService.createNotification(
+          this.userId!,
+          "provider",
+          notification.type,
+          "SRV Business Update",
+          notification.message,
+          notification.bookingId,
+          {
+            href: notification.href,
+            clientName: notification.clientName,
+            amount: notification.amount,
+          }
+        );
+      } catch (canisterError) {
+        console.warn("Failed to create provider notification in canister:", canisterError);
+        // Continue with push notification even if canister creation fails
+      }
+
       const payload = this.convertProviderNotificationToPush(notification);
       const success = await pushNotificationService.sendPushNotification(
         this.userId!,
@@ -90,15 +133,17 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        // //console.log(
-        //   "Push notification sent for provider notification:",
-        //   notification.id,
-        // );
+        // Mark as push sent in canister
+        try {
+          await notificationCanisterService.markAsPushSent(notification.id);
+        } catch (markError) {
+          console.warn("Failed to mark provider notification as push sent:", markError);
+        }
       }
 
       return success;
     } catch (error) {
-      //console.error("Error sending provider push notification:", error);
+      console.error("Error sending provider push notification:", error);
       return false;
     }
   }
