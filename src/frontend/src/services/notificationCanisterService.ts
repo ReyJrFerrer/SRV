@@ -453,6 +453,15 @@ export const notificationCanisterService = {
     metadata?: any,
   ): Promise<string> {
     try {
+      // First check if we can receive notifications to avoid rate limiting
+      const canReceive = await this.canReceiveNotification(
+        targetUserId,
+        notificationType,
+      );
+      if (!canReceive) {
+        throw new Error("Notification rate limit exceeded");
+      }
+
       const actor = getNotificationActor(true);
       const userPrincipal = Principal.fromText(targetUserId);
       const canisterUserType = { [userType]: null } as CanisterUserType;
@@ -472,12 +481,25 @@ export const notificationCanisterService = {
       );
 
       if ("err" in result) {
+        // Handle specific error types
+        if (result.err.includes("rate limit")) {
+          throw new Error("Notification rate limit exceeded");
+        } else if (result.err.includes("duplicate")) {
+          throw new Error("Duplicate notification");
+        }
         throw new Error(result.err);
       }
 
       return result.ok;
     } catch (error) {
       console.error("Error creating notification:", error);
+      
+      // Don't rethrow rate limit errors as they're expected
+      if (error instanceof Error && error.message.includes("rate limit")) {
+        console.warn("Rate limit reached, skipping notification creation");
+        return "rate-limited";
+      }
+      
       throw new Error(`Failed to create notification: ${error}`);
     }
   },

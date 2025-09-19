@@ -87,22 +87,26 @@ class FirebaseAuthService {
         }
 
         // Clear any existing content in the container
-        container.innerHTML = '';
+        container.innerHTML = "";
 
         // Wait a bit to ensure DOM is clean
         setTimeout(() => {
           try {
-            this.recaptchaVerifier = new RecaptchaVerifier(this.auth!, containerId, {
-              size: "invisible",
-              callback: () => {
-                console.log("reCAPTCHA solved");
-                resolve();
+            this.recaptchaVerifier = new RecaptchaVerifier(
+              this.auth!,
+              containerId,
+              {
+                size: "invisible",
+                callback: () => {
+                  console.log("reCAPTCHA solved");
+                  resolve();
+                },
+                "expired-callback": () => {
+                  console.log("reCAPTCHA expired");
+                  reject(new Error("reCAPTCHA expired"));
+                },
               },
-              "expired-callback": () => {
-                console.log("reCAPTCHA expired");
-                reject(new Error("reCAPTCHA expired"));
-              },
-            });
+            );
 
             // Render the recaptcha
             this.recaptchaVerifier
@@ -114,17 +118,29 @@ class FirebaseAuthService {
               .catch((error) => {
                 console.error("reCAPTCHA render error:", error);
                 this.clearRecaptcha();
-                reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
+                reject(
+                  new Error(
+                    "Service temporarily unavailable. Please reload the page and try again.",
+                  ),
+                );
               });
           } catch (error) {
             console.error("reCAPTCHA setup error:", error);
             this.clearRecaptcha();
-            reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
+            reject(
+              new Error(
+                "Service temporarily unavailable. Please reload the page and try again.",
+              ),
+            );
           }
         }, 100);
       } catch (error) {
         console.error("reCAPTCHA setup error:", error);
-        reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
+        reject(
+          new Error(
+            "Service temporarily unavailable. Please reload the page and try again.",
+          ),
+        );
       }
     });
   }
@@ -249,23 +265,27 @@ class FirebaseAuthService {
         message = "Verification code has expired. Please request a new code.";
         break;
       case "auth/too-many-requests":
-        message = "Too many attempts. Please wait a moment before trying again.";
+        message =
+          "Too many attempts. Please wait a moment before trying again.";
         break;
       // Firebase service issues - suggest reload
       case "auth/quota-exceeded":
       case "auth/recaptcha-not-enabled":
       case "auth/network-request-failed":
       case "auth/internal-error":
-        message = "Service temporarily unavailable. Please reload the page and try again.";
+        message =
+          "Service temporarily unavailable. Please reload the page and try again.";
         shouldReload = true;
         break;
       default:
         // Hide Firebase-specific errors and suggest reload for unknown issues
         if (error.message && error.message.includes("recaptcha")) {
-          message = "Service temporarily unavailable. Please reload the page and try again.";
+          message =
+            "Service temporarily unavailable. Please reload the page and try again.";
           shouldReload = true;
         } else if (error.code && error.code.startsWith("auth/")) {
-          message = "Service temporarily unavailable. Please reload the page and try again.";
+          message =
+            "Service temporarily unavailable. Please reload the page and try again.";
           shouldReload = true;
         } else {
           message = "An unexpected error occurred. Please try again.";

@@ -71,12 +71,12 @@ const OtpModal: React.FC<OtpModalProps> = ({
       } else {
         const errorMessage = result.error || "Invalid verification code";
         setError(errorMessage);
-        
+
         // Check if error suggests reload
         if (errorMessage.includes("reload the page")) {
           setShouldShowReload(true);
         }
-        
+
         // Only clear OTP if it's not a simple invalid code error
         if (!errorMessage.includes("attempts remaining")) {
           setOtpCode("");
@@ -85,11 +85,11 @@ const OtpModal: React.FC<OtpModalProps> = ({
     } catch (error: any) {
       const errorMessage = error.message || "Failed to verify code";
       setError(errorMessage);
-      
+
       if (errorMessage.includes("reload the page")) {
         setShouldShowReload(true);
       }
-      
+
       setOtpCode("");
     } finally {
       setIsLoading(false);
@@ -108,9 +108,10 @@ const OtpModal: React.FC<OtpModalProps> = ({
       await phoneVerificationService.resendCode("recaptcha-container-modal");
       setResendTimer(60);
     } catch (error: any) {
-      const errorMessage = error.message || "Failed to resend verification code";
+      const errorMessage =
+        error.message || "Failed to resend verification code";
       setError(errorMessage);
-      
+
       if (errorMessage.includes("reload the page")) {
         setShouldShowReload(true);
       }

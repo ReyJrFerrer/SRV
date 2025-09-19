@@ -105,19 +105,22 @@ class PhoneVerificationService {
       }
     } catch (error: any) {
       console.error("Error verifying code:", error);
-      
+
       // Check if error suggests reload
       const shouldReload = (error as any).shouldReload;
-      
+
       // Don't invalidate confirmation result for invalid codes unless max attempts reached
-      if (error.message?.includes("Invalid verification code") && this.attemptCount < this.maxAttempts) {
+      if (
+        error.message?.includes("Invalid verification code") &&
+        this.attemptCount < this.maxAttempts
+      ) {
         return {
           success: false,
           phoneNumber: this.currentPhoneNumber,
           error: `Invalid code. ${this.maxAttempts - this.attemptCount} attempts remaining.`,
         };
       }
-      
+
       // For other errors or max attempts reached, suggest appropriate action
       let errorMessage = error.message || "Invalid verification code";
       if (shouldReload) {
@@ -126,7 +129,7 @@ class PhoneVerificationService {
         errorMessage = "Too many failed attempts. Please request a new code.";
         this.confirmationResult = null; // Invalidate current verification
       }
-      
+
       return {
         success: false,
         phoneNumber: this.currentPhoneNumber,
