@@ -76,37 +76,55 @@ class FirebaseAuthService {
           return;
         }
 
-        // Clear existing recaptcha
-        if (this.recaptchaVerifier) {
-          this.recaptchaVerifier.clear();
+        // Clear existing recaptcha completely
+        this.clearRecaptcha();
+
+        // Check if container exists and clear its content
+        const container = document.getElementById(containerId);
+        if (!container) {
+          reject(new Error(`Container ${containerId} not found`));
+          return;
         }
 
-        this.recaptchaVerifier = new RecaptchaVerifier(this.auth, containerId, {
-          size: "invisible", // or 'normal' for visible recaptcha
-          callback: () => {
-            console.log("reCAPTCHA solved");
-            resolve();
-          },
-          "expired-callback": () => {
-            console.log("reCAPTCHA expired");
-            reject(new Error("reCAPTCHA expired"));
-          },
-        });
+        // Clear any existing content in the container
+        container.innerHTML = '';
 
-        // Render the recaptcha
-        this.recaptchaVerifier
-          .render()
-          .then(() => {
-            console.log("reCAPTCHA rendered successfully");
-            resolve();
-          })
-          .catch((error) => {
-            console.error("reCAPTCHA render error:", error);
-            reject(error);
-          });
+        // Wait a bit to ensure DOM is clean
+        setTimeout(() => {
+          try {
+            this.recaptchaVerifier = new RecaptchaVerifier(this.auth!, containerId, {
+              size: "invisible",
+              callback: () => {
+                console.log("reCAPTCHA solved");
+                resolve();
+              },
+              "expired-callback": () => {
+                console.log("reCAPTCHA expired");
+                reject(new Error("reCAPTCHA expired"));
+              },
+            });
+
+            // Render the recaptcha
+            this.recaptchaVerifier
+              .render()
+              .then(() => {
+                console.log("reCAPTCHA rendered successfully");
+                resolve();
+              })
+              .catch((error) => {
+                console.error("reCAPTCHA render error:", error);
+                this.clearRecaptcha();
+                reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
+              });
+          } catch (error) {
+            console.error("reCAPTCHA setup error:", error);
+            this.clearRecaptcha();
+            reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
+          }
+        }, 100);
       } catch (error) {
         console.error("reCAPTCHA setup error:", error);
-        reject(error);
+        reject(new Error("Service temporarily unavailable. Please reload the page and try again."));
       }
     });
   }
@@ -215,6 +233,7 @@ class FirebaseAuthService {
    */
   private handleFirebaseError(error: any): Error {
     let message = "An error occurred during phone verification";
+    let shouldReload = false;
 
     switch (error.code) {
       case "auth/invalid-phone-number":
@@ -223,40 +242,53 @@ class FirebaseAuthService {
       case "auth/missing-phone-number":
         message = "Phone number is required";
         break;
-      case "auth/quota-exceeded":
-        message = "SMS quota exceeded. Please try again later";
-        break;
-      case "auth/user-disabled":
-        message = "This phone number has been disabled";
-        break;
       case "auth/invalid-verification-code":
-        message = "Invalid verification code";
+        message = "Invalid verification code. Please try again.";
         break;
       case "auth/code-expired":
-        message = "Verification code has expired";
+        message = "Verification code has expired. Please request a new code.";
         break;
       case "auth/too-many-requests":
-        message = "Too many attempts. Please try again later";
+        message = "Too many attempts. Please wait a moment before trying again.";
         break;
+      // Firebase service issues - suggest reload
+      case "auth/quota-exceeded":
       case "auth/recaptcha-not-enabled":
-        message = "reCAPTCHA not enabled for this project";
+      case "auth/network-request-failed":
+      case "auth/internal-error":
+        message = "Service temporarily unavailable. Please reload the page and try again.";
+        shouldReload = true;
         break;
       default:
-        if (error.message) {
-          message = error.message;
+        // Hide Firebase-specific errors and suggest reload for unknown issues
+        if (error.message && error.message.includes("recaptcha")) {
+          message = "Service temporarily unavailable. Please reload the page and try again.";
+          shouldReload = true;
+        } else if (error.code && error.code.startsWith("auth/")) {
+          message = "Service temporarily unavailable. Please reload the page and try again.";
+          shouldReload = true;
+        } else {
+          message = "An unexpected error occurred. Please try again.";
         }
         break;
     }
 
-    return new Error(message);
+    const errorWithReload = new Error(message);
+    (errorWithReload as any).shouldReload = shouldReload;
+    return errorWithReload;
   }
 
   /**
    * Clear reCAPTCHA verifier
    */
   clearRecaptcha(): void {
-    if (this.recaptchaVerifier) {
-      this.recaptchaVerifier.clear();
+    try {
+      if (this.recaptchaVerifier) {
+        this.recaptchaVerifier.clear();
+        this.recaptchaVerifier = null;
+      }
+    } catch (error) {
+      console.error("Error clearing reCAPTCHA:", error);
       this.recaptchaVerifier = null;
     }
   }

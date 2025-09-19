@@ -138,10 +138,17 @@ export default function CreateProfilePage() {
       if (result.step === "otp-input") {
         setShowOtpModal(true);
       } else if (result.step === "error") {
-        setError(result.error || "Failed to send verification code");
+        const errorMessage = result.error || "Failed to send verification code";
+        setError(errorMessage);
+        
+        // Show reload suggestion for Firebase service errors
+        if (errorMessage.includes("reload the page")) {
+          // The error message already contains the reload instruction
+        }
       }
     } catch (error: any) {
-      setError(error.message || "Failed to send verification code");
+      const errorMessage = error.message || "Failed to send verification code";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

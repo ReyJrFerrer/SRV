@@ -26,6 +26,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
   const [otpCode, setOtpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shouldShowReload, setShouldShowReload] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [isVerified, setIsVerified] = useState(false);
 
@@ -45,6 +46,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
     if (open) {
       setOtpCode("");
       setError(null);
+      setShouldShowReload(false);
       setResendTimer(60);
       setIsVerified(false);
     }
@@ -55,6 +57,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
 
     setIsLoading(true);
     setError(null);
+    setShouldShowReload(false);
 
     try {
       const result = await phoneVerificationService.verifyCode(code);
@@ -66,11 +69,27 @@ const OtpModal: React.FC<OtpModalProps> = ({
           onVerified();
         }, 1500);
       } else {
-        setError(result.error || "Invalid verification code");
-        setOtpCode("");
+        const errorMessage = result.error || "Invalid verification code";
+        setError(errorMessage);
+        
+        // Check if error suggests reload
+        if (errorMessage.includes("reload the page")) {
+          setShouldShowReload(true);
+        }
+        
+        // Only clear OTP if it's not a simple invalid code error
+        if (!errorMessage.includes("attempts remaining")) {
+          setOtpCode("");
+        }
       }
     } catch (error: any) {
-      setError(error.message || "Failed to verify code");
+      const errorMessage = error.message || "Failed to verify code";
+      setError(errorMessage);
+      
+      if (errorMessage.includes("reload the page")) {
+        setShouldShowReload(true);
+      }
+      
       setOtpCode("");
     } finally {
       setIsLoading(false);
@@ -83,12 +102,18 @@ const OtpModal: React.FC<OtpModalProps> = ({
     setIsLoading(true);
     setOtpCode("");
     setError(null);
+    setShouldShowReload(false);
 
     try {
       await phoneVerificationService.resendCode("recaptcha-container-modal");
       setResendTimer(60);
     } catch (error: any) {
-      setError(error.message || "Failed to resend verification code");
+      const errorMessage = error.message || "Failed to resend verification code";
+      setError(errorMessage);
+      
+      if (errorMessage.includes("reload the page")) {
+        setShouldShowReload(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -199,8 +224,17 @@ const OtpModal: React.FC<OtpModalProps> = ({
                               <div className="flex-shrink-0">
                                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                               </div>
-                              <div className="ml-3">
+                              <div className="ml-3 flex-1">
                                 <p className="text-sm text-red-700">{error}</p>
+                                {shouldShowReload && (
+                                  <button
+                                    type="button"
+                                    onClick={() => window.location.reload()}
+                                    className="mt-2 inline-flex items-center rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700"
+                                  >
+                                    Reload Page
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
