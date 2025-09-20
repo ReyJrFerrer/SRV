@@ -94,10 +94,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const locationStore = useLocationStore();
 
   // --- Use PWA hook for push notification management ---
-  const { 
-    pwaState, 
-    enablePushNotifications: enablePushNotificationsPWA, 
-    disablePushNotifications: disablePushNotificationsPWA 
+  const {
+    pwaState,
+    enablePushNotifications: enablePushNotificationsPWA,
+    disablePushNotifications: disablePushNotificationsPWA,
   } = usePWA();
 
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
@@ -146,14 +146,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       autoEnablePushNotifications();
     }
   }, [
-    isAuthenticated, 
-    identity, 
-    pwaState.pushSubscribed, 
-    pwaState.pushNotificationSupported, 
-    pwaState.pushPermission, 
+    isAuthenticated,
+    identity,
+    pwaState.pushSubscribed,
+    pwaState.pushNotificationSupported,
+    pwaState.pushPermission,
     pwaState.browserInfo.canReceivePushNotifications,
     isLoading,
-    enablePushNotificationsPWA
+    enablePushNotificationsPWA,
   ]);
 
   useEffect(() => {

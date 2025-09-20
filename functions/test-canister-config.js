@@ -4,6 +4,9 @@ const {
   getCommissionFromCanister,
 } = require("./utils/canisterConfig");
 
+/**
+ * Test canister configuration and connection
+ */
 async function testCanisterConfig() {
   console.log("🧪 Testing Canister Configuration...");
 

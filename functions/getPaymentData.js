@@ -1,4 +1,4 @@
-const { onRequest } = require("firebase-functions/v2/https");
+const {onRequest} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 // Ensure Firebase Admin is initialized
@@ -25,7 +25,7 @@ if (admin.apps.length === 0) {
  * Get payment/booking data from Firestore using invoice ID
  * This retrieves the booking data that was stored when the invoice was created
  */
-exports.getPaymentData = onRequest({ cors: true }, async (req, res) => {
+exports.getPaymentData = onRequest({cors: true}, async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -34,7 +34,7 @@ exports.getPaymentData = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    const { invoiceId } = req.body.data;
+    const {invoiceId} = req.body.data;
 
     if (!invoiceId) {
       return res.status(400).json({

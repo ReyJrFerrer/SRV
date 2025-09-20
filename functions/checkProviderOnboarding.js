@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const { Xendit } = require("xendit-node");
+const {Xendit} = require("xendit-node");
 const admin = require("firebase-admin");
 
 // Initialize Xendit client with proper error handling
@@ -37,7 +37,7 @@ exports.checkProviderOnboarding = functions.https.onRequest(
     try {
       // Only accept GET and POST requests
       if (!["GET", "POST"].includes(req.method)) {
-        return res.status(405).json({ error: "Method not allowed" });
+        return res.status(405).json({error: "Method not allowed"});
       }
 
       // Enable CORS for local development
@@ -50,9 +50,9 @@ exports.checkProviderOnboarding = functions.https.onRequest(
 
       // Get providerId from query params (GET) or body (POST)
       const providerId =
-        req.method === "GET"
-          ? req.query.providerId
-          : (req.body.data || req.body).providerId;
+        req.method === "GET" ?
+          req.query.providerId :
+          (req.body.data || req.body).providerId;
 
       // Validate required fields
       if (!providerId) {
@@ -85,16 +85,16 @@ exports.checkProviderOnboarding = functions.https.onRequest(
               isOnboarded: isOnboarded,
               providerId: providerId,
               source: "firestore_only",
-              details: isOnboarded
-                ? {
-                    xenditCustomerId:
+              details: isOnboarded ?
+                {
+                  xenditCustomerId:
                       providerDoc.data() && providerDoc.data().xenditCustomerId,
-                    onboardedAt:
+                  onboardedAt:
                       providerDoc.data() && providerDoc.data().onboardedAt,
-                    payoutInfo:
+                  payoutInfo:
                       providerDoc.data() && providerDoc.data().payoutInfo,
-                  }
-                : null,
+                } :
+                null,
             },
           });
         } catch (firestoreError) {
@@ -106,11 +106,11 @@ exports.checkProviderOnboarding = functions.https.onRequest(
       }
 
       let xenditCustomer = null;
-      let xenditError = null;
+
 
       // Check Xendit Customer by reference ID
       try {
-        const { Customer } = xendit;
+        const {Customer} = xendit;
         const customerResponse = await Customer.getCustomerByReferenceID({
           referenceId: providerId,
         });
@@ -133,7 +133,7 @@ exports.checkProviderOnboarding = functions.https.onRequest(
         });
       } catch (error) {
         console.error("Error checking Xendit customer:", error);
-        xenditError = error;
+
 
         // If it's a 404 error, the customer doesn't exist
         if (error.response && error.response.status === 404) {
@@ -172,27 +172,27 @@ exports.checkProviderOnboarding = functions.https.onRequest(
       const isOnboarded = isXenditOnboarded || isFirestoreOnboarded;
 
       // Prepare response details
-      const details = isOnboarded
-        ? {
-            xenditCustomerId:
+      const details = isOnboarded ?
+        {
+          xenditCustomerId:
               (xenditCustomer && xenditCustomer.id) ||
               (firestoreData && firestoreData.xenditCustomerId),
-            xenditReferenceId:
+          xenditReferenceId:
               (xenditCustomer && xenditCustomer.referenceId) || providerId,
-            onboardedAt:
+          onboardedAt:
               (firestoreData && firestoreData.onboardedAt) ||
               (xenditCustomer && xenditCustomer.created),
-            payoutInfo: (firestoreData && firestoreData.payoutInfo) || {
-              gcashNumber: firestoreData && firestoreData.gcashNumber,
-              accountHolderName: firestoreData && firestoreData.gcashName,
-              channelCode: "PH_GCASH",
-            },
-            verificationSources: {
-              xendit: isXenditOnboarded,
-              firestore: !!isFirestoreOnboarded,
-            },
-          }
-        : null;
+          payoutInfo: (firestoreData && firestoreData.payoutInfo) || {
+            gcashNumber: firestoreData && firestoreData.gcashNumber,
+            accountHolderName: firestoreData && firestoreData.gcashName,
+            channelCode: "PH_GCASH",
+          },
+          verificationSources: {
+            xendit: isXenditOnboarded,
+            firestore: !!isFirestoreOnboarded,
+          },
+        } :
+        null;
 
       // Log the result
       console.log(`Provider ${providerId} onboarding status:`, {
