@@ -23,6 +23,7 @@ import {
   type Location,
   type ManualFields,
 } from "../store/locationStore";
+import { usePWA, PWAState } from "../hooks/usePWA";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -46,6 +47,10 @@ interface AuthContextType {
   setDisplayAddress: (address: string) => void;
   manualFields: ManualFields;
   setManualFields: (fields: ManualFields) => void;
+  // --- PWA properties ---
+  pwaState: PWAState;
+  enablePushNotifications: (userId: string) => Promise<boolean>;
+  disablePushNotifications: (userId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +93,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // --- Use Zustand location store instead of local state ---
   const locationStore = useLocationStore();
 
+  // --- Use PWA hook for push notification management ---
+  const { 
+    pwaState, 
+    enablePushNotifications: enablePushNotificationsPWA, 
+    disablePushNotifications: disablePushNotificationsPWA 
+  } = usePWA();
+
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);
@@ -98,6 +110,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     locationStore.initialize();
   }, [locationStore]);
+
+  // Auto-enable push notifications when user authenticates
+  useEffect(() => {
+    const autoEnablePushNotifications = async () => {
+      // Only attempt auto-enable if:
+      // 1. User is authenticated
+      // 2. PWA state is loaded (not loading)
+      // 3. Push notifications are supported
+      // 4. User hasn't explicitly denied permissions
+      // 5. Not already subscribed
+      if (
+        isAuthenticated &&
+        identity &&
+        !pwaState.pushSubscribed &&
+        pwaState.pushNotificationSupported &&
+        pwaState.pushPermission !== "denied" &&
+        pwaState.browserInfo.canReceivePushNotifications
+      ) {
+        try {
+          const userId = identity.getPrincipal().toString();
+          const success = await enablePushNotificationsPWA(userId);
+          if (success) {
+            // console.log("✅ Auto-enabled push notifications for user:", userId);
+          }
+        } catch (error) {
+          // Silently fail auto-enable - user can still enable manually if desired
+          // console.log("ℹ️ Auto-enable push notifications failed (this is normal):", error);
+        }
+      }
+    };
+
+    // Only run auto-enable after initial PWA state is loaded
+    if (!isLoading && isAuthenticated) {
+      autoEnablePushNotifications();
+    }
+  }, [
+    isAuthenticated, 
+    identity, 
+    pwaState.pushSubscribed, 
+    pwaState.pushNotificationSupported, 
+    pwaState.pushPermission, 
+    pwaState.browserInfo.canReceivePushNotifications,
+    isLoading,
+    enablePushNotificationsPWA
+  ]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -186,6 +243,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setDisplayAddress: locationStore.setDisplayAddress,
     manualFields: locationStore.manualFields,
     setManualFields: locationStore.setManualFields,
+    // PWA properties
+    pwaState,
+    enablePushNotifications: enablePushNotificationsPWA,
+    disablePushNotifications: disablePushNotificationsPWA,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

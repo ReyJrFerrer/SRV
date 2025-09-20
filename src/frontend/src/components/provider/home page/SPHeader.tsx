@@ -150,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <div className="h-10 border-l-2 border-blue-100"></div>
           <div className="flex flex-col">
             <span className="text-2xl font-semibold tracking-wide text-blue-700">
-              Welcome Back,{" "}
+              Welcome, {" "}
               <span className="text-2xl font-bold text-gray-800">
                 {displayName}
               </span>

@@ -4,16 +4,14 @@ import {
   DayOfWeek,
   DayAvailability,
 } from "../services/serviceCanisterService";
-import {
-  FrontendProfile,
-} from "../services/authCanisterService";
+import { FrontendProfile } from "../services/authCanisterService";
 import {
   enrichServiceWithProvider,
   getCategoryImage,
 } from "../utils/serviceHelpers";
-import { 
+import {
   OrganizedWeeklySchedule,
-  useServiceManagement 
+  useServiceManagement,
 } from "./serviceManagement";
 
 /**
@@ -61,7 +59,9 @@ const organizeWeeklySchedule = (
 /**
  * Helper function to format time slots from availability data
  */
-const formatTimeSlots = (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>): string[] => {
+const formatTimeSlots = (
+  weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+): string[] => {
   if (!weeklySchedule || weeklySchedule.length === 0) {
     return ["9:00 AM - 5:00 PM"]; // Default time slot in 12-hour format
   }
@@ -82,37 +82,42 @@ const formatTimeSlots = (weeklySchedule?: Array<{ day: DayOfWeek; availability: 
   const allTimeSlots = weeklySchedule
     .filter((day) => day.availability.isAvailable)
     .flatMap((day) =>
-      day.availability.slots.map((slot) => 
-        `${formatTime12Hour(slot.startTime)} - ${formatTime12Hour(slot.endTime)}`
-      )
+      day.availability.slots.map(
+        (slot) =>
+          `${formatTime12Hour(slot.startTime)} - ${formatTime12Hour(slot.endTime)}`,
+      ),
     );
 
   // Remove duplicates and return unique time slots
   const uniqueTimeSlots = Array.from(new Set(allTimeSlots));
-  
+
   return uniqueTimeSlots.length > 0 ? uniqueTimeSlots : ["9:00 AM - 5:00 PM"];
 };
 
 /**
  * Helper function to check if service is available now
  */
-const isServiceAvailableNow = (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>): boolean => {
+const isServiceAvailableNow = (
+  weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+): boolean => {
   if (!weeklySchedule || weeklySchedule.length === 0) {
     return true; // Default to available if no schedule is set
   }
 
   const now = new Date();
-  const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek;
+  const currentDay = now.toLocaleDateString("en-US", {
+    weekday: "long",
+  }) as DayOfWeek;
   const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
 
-  const todaySchedule = weeklySchedule.find(day => day.day === currentDay);
-  
+  const todaySchedule = weeklySchedule.find((day) => day.day === currentDay);
+
   if (!todaySchedule || !todaySchedule.availability.isAvailable) {
     return false;
   }
 
   // Check if current time falls within any available slot
-  return todaySchedule.availability.slots.some(slot => {
+  return todaySchedule.availability.slots.some((slot) => {
     return currentTime >= slot.startTime && currentTime <= slot.endTime;
   });
 };

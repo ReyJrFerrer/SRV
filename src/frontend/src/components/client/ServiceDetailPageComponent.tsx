@@ -753,9 +753,7 @@ const ServiceDetailPage: React.FC = () => {
                               </span>
                             ))
                           ) : (
-                            <span className="text-gray-400">
-                              Not specified
-                            </span>
+                            <span className="text-gray-400">Not specified</span>
                           )}
                         </div>
                       )}
@@ -863,19 +861,19 @@ const ServiceDetailPage: React.FC = () => {
         if (typeof slot === "string") {
           // Handle string format like "9:00 AM - 5:00 PM" or "09:00-17:00"
           let formattedSlot = slot;
-          
+
           // Check if it's already in 12-hour format
           if (!slot.includes("AM") && !slot.includes("PM")) {
             // Convert from 24-hour format to 12-hour format
             const match = slot.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
             if (match) {
               const [, startHour, startMin, endHour, endMin] = match;
-              const startTime = `${startHour.padStart(2, '0')}:${startMin}`;
-              const endTime = `${endHour.padStart(2, '0')}:${endMin}`;
+              const startTime = `${startHour.padStart(2, "0")}:${startMin}`;
+              const endTime = `${endHour.padStart(2, "0")}:${endMin}`;
               formattedSlot = `${formatTime12Hour(startTime)} - ${formatTime12Hour(endTime)}`;
             }
           }
-          
+
           // Assign to all available days
           availableDays.forEach((day) => {
             if (!timeSlotsByDay[day].includes(formattedSlot)) {
@@ -893,7 +891,7 @@ const ServiceDetailPage: React.FC = () => {
           // Handle object format with start/end properties
           const formattedSlot = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
           const day = slot.day || availableDays[0]; // Use specified day or first available day
-          
+
           if (availableDays.includes(day)) {
             if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
             if (!timeSlotsByDay[day].includes(formattedSlot)) {
@@ -903,7 +901,7 @@ const ServiceDetailPage: React.FC = () => {
         }
       });
     }
-    
+
     mappedAvailability = {
       isAvailableNow,
       availableDays,
