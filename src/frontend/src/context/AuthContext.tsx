@@ -17,7 +17,12 @@ import {
   initializeCanisterReferences,
   shouldInitializeCanisters,
 } from "../services/canisterInitService";
-import { useLocationStore, type LocationStatus, type Location, type ManualFields } from "../store/locationStore";
+import {
+  useLocationStore,
+  type LocationStatus,
+  type Location,
+  type ManualFields,
+} from "../store/locationStore";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };

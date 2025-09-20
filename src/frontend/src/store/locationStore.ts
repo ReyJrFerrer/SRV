@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
 
@@ -23,16 +23,16 @@ interface LocationState {
   locationStatus: LocationStatus;
   userAddress: string;
   userProvince: string;
-  
+
   // Loading states
   locationLoading: boolean;
   isInitialized: boolean;
-  
+
   // Manual address fields
   addressMode: "context" | "manual";
   displayAddress: string;
   manualFields: ManualFields;
-  
+
   // Actions
   setLocation: (status: LocationStatus, location?: Location | null) => void;
   setAddress: (address: string, province: string) => void;
@@ -66,26 +66,25 @@ const fetchWithRetry = async (
 
 const normalizeLocationData = (data: any) => {
   if (!data?.address) return null;
-  
-  const { city, town, village, municipality, county, state, region, province } = data.address;
-  
+
+  const { city, town, village, municipality, county, state, region, province } =
+    data.address;
+
   let cityPart = city || town || village || municipality || "";
   let provinceVal = county || state || region || province || "";
-  
+
   // Special case: Baguio normalization
   if (
     (cityPart.toLowerCase() === "baguio" ||
       cityPart.toLowerCase() === "baguio city") &&
-    [
-      "cordillera administrative region",
-      "car",
-      "region",
-    ].includes(provinceVal.toLowerCase())
+    ["cordillera administrative region", "car", "region"].includes(
+      provinceVal.toLowerCase(),
+    )
   ) {
     cityPart = "Baguio City";
     provinceVal = "Benguet";
   }
-  
+
   return {
     address: cityPart || "Could not determine city",
     province: provinceVal,
@@ -116,7 +115,7 @@ export const useLocationStore = create<LocationState>()(
       // Actions
       setLocation: (status: LocationStatus, newLocation?: Location | null) => {
         set({ locationStatus: status });
-        
+
         if (newLocation) {
           set({ location: newLocation });
           // Store location in localStorage for persistence
@@ -126,7 +125,7 @@ export const useLocationStore = create<LocationState>()(
           localStorage.removeItem("userLocation");
           set({ location: null });
         }
-        
+
         // Store the permission status
         localStorage.setItem("locationPermission", status);
       },
@@ -153,9 +152,13 @@ export const useLocationStore = create<LocationState>()(
 
       requestLocation: async () => {
         const state = get();
-        
+
         // If we already have location data and it's not expired, don't refetch
-        if (state.location && state.userAddress && state.locationStatus === "allowed") {
+        if (
+          state.location &&
+          state.userAddress &&
+          state.locationStatus === "allowed"
+        ) {
           return;
         }
 
@@ -175,11 +178,11 @@ export const useLocationStore = create<LocationState>()(
           async (position) => {
             const { latitude, longitude } = position.coords;
             const newLocation = { latitude, longitude };
-            
+
             // Check cache first
             const cacheKey = `address_${latitude}_${longitude}`;
             const cached = localStorage.getItem(cacheKey);
-            
+
             if (cached) {
               try {
                 const { address, province } = JSON.parse(cached);
@@ -190,7 +193,10 @@ export const useLocationStore = create<LocationState>()(
                   userProvince: province,
                   locationLoading: false,
                 });
-                localStorage.setItem("userLocation", JSON.stringify(newLocation));
+                localStorage.setItem(
+                  "userLocation",
+                  JSON.stringify(newLocation),
+                );
                 localStorage.setItem("locationPermission", "allowed");
                 return;
               } catch {
@@ -202,9 +208,9 @@ export const useLocationStore = create<LocationState>()(
               const data = await fetchWithRetry(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
               );
-              
+
               const normalized = normalizeLocationData(data);
-              
+
               if (normalized) {
                 set({
                   location: newLocation,
@@ -213,10 +219,13 @@ export const useLocationStore = create<LocationState>()(
                   userProvince: normalized.province,
                   locationLoading: false,
                 });
-                
+
                 // Cache the result
                 localStorage.setItem(cacheKey, JSON.stringify(normalized));
-                localStorage.setItem("userLocation", JSON.stringify(newLocation));
+                localStorage.setItem(
+                  "userLocation",
+                  JSON.stringify(newLocation),
+                );
                 localStorage.setItem("locationPermission", "allowed");
               } else {
                 set({
@@ -276,7 +285,9 @@ export const useLocationStore = create<LocationState>()(
 
         // Check for stored GPS location and permission first
         const storedLocation = localStorage.getItem("userLocation");
-        const storedPermission = localStorage.getItem("locationPermission") as LocationStatus;
+        const storedPermission = localStorage.getItem(
+          "locationPermission",
+        ) as LocationStatus;
 
         if (storedLocation && storedPermission === "allowed") {
           try {
@@ -286,7 +297,7 @@ export const useLocationStore = create<LocationState>()(
               locationStatus: "allowed",
               isInitialized: true,
             });
-            
+
             // If we have cached address data, use it
             const cacheKey = `address_${location.latitude}_${location.longitude}`;
             const cachedAddress = localStorage.getItem(cacheKey);
@@ -309,15 +320,18 @@ export const useLocationStore = create<LocationState>()(
         }
 
         set({ isInitialized: true });
-        
+
         // Only request location if we don't have it or permission status is not_set
-        if (state.locationStatus === "not_set" || (!state.location && state.locationStatus === "allowed")) {
+        if (
+          state.locationStatus === "not_set" ||
+          (!state.location && state.locationStatus === "allowed")
+        ) {
           await get().requestLocation();
         }
       },
     }),
     {
-      name: 'location-storage',
+      name: "location-storage",
       // Only persist essential data, not loading states
       partialize: (state) => ({
         location: state.location,

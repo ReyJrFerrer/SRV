@@ -78,7 +78,12 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
 
   // Update form data when Zustand location changes
   useEffect(() => {
-    if (locationInputMode === "detected" && geoLocation && userAddress && userProvince) {
+    if (
+      locationInputMode === "detected" &&
+      geoLocation &&
+      userAddress &&
+      userProvince
+    ) {
       setFormData((prev: any) => ({
         ...prev,
         locationMunicipalityCity: userAddress,
@@ -93,34 +98,36 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     !!formData.locationLatitude && !!formData.locationLongitude;
 
   const localLocationError =
-    locationInputMode === "detected" && !hasGPSCoordinates && locationStatus === "denied"
+    locationInputMode === "detected" &&
+    !hasGPSCoordinates &&
+    locationStatus === "denied"
       ? "Location access denied. Please enable location access or choose a different location."
       : locationInputMode === "detected" && locationLoading
-      ? undefined // Don't show error while loading
-      : locationInputMode === "detected" && !hasGPSCoordinates
-      ? "Still detecting your location, please wait"
-      : undefined;
+        ? undefined // Don't show error while loading
+        : locationInputMode === "detected" && !hasGPSCoordinates
+          ? "Still detecting your location, please wait"
+          : undefined;
 
   // Get display text for detected location
   const getDisplayAddress = () => {
     if (locationInputMode !== "detected") return "";
-    
+
     if (locationLoading) {
       return "Detecting location...";
     }
-    
+
     if (locationStatus === "denied") {
       return "Location access denied. Please enable location access.";
     }
-    
+
     if (userAddress && userProvince) {
       return `${userAddress}, ${userProvince}`;
     }
-    
+
     if (geoLocation) {
       return `Lat: ${geoLocation.latitude.toFixed(6)}, Lon: ${geoLocation.longitude.toFixed(6)} (address not found)`;
     }
-    
+
     return "Detecting location...";
   };
 
@@ -174,12 +181,14 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 </span>
               </div>
             </div>
-            {(locationStatus === "denied" || (locationInputMode === "detected" && !locationLoading && !userAddress)) && (
+            {(locationStatus === "denied" ||
+              (locationInputMode === "detected" &&
+                !locationLoading &&
+                !userAddress)) && (
               <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
-                {locationStatus === "denied" 
+                {locationStatus === "denied"
                   ? "Location access denied. Please enable location access or choose a different location."
-                  : "Failed to detect your location. Please try again or choose a different location."
-                }
+                  : "Failed to detect your location. Please try again or choose a different location."}
               </div>
             )}
           </div>

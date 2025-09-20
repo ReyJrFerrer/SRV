@@ -180,12 +180,8 @@ const ClientBookingPageComponent: React.FC = () => {
   const { identity } = useAuth();
 
   // --- Use Zustand location store ---
-  const {
-    userAddress,
-    userProvince,
-    locationLoading,
-    requestLocation,
-  } = useLocationStore();
+  const { userAddress, userProvince, locationLoading, requestLocation } =
+    useLocationStore();
 
   // --- Section refs for scrolling/highlighting ---
   const barangayRef = useRef<HTMLSelectElement>(null);
@@ -236,7 +232,7 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Routing ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
-  
+
   // Initialize location on component mount
   useEffect(() => {
     requestLocation();

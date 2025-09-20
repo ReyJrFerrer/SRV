@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  
+
   // --- Use Zustand location store ---
   const {
     location: geoLocation,
@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userProvince,
     locationLoading,
   } = useLocationStore();
-  
+
   // Get requestLocation function separately to avoid dependency issues
   const locationStore = useLocationStore();
 
@@ -106,7 +106,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-      
+
       // Initialize location through Zustand store (will check cache first)
       if (!isAuthLoading) {
         locationStore.requestLocation();

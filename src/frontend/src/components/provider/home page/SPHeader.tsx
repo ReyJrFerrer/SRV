@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userProvince,
     locationLoading,
   } = useLocationStore();
-  
+
   // Get locationStore separately to avoid dependency issues
   const locationStore = useLocationStore();
 
@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-      
+
       // Initialize location through Zustand store (will check cache first)
       if (!isAuthLoading) {
         locationStore.requestLocation();
