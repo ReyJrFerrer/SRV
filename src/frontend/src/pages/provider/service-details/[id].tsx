@@ -631,7 +631,6 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       try {
         const serviceData = await getService(id);
-        console.log(serviceData);
 
         if (serviceData) {
           // Ensure weeklySchedule has 'slots' array for existing data

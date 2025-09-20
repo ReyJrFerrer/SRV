@@ -660,6 +660,10 @@ const ServiceDetailPage: React.FC = () => {
       return Math.max(max, slots.length);
     }, 0);
 
+    // Mobile accordion state - moved outside IIFE to prevent resets
+    const [openDay, setOpenDay] = React.useState<string | null>(null);
+    const [hoveredDay, setHoveredDay] = React.useState<string | null>(null);
+
     // Icon for section header
     const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
       <svg
@@ -700,134 +704,120 @@ const ServiceDetailPage: React.FC = () => {
             {/* Mobile: stacked list, Desktop: grid */}
             <div className="block lg:hidden">
               {/* Mobile dropdown/accordion for days */}
-              {(() => {
-                const [openDay, setOpenDay] = React.useState<string | null>(
-                  null,
-                );
-                return (
-                  <ul className="divide-y divide-blue-100">
-                    {days.map((day) => {
-                      let slots = slotsByDay[day];
-                      if (typeof slots === "string") slots = [slots];
-                      if (!Array.isArray(slots)) slots = [];
-                      const isOpen = openDay === day;
-                      return (
-                        <li key={day} className="py-1">
-                          <button
-                            type="button"
-                            className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:ring-2 focus:ring-blue-400 focus:outline-none`}
-                            onClick={() => setOpenDay(isOpen ? null : day)}
-                            aria-expanded={isOpen}
-                            aria-controls={`availability-panel-${day}`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
-                              {day}
+              <ul className="divide-y divide-blue-100">
+                {days.map((day) => {
+                  let slots = slotsByDay[day];
+                  if (typeof slots === "string") slots = [slots];
+                  if (!Array.isArray(slots)) slots = [];
+                  const isOpen = openDay === day;
+                  return (
+                    <li key={day} className="py-1">
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:ring-2 focus:ring-blue-400 focus:outline-none`}
+                        onClick={() => setOpenDay(isOpen ? null : day)}
+                        aria-expanded={isOpen}
+                        aria-controls={`availability-panel-${day}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
+                          {day}
+                        </span>
+                        <svg
+                          className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div
+                          id={`availability-panel-${day}`}
+                          className="mt-2 mb-4 flex flex-wrap items-center gap-2 px-3"
+                        >
+                          {slots.length > 0 ? (
+                            slots.map((slot, idx) => (
+                              <span
+                                key={slot + idx}
+                                className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md transition hover:bg-yellow-200"
+                              >
+                                {slot}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400">
+                              Not specified
                             </span>
-                            <svg
-                              className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </button>
-                          {isOpen && (
-                            <div
-                              id={`availability-panel-${day}`}
-                              className="mt-2 mb-4 flex flex-wrap items-center gap-2 px-3"
-                            >
-                              {slots.length > 0 ? (
-                                slots.map((slot, idx) => (
-                                  <span
-                                    key={slot + idx}
-                                    className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md transition hover:bg-yellow-200"
-                                  >
-                                    {slot}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="text-gray-400">
-                                  Not specified
-                                </span>
-                              )}
-                            </div>
                           )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                );
-              })()}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
             {/* Desktop: landscape grid */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                {(() => {
-                  const [hoveredDay, setHoveredDay] = React.useState<
-                    string | null
-                  >(null);
-                  return (
-                    <table className="min-w-full border-separate border-spacing-y-2">
-                      <thead>
-                        <tr>
-                          {days.map((day) => (
-                            <th
-                              key={day}
-                              className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-50" : "hover:bg-yellow-50"}`}
-                              onMouseEnter={() => setHoveredDay(day)}
-                              onMouseLeave={() => setHoveredDay(null)}
-                            >
-                              <span className="flex items-center justify-center gap-2">
-                                <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
-                                {day}
-                              </span>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...Array(maxSlots > 0 ? maxSlots : 1)].map(
-                          (_, rowIdx) => (
-                            <tr key={rowIdx}>
-                              {days.map((day) => {
-                                let slots = slotsByDay[day];
-                                if (typeof slots === "string") slots = [slots];
-                                if (!Array.isArray(slots)) slots = [];
-                                const slot = slots[rowIdx];
-                                return (
-                                  <td
-                                    key={day + rowIdx}
-                                    className="px-4 py-3 text-center align-top"
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr>
+                      {days.map((day) => (
+                        <th
+                          key={day}
+                          className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-50" : "hover:bg-yellow-50"}`}
+                          onMouseEnter={() => setHoveredDay(day)}
+                          onMouseLeave={() => setHoveredDay(null)}
+                        >
+                          <span className="flex items-center justify-center gap-2">
+                            <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
+                            {day}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(maxSlots > 0 ? maxSlots : 1)].map(
+                      (_, rowIdx) => (
+                        <tr key={rowIdx}>
+                          {days.map((day) => {
+                            let slots = slotsByDay[day];
+                            if (typeof slots === "string") slots = [slots];
+                            if (!Array.isArray(slots)) slots = [];
+                            const slot = slots[rowIdx];
+                            return (
+                              <td
+                                key={day + rowIdx}
+                                className="px-4 py-3 text-center align-top"
+                              >
+                                {slot ? (
+                                  <span
+                                    className={`inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-200" : "hover:bg-yellow-200"}`}
                                   >
-                                    {slot ? (
-                                      <span
-                                        className={`inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-200" : "hover:bg-yellow-200"}`}
-                                      >
-                                        {slot}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-400">
-                                        {rowIdx === 0 ? "Not specified" : ""}
-                                      </span>
-                                    )}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ),
-                        )}
-                      </tbody>
-                    </table>
-                  );
-                })()}
+                                    {slot}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">
+                                    {rowIdx === 0 ? "Not specified" : ""}
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -868,101 +858,52 @@ const ServiceDetailPage: React.FC = () => {
       timeSlotsByDay[day] = [];
     });
     if (Array.isArray(timeSlots) && timeSlots.length > 0) {
-      // Case 1: timeSlots is 1:1 with availableDays (e.g. 7 days, 7 slots)
-      if (
-        Array.isArray(availableDays) &&
-        availableDays.length === timeSlots.length
-      ) {
-        availableDays.forEach((day, idx) => {
-          const slot = timeSlots[idx] as string | TimeSlotObject;
-          if (typeof slot === "string") {
-            const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+      // Process time slots with simplified formatting
+      timeSlots.forEach((slot: string | TimeSlotObject) => {
+        if (typeof slot === "string") {
+          // Handle string format like "9:00 AM - 5:00 PM" or "09:00-17:00"
+          let formattedSlot = slot;
+          
+          // Check if it's already in 12-hour format
+          if (!slot.includes("AM") && !slot.includes("PM")) {
+            // Convert from 24-hour format to 12-hour format
+            const match = slot.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
             if (match) {
-              const [, start, end] = match;
-              timeSlotsByDay[day] = [
-                `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`,
-              ];
-            } else {
-              timeSlotsByDay[day] = [formatTime12Hour(slot)];
+              const [, startHour, startMin, endHour, endMin] = match;
+              const startTime = `${startHour.padStart(2, '0')}:${startMin}`;
+              const endTime = `${endHour.padStart(2, '0')}:${endMin}`;
+              formattedSlot = `${formatTime12Hour(startTime)} - ${formatTime12Hour(endTime)}`;
             }
-          } else if (
-            slot &&
-            typeof slot === "object" &&
-            "start" in slot &&
-            "end" in slot &&
-            slot.start &&
-            slot.end
-          ) {
-            timeSlotsByDay[day] = [
-              `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`,
-            ];
           }
-        });
-      } else if (availableDays.length === 1) {
-        // All slots go to the only day
-        timeSlotsByDay[availableDays[0]] = timeSlots
-          .map((slot: string | TimeSlotObject) => {
-            if (typeof slot === "string") {
-              const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
-              if (match) {
-                const [, start, end] = match;
-                return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
-              }
-              return formatTime12Hour(slot);
-            } else if (
-              slot &&
-              typeof slot === "object" &&
-              "start" in slot &&
-              "end" in slot &&
-              slot.start &&
-              slot.end
-            ) {
-              return `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
-            }
-            return undefined;
-          })
-          .filter((r): r is string => typeof r === "string");
-      } else {
-        // If timeSlots is an array of objects with day property, group by day
-        let hasObjectSlots = false;
-        timeSlots.forEach((slot: string | TimeSlotObject) => {
-          if (
-            slot &&
-            typeof slot === "object" &&
-            "day" in slot &&
-            "start" in slot &&
-            "end" in slot &&
-            slot.day &&
-            slot.start &&
-            slot.end
-          ) {
-            hasObjectSlots = true;
-            const day = slot.day;
-            const range = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
-            if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
-            timeSlotsByDay[day].push(range);
-          }
-        });
-        // If no object slots, treat all as string slots and assign to all days
-        if (!hasObjectSlots) {
+          
+          // Assign to all available days
           availableDays.forEach((day) => {
-            timeSlotsByDay[day] = timeSlots
-              .map((slot: string | TimeSlotObject) => {
-                if (typeof slot === "string") {
-                  const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
-                  if (match) {
-                    const [, start, end] = match;
-                    return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
-                  }
-                  return formatTime12Hour(slot);
-                }
-                return undefined;
-              })
-              .filter((r): r is string => typeof r === "string");
+            if (!timeSlotsByDay[day].includes(formattedSlot)) {
+              timeSlotsByDay[day].push(formattedSlot);
+            }
           });
+        } else if (
+          slot &&
+          typeof slot === "object" &&
+          "start" in slot &&
+          "end" in slot &&
+          slot.start &&
+          slot.end
+        ) {
+          // Handle object format with start/end properties
+          const formattedSlot = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+          const day = slot.day || availableDays[0]; // Use specified day or first available day
+          
+          if (availableDays.includes(day)) {
+            if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
+            if (!timeSlotsByDay[day].includes(formattedSlot)) {
+              timeSlotsByDay[day].push(formattedSlot);
+            }
+          }
         }
-      }
+      });
     }
+    
     mappedAvailability = {
       isAvailableNow,
       availableDays,

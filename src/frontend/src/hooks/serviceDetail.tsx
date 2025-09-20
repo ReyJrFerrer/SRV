@@ -1,15 +1,121 @@
 import { useState, useEffect, useCallback } from "react";
-import serviceCanisterService, {
+import {
   Service,
+  DayOfWeek,
+  DayAvailability,
 } from "../services/serviceCanisterService";
-import authCanisterService, {
+import {
   FrontendProfile,
 } from "../services/authCanisterService";
 import {
   enrichServiceWithProvider,
-  principalToString,
   getCategoryImage,
 } from "../utils/serviceHelpers";
+import { 
+  OrganizedWeeklySchedule,
+  useServiceManagement 
+} from "./serviceManagement";
+
+/**
+ * Helper function to organize weekly schedule similar to serviceManagement.tsx
+ */
+const organizeWeeklySchedule = (
+  weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+): OrganizedWeeklySchedule => {
+  const organized: OrganizedWeeklySchedule = {};
+
+  if (!weeklySchedule || weeklySchedule.length === 0) {
+    return organized;
+  }
+
+  // Map each day to its corresponding property
+  weeklySchedule.forEach(({ day, availability }) => {
+    switch (day) {
+      case "Monday":
+        organized.monday = availability;
+        break;
+      case "Tuesday":
+        organized.tuesday = availability;
+        break;
+      case "Wednesday":
+        organized.wednesday = availability;
+        break;
+      case "Thursday":
+        organized.thursday = availability;
+        break;
+      case "Friday":
+        organized.friday = availability;
+        break;
+      case "Saturday":
+        organized.saturday = availability;
+        break;
+      case "Sunday":
+        organized.sunday = availability;
+        break;
+    }
+  });
+
+  return organized;
+};
+
+/**
+ * Helper function to format time slots from availability data
+ */
+const formatTimeSlots = (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>): string[] => {
+  if (!weeklySchedule || weeklySchedule.length === 0) {
+    return ["9:00 AM - 5:00 PM"]; // Default time slot in 12-hour format
+  }
+
+  // Helper function to format time to 12-hour format
+  const formatTime12Hour = (time: string): string => {
+    const [hourStr, minuteStr] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+    if (isNaN(hour) || isNaN(minute)) return time;
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+    return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+  };
+
+  // Extract all unique time slots across all days and format them
+  const allTimeSlots = weeklySchedule
+    .filter((day) => day.availability.isAvailable)
+    .flatMap((day) =>
+      day.availability.slots.map((slot) => 
+        `${formatTime12Hour(slot.startTime)} - ${formatTime12Hour(slot.endTime)}`
+      )
+    );
+
+  // Remove duplicates and return unique time slots
+  const uniqueTimeSlots = Array.from(new Set(allTimeSlots));
+  
+  return uniqueTimeSlots.length > 0 ? uniqueTimeSlots : ["9:00 AM - 5:00 PM"];
+};
+
+/**
+ * Helper function to check if service is available now
+ */
+const isServiceAvailableNow = (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>): boolean => {
+  if (!weeklySchedule || weeklySchedule.length === 0) {
+    return true; // Default to available if no schedule is set
+  }
+
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }) as DayOfWeek;
+  const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+
+  const todaySchedule = weeklySchedule.find(day => day.day === currentDay);
+  
+  if (!todaySchedule || !todaySchedule.availability.isAvailable) {
+    return false;
+  }
+
+  // Check if current time falls within any available slot
+  return todaySchedule.availability.slots.some(slot => {
+    return currentTime >= slot.startTime && currentTime <= slot.endTime;
+  });
+};
 
 /**
  * Interface for formatted service that matches the ServiceDetailPageComponent requirements
@@ -117,16 +223,8 @@ const formatServiceForDetailPage = (
             .filter((day) => day.availability.isAvailable)
             .map((day) => day.day)
         : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], // Default schedule
-      timeSlots: service.weeklySchedule
-        ? service.weeklySchedule
-            .filter((day) => day.availability.isAvailable)
-            .flatMap((day) =>
-              day.availability.slots.map(
-                (slot) => `${slot.startTime}-${slot.endTime}`,
-              ),
-            )
-        : ["09:00-17:00"], // Default time slot
-      isAvailableNow: true, // Default value, could be calculated based on current time and availability
+      timeSlots: formatTimeSlots(service.weeklySchedule),
+      isAvailableNow: isServiceAvailableNow(service.weeklySchedule),
     },
     rating: {
       average: service.rating || 0,
@@ -156,6 +254,11 @@ const formatServiceForDetailPage = (
 };
 
 /**
+ * Export utility functions for external use
+ */
+export { organizeWeeklySchedule, formatTimeSlots, isServiceAvailableNow };
+
+/**
  * Custom hook to fetch service detail by ID with provider information
  * @param serviceId The service ID to fetch (from router slug)
  * @returns Object containing service details, provider, loading state, error and refetch function
@@ -165,6 +268,9 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
   const [provider, setProvider] = useState<FrontendProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use serviceManagement hook to get enhanced service data
+  const { getService: getEnhancedService } = useServiceManagement();
 
   const fetchServiceDetail = useCallback(async () => {
     if (!serviceId) {
@@ -178,10 +284,10 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
     setError(null);
 
     try {
-      // Fetch the service data
-      const serviceData = await serviceCanisterService.getService(serviceId);
+      // Use serviceManagement's getService method which already includes provider data
+      const enhancedServiceData = await getEnhancedService(serviceId);
 
-      if (!serviceData) {
+      if (!enhancedServiceData) {
         //console.warn(`Service with ID "${serviceId}" not found`);
         setService(null);
         setProvider(null);
@@ -189,41 +295,17 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         return;
       }
 
-      // Fetch provider information
-      try {
-        const providerIdStr = principalToString(serviceData.providerId);
-        const providerData =
-          await authCanisterService.getProfile(providerIdStr);
+      // Extract provider from enhanced service
+      const providerData = enhancedServiceData.providerProfile || null;
+      setProvider(providerData);
 
-        if (providerData) {
-          setProvider(providerData);
+      // Format service with the enhanced data
+      const formattedService = formatServiceForDetailPage(
+        enhancedServiceData,
+        providerData,
+      );
 
-          // Format service with provider data
-          const formattedService = formatServiceForDetailPage(
-            serviceData,
-            providerData,
-          );
-
-          setService(formattedService);
-        } else {
-          //console.warn("Provider not found for service");
-          setProvider(null);
-
-          // Format service without provider data
-          const formattedService = formatServiceForDetailPage(
-            serviceData,
-            null,
-          );
-          setService(formattedService);
-        }
-      } catch (providerError) {
-        //console.error("Failed to load provider information:", providerError);
-        setProvider(null);
-
-        // Still return service data even if provider fetch fails
-        const formattedService = formatServiceForDetailPage(serviceData, null);
-        setService(formattedService);
-      }
+      setService(formattedService);
     } catch (serviceError) {
       //console.error("Failed to load service data:", serviceError);
       setService(null);
@@ -232,7 +314,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
     } finally {
       setLoading(false);
     }
-  }, [serviceId]);
+  }, [serviceId, getEnhancedService]);
 
   useEffect(() => {
     fetchServiceDetail();
