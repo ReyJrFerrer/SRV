@@ -140,10 +140,9 @@ const TimeSlotInput: React.FC<{
           </div>
         </div>
 
-        <span className="hidden text-gray-500 lg:inline">to</span>
-        <span className="text-center text-sm font-medium text-gray-500 sm:hidden">
-          to
-        </span>
+        <div className="flex items-center justify-center py-1 lg:py-0">
+        <span className="text-sm font-medium text-gray-500 lg:text-base">to</span>
+      </div>
 
         {/* End Time */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

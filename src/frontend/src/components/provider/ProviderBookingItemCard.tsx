@@ -142,7 +142,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
-  const price = booking.price + commissionValidation.estimatedCommission; 
+  const price = booking.price + commissionValidation.estimatedCommission;
   const amountToPay = booking.amountPaid ? booking.amountPaid : 0;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
@@ -219,7 +219,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleReject = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Show confirmation dialog instead of window.confirm
     setShowDeclineConfirm(true);
   };
@@ -337,7 +337,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             </h3>
             <p className="mb-4 text-sm text-gray-700">
               Are you sure you want to decline this booking from{" "}
-              <b>{clientName}</b>? This action cannot be undone and the client will be notified.
+              <b>{clientName}</b>? This action cannot be undone and the client
+              will be notified.
             </p>
             <div className="flex gap-2">
               <button
@@ -360,391 +361,401 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       )}
 
       {isInProgress ? (
-    <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
-      {/* Booking Card */}
-      <div className="md:flex">
-        {/* Provider Profile Image */}
-        <div className="md:flex-shrink-0">
-          <div className="relative h-48 w-full object-cover md:w-48">
-            <img
-              src={serviceImage || "/default-client.svg"}
-              alt={clientName}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/default-client.svg";
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Booking Details */}
-        <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-          <div>
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
-                {serviceTitle}
-              </p>
-              {/* Booking status badge */}
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
-              >
-                {status.replace("_", " ")}
-              </span>
+        <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
+          {/* Booking Card */}
+          <div className="md:flex">
+            {/* Provider Profile Image */}
+            <div className="md:flex-shrink-0">
+              <div className="relative h-48 w-full object-cover md:w-48">
+                <img
+                  src={serviceImage || "/default-client.svg"}
+                  alt={clientName}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/default-client.svg";
+                  }}
+                />
+              </div>
             </div>
 
-            <h3
-              className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
-              title={clientName}
-            >
-              {clientName}
-            </h3>
-            <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
-
-            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              <p className="flex items-center">
-                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                {formatDate(booking.requestedDate)}
-              </p>
-
-              <p className="flex items-center">
-                <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="truncate">{locationAddress}</span>
-              </p>
-
-              {price !== undefined && (
-                <p className="flex items-center">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  <span className="font-semibold text-green-600">
-                    ₱{price.toFixed(2)}
+            {/* Booking Details */}
+            <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+              <div>
+                <div className="flex items-start justify-between">
+                  <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
+                    {serviceTitle}
+                  </p>
+                  {/* Booking status badge */}
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
+                  >
+                    {status.replace("_", " ")}
                   </span>
-                </p>
-              )}
+                </div>
 
-              {amountToPay !== undefined && (
-                <p className="flex items-center">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  <span className="font-semibold text-green-600">
-                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
-                  </span>
-                </p>
-              )}
+                <h3
+                  className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
+                  title={clientName}
+                >
+                  {clientName}
+                </h3>
+                <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Client's payment method: {
-                    booking.paymentMethod === 'CashOnHand' 
-                      ? 'Cash on Hand' 
-                      : booking.paymentMethod
-                  }
-                </span>
-              </p>
+                <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+                  <p className="flex items-center">
+                    <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    {formatDate(booking.requestedDate)}
+                  </p>
 
-              {duration !== "N/A" && (
-                <p className="flex items-center">
-                  <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  Duration: {duration}
-                </p>
-              )}
+                  <p className="flex items-center">
+                    <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="truncate">{locationAddress}</span>
+                  </p>
+
+                  {price !== undefined && (
+                    <p className="flex items-center">
+                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      <span className="font-semibold text-green-600">
+                        ₱{price.toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+
+                  {amountToPay !== undefined && (
+                    <p className="flex items-center">
+                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      <span className="font-semibold text-green-600">
+                        Client's amount to pay: ₱{amountToPay.toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-semibold text-green-600">
+                      Client's payment method:{" "}
+                      {booking.paymentMethod === "CashOnHand"
+                        ? "Cash on Hand"
+                        : booking.paymentMethod}
+                    </span>
+                  </p>
+
+                  {duration !== "N/A" && (
+                    <p className="flex items-center">
+                      <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      Duration: {duration}
+                    </p>
+                  )}
+                </div>
+                {notes && (
+                  <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                    <strong>Booking Notes:</strong> {notes}
+                  </div>
+                )}
+              </div>
+              {/* Action Buttons Section */}
+              <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+                {canAcceptOrDecline && (
+                  <div className="flex w-full flex-wrap gap-2">
+                    <button
+                      onClick={handleReject}
+                      disabled={isBookingActionInProgress(
+                        booking.id,
+                        "decline",
+                      )}
+                      className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+                    >
+                      <XCircleIcon className="mr-1 h-4 w-4" />
+                      {isBookingActionInProgress(booking.id, "decline")
+                        ? "Declining..."
+                        : "Decline"}
+                    </button>
+                    <button
+                      onClick={handleAccept}
+                      disabled={
+                        isBookingActionInProgress(booking.id, "accept") ||
+                        commissionValidation.hasInsufficientBalance
+                      }
+                      className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                    >
+                      <CheckCircleIcon className="mr-1 h-4 w-4" />
+                      {isBookingActionInProgress(booking.id, "accept")
+                        ? "Accepting..."
+                        : commissionValidation.hasInsufficientBalance
+                          ? "Insufficient Balance"
+                          : "Accept"}
+                    </button>
+                  </div>
+                )}
+                {(canStart || canComplete || isCompleted) && (
+                  <div className="flex w-full flex-wrap gap-2">
+                    <button
+                      onClick={handleChatClient}
+                      className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+                    >
+                      <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
+                      Chat {booking.clientName?.split(" ")[0] || "Client"}
+                    </button>
+                    {canStart && (
+                      <button
+                        onClick={handleStartService}
+                        disabled={
+                          isBookingActionInProgress(booking.id, "start") ||
+                          isScheduledForFuture // <-- lock if scheduled for future
+                        }
+                        className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
+                          isScheduledForFuture
+                            ? "cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
+                        title={
+                          isScheduledForFuture
+                            ? "You can only start the service on the scheduled date."
+                            : undefined
+                        }
+                      >
+                        <ArrowPathIcon className="mr-1 h-4 w-4" />
+                        {isBookingActionInProgress(booking.id, "start")
+                          ? "Starting..."
+                          : isScheduledForFuture
+                            ? "Start Service (Locked)"
+                            : "Start Service"}
+                      </button>
+                    )}
+                    {canComplete && (
+                      <button
+                        onClick={handleMarkAsCompleted}
+                        disabled={isBookingActionInProgress(
+                          booking.id,
+                          "complete",
+                        )}
+                        className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                      >
+                        <CheckCircleIcon className="mr-1 h-4 w-4" />
+                        {isBookingActionInProgress(booking.id, "complete")
+                          ? "Completing..."
+                          : "Mark Completed"}
+                      </button>
+                    )}
+                    {isCompleted && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/provider/review/${booking?.id}`);
+                        }}
+                        className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+                      >
+                        <StarIcon className="mr-1 h-4 w-4" />
+                        View My Reviews
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            {notes && (
-              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-                <strong>Booking Notes:</strong> {notes}
-              </div>
-            )}
-          </div>
-          {/* Action Buttons Section */}
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-            {canAcceptOrDecline && (
-              <div className="flex w-full flex-wrap gap-2">
-                <button
-                  onClick={handleReject}
-                  disabled={isBookingActionInProgress(booking.id, "decline")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
-                >
-                  <XCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "decline")
-                    ? "Declining..."
-                    : "Decline"}
-                </button>
-                <button
-                  onClick={handleAccept}
-                  disabled={
-                    isBookingActionInProgress(booking.id, "accept") ||
-                    commissionValidation.hasInsufficientBalance
-                  }
-                  className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
-                >
-                  <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "accept")
-                    ? "Accepting..."
-                    : commissionValidation.hasInsufficientBalance
-                      ? "Insufficient Balance"
-                      : "Accept"}
-                </button>
-              </div>
-            )}
-            {(canStart || canComplete || isCompleted) && (
-              <div className="flex w-full flex-wrap gap-2">
-                <button
-                  onClick={handleChatClient}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-                >
-                  <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
-                  Chat {booking.clientName?.split(" ")[0] || "Client"}
-                </button>
-                {canStart && (
-                  <button
-                    onClick={handleStartService}
-                    disabled={
-                      isBookingActionInProgress(booking.id, "start") ||
-                      isScheduledForFuture // <-- lock if scheduled for future
-                    }
-                    className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
-                      isScheduledForFuture
-                        ? "cursor-not-allowed opacity-60"
-                        : ""
-                    }`}
-                    title={
-                      isScheduledForFuture
-                        ? "You can only start the service on the scheduled date."
-                        : undefined
-                    }
-                  >
-                    <ArrowPathIcon className="mr-1 h-4 w-4" />
-                    {isBookingActionInProgress(booking.id, "start")
-                      ? "Starting..."
-                      : isScheduledForFuture
-                        ? "Start Service (Locked)"
-                        : "Start Service"}
-                  </button>
-                )}
-                {canComplete && (
-                  <button
-                    onClick={handleMarkAsCompleted}
-                    disabled={isBookingActionInProgress(booking.id, "complete")}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
-                  >
-                    <CheckCircleIcon className="mr-1 h-4 w-4" />
-                    {isBookingActionInProgress(booking.id, "complete")
-                      ? "Completing..."
-                      : "Mark Completed"}
-                  </button>
-                )}
-                {isCompleted && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/provider/review/${booking?.id}`);
-                    }}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-                  >
-                    <StarIcon className="mr-1 h-4 w-4" />
-                    View My Reviews
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </div>
-      </div>
-    </div>
-  ) : (
-    <Link
-      to={`/provider/booking/${booking.id}`}
-      className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-6"
-    >
-      {/* Booking Card */}
-      <div className="md:flex">
-        {/* Provider Profile Image */}
-        <div className="md:flex-shrink-0">
-          <div className="relative h-48 w-full object-cover md:w-48">
-            <img
-              src={serviceImage || "/default-client.svg"}
-              alt={clientName}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/default-client.svg";
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Booking Details */}
-        <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-          <div>
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
-                {serviceTitle}
-              </p>
-              {/* Booking status badge */}
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
-              >
-                {status.replace("_", " ")}
-              </span>
+      ) : (
+        <Link
+          to={`/provider/booking/${booking.id}`}
+          className="focus:ring-opacity-50 mb-6 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          {/* Booking Card */}
+          <div className="md:flex">
+            {/* Provider Profile Image */}
+            <div className="md:flex-shrink-0">
+              <div className="relative h-48 w-full object-cover md:w-48">
+                <img
+                  src={serviceImage || "/default-client.svg"}
+                  alt={clientName}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/default-client.svg";
+                  }}
+                />
+              </div>
             </div>
 
-            <h3
-              className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
-              title={clientName}
-            >
-              {clientName}
-            </h3>
-            <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
-
-            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              <p className="flex items-center">
-                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                {formatDate(booking.requestedDate)}
-              </p>
-
-              <p className="flex items-center">
-                <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="truncate">{locationAddress}</span>
-              </p>
-
-              {price !== undefined && (
-                <p className="flex items-center">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  <span className="font-semibold text-green-600">
-                    ₱{price.toFixed(2)}
+            {/* Booking Details */}
+            <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+              <div>
+                <div className="flex items-start justify-between">
+                  <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
+                    {serviceTitle}
+                  </p>
+                  {/* Booking status badge */}
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
+                  >
+                    {status.replace("_", " ")}
                   </span>
-                </p>
-              )}
+                </div>
 
-              {amountToPay !== undefined && (
-                <p className="flex items-center">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  <span className="font-semibold text-green-600">
-                    Client's amount to pay: ₱{amountToPay.toFixed(2)}
-                  </span>
-                </p>
-              )}
+                <h3
+                  className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
+                  title={clientName}
+                >
+                  {clientName}
+                </h3>
+                <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
-              {duration !== "N/A" && (
-                <p className="flex items-center">
-                  <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  Duration: {duration}
-                </p>
-              )}
+                <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+                  <p className="flex items-center">
+                    <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    {formatDate(booking.requestedDate)}
+                  </p>
 
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Client's payment method: {
-                    booking.paymentMethod === 'CashOnHand' 
-                      ? 'Cash on Hand' 
-                      : booking.paymentMethod
-                  }
-                </span>
-              </p>
+                  <p className="flex items-center">
+                    <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="truncate">{locationAddress}</span>
+                  </p>
+
+                  {price !== undefined && (
+                    <p className="flex items-center">
+                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      <span className="font-semibold text-green-600">
+                        ₱{price.toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+
+                  {amountToPay !== undefined && (
+                    <p className="flex items-center">
+                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      <span className="font-semibold text-green-600">
+                        Client's amount to pay: ₱{amountToPay.toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+
+                  {duration !== "N/A" && (
+                    <p className="flex items-center">
+                      <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                      Duration: {duration}
+                    </p>
+                  )}
+
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-semibold text-green-600">
+                      Client's payment method:{" "}
+                      {booking.paymentMethod === "CashOnHand"
+                        ? "Cash on Hand"
+                        : booking.paymentMethod}
+                    </span>
+                  </p>
+                </div>
+                {notes && (
+                  <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                    <strong>Booking Notes:</strong> {notes}
+                  </div>
+                )}
+              </div>
+              {/* Action Buttons Section */}
+              <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+                {canAcceptOrDecline && (
+                  <div className="flex w-full flex-wrap gap-2">
+                    <button
+                      onClick={handleReject}
+                      disabled={isBookingActionInProgress(
+                        booking.id,
+                        "decline",
+                      )}
+                      className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+                    >
+                      <XCircleIcon className="mr-1 h-4 w-4" />
+                      {isBookingActionInProgress(booking.id, "decline")
+                        ? "Declining..."
+                        : "Decline"}
+                    </button>
+                    <button
+                      onClick={handleAccept}
+                      disabled={
+                        isBookingActionInProgress(booking.id, "accept") ||
+                        commissionValidation.hasInsufficientBalance
+                      }
+                      className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                    >
+                      <CheckCircleIcon className="mr-1 h-4 w-4" />
+                      {isBookingActionInProgress(booking.id, "accept")
+                        ? "Accepting..."
+                        : commissionValidation.hasInsufficientBalance
+                          ? "Insufficient Balance"
+                          : "Accept"}
+                    </button>
+                  </div>
+                )}
+                {(canStart || canComplete || isCompleted) && (
+                  <div className="flex w-full flex-wrap gap-2">
+                    <button
+                      onClick={handleChatClient}
+                      className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+                    >
+                      <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
+                      Chat {booking.clientName?.split(" ")[0] || "Client"}
+                    </button>
+                    {canStart && (
+                      <button
+                        onClick={handleStartService}
+                        disabled={
+                          isBookingActionInProgress(booking.id, "start") ||
+                          isScheduledForFuture // <-- lock if scheduled for future
+                        }
+                        className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
+                          isScheduledForFuture
+                            ? "cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
+                        title={
+                          isScheduledForFuture
+                            ? "You can only start the service on the scheduled date."
+                            : undefined
+                        }
+                      >
+                        <ArrowPathIcon className="mr-1 h-4 w-4" />
+                        {isBookingActionInProgress(booking.id, "start")
+                          ? "Starting..."
+                          : isScheduledForFuture
+                            ? "Start Service (Locked)"
+                            : "Start Service"}
+                      </button>
+                    )}
+                    {canComplete && (
+                      <button
+                        onClick={handleMarkAsCompleted}
+                        disabled={isBookingActionInProgress(
+                          booking.id,
+                          "complete",
+                        )}
+                        className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                      >
+                        <CheckCircleIcon className="mr-1 h-4 w-4" />
+                        {isBookingActionInProgress(booking.id, "complete")
+                          ? "Completing..."
+                          : "Mark Completed"}
+                      </button>
+                    )}
+                    {isCompleted && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/provider/review/${booking?.id}`);
+                        }}
+                        className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+                      >
+                        <StarIcon className="mr-1 h-4 w-4" />
+                        View My Reviews
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            {notes && (
-              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-                <strong>Booking Notes:</strong> {notes}
-              </div>
-            )}
           </div>
-          {/* Action Buttons Section */}
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-            {canAcceptOrDecline && (
-              <div className="flex w-full flex-wrap gap-2">
-                <button
-                  onClick={handleReject}
-                  disabled={isBookingActionInProgress(booking.id, "decline")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
-                >
-                  <XCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "decline")
-                    ? "Declining..."
-                    : "Decline"}
-                </button>
-                <button
-                  onClick={handleAccept}
-                  disabled={
-                    isBookingActionInProgress(booking.id, "accept") ||
-                    commissionValidation.hasInsufficientBalance
-                  }
-                  className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
-                >
-                  <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "accept")
-                    ? "Accepting..."
-                    : commissionValidation.hasInsufficientBalance
-                      ? "Insufficient Balance"
-                      : "Accept"}
-                </button>
-              </div>
-            )}
-            {(canStart || canComplete || isCompleted) && (
-              <div className="flex w-full flex-wrap gap-2">
-                <button
-                  onClick={handleChatClient}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-                >
-                  <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
-                  Chat {booking.clientName?.split(" ")[0] || "Client"}
-                </button>
-                {canStart && (
-                  <button
-                    onClick={handleStartService}
-                    disabled={
-                      isBookingActionInProgress(booking.id, "start") ||
-                      isScheduledForFuture // <-- lock if scheduled for future
-                    }
-                    className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
-                      isScheduledForFuture
-                        ? "cursor-not-allowed opacity-60"
-                        : ""
-                    }`}
-                    title={
-                      isScheduledForFuture
-                        ? "You can only start the service on the scheduled date."
-                        : undefined
-                    }
-                  >
-                    <ArrowPathIcon className="mr-1 h-4 w-4" />
-                    {isBookingActionInProgress(booking.id, "start")
-                      ? "Starting..."
-                      : isScheduledForFuture
-                        ? "Start Service (Locked)"
-                        : "Start Service"}
-                  </button>
-                )}
-                {canComplete && (
-                  <button
-                    onClick={handleMarkAsCompleted}
-                    disabled={isBookingActionInProgress(booking.id, "complete")}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
-                  >
-                    <CheckCircleIcon className="mr-1 h-4 w-4" />
-                    {isBookingActionInProgress(booking.id, "complete")
-                      ? "Completing..."
-                      : "Mark Completed"}
-                  </button>
-                )}
-                {isCompleted && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/provider/review/${booking?.id}`);
-                    }}
-                    className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-                  >
-                    <StarIcon className="mr-1 h-4 w-4" />
-                    View My Reviews
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
-  )}
+        </Link>
+      )}
     </>
   );
 };

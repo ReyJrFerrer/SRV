@@ -17,22 +17,10 @@ import {
   initializeCanisterReferences,
   shouldInitializeCanisters,
 } from "../services/canisterInitService";
+import { useLocationStore, type LocationStatus, type Location, type ManualFields } from "../store/locationStore";
 
-// --- NEW: Types for Location State ---
-type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
-interface Location {
-  latitude: number;
-  longitude: number;
-}
-// --- Shared manual address fields ---
-export interface ManualFields {
-  barangay: string;
-  street: string;
-  houseNumber: string;
-  landmark?: string;
-  municipality?: string;
-  province?: string;
-}
+// Re-export types for backward compatibility
+export type { LocationStatus, Location, ManualFields };
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -42,11 +30,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  // --- Location properties ---
+  // --- Location properties (now delegated to Zustand store) ---
   location: Location | null;
   locationStatus: LocationStatus;
   setLocation: (status: LocationStatus, location?: Location | null) => void;
-  // --- Shared address state ---
+  // --- Shared address state (now delegated to Zustand store) ---
   addressMode: "context" | "manual";
   setAddressMode: (mode: "context" | "manual") => void;
   displayAddress: string;
@@ -92,49 +80,19 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Initialize location from GPS location stored in localStorage on mount
-  useEffect(() => {
-    // Check for stored GPS location first
-    const storedLocation = localStorage.getItem("userLocation");
-    const storedPermission = localStorage.getItem("locationPermission");
+  // --- Use Zustand location store instead of local state ---
+  const locationStore = useLocationStore();
 
-    if (storedLocation && storedPermission === "allowed") {
-      try {
-        const location = JSON.parse(storedLocation);
-        setLocationState(location);
-        setLocationStatus("allowed");
-      } catch {
-        // If parsing fails, clear invalid data
-        localStorage.removeItem("userLocation");
-        localStorage.removeItem("locationPermission");
-      }
-    }
-  }, []);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Location state ---
-  const [location, setLocationState] = useState<Location | null>(null);
-  const [locationStatus, setLocationStatus] =
-    useState<LocationStatus>("not_set");
-  // --- Shared address state ---
-  const [addressMode, setAddressMode] = useState<"context" | "manual">(
-    "context",
-  );
-  const [displayAddress, setDisplayAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [manualFields, setManualFields] = useState<ManualFields>({
-    barangay: "",
-    street: "",
-    houseNumber: "",
-    landmark: "",
-    municipality: "",
-    province: "",
-  });
+  // Initialize location store on mount
+  useEffect(() => {
+    locationStore.initialize();
+  }, [locationStore]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -160,25 +118,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
-
-  // --- Function to update location state ---
-  const setLocation = (
-    status: LocationStatus,
-    newLocation?: Location | null,
-  ) => {
-    setLocationStatus(status);
-    if (newLocation) {
-      setLocationState(newLocation);
-      // Store location in localStorage for persistence
-      localStorage.setItem("userLocation", JSON.stringify(newLocation));
-    } else if (status !== "allowed") {
-      // Clear stored location if status is not allowed
-      localStorage.removeItem("userLocation");
-      setLocationState(null);
-    }
-    // Store the permission status to avoid asking on every visit
-    localStorage.setItem("locationPermission", status);
-  };
 
   const login = async () => {
     if (!authClient) return;
@@ -232,15 +171,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
-    location,
-    locationStatus,
-    setLocation,
-    addressMode,
-    setAddressMode,
-    displayAddress,
-    setDisplayAddress,
-    manualFields,
-    setManualFields,
+    // Delegate location properties to Zustand store
+    location: locationStore.location,
+    locationStatus: locationStore.locationStatus,
+    setLocation: locationStore.setLocation,
+    addressMode: locationStore.addressMode,
+    setAddressMode: locationStore.setAddressMode,
+    displayAddress: locationStore.displayAddress,
+    setDisplayAddress: locationStore.setDisplayAddress,
+    manualFields: locationStore.manualFields,
+    setManualFields: locationStore.setManualFields,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

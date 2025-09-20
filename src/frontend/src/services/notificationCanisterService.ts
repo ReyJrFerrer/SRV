@@ -493,13 +493,13 @@ export const notificationCanisterService = {
       return result.ok;
     } catch (error) {
       console.error("Error creating notification:", error);
-      
+
       // Don't rethrow rate limit errors as they're expected
       if (error instanceof Error && error.message.includes("rate limit")) {
         console.warn("Rate limit reached, skipping notification creation");
         return "rate-limited";
       }
-      
+
       throw new Error(`Failed to create notification: ${error}`);
     }
   },

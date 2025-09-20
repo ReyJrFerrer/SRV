@@ -87,14 +87,21 @@ class NotificationIntegrationService {
               clientName: notification.clientName,
             },
           );
-          
+
           // If rate limited, skip but don't fail the push notification
           if (result === "rate-limited") {
-            console.info("Notification creation rate limited, proceeding with push notification only");
+            console.info(
+              "Notification creation rate limited, proceeding with push notification only",
+            );
           }
         } catch (canisterError) {
-          if (canisterError instanceof Error && canisterError.message.includes("rate limit")) {
-            console.info("Rate limit reached, proceeding with push notification only");
+          if (
+            canisterError instanceof Error &&
+            canisterError.message.includes("rate limit")
+          ) {
+            console.info(
+              "Rate limit reached, proceeding with push notification only",
+            );
           } else {
             console.warn(
               "Failed to create frontend notification in canister:",
@@ -114,13 +121,16 @@ class NotificationIntegrationService {
       if (success) {
         // Track that we've sent this notification
         this.sentNotifications.add(notification.id);
-        
+
         // Mark as push sent in canister (only if it's not a frontend-only notification)
         if (!notification.id.startsWith("frontend-")) {
           try {
             await notificationCanisterService.markAsPushSent(notification.id);
           } catch (markError) {
-            console.warn("Failed to mark notification as push sent:", markError);
+            console.warn(
+              "Failed to mark notification as push sent:",
+              markError,
+            );
           }
         }
       }
@@ -144,7 +154,9 @@ class NotificationIntegrationService {
 
     // Check if we already sent this notification
     if (this.sentNotifications.has(notification.id)) {
-      console.debug(`Provider notification ${notification.id} already sent, skipping`);
+      console.debug(
+        `Provider notification ${notification.id} already sent, skipping`,
+      );
       return false;
     }
 
@@ -166,14 +178,21 @@ class NotificationIntegrationService {
               amount: notification.amount,
             },
           );
-          
+
           // If rate limited, skip but don't fail the push notification
           if (result === "rate-limited") {
-            console.info("Provider notification creation rate limited, proceeding with push notification only");
+            console.info(
+              "Provider notification creation rate limited, proceeding with push notification only",
+            );
           }
         } catch (canisterError) {
-          if (canisterError instanceof Error && canisterError.message.includes("rate limit")) {
-            console.info("Rate limit reached, proceeding with push notification only");
+          if (
+            canisterError instanceof Error &&
+            canisterError.message.includes("rate limit")
+          ) {
+            console.info(
+              "Rate limit reached, proceeding with push notification only",
+            );
           } else {
             console.warn(
               "Failed to create frontend provider notification in canister:",
@@ -193,7 +212,7 @@ class NotificationIntegrationService {
       if (success) {
         // Track that we've sent this notification
         this.sentNotifications.add(notification.id);
-        
+
         // Mark as push sent in canister (only if it's not a frontend-only notification)
         if (!notification.id.startsWith("frontend-")) {
           try {

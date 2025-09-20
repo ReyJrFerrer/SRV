@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MapPinIcon } from "@heroicons/react/24/solid";
 import phLocations from "../../../data/ph_locations.json"; // Adjust path as needed
+import { useLocationStore } from "../../../store/locationStore";
 
 interface ServiceLocationProps {
   formData: {
@@ -14,46 +15,20 @@ interface ServiceLocationProps {
   };
 }
 
-const getCityAndProvince = (address: any) => {
-  // Try to get city/municipality
-  let city =
-    address.city ||
-    address.town ||
-    address.municipality ||
-    address.village ||
-    address.county ||
-    address.state_district ||
-    address.state ||
-    address.region ||
-    "";
-
-  // Try to get province
-  let province =
-    address.province || address.state || address.region || address.county || "";
-
-  // Special case for Baguio
-  if (
-    (province === "Cordillera Administrative Region" ||
-      address.state === "Cordillera Administrative Region" ||
-      address.region === "Cordillera Administrative Region") &&
-    (city === "Baguio" || city === "Baguio City")
-  ) {
-    city = "Baguio City";
-    province = "Benguet";
-  }
-
-  return { city, province };
-};
-
 const ServiceLocation: React.FC<ServiceLocationProps> = ({
   setFormData,
   validationErrors,
   formData,
 }) => {
-  const [displayAddress, setDisplayAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [error, setError] = useState<string | null>(null);
+  // Use Zustand location store
+  const {
+    location: geoLocation,
+    userAddress,
+    userProvince,
+    locationLoading,
+    locationStatus,
+    requestLocation,
+  } = useLocationStore();
 
   // New: location input mode
   const [locationInputMode, setLocationInputMode] = useState<
@@ -94,69 +69,60 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     }));
   };
 
-  // Only run geolocation if using detected mode
+  // Initialize location on component mount if using detected mode
   useEffect(() => {
-    if (locationInputMode !== "detected") return;
-
-    if (!navigator.geolocation) {
-      setDisplayAddress("Geolocation is not supported by your browser.");
-      setError("Geolocation not supported");
-      return;
+    if (locationInputMode === "detected") {
+      requestLocation();
     }
+  }, [locationInputMode, requestLocation]);
 
-    setDisplayAddress("Detecting location...");
-    setError(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            if (data && data.address) {
-              const { city, province } = getCityAndProvince(data.address);
-
-              setDisplayAddress([city, province].filter(Boolean).join(", "));
-
-              setFormData((prev: any) => ({
-                ...prev,
-                locationMunicipalityCity: city,
-                locationProvince: province,
-                locationLatitude: latitude.toString(),
-                locationLongitude: longitude.toString(),
-              }));
-            } else {
-              setDisplayAddress(
-                `Lat: ${latitude}, Lon: ${longitude} (address not found)`,
-              );
-            }
-          })
-          .catch(() => {
-            setDisplayAddress(
-              `Lat: ${latitude}, Lon: ${longitude} (failed to fetch address)`,
-            );
-            setError("Failed to fetch address from OpenStreetMap.");
-          });
-      },
-      (err) => {
-        setDisplayAddress(
-          "Location not shared. Please enable location access.",
-        );
-        setError(err.message);
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, [setFormData, locationInputMode]);
+  // Update form data when Zustand location changes
+  useEffect(() => {
+    if (locationInputMode === "detected" && geoLocation && userAddress && userProvince) {
+      setFormData((prev: any) => ({
+        ...prev,
+        locationMunicipalityCity: userAddress,
+        locationProvince: userProvince,
+        locationLatitude: geoLocation.latitude.toString(),
+        locationLongitude: geoLocation.longitude.toString(),
+      }));
+    }
+  }, [locationInputMode, geoLocation, userAddress, userProvince, setFormData]);
 
   const hasGPSCoordinates =
     !!formData.locationLatitude && !!formData.locationLongitude;
 
   const localLocationError =
-    locationInputMode === "detected" && !hasGPSCoordinates
+    locationInputMode === "detected" && !hasGPSCoordinates && locationStatus === "denied"
+      ? "Location access denied. Please enable location access or choose a different location."
+      : locationInputMode === "detected" && locationLoading
+      ? undefined // Don't show error while loading
+      : locationInputMode === "detected" && !hasGPSCoordinates
       ? "Still detecting your location, please wait"
       : undefined;
+
+  // Get display text for detected location
+  const getDisplayAddress = () => {
+    if (locationInputMode !== "detected") return "";
+    
+    if (locationLoading) {
+      return "Detecting location...";
+    }
+    
+    if (locationStatus === "denied") {
+      return "Location access denied. Please enable location access.";
+    }
+    
+    if (userAddress && userProvince) {
+      return `${userAddress}, ${userProvince}`;
+    }
+    
+    if (geoLocation) {
+      return `Lat: ${geoLocation.latitude.toFixed(6)}, Lon: ${geoLocation.longitude.toFixed(6)} (address not found)`;
+    }
+    
+    return "Detecting location...";
+  };
 
   return (
     <div className="mx-auto max-w-xl space-y-8 p-4">
@@ -204,13 +170,16 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                   Using Your Current Location
                 </span>
                 <span className="text-lg font-semibold break-words text-blue-900">
-                  {displayAddress}
+                  {getDisplayAddress()}
                 </span>
               </div>
             </div>
-            {error && (
+            {(locationStatus === "denied" || (locationInputMode === "detected" && !locationLoading && !userAddress)) && (
               <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
-                {error}
+                {locationStatus === "denied" 
+                  ? "Location access denied. Please enable location access or choose a different location."
+                  : "Failed to detect your location. Please try again or choose a different location."
+                }
               </div>
             )}
           </div>

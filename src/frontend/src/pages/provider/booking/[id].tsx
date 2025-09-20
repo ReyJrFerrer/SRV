@@ -248,11 +248,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
-  
+
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
-  
+
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
 
@@ -414,7 +414,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const handleDeclineBooking = async () => {
     if (!specificBooking) return;
-    
+
     // Show confirmation dialog instead of window.confirm
     setShowDeclineConfirm(true);
   };
@@ -422,7 +422,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // New function to handle the actual decline after confirmation
   const handleConfirmDecline = async () => {
     if (!specificBooking) return;
-    
+
     setIsDeclinining(true);
     try {
       const success = await declineBookingById(
@@ -692,7 +692,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </h3>
             <p className="mb-4 text-sm text-gray-700">
               Are you sure you want to decline this booking from{" "}
-              <b>{specificBooking?.clientName || 'this client'}</b>? This action cannot be undone and the client will be notified.
+              <b>{specificBooking?.clientName || "this client"}</b>? This action
+              cannot be undone and the client will be notified.
             </p>
             <div className="flex gap-2">
               <button
@@ -823,7 +824,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 <span className="font-medium text-gray-700">
                   Price:{" "}
                   <span className="font-semibold text-green-700">
-                    ₱{(price + commissionValidation.estimatedCommission).toFixed(2)} 
+                    ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}
                   </span>
                 </span>
               </div>
