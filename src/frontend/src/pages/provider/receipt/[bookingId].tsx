@@ -25,8 +25,12 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const { getBookingById, loading, isProviderAuthenticated, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const {
+    getBookingById,
+    loading,
+    isProviderAuthenticated,
+    checkCommissionValidation,
+  } = useProviderBookingManagement();
 
   // Get booking data from hook
   const booking = useMemo(() => {
@@ -193,22 +197,29 @@ const ReceiptPage: React.FC = () => {
               ₱{serviceTotal.toFixed(2)}
             </span>
           </div>
-          {paymentMethod === "Cash" && commissionValidation.estimatedCommission > 0 && (
-            <div className="flex justify-between">
-              <span className="text-gray-600">Commission:</span>
-              <span className="font-bold text-yellow-700">
-                ₱{commissionValidation.estimatedCommission.toFixed(2)}
-              </span>
-            </div>
-          )}
-          {paymentMethod === "Cash" && commissionValidation.estimatedCommission > 0 && (
-            <div className="flex justify-between border-t border-yellow-300 pt-2">
-              <span className="text-gray-600 font-semibold">Total Amount:</span>
-              <span className="font-bold text-yellow-700">
-                ₱{(serviceTotal + commissionValidation.estimatedCommission).toFixed(2)}
-              </span>
-            </div>
-          )}
+          {paymentMethod === "Cash" &&
+            commissionValidation.estimatedCommission > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Commission:</span>
+                <span className="font-bold text-yellow-700">
+                  ₱{commissionValidation.estimatedCommission.toFixed(2)}
+                </span>
+              </div>
+            )}
+          {paymentMethod === "Cash" &&
+            commissionValidation.estimatedCommission > 0 && (
+              <div className="flex justify-between border-t border-yellow-300 pt-2">
+                <span className="font-semibold text-gray-600">
+                  Total Amount:
+                </span>
+                <span className="font-bold text-yellow-700">
+                  ₱
+                  {(
+                    serviceTotal + commissionValidation.estimatedCommission
+                  ).toFixed(2)}
+                </span>
+              </div>
+            )}
           <div className="flex justify-between">
             <span className="text-gray-600">
               Amount Paid ({paymentMethod}):

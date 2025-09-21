@@ -138,10 +138,8 @@ const WalletPage: React.FC = () => {
             );
             const amount = statusResponse.paidAmount || 0;
 
-
             if (amount > 0) {
               try {
-
                 // Get payment channel info from the status response
                 const paymentChannel = statusResponse.paymentChannel || "GCash";
                 const description = `Wallet Topup. Transfer from ${paymentChannel}`;
@@ -171,8 +169,7 @@ const WalletPage: React.FC = () => {
           }
         } else {
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     // Remove completed/expired invoices from tracking
@@ -685,7 +682,8 @@ const WalletPage: React.FC = () => {
                 Complete Your Onboarding
               </h3>
               <p className="mt-2 text-sm text-gray-600">
-                Before you can use your wallet and topup, you need to complete your provider onboarding by setting up your payout information.
+                Before you can use your wallet and topup, you need to complete
+                your provider onboarding by setting up your payout information.
               </p>
             </div>
 
@@ -694,7 +692,9 @@ const WalletPage: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-blue-600" />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-800">What you'll set up:</p>
+                    <p className="font-medium text-blue-800">
+                      What you'll set up:
+                    </p>
                     <ul className="mt-2 space-y-1 text-blue-700">
                       <li>• GCash account for receiving payments</li>
                       <li>• Business information</li>

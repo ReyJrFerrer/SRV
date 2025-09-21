@@ -87,15 +87,21 @@ const CompleteServicePage: React.FC = () => {
     const received = parseFloat(cashReceived);
     if (!isNaN(received) && servicePrice > 0) {
       // For cash bookings, include commission in the total amount
-      const totalAmount = booking?.paymentMethod === "CashOnHand" 
-        ? servicePrice + commissionValidation.estimatedCommission 
-        : servicePrice;
+      const totalAmount =
+        booking?.paymentMethod === "CashOnHand"
+          ? servicePrice + commissionValidation.estimatedCommission
+          : servicePrice;
       const change = received - totalAmount;
       setChangeDue(change >= 0 ? change : 0);
     } else {
       setChangeDue(0);
     }
-  }, [cashReceived, servicePrice, booking?.paymentMethod, commissionValidation.estimatedCommission]);
+  }, [
+    cashReceived,
+    servicePrice,
+    booking?.paymentMethod,
+    commissionValidation.estimatedCommission,
+  ]);
 
   const handleCashReceivedChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -131,7 +137,8 @@ const CompleteServicePage: React.FC = () => {
       if (booking.paymentMethod === "CashOnHand") {
         // Cash payment handling
         const receivedAmount = parseFloat(cashReceived);
-        const totalAmount = servicePrice + commissionValidation.estimatedCommission;
+        const totalAmount =
+          servicePrice + commissionValidation.estimatedCommission;
 
         if (isNaN(receivedAmount) || receivedAmount < totalAmount) {
           setError(
@@ -305,7 +312,10 @@ const CompleteServicePage: React.FC = () => {
                 Service Total:
               </span>
               <span className="text-xl font-bold text-blue-700">
-                ₱{(servicePrice + commissionValidation.estimatedCommission).toFixed(2)}
+                ₱
+                {(
+                  servicePrice + commissionValidation.estimatedCommission
+                ).toFixed(2)}
               </span>
             </div>
 
@@ -354,7 +364,8 @@ const CompleteServicePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {parseFloat(cashReceived) >= (servicePrice + commissionValidation.estimatedCommission) &&
+                  {parseFloat(cashReceived) >=
+                    servicePrice + commissionValidation.estimatedCommission &&
                     servicePrice > 0 && (
                       <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
                         <span className="text-sm font-medium text-green-700">

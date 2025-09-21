@@ -283,7 +283,10 @@ export default function ProviderReviewView() {
                 <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
                 <div className="flex flex-col">
                   <span>
-                    <strong>Price:</strong> ₱{(price + commissionValidation.estimatedCommission).toFixed(2)}
+                    <strong>Price:</strong> ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}
                   </span>
                 </div>
               </div>

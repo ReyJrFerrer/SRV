@@ -14,7 +14,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import {useProviderBookingManagement} from "../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -28,9 +28,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   onUpdateStatus,
 }) => {
   const navigate = useNavigate();
-    const {
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -44,7 +42,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       refetch();
     }
   }, [userImageUrl, refetch]);
-    const [commissionValidation, setCommissionValidation] = useState<{
+  const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
     estimatedCommission: 0,
@@ -372,7 +370,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 <p className="flex items-center">
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-green-600">
-                    ₱{(booking.price + commissionValidation.estimatedCommission).toFixed(2)}
+                    ₱
+                    {(
+                      booking.price + commissionValidation.estimatedCommission
+                    ).toFixed(2)}
                   </span>
                 </p>
               )}

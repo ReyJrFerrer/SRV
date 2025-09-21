@@ -7,8 +7,7 @@ const FIREBASE_PROJECT_ID = "devsrv-rey";
 const FIREBASE_REGION = "us-central1";
 
 // Use local emulator in development, production URL in production
-const BASE_URL =
- `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
+const BASE_URL = `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
 
 export interface DirectPaymentRequest {
   bookingId: string;
@@ -94,15 +93,18 @@ export async function createDirectPayment(
   request: DirectPaymentRequest,
 ): Promise<PaymentResponse> {
   try {
-    const response = await fetch(`https://createdirectpayment-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://createdirectpayment-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: request,
+        }),
       },
-      body: JSON.stringify({
-        data: request,
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -126,15 +128,18 @@ export async function createTopupInvoice(
   request: TopupInvoiceRequest,
 ): Promise<PaymentResponse> {
   try {
-    const response = await fetch(`https://createtopupinvoice-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://createtopupinvoice-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: request,
+        }),
       },
-      body: JSON.stringify({
-        data: request,
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -191,15 +196,18 @@ export async function onboardProvider(
   request: OnboardProviderRequest,
 ): Promise<ProviderOnboardingResponse> {
   try {
-    const response = await fetch(`https://onboardprovider-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://onboardprovider-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: request,
+        }),
       },
-      body: JSON.stringify({
-        data: request,
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -226,15 +234,18 @@ export async function checkProviderOnboarding(
   providerId: string,
 ): Promise<boolean> {
   try {
-    const response = await fetch(`https://checkprovideronboarding-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://checkprovideronboarding-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: { providerId },
+        }),
       },
-      body: JSON.stringify({
-        data: { providerId },
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -307,15 +318,18 @@ export async function getPaymentData(
   invoiceId: string,
 ): Promise<PaymentDataResponse> {
   try {
-    const response = await fetch(`https://getpaymentdata-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://getpaymentdata-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: { invoiceId },
+        }),
       },
-      body: JSON.stringify({
-        data: { invoiceId },
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -392,15 +406,18 @@ export async function checkInvoiceStatus(
   invoiceId: string,
 ): Promise<InvoiceStatusResponse> {
   try {
-    const response = await fetch(`https://checkinvoicestatus-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://checkinvoicestatus-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: { invoiceId },
+        }),
       },
-      body: JSON.stringify({
-        data: { invoiceId },
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -427,15 +444,18 @@ export async function releaseHeldPayment(
   try {
     console.log("🔄 Releasing held payment:", request);
 
-    const response = await fetch(`https://releaseheldpayment-s4ulenxusq-uc.a.run.app`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `https://releaseheldpayment-s4ulenxusq-uc.a.run.app`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: request, // Wrap in data object to match other functions
+        }),
       },
-      body: JSON.stringify({
-        data: request, // Wrap in data object to match other functions
-      }),
-    });
+    );
 
     console.log("📡 Response status:", response.status);
 

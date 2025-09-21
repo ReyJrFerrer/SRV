@@ -41,8 +41,13 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { getBookingById, loading, error, isProviderAuthenticated, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const {
+    getBookingById,
+    loading,
+    error,
+    isProviderAuthenticated,
+    checkCommissionValidation,
+  } = useProviderBookingManagement();
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
@@ -320,12 +325,16 @@ const ActiveServicePage: React.FC = () => {
               <div className="flex items-center">
                 <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
                 <div className="flex flex-col">
-                <span className="font-medium text-gray-700">
-                  Price: {" "}
-                   <span className="font-semibold text-green-700">
-                    ₱{Number(booking.price + commissionValidation.estimatedCommission).toFixed(2)}
+                  <span className="font-medium text-gray-700">
+                    Price:{" "}
+                    <span className="font-semibold text-green-700">
+                      ₱
+                      {Number(
+                        booking.price +
+                          commissionValidation.estimatedCommission,
+                      ).toFixed(2)}
+                    </span>
                   </span>
-                </span>
                 </div>
               </div>
               <div className="flex items-center">
@@ -334,7 +343,7 @@ const ActiveServicePage: React.FC = () => {
                   <span className="font-medium text-gray-700">
                     Client's amount to pay:{" "}
                     <span className="font-semibold text-green-700">
-                      ₱{(Number(booking.amountPaid).toFixed(2))}
+                      ₱{Number(booking.amountPaid).toFixed(2)}
                     </span>
                   </span>
                 </div>

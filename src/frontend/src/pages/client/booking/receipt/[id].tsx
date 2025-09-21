@@ -95,8 +95,11 @@ const ReceiptPage: React.FC = () => {
   };
 
   const amountPaid = booking?.amountPaid || 0;
-  const totalServiceCost = booking?.price 
-    ? booking.price + (booking.paymentMethod === "CashOnHand" ? commissionValidation.estimatedCommission : 0)
+  const totalServiceCost = booking?.price
+    ? booking.price +
+      (booking.paymentMethod === "CashOnHand"
+        ? commissionValidation.estimatedCommission
+        : 0)
     : 0;
   const changeGiven =
     totalServiceCost && amountPaid ? amountPaid - totalServiceCost : 0;

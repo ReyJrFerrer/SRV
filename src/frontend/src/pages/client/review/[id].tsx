@@ -246,8 +246,14 @@ export const BookingReviewPage: React.FC = () => {
             {formatLocationString(booking.location)}
           </div>
           <div>
-            <span className="font-bold">Price:</span> ₱{booking.price 
-              ? (booking.price + (booking.paymentMethod === "CashOnHand" ? commissionValidation.estimatedCommission : 0)).toFixed(2)
+            <span className="font-bold">Price:</span> ₱
+            {booking.price
+              ? (
+                  booking.price +
+                  (booking.paymentMethod === "CashOnHand"
+                    ? commissionValidation.estimatedCommission
+                    : 0)
+                ).toFixed(2)
               : "TBD"}
           </div>
         </div>

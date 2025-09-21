@@ -125,8 +125,7 @@ const PayoutSettingsPage: React.FC = () => {
         providerId: providerId,
         gcashNumber: formData.gcashNumber,
         gcashName: formData.gcashName,
-        businessName:
-          formData.businessName || `${formData.gcashName} Services`,
+        businessName: formData.businessName || `${formData.gcashName} Services`,
         businessType: formData.businessType,
         email: formData.email,
         phoneNumber: formData.phoneNumber
@@ -196,7 +195,8 @@ const PayoutSettingsPage: React.FC = () => {
               Welcome to SRV!
             </h2>
             <p className="mb-6 text-gray-600">
-              Your provider account has been successfully set up! You can now Top-up your wallet and start offering your services.
+              Your provider account has been successfully set up! You can now
+              Top-up your wallet and start offering your services.
             </p>
             <div className="space-y-3">
               <button
@@ -229,7 +229,9 @@ const PayoutSettingsPage: React.FC = () => {
             <ArrowLeftIcon className="mr-2 h-5 w-5" />
             Back
           </button>
-          <h1 className="text-xl font-extrabold text-black">Complete Onboarding</h1>
+          <h1 className="text-xl font-extrabold text-black">
+            Complete Onboarding
+          </h1>
           <div className="w-16" /> {/* Spacer */}
         </div>
       </header>
@@ -243,7 +245,9 @@ const PayoutSettingsPage: React.FC = () => {
                 Set Up Your Provider Account
               </h2>
               <p className="text-sm text-gray-600">
-                Complete your onboarding by setting up your payout information. This enables you to top-up your wallet and accept client booking request to your services.
+                Complete your onboarding by setting up your payout information.
+                This enables you to top-up your wallet and accept client booking
+                request to your services.
               </p>
             </div>
 
@@ -395,7 +399,10 @@ const PayoutSettingsPage: React.FC = () => {
 
             <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
               <p className="text-xs text-blue-700">
-                <strong>Secure & Private:</strong> Your information is encrypted and stored securely. We use Xendit's secure payment platform to process transactions. This is a one-time setup to activate your provider account.
+                <strong>Secure & Private:</strong> Your information is encrypted
+                and stored securely. We use Xendit's secure payment platform to
+                process transactions. This is a one-time setup to activate your
+                provider account.
               </p>
             </div>
           </div>

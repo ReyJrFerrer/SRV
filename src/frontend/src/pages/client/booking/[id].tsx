@@ -621,7 +621,11 @@ const BookingDetailsPage: React.FC = () => {
                 <div className="flex items-start">
                   <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                   <span>
-                    <strong>Payment:</strong> ₱{(price + commissionValidation.estimatedCommission).toFixed(2)} (Cash)
+                    <strong>Payment:</strong> ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}{" "}
+                    (Cash)
                   </span>
                 </div>
               )}
