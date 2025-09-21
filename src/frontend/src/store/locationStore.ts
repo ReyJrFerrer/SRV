@@ -65,6 +65,32 @@ const fetchWithRetry = async (
 };
 
 const normalizeLocationData = (data: any) => {
+  // Handle BigDataCloud API response format
+  if (data?.city || data?.locality) {
+    const cityPart = data.city || data.locality || "";
+    const provinceVal = data.principalSubdivision || data.countryName || "";
+
+    // Special case: Baguio normalization
+    if (
+      (cityPart.toLowerCase() === "baguio" ||
+        cityPart.toLowerCase() === "baguio city") &&
+      ["cordillera administrative region", "car", "region"].includes(
+        provinceVal.toLowerCase(),
+      )
+    ) {
+      return {
+        address: "Baguio City",
+        province: "Benguet",
+      };
+    }
+
+    return {
+      address: cityPart || "Could not determine city",
+      province: provinceVal,
+    };
+  }
+
+  // Handle Nominatim API response format (fallback)
   if (!data?.address) return null;
 
   const { city, town, village, municipality, county, state, region, province } =
@@ -205,8 +231,9 @@ export const useLocationStore = create<LocationState>()(
             }
 
             try {
+              // Use BigDataCloud's free reverse geocoding API (supports CORS)
               const data = await fetchWithRetry(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
               );
 
               const normalized = normalizeLocationData(data);
