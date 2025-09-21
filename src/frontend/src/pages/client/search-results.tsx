@@ -31,7 +31,7 @@ const SearchResultsPage: React.FC = () => {
   const [pendingMinRating, setPendingMinRating] = useState(0);
   // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
-  const [maxPrice, setMaxPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
   // Sync pending state with applied state when opening filter panel
@@ -101,7 +101,7 @@ const SearchResultsPage: React.FC = () => {
     }));
 
     const filtered = safeResults.filter((service) => {
-      const priceMatch = service.price.amount >= maxPrice;
+      const priceMatch = service.price.amount <= maxPrice;
       const ratingMatch = service.rating.average >= minRating;
       return priceMatch && ratingMatch;
     });

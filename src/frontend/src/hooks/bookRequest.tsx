@@ -32,6 +32,8 @@ export interface BookingRequest {
   concerns?: string;
   notes?: string; // Optional notes for the booking
   amountToPay?: number;
+  paymentMethod: "CashOnHand" | "GCash" | "SRVWallet"; // Payment method chosen by client
+  paymentId?: string; // Optional payment ID for e-wallet payments (Xendit invoice ID)
 }
 
 export interface UseBookRequestReturn {
@@ -382,11 +384,8 @@ export const useBookRequest = (): UseBookRequestReturn => {
           throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
         }
 
-        // Get the first package ID (you might want to modify this based on your business logic)
-        const firstPackageId =
-          bookingData.packages.length > 0
-            ? bookingData.packages[0].id
-            : undefined;
+        // Extract all package IDs for multiple package booking
+        const packageIds = bookingData.packages.map((pkg) => pkg.id);
 
         // Create booking through canister
         const booking = await bookingCanisterService.createBooking(
@@ -395,9 +394,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
           totalPrice, // This should now be a valid number
           location,
           requestedDate,
-          firstPackageId,
+          packageIds, // Send array of all package IDs
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
+          bookingData.paymentMethod, // Pass the payment method to the booking
+          bookingData.paymentId, // Pass the payment ID (Xendit invoice ID) for e-wallet payments
         );
         //console.log("✅ Booking created successfully:", booking);
         return booking;
@@ -453,6 +454,19 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
     if (!bookingData.location) {
       errors.push("Location is required");
+    }
+
+    if (!bookingData.paymentMethod) {
+      errors.push("Payment method is required");
+    }
+
+    // Validate payment method is one of the allowed values
+    const validPaymentMethods = ["CashOnHand", "GCash", "SRVWallet"];
+    if (
+      bookingData.paymentMethod &&
+      !validPaymentMethods.includes(bookingData.paymentMethod)
+    ) {
+      errors.push("Invalid payment method selected");
     }
 
     return {

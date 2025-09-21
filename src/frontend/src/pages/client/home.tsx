@@ -12,6 +12,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
+import { useLocationStore } from "../../store/locationStore";
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
 
@@ -21,14 +22,8 @@ const ClientHomePage: React.FC = () => {
   const navigate = useNavigate();
   // --- State: Service category error ---
   const { error } = useServiceManagement();
-  // --- State: Location permission ---
-  const [locationStatus, setLocationStatus] = useState<
-    "pending" | "allowed" | "denied"
-  >("pending");
-  const [, setGeoLocation] = useState<{
-    province: string;
-    municipality: string;
-  } | null>(null);
+  // --- Use Zustand location store for location permission status ---
+  const { locationStatus } = useLocationStore();
   const { bookings } = useBookingManagement();
   const { submitFeedback, submitting } = useFeedback();
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
@@ -40,44 +35,9 @@ const ClientHomePage: React.FC = () => {
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
 
-  // --- Effect: Set page title and check geolocation permission status on mount ---
+  // --- Effect: Set page title on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          // Permission accepted
-          const { latitude, longitude } = position.coords;
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            );
-            const data = await res.json();
-            const province =
-              data.address.county ||
-              data.address.state ||
-              data.address.region ||
-              data.address.province ||
-              "";
-            const municipality =
-              data.address.city ||
-              data.address.town ||
-              data.address.village ||
-              "";
-            setGeoLocation({ province, municipality });
-            setLocationStatus("allowed");
-          } catch {
-            setLocationStatus("denied");
-          }
-        },
-        (_err) => {
-          // Permission denied
-          setLocationStatus("denied");
-        },
-      );
-    } else {
-      setLocationStatus("denied");
-    }
   }, []);
 
   useEffect(() => {

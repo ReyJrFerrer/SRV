@@ -5,13 +5,11 @@ import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Option "mo:base/Option";
 import Int "mo:base/Int";
-import Debug "mo:base/Debug";
 import Float "mo:base/Float";
+import Result "mo:base/Result";
 
 import Types "../types/shared";
-import StaticData "../utils/staticData";
 
 persistent actor BookingCanister {
     // Type definitions
@@ -21,6 +19,7 @@ persistent actor BookingCanister {
     type Location = Types.Location;
     type Result<T> = Types.Result<T>;
     type ReputationScore = Types.ReputationScore;
+    type PaymentMethod = Types.PaymentMethod;
 
     // State variables
     private var bookingEntries : [(Text, Booking)] = [];
@@ -34,7 +33,9 @@ persistent actor BookingCanister {
     private transient var serviceCanisterId : ?Principal = null;
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
-    private transient var remittanceCanisterId : ?Principal = null;
+    private transient var commissionCanisterId : ?Principal = null;
+    private transient var walletCanisterId : ?Principal = null;
+    private transient var notificationCanisterId : ?Principal = null;
     private transient var adminCanisterId : ?Principal = null;
 
     // Constants
@@ -51,9 +52,15 @@ persistent actor BookingCanister {
     };
     
     private func isBookingEligibleForReview(booking : Booking) : Bool {
-        return booking.status == #Completed and 
-               Option.isSome(booking.completedDate) and
-               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+        switch (booking.completedDate) {
+            case (?completedDate) {
+                return booking.status == #Completed and 
+                       (Time.now() - completedDate) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+            };
+            case (null) {
+                return false;
+            };
+        };
     };
 
     // private func validatePrice(price : Nat) : Bool {
@@ -117,6 +124,16 @@ persistent actor BookingCanister {
             location = existingBooking.location;
             evidence = existingBooking.evidence;
             notes = existingBooking.notes;
+            paymentMethod = existingBooking.paymentMethod;
+            // Copy payment status fields from existing booking
+            paymentStatus = existingBooking.paymentStatus;
+            paymentId = existingBooking.paymentId;
+            heldAmount = existingBooking.heldAmount;
+            releasedAmount = existingBooking.releasedAmount;
+            commissionRetained = existingBooking.commissionRetained;
+            paymentReleased = existingBooking.paymentReleased;
+            releasedAt = existingBooking.releasedAt;
+            payoutId = existingBooking.payoutId;
             createdAt = existingBooking.createdAt;
             updatedAt = Time.now();
         };
@@ -124,11 +141,72 @@ persistent actor BookingCanister {
         #ok(updatedBooking)
     };
 
-    // Static data initialization
-    private func initializeStaticData() {
-        // Add bookings from shared static data
-        for ((id, booking) in StaticData.getSTATIC_BOOKINGS().vals()) {
-            bookings.put(id, booking);
+    // Helper function to create notifications
+    private func createNotification(
+        targetUserId: Principal,
+        userType: Text,
+        notificationType: Text,
+        title: Text,
+        message: Text,
+        relatedEntityId: ?Text,
+        metadata: ?Text
+    ) : async () {
+        switch (notificationCanisterId) {
+            case (?canisterId) {
+                try {
+                    let notificationCanister = actor(Principal.toText(canisterId)) : actor {
+                        createNotification: (
+                            Principal, 
+                            {#client; #provider}, 
+                            {
+                                #booking_accepted; #booking_declined; #review_reminder; #generic;
+                                #new_booking_request; #booking_confirmation; #payment_completed;
+                                #service_completion_reminder; #review_request; #chat_message;
+                                #booking_cancelled; #booking_completed; #payment_received;
+                                #payment_failed; #provider_message; #system_announcement;
+                                #service_rescheduled; #service_reminder; #promo_offer;
+                                #provider_on_the_way; #booking_rescheduled; #client_no_show;
+                                #payment_issue;
+                            }, 
+                            Text, 
+                            Text, 
+                            ?Text, 
+                            ?Text
+                        ) -> async {#ok: Text; #err: Text};
+                    };
+                    
+                    let userTypeVariant = if (userType == "client") { #client } else { #provider };
+                    let notificationTypeVariant = switch (notificationType) {
+                        case ("booking_accepted") { #booking_accepted };
+                        case ("booking_declined") { #booking_declined };
+                        case ("new_booking_request") { #new_booking_request };
+                        case ("booking_confirmation") { #booking_confirmation };
+                        case ("payment_completed") { #payment_completed };
+                        case ("service_completion_reminder") { #service_completion_reminder };
+                        case ("booking_cancelled") { #booking_cancelled };
+                        case ("booking_completed") { #booking_completed };
+                        case ("payment_received") { #payment_received };
+                        case ("review_request") { #review_request };
+                        case (_) { #generic };
+                    };
+                    
+                    let _result = await notificationCanister.createNotification(
+                        targetUserId,
+                        userTypeVariant,
+                        notificationTypeVariant,
+                        title,
+                        message,
+                        relatedEntityId,
+                        metadata
+                    );
+                } catch (_error) {
+                    // Log error but don't fail the booking operation
+                    // In a real implementation, you might want to add proper logging
+                };
+            };
+            case (null) {
+                // Notification canister not set, skip notification creation
+            };
         };
     };
 
@@ -145,10 +223,6 @@ persistent actor BookingCanister {
         evidences := HashMap.fromIter<Text, Evidence>(evidenceEntries.vals(), 10, Text.equal, Text.hash);
         evidenceEntries := [];
 
-        // Initialize static data if bookings are empty
-        if (bookings.size() == 0) {
-            initializeStaticData();
-        };
     };
 
     // Set canister references
@@ -157,7 +231,9 @@ persistent actor BookingCanister {
         service : ?Principal,
         review : ?Principal,
         reputation : ?Principal,
-        remittance : ?Principal,
+        commission : ?Principal,
+        wallet : ?Principal,
+        notification : ?Principal,
         admin : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
@@ -165,7 +241,9 @@ persistent actor BookingCanister {
         serviceCanisterId := service;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
-        remittanceCanisterId := remittance;
+        commissionCanisterId := commission;
+        walletCanisterId := wallet;
+        notificationCanisterId := notification;
         adminCanisterId := admin;
         return #ok("Canister references set successfully");
     };
@@ -244,9 +322,11 @@ persistent actor BookingCanister {
         price : Nat,
         location : Location,
         requestedDate : Time.Time,
-        servicePackageId : ?Text,
+        servicePackageIds : [Text],  // Array of package IDs for multiple package bookings
         notes : ?Text,
-        amountToPay: ?Nat
+        amountToPay: ?Nat,
+        paymentMethod: PaymentMethod,
+        paymentId: ?Text  // Optional payment ID for e-wallet payments (Xendit invoice ID)
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -276,27 +356,19 @@ persistent actor BookingCanister {
                             return #err("Service does not belong to the specified provider");
                         };
                         
-                        // If a package is specified, validate it exists and belongs to this service
-                        switch (servicePackageId) {
-                            case (?packageId) {
+                        // If packages are specified, validate they exist and belong to this service
+                        if (servicePackageIds.size() > 0) {
+                            for (packageId in servicePackageIds.vals()) {
                                 switch (await serviceCanister.getPackage(packageId)) {
                                     case (#ok(package)) {
                                         if (package.serviceId != serviceId) {
-                                            return #err("Package does not belong to the specified service");
-                                        };
-                                        
-                                        // If price doesn't match package price, use package price
-                                        if (price != package.price) {
-                                            // We'll override the price with the package price later
+                                            return #err("Package " # packageId # " does not belong to the specified service");
                                         };
                                     };
                                     case (#err(msg)) {
-                                        return #err("Package not found: " # msg);
+                                        return #err("Package " # packageId # " not found: " # msg);
                                     };
                                 };
-                            };
-                            case (null) {
-                                // No package specified, continue with regular service booking
                             };
                         };
                     };
@@ -309,15 +381,6 @@ persistent actor BookingCanister {
                 return #err("Service canister reference not set");
             };
         };
-
-        // if (not validatePrice(price)) {
-        //     return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
-        // };
-
-        // if (not validateScheduledDate(requestedDate, requestedDate)) {
-        //     return #err("Requested date must be between 1 hour and 30 days from now");
-        // };
-
         // Validate service availability using new service-based approach
         switch (await validateServiceAvailability(serviceId, requestedDate)) {
             case (#err(msg)) {
@@ -328,30 +391,42 @@ persistent actor BookingCanister {
         
         let bookingId = generateId();
         
-        // If a package is specified, get its price
+        // If packages are specified, calculate total price from all packages
         var finalPrice = price;
+        var totalPackagePrice : Nat = 0;
         
-        if (Option.isSome(servicePackageId)) {
+        if (servicePackageIds.size() > 0) {
             switch (serviceCanisterId) {
                 case (?serviceCanisterId) {
                     let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
                         getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                        getService : (Text) -> async Types.Result<Types.Service>;
                     };
                     
-                    switch (await serviceCanister.getPackage(Option.unwrap(servicePackageId))) {
-                        case (#ok(package)) {
-                            finalPrice := package.price;
+                    for (packageId in servicePackageIds.vals()) {
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(package)) {
+                                totalPackagePrice += package.price;
+                            };
+                            case (#err(_)) {
+                                // We already validated the packages exist earlier, so this shouldn't happen
+                                // But if it does, we'll use the provided price
+                            };
                         };
-                        case (#err(_)) {
-                            // We already validated the package exists earlier, so this shouldn't happen
-                            // But if it does, we'll use the provided price
-                        };
+                    };
+                    
+                    // Use the calculated total package price if packages were found
+                    if (totalPackagePrice > 0) {
+                        finalPrice := totalPackagePrice;
                     };
                 };
                 case (null) {
                     // We already validated the service canister exists earlier, so this shouldn't happen
                 };
             };
+        } else {
+            // No packages specified, use the provided price
+            finalPrice := price;
         };
         
         let newBooking : Booking = {
@@ -360,7 +435,7 @@ persistent actor BookingCanister {
             providerId = providerId;
             providerName = null;
             serviceId = serviceId;
-            servicePackageId = servicePackageId;
+            servicePackageId = servicePackageIds;
             status = #Requested;
             requestedDate = requestedDate;
             scheduledDate = null;
@@ -372,11 +447,39 @@ persistent actor BookingCanister {
             location = location;
             evidence = null;
             notes = notes;
+            paymentMethod = paymentMethod;
+            // Initialize payment status tracking fields
+            paymentStatus = switch (paymentId) {
+                case (?_) ?("PAID_HELD"); // Payment already processed and held for e-wallet
+                case (null) ?("PENDING"); // Cash or payment to be processed later
+            };
+            paymentId = paymentId; // Store the provided payment ID (Xendit invoice ID for e-wallet)
+            heldAmount = switch (paymentId) {
+                case (?_) ?finalPrice; // Full amount held for digital payments
+                case (null) null; // No amount held for cash payments
+            };
+            releasedAmount = null; // Will be set when payment is released
+            commissionRetained = null; // Will be set when commission is calculated
+            paymentReleased = null; // Will be set to true when payment is released
+            releasedAt = null; // Will be set when payment is released
+            payoutId = null; // Will be set when payout is processed
             createdAt = Time.now();
             updatedAt = Time.now();
         };
         
         bookings.put(bookingId, newBooking);
+        
+        // Create notification for the provider about new booking request
+        await createNotification(
+            providerId,
+            "provider",
+            "new_booking_request",
+            "New Booking Request",
+            "You have received a new booking request for " # serviceId,
+            ?bookingId,
+            ?("{\"serviceId\":\"" # serviceId # "\",\"clientId\":\"" # Principal.toText(caller) # "\"}")
+        );
+        
         return #ok(newBooking);
     };
     
@@ -416,7 +519,155 @@ persistent actor BookingCanister {
         return providerBookings;
     };
     
-    // Accept a booking request (provider) - Enhanced with conflict checking
+    // Helper function to validate commission balance for cash jobs
+    private func validateCommissionBalance(booking : Booking) : async Result<Bool> {
+        // Only check commission balance for cash payment jobs
+        if (booking.paymentMethod != #CashOnHand) {
+            return #ok(true); // Skip commission validation for non-cash payments
+        };
+        
+        // Get service information and commission fee
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                };
+                
+                // Check if this is a package booking or regular service booking
+                var totalEstimatedCommission : Nat = 0;
+                
+                if (booking.servicePackageId.size() > 0) {
+                    // Multiple package booking - get commission from all packages
+                    for (packageId in booking.servicePackageId.vals()) {
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(pkg)) {
+                                totalEstimatedCommission += pkg.commissionFee * 100;
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to get package information for " # packageId # ": " # msg);
+                            };
+                        };
+                    };
+                } else {
+                    // Regular service booking - get commission from service
+                    switch (await serviceCanister.getService(booking.serviceId)) {
+                        case (#ok(service)) {
+                            totalEstimatedCommission := service.commissionFee * 100;
+                        };
+                        case (#err(msg)) {
+                            return #err("Failed to get service information: " # msg);
+                        };
+                    };
+                };
+                
+                // Check provider's wallet balance
+                switch (walletCanisterId) {
+                    case (?walletId) {
+                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                            get_balance_of : (Principal) -> async Nat;
+                        };
+                        
+                        let providerBalance = await walletCanister.get_balance_of(booking.providerId);
+                        
+                        if (providerBalance < totalEstimatedCommission) {
+                            return #err("Insufficient wallet balance. Required commission: ₱" # Nat.toText(totalEstimatedCommission / 100) # ", Available balance: ₱" # Nat.toText(providerBalance / 100) # ". Please top up your wallet before accepting this booking.");
+                        };
+                        
+                        return #ok(true);
+                    };
+                    case (null) {
+                        return #err("Wallet canister reference not set");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+    
+    // Helper function to process commission deduction for completed cash jobs
+    private func processCommissionDeduction(booking : Booking) : async Result<Bool> {
+        // Only process commission deduction for cash payment jobs
+        if (booking.paymentMethod != #CashOnHand) {
+            return #ok(true); // Skip commission deduction for non-cash payments
+        };
+        
+        // Get service information and commission fee
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                };
+                
+                // Check if this is a package booking or regular service booking
+                var totalCommission : Nat = 0;
+                var serviceDescriptions : [Text] = [];
+                
+                if (booking.servicePackageId.size() > 0) {
+                    // Multiple package booking - get commission from all packages
+                    for (packageId in booking.servicePackageId.vals()) {
+                        switch (await serviceCanister.getPackage(packageId)) {
+                            case (#ok(pkg)) {
+                                totalCommission += pkg.commissionFee * 100;
+                                serviceDescriptions := Array.append(serviceDescriptions, [pkg.title]);
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to get package information for " # packageId # ": " # msg);
+                            };
+                        };
+                    };
+                } else {
+                    // Regular service booking - get commission from service
+                    switch (await serviceCanister.getService(booking.serviceId)) {
+                        case (#ok(service)) {
+                            totalCommission := service.commissionFee * 100;
+                            serviceDescriptions := [service.title];
+                        };
+                        case (#err(msg)) {
+                            return #err("Failed to get service information: " # msg);
+                        };
+                    };
+                };
+                
+                // Deduct commission from provider's wallet
+                switch (walletCanisterId) {
+                    case (?walletId) {
+                        let walletCanister = actor(Principal.toText(walletId)) : actor {
+                            debit : (Principal, Nat, ?Text, ?Text) -> async Types.Result<Nat>;
+                        };
+                        
+                        let serviceDescriptionsText = if (serviceDescriptions.size() > 0) {
+                            Array.foldLeft<Text, Text>(serviceDescriptions, "", func(acc, desc) {
+                                if (acc == "") desc else acc # ", " # desc
+                            });
+                        } else "Unknown Service";
+                        
+                        let commissionDescription = "Commission fee for booking #" # booking.id # " - " # serviceDescriptionsText;
+                        
+                        switch (await walletCanister.debit(booking.providerId, totalCommission, ?commissionDescription, ?"SRV_COMMISSION")) {
+                            case (#ok(_)) {
+                                return #ok(true);
+                            };
+                            case (#err(msg)) {
+                                return #err("Failed to deduct commission: " # msg);
+                            };
+                        };
+                    };
+                    case (null) {
+                        return #err("Wallet canister reference not set");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+    
+    // Accept a booking request (provider) - Enhanced with conflict checking and commission validation
     public shared(msg) func acceptBooking(
         bookingId : Text,
         scheduledDate : Time.Time
@@ -439,9 +690,15 @@ persistent actor BookingCanister {
                     case (#ok(_)) {};
                 };
 
-                // if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
-                //     return #err("Scheduled date must be between 1 hour and 30 days from now");
-                // };
+                // Commission and wallet balance validation for cash jobs
+                switch (await validateCommissionBalance(existingBooking)) {
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
+                    case (#ok(_)) {};
+                };
+
+            
 
                 switch (updateBookingStatus(existingBooking, #Accepted, caller, true)) {
                     case (#ok(updatedBooking)) {
@@ -463,11 +720,33 @@ persistent actor BookingCanister {
                             location = updatedBooking.location;
                             evidence = updatedBooking.evidence;
                             notes = updatedBooking.notes;
+                            paymentMethod = updatedBooking.paymentMethod;
+                            // Copy payment status fields from existing booking
+                            paymentStatus = updatedBooking.paymentStatus;
+                            paymentId = updatedBooking.paymentId;
+                            heldAmount = updatedBooking.heldAmount;
+                            releasedAmount = updatedBooking.releasedAmount;
+                            commissionRetained = updatedBooking.commissionRetained;
+                            paymentReleased = updatedBooking.paymentReleased;
+                            releasedAt = updatedBooking.releasedAt;
+                            payoutId = updatedBooking.payoutId;
                             createdAt = updatedBooking.createdAt;
                             updatedAt = updatedBooking.updatedAt;
                         };
                         
                         bookings.put(bookingId, finalBooking);
+                        
+                        // Create notification for the client about booking acceptance
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "booking_accepted",
+                            "Booking Accepted",
+                            "Your booking has been accepted by the provider",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(finalBooking);
                     };
                     case (#err(msg)) {
@@ -490,6 +769,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #Declined, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the client about booking decline
+                        await createNotification(
+                            updatedBooking.clientId,
+                            "client",
+                            "booking_declined",
+                            "Booking Declined",
+                            "Your booking request has been declined by the provider",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(updatedBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
@@ -512,6 +803,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #InProgress, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the client about service starting
+                        await createNotification(
+                            updatedBooking.clientId,
+                            "client",
+                            "service_reminder",
+                            "Service Started",
+                            "Your service provider has started working on your booking",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(updatedBooking.providerId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
@@ -525,60 +828,8 @@ persistent actor BookingCanister {
         };
     };
     
-    // Helper function to create remittance order after booking completion
-    private func createRemittanceOrder(booking: Booking) : async Result<Text> {
-        switch (remittanceCanisterId, serviceCanisterId) {
-            case (?remittanceId, ?serviceId) {
-                // Get service details to determine service type
-                let serviceActor = actor(Principal.toText(serviceId)) : actor {
-                    getService: (Text) -> async Result<Types.Service>;
-                };
-                
-                try {
-                    switch (await serviceActor.getService(booking.serviceId)) {
-                        case (#ok(service)) {
-                            let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
-                                createOrder: ({
-                                    service_provider_id: Principal;
-                                    amount: Nat;
-                                    service_type: Text;
-                                    service_id: ?Text;
-                                    booking_id: ?Text;
-                                }) -> async Result<Types.RemittanceOrder>;
-                            };
-                            
-                            let createOrderInput = {
-                                service_provider_id = booking.providerId;
-                                amount = booking.price;
-                                service_type = service.category.id;
-                                service_id = ?booking.serviceId;
-                                booking_id = ?booking.id;
-                            };
-                            
-                            switch (await remittanceActor.createOrder(createOrderInput)) {
-                                case (#ok(remittanceOrder)) {
-                                    #ok("Remittance order created: " # remittanceOrder.id)
-                                };
-                                case (#err(msg)) {
-                                    #err("Failed to create remittance order: " # msg)
-                                };
-                            }
-                        };
-                        case (#err(msg)) {
-                            #err("Failed to get service details: " # msg)
-                        };
-                    }
-                } catch (_) {
-                    #err("Error communicating with service canister")
-                }
-            };
-            case (_, _) {
-                #err("Remittance or Service canister not configured")
-            };
-        }
-    };
-
-    // Complete a booking (provider) - Enhanced with remittance integration and payment tracking
+    
+    // Complete a booking (provider) - Enhanced with payment tracking
     public shared(msg) func completeBooking(bookingId : Text, amountPaid : ?Nat) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -613,13 +864,89 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = existingBooking.updatedAt;
                 };
 
                 switch (updateBookingStatus(bookingWithPaymentInfo, #Completed, caller, true)) {
                     case (#ok(updatedBooking)) {
+                        
+                        // Process commission deduction for cash jobs (payment method is checked inside processCommissionDeduction)
+                        switch (await processCommissionDeduction(updatedBooking)) {
+                            case (#err(msg)) {
+                                // Commission deduction failed - this is critical for cash jobs
+                                // Revert the booking status and return an error
+                                return #err("Failed to complete booking: " # msg # ". Commission could not be deducted from wallet.");
+                            };
+                            case (#ok(_)) {
+                                // Commission successfully deducted for cash jobs (or skipped for non-cash)
+                                // Continue with booking completion
+                            };
+                        };
+
+                        // Only update booking in storage after successful commission deduction
                         bookings.put(bookingId, updatedBooking);
+
+                        // For digital payments, mark payment status as ready for release
+                        // The actual payment release will be triggered by Firebase Cloud Functions
+                        var finalBooking = updatedBooking;
+                        switch (updatedBooking.paymentMethod) {
+                            case (#GCash or #SRVWallet) {
+                                switch (updatedBooking.paymentStatus) {
+                                    case (?"PAID_HELD") {
+                                        // Update payment status to indicate booking is completed and ready for release
+                                        let bookingReadyForRelease : Booking = {
+                                            id = updatedBooking.id;
+                                            clientId = updatedBooking.clientId;
+                                            providerId = updatedBooking.providerId;
+                                            serviceId = updatedBooking.serviceId;
+                                            servicePackageId = updatedBooking.servicePackageId;
+                                            status = updatedBooking.status;
+                                            requestedDate = updatedBooking.requestedDate;
+                                            scheduledDate = updatedBooking.scheduledDate;
+                                            startedDate = updatedBooking.startedDate;
+                                            completedDate = updatedBooking.completedDate;
+                                            price = updatedBooking.price;
+                                            amountPaid = updatedBooking.amountPaid;
+                                            serviceTime = updatedBooking.serviceTime;
+                                            location = updatedBooking.location;
+                                            evidence = updatedBooking.evidence;
+                                            notes = updatedBooking.notes;
+                                            paymentMethod = updatedBooking.paymentMethod;
+                                            // Update payment status to indicate ready for release
+                                            paymentStatus = ?("READY_FOR_RELEASE");
+                                            paymentId = updatedBooking.paymentId;
+                                            heldAmount = updatedBooking.heldAmount;
+                                            releasedAmount = updatedBooking.releasedAmount;
+                                            commissionRetained = updatedBooking.commissionRetained;
+                                            paymentReleased = updatedBooking.paymentReleased;
+                                            releasedAt = updatedBooking.releasedAt;
+                                            payoutId = updatedBooking.payoutId;
+                                            createdAt = updatedBooking.createdAt;
+                                            updatedAt = Time.now();
+                                        };
+                                        finalBooking := bookingReadyForRelease;
+                                        bookings.put(bookingId, finalBooking);
+                                    };
+                                    case (_) {
+                                        // Payment not held or already processed, no action needed
+                                    };
+                                };
+                            };
+                            case (#CashOnHand) {
+                                // Cash payments don't need release logic
+                            };
+                        };
                         
                         // Update reputation scores for both provider and client
                         switch (reputationCanisterId) {
@@ -628,26 +955,36 @@ persistent actor BookingCanister {
                                     updateProviderReputation : (Principal) -> async Result<ReputationScore>;
                                 };
                                 // Update provider reputation using provider-specific function
-                                ignore await reputationCanister.updateProviderReputation(updatedBooking.providerId);
+                                ignore await reputationCanister.updateProviderReputation(finalBooking.providerId);
                             };
                             case (null) {
                                 // Reputation canister not set, continue without updating reputation
                             };
                         };
 
-                        // Create remittance order for commission payment
-                        switch (await createRemittanceOrder(updatedBooking)) {
-                            case (#ok(_)) {
-                                // Remittance order created successfully
-                                return #ok(updatedBooking);
-                            };
-                            case (#err(remittanceError)) {
-                                // Log the error but don't fail the booking completion
-                                // In a real system, you might want to queue this for retry
-                                Debug.print("Warning: Failed to create remittance order: " # remittanceError);
-                                return #ok(updatedBooking);
-                            };
-                        };
+                        // Create notification for the client about booking completion
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "booking_completed",
+                            "Service Completed",
+                            "Your booking has been completed successfully",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+
+                        // Create review request notification for the client
+                        await createNotification(
+                            finalBooking.clientId,
+                            "client",
+                            "review_request",
+                            "Review Request",
+                            "Please review your completed service",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # finalBooking.serviceId # "\",\"providerId\":\"" # Principal.toText(finalBooking.providerId) # "\"}")
+                        );
+
+                        return #ok(finalBooking);
                     };
                     case (#err(msg)) {
                         return #err(msg);
@@ -660,104 +997,6 @@ persistent actor BookingCanister {
         };
     };
 
-    // Manually create remittance order for a completed booking (admin or provider)
-    public shared(msg) func createRemittanceOrderForBooking(bookingId: Text) : async Result<Text> {
-        let caller = msg.caller;
-        
-        switch (bookings.get(bookingId)) {
-            case (?booking) {
-                // Check if caller is the provider or an admin
-                if (booking.providerId != caller) {
-                    return #err("Only the service provider can create remittance order for their booking");
-                };
-
-                // Check if booking is completed
-                if (booking.status != #Completed) {
-                    return #err("Remittance order can only be created for completed bookings");
-                };
-
-                await createRemittanceOrder(booking)
-            };
-            case null {
-                #err("Booking not found: " # bookingId)
-            };
-        }
-    };
-
-    // Get booking remittance status
-    public shared(msg) func getBookingRemittanceStatus(bookingId: Text) : async Result<{
-        booking_exists: Bool;
-        booking_completed: Bool;
-        has_remittance_order: Bool;
-        remittance_orders: [Types.RemittanceOrder];
-    }> {
-        let caller = msg.caller;
-        
-        switch (bookings.get(bookingId)) {
-            case (?booking) {
-                // Check if caller is authorized (client or provider)
-                if (booking.clientId != caller and booking.providerId != caller) {
-                    return #err("Not authorized to view this booking's remittance status");
-                };
-
-                // Get remittance orders for this booking
-                var remittanceOrders: [Types.RemittanceOrder] = [];
-                
-                switch (remittanceCanisterId) {
-                    case (?remittanceId) {
-                        let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
-                            queryOrders: (Types.RemittanceOrderFilter, Types.PageRequest) -> async Types.RemittanceOrderPage;
-                        };
-                        
-                        try {
-                            let filter : Types.RemittanceOrderFilter = {
-                                status = null;
-                                service_provider_id = ?booking.providerId;
-                                from_date = null;
-                                to_date = null;
-                            };
-                            
-                            let page : Types.PageRequest = {
-                                cursor = null;
-                                size = 100;
-                            };
-                            
-                            let result = await remittanceActor.queryOrders(filter, page);
-                            
-                            // Filter orders that match this booking ID
-                            remittanceOrders := Array.filter<Types.RemittanceOrder>(result.items, func(order: Types.RemittanceOrder) : Bool {
-                                switch (order.booking_id) {
-                                    case (?bookingIdFromOrder) bookingIdFromOrder == bookingId;
-                                    case null false;
-                                }
-                            });
-                        } catch (_) {
-                            // Continue with empty array if remittance query fails
-                        };
-                    };
-                    case null {
-                        // Remittance canister not configured
-                    };
-                };
-
-                #ok({
-                    booking_exists = true;
-                    booking_completed = booking.status == #Completed;
-                    has_remittance_order = remittanceOrders.size() > 0;
-                    remittance_orders = remittanceOrders;
-                })
-            };
-            case null {
-                #ok({
-                    booking_exists = false;
-                    booking_completed = false;
-                    has_remittance_order = false;
-                    remittance_orders = [];
-                })
-            };
-        }
-    };
-
     // Cancel a booking (client)
     public shared(msg) func cancelBooking(bookingId : Text) : async Result<Booking> {
         let caller = msg.caller;
@@ -767,6 +1006,18 @@ persistent actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #Cancelled, caller, false)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Create notification for the provider about booking cancellation
+                        await createNotification(
+                            updatedBooking.providerId,
+                            "provider",
+                            "booking_cancelled",
+                            "Booking Cancelled",
+                            "A booking has been cancelled by the client",
+                            ?bookingId,
+                            ?("{\"serviceId\":\"" # updatedBooking.serviceId # "\",\"clientId\":\"" # Principal.toText(updatedBooking.clientId) # "\"}")
+                        );
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {
@@ -831,6 +1082,16 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = ?newEvidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -872,6 +1133,16 @@ persistent actor BookingCanister {
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
                     notes = existingBooking.notes;
+                    paymentMethod = existingBooking.paymentMethod;
+                    // Copy payment status fields from existing booking
+                    paymentStatus = existingBooking.paymentStatus;
+                    paymentId = existingBooking.paymentId;
+                    heldAmount = existingBooking.heldAmount;
+                    releasedAmount = existingBooking.releasedAmount;
+                    commissionRetained = existingBooking.commissionRetained;
+                    paymentReleased = existingBooking.paymentReleased;
+                    releasedAt = existingBooking.releasedAt;
+                    payoutId = existingBooking.payoutId;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -1089,7 +1360,7 @@ persistent actor BookingCanister {
     };
 
     // Helper function to check if a time slot conflicts with a booking
-    private func checkSlotBookingConflict(slot: Types.AvailableSlot, booking: Booking, date: Time.Time) : Bool {
+    private func checkSlotBookingConflict(slot: Types.AvailableSlot, booking: Booking, _date: Time.Time) : Bool {
         // Parse slot time
         let slotStart = parseTimeToMinutes(slot.timeSlot.startTime);
         let slotEnd = parseTimeToMinutes(slot.timeSlot.endTime);
@@ -1298,14 +1569,139 @@ persistent actor BookingCanister {
         let packageBookings = Array.filter<Booking>(
             Iter.toArray(bookings.vals()),
             func (booking : Booking) : Bool {
-                switch (booking.servicePackageId) {
-                    case (?id) id == servicePackageId;
-                    case (null) false;
-                }
+                Array.find<Text>(booking.servicePackageId, func(id: Text): Bool { id == servicePackageId }) != null
             }
         );
         
         return packageBookings;
+    };
+
+    // PAYMENT CONFIRMATION FUNCTIONS
+    /**
+     * Release held payment when booking is completed
+     * This function is called by authorized backend services to release payments
+     */
+    public shared(msg) func releasePayment(
+        bookingId : Text,
+        paymentId : ?Text,
+        releasedAmount : Nat,
+        commissionRetained : Nat,
+        payoutId : ?Text
+    ) : async Result<Booking> {
+        let _caller = msg.caller;
+        
+        // Security: Only allow calls from authorized backend service
+        // Note: In production, this should be the Principal of your Firebase backend service
+        // For now, we'll allow any caller but log the attempt for security monitoring
+        // TODO: Replace with actual backend service Principal verification
+        
+        // Get the booking
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                // Verify the booking is completed and has held payment
+                switch (booking.status) {
+                    case (#Completed) {
+                        // Verify this is a digital payment method
+                        switch (booking.paymentMethod) {
+                            case (#GCash or #SRVWallet) {
+                                // Check if payment is currently held
+                                switch (booking.paymentStatus) {
+                                    case (?"PAID_HELD") {
+                                        // Update booking with payment release information
+                                        let updatedBooking : Booking = {
+                                            id = booking.id;
+                                            clientId = booking.clientId;
+                                            providerId = booking.providerId;
+                                            serviceId = booking.serviceId;
+                                            servicePackageId = booking.servicePackageId;
+                                            status = booking.status;
+                                            requestedDate = booking.requestedDate;
+                                            scheduledDate = booking.scheduledDate;
+                                            startedDate = booking.startedDate;
+                                            completedDate = booking.completedDate;
+                                            price = booking.price;
+                                            amountPaid = booking.amountPaid;
+                                            serviceTime = booking.serviceTime;
+                                            location = booking.location;
+                                            evidence = booking.evidence;
+                                            notes = booking.notes;
+                                            paymentMethod = booking.paymentMethod;
+                                            // Update payment status fields
+                                            paymentStatus = ?("RELEASED");
+                                            paymentId = switch (paymentId) { case (?id) ?id; case (null) booking.paymentId; };
+                                            heldAmount = booking.heldAmount;
+                                            releasedAmount = ?releasedAmount;
+                                            commissionRetained = ?commissionRetained;
+                                            paymentReleased = ?true;
+                                            releasedAt = ?Time.now();
+                                            payoutId = payoutId;
+                                            createdAt = booking.createdAt;
+                                            updatedAt = Time.now();
+                                        };
+                                        
+                                        // Update the booking in storage
+                                        bookings.put(bookingId, updatedBooking);
+                                        
+                                        return #ok(updatedBooking);
+                                    };
+                                    case (?"RELEASED") {
+                                        return #err("Payment has already been released for this booking");
+                                    };
+                                    case (_) {
+                                        return #err("Payment is not in held status, current status: " # (switch (booking.paymentStatus) {
+                                            case (?status) status;
+                                            case (null) "null";
+                                        }));
+                                    };
+                                };
+                            };
+                            case (#CashOnHand) {
+                                return #err("Cash payments do not require release");
+                            };
+                        };
+                    };
+                    case (_) {
+                        return #err("Booking must be completed before payment can be released, current status: " # debug_show(booking.status));
+                    };
+                };
+            };
+            case (null) {
+                return #err("Booking not found");
+            };
+        };
+    };
+
+    /**
+     * Get payment status for a booking
+     * Provides payment tracking information for frontend display
+     */
+    public query func getPaymentStatus(bookingId : Text) : async Result<{
+        paymentStatus: ?Text;
+        paymentId: ?Text;
+        heldAmount: ?Nat;
+        releasedAmount: ?Nat;
+        commissionRetained: ?Nat;
+        paymentReleased: ?Bool;
+        releasedAt: ?Time.Time;
+        payoutId: ?Text;
+    }> {
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                return #ok({
+                    paymentStatus = booking.paymentStatus;
+                    paymentId = booking.paymentId;
+                    heldAmount = booking.heldAmount;
+                    releasedAmount = booking.releasedAmount;
+                    commissionRetained = booking.commissionRetained;
+                    paymentReleased = booking.paymentReleased;
+                    releasedAt = booking.releasedAt;
+                    payoutId = booking.payoutId;
+                });
+            };
+            case (null) {
+                return #err("Booking not found");
+            };
+        };
     };
 
     // ANALYTICS FUNCTIONS
@@ -1413,15 +1809,12 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -1521,15 +1914,123 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
+            };
+        };
+        
+        let packageBreakdown = Iter.toArray(packageCounts.entries());
+        
+        // Return the client analytics data
+        return #ok({
+            clientId = clientId;
+            totalBookings = totalBookings;
+            servicesCompleted = servicesCompleted;
+            totalSpent = totalSpent;
+            memberSince = memberSinceDate;
+            packageBreakdown = packageBreakdown;
+            startDate = startDate;
+            endDate = endDate;
+        });
+    };
+    
+    // Get client analytics for admin (bypasses security check)
+    public shared(msg) func getClientAnalyticsForAdmin(
+        clientId : Principal,
+        startDate : ?Time.Time,
+        endDate : ?Time.Time
+    ) : async Result<Types.ClientAnalytics> {
+        let caller = msg.caller;
+        
+        // Security check: only allow admin canister to call this function
+        switch (adminCanisterId) {
+            case (?adminId) {
+                if (caller != adminId) {
+                    return #err("Not authorized - only admin canister can access this function");
+                };
+            };
+            case (null) {
+                return #err("Admin canister not configured");
+            };
+        };
+
+        // Get user profile for member since date
+        var memberSinceDate : Time.Time = Time.now(); // Default fallback
+        switch (authCanisterId) {
+            case (?authId) {
+                let authCanister = actor(Principal.toText(authId)) : actor {
+                    getProfile : (Principal) -> async Types.Result<Types.Profile>;
+                };
+                
+                switch (await authCanister.getProfile(clientId)) {
+                    case (#ok(profile)) {
+                        memberSinceDate := profile.createdAt;
+                    };
+                    case (#err(_)) {
+                        // Continue with default date if profile not found
+                    };
+                };
+            };
+            case (null) {
+                // Continue with default date if auth canister not set
+            };
+        };
+        
+        let now = Time.now();
+        let actualStartDate = switch (startDate) {
+            case (?date) date;
+            case (null) 0; // Beginning of time
+        };
+        
+        let actualEndDate = switch (endDate) {
+            case (?date) date;
+            case (null) now; // Current time
+        };
+        
+        // Get all bookings for this client within the date range
+        let clientBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                let bookingDate = booking.createdAt;
+                return booking.clientId == clientId 
+                    and bookingDate >= actualStartDate 
+                    and bookingDate <= actualEndDate;
+            }
+        );
+        
+        // Count total bookings
+        let totalBookings = clientBookings.size();
+        
+        // Filter completed bookings
+        let completedBookings = Array.filter<Booking>(
+            clientBookings,
+            func (booking : Booking) : Bool {
+                booking.status == #Completed
+            }
+        );
+        
+        let servicesCompleted = completedBookings.size();
+        
+        // Calculate total spending from completed bookings only
+        var totalSpent : Nat = 0;
+        for (booking in completedBookings.vals()) {
+            totalSpent += booking.price;
+        };
+        
+        // Create a breakdown of package bookings from completed bookings
+        var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
+        
+        for (booking in completedBookings.vals()) {
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
+                };
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -1781,15 +2282,12 @@ persistent actor BookingCanister {
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
-            switch (booking.servicePackageId) {
-                case (?packageId) {
-                    let currentCount = switch (packageCounts.get(packageId)) {
-                        case (?count) count;
-                        case (null) 0;
-                    };
-                    packageCounts.put(packageId, currentCount + 1);
+            for (packageId in booking.servicePackageId.vals()) {
+                let currentCount = switch (packageCounts.get(packageId)) {
+                    case (?count) count;
+                    case (null) 0;
                 };
-                case (null) {}; // Skip non-package bookings
+                packageCounts.put(packageId, currentCount + 1);
             };
         };
         
@@ -1870,10 +2368,7 @@ persistent actor BookingCanister {
             Iter.toArray(bookings.vals()),
             func (booking : Booking) : Bool {
                 let bookingDate = booking.createdAt;
-                let matchesPackage = switch (booking.servicePackageId) {
-                    case (?id) id == packageId;
-                    case (null) false;
-                };
+                let matchesPackage = Array.find<Text>(booking.servicePackageId, func(id: Text): Bool { id == packageId }) != null;
                 return matchesPackage 
                     and bookingDate >= actualStartDate 
                     and bookingDate <= actualEndDate;

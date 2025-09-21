@@ -6,11 +6,15 @@ import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
 import { canisterId as remittanceCanisterId } from "../../../declarations/remittance";
+import { canisterId as commissionCanisterId } from "../../../declarations/commission";
+import { canisterId as walletCanisterId } from "../../../declarations/wallet";
+import { canisterId as notificationCanisterId } from "../../../declarations/notification";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
   Booking as CanisterBooking,
   BookingStatus as CanisterBookingStatus,
+  PaymentMethod as CanisterPaymentMethod,
   Location as CanisterLocation,
   Evidence as CanisterEvidence,
   AvailableSlot as CanisterAvailableSlot,
@@ -32,7 +36,8 @@ const createBookingActor = (identity?: Identity | null): BookingService => {
     agentOptions: {
       identity: identity || undefined,
       host:
-        process.env.DFX_NETWORK !== "ic"
+        process.env.DFX_NETWORK !== "ic" &&
+        process.env.DFX_NETWORK !== "playground"
           ? "http://localhost:4943"
           : "https://ic0.app",
     },
@@ -81,6 +86,8 @@ export type BookingStatus =
   | "InProgress"
   | "Completed"
   | "Disputed";
+
+export type PaymentMethod = "CashOnHand" | "GCash" | "SRVWallet";
 
 export type DayOfWeek =
   | "Monday"
@@ -176,7 +183,7 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
-  servicePackageId?: string;
+  servicePackageId: string[]; // Array of package IDs for multiple package bookings
   status: BookingStatus;
   requestedDate: string;
   scheduledDate?: string;
@@ -188,6 +195,8 @@ export interface Booking {
   location: Location;
   evidence?: Evidence;
   notes?: string;
+  paymentMethod: PaymentMethod;
+  paymentId?: string; // Reference to external payment (Xendit invoice ID)
   createdAt: string;
   updatedAt: string;
   // Additional UI fields
@@ -235,6 +244,30 @@ const convertToCanisterBookingStatus = (
       return { Disputed: null };
     default:
       return { Requested: null };
+  }
+};
+
+const convertCanisterPaymentMethod = (
+  paymentMethod: CanisterPaymentMethod,
+): PaymentMethod => {
+  if ("CashOnHand" in paymentMethod) return "CashOnHand";
+  if ("GCash" in paymentMethod) return "GCash";
+  if ("SRVWallet" in paymentMethod) return "SRVWallet";
+  return "CashOnHand"; // fallback
+};
+
+const convertToCanisterPaymentMethod = (
+  paymentMethod: PaymentMethod,
+): CanisterPaymentMethod => {
+  switch (paymentMethod) {
+    case "CashOnHand":
+      return { CashOnHand: null };
+    case "GCash":
+      return { GCash: null };
+    case "SRVWallet":
+      return { SRVWallet: null };
+    default:
+      return { CashOnHand: null };
   }
 };
 
@@ -362,7 +395,7 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
   clientId: booking.clientId,
   providerId: booking.providerId,
   serviceId: booking.serviceId,
-  servicePackageId: booking.servicePackageId[0],
+  servicePackageId: booking.servicePackageId, // Now directly assign the array
   status: convertCanisterBookingStatus(booking.status),
   requestedDate: new Date(
     Number(booking.requestedDate) / 1000000,
@@ -388,12 +421,43 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
     ? convertCanisterEvidence(booking.evidence[0])
     : undefined,
   notes: booking.notes[0],
+  paymentMethod: convertCanisterPaymentMethod(booking.paymentMethod),
+  paymentId: booking.paymentId[0], // Xendit invoice ID
   createdAt: new Date(Number(booking.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(booking.updatedAt) / 1000000).toISOString(),
 });
 
 // Booking Canister Service Functions
 export const bookingCanisterService = {
+  /**
+   * Create a new booking with a single package (backwards compatibility)
+   */
+  async createBookingWithPackage(
+    serviceId: string,
+    providerId: Principal,
+    price: number,
+    location: Location,
+    requestedDate: Date,
+    servicePackageId: string,
+    notes?: string,
+    amountToPay?: number,
+    paymentMethod: PaymentMethod = "CashOnHand",
+    paymentId?: string,
+  ): Promise<Booking | null> {
+    return this.createBooking(
+      serviceId,
+      providerId,
+      price,
+      location,
+      requestedDate,
+      [servicePackageId], // Convert single package to array
+      notes,
+      amountToPay,
+      paymentMethod,
+      paymentId,
+    );
+  },
+
   /**
    * Create a new booking
    */
@@ -403,9 +467,11 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
-    servicePackageId?: string,
+    servicePackageIds: string[] = [], // Array of package IDs for multiple package bookings
     notes?: string,
     amountToPay?: number,
+    paymentMethod: PaymentMethod = "CashOnHand",
+    paymentId?: string,
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
@@ -415,6 +481,8 @@ export const bookingCanisterService = {
         amountToPay !== undefined
           ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
           : [];
+      const canisterPaymentMethod =
+        convertToCanisterPaymentMethod(paymentMethod);
 
       const result = await actor.createBooking(
         serviceId,
@@ -422,9 +490,11 @@ export const bookingCanisterService = {
         BigInt(price),
         canisterLocation,
         requestedTimestamp,
-        servicePackageId ? [servicePackageId] : [],
+        servicePackageIds, // Send the array directly
         notes ? [notes] : [],
         amountToPayOptional,
+        canisterPaymentMethod,
+        paymentId ? [paymentId] : [],
       );
 
       if ("ok" in result) {
@@ -966,8 +1036,10 @@ export const bookingCanisterService = {
         [Principal.fromText(serviceCanisterId)],
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
+        [Principal.fromText(commissionCanisterId)],
+        [Principal.fromText(walletCanisterId)],
+        [Principal.fromText(notificationCanisterId)],
         [Principal.fromText(remittanceCanisterId)],
-        [] // admin canister reference - empty for frontend
       );
 
       if ("ok" in result) {
@@ -1162,6 +1234,122 @@ export const bookingCanisterService = {
       //console.error("Error fetching package analytics:", error);
       throw new Error(`Failed to fetch package analytics: ${error}`);
     }
+  },
+
+  /**
+   * Release held payment for a completed booking
+   * This function is called after the Firebase Cloud Function has processed the payment release
+   */
+  async releasePayment(
+    bookingId: string,
+    paymentId?: string,
+    releasedAmount?: number,
+    commissionRetained?: number,
+    payoutId?: string,
+  ): Promise<Booking | null> {
+    try {
+      const actor = getBookingActor(true); // Requires authentication
+
+      const result = await actor.releasePayment(
+        bookingId,
+        paymentId ? [paymentId] : [],
+        BigInt(Math.round((releasedAmount || 0) * 100)), // Convert to cents
+        BigInt(Math.round((commissionRetained || 0) * 100)), // Convert to cents
+        payoutId ? [payoutId] : [],
+      );
+
+      if ("ok" in result) {
+        return convertCanisterBooking(result.ok);
+      } else {
+        console.error("Error releasing payment:", result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error releasing payment:", error);
+      throw new Error(`Failed to release payment: ${error}`);
+    }
+  },
+
+  /**
+   * Get payment status for a booking
+   */
+  async getPaymentStatus(bookingId: string): Promise<{
+    paymentStatus?: string;
+    paymentId?: string;
+    heldAmount?: number;
+    releasedAmount?: number;
+    commissionRetained?: number;
+    paymentReleased?: boolean;
+    releasedAt?: Date;
+    payoutId?: string;
+  } | null> {
+    try {
+      const actor = getBookingActor();
+
+      const result = await actor.getPaymentStatus(bookingId);
+
+      if ("ok" in result) {
+        const data = result.ok;
+        return {
+          paymentStatus: data.paymentStatus[0],
+          paymentId: data.paymentId[0],
+          heldAmount: data.heldAmount[0]
+            ? Number(data.heldAmount[0]) / 100
+            : undefined, // Convert from cents
+          releasedAmount: data.releasedAmount[0]
+            ? Number(data.releasedAmount[0]) / 100
+            : undefined, // Convert from cents
+          commissionRetained: data.commissionRetained[0]
+            ? Number(data.commissionRetained[0]) / 100
+            : undefined, // Convert from cents
+          paymentReleased: data.paymentReleased[0],
+          releasedAt: data.releasedAt[0]
+            ? new Date(Number(data.releasedAt[0]) / 1000000)
+            : undefined,
+          payoutId: data.payoutId[0],
+        };
+      } else {
+        console.error("Error getting payment status:", result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error getting payment status:", error);
+      throw new Error(`Failed to get payment status: ${error}`);
+    }
+  },
+
+  // Utility functions for working with multiple packages
+  /**
+   * Utility function to check if a booking has a specific package
+   */
+  hasPackage(booking: Booking, packageId: string): boolean {
+    return booking.servicePackageId.includes(packageId);
+  },
+
+  /**
+   * Utility function to get the first package ID (for backwards compatibility)
+   */
+  getFirstPackageId(booking: Booking): string | undefined {
+    return booking.servicePackageId.length > 0
+      ? booking.servicePackageId[0]
+      : undefined;
+  },
+
+  /**
+   * Utility function to check if a booking has multiple packages
+   */
+  hasMultiplePackages(booking: Booking): boolean {
+    return booking.servicePackageId.length > 1;
+  },
+
+  /**
+   * Utility function to get all package IDs as a formatted string
+   */
+  getPackageIdsDisplay(booking: Booking): string {
+    if (booking.servicePackageId.length === 0) {
+      return "No packages";
+    }
+    return booking.servicePackageId.join(", ");
   },
 };
 

@@ -3,6 +3,7 @@ import pushNotificationService, {
 } from "./pushNotificationService";
 import { Notification } from "../hooks/useNotifications";
 import { ProviderNotification } from "../hooks/useProviderNotifications";
+import notificationCanisterService from "./notificationCanisterService";
 
 /**
  * Service to integrate existing notification hooks with PWA push notifications
@@ -12,6 +13,7 @@ class NotificationIntegrationService {
   private isInitialized = false;
   private userId: string | null = null;
   private pushEnabled = false;
+  private sentNotifications = new Set<string>(); // Track already sent notifications
 
   private constructor() {}
 
@@ -30,6 +32,8 @@ class NotificationIntegrationService {
     this.userId = userId;
     this.pushEnabled = isPushEnabled;
     this.isInitialized = true;
+    // Clear sent notifications when user changes
+    this.sentNotifications.clear();
     // //console.log("Notification Integration Service initialized:", {
     //   userId,
     //   isPushEnabled,
@@ -44,6 +48,14 @@ class NotificationIntegrationService {
   }
 
   /**
+   * Clear sent notifications cache (useful for debugging or when user changes)
+   */
+  clearSentNotificationsCache() {
+    this.sentNotifications.clear();
+    console.debug("Cleared sent notifications cache");
+  }
+
+  /**
    * Send push notification for a regular client notification
    */
   async sendClientNotification(notification: Notification): Promise<boolean> {
@@ -51,7 +63,55 @@ class NotificationIntegrationService {
       return false;
     }
 
+    // Check if we already sent this notification
+    if (this.sentNotifications.has(notification.id)) {
+      console.debug(`Notification ${notification.id} already sent, skipping`);
+      return false;
+    }
+
     try {
+      // Only create notification in canister if it's a frontend-generated notification
+      // (notifications from canister already exist and shouldn't be recreated)
+      if (notification.id.startsWith("frontend-")) {
+        try {
+          const result = await notificationCanisterService.createNotification(
+            this.userId!,
+            "client",
+            notification.type,
+            "SRV Notification",
+            notification.message,
+            notification.bookingId,
+            {
+              href: notification.href,
+              providerName: notification.providerName,
+              clientName: notification.clientName,
+            },
+          );
+
+          // If rate limited, skip but don't fail the push notification
+          if (result === "rate-limited") {
+            console.info(
+              "Notification creation rate limited, proceeding with push notification only",
+            );
+          }
+        } catch (canisterError) {
+          if (
+            canisterError instanceof Error &&
+            canisterError.message.includes("rate limit")
+          ) {
+            console.info(
+              "Rate limit reached, proceeding with push notification only",
+            );
+          } else {
+            console.warn(
+              "Failed to create frontend notification in canister:",
+              canisterError,
+            );
+          }
+          // Continue with push notification even if canister creation fails
+        }
+      }
+
       const payload = this.convertClientNotificationToPush(notification);
       const success = await pushNotificationService.sendPushNotification(
         this.userId!,
@@ -59,15 +119,25 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        // //console.log(
-        //   "Push notification sent for client notification:",
-        //   notification.id,
-        // );
+        // Track that we've sent this notification
+        this.sentNotifications.add(notification.id);
+
+        // Mark as push sent in canister (only if it's not a frontend-only notification)
+        if (!notification.id.startsWith("frontend-")) {
+          try {
+            await notificationCanisterService.markAsPushSent(notification.id);
+          } catch (markError) {
+            console.warn(
+              "Failed to mark notification as push sent:",
+              markError,
+            );
+          }
+        }
       }
 
       return success;
     } catch (error) {
-      //console.error("Error sending client push notification:", error);
+      console.error("Error sending client push notification:", error);
       return false;
     }
   }
@@ -82,7 +152,57 @@ class NotificationIntegrationService {
       return false;
     }
 
+    // Check if we already sent this notification
+    if (this.sentNotifications.has(notification.id)) {
+      console.debug(
+        `Provider notification ${notification.id} already sent, skipping`,
+      );
+      return false;
+    }
+
     try {
+      // Only create notification in canister if it's a frontend-generated notification
+      // (notifications from canister already exist and shouldn't be recreated)
+      if (notification.id.startsWith("frontend-")) {
+        try {
+          const result = await notificationCanisterService.createNotification(
+            this.userId!,
+            "provider",
+            notification.type,
+            "SRV Business Update",
+            notification.message,
+            notification.bookingId,
+            {
+              href: notification.href,
+              clientName: notification.clientName,
+              amount: notification.amount,
+            },
+          );
+
+          // If rate limited, skip but don't fail the push notification
+          if (result === "rate-limited") {
+            console.info(
+              "Provider notification creation rate limited, proceeding with push notification only",
+            );
+          }
+        } catch (canisterError) {
+          if (
+            canisterError instanceof Error &&
+            canisterError.message.includes("rate limit")
+          ) {
+            console.info(
+              "Rate limit reached, proceeding with push notification only",
+            );
+          } else {
+            console.warn(
+              "Failed to create frontend provider notification in canister:",
+              canisterError,
+            );
+          }
+          // Continue with push notification even if canister creation fails
+        }
+      }
+
       const payload = this.convertProviderNotificationToPush(notification);
       const success = await pushNotificationService.sendPushNotification(
         this.userId!,
@@ -90,15 +210,25 @@ class NotificationIntegrationService {
       );
 
       if (success) {
-        // //console.log(
-        //   "Push notification sent for provider notification:",
-        //   notification.id,
-        // );
+        // Track that we've sent this notification
+        this.sentNotifications.add(notification.id);
+
+        // Mark as push sent in canister (only if it's not a frontend-only notification)
+        if (!notification.id.startsWith("frontend-")) {
+          try {
+            await notificationCanisterService.markAsPushSent(notification.id);
+          } catch (markError) {
+            console.warn(
+              "Failed to mark provider notification as push sent:",
+              markError,
+            );
+          }
+        }
       }
 
       return success;
     } catch (error) {
-      //console.error("Error sending provider push notification:", error);
+      console.error("Error sending provider push notification:", error);
       return false;
     }
   }

@@ -11,6 +11,7 @@ import {
   DayOfWeek,
   TimeSlot,
   DayAvailability,
+  CommissionQuote,
   serviceCanisterService,
 } from "../services/serviceCanisterService";
 import {
@@ -209,6 +210,10 @@ interface ServiceManagementHook {
   organizeWeeklySchedule: (
     weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
   ) => OrganizedWeeklySchedule;
+  getCommissionQuote: (
+    categoryId: string,
+    price: number,
+  ) => Promise<CommissionQuote>;
 
   // Image processing utilities
   processImageFilesForService: (
@@ -1297,6 +1302,26 @@ export const useServiceManagement = (): ServiceManagementHook => {
     [],
   );
 
+  // Commission quote function
+  const getCommissionQuote = useCallback(
+    async (categoryId: string, price: number): Promise<CommissionQuote> => {
+      try {
+        const quote = await serviceCanisterService.getCommissionQuote(
+          categoryId,
+          price,
+        );
+        if (!quote) {
+          throw new Error("Failed to get commission quote");
+        }
+        return quote;
+      } catch (error) {
+        handleError(error, "get commission quote");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
   // Return the hook interface
   return {
     // Core data states
@@ -1360,6 +1385,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     retryOperation,
     isOperationInProgress,
     organizeWeeklySchedule,
+    getCommissionQuote,
 
     // Image processing utilities
     processImageFilesForService,

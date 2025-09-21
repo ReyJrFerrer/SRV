@@ -31,6 +31,7 @@ import ClientServiceReviews from "./src/pages/client/service/reviews/[id]";
 import ClientBookingIndex from "./src/pages/client/booking/index";
 import ClientBookingDetails from "./src/pages/client/booking/[id]";
 import ClientBookingConfirmation from "./src/pages/client/booking/confirmation";
+import ClientPaymentPending from "./src/pages/client/booking/payment-pending";
 import ReceiptPage from "./src/pages/client/booking/receipt/[id]";
 import ClientBookService from "./src/pages/client/book/[id]";
 
@@ -67,9 +68,6 @@ import ProviderReceipt from "./src/pages/provider/receipt/[bookingId]";
 // Provider Review
 import ProviderReview from "./src/pages/provider/review/[id]";
 
-// Provider Payment Commission
-import PaymentProviderCommission from "./src/pages/provider/payment-commission";
-
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import ConversationPage from "./src/pages/client/chat/[providerId]";
@@ -80,6 +78,10 @@ import NotificationsPageSP from "./src/pages/provider/notifications";
 import ProviderTermsAndConditionsPage from "./src/pages/provider/inside settings/terms";
 import ProviderReportIssuePage from "./src/pages/report";
 import ProviderHelpSupportPage from "./src/pages/provider/help";
+
+// Payment
+import WalletPage from "./src/pages/provider/wallet";
+import PayoutSettingsPage from "./src/pages/provider/payout-settings";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -135,6 +137,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 path="booking/confirmation"
                 element={<ClientBookingConfirmation />}
               />
+              <Route
+                path="booking/payment-pending"
+                element={<ClientPaymentPending />}
+              />
               <Route path="booking/receipt/:id" element={<ReceiptPage />} />
               <Route path="book/:id" element={<ClientBookService />} />
 
@@ -156,6 +162,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route path="settings" element={<SettingsPageSP />} />
               <Route path="profile" element={<ProviderProfilePage />} />
               <Route path="notifications" element={<NotificationsPageSP />} />
+              <Route path="wallet" element={<WalletPage />} />
+              <Route path="payout-settings" element={<PayoutSettingsPage />} />
 
               {/* Service Management Routes */}
               <Route path="services" element={<ProviderServices />} />
@@ -185,12 +193,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
               {/* Review Routes */}
               <Route path="review/:id" element={<ProviderReview />} />
-
-              {/* Payment Commission Route */}
-              <Route
-                path="payment-commission"
-                element={<PaymentProviderCommission />}
-              />
 
               {/* Provider Info Pages */}
               <Route

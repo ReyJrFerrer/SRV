@@ -8,8 +8,8 @@ import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
+import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
@@ -48,6 +48,7 @@ persistent actor ServiceCanister {
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
     private transient var mediaCanisterId : ?Principal = null;
+    private transient var commissionCanisterId : ?Principal = null;
     private transient var adminCanisterId : ?Principal = null;
 
     // Constants
@@ -67,6 +68,7 @@ persistent actor ServiceCanister {
         review : ?Principal,
         reputation : ?Principal,
         media : ?Principal,
+        commission : ?Principal,
         admin : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
@@ -75,15 +77,21 @@ persistent actor ServiceCanister {
         reviewCanisterId := review;
         reputationCanisterId := reputation;
         mediaCanisterId := media;
+        commissionCanisterId := commission;
         adminCanisterId := admin;
         return #ok("Canister references set successfully");
     };
 
+     // Counter for ensuring unique IDs
+    private var idCounter : Nat = 0;
+
     // Helper functions
-    func generateId() : Text {
+      private func generateId(caller : Principal) : Text {
         let now = Int.abs(Time.now());
-        let random = Int.abs(Time.now()) % 10000;
-        return Int.toText(now) # "-" # Int.toText(random);
+        idCounter += 1;
+        let callerText = Principal.toText(caller);
+        let callerHash = Nat32.toNat(Text.hash(callerText));
+        return Int.toText(now) # "-" # Nat.toText(idCounter) # "-" # Nat.toText(callerHash);
     };
 
     func calculateDistance(loc1 : Location, loc2 : Location) : Float {
@@ -138,6 +146,30 @@ persistent actor ServiceCanister {
             };
             case (null) {
                 return #err("Auth canister reference not set");
+            };
+        };
+    };
+
+    // Helper function to calculate commission fee and rate
+    private func calculateCommissionInfo(categoryName : Text, price : Nat) : async (Nat, Float) {
+        switch (commissionCanisterId) {
+            case (?commissionId) {
+                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
+                    calculate_commission : (Text, Nat) -> async Nat;
+                };
+                
+                let commissionFee = await commissionCanister.calculate_commission(categoryName, price);
+                let commissionRate = if (price > 0) {
+                    (Float.fromInt(commissionFee) / Float.fromInt(price)) * 100.0
+                } else {
+                    0.0
+                };
+                
+                (commissionFee, commissionRate)
+            };
+            case (null) {
+                // Default to 0 if commission canister not available
+                (0, 0.0)
             };
         };
     };
@@ -348,7 +380,10 @@ persistent actor ServiceCanister {
             };
         };
         
-        let serviceId = generateId();
+        let serviceId = generateId(caller);
+        
+        // Calculate commission fee and rate
+        let (commissionFee, commissionRate) = await calculateCommissionInfo(category.name, price);
         
         let newService : Service = {
             id = serviceId;
@@ -357,6 +392,9 @@ persistent actor ServiceCanister {
             description = description;
             category = category;
             price = price;
+            // Commission fee information
+            commissionFee = commissionFee;
+            commissionRate = commissionRate;
             location = location;
             status = #Available;
             createdAt = Time.now();
@@ -505,6 +543,8 @@ persistent actor ServiceCanister {
                     description = existingService.description;
                     category = existingService.category;
                     price = existingService.price;
+                    commissionFee = existingService.commissionFee;
+                    commissionRate = existingService.commissionRate;
                     location = existingService.location;
                     status = status;
                     createdAt = existingService.createdAt;
@@ -617,6 +657,8 @@ persistent actor ServiceCanister {
                     description = existingService.description;
                     category = existingService.category;
                     price = existingService.price;
+                    commissionFee = existingService.commissionFee;
+                    commissionRate = existingService.commissionRate;
                     location = existingService.location;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
@@ -746,6 +788,13 @@ persistent actor ServiceCanister {
                     case (null) existingService.maxBookingsPerDay;
                 };
                 
+                // Calculate commission if price or category changed
+                let (commissionFee, commissionRate) = if (price != null or categoryId != existingService.category.id) {
+                    await calculateCommissionInfo(updatedCategory.name, updatedPrice)
+                } else {
+                    (existingService.commissionFee, existingService.commissionRate)
+                };
+                
                 let updatedService : Service = {
                     id = existingService.id;
                     providerId = existingService.providerId;
@@ -753,6 +802,9 @@ persistent actor ServiceCanister {
                     description = updatedDescription;
                     category = updatedCategory;
                     price = updatedPrice;
+                    // Commission fee information
+                    commissionFee = commissionFee;
+                    commissionRate = commissionRate;
                     location = updatedLocation;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
@@ -935,6 +987,8 @@ persistent actor ServiceCanister {
                             description = existingService.description;
                             category = existingService.category;
                             price = existingService.price;
+                            commissionFee = existingService.commissionFee;
+                            commissionRate = existingService.commissionRate;
                             location = existingService.location;
                             status = existingService.status;
                             createdAt = existingService.createdAt;
@@ -1000,6 +1054,8 @@ persistent actor ServiceCanister {
                             description = existingService.description;
                             category = existingService.category;
                             price = existingService.price;
+                            commissionFee = existingService.commissionFee;
+                            commissionRate = existingService.commissionRate;
                             location = existingService.location;
                             status = existingService.status;
                             createdAt = existingService.createdAt;
@@ -1075,6 +1131,8 @@ persistent actor ServiceCanister {
                     description = existingService.description;
                     category = existingService.category;
                     price = existingService.price;
+                    commissionFee = existingService.commissionFee;
+                    commissionRate = existingService.commissionRate;
                     location = existingService.location;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
@@ -1156,6 +1214,8 @@ persistent actor ServiceCanister {
                             description = existingService.description;
                             category = existingService.category;
                             price = existingService.price;
+                            commissionFee = existingService.commissionFee;
+                            commissionRate = existingService.commissionRate;
                             location = existingService.location;
                             status = existingService.status;
                             createdAt = existingService.createdAt;
@@ -1221,6 +1281,8 @@ persistent actor ServiceCanister {
                             description = existingService.description;
                             category = existingService.category;
                             price = existingService.price;
+                            commissionFee = existingService.commissionFee;
+                            commissionRate = existingService.commissionRate;
                             location = existingService.location;
                             status = existingService.status;
                             createdAt = existingService.createdAt;
@@ -1281,6 +1343,8 @@ persistent actor ServiceCanister {
                     description = existingService.description;
                     category = existingService.category;
                     price = existingService.price;
+                    commissionFee = existingService.commissionFee;
+                    commissionRate = existingService.commissionRate;
                     location = existingService.location;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
@@ -1332,7 +1396,7 @@ persistent actor ServiceCanister {
             case (null) {};
         };
         
-        let categoryId = generateId();
+        let categoryId = generateId(caller);
         
         let newCategory : ServiceCategory = {
             id = categoryId;
@@ -1389,6 +1453,8 @@ persistent actor ServiceCanister {
                     description = existingService.description;
                     category = existingService.category;
                     price = existingService.price;
+                    commissionFee = existingService.commissionFee;
+                    commissionRate = existingService.commissionRate;
                     location = existingService.location;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
@@ -1670,29 +1736,6 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
     };
 
 
-    // Get daily booking count for a provider and date
-    // private func getDailyBookingCount(providerId : Principal, date : Time.Time) : async Nat {
-    //     switch (bookingCanisterId) {
-    //         case (?bookingId) {
-    //             let bookingCanister = actor(Principal.toText(bookingId)) : actor {
-    //                 getDailyBookingCount : (Principal, Time.Time) -> async Nat;
-    //             };
-                
-    //             await bookingCanister.getDailyBookingCount(providerId, date);
-    //         };
-    //         case (null) {
-    //             0
-    //         };
-    //     }
-    // };
-
-    // // Helper function to get start of day timestamp
-    // private func getStartOfDay(timestamp : Time.Time) : Time.Time {
-    //     let secondsSinceEpoch = timestamp / 1_000_000_000;
-    //     let daysSinceEpoch = secondsSinceEpoch / 86400;
-    //     let startOfDaySeconds = daysSinceEpoch * 86400;
-    //     startOfDaySeconds * 1_000_000_000
-    // };
 
     // Package-related functions
     
@@ -1729,7 +1772,10 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                     return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
                 };
                 
-                let packageId = generateId();
+                let packageId = generateId(caller);
+                
+                // Calculate commission fee and rate for the package
+                let (commissionFee, commissionRate) = await calculateCommissionInfo(service.category.name, price);
                 
                 let newPackage : ServicePackage = {
                     id = packageId;
@@ -1737,6 +1783,9 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                     title = title;
                     description = description;
                     price = price;
+                    // Commission fee information
+                    commissionFee = commissionFee;
+                    commissionRate = commissionRate;
                     createdAt = Time.now();
                     updatedAt = Time.now();
                 };
@@ -1841,12 +1890,30 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                     case (null) existingPackage.price;
                 };
                 
+                // Get the associated service to get category for commission calculation
+                let service = switch (services.get(existingPackage.serviceId)) {
+                    case (?s) s;
+                    case (null) {
+                        return #err("Associated service not found");
+                    };
+                };
+                
+                // Calculate commission if price changed
+                let (commissionFee, commissionRate) = if (price != null) {
+                    await calculateCommissionInfo(service.category.name, updatedPrice)
+                } else {
+                    (existingPackage.commissionFee, existingPackage.commissionRate)
+                };
+                
                 let updatedPackage : ServicePackage = {
                     id = existingPackage.id;
                     serviceId = existingPackage.serviceId;
                     title = updatedTitle;
                     description = updatedDescription;
                     price = updatedPrice;
+                    // Commission fee information
+                    commissionFee = commissionFee;
+                    commissionRate = commissionRate;
                     createdAt = existingPackage.createdAt;
                     updatedAt = Time.now();
                 };
@@ -1887,6 +1954,46 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
             };
             case (null) {
                 return #err("Package not found");
+            };
+        };
+    };
+
+    // COMMISSION HELPER FUNCTIONS
+
+    // Get commission quote for a given category and price
+    public func getCommissionQuote(categoryName : Text, price : Nat) : async Result<{
+        commissionFee: Nat;
+        commissionRate: Float;
+        totalAmount: Nat; // price + commission fee
+    }> {
+        let (commissionFee, commissionRate) = await calculateCommissionInfo(categoryName, price);
+        
+        return #ok({
+            commissionFee = commissionFee;
+            commissionRate = commissionRate;
+            totalAmount = price + commissionFee;
+        });
+    };
+
+    // Get commission breakdown for debugging/testing (query version for admin/debugging)
+    public func getCommissionBreakdown(categoryName : Text, price : Nat) : async Result<Text> {
+        switch (commissionCanisterId) {
+            case (?commissionId) {
+                let commissionCanister = actor(Principal.toText(commissionId)) : actor {
+                    get_commission_breakdown : (Text, Nat) -> async {
+                        tier: {#TierA; #TierB; #TierC};
+                        baseFee: Nat;
+                        calculatedCommission: Nat;
+                        breakdown: Text;
+                        structure: {baseFee: Nat; breakpoints: [Nat]; rates: [Float]};
+                    };
+                };
+                
+                let breakdown = await commissionCanister.get_commission_breakdown(categoryName, price);
+                return #ok(breakdown.breakdown);
+            };
+            case (null) {
+                return #err("Commission canister not configured");
             };
         };
     };

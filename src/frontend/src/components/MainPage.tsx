@@ -23,6 +23,12 @@ export default function MainPage({
   // Handler for login button click
   const handleLoginClick = () => {
     setShowIdentityInfoModal(true);
+    // Close mobile menu if it's open
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+      const nav = document.querySelector(".main-nav");
+      nav?.classList.remove("active");
+    }
   };
 
   // Handler for confirming identity info

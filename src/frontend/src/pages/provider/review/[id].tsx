@@ -23,6 +23,11 @@ export default function ProviderReviewView() {
   const [clientReview, setClientReview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
 
   // Set document title
   useEffect(() => {
@@ -43,6 +48,7 @@ export default function ProviderReviewView() {
     loading: bookingLoading,
     error: bookingError,
     formatBookingDate,
+    checkCommissionValidation,
   } = useProviderBookingManagement();
 
   // Get review functionality from review management hook
@@ -80,6 +86,19 @@ export default function ProviderReviewView() {
         }
 
         setBooking(foundBooking);
+
+        // Check commission validation for cash bookings
+        if (foundBooking.paymentMethod === "CashOnHand") {
+          try {
+            const validation = await checkCommissionValidation(foundBooking);
+            setCommissionValidation(validation);
+          } catch (error) {
+            console.error("Failed to validate commission:", error);
+            setCommissionValidation({ estimatedCommission: 0 });
+          }
+        } else {
+          setCommissionValidation({ estimatedCommission: 0 });
+        }
 
         // Get reviews for this booking
         const bookingReviews = await getBookingReviews(bookingId);
@@ -215,17 +234,17 @@ export default function ProviderReviewView() {
   const price = booking?.price;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-3">
+        <div className="container mx-auto flex items-center px-4 py-6">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-800">
+          <h1 className="truncate text-lg font-semibold text-slate-800">
             Client Review
           </h1>
         </div>
@@ -262,9 +281,14 @@ export default function ProviderReviewView() {
             {price !== undefined && (
               <div className="flex items-center">
                 <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
-                <span>
-                  <strong>Price:</strong> ₱{price.toFixed(2)}
-                </span>
+                <div className="flex flex-col">
+                  <span>
+                    <strong>Price:</strong> ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}
+                  </span>
+                </div>
               </div>
             )}
           </div>

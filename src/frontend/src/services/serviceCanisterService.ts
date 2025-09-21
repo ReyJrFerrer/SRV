@@ -6,6 +6,7 @@ import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as mediaCanisterId } from "../../../declarations/media";
+import { canisterId as commissionCanisterId } from "../../../declarations/commission";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ServiceService,
@@ -31,7 +32,8 @@ const createServiceActor = (identity?: Identity | null): ServiceService => {
     agentOptions: {
       identity: identity || undefined,
       host:
-        process.env.DFX_NETWORK !== "ic"
+        process.env.DFX_NETWORK !== "ic" &&
+        process.env.DFX_NETWORK !== "playground"
           ? "http://localhost:4943"
           : "https://ic0.app",
     },
@@ -129,6 +131,9 @@ export interface Service {
   description: string;
   category: ServiceCategory;
   price: number;
+  // Commission fee information
+  commissionFee: number;
+  commissionRate: number;
   location: Location;
   status: ServiceStatus;
   rating?: number;
@@ -146,6 +151,7 @@ export interface Service {
   providerName?: string;
   distance?: number;
   priceDisplay?: string;
+  totalAmount?: number; // price + commissionFee (computed field)
 }
 
 export interface ServicePackage {
@@ -154,8 +160,20 @@ export interface ServicePackage {
   title: string;
   description: string;
   price: number;
+  // Commission fee information
+  commissionFee: number;
+  commissionRate: number;
   createdAt: string;
   updatedAt: string;
+  // Additional computed field
+  totalAmount?: number; // price + commissionFee
+}
+
+// Commission-related interfaces
+export interface CommissionQuote {
+  commissionFee: number;
+  commissionRate: number;
+  totalAmount: number; // price + commission fee
 }
 
 // Helper functions to convert between canister and frontend types
@@ -302,6 +320,9 @@ const convertCanisterService = (service: CanisterService): Service => ({
   description: service.description,
   category: convertCanisterServiceCategory(service.category),
   price: Number(service.price),
+  // Commission fee information
+  commissionFee: Number(service.commissionFee),
+  commissionRate: Number(service.commissionRate),
   location: convertCanisterLocation(service.location),
   status: convertCanisterServiceStatus(service.status),
   rating: service.rating[0],
@@ -332,6 +353,9 @@ const convertCanisterServicePackage = (
   title: pkg.title,
   description: pkg.description,
   price: Number(pkg.price),
+  // Commission fee information
+  commissionFee: Number(pkg.commissionFee),
+  commissionRate: Number(pkg.commissionRate),
   createdAt: new Date(Number(pkg.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(pkg.updatedAt) / 1000000).toISOString(),
 });
@@ -751,6 +775,7 @@ export const serviceCanisterService = {
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
         [Principal.fromText(mediaCanisterId)],
+        [Principal.fromText(commissionCanisterId)],
         [] // admin canister reference - empty for frontend
       );
 
@@ -1132,7 +1157,100 @@ export const serviceCanisterService = {
       throw new Error(`Failed to verify service: ${error}`);
     }
   },
+
+  // COMMISSION FUNCTIONS
+
+  /**
+   * Get commission quote for a given category and price
+   */
+  async getCommissionQuote(
+    categoryName: string,
+    price: number,
+  ): Promise<CommissionQuote | null> {
+    try {
+      const actor = await getServiceActor(false);
+      const result = await actor.getCommissionQuote(
+        categoryName,
+        BigInt(price),
+      );
+
+      if ("ok" in result) {
+        return {
+          commissionFee: Number(result.ok.commissionFee),
+          commissionRate: Number(result.ok.commissionRate),
+          totalAmount: Number(result.ok.totalAmount),
+        };
+      } else {
+        //console.error("Error getting commission quote:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      //console.error("Error getting commission quote:", error);
+      throw new Error(`Failed to get commission quote: ${error}`);
+    }
+  },
+
+  /**
+   * Get commission breakdown for debugging/testing (admin function)
+   */
+  async getCommissionBreakdown(
+    categoryName: string,
+    price: number,
+  ): Promise<string | null> {
+    try {
+      const actor = await getServiceActor(true);
+      const result = await actor.getCommissionBreakdown(
+        categoryName,
+        BigInt(price),
+      );
+
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        //console.error("Error getting commission breakdown:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      //console.error("Error getting commission breakdown:", error);
+      throw new Error(`Failed to get commission breakdown: ${error}`);
+    }
+  },
 };
+
+// Commission utility functions
+export const calculateTotalAmount = (
+  price: number,
+  commissionFee: number,
+): number => {
+  return price + commissionFee;
+};
+
+export const formatCommissionRate = (rate: number): string => {
+  return `${rate.toFixed(2)}%`;
+};
+
+export const formatPriceWithCommission = (
+  price: number,
+  commissionFee: number,
+): string => {
+  const total = calculateTotalAmount(price, commissionFee);
+  return `₱${price.toLocaleString()} + ₱${commissionFee.toLocaleString()} commission = ₱${total.toLocaleString()}`;
+};
+
+// Enhanced service/package with computed commission fields
+export const enhanceServiceWithCommission = (
+  service: Service,
+): Service & { totalAmount: number } => ({
+  ...service,
+  totalAmount: calculateTotalAmount(service.price, service.commissionFee),
+});
+
+export const enhancePackageWithCommission = (
+  pkg: ServicePackage,
+): ServicePackage & { totalAmount: number } => ({
+  ...pkg,
+  totalAmount: calculateTotalAmount(pkg.price, pkg.commissionFee),
+});
 
 // Reset functions for authentication state changes
 export const resetServiceActor = () => {

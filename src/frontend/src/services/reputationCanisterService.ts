@@ -19,7 +19,8 @@ const createReputationActor = (
     agentOptions: {
       identity: identity || undefined,
       host:
-        process.env.DFX_NETWORK !== "ic"
+        process.env.DFX_NETWORK !== "ic" &&
+        process.env.DFX_NETWORK !== "playground"
           ? "http://localhost:4943"
           : "https://ic0.app",
     },

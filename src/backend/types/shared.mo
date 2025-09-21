@@ -154,6 +154,9 @@ module {
         title: Text;
         description: Text;
         price: Nat;
+        // Commission fee information
+        commissionFee: Nat; // Calculated commission fee for this package price
+        commissionRate: Float; // Effective commission rate as percentage
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };
@@ -165,6 +168,9 @@ module {
         description: Text;
         category: ServiceCategory;
         price: Nat;
+        // Commission fee information
+        commissionFee: Nat; // Calculated commission fee for this service price
+        commissionRate: Float; // Effective commission rate as percentage
         location: Location;
         status: ServiceStatus;
         createdAt: Time.Time;
@@ -209,7 +215,7 @@ module {
         providerId: Principal;
         providerName: ?Text; // Provider name for display
         serviceId: Text;
-        servicePackageId: ?Text;  // ID of the package if booking a package
+        servicePackageId: [Text];  // Array of package IDs for multiple package bookings
         status: BookingStatus;
         requestedDate: Time.Time;
         scheduledDate: ?Time.Time;
@@ -221,6 +227,16 @@ module {
         location: Location;
         evidence: ?Evidence;
         notes: ?Text;  // Optional notes from client during booking creation
+        paymentMethod: PaymentMethod; // Payment method chosen by client
+        // Payment status tracking fields for Phase 3 Payment Holding and Release
+        paymentStatus: ?Text; // PENDING, PAID_HELD, RELEASED, COMPLETED
+        paymentId: ?Text; // Reference to external payment (Xendit invoice ID)
+        heldAmount: ?Nat; // Amount held in escrow for digital payments
+        releasedAmount: ?Nat; // Amount released to provider
+        commissionRetained: ?Nat; // Commission amount retained by platform
+        paymentReleased: ?Bool; // Flag indicating if payment has been released
+        releasedAt: ?Time.Time; // Timestamp when payment was released
+        payoutId: ?Text; // Reference to payout transaction (Xendit payout ID)
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };
@@ -423,6 +439,8 @@ module {
 
     public type PaymentMethod = {
         #CashOnHand;
+        #GCash;
+        #SRVWallet;
     };
 
     public type CommissionFormula = {

@@ -18,7 +18,10 @@ import {
   ServiceCreateRequest,
 } from "../../../hooks/serviceManagement";
 
-import { ServiceCategory } from "../../../services/serviceCanisterService";
+import {
+  ServiceCategory,
+  CommissionQuote,
+} from "../../../services/serviceCanisterService";
 import { processServiceCertificateFiles } from "../../../services/mediaService";
 
 // Type for time slots
@@ -108,6 +111,7 @@ const AddServicePage: React.FC = () => {
     createPackage,
     processImageFilesForService,
     validateImageFiles,
+    getCommissionQuote,
   } = useServiceManagement();
 
   // State for stepper and form data
@@ -132,6 +136,12 @@ const AddServicePage: React.FC = () => {
 
   // Used to trigger scroll/highlight on error
   const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
+
+  // Commission state
+  const [commissionQuotes, setCommissionQuotes] = useState<{
+    [packageId: string]: CommissionQuote;
+  }>({});
+  const [loadingCommissions, setLoadingCommissions] = useState(false);
 
   // --- Image Handlers ---
   const handleImageFilesChange = async (
@@ -198,6 +208,36 @@ const AddServicePage: React.FC = () => {
     setCertificationPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Commission handlers
+  const fetchCommissionQuotes = useCallback(async () => {
+    if (!getCommissionQuote || !formData.categoryId) return;
+
+    setLoadingCommissions(true);
+    const quotes: { [packageId: string]: CommissionQuote } = {};
+
+    console.log(formData.categoryId);
+    const categoryForCommission =
+      categories.find((cat) => cat.id === formData.categoryId)?.name ||
+      "Default Category";
+
+    try {
+      for (const pkg of formData.servicePackages) {
+        if (pkg.name.trim() && pkg.description.trim() && pkg.price) {
+          const quote = await getCommissionQuote(
+            categoryForCommission,
+            Number(pkg.price),
+          );
+          quotes[pkg.id] = quote;
+        }
+      }
+      setCommissionQuotes(quotes);
+    } catch (error) {
+      console.error("Failed to fetch commission quotes:", error);
+    } finally {
+      setLoadingCommissions(false);
+    }
+  }, [formData.servicePackages, formData.categoryId, getCommissionQuote]);
+
   // --- Initial Data Fetch ---
   useEffect(() => {
     getCategories();
@@ -214,6 +254,13 @@ const AddServicePage: React.FC = () => {
       }
     }
   }, [categories, formData.categoryId]);
+
+  // Fetch commission quotes when reaching the review step
+  useEffect(() => {
+    if (currentStep === 4) {
+      fetchCommissionQuotes();
+    }
+  }, [currentStep, fetchCommissionQuotes]);
 
   // --- Validation for Each Step ---
   const validateCurrentStep = useCallback((): ValidationErrors => {
@@ -302,6 +349,28 @@ const AddServicePage: React.FC = () => {
               }
             }
           });
+
+          // Check for duplicate package names
+          const packageNames = formData.servicePackages
+            .filter((pkg) => pkg.name.trim())
+            .map((pkg) => pkg.name.trim().toLowerCase());
+
+          const duplicateNames = packageNames.filter(
+            (name, index) => packageNames.indexOf(name) !== index,
+          );
+
+          if (duplicateNames.length > 0) {
+            const duplicateName = duplicateNames[0];
+            const duplicateIndices = formData.servicePackages
+              .map((pkg, index) =>
+                pkg.name.trim().toLowerCase() === duplicateName
+                  ? index + 1
+                  : null,
+              )
+              .filter((index) => index !== null);
+
+            errors.servicePackages = `Package names must be unique. "${formData.servicePackages.find((pkg) => pkg.name.trim().toLowerCase() === duplicateName)?.name.trim()}" is used in packages ${duplicateIndices.join(", ")}.`;
+          }
         }
         break;
       case 2: // Availability
@@ -309,19 +378,65 @@ const AddServicePage: React.FC = () => {
           errors.availabilitySchedule =
             "Please select at least one day of availability";
         }
+
+        // Helper function to validate time slots
+        const validateTimeSlots = (timeSlots: TimeSlotUIData[]) => {
+          for (const slot of timeSlots) {
+            // Check if all fields are filled
+            if (
+              !slot.startHour ||
+              !slot.startMinute ||
+              !slot.endHour ||
+              !slot.endMinute
+            ) {
+              return "Please complete all time slot fields";
+            }
+
+            // Check if start and end times are the same
+            const convertTo24Hour = (
+              hour: string,
+              minute: string,
+              period: "AM" | "PM",
+            ) => {
+              let hour24 = parseInt(hour, 10);
+              if (period === "PM" && hour24 !== 12) {
+                hour24 += 12;
+              } else if (period === "AM" && hour24 === 12) {
+                hour24 = 0;
+              }
+              return hour24 * 60 + parseInt(minute, 10); // Convert to minutes for comparison
+            };
+
+            const startMinutes = convertTo24Hour(
+              slot.startHour,
+              slot.startMinute,
+              slot.startPeriod,
+            );
+            const endMinutes = convertTo24Hour(
+              slot.endHour,
+              slot.endMinute,
+              slot.endPeriod,
+            );
+
+            // Critical validation: Start and end times cannot be identical
+            if (startMinutes === endMinutes) {
+              return "⚠️ Start and end times cannot be the same";
+            }
+
+            if (startMinutes >= endMinutes) {
+              return "⚠️ Start time must be before end time";
+            }
+          }
+          return null;
+        };
+
         if (formData.useSameTimeForAllDays) {
           if (formData.commonTimeSlots.length === 0) {
             errors.timeSlots = "Please add at least one time slot";
           } else {
-            const hasValidTimeSlot = formData.commonTimeSlots.some(
-              (slot) =>
-                slot.startHour &&
-                slot.startMinute &&
-                slot.endHour &&
-                slot.endMinute,
-            );
-            if (!hasValidTimeSlot) {
-              errors.timeSlots = "Please complete at least one time slot";
+            const validationError = validateTimeSlots(formData.commonTimeSlots);
+            if (validationError) {
+              errors.timeSlots = validationError;
             }
           }
         } else {
@@ -332,6 +447,18 @@ const AddServicePage: React.FC = () => {
           );
           if (!hasTimeSlots) {
             errors.timeSlots = "Please add time slots for your available days";
+          } else {
+            // Validate all per-day time slots
+            for (const day of formData.availabilitySchedule) {
+              const daySlots = formData.perDayTimeSlots[day] || [];
+              if (daySlots.length > 0) {
+                const validationError = validateTimeSlots(daySlots);
+                if (validationError) {
+                  errors.timeSlots = `${day}: ${validationError}`;
+                  break;
+                }
+              }
+            }
           }
         }
         break;
@@ -397,6 +524,14 @@ const AddServicePage: React.FC = () => {
       return;
     }
     const errors = validateCurrentStep();
+
+    // Additional check specifically for time slot errors to ensure user cannot proceed
+    if (errors.timeSlots) {
+      setValidationErrors(errors);
+      setScrollToErrorTrigger((prev) => prev + 1);
+      return;
+    }
+
     if (Object.keys(errors).length === 0) {
       setCurrentStep((prev) => prev + 1);
       setValidationErrors({});
@@ -797,24 +932,49 @@ const AddServicePage: React.FC = () => {
                           pkg.description.trim() &&
                           pkg.price,
                       )
-                      .map((pkg) => (
-                        <div
-                          key={pkg.id}
-                          className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-center md:justify-between"
-                        >
-                          <div>
-                            <p className="font-medium text-blue-900">
-                              {pkg.name}
-                            </p>
-                            <p className="text-sm break-words text-gray-600">
-                              {pkg.description}
-                            </p>
+                      .map((pkg) => {
+                        const commissionQuote = commissionQuotes[pkg.id];
+                        return (
+                          <div
+                            key={pkg.id}
+                            className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-start md:justify-between"
+                          >
+                            <div className="flex-1">
+                              <p className="font-medium text-blue-900">
+                                {pkg.name}
+                              </p>
+                              <p className="text-sm break-words text-gray-600">
+                                {pkg.description}
+                              </p>
+                            </div>
+                            <div className="mt-2 text-right md:mt-0">
+                              <p className="text-lg font-semibold text-green-600">
+                                ₱{Number(pkg.price).toLocaleString()}
+                              </p>
+                              {loadingCommissions && (
+                                <p className="text-xs text-gray-500">
+                                  Loading commission...
+                                </p>
+                              )}
+                              {commissionQuote && (
+                                <div className="mt-1 text-base text-gray-600">
+                                  <p>
+                                    Commission: ₱
+                                    {commissionQuote.commissionFee.toLocaleString()}
+                                  </p>
+                                  <p className="font-medium text-blue-600">
+                                    Total: ₱
+                                    {(
+                                      Number(pkg.price) +
+                                      commissionQuote.commissionFee
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="mt-2 text-lg font-semibold text-green-600 md:mt-0">
-                            ₱{Number(pkg.price).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
                 <div className="rounded-lg bg-white p-5 shadow-sm">

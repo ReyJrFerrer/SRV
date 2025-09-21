@@ -6,6 +6,7 @@ import authCanisterService, {
 import serviceCanisterService, {
   Service,
   ServiceCategory,
+  ServicePackage,
 } from "../services/serviceCanisterService";
 
 // EnrichedService interface as specified
@@ -55,12 +56,25 @@ interface UseServicesResult {
 const transformToEnrichedService = (
   service: Service,
   providerProfile: FrontendProfile | null,
+  servicePackages?: ServicePackage[],
 ): EnrichedService => {
   // Create a slug from the title
   const slug = service.title
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-");
+
+  // Calculate the lowest price from service packages, fallback to service price
+  const getLowestPrice = (): number => {
+    if (servicePackages && servicePackages.length > 0) {
+      return Math.min(
+        ...servicePackages.map((pkg) => pkg.price + pkg.commissionFee),
+      );
+    }
+    return service.price;
+  };
+
+  const lowestPrice = getLowestPrice();
 
   return {
     id: service.id,
@@ -81,9 +95,9 @@ const transformToEnrichedService = (
       count: service.reviewCount,
     },
     price: {
-      amount: service.price,
-      unit: "per hour", // Default unit
-      display: `$${service.price.toFixed(2)}`,
+      amount: lowestPrice,
+      unit: "starting from", // Updated to reflect it's the lowest price
+      display: `₱${lowestPrice.toLocaleString()}`,
     },
 
     // Location
@@ -110,6 +124,86 @@ const transformToEnrichedService = (
 };
 
 /**
+ * Helper function to fetch provider profiles for a list of services
+ */
+const fetchProviderProfiles = async (
+  services: Service[],
+): Promise<Record<string, FrontendProfile | null>> => {
+  // Create a map of all provider IDs to reduce redundant API calls
+  const providerIds = Array.from(
+    new Set(services.map((service) => service.providerId.toString())),
+  );
+
+  // Fetch all provider profiles in parallel
+  const providerProfiles = await Promise.all(
+    providerIds.map(async (providerId) => {
+      try {
+        return await authCanisterService.getProfile(providerId);
+      } catch (err) {
+        // //console.error(
+        //   `Failed to fetch profile for provider ${providerId}`,
+        //   err,
+        // );
+        return null;
+      }
+    }),
+  );
+
+  // Create a map for quick provider lookup
+  return providerIds.reduce(
+    (map, id, index) => {
+      map[id] = providerProfiles[index];
+      return map;
+    },
+    {} as Record<string, FrontendProfile | null>,
+  );
+};
+
+/**
+ * Helper function to fetch service packages for a list of services
+ */
+const fetchServicePackages = async (
+  services: Service[],
+): Promise<Map<string, ServicePackage[]>> => {
+  const servicePackagesMap = new Map<string, ServicePackage[]>();
+
+  await Promise.all(
+    services.map(async (service) => {
+      try {
+        const packages = await serviceCanisterService.getServicePackages(
+          service.id,
+        );
+        servicePackagesMap.set(service.id, packages);
+      } catch (err) {
+        // If fetching packages fails, we'll use service price as fallback
+        servicePackagesMap.set(service.id, []);
+      }
+    }),
+  );
+
+  return servicePackagesMap;
+};
+
+/**
+ * Helper function to transform services with provider data and packages
+ */
+const transformServicesWithData = (
+  services: Service[],
+  providerMap: Record<string, FrontendProfile | null>,
+  servicePackagesMap: Map<string, ServicePackage[]>,
+): EnrichedService[] => {
+  return services.map((service) => {
+    const providerProfile = providerMap[service.providerId.toString()];
+    const servicePackages = servicePackagesMap.get(service.id) || [];
+    return transformToEnrichedService(
+      service,
+      providerProfile,
+      servicePackages,
+    );
+  });
+};
+
+/**
  * Hook to fetch all services with provider information
  */
 export const useAllServicesWithProviders = (): UseServicesResult => {
@@ -131,40 +225,18 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         return;
       }
 
-      // Create a map of all provider IDs to reduce redundant API calls
-      const providerIds = Array.from(
-        new Set(allServices.map((service) => service.providerId.toString())),
-      );
+      // Fetch provider profiles and service packages in parallel
+      const [providerMap, servicePackagesMap] = await Promise.all([
+        fetchProviderProfiles(allServices),
+        fetchServicePackages(allServices),
+      ]);
 
-      // Fetch all provider profiles in parallel
-      const providerProfiles = await Promise.all(
-        providerIds.map(async (providerId) => {
-          try {
-            return await authCanisterService.getProfile(providerId);
-          } catch (err) {
-            // //console.error(
-            //   `Failed to fetch profile for provider ${providerId}`,
-            //   err,
-            // );
-            return null;
-          }
-        }),
+      // Transform services with provider data and packages
+      const enrichedServices = transformServicesWithData(
+        allServices,
+        providerMap,
+        servicePackagesMap,
       );
-
-      // Create a map for quick provider lookup
-      const providerMap = providerIds.reduce(
-        (map, id, index) => {
-          map[id] = providerProfiles[index];
-          return map;
-        },
-        {} as Record<string, FrontendProfile | null>,
-      );
-
-      // Transform services with provider data
-      const enrichedServices = allServices.map((service) => {
-        const providerProfile = providerMap[service.providerId.toString()];
-        return transformToEnrichedService(service, providerProfile);
-      });
 
       // Set all services at once to prevent flickering
       setServices(enrichedServices);
@@ -215,42 +287,18 @@ export const useServicesByCategory = (
       const categoryServices =
         await serviceCanisterService.getServicesByCategory(categoryId);
 
-      // Create a map of all provider IDs to reduce redundant API calls
-      const providerIds = Array.from(
-        new Set(
-          categoryServices.map((service) => service.providerId.toString()),
-        ),
-      );
+      // Fetch provider profiles and service packages in parallel
+      const [providerMap, servicePackagesMap] = await Promise.all([
+        fetchProviderProfiles(categoryServices),
+        fetchServicePackages(categoryServices),
+      ]);
 
-      // Fetch all provider profiles in parallel
-      const providerProfiles = await Promise.all(
-        providerIds.map(async (providerId) => {
-          try {
-            return await authCanisterService.getProfile(providerId);
-          } catch (err) {
-            // //console.error(
-            //   `Failed to fetch profile for provider ${providerId}`,
-            //   err,
-            // );
-            return null;
-          }
-        }),
+      // Transform services with provider data and packages
+      const enrichedServices = transformServicesWithData(
+        categoryServices,
+        providerMap,
+        servicePackagesMap,
       );
-
-      // Create a map for quick provider lookup
-      const providerMap = providerIds.reduce(
-        (map, id, index) => {
-          map[id] = providerProfiles[index];
-          return map;
-        },
-        {} as Record<string, FrontendProfile | null>,
-      );
-
-      // Transform services with provider data
-      const enrichedServices = categoryServices.map((service) => {
-        const providerProfile = providerMap[service.providerId.toString()];
-        return transformToEnrichedService(service, providerProfile);
-      });
 
       setServices(enrichedServices);
     } catch (err) {
@@ -312,40 +360,18 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
         })
         .slice(0, limit || 10); // Apply limit or default to 10
 
-      // Create a map of all provider IDs to reduce redundant API calls
-      const providerIds = Array.from(
-        new Set(topServices.map((service) => service.providerId.toString())),
-      );
+      // Fetch provider profiles and service packages in parallel
+      const [providerMap, servicePackagesMap] = await Promise.all([
+        fetchProviderProfiles(topServices),
+        fetchServicePackages(topServices),
+      ]);
 
-      // Fetch all provider profiles in parallel
-      const providerProfiles = await Promise.all(
-        providerIds.map(async (providerId) => {
-          try {
-            return await authCanisterService.getProfile(providerId);
-          } catch (err) {
-            // //console.error(
-            //   `Failed to fetch profile for provider ${providerId}`,
-            //   err,
-            // );
-            return null;
-          }
-        }),
+      // Transform services with provider data and packages
+      const enrichedServices = transformServicesWithData(
+        topServices,
+        providerMap,
+        servicePackagesMap,
       );
-
-      // Create a map for quick provider lookup
-      const providerMap = providerIds.reduce(
-        (map, id, index) => {
-          map[id] = providerProfiles[index];
-          return map;
-        },
-        {} as Record<string, FrontendProfile | null>,
-      );
-
-      // Transform services with provider data
-      const enrichedServices = topServices.map((service) => {
-        const providerProfile = providerMap[service.providerId.toString()];
-        return transformToEnrichedService(service, providerProfile);
-      });
 
       setServices(enrichedServices);
     } catch (err) {
@@ -398,14 +424,17 @@ export const useServiceById = (
         return;
       }
 
-      // Fetch the provider profile
-      const providerId = serviceData.providerId.toString();
-      const providerProfile = await authCanisterService.getProfile(providerId);
+      // Fetch the provider profile and service packages in parallel
+      const [providerProfile, servicePackages] = await Promise.all([
+        authCanisterService.getProfile(serviceData.providerId.toString()),
+        serviceCanisterService.getServicePackages(serviceId),
+      ]);
 
       // Transform to enriched service
       const enrichedService = transformToEnrichedService(
         serviceData,
         providerProfile,
+        servicePackages,
       );
       setService(enrichedService);
     } catch (err) {

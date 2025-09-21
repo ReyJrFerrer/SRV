@@ -721,7 +721,9 @@ const ClientProfilePage: React.FC = () => {
                         id="phone"
                         value={phone}
                         onChange={(e) => {
-                          setPhone(e.target.value);
+                          // Remove spaces from phone number input
+                          const phoneValue = e.target.value.replace(/\s/g, "");
+                          setPhone(phoneValue);
                           if (phoneError) setPhoneError("");
                           if (editError) setEditError("");
                         }}

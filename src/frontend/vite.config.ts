@@ -28,6 +28,7 @@ export default defineConfig({
           return "assets/[name]-[hash][extname]";
         },
       },
+      external: ["@rollup/rollup-darwin-x64", "@rollup/rollup-darwin-arm64"],
     },
   },
   optimizeDeps: {
@@ -64,6 +65,11 @@ export default defineConfig({
       },
     },
     allowedHosts: true,
+    // 9/5/2025
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
   },
   plugins: [
     react(),

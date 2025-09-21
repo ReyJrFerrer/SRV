@@ -248,6 +248,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // State for decline confirmation dialog
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
+  const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
 
@@ -279,7 +284,23 @@ const ProviderBookingDetailsPage: React.FC = () => {
     error: hookError,
     refreshBookings,
     clearError,
+    checkCommissionValidation,
+    // canAcceptCashBooking,
+    // getWalletBalance,
   } = useProviderBookingManagement();
+
+  // Commission validation state
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+    hasInsufficientBalance: boolean;
+    commissionValidationMessage?: string;
+    loading: boolean;
+  }>({
+    estimatedCommission: 0,
+    hasInsufficientBalance: false,
+    commissionValidationMessage: "",
+    loading: false,
+  });
 
   // Find specific booking from the hook's bookings array
   useEffect(() => {
@@ -301,6 +322,40 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [id, bookings, hookLoading]);
 
+  // Check commission validation when booking changes
+  useEffect(() => {
+    const validateCommission = async () => {
+      if (!specificBooking) {
+        setCommissionValidation({
+          estimatedCommission: 0,
+          hasInsufficientBalance: false,
+          commissionValidationMessage: "",
+          loading: false,
+        });
+        return;
+      }
+
+      try {
+        setCommissionValidation((prev) => ({ ...prev, loading: true }));
+        const validation = await checkCommissionValidation(specificBooking);
+        setCommissionValidation({
+          ...validation,
+          loading: false,
+        });
+      } catch (error) {
+        //console.error("Error validating commission:", error);
+        setCommissionValidation({
+          estimatedCommission: 0,
+          hasInsufficientBalance: true,
+          commissionValidationMessage: "Error checking commission requirements",
+          loading: false,
+        });
+      }
+    };
+
+    validateCommission();
+  }, [specificBooking, checkCommissionValidation]);
+
   // Handle retry functionality
   const handleRetry = async () => {
     setLocalError(null);
@@ -315,6 +370,22 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Action handlers
   const handleAcceptBooking = async () => {
     if (!specificBooking) return;
+
+    // Check commission validation for cash bookings before accepting
+    if (specificBooking.paymentMethod === "CashOnHand") {
+      if (commissionValidation.loading) {
+        alert("Please wait while we validate commission requirements.");
+        return;
+      }
+
+      if (commissionValidation.hasInsufficientBalance) {
+        alert(
+          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`,
+        );
+        return;
+      }
+    }
+
     const success = await acceptBookingById(specificBooking.id);
     if (success) {
       await refreshBookings();
@@ -329,18 +400,33 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const handleDeclineBooking = async () => {
     if (!specificBooking) return;
-    const success = await declineBookingById(
-      specificBooking.id,
-      "Declined by provider",
-    );
-    if (success) {
-      await refreshBookings();
-      const updatedBooking = bookings.find(
-        (booking) => booking.id === specificBooking.id,
+
+    // Show confirmation dialog instead of window.confirm
+    setShowDeclineConfirm(true);
+  };
+
+  // New function to handle the actual decline after confirmation
+  const handleConfirmDecline = async () => {
+    if (!specificBooking) return;
+
+    setIsDeclinining(true);
+    try {
+      const success = await declineBookingById(
+        specificBooking.id,
+        "Declined by provider",
       );
-      if (updatedBooking) {
-        setSpecificBooking(updatedBooking);
+      if (success) {
+        await refreshBookings();
+        const updatedBooking = bookings.find(
+          (booking) => booking.id === specificBooking.id,
+        );
+        if (updatedBooking) {
+          setSpecificBooking(updatedBooking);
+        }
       }
+    } finally {
+      setIsDeclinining(false);
+      setShowDeclineConfirm(false);
     }
   };
 
@@ -583,11 +669,43 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // --- Main Page Layout ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      {/* Decline Confirmation Dialog */}
+      {showDeclineConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Decline Booking?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to decline this booking from{" "}
+              <b>{specificBooking?.clientName || "this client"}</b>? This action
+              cannot be undone and the client will be notified.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowDeclineConfirm(false)}
+                disabled={isDeclinining}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={handleConfirmDecline}
+                disabled={isDeclinining}
+              >
+                {isDeclinining ? "Declining..." : "Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center px-4 py-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/provider/bookings")}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
             aria-label="Back"
           >
@@ -657,7 +775,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 <span className="font-medium text-gray-700">
                   Package:{" "}
                   <span className="font-normal text-gray-700">
-                    {specificBooking.packageDetails.title}
+                    {specificBooking.packageName}
                   </span>
                 </span>
               </div>
@@ -692,7 +810,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 <span className="font-medium text-gray-700">
                   Price:{" "}
                   <span className="font-semibold text-green-700">
-                    ₱{price.toFixed(2)}
+                    ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}
                   </span>
                 </span>
               </div>
@@ -722,6 +843,84 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
         {/* Booking Progress Section */}
         <BookingProgressSection status={specificBooking?.status} />
+
+        {/* Commission Validation Section for Cash Bookings */}
+        {specificBooking?.paymentMethod === "CashOnHand" &&
+          specificBooking?.canAccept && (
+            <div className="rounded-2xl bg-white p-4 shadow-lg">
+              <h3 className="mb-3 text-lg font-bold text-blue-700">
+                Commission Information
+              </h3>
+              {commissionValidation.loading ? (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                  <span>Calculating commission...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {commissionValidation.estimatedCommission > 0 && (
+                    <div className="flex items-center gap-2">
+                      <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
+                      <span className="font-medium text-gray-700">
+                        Estimated Commission:{" "}
+                        <span className="font-semibold text-red-600">
+                          ₱{commissionValidation.estimatedCommission.toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
+                  {commissionValidation.hasInsufficientBalance ? (
+                    <div className="rounded-lg bg-red-50 p-3">
+                      <div className="flex items-start gap-2">
+                        <XCircleIcon className="mt-0.5 h-5 w-5 text-red-500" />
+                        <div>
+                          <p className="font-medium text-red-800">
+                            Insufficient Wallet Balance
+                          </p>
+                          <p className="mt-1 text-sm text-red-700">
+                            {commissionValidation.commissionValidationMessage}
+                          </p>
+                          <Link
+                            to="/provider/wallet"
+                            className="mt-2 inline-flex items-center text-sm font-medium text-red-600 underline hover:text-red-800"
+                          >
+                            Top up your wallet →
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    commissionValidation.estimatedCommission > 0 && (
+                      <div className="rounded-lg bg-green-50 p-3">
+                        <div className="flex items-start gap-2">
+                          <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-500" />
+                          <div>
+                            <p className="font-medium text-green-800">
+                              Wallet Balance Sufficient: ₱
+                              {commissionValidation.commissionValidationMessage}
+                            </p>
+                            <p className="mt-1 text-sm text-green-700">
+                              Result: ₱
+                              {commissionValidation.commissionValidationMessage}{" "}
+                              - ₱
+                              {commissionValidation.estimatedCommission.toFixed(
+                                2,
+                              )}{" "}
+                              = ₱
+                              {Number(
+                                commissionValidation.commissionValidationMessage,
+                              ) - commissionValidation.estimatedCommission}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
@@ -783,16 +982,35 @@ const ProviderBookingDetailsPage: React.FC = () => {
               </button>
               <button
                 onClick={handleAcceptBooking}
-                disabled={isBookingActionInProgress(
-                  specificBooking?.id || "",
-                  "accept",
-                )}
-                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                disabled={
+                  isBookingActionInProgress(
+                    specificBooking?.id || "",
+                    "accept",
+                  ) ||
+                  (specificBooking?.paymentMethod === "CashOnHand" &&
+                    (commissionValidation.loading ||
+                      commissionValidation.hasInsufficientBalance))
+                }
+                className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                  specificBooking?.paymentMethod === "CashOnHand" &&
+                  (commissionValidation.loading ||
+                    commissionValidation.hasInsufficientBalance)
+                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
+                    : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                } disabled:opacity-50`}
+                title={
+                  specificBooking?.paymentMethod === "CashOnHand" &&
+                  commissionValidation.hasInsufficientBalance
+                    ? "Insufficient wallet balance for commission fee"
+                    : ""
+                }
               >
                 <CheckCircleIcon className="mr-2 h-5 w-5" />
                 {isBookingActionInProgress(specificBooking?.id || "", "accept")
                   ? "Accepting..."
-                  : "Accept"}
+                  : commissionValidation.loading
+                    ? "Checking..."
+                    : "Accept"}
               </button>
             </>
           )}

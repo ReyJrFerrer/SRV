@@ -209,24 +209,34 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
           <input
             type="time"
             value={templateTimeSlot.startTime}
-            onChange={(e) =>
+            onChange={(e) => {
+              const newStartTime = e.target.value;
               setTemplateTimeSlot({
                 ...templateTimeSlot,
-                startTime: e.target.value,
-              })
-            }
+                startTime: newStartTime,
+                // If start time equals end time, automatically increment end time by 1 hour
+                endTime:
+                  newStartTime === templateTimeSlot.endTime
+                    ? addHoursToTime(newStartTime, 1)
+                    : templateTimeSlot.endTime,
+              });
+            }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
           <span>-</span>
           <input
             type="time"
             value={templateTimeSlot.endTime}
-            onChange={(e) =>
-              setTemplateTimeSlot({
-                ...templateTimeSlot,
-                endTime: e.target.value,
-              })
-            }
+            onChange={(e) => {
+              const newEndTime = e.target.value;
+              // Prevent setting end time same as start time
+              if (newEndTime !== templateTimeSlot.startTime) {
+                setTemplateTimeSlot({
+                  ...templateTimeSlot,
+                  endTime: newEndTime,
+                });
+              }
+            }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -343,13 +353,24 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       type="time"
                       value={slot.startTime}
                       onChange={(e) => {
+                        const newStartTime = e.target.value;
                         const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots[slotIndex].startTime =
-                          e.target.value;
+                        const dayIndex = weeklySchedule.findIndex(
+                          (d) => d.day === dayEntry.day,
+                        );
+
+                        // Update start time
+                        newSchedule[dayIndex].availability.slots[
+                          slotIndex
+                        ].startTime = newStartTime;
+
+                        // If start time equals end time, automatically increment end time by 1 hour
+                        if (newStartTime === slot.endTime) {
+                          newSchedule[dayIndex].availability.slots[
+                            slotIndex
+                          ].endTime = addHoursToTime(newStartTime, 1);
+                        }
+
                         setWeeklySchedule(newSchedule);
                       }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
@@ -359,14 +380,17 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       type="time"
                       value={slot.endTime}
                       onChange={(e) => {
-                        const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots[slotIndex].endTime =
-                          e.target.value;
-                        setWeeklySchedule(newSchedule);
+                        const newEndTime = e.target.value;
+                        // Prevent setting end time same as start time
+                        if (newEndTime !== slot.startTime) {
+                          const newSchedule = [...weeklySchedule];
+                          newSchedule[
+                            weeklySchedule.findIndex(
+                              (d) => d.day === dayEntry.day,
+                            )
+                          ].availability.slots[slotIndex].endTime = newEndTime;
+                          setWeeklySchedule(newSchedule);
+                        }
                       }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                     />
@@ -1252,7 +1276,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       if (currentPackageId) {
         // Update existing package
-        await updatePackage({
+        const updatedPackage = await updatePackage({
           id: currentPackageId,
           serviceId: service.id,
           title: packageFormTitle,
@@ -1260,17 +1284,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           price: parsedPrice,
         });
         setPackages((prev) =>
-          prev.map((p) =>
-            p.id === currentPackageId
-              ? {
-                  ...p,
-                  title: packageFormTitle,
-                  description: packageFormDescription,
-                  price: parsedPrice,
-                  updatedAt: new Date().toISOString(),
-                }
-              : p,
-          ),
+          prev.map((p) => (p.id === currentPackageId ? updatedPackage : p)),
         );
         toast.success("Package updated!");
       } else {
@@ -1407,7 +1421,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
 
       {/* Image/PDF Preview Modal */}
@@ -1480,7 +1494,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         </div>
       )}
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
+      <header className="bg-white-90 sticky top-0 z-40 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
             onClick={() => navigate("/provider/home")}
@@ -1526,7 +1540,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         {/* Hero Card */}
         <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
-          <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
+          <div className="relative flex h-56 w-full max-w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
             {serviceImages &&
             serviceImages.length > 0 &&
             serviceImages[0].dataUrl ? (
@@ -1807,7 +1821,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                       <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                       Availability
                     </label>
-                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+                    <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
                       {service.weeklySchedule?.filter(
                         (entry) => entry.availability.isAvailable,
                       ).length ? (
@@ -1969,7 +1983,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 )}
 
                 {/* Redesigned package cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid-cols-1 gap-4 sm:grid-cols-2">
                   {packages.length > 0
                     ? packages.map((pkg) => (
                         <div
@@ -1981,9 +1995,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                               <h4 className="text-lg font-semibold break-words text-blue-900">
                                 {pkg.title}
                               </h4>
-                              <span className="text-lg font-bold text-green-600">
-                                ₱{pkg.price.toFixed(2)}
-                              </span>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-blue-600">
+                                  ₱{pkg.price.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  + ₱{pkg.commissionFee.toFixed(2)} commission
+                                </div>
+                                <div className="text-sm font-medium text-green-600">
+                                  = ₱
+                                  {(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
+                                  total
+                                </div>
+                              </div>
                             </div>
                             <p className="mt-1 text-sm break-words text-blue-700">
                               {pkg.description}
@@ -2457,7 +2481,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
               }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+              className={`flex w-full flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-red-400 hover:text-white"

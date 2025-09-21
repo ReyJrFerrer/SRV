@@ -9,6 +9,7 @@ import {
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
+  BanknotesIcon, // Add icon for payout settings
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
@@ -35,6 +36,11 @@ const SettingsPage: React.FC = () => {
 
   // Update menu items to point to correct routes
   const menuItems = [
+    {
+      name: "Payout Settings",
+      icon: BanknotesIcon,
+      href: "/provider/payout-settings",
+    },
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,

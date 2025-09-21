@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useLocationStore } from "../../store/locationStore";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -33,11 +34,16 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
-  // --- State: Geolocation for map modal ---
-  const [geoLocation, setGeoLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  // --- Use Zustand location store ---
+  const {
+    location: geoLocation,
+    userAddress,
+    userProvince,
+    locationLoading,
+  } = useLocationStore();
+
+  // Get requestLocation function separately to avoid dependency issues
+  const locationStore = useLocationStore();
 
   // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
@@ -58,11 +64,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     "Looking for a babysitter?",
   ];
   const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
-
-  // --- State: Location display ---
-  const [userAddress, setUserAddress] = useState<string>("");
-  const [userProvince, setUserProvince] = useState<string>("");
-  const [locationLoading, setLocationLoading] = useState(true);
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
@@ -93,30 +94,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   };
 
-  // Effect: fetch user profile and location info after auth
-  // --- Effect: Fetch user profile and detect location on mount ---
+  // Effect: fetch user profile and initialize location when auth loads
   useEffect(() => {
-    // Helper: retry fetch with delay (for OpenStreetMap reverse geocoding)
-    const fetchWithRetry = async (
-      url: string,
-      attempts: number,
-      delayMs: number,
-    ): Promise<any> => {
-      for (let i = 0; i < attempts; i++) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error("Fetch failed");
-          return await res.json();
-        } catch (err) {
-          if (i < attempts - 1) {
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
-          }
-        }
-      }
-      throw new Error("All fetch attempts failed");
-    };
-
-    // Main: load profile and location
     const loadInitialData = async () => {
       // Fetch user profile if authenticated
       if (isAuthenticated) {
@@ -127,86 +106,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-      setLocationLoading(true);
-      // Request geolocation from browser
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            setGeoLocation({ latitude, longitude });
-            try {
-              const data = await fetchWithRetry(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-                3, // attempts
-                1500, // delay ms
-              );
-              if (data && data.address) {
-                const { city, town, village, county, state, region, province } =
-                  data.address;
-                // Special case: Baguio
-                let cityPart = city || town || village || "";
-                let provinceVal = county || state || region || province || "";
-                if (
-                  (cityPart.toLowerCase() === "baguio" ||
-                    cityPart.toLowerCase() === "baguio city") &&
-                  [
-                    "cordillera administrative region",
-                    "car",
-                    "region",
-                  ].includes(provinceVal.toLowerCase())
-                ) {
-                  cityPart = "Baguio City";
-                  provinceVal = "Benguet";
-                }
-                // Only set city/municipality and province, do not include other details
-                setUserAddress(cityPart || "Could not determine city");
-                setUserProvince(provinceVal);
-                // Cache the address for faster subsequent loads
-                if (
-                  location &&
-                  "latitude" in location &&
-                  "longitude" in location
-                ) {
-                  localStorage.setItem(
-                    `address_${location.latitude}_${location.longitude}`,
-                    JSON.stringify({
-                      address: cityPart,
-                      province: provinceVal,
-                    }),
-                  );
-                }
-              } else {
-                setUserAddress("Could not determine city");
-                setUserProvince("");
-              }
-              setLocationLoading(false);
-            } catch (err) {
-              setUserAddress("Could not determine city");
-              setUserProvince("");
-              setLocationLoading(false);
-            }
-          },
-          () => {
-            // Permission denied or error
-            setLocationLoading(false);
-            setUserAddress("");
-            setUserProvince("");
-            setGeoLocation(null);
-          },
-        );
-      } else {
-        setLocationLoading(false);
-        setUserAddress("");
-        setUserProvince("");
-        setGeoLocation(null);
+
+      // Initialize location through Zustand store (will check cache first)
+      if (!isAuthLoading) {
+        locationStore.requestLocation();
       }
     };
+
     if (!isAuthLoading) {
       loadInitialData();
     }
-    // Only run once after auth loads
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isAuthLoading]);
+  }, [isAuthenticated, isAuthLoading, locationStore]);
 
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
@@ -302,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <div className="h-10 border-l-2 border-blue-100"></div>
           <div className="flex flex-col">
             <span className="text-2xl font-semibold tracking-wide text-blue-700">
-              Welcome Back,{" "}
+              Welcome,{" "}
               <span className="text-2xl font-bold text-gray-800">
                 {displayName}
               </span>
@@ -341,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         <hr className="my-4 border-blue-100" />
         <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
           <span className="text-xl font-semibold tracking-wide text-blue-700">
-            Welcome Back,
+            Welcome,
           </span>
           <span className="text-xl font-bold text-gray-800">{displayName}</span>
         </div>

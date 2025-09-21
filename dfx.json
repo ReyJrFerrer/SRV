@@ -45,6 +45,18 @@
       "type": "motoko",
       "main": "src/backend/function/feedback.mo"
     },
+    "commission": {
+      "type": "motoko",
+      "main": "src/backend/function/commission.mo"
+    },
+    "wallet": {
+      "type": "motoko",
+      "main": "src/backend/function/wallet.mo"
+    },
+    "notification": {
+      "type": "motoko",
+      "main": "src/backend/function/notification.mo"
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",
@@ -56,28 +68,10 @@
       },
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
     },
-    "backend": {
-      "dependencies": [
-        "llm",
-        "auth",
-        "booking",
-        "reputation",
-        "review",
-        "service",
-        "chat",
-        "media"
-      ],
-      "type": "motoko",
-      "main": "src/backend/main.mo"
-    },
 
     "admin-frontend": {
-      "dependencies": ["admin"],
-      "type": "assets",
-      "source": ["src/admin/dist/"]
-    },
-    "frontend": {
       "dependencies": [
+        "admin",
         "llm",
         "auth",
         "booking",
@@ -88,10 +82,12 @@
         "media",
         "remittance",
         "feedback",
-        "admin"
+        "commission",
+        "wallet",
+        "notification"
       ],
       "type": "assets",
-      "source": ["src/frontend/dist/"]
+      "source": ["src/admin/dist/"]
     }
   },
   "defaults": {

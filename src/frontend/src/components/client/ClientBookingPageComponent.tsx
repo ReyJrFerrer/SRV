@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import phLocations from "../../data/ph_locations.json";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,20 +8,29 @@ import {
   GlobeAltIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  WalletIcon,
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
+import phLocations from "../../data/ph_locations.json";
+import {
+  createDirectPayment,
+  checkProviderOnboarding,
+} from "../../services/firebase";
+import { useAuth } from "../../context/AuthContext";
+import { useLocationStore } from "../../store/locationStore";
 
 // --- Payment Section Sub-Component ---
 
 // Payment method selection and input for cash change
 type PaymentSectionProps = {
-  paymentMethod: string;
-  setPaymentMethod: (method: string) => void;
+  paymentMethod: "CashOnHand" | "GCash" | "SRVWallet";
+  setPaymentMethod: (method: "CashOnHand" | "GCash" | "SRVWallet") => void;
   packages: {
     id: string;
     title: string;
     description: string;
     price: number;
+    commissionFee?: number;
     checked: boolean;
   }[];
   amountPaid: string;
@@ -30,6 +38,7 @@ type PaymentSectionProps = {
   paymentError: string | null;
   totalPrice: number;
   highlight?: boolean; // <-- Add highlight prop
+  isProviderOnboarded?: boolean; // <-- Add provider onboarding status
 };
 
 const PaymentSection: React.FC<PaymentSectionProps> = ({
@@ -41,6 +50,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   paymentError,
   totalPrice,
   highlight = false,
+  // isProviderOnboarded = false,
 }) => (
   <div
     className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
@@ -52,9 +62,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
     <div className="space-y-3">
       <div
-        onClick={() => setPaymentMethod("cash")}
+        onClick={() => setPaymentMethod("CashOnHand")}
         className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
-          paymentMethod === "cash"
+          paymentMethod === "CashOnHand"
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300"
         }`}
@@ -63,11 +73,11 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-500" />
           <span className="font-medium text-gray-800">Cash</span>
         </div>
-        {paymentMethod === "cash" && (
+        {paymentMethod === "CashOnHand" && (
           <CheckCircleIcon className="h-6 w-6 text-blue-500" />
         )}
       </div>
-      {paymentMethod === "cash" && packages.some((p) => p.checked) && (
+      {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
         <div className="pt-2 pl-4">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
@@ -90,18 +100,61 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           )}
         </div>
       )}
-      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
+      <div
+        // onClick={() => (isProviderOnboarded ? setPaymentMethod("GCash") : null)}
+        className={
+          `flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`
+          //   ${
+          //   !isProviderOnboarded
+          //     ? "cursor-not-allowed border-gray-300 opacity-50"
+          //     : paymentMethod === "GCash"
+          //       ? "cursor-pointer border-blue-500 bg-blue-50"
+          //       : "cursor-pointer border-gray-300"
+          // }
+        }
+      >
+        <div className="flex items-center">
+          <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-800">
+              E-Wallet (GCash and PayMaya)
+            </span>
+            {/* {!isProviderOnboarded && (
+              <span className="text-xs text-gray-500">
+                Provider not set up for direct payments
+              </span>
+            )} */}
+          </div>
+        </div>
+
+        <div className="flex items-center">
+          {/* {!isProviderOnboarded && (
+            <span className="mr-2 text-xs text-gray-400">Unavailable</span>
+          )} */}
+          {/* {paymentMethod === "GCash" && isProviderOnboarded && (
+            <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+          )} */}
+        </div>
+        <span className="text-xs text-gray-400">Soon</span>
+      </div>
+      <div
+        // onClick={() => setPaymentMethod("SRVWallet")}
+        className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`}
+      >
         <div className="flex items-center">
           <img
-            src="/images/external logo/g-cash-logo.svg"
-            alt="GCash"
+            src="/logo.svg"
+            alt="SRV"
             width={24}
             height={24}
             className="mr-3"
           />
-          <span className="font-medium text-gray-500">GCash</span>
+          <span className="font-medium text-gray-800">SRV Wallet</span>
         </div>
         <span className="text-xs text-gray-400">Soon</span>
+        {/* {paymentMethod === "SRVWallet" && (
+          <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+        )} */}
       </div>
       <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
         <div className="flex items-center">
@@ -123,6 +176,13 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 
 // --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
+  // --- Auth context ---
+  const { identity } = useAuth();
+
+  // --- Use Zustand location store ---
+  const { userAddress, userProvince, locationLoading, requestLocation } =
+    useLocationStore();
+
   // --- Section refs for scrolling/highlighting ---
   const barangayRef = useRef<HTMLSelectElement>(null);
   const otherBarangayRef = useRef<HTMLInputElement>(null);
@@ -139,6 +199,7 @@ const ClientBookingPageComponent: React.FC = () => {
       title: string;
       description: string;
       price: number;
+      commissionFee?: number;
       checked: boolean;
     }[]
   >([]);
@@ -161,82 +222,26 @@ const ClientBookingPageComponent: React.FC = () => {
   const NOTES_CHAR_LIMIT = 50;
   // --- Payment state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "CashOnHand" | "GCash" | "SRVWallet"
+  >("CashOnHand");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isProviderOnboarded, setIsProviderOnboarded] =
+    useState<boolean>(false);
   // --- Routing ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
-  // --- Location detection state ---
-  const [locationStatus, setLocationStatus] = useState<
-    "detecting" | "allowed" | "denied"
-  >("detecting");
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null,
-  );
-  const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
-  const [displayProvince, setDisplayProvince] = useState<string>("");
-  // --- Detect location on mount ---
+
+  // Initialize location on component mount
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("denied");
-      return;
-    }
-    setLocationStatus("detecting");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationStatus("allowed");
-        setLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-        setMarkerPosition([pos.coords.latitude, pos.coords.longitude]);
-      },
-      () => {
-        setLocationStatus("denied");
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, []);
-  // --- Reverse geocode to get municipality/city and province ---
-  useEffect(() => {
-    if (locationStatus === "allowed" && location) {
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.address) {
-            const {
-              city,
-              town,
-              municipality,
-              village,
-              county,
-              state,
-              region,
-              province,
-            } = data.address;
-            let detectedCity = city || town || municipality || village || "";
-            let detectedProvince = county || state || region || province || "";
-            if (detectedCity.trim().toLowerCase() === "baguio")
-              detectedCity = "Baguio City";
-            if (detectedProvince === "Cordillera Administrative Region")
-              detectedProvince = "Benguet";
-            setDisplayMunicipality(detectedCity);
-            setDisplayProvince(detectedProvince);
-          }
-        })
-        .catch(() => {
-          setDisplayMunicipality("");
-          setDisplayProvince("");
-        });
-    }
-  }, [locationStatus, location]);
+    requestLocation();
+  }, [requestLocation]);
+
+  // Set displayMunicipality and displayProvince from Zustand store
+  const displayMunicipality = userAddress || "";
+  const displayProvince = userProvince || "";
+
   // --- Service and booking data (from hook) ---
   const {
     service,
@@ -252,10 +257,49 @@ const ClientBookingPageComponent: React.FC = () => {
     createBookingRequest,
     calculateTotalPrice,
   } = useBookRequest();
+
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
   const [otherBarangay, setOtherBarangay] = useState("");
+  // Add new state for location input mode and manual province/city selection
+  const [locationInputMode, setLocationInputMode] = useState<
+    "detected" | "manual"
+  >("detected");
+  const [manualProvince, setManualProvince] = useState<string>("");
+  const [manualCity, setManualCity] = useState<string>("");
+  const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>(
+    [],
+  );
+  // --- Update manualBarangayOptions when manualProvince or manualCity changes ---
+  useEffect(() => {
+    if (manualProvince && manualCity) {
+      const provinceObj = phLocations.provinces.find(
+        (prov: any) =>
+          prov.name.trim().toLowerCase() ===
+          manualProvince.trim().toLowerCase(),
+      );
+      const muniObj = provinceObj?.municipalities.find(
+        (muni: any) =>
+          muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
+      );
+      if (muniObj && Array.isArray(muniObj.barangays)) {
+        setManualBarangayOptions(
+          muniObj.barangays.filter(
+            (b: string) =>
+              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+          ),
+        );
+      } else {
+        setManualBarangayOptions([]);
+      }
+      setSelectedBarangay("");
+    } else {
+      setManualBarangayOptions([]);
+      setSelectedBarangay("");
+    }
+  }, [manualProvince, manualCity]);
+
   useEffect(() => {
     let foundBarangays: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
@@ -381,6 +425,26 @@ const ClientBookingPageComponent: React.FC = () => {
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
+
+  // --- Check provider onboarding status when service is loaded ---
+  useEffect(() => {
+    const checkProviderOnboardingStatus = async () => {
+      if (service?.providerId) {
+        try {
+          const isOnboarded = await checkProviderOnboarding(
+            service.providerId.toString(),
+          );
+          setIsProviderOnboarded(isOnboarded);
+        } catch (error) {
+          // console.error("Error checking provider onboarding:", error);
+          setIsProviderOnboarded(false);
+        }
+      }
+    };
+
+    checkProviderOnboardingStatus();
+  }, [service?.providerId]);
+
   useEffect(() => {
     if (hookPackages.length > 0) {
       setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
@@ -429,15 +493,19 @@ const ClientBookingPageComponent: React.FC = () => {
       }
 
       // Helper function to check if a time slot has passed (for same-day booking only)
-      const isTimeSlotPassed = (startTime: string): boolean => {
+      const isTimeSlotPassed = (
+        _startTime: string,
+        endTime: string,
+      ): boolean => {
         if (bookingOption !== "sameday") return false;
 
         const now = new Date();
-        const [startHour, startMinute] = startTime.split(":").map(Number);
-        const slotStartTime = new Date();
-        slotStartTime.setHours(startHour, startMinute, 0, 0);
+        const [endHour, endMinute] = endTime.split(":").map(Number);
+        const slotEndTime = new Date();
+        slotEndTime.setHours(endHour, endMinute, 0, 0);
 
-        return now >= slotStartTime;
+        // A slot is only "passed" if the current time is past the END of the slot
+        return now >= slotEndTime;
       };
 
       // Check availability for each slot
@@ -445,7 +513,10 @@ const ClientBookingPageComponent: React.FC = () => {
         const timeSlotKey = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
 
         // First check if the time slot has passed (for same-day booking)
-        const hasTimePassed = isTimeSlotPassed(slot.timeSlot.startTime);
+        const hasTimePassed = isTimeSlotPassed(
+          slot.timeSlot.startTime,
+          slot.timeSlot.endTime,
+        );
 
         if (hasTimePassed) {
           availabilityMap[timeSlotKey] = false;
@@ -490,12 +561,18 @@ const ClientBookingPageComponent: React.FC = () => {
   const totalPrice = useMemo(() => {
     return packages
       .filter((p: any) => p.checked)
-      .reduce((sum: number, pkg: any) => sum + pkg.price, 0);
+      .reduce(
+        (sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0),
+        0,
+      );
   }, [packages, hookPackages, calculateTotalPrice]);
 
   // --- Validate payment amount ---
   useEffect(() => {
-    if (paymentMethod === "cash" && packages.some((p: any) => p.checked)) {
+    if (
+      paymentMethod === "CashOnHand" &&
+      packages.some((p: any) => p.checked)
+    ) {
       const paidAmount = parseFloat(amountPaid);
       if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
         setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
@@ -522,6 +599,57 @@ const ClientBookingPageComponent: React.FC = () => {
     setSelectedTime(""); // Clear selected time when switching booking options
     setSlotAvailability({}); // Clear slot availability cache
     setFormError(null);
+
+    // Auto-select next available business day when switching to scheduled
+    if (option === "scheduled" && service) {
+      // First clear the selected date to ensure clean state
+      setSelectedDate(null);
+
+      // Use setTimeout to ensure the state update is processed before setting new date
+      setTimeout(() => {
+        const nextAvailableDate = findNextAvailableBusinessDay();
+        if (nextAvailableDate) {
+          setSelectedDate(nextAvailableDate);
+        }
+      }, 0);
+    } else if (option === "sameday") {
+      // Clear selected date for same-day booking
+      setSelectedDate(null);
+    }
+  };
+
+  // Helper function to find the next available business day
+  const findNextAvailableBusinessDay = (): Date | null => {
+    if (!service?.weeklySchedule) return null;
+
+    const today = new Date();
+    let currentDate = new Date(today.setDate(today.getDate() + 1)); // Start from tomorrow
+
+    // Check up to 14 days ahead to find an available day
+    for (let i = 0; i < 14; i++) {
+      const dayName = dayIndexToName(currentDate.getDay());
+      const isAvailable = service.weeklySchedule.some(
+        (s) => s.day === dayName && s.availability.isAvailable,
+      );
+
+      if (isAvailable) {
+        // Create adjusted date to avoid timezone issues (similar to handleDateChange)
+        return new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          12,
+          0,
+          0,
+          0,
+        );
+      }
+
+      // Move to next day
+      currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+    }
+
+    return null; // No available day found within 14 days
   };
   // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
@@ -536,21 +664,6 @@ const ClientBookingPageComponent: React.FC = () => {
         0,
         0,
       );
-      // //console.log("DatePicker selected:", {
-      //   original: date.toISOString(),
-      //   originalDay: date.getDay(),
-      //   adjusted: adjustedDate.toISOString(),
-      //   adjustedDay: adjustedDate.getDay(),
-      //   dayName: [
-      //     "Sunday",
-      //     "Monday",
-      //     "Tuesday",
-      //     "Wednesday",
-      //     "Thursday",
-      //     "Friday",
-      //     "Saturday",
-      //   ][adjustedDate.getDay()],
-      // });
       setSelectedDate(adjustedDate);
     } else {
       setSelectedDate(null);
@@ -650,7 +763,10 @@ const ClientBookingPageComponent: React.FC = () => {
       }
 
       // 4. Payment Method (if cash)
-      if (paymentMethod === "cash" && packages.some((pkg) => pkg.checked)) {
+      if (
+        paymentMethod === "CashOnHand" &&
+        packages.some((pkg) => pkg.checked)
+      ) {
         const paidAmount = parseFloat(amountPaid);
         if (!amountPaid.trim()) {
           setFormError("Please enter the cash amount before proceeding.");
@@ -706,12 +822,18 @@ const ClientBookingPageComponent: React.FC = () => {
       // Build address string from manual entry and header context
       const barangayValue =
         selectedBarangay === "__other__" ? otherBarangay : selectedBarangay;
+
+      const finalMunicipality =
+        locationInputMode === "manual" ? manualCity : displayMunicipality;
+      const finalProvince =
+        locationInputMode === "manual" ? manualProvince : displayProvince;
+
       const finalAddress = [
         houseNumber,
         street,
         barangayValue,
-        displayMunicipality,
-        displayProvince,
+        finalMunicipality,
+        finalProvince,
         landmark,
       ]
         .filter(Boolean)
@@ -728,8 +850,76 @@ const ClientBookingPageComponent: React.FC = () => {
         location: finalAddress,
         notes: notes,
         amountToPay: parseFloat(amountPaid),
+        paymentMethod: paymentMethod, // Include the selected payment method
       };
+
+      // Handle different payment methods
+      if (paymentMethod === "GCash") {
+        // For GCash payments, create a direct payment invoice first
+        if (!identity) {
+          setFormError("You must be logged in to make digital payments.");
+          return;
+        }
+
+        // Check if provider is onboarded for direct payments
+        const isProviderOnboarded = await checkProviderOnboarding(
+          service!.providerId.toString(),
+        );
+        if (!isProviderOnboarded) {
+          setFormError(
+            "This provider hasn't set up direct payments yet. Please use cash payment or SRV Wallet.",
+          );
+          return;
+        }
+
+        const clientId = identity.getPrincipal().toString();
+
+        // Create direct payment invoice with selected packages
+
+        const paymentResult = await createDirectPayment({
+          bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
+          clientId: clientId,
+          providerId: service!.providerId.toString(),
+          packages: packages,
+          serviceTitle: service!.title,
+          category: service!.category.name.toString(),
+          bookingData: {
+            ...bookingData,
+            location:
+              typeof bookingData.location === "string"
+                ? bookingData.location
+                : finalAddress, // Ensure location is string
+          }, // Pass the full booking data
+        });
+
+        if (!paymentResult.success) {
+          setFormError(
+            paymentResult.error ||
+              "Failed to create payment invoice. Please try again.",
+          );
+          return;
+        }
+
+        // If payment invoice was created successfully, redirect to payment
+        if (paymentResult.invoiceUrl) {
+          // Redirect to payment page
+          window.open(paymentResult.invoiceUrl, "_blank");
+
+          // Show a message to user about payment process
+          navigate("/client/booking/payment-pending", {
+            state: {
+              invoiceId: paymentResult.invoiceId,
+              invoiceUrl: paymentResult.invoiceUrl,
+              bookingData: bookingData,
+            },
+          });
+          return;
+        }
+      }
+
+      // For cash payments and SRV Wallet, proceed with normal booking creation
       const booking = await createBookingRequest(bookingData);
+
       if (booking) {
         setFormError(null); // Clear error after successful booking
         const confirmationDetails = {
@@ -746,10 +936,12 @@ const ClientBookingPageComponent: React.FC = () => {
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),
           amountToPay:
-            paymentMethod === "cash"
+            paymentMethod === "CashOnHand"
               ? amountPaid || totalPrice.toFixed(2)
               : totalPrice.toFixed(2),
           landmark: landmark || "None",
+          municipality: finalMunicipality,
+          province: finalProvince,
         };
         navigate("/client/booking/confirmation", {
           state: { details: confirmationDetails },
@@ -928,10 +1120,13 @@ const ClientBookingPageComponent: React.FC = () => {
                       </div>
                       <div className="text-base font-bold text-blue-600">
                         ₱
-                        {pkg.price.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {(pkg.price + (pkg.commissionFee || 0)).toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
                       </div>
                     </div>
                   </label>
@@ -948,6 +1143,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     paymentError={paymentError}
                     totalPrice={totalPrice}
                     highlight={highlightInput === "paymentSection"}
+                    isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
               </div>
@@ -1037,18 +1233,12 @@ const ClientBookingPageComponent: React.FC = () => {
                               // Check if the time slot has passed (for same-day booking)
                               const isTimeSlotPassed = (): boolean => {
                                 const now = new Date();
-                                const [startHour, startMinute] =
-                                  slot.timeSlot.startTime
-                                    .split(":")
-                                    .map(Number);
-                                const slotStartTime = new Date();
-                                slotStartTime.setHours(
-                                  startHour,
-                                  startMinute,
-                                  0,
-                                  0,
-                                );
-                                return now >= slotStartTime;
+                                const [endHour, endMinute] =
+                                  slot.timeSlot.endTime.split(":").map(Number);
+                                const slotEndTime = new Date();
+                                slotEndTime.setHours(endHour, endMinute, 0, 0);
+                                // A slot is only "passed" if the current time is past the END of the slot
+                                return now >= slotEndTime;
                               };
 
                               const hasTimePassed = isTimeSlotPassed();
@@ -1265,162 +1455,334 @@ const ClientBookingPageComponent: React.FC = () => {
                 )}
               </div>
               {/* --- Service Location Section --- */}
+              {/* --- Service Location Section (uses location from Header.tsx context or manual selection) --- */}
               <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
-                {/* --- Service Location Section (uses location from Header.tsx context) --- */}
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
-                <div className="mt-2 space-y-3">
-                  {/* The Municipality/City and Province below are sourced from Header.tsx context */}
-                  <p className="text-xs text-gray-600">
-                    Your location is automatically detected.
-                  </p>
-                  <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                <div className="mb-4 flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="locationInputMode"
+                      value="detected"
+                      checked={locationInputMode === "detected"}
+                      onChange={() => setLocationInputMode("detected")}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Use Detected Location
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="locationInputMode"
+                      value="manual"
+                      checked={locationInputMode === "manual"}
+                      onChange={() => setLocationInputMode("manual")}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Choose Diffferent Location
+                    </span>
+                  </label>
+                </div>
+                {locationInputMode === "detected" ? (
+                  <div className="mt-2 space-y-3">
+                    <p className="text-xs text-gray-600">
+                      Your location is automatically detected.
+                    </p>
+                    <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Municipality/City
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationLoading
+                                ? "Detecting..."
+                                : (displayMunicipality || "")
+                                      .trim()
+                                      .toLowerCase() === "baguio"
+                                  ? "Baguio City"
+                                  : displayMunicipality || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            placeholder="Municipality/City"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Province
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationLoading
+                                ? "Detecting..."
+                                : displayProvince ===
+                                    "Cordillera Administrative Region"
+                                  ? "Benguet"
+                                  : displayProvince || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            placeholder="Province"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Barangay dropdown populated from ph_locations.json */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {barangayOptions
+                        .filter(
+                          (b) =>
+                            b &&
+                            b.trim().toLowerCase().replace(/\s+/g, "") !==
+                              "others",
+                        )
+                        .map((barangay, idx) => (
+                          <option key={idx} value={barangay}>
+                            {barangay}
+                          </option>
+                        ))}
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
+                    <input
+                      ref={streetRef}
+                      type="text"
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!selectedBarangay}
+                      minLength={3}
+                      maxLength={20}
+                    />
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2 space-y-3">
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <label className="mb-1 block text-xs text-blue-700">
-                          Municipality/City
+                          Province *
                         </label>
-                        <input
-                          type="text"
-                          value={
-                            locationStatus === "detecting"
-                              ? "Detecting..."
-                              : (displayMunicipality || "")
-                                    .trim()
-                                    .toLowerCase() === "baguio"
-                                ? "Baguio City"
-                                : displayMunicipality || ""
-                          }
-                          readOnly
-                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
-                          placeholder="Municipality/City"
-                        />
+                        <select
+                          value={manualProvince}
+                          onChange={(e) => {
+                            setManualProvince(e.target.value);
+                            setManualCity("");
+                          }}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                        >
+                          <option value="" disabled>
+                            Select Province
+                          </option>
+                          {phLocations.provinces.map((prov: any) => (
+                            <option key={prov.name} value={prov.name}>
+                              {prov.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex-1">
                         <label className="mb-1 block text-xs text-blue-700">
-                          Province
+                          City/Municipality *
                         </label>
-                        <input
-                          type="text"
-                          value={
-                            locationStatus === "detecting"
-                              ? "Detecting..."
-                              : displayProvince ===
-                                  "Cordillera Administrative Region"
-                                ? "Benguet"
-                                : displayProvince || ""
-                          }
-                          readOnly
-                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
-                          placeholder="Province"
-                        />
+                        <select
+                          value={manualCity}
+                          onChange={(e) => setManualCity(e.target.value)}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                          disabled={!manualProvince}
+                        >
+                          <option value="" disabled>
+                            Select City/Municipality
+                          </option>
+                          {manualProvince &&
+                            phLocations.provinces
+                              .find(
+                                (prov: any) =>
+                                  prov.name.trim().toLowerCase() ===
+                                  manualProvince.trim().toLowerCase(),
+                              )
+                              ?.municipalities.map((muni: any) => (
+                                <option key={muni.name} value={muni.name}>
+                                  {muni.name}
+                                </option>
+                              ))}
+                        </select>
                       </div>
                     </div>
-                  </div>
-                  {locationStatus === "allowed" && markerPosition && (
-                    <div className="mb-2"></div>
-                  )}
-
-                  {/* Barangay dropdown populated from ph_locations.json */}
-                  <select
-                    ref={barangayRef}
-                    value={selectedBarangay}
-                    onChange={(e) => setSelectedBarangay(e.target.value)}
-                    className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                      highlightInput === "barangay"
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                  >
-                    <option value="" disabled>
-                      Select Barangay *
-                    </option>
-                    {barangayOptions
-                      .filter(
-                        (b) =>
-                          b &&
-                          b.trim().toLowerCase().replace(/\s+/g, "") !==
-                            "others",
-                      )
-                      .map((barangay, idx) => (
+                    {/* Barangay dropdown for manual selection */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!manualCity}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {manualBarangayOptions.map((barangay, idx) => (
                         <option key={idx} value={barangay}>
                           {barangay}
                         </option>
                       ))}
-                    <option value="__other__">Others</option>
-                  </select>
-                  {selectedBarangay === "__other__" && (
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
                     <input
-                      ref={otherBarangayRef}
+                      ref={streetRef}
                       type="text"
-                      placeholder="Enter your Barangay *"
-                      value={otherBarangay}
-                      onChange={(e) => setOtherBarangay(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
-                        highlightInput === "otherBarangay" ||
-                        (otherBarangay &&
-                          (otherBarangay.trim().length < 3 ||
-                            otherBarangay.trim().length > 20))
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : "border-blue-400"
+                          : ""
                       }`}
+                      disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
-                      required
                     />
-                  )}
-                  <input
-                    ref={streetRef}
-                    type="text"
-                    placeholder="Street Name *"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                      !selectedBarangay
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : "border-gray-300 bg-white text-gray-700"
-                    } ${
-                      highlightInput === "street" ||
-                      (street &&
-                        (street.trim().length < 3 || street.trim().length > 20))
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                    disabled={!selectedBarangay}
-                    minLength={3}
-                    maxLength={20}
-                  />
-                  <input
-                    ref={houseNumberRef}
-                    type="text"
-                    placeholder="House/Unit No. *"
-                    value={houseNumber}
-                    onChange={(e) => setHouseNumber(e.target.value)}
-                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                      !street
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : "border-gray-300 bg-white text-gray-700"
-                    } ${
-                      highlightInput === "houseNumber" ||
-                      (houseNumber &&
-                        (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                        ? "border-2 border-red-500 ring-2 ring-red-200"
-                        : ""
-                    }`}
-                    disabled={!street}
-                    maxLength={15}
-                  />
-                  {/* Landmark input, always enabled */}
-                  <input
-                    type="text"
-                    placeholder="Building / Subdivision / Sitio / etc. (optional)"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                  />
-                </div>
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                )}
               </div>
               <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
@@ -1450,6 +1812,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     paymentError={paymentError}
                     totalPrice={totalPrice}
                     highlight={highlightInput === "paymentSection"}
+                    isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
               </div>

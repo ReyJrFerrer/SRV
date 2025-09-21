@@ -149,7 +149,13 @@ const ProviderBookingsPage: React.FC = () => {
           bookingDate.getDate() === today.getDate() &&
           bookingDate.getMonth() === today.getMonth() &&
           bookingDate.getFullYear() === today.getFullYear();
-        return timingFilter === "Same Day" ? isSameDay : false;
+
+        if (timingFilter === "Same Day") {
+          return isSameDay;
+        } else if (timingFilter === "Scheduled") {
+          return !isSameDay;
+        }
+        return false;
       });
     }
 
@@ -354,7 +360,7 @@ const ProviderBookingsPage: React.FC = () => {
           </div>
         </div>
 
-        <main className="flex-grow overflow-y-auto pb-20">
+        <main className="flex-grow overflow-y-auto pb-10">
           {currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
               {currentBookings.map((booking) => (
