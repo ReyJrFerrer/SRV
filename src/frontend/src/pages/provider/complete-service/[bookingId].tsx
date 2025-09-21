@@ -27,12 +27,18 @@ const CompleteServicePage: React.FC = () => {
   const [changeDue, setChangeDue] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
 
   const {
     getBookingById,
     completeBookingById,
     loading,
     isProviderAuthenticated,
+    checkCommissionValidation,
   } = useProviderBookingManagement();
 
   const booking = useMemo(() => {
@@ -56,15 +62,40 @@ const CompleteServicePage: React.FC = () => {
     }
   }, [booking]);
 
+  // Check commission validation for cash bookings
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!booking || booking.paymentMethod !== "CashOnHand") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation(validation);
+      } catch (error) {
+        console.error("Failed to validate commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [booking, checkCommissionValidation]);
+
   useEffect(() => {
     const received = parseFloat(cashReceived);
     if (!isNaN(received) && servicePrice > 0) {
-      const change = received - servicePrice;
+      // For cash bookings, include commission in the total amount
+      const totalAmount = booking?.paymentMethod === "CashOnHand" 
+        ? servicePrice + commissionValidation.estimatedCommission 
+        : servicePrice;
+      const change = received - totalAmount;
       setChangeDue(change >= 0 ? change : 0);
     } else {
       setChangeDue(0);
     }
-  }, [cashReceived, servicePrice]);
+  }, [cashReceived, servicePrice, booking?.paymentMethod, commissionValidation.estimatedCommission]);
 
   const handleCashReceivedChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -100,10 +131,11 @@ const CompleteServicePage: React.FC = () => {
       if (booking.paymentMethod === "CashOnHand") {
         // Cash payment handling
         const receivedAmount = parseFloat(cashReceived);
+        const totalAmount = servicePrice + commissionValidation.estimatedCommission;
 
-        if (isNaN(receivedAmount) || receivedAmount < servicePrice) {
+        if (isNaN(receivedAmount) || receivedAmount < totalAmount) {
           setError(
-            `Cash received must be a number and at least ₱${servicePrice.toFixed(2)}.`,
+            `Cash received must be a number and at least ₱${totalAmount.toFixed(2)} (₱${servicePrice.toFixed(2)} service + ₱${commissionValidation.estimatedCommission.toFixed(2)} commission).`,
           );
           setIsSubmitting(false);
           return;
@@ -273,7 +305,7 @@ const CompleteServicePage: React.FC = () => {
                 Service Total:
               </span>
               <span className="text-xl font-bold text-blue-700">
-                ₱{servicePrice.toFixed(2)}
+                ₱{(servicePrice + commissionValidation.estimatedCommission).toFixed(2)}
               </span>
             </div>
 
@@ -322,7 +354,7 @@ const CompleteServicePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {parseFloat(cashReceived) >= servicePrice &&
+                  {parseFloat(cashReceived) >= (servicePrice + commissionValidation.estimatedCommission) &&
                     servicePrice > 0 && (
                       <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
                         <span className="text-sm font-medium text-green-700">

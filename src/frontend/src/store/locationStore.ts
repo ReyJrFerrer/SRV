@@ -74,9 +74,9 @@ const normalizeLocationData = (data: any) => {
     if (
       (cityPart.toLowerCase() === "baguio" ||
         cityPart.toLowerCase() === "baguio city") &&
-      ["cordillera administrative region", "car", "region"].includes(
-        provinceVal.toLowerCase(),
-      )
+      (provinceVal.toLowerCase().includes("cordillera administrative region") ||
+        provinceVal.toLowerCase().includes("car") ||
+        provinceVal.toLowerCase() === "region")
     ) {
       return {
         address: "Baguio City",
@@ -103,9 +103,9 @@ const normalizeLocationData = (data: any) => {
   if (
     (cityPart.toLowerCase() === "baguio" ||
       cityPart.toLowerCase() === "baguio city") &&
-    ["cordillera administrative region", "car", "region"].includes(
-      provinceVal.toLowerCase(),
-    )
+    (provinceVal.toLowerCase().includes("cordillera administrative region") ||
+      provinceVal.toLowerCase().includes("car") ||
+      provinceVal.toLowerCase() === "region")
   ) {
     cityPart = "Baguio City";
     provinceVal = "Benguet";

@@ -24,6 +24,7 @@ import { authCanisterService } from "../../../services/authCanisterService";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../../context/AuthContext"; // Import auth context
+import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 // Reputation Score Component (from ServiceDetailPageComponent.tsx)
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -198,6 +199,14 @@ const BookingDetailsPage: React.FC = () => {
   const { conversations, loading: chatLoading, createConversation } = useChat(); // Add the useChat hook
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
+  // Commission validation hook and state
+  const { checkCommissionValidation } = useProviderBookingManagement();
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
+
   const {
     bookings,
     updateBookingStatus: updateBookingStatusHook,
@@ -284,6 +293,29 @@ const BookingDetailsPage: React.FC = () => {
     };
     checkReviewStatus();
   }, [specificBooking]);
+
+  // Check commission validation for cash bookings
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!specificBooking || specificBooking.paymentMethod !== "CashOnHand") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(specificBooking);
+        setCommissionValidation({
+          estimatedCommission: validation.estimatedCommission,
+        });
+      } catch (error) {
+        console.error("Error checking commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [specificBooking, checkCommissionValidation]);
 
   const handleUpdateBookingStatus = async (
     bookingId: string,
@@ -589,7 +621,7 @@ const BookingDetailsPage: React.FC = () => {
                 <div className="flex items-start">
                   <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                   <span>
-                    <strong>Payment:</strong> ₱{price.toFixed(2)} (Cash)
+                    <strong>Payment:</strong> ₱{(price + commissionValidation.estimatedCommission).toFixed(2)} (Cash)
                   </span>
                 </div>
               )}

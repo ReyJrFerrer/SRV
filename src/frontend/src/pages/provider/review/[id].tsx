@@ -23,6 +23,11 @@ export default function ProviderReviewView() {
   const [clientReview, setClientReview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
 
   // Set document title
   useEffect(() => {
@@ -43,6 +48,7 @@ export default function ProviderReviewView() {
     loading: bookingLoading,
     error: bookingError,
     formatBookingDate,
+    checkCommissionValidation,
   } = useProviderBookingManagement();
 
   // Get review functionality from review management hook
@@ -80,6 +86,19 @@ export default function ProviderReviewView() {
         }
 
         setBooking(foundBooking);
+
+        // Check commission validation for cash bookings
+        if (foundBooking.paymentMethod === "CashOnHand") {
+          try {
+            const validation = await checkCommissionValidation(foundBooking);
+            setCommissionValidation(validation);
+          } catch (error) {
+            console.error("Failed to validate commission:", error);
+            setCommissionValidation({ estimatedCommission: 0 });
+          }
+        } else {
+          setCommissionValidation({ estimatedCommission: 0 });
+        }
 
         // Get reviews for this booking
         const bookingReviews = await getBookingReviews(bookingId);
@@ -262,9 +281,11 @@ export default function ProviderReviewView() {
             {price !== undefined && (
               <div className="flex items-center">
                 <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
-                <span>
-                  <strong>Price:</strong> ₱{price.toFixed(2)}
-                </span>
+                <div className="flex flex-col">
+                  <span>
+                    <strong>Price:</strong> ₱{(price + commissionValidation.estimatedCommission).toFixed(2)}
+                  </span>
+                </div>
               </div>
             )}
           </div>

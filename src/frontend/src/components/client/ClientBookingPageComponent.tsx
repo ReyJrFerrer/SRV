@@ -258,7 +258,6 @@ const ClientBookingPageComponent: React.FC = () => {
     calculateTotalPrice,
   } = useBookRequest();
 
-  console.log(hookPackages);
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
@@ -437,7 +436,7 @@ const ClientBookingPageComponent: React.FC = () => {
           );
           setIsProviderOnboarded(isOnboarded);
         } catch (error) {
-          console.error("Error checking provider onboarding:", error);
+          // console.error("Error checking provider onboarding:", error);
           setIsProviderOnboarded(false);
         }
       }

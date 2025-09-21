@@ -50,6 +50,9 @@ const WalletPage: React.FC = () => {
   // Commission info modal state
   const [showCommissionModal, setShowCommissionModal] = useState(false);
 
+  // Onboarding modal state
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
   // Running balance toggle state
   const [showRunningBalance, setShowRunningBalance] = useState(false);
 
@@ -86,6 +89,16 @@ const WalletPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Check if user needs onboarding
+  useEffect(() => {
+    if (!isAuthenticated || !identity) return;
+
+    const isOnboarded = localStorage.getItem("provider_onboarded");
+    if (!isOnboarded) {
+      setShowOnboardingModal(true);
+    }
+  }, [isAuthenticated, identity]);
+
   // Periodically check for completed payments
   useEffect(() => {
     if (activeInvoices.size === 0) return;
@@ -108,16 +121,11 @@ const WalletPage: React.FC = () => {
   const checkAndCreditCompletedPayments = async () => {
     if (!identity || activeInvoices.size === 0) return;
 
-    console.log(
-      `🔍 Checking ${activeInvoices.size} active invoices for completion`,
-    );
     const completedInvoices = new Set<string>();
 
     for (const invoiceId of activeInvoices) {
       try {
-        console.log(`📋 Checking invoice status: ${invoiceId}`);
         const statusResponse = await checkInvoiceStatus(invoiceId);
-        console.log(`📋 Invoice ${invoiceId} status:`, statusResponse);
 
         if (statusResponse.success) {
           if (
@@ -130,13 +138,9 @@ const WalletPage: React.FC = () => {
             );
             const amount = statusResponse.paidAmount || 0;
 
-            console.log(`💰 Payment completed! Amount to credit: ₱${amount}`);
 
             if (amount > 0) {
               try {
-                console.log(
-                  `💳 Crediting wallet for principal: ${principal.toString()}`,
-                );
 
                 // Get payment channel info from the status response
                 const paymentChannel = statusResponse.paymentChannel || "GCash";
@@ -152,13 +156,10 @@ const WalletPage: React.FC = () => {
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
                 completedInvoices.add(invoiceId);
-                console.log(`✅ Successfully credited wallet with ₱${amount}`);
               } catch (creditError) {
-                console.error("❌ Failed to credit wallet:", creditError);
                 toast.error("Failed to credit wallet. Please try refreshing.");
               }
             } else {
-              console.warn(`⚠️ Payment completed but amount is 0 or undefined`);
             }
           } else if (statusResponse.status === "EXPIRED") {
             // Invoice expired, remove from tracking
@@ -166,20 +167,11 @@ const WalletPage: React.FC = () => {
             toast.warning(
               "A top-up payment has expired. Please create a new top-up if needed.",
             );
-            console.log(`🕐 Invoice ${invoiceId} expired`);
           } else {
-            console.log(
-              `⏳ Invoice ${invoiceId} still pending: ${statusResponse.status}`,
-            );
           }
         } else {
-          console.error(
-            `❌ Failed to get status for invoice ${invoiceId}:`,
-            statusResponse.error,
-          );
         }
       } catch (error) {
-        console.error(`❌ Error checking invoice ${invoiceId}:`, error);
       }
     }
 
@@ -242,7 +234,6 @@ const WalletPage: React.FC = () => {
         throw new Error(response.error || "Failed to create top-up invoice");
       }
     } catch (error: any) {
-      console.error("Top-up error:", error);
       toast.error(error.message || "Failed to initiate top-up");
     } finally {
       setTopUpLoading(false);
@@ -675,6 +666,56 @@ const WalletPage: React.FC = () => {
                   className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {topUpLoading ? "Processing..." : "Continue to Payment"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Modal */}
+      {showOnboardingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-xl backdrop-blur-md">
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <BanknotesIcon className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                Complete Your Onboarding
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Before you can use your wallet and topup, you need to complete your provider onboarding by setting up your payout information.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-lg border border-blue-200/80 bg-blue-50/80 p-4">
+                <div className="flex items-start gap-3">
+                  <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-blue-600" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-800">What you'll set up:</p>
+                    <ul className="mt-2 space-y-1 text-blue-700">
+                      <li>• GCash account for receiving payments</li>
+                      <li>• Business information</li>
+                      <li>• Contact details</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowOnboardingModal(false)}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white/80 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50/80"
+                >
+                  Later
+                </button>
+                <button
+                  onClick={() => navigate("/provider/payout-settings")}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Get Started
                 </button>
               </div>
             </div>

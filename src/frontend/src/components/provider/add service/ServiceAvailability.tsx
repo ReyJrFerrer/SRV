@@ -85,112 +85,109 @@ const TimeSlotInput: React.FC<{
   const isSameTime = startTime.getTime() === endTime.getTime();
 
   return (
-    <div
-      className={`mb-2 flex flex-col gap-3 rounded-lg border p-3 shadow-sm ${
-        isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
-      }`}
-    >
-      <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:gap-2">
-        {/* Start Time */}
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <span className="text-sm font-medium text-gray-600">Start:</span>
-          <div className="flex gap-1 sm:gap-2">
-            <select
-              value={slot.startHour}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startHour", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {hourOptions.map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-            <span className="flex items-center text-gray-400">:</span>
-            <select
-              value={slot.startMinute}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startMinute", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {minuteOptions.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <select
-              value={slot.startPeriod}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startPeriod", e.target.value)
-              }
-              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {periodOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* "to" separator */}
-        <div className="flex items-center justify-center py-1 sm:my-6 lg:my-0 lg:flex lg:py-0">
-          <span className="text-sm font-medium text-gray-500 lg:text-base">
-            to
-          </span>
-        </div>
-
-        {/* End Time */}
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <span className="text-sm font-medium text-gray-600">End:</span>
-          <div className="flex gap-1 sm:gap-2">
-            <select
-              value={slot.endHour}
-              onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {hourOptions.map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-            <span className="flex items-center text-gray-400">:</span>
-            <select
-              value={slot.endMinute}
-              onChange={(e) =>
-                onSlotChange(slot.id, "endMinute", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {minuteOptions.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <select
-              value={slot.endPeriod}
-              onChange={(e) =>
-                onSlotChange(slot.id, "endPeriod", e.target.value)
-              }
-              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {periodOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
+  <div
+    className={`mb-2 flex flex-col gap-2 rounded-lg border p-3 shadow-sm ${
+      isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
+    }`}
+  >
+    <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
+      {/* Start Time */}
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <span className="text-sm font-medium text-gray-600">Start:</span>
+        <div className="flex gap-1 sm:gap-2">
+          <select
+            value={slot.startHour}
+            onChange={(e) =>
+              onSlotChange(slot.id, "startHour", e.target.value)
+            }
+            className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {hourOptions.map((h) => (
+              <option key={h} value={h}>
+                {h}
+              </option>
+            ))}
+          </select>
+          <span className="flex items-center text-gray-400">:</span>
+          <select
+            value={slot.startMinute}
+            onChange={(e) =>
+              onSlotChange(slot.id, "startMinute", e.target.value)
+            }
+            className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {minuteOptions.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <select
+            value={slot.startPeriod}
+            onChange={(e) =>
+              onSlotChange(slot.id, "startPeriod", e.target.value)
+            }
+            className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {periodOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
+      {/* "to" separator - more compact */}
+      <div className="flex items-center justify-center lg:px-2">
+        <span className="text-sm font-medium text-gray-500">to</span>
+      </div>
+
+      {/* End Time */}
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <span className="text-sm font-medium text-gray-600">End:</span>
+        <div className="flex gap-1 sm:gap-2">
+          <select
+            value={slot.endHour}
+            onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
+            className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {hourOptions.map((h) => (
+              <option key={h} value={h}>
+                {h}
+              </option>
+            ))}
+          </select>
+          <span className="flex items-center text-gray-400">:</span>
+          <select
+            value={slot.endMinute}
+            onChange={(e) =>
+              onSlotChange(slot.id, "endMinute", e.target.value)
+            }
+            className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {minuteOptions.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <select
+            value={slot.endPeriod}
+            onChange={(e) =>
+              onSlotChange(slot.id, "endPeriod", e.target.value)
+            }
+            className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            {periodOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
       {/* Delete button */}
       <button
         type="button"

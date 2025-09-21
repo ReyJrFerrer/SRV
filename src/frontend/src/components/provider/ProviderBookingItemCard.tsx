@@ -416,7 +416,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     <p className="flex items-center">
                       <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                       <span className="font-semibold text-green-600">
-                        ₱{price.toFixed(2)}
+                        Price: ₱{price.toFixed(2)}
                       </span>
                     </p>
                   )}
@@ -615,7 +615,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     <p className="flex items-center">
                       <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                       <span className="font-semibold text-green-600">
-                        ₱{price.toFixed(2)}
+                        Price: ₱{price.toFixed(2)}
                       </span>
                     </p>
                   )}

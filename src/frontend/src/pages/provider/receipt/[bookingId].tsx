@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   PrinterIcon,
@@ -18,7 +18,14 @@ const ReceiptPage: React.FC = () => {
   const changeGiven = parseFloat(searchParams.get("change") || "0");
   const paymentMethod = searchParams.get("method") || "N/A";
 
-  const { getBookingById, loading, isProviderAuthenticated } =
+  // Commission validation state
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
+
+  const { getBookingById, loading, isProviderAuthenticated, checkCommissionValidation } =
     useProviderBookingManagement();
 
   // Get booking data from hook
@@ -45,6 +52,27 @@ const ReceiptPage: React.FC = () => {
       document.title = "Receipt | SRV Provider";
     }
   }, [booking]);
+
+  // Check commission validation for cash bookings
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!booking || paymentMethod !== "Cash") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation(validation);
+      } catch (error) {
+        console.error("Failed to validate commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [booking, paymentMethod, checkCommissionValidation]);
 
   const handleDone = () => {
     navigate("/provider/bookings?tab=Completed");
@@ -160,11 +188,27 @@ const ReceiptPage: React.FC = () => {
             Payment Summary
           </h2>
           <div className="flex justify-between">
-            <span className="text-gray-600">Service Total:</span>
+            <span className="text-gray-600">Service Price:</span>
             <span className="font-bold text-yellow-700">
               ₱{serviceTotal.toFixed(2)}
             </span>
           </div>
+          {paymentMethod === "Cash" && commissionValidation.estimatedCommission > 0 && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Commission:</span>
+              <span className="font-bold text-yellow-700">
+                ₱{commissionValidation.estimatedCommission.toFixed(2)}
+              </span>
+            </div>
+          )}
+          {paymentMethod === "Cash" && commissionValidation.estimatedCommission > 0 && (
+            <div className="flex justify-between border-t border-yellow-300 pt-2">
+              <span className="text-gray-600 font-semibold">Total Amount:</span>
+              <span className="font-bold text-yellow-700">
+                ₱{(serviceTotal + commissionValidation.estimatedCommission).toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-gray-600">
               Amount Paid ({paymentMethod}):

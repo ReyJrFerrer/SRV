@@ -6,6 +6,7 @@ import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
+import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
 const feedbackOptions = [
   "Very Professional",
@@ -25,6 +26,11 @@ export const BookingReviewPage: React.FC = () => {
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
   const [, setExistingReview] = useState<any>(null);
   const [providerNameState, setProviderName] = useState("Service Provider");
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
 
   const {
     bookings,
@@ -33,6 +39,8 @@ export const BookingReviewPage: React.FC = () => {
     formatBookingDate,
     formatLocationString,
   } = useBookingManagement();
+
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
   const {
     submitReview,
@@ -61,6 +69,19 @@ export const BookingReviewPage: React.FC = () => {
               foundBooking.providerName ||
               "Service Provider",
           );
+
+          // Check commission validation for cash bookings
+          if (foundBooking.paymentMethod === "CashOnHand") {
+            try {
+              const validation = await checkCommissionValidation(foundBooking);
+              setCommissionValidation(validation);
+            } catch (error) {
+              console.error("Failed to validate commission:", error);
+              setCommissionValidation({ estimatedCommission: 0 });
+            }
+          } else {
+            setCommissionValidation({ estimatedCommission: 0 });
+          }
         }
 
         const bookingReviews = await getBookingReviews(bookingId as string);
@@ -225,7 +246,9 @@ export const BookingReviewPage: React.FC = () => {
             {formatLocationString(booking.location)}
           </div>
           <div>
-            <span className="font-bold">Price:</span> ₱{booking.price || "TBD"}
+            <span className="font-bold">Price:</span> ₱{booking.price 
+              ? (booking.price + (booking.paymentMethod === "CashOnHand" ? commissionValidation.estimatedCommission : 0)).toFixed(2)
+              : "TBD"}
           </div>
         </div>
       </div>

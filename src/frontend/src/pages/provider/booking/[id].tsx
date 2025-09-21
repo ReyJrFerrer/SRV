@@ -335,20 +335,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
 
-      // Only check for cash payment bookings that can be accepted
-      if (
-        specificBooking.paymentMethod !== "CashOnHand" ||
-        !specificBooking.canAccept
-      ) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: false,
-          commissionValidationMessage: "No commission validation needed",
-          loading: false,
-        });
-        return;
-      }
-
       try {
         setCommissionValidation((prev) => ({ ...prev, loading: true }));
         const validation = await checkCommissionValidation(specificBooking);

@@ -5,15 +5,22 @@ import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../../hooks/bookingManagement"; // Adjust path as needed
+import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
   const location = useLocation();
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
 
   // Get review info from navigation state if present
   const userRating = location.state?.userRating;
   const { bookings, loading: bookingLoading } = useBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {
@@ -35,6 +42,27 @@ const ReceiptPage: React.FC = () => {
       setBooking(foundBooking || null);
     }
   }, [id, bookings, bookingLoading]);
+
+  // Check commission validation for cash bookings
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!booking || booking.paymentMethod !== "CashOnHand") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation(validation);
+      } catch (error) {
+        console.error("Failed to validate commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [booking, checkCommissionValidation]);
 
   // Share functionality using the Web Share API
   const handleShare = async () => {
@@ -67,8 +95,11 @@ const ReceiptPage: React.FC = () => {
   };
 
   const amountPaid = booking?.amountPaid || 0;
+  const totalServiceCost = booking?.price 
+    ? booking.price + (booking.paymentMethod === "CashOnHand" ? commissionValidation.estimatedCommission : 0)
+    : 0;
   const changeGiven =
-    booking?.price && amountPaid ? amountPaid - booking.price : 0;
+    totalServiceCost && amountPaid ? amountPaid - totalServiceCost : 0;
 
   if (bookingLoading) {
     return (
@@ -180,7 +211,7 @@ const ReceiptPage: React.FC = () => {
             <div className="flex justify-between">
               <span className="font-bold text-gray-600">Service Total:</span>
               <span className="text-gray-800">
-                ₱{booking.price?.toFixed(2) || "0.00"}
+                ₱{totalServiceCost.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between">

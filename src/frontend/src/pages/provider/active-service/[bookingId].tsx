@@ -34,9 +34,14 @@ const ActiveServicePage: React.FC = () => {
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(
     null,
   );
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { getBookingById, loading, error, isProviderAuthenticated } =
+  const { getBookingById, loading, error, isProviderAuthenticated, checkCommissionValidation } =
     useProviderBookingManagement();
 
   const { identity } = useAuth();
@@ -82,6 +87,27 @@ const ActiveServicePage: React.FC = () => {
     }
     return () => clearInterval(timerInterval);
   }, [actualStartTime]);
+
+  // Check commission validation for cash bookings
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!booking || booking.paymentMethod !== "CashOnHand") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation(validation);
+      } catch (error) {
+        console.error("Failed to validate commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [booking, checkCommissionValidation]);
 
   const handleMarkCompleted = async () => {
     if (!booking) return;
@@ -293,18 +319,25 @@ const ActiveServicePage: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="font-semibold text-green-700">
-                  ₱{Number(booking.price).toFixed(2)}
+                <div className="flex flex-col">
+                <span className="font-medium text-gray-700">
+                  Price: {" "}
+                   <span className="font-semibold text-green-700">
+                    ₱{Number(booking.price + commissionValidation.estimatedCommission).toFixed(2)}
+                  </span>
                 </span>
+                </div>
               </div>
               <div className="flex items-center">
                 <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="font-medium text-gray-700">
-                  Client's amount to pay:{" "}
-                  <span className="font-semibold text-green-700">
-                    {Number(booking.amountPaid).toFixed(2)}
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-700">
+                    Client's amount to pay:{" "}
+                    <span className="font-semibold text-green-700">
+                      ₱{(Number(booking.amountPaid).toFixed(2))}
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
             </div>
           </section>
