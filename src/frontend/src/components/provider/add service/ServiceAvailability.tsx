@@ -139,7 +139,7 @@ const TimeSlotInput: React.FC<{
         </div>
 
         {/* "to" separator */}
-        <div className="my-4 flex items-center justify-center py-1 sm:my-6 lg:my-0 lg:py-0">
+        <div className="flex items-center justify-center py-1 sm:my-6 lg:my-0 lg:flex lg:py-0">
           <span className="text-sm font-medium text-gray-500 lg:text-base">
             to
           </span>

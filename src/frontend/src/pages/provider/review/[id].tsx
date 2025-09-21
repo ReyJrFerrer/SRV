@@ -215,17 +215,17 @@ export default function ProviderReviewView() {
   const price = booking?.price;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-3">
+        <div className="container mx-auto flex items-center px-4 py-6">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-800">
+          <h1 className="truncate text-lg font-semibold text-slate-800">
             Client Review
           </h1>
         </div>

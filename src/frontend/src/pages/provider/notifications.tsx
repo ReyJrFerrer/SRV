@@ -194,7 +194,7 @@ const NotificationsPageSP = () => {
         </div>
       </header>
 
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-24 px-2 sm:px-4 md:px-8">
         {loading ? (
           <div className="p-10 text-center text-gray-500">Loading...</div>
         ) : error ? (
