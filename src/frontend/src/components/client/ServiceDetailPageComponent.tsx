@@ -1104,7 +1104,7 @@ const ServiceDetailPage: React.FC = () => {
           <button
             onClick={handleChatProviderClick}
             disabled={isOwnService}
-            className="flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
+            className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
             style={{ minWidth: 0, flexBasis: "32%" }}
           >
             {chatLoading ? (
@@ -1114,6 +1114,11 @@ const ServiceDetailPage: React.FC = () => {
               </>
             ) : null}
             <span className="text-base font-semibold"> Chat</span>
+            {isOwnService && (
+              <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                You cannot chat with your own service.
+              </span>
+            )}
           </button>
           {/* Book Now button (right, wider and more prominent) */}
           <div
@@ -1125,10 +1130,15 @@ const ServiceDetailPage: React.FC = () => {
               disabled={
                 packages.length === 0 || isOwnService || !service.isActive
               }
-              className="w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
+              className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
               style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
               {service.isActive ? "Book Now" : "Service Unavailable"}
+              {isOwnService && (
+                <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  You cannot book your own service.
+                </span>
+              )}
             </button>
           </div>
         </div>

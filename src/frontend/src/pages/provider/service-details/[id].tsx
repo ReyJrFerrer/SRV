@@ -1407,7 +1407,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
 
       {/* Image/PDF Preview Modal */}
@@ -1480,7 +1480,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         </div>
       )}
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
+      <header className="bg-white-90 sticky top-0 z-40 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
             onClick={() => navigate("/provider/home")}
@@ -1526,7 +1526,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         {/* Hero Card */}
         <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
-          <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
+          <div className="relative flex h-56 w-full max-w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
             {serviceImages &&
             serviceImages.length > 0 &&
             serviceImages[0].dataUrl ? (
@@ -1807,7 +1807,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                       <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                       Availability
                     </label>
-                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+                    <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
                       {service.weeklySchedule?.filter(
                         (entry) => entry.availability.isAvailable,
                       ).length ? (
@@ -1969,7 +1969,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 )}
 
                 {/* Redesigned package cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid-cols-1 gap-4 sm:grid-cols-2">
                   {packages.length > 0
                     ? packages.map((pkg) => (
                         <div
@@ -2448,7 +2448,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
               }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+              className={`flex w-full flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-red-400 hover:text-white"
