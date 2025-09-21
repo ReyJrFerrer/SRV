@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { onboardProvider } from "../../services/firebase";
 import {
   BanknotesIcon,
   CheckCircleIcon,
@@ -20,7 +21,7 @@ const PayoutSettingsPage: React.FC = () => {
     gcashNumber: "",
     gcashName: "",
     businessName: "",
-    businessType: "INDIVIDUAL",
+    businessType: "INDIVIDUAL" as "INDIVIDUAL" | "CORPORATION" | "PARTNERSHIP",
     email: "",
     phoneNumber: "",
   });
@@ -115,52 +116,31 @@ const PayoutSettingsPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Call Firebase Cloud Function via HTTP
-      const projectId = "devsrv-rey"; // Your Firebase project ID
-      //   const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
-      const functionUrl = `http://127.0.0.1:5001/${projectId}/us-central1/onboardProvider`;
-
       const providerId = identity?.getPrincipal().toString();
       if (!providerId) {
         throw new Error("Unable to get provider ID");
       }
 
-      const response = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: {
-            providerId: providerId,
-            gcashNumber: formData.gcashNumber,
-            gcashName: formData.gcashName,
-            businessName:
-              formData.businessName || `${formData.gcashName} Services`,
-            businessType: formData.businessType,
-            email: formData.email,
-            phoneNumber: formData.phoneNumber
-              ? `+${formData.phoneNumber}`
-              : `+63${formData.gcashNumber.slice(1)}`,
-          },
-        }),
+      const result = await onboardProvider({
+        providerId: providerId,
+        gcashNumber: formData.gcashNumber,
+        gcashName: formData.gcashName,
+        businessName:
+          formData.businessName || `${formData.gcashName} Services`,
+        businessType: formData.businessType,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber
+          ? `+${formData.phoneNumber}`
+          : `+63${formData.gcashNumber.slice(1)}`,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.result?.success) {
+      if (result.success) {
         setSuccess(true);
         // Optional: Store onboarding status locally
         localStorage.setItem("provider_onboarded", "true");
       } else {
         throw new Error(
-          result.result?.message ||
-            result.error ||
-            "Failed to set up payout settings",
+          result.message || result.error || "Failed to set up payout settings",
         );
       }
     } catch (err: any) {

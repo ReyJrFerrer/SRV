@@ -195,21 +195,43 @@ async function checkInvoiceStatus(invoiceId) {
  * This function uses invoiceId to directly fetch payment data and process payout
  */
 exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
+  console.log("=== releaseHeldPayment function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
+
   try {
-    // Only accept POST requests
+    // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
       return res.status(405).json({
         success: false,
         error: "Method Not Allowed",
       });
-    }
-
-    // Enable CORS for local development
-    res.set("Access-Control-Allow-Origin", "*");
-    res.set("Access-Control-Allow-Methods", "GET, POST");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") {
-      return res.status(200).end();
     }
 
     // Extract data from request body

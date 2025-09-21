@@ -34,18 +34,40 @@ if (!admin.apps.length) {
  */
 exports.checkProviderOnboarding = functions.https.onRequest(
   async (req, res) => {
+    console.log("=== checkProviderOnboarding function started ===");
+    console.log("Request method:", req.method);
+    console.log("Request headers origin:", req.headers.origin);
+
+    // Set CORS headers first, before any other logic
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://devsrv-rey.web.app",
+      "https://devsrv-rey.firebaseapp.com",
+    ];
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.set("Access-Control-Allow-Origin", origin);
+    } else {
+      // For development and testing, allow localhost
+      res.set("Access-Control-Allow-Origin", "*");
+    }
+
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.set("Access-Control-Max-Age", "3600");
+
+    // Handle preflight OPTIONS request
+    if (req.method === "OPTIONS") {
+      console.log("Handling OPTIONS preflight request");
+      return res.status(204).send();
+    }
+
     try {
-      // Only accept GET and POST requests
+      // Only accept GET and POST requests after handling OPTIONS
       if (!["GET", "POST"].includes(req.method)) {
         return res.status(405).json({error: "Method not allowed"});
-      }
-
-      // Enable CORS for local development
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Access-Control-Allow-Methods", "GET, POST");
-      res.set("Access-Control-Allow-Headers", "Content-Type");
-      if (req.method === "OPTIONS") {
-        return res.status(200).end();
       }
 
       // Get providerId from query params (GET) or body (POST)

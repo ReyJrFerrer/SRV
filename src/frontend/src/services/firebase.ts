@@ -153,6 +153,16 @@ export async function createTopupInvoice(
   }
 }
 
+export interface OnboardProviderRequest {
+  providerId: string;
+  gcashNumber: string;
+  gcashName: string;
+  businessName?: string;
+  businessType: "INDIVIDUAL" | "CORPORATION" | "PARTNERSHIP";
+  email: string;
+  phoneNumber?: string;
+}
+
 export interface ProviderOnboardingResponse {
   success: boolean;
   isOnboarded: boolean;
@@ -172,6 +182,42 @@ export interface ProviderOnboardingResponse {
     };
   };
   error?: string;
+  message?: string;
+}
+
+/**
+ * Onboard a provider for direct payments
+ * This creates a Xendit customer and sets up payout information
+ */
+export async function onboardProvider(
+  request: OnboardProviderRequest,
+): Promise<ProviderOnboardingResponse> {
+  try {
+    const response = await fetch(`${BASE_URL}/onboardProvider`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: request,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.result || result;
+  } catch (error: any) {
+    console.error("Error onboarding provider:", error);
+    return {
+      success: false,
+      isOnboarded: false,
+      providerId: request.providerId,
+      error: error.message || "Failed to onboard provider",
+    };
+  }
 }
 
 /**

@@ -34,8 +34,38 @@ if (!admin.apps.length) {
  * This is the most critical function that receives payment status updates
  */
 exports.xenditWebhook = functions.https.onRequest(async (req, res) => {
+  console.log("=== xenditWebhook function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-callback-token");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
+
   try {
-    // Only accept POST requests
+    // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
     }

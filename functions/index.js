@@ -5,7 +5,7 @@
  * including Xendit integration for digital payments and wallet top-ups.
  */
 
-const {setGlobalOptions} = require("firebase-functions/v2");
+const {setGlobalOptions} = require("firebase-functions");
 
 // Set global options for all functions
 setGlobalOptions({maxInstances: 10});
