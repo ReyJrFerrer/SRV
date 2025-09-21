@@ -5,13 +5,10 @@ const admin = require("firebase-admin");
 // Initialize Xendit client with proper error handling
 let xendit;
 try {
-  const config = functions.config();
-  const secretKey =
-    (config.xendit && config.xendit.secret_key) ||
-    process.env.XENDIT_SECRET_KEY;
+  const secretKey = process.env.XENDIT_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("Xendit secret key not found in config or environment");
+    console.warn("Xendit secret key not found in environment variables");
     xendit = null;
   } else {
     xendit = new Xendit({
@@ -71,9 +68,7 @@ exports.xenditWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     // Verify webhook signature from Xendit
-    const callbackToken =
-      (functions.config().xendit && functions.config().xendit.callback_token) ||
-      process.env.XENDIT_CALLBACK_TOKEN;
+    const callbackToken = process.env.XENDIT_CALLBACK_TOKEN;
     const receivedSignature = req.headers["x-callback-token"];
 
     if (!receivedSignature || receivedSignature !== callbackToken) {
