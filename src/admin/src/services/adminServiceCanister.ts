@@ -18,17 +18,17 @@ import { Identity } from "@dfinity/agent";
 // Helper function to convert Motoko Time (BigInt nanoseconds) to ISO string
 const convertMotokoTime = (timeValue: any): string | null => {
   if (!timeValue) return null;
-  
+
   try {
     // Handle BigInt timestamps (Motoko Time is in nanoseconds)
-    if (typeof timeValue === 'bigint') {
+    if (typeof timeValue === "bigint") {
       // Convert nanoseconds to milliseconds
       const milliseconds = Number(timeValue) / 1000000;
       return new Date(milliseconds).toISOString();
     }
-    
+
     // Handle number timestamps
-    if (typeof timeValue === 'number') {
+    if (typeof timeValue === "number") {
       // If it's already in milliseconds
       if (timeValue > 1000000000000) {
         return new Date(timeValue).toISOString();
@@ -36,9 +36,9 @@ const convertMotokoTime = (timeValue: any): string | null => {
       // If it's in nanoseconds, convert to milliseconds
       return new Date(timeValue / 1000000).toISOString();
     }
-    
+
     // Handle string timestamps
-    if (typeof timeValue === 'string') {
+    if (typeof timeValue === "string") {
       const numValue = Number(timeValue);
       if (!isNaN(numValue)) {
         // If it's a numeric string, treat as nanoseconds
@@ -47,7 +47,7 @@ const convertMotokoTime = (timeValue: any): string | null => {
       // If it's already a date string, return as is
       return timeValue;
     }
-    
+
     return null;
   } catch (error) {
     logError("Error converting time", { timeValue, error });
@@ -57,19 +57,30 @@ const convertMotokoTime = (timeValue: any): string | null => {
 
 // ===== HELPER FUNCTIONS =====
 
-
 // Helper function to create actors with consistent error handling
-const createCanisterActor = async (canisterName: string, identity?: Identity | null) => {
+const createCanisterActor = async (
+  canisterName: string,
+  identity?: Identity | null,
+) => {
   const { createActor } = await import(`../../../declarations/${canisterName}`);
-  const { canisterId: canisterId } = await import(`../../../declarations/${canisterName}`);
-  
+  const { canisterId: canisterId } = await import(
+    `../../../declarations/${canisterName}`
+  );
+
   return createActor(canisterId, {
-    agentOptions: (identity || currentIdentity) ? { identity: identity || currentIdentity } : undefined,
+    agentOptions:
+      identity || currentIdentity
+        ? { identity: identity || currentIdentity }
+        : undefined,
   });
 };
 
 // Helper function to create AdminServiceError
-const createAdminError = (message: string, code: string, details?: any): AdminServiceError => {
+const createAdminError = (
+  message: string,
+  code: string,
+  details?: any,
+): AdminServiceError => {
   return new AdminServiceError({
     message,
     code,
@@ -201,10 +212,11 @@ const convertCanisterService = (service: any): ServiceData => ({
   reviewCount: service.reviewCount ? Number(service.reviewCount) : undefined,
   imageUrls: service.imageUrls || [], // Match provider's approach
   certificateUrls: service.certificateUrls || [], // Match provider's approach
-  weeklySchedule: service.weeklySchedule?.[0]?.map(([day, avail]: [any, any]) => ({
-    dayOfWeek: convertCanisterDayOfWeek(day),
-    availability: convertCanisterDayAvailability(avail),
-  })) || [],
+  weeklySchedule:
+    service.weeklySchedule?.[0]?.map(([day, avail]: [any, any]) => ({
+      dayOfWeek: convertCanisterDayOfWeek(day),
+      availability: convertCanisterDayAvailability(avail),
+    })) || [],
   packages: [], // Will be populated separately
 });
 
@@ -312,7 +324,7 @@ export interface FrontendMediaItem {
     | "ServiceCertificate";
   fileSize: number;
   ownerId: string;
-  validationStatus?: 'Pending' | 'Validated' | 'Rejected'; // Only for ServiceCertificate
+  validationStatus?: "Pending" | "Validated" | "Rejected"; // Only for ServiceCertificate
   createdAt: Date;
   updatedAt: Date;
 }
@@ -373,7 +385,7 @@ const getAdminActor = (requireAuth: boolean = false): AdminService => {
   if (requireAuth && !currentIdentity) {
     throw createAdminError(
       "Authentication required: Please log in as an admin to perform this action",
-      "AUTH_REQUIRED"
+      "AUTH_REQUIRED",
     );
   }
 
@@ -547,9 +559,17 @@ const handleResult = <T>(result: any, errorPrefix: string): T => {
   if ("ok" in result) {
     return result.ok as T;
   } else if ("err" in result) {
-    throw createAdminError(`${errorPrefix}: ${result.err}`, "CANISTER_ERROR", result.err);
+    throw createAdminError(
+      `${errorPrefix}: ${result.err}`,
+      "CANISTER_ERROR",
+      result.err,
+    );
   } else {
-    throw createAdminError(`${errorPrefix}: Unexpected result format`, "UNKNOWN_ERROR", result);
+    throw createAdminError(
+      `${errorPrefix}: Unexpected result format`,
+      "UNKNOWN_ERROR",
+      result,
+    );
   }
 };
 
@@ -1041,10 +1061,16 @@ export const adminServiceCanister = {
         ? [Principal.fromText(mediaCanisterId)]
         : [];
       // Canister references for intercanister calls
-      const { canisterId: authCanisterId } = await import("../../../declarations/auth");
-      const { canisterId: serviceCanisterId } = await import("../../../declarations/service");
-      const { canisterId: bookingCanisterId } = await import("../../../declarations/booking");
-      
+      const { canisterId: authCanisterId } = await import(
+        "../../../declarations/auth"
+      );
+      const { canisterId: serviceCanisterId } = await import(
+        "../../../declarations/service"
+      );
+      const { canisterId: bookingCanisterId } = await import(
+        "../../../declarations/booking"
+      );
+
       const authPrincipal: [] | [Principal] = authCanisterId
         ? [Principal.fromText(authCanisterId)]
         : [];
@@ -1055,11 +1081,14 @@ export const adminServiceCanister = {
         ? [Principal.fromText(bookingCanisterId)]
         : [];
 
-
       // Get review and reputation canister IDs
-      const { canisterId: reviewCanisterId } = await import("../../../declarations/review");
-      const { canisterId: reputationCanisterId } = await import("../../../declarations/reputation");
-      
+      const { canisterId: reviewCanisterId } = await import(
+        "../../../declarations/review"
+      );
+      const { canisterId: reputationCanisterId } = await import(
+        "../../../declarations/reputation"
+      );
+
       const reviewPrincipal: [] | [Principal] = reviewCanisterId
         ? [Principal.fromText(reviewCanisterId)]
         : [];
@@ -1076,8 +1105,11 @@ export const adminServiceCanister = {
         reviewPrincipal,
         reputationPrincipal,
       );
-      
-      const resultText = handleResult<string>(result, "Failed to set canister references");
+
+      const resultText = handleResult<string>(
+        result,
+        "Failed to set canister references",
+      );
       return resultText;
     } catch (error) {
       logError("Error setting canister references", error);
@@ -1097,11 +1129,14 @@ export const adminServiceCanister = {
   async getAllUsers(): Promise<Profile[]> {
     try {
       const actor = getAdminActor();
-      
+
       // Check if getAllUsers function exists on the actor
-      if (typeof (actor as any).getAllUsers === 'function') {
+      if (typeof (actor as any).getAllUsers === "function") {
         const result = await (actor as any).getAllUsers();
-        const users = handleResult<Profile[]>(result, "Failed to get all users from admin canister");
+        const users = handleResult<Profile[]>(
+          result,
+          "Failed to get all users from admin canister",
+        );
         return users;
       } else {
         const authActor = await createCanisterActor("auth");
@@ -1114,21 +1149,26 @@ export const adminServiceCanister = {
     return [];
   },
 
-
   /**
    * Delete a service
    */
   async deleteService(serviceId: string): Promise<void> {
     try {
       if (!currentIdentity) {
-        throw createAdminError("Authentication required to delete service", "AUTH_REQUIRED");
+        throw createAdminError(
+          "Authentication required to delete service",
+          "AUTH_REQUIRED",
+        );
       }
 
       const serviceActor = await createCanisterActor("service");
       const result = await (serviceActor as any).deleteService(serviceId);
-      
+
       if ("err" in result) {
-        throw createAdminError(`Failed to delete service: ${result.err}`, "DELETE_SERVICE_ERROR");
+        throw createAdminError(
+          `Failed to delete service: ${result.err}`,
+          "DELETE_SERVICE_ERROR",
+        );
       }
     } catch (error) {
       handleError(error, "delete service", "DELETE_SERVICE_ERROR");
@@ -1141,24 +1181,33 @@ export const adminServiceCanister = {
   async getServicePackages(serviceId: string): Promise<any[]> {
     try {
       logSuccess(`Getting service packages for serviceId: ${serviceId}`);
-      
+
       // Try admin canister first
       const actor = getAdminActor();
-      if (typeof (actor as any).getServicePackages === 'function') {
+      if (typeof (actor as any).getServicePackages === "function") {
         const result = await (actor as any).getServicePackages(serviceId);
-        const packages = handleResult<any[]>(result, "Failed to get service packages");
+        const packages = handleResult<any[]>(
+          result,
+          "Failed to get service packages",
+        );
         return packages;
       }
-      
+
       if (!currentIdentity) {
-        throw createAdminError("Authentication required to get service packages", "AUTH_REQUIRED");
+        throw createAdminError(
+          "Authentication required to get service packages",
+          "AUTH_REQUIRED",
+        );
       }
 
       const serviceActor = await createCanisterActor("service");
       const result = await (serviceActor as any).getServicePackages(serviceId);
-      
+
       if ("err" in result) {
-        throw createAdminError(`Failed to get service packages: ${result.err}`, "GET_SERVICE_PACKAGES_ERROR");
+        throw createAdminError(
+          `Failed to get service packages: ${result.err}`,
+          "GET_SERVICE_PACKAGES_ERROR",
+        );
       }
 
       return result.ok || [];
@@ -1171,18 +1220,17 @@ export const adminServiceCanister = {
   // Simplified service data retrieval (using admin canister for authentication)
   async getServiceData(serviceId: string): Promise<ServiceData | null> {
     try {
-      
       // Use admin canister to get service data (properly authenticated)
       const actor = getAdminActor();
-      
+
       // First try to get service through admin canister
-      if (typeof (actor as any).getService === 'function') {
+      if (typeof (actor as any).getService === "function") {
         const result = await (actor as any).getService(serviceId);
         const service = handleResult<any>(result, "Failed to get service");
-        
+
         if (service) {
           const serviceData = convertCanisterService(service);
-          
+
           // Get service packages
           try {
             const packages = await this.getServicePackages(serviceId);
@@ -1190,11 +1238,11 @@ export const adminServiceCanister = {
           } catch (packageError) {
             serviceData.packages = [];
           }
-          
+
           return serviceData;
         }
       }
-      
+
       if (!currentIdentity) {
         throw new AdminServiceError({
           message: "Authentication required to get service data",
@@ -1203,17 +1251,19 @@ export const adminServiceCanister = {
       }
 
       const { createActor } = await import("../../../declarations/service");
-      const { canisterId: serviceCanisterId } = await import("../../../declarations/service");
+      const { canisterId: serviceCanisterId } = await import(
+        "../../../declarations/service"
+      );
       const serviceActor = createActor(serviceCanisterId, {
         agentOptions: {
           identity: currentIdentity,
         },
       });
-      
+
       const serviceResult = await serviceActor.getService(serviceId);
       if ("ok" in serviceResult) {
         const serviceData = convertCanisterService(serviceResult.ok);
-        
+
         // Get service packages
         try {
           const packages = await this.getServicePackages(serviceId);
@@ -1221,7 +1271,7 @@ export const adminServiceCanister = {
         } catch (packageError) {
           serviceData.packages = [];
         }
-        
+
         return serviceData;
       } else {
         return null;
@@ -1240,20 +1290,20 @@ export const adminServiceCanister = {
     providerBookings: any[];
   }> {
     try {
-      
       // First ensure canister references are set
       await this.setCanisterReferences().catch(() => {
         // Continue anyway, might already be set
       });
-      
+
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).getUserServicesAndBookings === 'function') {
-        const result = await (actor as any).getUserServicesAndBookings(principal);
-        
+      if (typeof (actor as any).getUserServicesAndBookings === "function") {
+        const result = await (actor as any).getUserServicesAndBookings(
+          principal,
+        );
+
         const data = handleResult<{
           offeredServices: any[];
           clientBookings: any[];
@@ -1265,19 +1315,22 @@ export const adminServiceCanister = {
         return {
           offeredServices: [],
           clientBookings: [],
-          providerBookings: []
+          providerBookings: [],
         };
       }
     } catch (error) {
-      handleError(error, "get user services and bookings", "GET_USER_SERVICES_BOOKINGS_ERROR");
+      handleError(
+        error,
+        "get user services and bookings",
+        "GET_USER_SERVICES_BOOKINGS_ERROR",
+      );
     }
     return {
       offeredServices: [],
       clientBookings: [],
-      providerBookings: []
+      providerBookings: [],
     };
   },
-
 
   /**
    * Get service count for a specific user
@@ -1287,26 +1340,37 @@ export const adminServiceCanister = {
     try {
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).getUserServiceCount === 'function') {
+      if (typeof (actor as any).getUserServiceCount === "function") {
         const result = await (actor as any).getUserServiceCount(principal);
-        const count = handleResult<bigint>(result, "Failed to get user service count");
+        const count = handleResult<bigint>(
+          result,
+          "Failed to get user service count",
+        );
         return Number(count);
       } else {
         const serviceActor = await createCanisterActor("service");
-        const result = await (serviceActor as any).getUserServiceCount(principal);
+        const result = await (serviceActor as any).getUserServiceCount(
+          principal,
+        );
         if ("err" in result) {
-          throw createAdminError(`Failed to get user service count: ${result.err}`, "GET_USER_SERVICE_COUNT_ERROR");
+          throw createAdminError(
+            `Failed to get user service count: ${result.err}`,
+            "GET_USER_SERVICE_COUNT_ERROR",
+          );
         }
         return Number(result.ok || 0);
       }
     } catch (error) {
-      handleError(error, "get user service count", "GET_USER_SERVICE_COUNT_ERROR");
+      handleError(
+        error,
+        "get user service count",
+        "GET_USER_SERVICE_COUNT_ERROR",
+      );
     }
     return 0;
   },
-
 
   // User Management Functions
 
@@ -1317,18 +1381,27 @@ export const adminServiceCanister = {
     try {
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).lockUserAccount === 'function') {
+      if (typeof (actor as any).lockUserAccount === "function") {
         const result = await (actor as any).lockUserAccount(principal, locked);
-        return handleResult<string>(result, "Failed to lock/unlock user account");
+        return handleResult<string>(
+          result,
+          "Failed to lock/unlock user account",
+        );
       } else {
         const authActor = await createCanisterActor("auth");
-        if (typeof (authActor as any).lockUserAccount === 'function') {
-          const result = await (authActor as any).lockUserAccount(principal, locked);
+        if (typeof (authActor as any).lockUserAccount === "function") {
+          const result = await (authActor as any).lockUserAccount(
+            principal,
+            locked,
+          );
           return result;
         } else {
-          throw createAdminError("Auth canister doesn't have lockUserAccount function", "FUNCTION_NOT_FOUND");
+          throw createAdminError(
+            "Auth canister doesn't have lockUserAccount function",
+            "FUNCTION_NOT_FOUND",
+          );
         }
       }
     } catch (error) {
@@ -1337,7 +1410,6 @@ export const adminServiceCanister = {
     return "";
   },
 
-
   /**
    * Delete a user account
    */
@@ -1345,18 +1417,21 @@ export const adminServiceCanister = {
     try {
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).deleteUserAccount === 'function') {
+      if (typeof (actor as any).deleteUserAccount === "function") {
         const result = await (actor as any).deleteUserAccount(principal);
         return handleResult<string>(result, "Failed to delete user account");
       } else {
         const authActor = await createCanisterActor("auth");
-        if (typeof (authActor as any).deleteUserAccount === 'function') {
+        if (typeof (authActor as any).deleteUserAccount === "function") {
           const result = await (authActor as any).deleteUserAccount(principal);
           return result;
         } else {
-          throw createAdminError("Auth canister doesn't have deleteUserAccount function", "FUNCTION_NOT_FOUND");
+          throw createAdminError(
+            "Auth canister doesn't have deleteUserAccount function",
+            "FUNCTION_NOT_FOUND",
+          );
         }
       }
     } catch (error) {
@@ -1365,30 +1440,45 @@ export const adminServiceCanister = {
     return "";
   },
 
-
   /**
    * Update user reputation score
    */
-  async updateUserReputation(userId: string, reputationScore: number): Promise<string> {
+  async updateUserReputation(
+    userId: string,
+    reputationScore: number,
+  ): Promise<string> {
     try {
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).updateUserReputation === 'function') {
-        const result = await (actor as any).updateUserReputation(principal, BigInt(reputationScore));
+      if (typeof (actor as any).updateUserReputation === "function") {
+        const result = await (actor as any).updateUserReputation(
+          principal,
+          BigInt(reputationScore),
+        );
         return handleResult<string>(result, "Failed to update user reputation");
       } else {
         const authActor = await createCanisterActor("auth");
-        if (typeof (authActor as any).updateUserReputation === 'function') {
-          const result = await (authActor as any).updateUserReputation(principal, BigInt(reputationScore));
+        if (typeof (authActor as any).updateUserReputation === "function") {
+          const result = await (authActor as any).updateUserReputation(
+            principal,
+            BigInt(reputationScore),
+          );
           return result;
         } else {
-          throw createAdminError("Auth canister doesn't have updateUserReputation function", "FUNCTION_NOT_FOUND");
+          throw createAdminError(
+            "Auth canister doesn't have updateUserReputation function",
+            "FUNCTION_NOT_FOUND",
+          );
         }
       }
     } catch (error) {
-      handleError(error, "update user reputation", "UPDATE_USER_REPUTATION_ERROR");
+      handleError(
+        error,
+        "update user reputation",
+        "UPDATE_USER_REPUTATION_ERROR",
+      );
     }
     return "";
   },
@@ -1405,13 +1495,17 @@ export const adminServiceCanister = {
     totalReviews: number;
   }> {
     try {
-      
       // Try admin canister first
       const actor = getAdminActor();
-      if (typeof (actor as any).getUserAnalytics === 'function') {
-        const result = await (actor as any).getUserAnalytics(Principal.fromText(userId));
-        const analytics = handleResult<any>(result, "Failed to get user analytics");
-        
+      if (typeof (actor as any).getUserAnalytics === "function") {
+        const result = await (actor as any).getUserAnalytics(
+          Principal.fromText(userId),
+        );
+        const analytics = handleResult<any>(
+          result,
+          "Failed to get user analytics",
+        );
+
         return {
           totalEarnings: Number(analytics.totalEarnings || 0) / 100, // Convert from cents
           completedJobs: Number(analytics.completedJobs || 0),
@@ -1421,15 +1515,21 @@ export const adminServiceCanister = {
           totalReviews: 0, // Will be fetched separately
         };
       }
-      
+
       const { createActor } = await import("../../../declarations/booking");
-      const { canisterId: bookingId } = await import("../../../declarations/booking");
+      const { canisterId: bookingId } = await import(
+        "../../../declarations/booking"
+      );
       const bookingActor = createActor(bookingId);
       const userPrincipal = Principal.fromText(userId);
-      
-      const analyticsResult = await bookingActor.getProviderAnalytics(userPrincipal, [], []);
-      
-      if ('ok' in analyticsResult) {
+
+      const analyticsResult = await bookingActor.getProviderAnalytics(
+        userPrincipal,
+        [],
+        [],
+      );
+
+      if ("ok" in analyticsResult) {
         const analytics = analyticsResult.ok;
         return {
           totalEarnings: Number(analytics.totalEarnings) / 100, // Convert from cents
@@ -1465,19 +1565,21 @@ export const adminServiceCanister = {
     totalReviews: number;
   }> {
     try {
-      
       // Use admin canister to get review data (properly authenticated)
       const actor = getAdminActor();
-      if (typeof (actor as any).getUserReviews === 'function') {
+      if (typeof (actor as any).getUserReviews === "function") {
         const result = await (actor as any).getUserReviews(userId);
-        const reviewData = handleResult<any>(result, "Failed to get review data");
-        
+        const reviewData = handleResult<any>(
+          result,
+          "Failed to get review data",
+        );
+
         return {
           averageRating: Number(reviewData.averageRating || 0),
           totalReviews: Number(reviewData.totalReviews || 0),
         };
       }
-      
+
       if (!currentIdentity) {
         throw new AdminServiceError({
           message: "Authentication required to get review data",
@@ -1486,20 +1588,22 @@ export const adminServiceCanister = {
       }
 
       const { createActor } = await import("../../../declarations/review");
-      const { canisterId: reviewId } = await import("../../../declarations/review");
+      const { canisterId: reviewId } = await import(
+        "../../../declarations/review"
+      );
       const reviewActor = createActor(reviewId, {
         agentOptions: {
           identity: currentIdentity,
         },
       });
       const userPrincipal = Principal.fromText(userId);
-      
+
       const [ratingResult, userReviews] = await Promise.all([
         reviewActor.calculateUserAverageRating(userPrincipal),
-        reviewActor.getUserReviews(userPrincipal)
+        reviewActor.getUserReviews(userPrincipal),
       ]);
-      
-      if ('ok' in ratingResult) {
+
+      if ("ok" in ratingResult) {
         const averageRating = Number(ratingResult.ok);
         const totalReviews = userReviews.length;
         return {
@@ -1522,7 +1626,6 @@ export const adminServiceCanister = {
     }
   },
 
-
   /**
    * Get user reputation score (real data from backend)
    */
@@ -1532,20 +1635,22 @@ export const adminServiceCanister = {
     completedBookings: number;
   }> {
     try {
-      
       // Use admin canister to get reputation data (properly authenticated)
       const actor = getAdminActor();
-      if (typeof (actor as any).getUserReputation === 'function') {
+      if (typeof (actor as any).getUserReputation === "function") {
         const result = await (actor as any).getUserReputation(userId);
-        const reputationData = handleResult<any>(result, "Failed to get reputation data");
-        
+        const reputationData = handleResult<any>(
+          result,
+          "Failed to get reputation data",
+        );
+
         return {
           reputationScore: Number(reputationData.reputationScore || 50),
           trustLevel: reputationData.trustLevel || "New",
           completedBookings: Number(reputationData.completedBookings || 0),
         };
       }
-      
+
       if (!currentIdentity) {
         throw new AdminServiceError({
           message: "Authentication required to get reputation data",
@@ -1554,17 +1659,20 @@ export const adminServiceCanister = {
       }
 
       const { createActor } = await import("../../../declarations/reputation");
-      const { canisterId: reputationId } = await import("../../../declarations/reputation");
+      const { canisterId: reputationId } = await import(
+        "../../../declarations/reputation"
+      );
       const reputationActor = createActor(reputationId, {
         agentOptions: {
           identity: currentIdentity,
         },
       });
       const userPrincipal = Principal.fromText(userId);
-      
-      const reputationResult = await reputationActor.getReputationScore(userPrincipal);
-      
-      if ('ok' in reputationResult) {
+
+      const reputationResult =
+        await reputationActor.getReputationScore(userPrincipal);
+
+      if ("ok" in reputationResult) {
         const reputation = reputationResult.ok;
         return {
           reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
@@ -1592,67 +1700,82 @@ export const adminServiceCanister = {
   /**
    * Get user bookings (for admin booking history view)
    */
-  async getUserBookings(userId: string): Promise<Array<{
-    id: string;
-    serviceId: string;
-    serviceName: string;
-    providerId: string;
-    providerName: string;
-    status: string;
-    price: number;
-    createdAt: string;
-    scheduledDate: string;
-    completedAt?: string;
-    rating?: number;
-    review?: string;
-  }>> {
+  async getUserBookings(userId: string): Promise<
+    Array<{
+      id: string;
+      serviceId: string;
+      serviceName: string;
+      providerId: string;
+      providerName: string;
+      status: string;
+      price: number;
+      createdAt: string;
+      scheduledDate: string;
+      completedAt?: string;
+      rating?: number;
+      review?: string;
+    }>
+  > {
     try {
-      
       const actor = getAdminActor();
-      if (typeof (actor as any).getUserBookings === 'function') {
-        const result = await (actor as any).getUserBookings(Principal.fromText(userId));
-        const bookingsData = handleResult<any[]>(result, "Failed to get user bookings");
-        
-        
+      if (typeof (actor as any).getUserBookings === "function") {
+        const result = await (actor as any).getUserBookings(
+          Principal.fromText(userId),
+        );
+        const bookingsData = handleResult<any[]>(
+          result,
+          "Failed to get user bookings",
+        );
+
         // Handle both array and single booking responses
-        const bookingsArray = Array.isArray(bookingsData) ? bookingsData : [bookingsData];
-        
+        const bookingsArray = Array.isArray(bookingsData)
+          ? bookingsData
+          : [bookingsData];
+
         // Map bookings and fetch provider names and service names
         const bookingsWithNames = await Promise.all(
           bookingsArray.map(async (booking) => {
             let providerName = "Unknown Provider";
             let serviceName = "Unknown Service";
-            
+
             // Try to get provider name from the booking data first
             if (booking.providerName?.[0]) {
               providerName = booking.providerName[0];
             } else if (booking.providerId) {
               try {
-                const { createActor } = await import("../../../declarations/auth");
-                const { canisterId: authId } = await import("../../../declarations/auth");
+                const { createActor } = await import(
+                  "../../../declarations/auth"
+                );
+                const { canisterId: authId } = await import(
+                  "../../../declarations/auth"
+                );
                 const authActor = createActor(authId);
-                const profileResult = await authActor.getProfile(Principal.fromText(booking.providerId.toString()));
-                if ('ok' in profileResult) {
+                const profileResult = await authActor.getProfile(
+                  Principal.fromText(booking.providerId.toString()),
+                );
+                if ("ok" in profileResult) {
                   providerName = profileResult.ok.name;
                 }
-              } catch (error) {
-              }
+              } catch (error) {}
             }
-            
+
             // Try to get service name from the booking data first
             if (booking.serviceName?.[0]) {
               serviceName = booking.serviceName[0];
             } else if (booking.serviceId) {
               try {
-                const { serviceCanisterService } = await import("../../../frontend/src/services/serviceCanisterService");
-                const serviceData = await serviceCanisterService.getService(booking.serviceId);
+                const { serviceCanisterService } = await import(
+                  "../../../frontend/src/services/serviceCanisterService"
+                );
+                const serviceData = await serviceCanisterService.getService(
+                  booking.serviceId,
+                );
                 if (serviceData) {
                   serviceName = serviceData.title;
                 }
-              } catch (error) {
-              }
+              } catch (error) {}
             }
-            
+
             return {
               id: booking.id || booking.bookingId || "",
               serviceId: booking.serviceId || "",
@@ -1661,20 +1784,24 @@ export const adminServiceCanister = {
               providerName: providerName,
               status: booking.status || "Unknown",
               price: Number(booking.price || 0),
-              createdAt: convertMotokoTime(booking.createdAt) || new Date().toISOString(),
-              scheduledDate: convertMotokoTime(booking.scheduledDate) || convertMotokoTime(booking.createdAt) || new Date().toISOString(),
+              createdAt:
+                convertMotokoTime(booking.createdAt) ||
+                new Date().toISOString(),
+              scheduledDate:
+                convertMotokoTime(booking.scheduledDate) ||
+                convertMotokoTime(booking.createdAt) ||
+                new Date().toISOString(),
               completedAt: convertMotokoTime(booking.completedAt) || undefined,
               rating: booking.rating ? Number(booking.rating) : undefined,
-              review: booking.review
+              review: booking.review,
             };
-          })
+          }),
         );
-        
+
         return bookingsWithNames;
       }
-      
+
       return [];
-      
     } catch (error) {
       logError("Error fetching user bookings", error);
       throw new AdminServiceError({
@@ -1694,13 +1821,17 @@ export const adminServiceCanister = {
     memberSince: string;
   }> {
     try {
-      
       // Use admin canister to get client analytics data (properly authenticated)
       const actor = getAdminActor();
-      if (typeof (actor as any).getUserClientAnalytics === 'function') {
-        const result = await (actor as any).getUserClientAnalytics(Principal.fromText(userId));
-        const analyticsData = handleResult<any>(result, "Failed to get client analytics data");
-        
+      if (typeof (actor as any).getUserClientAnalytics === "function") {
+        const result = await (actor as any).getUserClientAnalytics(
+          Principal.fromText(userId),
+        );
+        const analyticsData = handleResult<any>(
+          result,
+          "Failed to get client analytics data",
+        );
+
         return {
           totalBookings: Number(analyticsData.totalBookings || 0),
           servicesCompleted: Number(analyticsData.servicesCompleted || 0),
@@ -1708,7 +1839,7 @@ export const adminServiceCanister = {
           memberSince: analyticsData.memberSince || "Unknown",
         };
       }
-      
+
       if (!currentIdentity) {
         throw new AdminServiceError({
           message: "Authentication required to get client analytics data",
@@ -1716,11 +1847,14 @@ export const adminServiceCanister = {
         } as AdminServiceError);
       }
 
-      const { bookingCanisterService } = await import("../../../frontend/src/services/bookingCanisterService");
+      const { bookingCanisterService } = await import(
+        "../../../frontend/src/services/bookingCanisterService"
+      );
       const userPrincipal = Principal.fromText(userId);
-      
-      const analyticsResult = await bookingCanisterService.getClientAnalyticsForAdmin(userPrincipal);
-      
+
+      const analyticsResult =
+        await bookingCanisterService.getClientAnalyticsForAdmin(userPrincipal);
+
       if (analyticsResult) {
         return {
           totalBookings: Number(analyticsResult.totalBookings),
@@ -1759,18 +1893,27 @@ export const adminServiceCanister = {
     overdueOrders: number;
   }> {
     try {
-      
       const { createActor } = await import("../../../declarations/remittance");
-      const { canisterId: remittanceId } = await import("../../../declarations/remittance");
+      const { canisterId: remittanceId } = await import(
+        "../../../declarations/remittance"
+      );
       const remittanceActor = createActor(remittanceId);
       const userPrincipal = Principal.fromText(userId);
-      
-      const commissionData = await remittanceActor.getProviderAnalytics(userPrincipal, [], []);
-      
+
+      const commissionData = await remittanceActor.getProviderAnalytics(
+        userPrincipal,
+        [],
+        [],
+      );
+
       return {
         pendingCommission: Number(commissionData.pending_orders) * 100, // Estimate pending commission
         settledCommission: Number(commissionData.total_commission_paid) / 100, // Convert centavos to PHP
-        outstandingBalance: Number(commissionData.total_service_amount - commissionData.total_commission_paid) / 100, // Calculate outstanding
+        outstandingBalance:
+          Number(
+            commissionData.total_service_amount -
+              commissionData.total_commission_paid,
+          ) / 100, // Calculate outstanding
         pendingOrders: Number(commissionData.pending_orders),
         overdueOrders: 0, // Not available in this function
       };
@@ -1786,41 +1929,55 @@ export const adminServiceCanister = {
     }
   },
 
-
   /**
    * Update user commission amount
    */
-  async updateUserCommission(userId: string, commissionAmount: number): Promise<string> {
+  async updateUserCommission(
+    userId: string,
+    commissionAmount: number,
+  ): Promise<string> {
     try {
       const actor = getAdminActor();
       const principal = Principal.fromText(userId);
-      
+
       // Check if the function exists on the admin canister
-      if (typeof (actor as any).updateUserCommission === 'function') {
-        const result = await (actor as any).updateUserCommission(principal, BigInt(commissionAmount * 100)); // Convert to centavos
+      if (typeof (actor as any).updateUserCommission === "function") {
+        const result = await (actor as any).updateUserCommission(
+          principal,
+          BigInt(commissionAmount * 100),
+        ); // Convert to centavos
         return handleResult<string>(result, "Failed to update user commission");
       } else {
         const authActor = await createCanisterActor("auth");
-        if (typeof (authActor as any).updateUserCommission === 'function') {
-          const result = await (authActor as any).updateUserCommission(principal, BigInt(commissionAmount * 100));
+        if (typeof (authActor as any).updateUserCommission === "function") {
+          const result = await (authActor as any).updateUserCommission(
+            principal,
+            BigInt(commissionAmount * 100),
+          );
           return result;
         } else {
-          throw createAdminError("Auth canister doesn't have updateUserCommission function", "FUNCTION_NOT_FOUND");
+          throw createAdminError(
+            "Auth canister doesn't have updateUserCommission function",
+            "FUNCTION_NOT_FOUND",
+          );
         }
       }
     } catch (error) {
-      handleError(error, "update user commission", "UPDATE_USER_COMMISSION_ERROR");
+      handleError(
+        error,
+        "update user commission",
+        "UPDATE_USER_COMMISSION_ERROR",
+      );
     }
     return "";
   },
-
 
   // Get services with certificates for validation
   async getServicesWithCertificates(): Promise<any[]> {
     try {
       const actor = getAdminActor();
       const result = await actor.getServicesWithCertificates();
-      
+
       if ("ok" in result) {
         return result.ok;
       } else {
@@ -1837,7 +1994,7 @@ export const adminServiceCanister = {
     try {
       const actor = getAdminActor();
       const result = await actor.getPendingCertificateValidations();
-      
+
       if ("ok" in result) {
         return result.ok;
       } else {
@@ -1849,11 +2006,19 @@ export const adminServiceCanister = {
     }
   },
 
-  async validateCertificate(validationId: string, approved: boolean, reason?: string): Promise<string> {
+  async validateCertificate(
+    validationId: string,
+    approved: boolean,
+    reason?: string,
+  ): Promise<string> {
     try {
       const actor = getAdminActor();
-      const result = await actor.validateCertificate(validationId, approved, reason ? [reason] : []);
-      
+      const result = await actor.validateCertificate(
+        validationId,
+        approved,
+        reason ? [reason] : [],
+      );
+
       if ("ok" in result) {
         return result.ok;
       } else {
@@ -1866,23 +2031,35 @@ export const adminServiceCanister = {
   },
 
   // Update certificate validation status in media canister
-  async updateCertificateValidationStatus(mediaId: string, status: 'Pending' | 'Validated' | 'Rejected'): Promise<any> {
+  async updateCertificateValidationStatus(
+    mediaId: string,
+    status: "Pending" | "Validated" | "Rejected",
+  ): Promise<any> {
     try {
       // Import media canister actor with authenticated identity
       const { createActor } = await import("../../../declarations/media");
-      const { canisterId: mediaCanisterId } = await import("../../../declarations/media");
+      const { canisterId: mediaCanisterId } = await import(
+        "../../../declarations/media"
+      );
       const mediaActor = createActor(mediaCanisterId, {
-        agentOptions: currentIdentity ? { identity: currentIdentity } : undefined,
+        agentOptions: currentIdentity
+          ? { identity: currentIdentity }
+          : undefined,
       });
 
       // Convert string status to backend format
-      const backendStatus = status === 'Validated' ? { Validated: null } : 
-                           status === 'Rejected' ? { Rejected: null } : 
-                           { Pending: null };
+      const backendStatus =
+        status === "Validated"
+          ? { Validated: null }
+          : status === "Rejected"
+            ? { Rejected: null }
+            : { Pending: null };
 
       // Use type assertion to call the new function
-      const result = await (mediaActor as any).updateCertificateValidationStatus(mediaId, backendStatus);
-      
+      const result = await (
+        mediaActor as any
+      ).updateCertificateValidationStatus(mediaId, backendStatus);
+
       if ("ok" in result) {
         return result.ok;
       } else {
@@ -1902,37 +2079,43 @@ export const adminServiceCanister = {
     try {
       // Import media canister actor - use default for query functions
       const { media } = await import("../../../declarations/media");
-      
+
       if (!media) {
         throw new Error("Media canister not available");
       }
 
       // Get validated certificates from media canister
-      const validatedCerts = await (media as any).getCertificatesByValidationStatus([{ Validated: null }]);
-      
-      // Convert to frontend format with service information
-      const processedCerts = await Promise.all(validatedCerts.map(async (cert: any) => {
-        try {
-          // Create service data that matches the format expected by CertificateCard
-          return {
-            id: `validated-${cert.id}-${Date.now()}`,
-             service: {
-               serviceId: `service-${cert.ownerId}`, // Use owner as service identifier
-               serviceTitle: 'Validated Service',
-               providerId: cert.ownerId,
-               certificateUrls: [cert.url] // This is what useServiceCertificates needs
-             },
-            certificateIndex: 0,
-            certificateUrl: cert.url,
-            approvedAt: new Date(Number(cert.updatedAt) / 1000000).toISOString()
-          };
-        } catch (error) {
-          logError("Error processing validated certificate", error);
-          return null;
-        }
-      }));
+      const validatedCerts = await (
+        media as any
+      ).getCertificatesByValidationStatus([{ Validated: null }]);
 
-      return processedCerts.filter(cert => cert !== null);
+      // Convert to frontend format with service information
+      const processedCerts = await Promise.all(
+        validatedCerts.map(async (cert: any) => {
+          try {
+            // Create service data that matches the format expected by CertificateCard
+            return {
+              id: `validated-${cert.id}-${Date.now()}`,
+              service: {
+                serviceId: `service-${cert.ownerId}`, // Use owner as service identifier
+                serviceTitle: "Validated Service",
+                providerId: cert.ownerId,
+                certificateUrls: [cert.url], // This is what useServiceCertificates needs
+              },
+              certificateIndex: 0,
+              certificateUrl: cert.url,
+              approvedAt: new Date(
+                Number(cert.updatedAt) / 1000000,
+              ).toISOString(),
+            };
+          } catch (error) {
+            logError("Error processing validated certificate", error);
+            return null;
+          }
+        }),
+      );
+
+      return processedCerts.filter((cert) => cert !== null);
     } catch (error) {
       logError("Error fetching validated certificates", error);
       return [];
@@ -1944,37 +2127,43 @@ export const adminServiceCanister = {
     try {
       // Import media canister actor - use default for query functions
       const { media } = await import("../../../declarations/media");
-      
+
       if (!media) {
         throw new Error("Media canister not available");
       }
 
       // Get rejected certificates from media canister
-      const rejectedCerts = await (media as any).getCertificatesByValidationStatus([{ Rejected: null }]);
-      
-      // Convert to frontend format with service information
-      const processedCerts = await Promise.all(rejectedCerts.map(async (cert: any) => {
-        try {
-          // Create service data that matches the format expected by CertificateCard
-          return {
-            id: `rejected-${cert.id}-${Date.now()}`,
-             service: {
-               serviceId: `service-${cert.ownerId}`, // Use owner as service identifier
-               serviceTitle: 'Rejected Service',
-               providerId: cert.ownerId,
-               certificateUrls: [cert.url] // This is what useServiceCertificates needs
-             },
-            certificateIndex: 0,
-            certificateUrl: cert.url,
-            rejectedAt: new Date(Number(cert.updatedAt) / 1000000).toISOString()
-          };
-        } catch (error) {
-          logError("Error processing rejected certificate", error);
-          return null;
-        }
-      }));
+      const rejectedCerts = await (
+        media as any
+      ).getCertificatesByValidationStatus([{ Rejected: null }]);
 
-      return processedCerts.filter(cert => cert !== null);
+      // Convert to frontend format with service information
+      const processedCerts = await Promise.all(
+        rejectedCerts.map(async (cert: any) => {
+          try {
+            // Create service data that matches the format expected by CertificateCard
+            return {
+              id: `rejected-${cert.id}-${Date.now()}`,
+              service: {
+                serviceId: `service-${cert.ownerId}`, // Use owner as service identifier
+                serviceTitle: "Rejected Service",
+                providerId: cert.ownerId,
+                certificateUrls: [cert.url], // This is what useServiceCertificates needs
+              },
+              certificateIndex: 0,
+              certificateUrl: cert.url,
+              rejectedAt: new Date(
+                Number(cert.updatedAt) / 1000000,
+              ).toISOString(),
+            };
+          } catch (error) {
+            logError("Error processing rejected certificate", error);
+            return null;
+          }
+        }),
+      );
+
+      return processedCerts.filter((cert) => cert !== null);
     } catch (error) {
       logError("Error fetching rejected certificates", error);
       return [];
@@ -2014,15 +2203,17 @@ export const {
 export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
   try {
     const { createActor } = await import("../../../declarations/feedback");
-    const { canisterId: feedbackCanisterId } = await import("../../../declarations/feedback");
-    
+    const { canisterId: feedbackCanisterId } = await import(
+      "../../../declarations/feedback"
+    );
+
     const feedbackActor = createActor(feedbackCanisterId, {
       agentOptions: currentIdentity ? { identity: currentIdentity } : undefined,
     });
 
     // Get all reports from feedback canister
     const reports = await (feedbackActor as any).getAllReports();
-    
+
     return reports.map((report: any) => ({
       id: report.id,
       userId: report.userId.toString(),
@@ -2039,17 +2230,25 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
 };
 
 // Update report status in feedback canister
-export const updateReportStatus = async (reportId: string, newStatus: string): Promise<boolean> => {
+export const updateReportStatus = async (
+  reportId: string,
+  newStatus: string,
+): Promise<boolean> => {
   try {
     const { createActor } = await import("../../../declarations/feedback");
-    const { canisterId: feedbackCanisterId } = await import("../../../declarations/feedback");
-    
+    const { canisterId: feedbackCanisterId } = await import(
+      "../../../declarations/feedback"
+    );
+
     const feedbackActor = createActor(feedbackCanisterId, {
       agentOptions: currentIdentity ? { identity: currentIdentity } : undefined,
     });
 
-    const result = await (feedbackActor as any).updateReportStatus(reportId, newStatus);
-    
+    const result = await (feedbackActor as any).updateReportStatus(
+      reportId,
+      newStatus,
+    );
+
     if (result.ok) {
       logSuccess(`Report ${reportId} status updated to: ${newStatus}`);
       return true;

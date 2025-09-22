@@ -316,7 +316,9 @@ export const getImageDataUrl = async (
     }
 
     // Get file data from media canister
-    console.log("getImageDataUrl - Getting media actor and calling getFileData");
+    console.log(
+      "getImageDataUrl - Getting media actor and calling getFileData",
+    );
     const actor = getMediaActor();
     const result = await actor.getFileData(mediaId);
     console.log("getImageDataUrl - getFileData result:", result);
@@ -330,7 +332,7 @@ export const getImageDataUrl = async (
     console.log("getImageDataUrl - Getting media item for content type");
     const mediaItemResult = await actor.getMediaItem(mediaId);
     console.log("getImageDataUrl - getMediaItem result:", mediaItemResult);
-    
+
     if ("err" in mediaItemResult) {
       console.warn("Failed to retrieve media item:", mediaItemResult.err);
       return opts.fallbackImageUrl;
@@ -340,9 +342,17 @@ export const getImageDataUrl = async (
     console.log("getImageDataUrl - Converting to data URL");
     const uint8Array = new Uint8Array(result.ok);
     const contentType = mediaItemResult.ok.contentType;
-    console.log("getImageDataUrl - Content type:", contentType, "Data length:", uint8Array.length);
+    console.log(
+      "getImageDataUrl - Content type:",
+      contentType,
+      "Data length:",
+      uint8Array.length,
+    );
     const dataUrl = await convertBlobToDataUrl(uint8Array, contentType);
-    console.log("getImageDataUrl - Data URL generated, length:", dataUrl.length);
+    console.log(
+      "getImageDataUrl - Data URL generated, length:",
+      dataUrl.length,
+    );
 
     // Cache the result if enabled
     if (opts.enableCache) {

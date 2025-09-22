@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 // import { PendingValidationCard } from "../components/PendingValidationCard";
-import { XMarkIcon, ArrowDownTrayIcon, DocumentIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
+import {
+  XMarkIcon,
+  ArrowDownTrayIcon,
+  DocumentIcon,
+  ArrowUturnLeftIcon,
+} from "@heroicons/react/24/solid";
 import { useServiceCertificates } from "../../../frontend/src/hooks/useMediaLoader";
 
 // Types for media modal
@@ -173,9 +178,21 @@ interface CertificateCardProps {
   certificateUrl: string;
   certificateIndex: number;
   onViewCertificate: (url: string) => void;
-  onApprove: (service: any, certificateIndex: number, certificateUrl: string) => void;
-  onReject: (service: any, certificateIndex: number, certificateUrl: string) => void;
-  onCardClick?: (service: any, certificateIndex: number, certificateUrl: string) => void;
+  onApprove: (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => void;
+  onReject: (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => void;
+  onCardClick?: (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => void;
 }
 
 // Processed Certificate Card Component (for approved/rejected sections)
@@ -191,7 +208,11 @@ interface ProcessedCertificateCardProps {
   onViewCertificate: (url: string) => void;
   onUndo: (certificate: any) => void;
   isApproved?: boolean;
-  onCardClick?: (service: any, certificateIndex: number, certificateUrl: string) => void;
+  onCardClick?: (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => void;
 }
 
 const CertificateCard: React.FC<CertificateCardProps> = ({
@@ -204,25 +225,29 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
   onCardClick,
 }) => {
   // Use the useServiceCertificates hook to properly load certificate images
-  const { certificates: serviceCertificates, isLoading: isLoadingCertificates, error: _certificateError } = useServiceCertificates(
-    service.serviceId,
-    service.certificateUrls || [],
-  );
+  const {
+    certificates: serviceCertificates,
+    isLoading: isLoadingCertificates,
+    error: _certificateError,
+  } = useServiceCertificates(service.serviceId, service.certificateUrls || []);
 
   // Find the corresponding processed certificate
   const processedCert = serviceCertificates?.[certificateIndex];
-  const displayUrl = processedCert?.dataUrl || processedCert?.url || certificateUrl;
+  const displayUrl =
+    processedCert?.dataUrl || processedCert?.url || certificateUrl;
 
   return (
-    <div 
-      className="flex flex-col gap-2 p-3 border border-gray-200 rounded-lg bg-white shadow-sm cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+    <div
+      className="flex cursor-pointer flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
       onClick={() => onCardClick?.(service, certificateIndex, certificateUrl)}
     >
       {/* Service info header */}
-      <div className="flex items-start space-x-2 mb-2">
-        <DocumentIcon className="h-4 w-4 text-blue-600 mt-0.5" />
+      <div className="mb-2 flex items-start space-x-2">
+        <DocumentIcon className="mt-0.5 h-4 w-4 text-blue-600" />
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-gray-900 truncate">{service.serviceTitle}</h4>
+          <h4 className="truncate text-sm font-medium text-gray-900">
+            {service.serviceTitle}
+          </h4>
         </div>
       </div>
 
@@ -232,11 +257,11 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
           e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className="group relative w-full h-32 overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+        className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
           </div>
         ) : processedCert?.error ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
@@ -250,22 +275,22 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             className="max-h-full max-w-full object-contain"
             loading="lazy"
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block'
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
             }}
             onLoad={(_e) => {
               console.log("Certificate loaded successfully:", displayUrl);
             }}
             onError={(e) => {
               console.log("Certificate failed to load:", displayUrl);
-              e.currentTarget.style.display = 'none';
+              e.currentTarget.style.display = "none";
             }}
           />
         )}
       </button>
-      
+
       {/* Action buttons below the image */}
       <div className="flex gap-2">
         <button
@@ -273,7 +298,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onApprove(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 px-3 py-2 text-xs bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="flex-1 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
         >
           Approve
         </button>
@@ -282,7 +307,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onReject(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           Reject
         </button>
@@ -298,60 +323,83 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
   isApproved = false,
   onCardClick,
 }) => {
-  const { certificates: serviceCertificates, isLoading: isLoadingCertificates, error: _certificateError } = useServiceCertificates(
+  const {
+    certificates: serviceCertificates,
+    isLoading: isLoadingCertificates,
+    error: _certificateError,
+  } = useServiceCertificates(
     certificate.service.serviceId,
     certificate.service.certificateUrls || [],
   );
 
   // Find the corresponding processed certificate
   const processedCert = serviceCertificates?.[certificate.certificateIndex];
-  const displayUrl = processedCert?.dataUrl || processedCert?.url || certificate.certificateUrl;
+  const displayUrl =
+    processedCert?.dataUrl || processedCert?.url || certificate.certificateUrl;
 
-  const bgColor = isApproved ? 'bg-green-50' : 'bg-red-50';
-  const borderColor = isApproved ? 'border-green-200' : 'border-red-200';
-  const iconColor = isApproved ? 'text-green-600' : 'text-red-600';
-  const buttonBgColor = isApproved ? 'bg-green-100 hover:bg-green-200' : 'bg-red-100 hover:bg-red-200';
-  const buttonFocusColor = isApproved ? 'focus:ring-green-500' : 'focus:ring-red-500';
-  const statusText = isApproved ? 'Approved' : 'Rejected';
-  const statusDate = isApproved ? certificate.approvedAt : certificate.rejectedAt;
+  const bgColor = isApproved ? "bg-green-50" : "bg-red-50";
+  const borderColor = isApproved ? "border-green-200" : "border-red-200";
+  const iconColor = isApproved ? "text-green-600" : "text-red-600";
+  const buttonBgColor = isApproved
+    ? "bg-green-100 hover:bg-green-200"
+    : "bg-red-100 hover:bg-red-200";
+  const buttonFocusColor = isApproved
+    ? "focus:ring-green-500"
+    : "focus:ring-red-500";
+  const statusText = isApproved ? "Approved" : "Rejected";
+  const statusDate = isApproved
+    ? certificate.approvedAt
+    : certificate.rejectedAt;
 
   return (
-    <div 
-      className={`flex flex-col gap-2 p-3 border ${borderColor} rounded-lg ${bgColor} shadow-sm relative cursor-pointer hover:shadow-md transition-all`}
-      onClick={() => onCardClick?.(certificate.service, certificate.certificateIndex, certificate.certificateUrl)}
+    <div
+      className={`flex flex-col gap-2 border p-3 ${borderColor} rounded-lg ${bgColor} relative cursor-pointer shadow-sm transition-all hover:shadow-md`}
+      onClick={() =>
+        onCardClick?.(
+          certificate.service,
+          certificate.certificateIndex,
+          certificate.certificateUrl,
+        )
+      }
     >
       {/* Undo button */}
       <button
         onClick={(e) => {
-          e.stopPropagation(); 
+          e.stopPropagation();
           onUndo(certificate);
         }}
-        className="absolute top-2 right-2 p-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 z-10"
+        className="absolute top-2 right-2 z-10 rounded-full bg-gray-100 p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
         title={`Undo ${statusText.toLowerCase()}`}
       >
         <ArrowUturnLeftIcon className="h-4 w-4" />
       </button>
 
       {/* Service info header */}
-      <div className="flex items-start space-x-2 mb-2 pr-8">
+      <div className="mb-2 flex items-start space-x-2 pr-8">
         <DocumentIcon className={`h-4 w-4 ${iconColor} mt-0.5`} />
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-gray-900 truncate">{certificate.service.serviceTitle}</h4>
-          <p className={`text-xs ${iconColor}`}>{statusText}: {new Date(statusDate || '').toLocaleDateString()}</p>
+          <h4 className="truncate text-sm font-medium text-gray-900">
+            {certificate.service.serviceTitle}
+          </h4>
+          <p className={`text-xs ${iconColor}`}>
+            {statusText}: {new Date(statusDate || "").toLocaleDateString()}
+          </p>
         </div>
       </div>
 
       {/* Certificate image */}
       <button
         onClick={(e) => {
-          e.stopPropagation(); 
+          e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className={`group relative w-full h-32 overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:outline-none focus:ring-2 ${buttonFocusColor} flex items-center justify-center`}
+        className={`group relative h-32 w-full overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:ring-2 focus:outline-none ${buttonFocusColor} flex items-center justify-center`}
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
-            <div className={`animate-spin rounded-full h-6 w-6 border-b-2 ${iconColor}`}></div>
+            <div
+              className={`h-6 w-6 animate-spin rounded-full border-b-2 ${iconColor}`}
+            ></div>
           </div>
         ) : processedCert?.error ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
@@ -365,17 +413,17 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
             className="max-h-full max-w-full object-contain"
             loading="lazy"
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block'
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
             }}
             onLoad={(_e) => {
               console.log("Certificate loaded successfully:", displayUrl);
             }}
             onError={(e) => {
               console.log("Certificate failed to load:", displayUrl);
-              e.currentTarget.style.display = 'none';
+              e.currentTarget.style.display = "none";
             }}
           />
         )}
@@ -395,16 +443,18 @@ export const ValidationInboxPage: React.FC = () => {
   } = useAdmin();
 
   // Certificate validation state
-  const [servicesWithCertificates, setServicesWithCertificates] = useState<any[]>([]);
+  const [servicesWithCertificates, setServicesWithCertificates] = useState<
+    any[]
+  >([]);
   const [certificateLoading, setCertificateLoading] = useState(false);
-  
+
   // Statistics state
   const [stats, setStats] = useState({
     totalCertificates: 0,
     certificatesPending: 0,
     completedToday: 0,
     completedTotal: 0,
-    rejectedTotal: 0
+    rejectedTotal: 0,
   });
 
   // Certificate validation state
@@ -431,21 +481,25 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Calculate statistics
   const calculateStats = () => {
-    const certificatesPending = servicesWithCertificates.reduce((total, service) => total + service.certificateUrls.length, 0);
+    const certificatesPending = servicesWithCertificates.reduce(
+      (total, service) => total + service.certificateUrls.length,
+      0,
+    );
     const completedTotal = approvedCertificates.length;
     const rejectedTotal = rejectedCertificates.length;
-    const totalCertificates = certificatesPending + completedTotal + rejectedTotal;
+    const totalCertificates =
+      certificatesPending + completedTotal + rejectedTotal;
     const today = new Date().toDateString();
-    const completedToday = approvedCertificates.filter(cert => 
-      new Date(cert.approvedAt).toDateString() === today
+    const completedToday = approvedCertificates.filter(
+      (cert) => new Date(cert.approvedAt).toDateString() === today,
     ).length;
-    
+
     setStats({
       totalCertificates,
       certificatesPending,
       completedToday,
       completedTotal,
-      rejectedTotal
+      rejectedTotal,
     });
   };
 
@@ -453,7 +507,9 @@ export const ValidationInboxPage: React.FC = () => {
   const loadServicesWithCertificates = async () => {
     setCertificateLoading(true);
     try {
-      const { adminServiceCanister } = await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       const services = await adminServiceCanister.getServicesWithCertificates();
       setServicesWithCertificates(services);
     } catch (error) {
@@ -466,8 +522,11 @@ export const ValidationInboxPage: React.FC = () => {
   // Load validated certificates from backend
   const loadValidatedCertificates = async () => {
     try {
-      const { adminServiceCanister } = await import("../services/adminServiceCanister");
-      const validatedCerts = await adminServiceCanister.getValidatedCertificates();
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
+      const validatedCerts =
+        await adminServiceCanister.getValidatedCertificates();
       setApprovedCertificates(validatedCerts);
     } catch (error) {
       console.error("Error loading validated certificates:", error);
@@ -477,8 +536,11 @@ export const ValidationInboxPage: React.FC = () => {
   // Load rejected certificates from backend
   const loadRejectedCertificates = async () => {
     try {
-      const { adminServiceCanister } = await import("../services/adminServiceCanister");
-      const rejectedCerts = await adminServiceCanister.getRejectedCertificates();
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
+      const rejectedCerts =
+        await adminServiceCanister.getRejectedCertificates();
       setRejectedCertificates(rejectedCerts);
     } catch (error) {
       console.error("Error loading rejected certificates:", error);
@@ -499,14 +561,23 @@ export const ValidationInboxPage: React.FC = () => {
   }, [servicesWithCertificates, approvedCertificates, rejectedCertificates]);
 
   // Handle certificate approval
-  const handleApproveCertificate = async (service: any, certificateIndex: number, certificateUrl: string) => {
+  const handleApproveCertificate = async (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => {
     try {
-      const mediaId = certificateUrl.split('/media/')[1];
-      
+      const mediaId = certificateUrl.split("/media/")[1];
+
       if (mediaId) {
         // Update validation status in media canister
-        const { adminServiceCanister } = await import("../services/adminServiceCanister");
-        await adminServiceCanister.updateCertificateValidationStatus(mediaId, 'Validated');
+        const { adminServiceCanister } = await import(
+          "../services/adminServiceCanister"
+        );
+        await adminServiceCanister.updateCertificateValidationStatus(
+          mediaId,
+          "Validated",
+        );
       }
 
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;
@@ -515,12 +586,12 @@ export const ValidationInboxPage: React.FC = () => {
         certificateIndex,
         certificateUrl,
         approvedAt: new Date().toISOString(),
-        id: uniqueId
+        id: uniqueId,
       };
-      setApprovedCertificates(prev => [...prev, certificateData]);
-      
+      setApprovedCertificates((prev) => [...prev, certificateData]);
+
       console.log("Certificate approved:", certificateData);
-      
+
       // Refresh data from backend
       await loadServicesWithCertificates();
     } catch (error) {
@@ -529,14 +600,23 @@ export const ValidationInboxPage: React.FC = () => {
   };
 
   // Handle certificate rejection
-  const handleRejectCertificate = async (service: any, certificateIndex: number, certificateUrl: string) => {
+  const handleRejectCertificate = async (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => {
     try {
-      const mediaId = certificateUrl.split('/media/')[1];
-      
+      const mediaId = certificateUrl.split("/media/")[1];
+
       if (mediaId) {
         // Update validation status in media canister
-        const { adminServiceCanister } = await import("../services/adminServiceCanister");
-        await adminServiceCanister.updateCertificateValidationStatus(mediaId, 'Rejected');
+        const { adminServiceCanister } = await import(
+          "../services/adminServiceCanister"
+        );
+        await adminServiceCanister.updateCertificateValidationStatus(
+          mediaId,
+          "Rejected",
+        );
       }
 
       // Add to rejected certificates for UI display
@@ -546,12 +626,12 @@ export const ValidationInboxPage: React.FC = () => {
         certificateIndex,
         certificateUrl,
         rejectedAt: new Date().toISOString(),
-        id: uniqueId
+        id: uniqueId,
       };
-      setRejectedCertificates(prev => [...prev, certificateData]);
-      
+      setRejectedCertificates((prev) => [...prev, certificateData]);
+
       console.log("Certificate rejected:", certificateData);
-      
+
       // Refresh data from backend
       await loadServicesWithCertificates();
     } catch (error) {
@@ -562,20 +642,29 @@ export const ValidationInboxPage: React.FC = () => {
   // Handle undoing certificate approval/rejection
   const handleUndoCertificate = async (certificate: any) => {
     try {
-      const mediaId = certificate.certificateUrl.split('/media/')[1];
-      
+      const mediaId = certificate.certificateUrl.split("/media/")[1];
+
       if (mediaId) {
         // Reset validation status to Pending in media canister
-        const { adminServiceCanister } = await import("../services/adminServiceCanister");
-        await adminServiceCanister.updateCertificateValidationStatus(mediaId, 'Pending');
+        const { adminServiceCanister } = await import(
+          "../services/adminServiceCanister"
+        );
+        await adminServiceCanister.updateCertificateValidationStatus(
+          mediaId,
+          "Pending",
+        );
       }
 
       // Remove from approved/rejected lists using the unique ID
-      setApprovedCertificates(prev => prev.filter(cert => cert.id !== certificate.id));
-      setRejectedCertificates(prev => prev.filter(cert => cert.id !== certificate.id));
-      
+      setApprovedCertificates((prev) =>
+        prev.filter((cert) => cert.id !== certificate.id),
+      );
+      setRejectedCertificates((prev) =>
+        prev.filter((cert) => cert.id !== certificate.id),
+      );
+
       console.log("Certificate undone:", certificate);
-      
+
       // Refresh data from backend
       await loadServicesWithCertificates();
     } catch (error) {
@@ -630,11 +719,21 @@ export const ValidationInboxPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => navigate('/dashboard')}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                 >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                   Back
                 </button>
@@ -643,22 +742,28 @@ export const ValidationInboxPage: React.FC = () => {
                     Validation Inbox
                   </h1>
                   <p className="mt-2 text-sm text-gray-600">
-                    Review and approve submitted certificate images from service providers
+                    Review and approve submitted certificate images from service
+                    providers
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleRefresh}
                 disabled={loading.pendingValidations}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <svg 
-                  className={`h-4 w-4 mr-2 ${loading.pendingValidations ? 'animate-spin' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 Refresh
               </button>
@@ -683,7 +788,9 @@ export const ValidationInboxPage: React.FC = () => {
                 <div className="text-2xl font-bold text-yellow-600">
                   {stats.certificatesPending}
                 </div>
-                <div className="text-sm text-gray-500">Certificates Pending</div>
+                <div className="text-sm text-gray-500">
+                  Certificates Pending
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
@@ -715,7 +822,8 @@ export const ValidationInboxPage: React.FC = () => {
                     Pending Certificate Validations
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    Review and approve submitted certificate images from service providers
+                    Review and approve submitted certificate images from service
+                    providers
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -754,27 +862,35 @@ export const ValidationInboxPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {servicesWithCertificates.flatMap((service) => {
                     // Use the useServiceCertificates hook for each service to get processed certificates
-                    return service.certificateUrls.map((url: string, index: number) => {
-                      // For now, use the raw URL - we'll need to process this differently
-                      return (
-                        <CertificateCard
-                          key={`${service.serviceId}-${index}`}
-                          service={service}
-                          certificateUrl={url}
-                          certificateIndex={index}
-                          onViewCertificate={handleViewCertificate}
-                          onApprove={handleApproveCertificate}
-                          onReject={handleRejectCertificate}
-                          onCardClick={(service, _certificateIndex, _certificateUrl) => {
-                            // Navigate to admin service details with validation inbox referrer
-                            navigate(`/user/${service.providerId}/services/${service.serviceId}?from=validation-inbox`);
-                          }}
-                        />
-                      );
-                    });
+                    return service.certificateUrls.map(
+                      (url: string, index: number) => {
+                        // For now, use the raw URL - we'll need to process this differently
+                        return (
+                          <CertificateCard
+                            key={`${service.serviceId}-${index}`}
+                            service={service}
+                            certificateUrl={url}
+                            certificateIndex={index}
+                            onViewCertificate={handleViewCertificate}
+                            onApprove={handleApproveCertificate}
+                            onReject={handleRejectCertificate}
+                            onCardClick={(
+                              service,
+                              _certificateIndex,
+                              _certificateUrl,
+                            ) => {
+                              // Navigate to admin service details with validation inbox referrer
+                              navigate(
+                                `/user/${service.providerId}/services/${service.serviceId}?from=validation-inbox`,
+                              );
+                            }}
+                          />
+                        );
+                      },
+                    );
                   })}
                 </div>
               )}
@@ -812,7 +928,7 @@ export const ValidationInboxPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {approvedCertificates.map((certificate) => (
                     <ProcessedCertificateCard
                       key={certificate.id}
@@ -820,9 +936,17 @@ export const ValidationInboxPage: React.FC = () => {
                       onViewCertificate={handleViewCertificate}
                       onUndo={handleUndoCertificate}
                       isApproved={true}
-                      onCardClick={(service, certificateIndex, certificateUrl) => {
+                      onCardClick={(
+                        service,
+                        certificateIndex,
+                        certificateUrl,
+                      ) => {
                         // TODO: Add card click functionality
-                        console.log('Validated certificate card clicked:', { service, certificateIndex, certificateUrl });
+                        console.log("Validated certificate card clicked:", {
+                          service,
+                          certificateIndex,
+                          certificateUrl,
+                        });
                       }}
                     />
                   ))}
@@ -862,7 +986,7 @@ export const ValidationInboxPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {rejectedCertificates.map((certificate) => (
                     <ProcessedCertificateCard
                       key={certificate.id}
@@ -870,9 +994,17 @@ export const ValidationInboxPage: React.FC = () => {
                       onViewCertificate={handleViewCertificate}
                       onUndo={handleUndoCertificate}
                       isApproved={false}
-                      onCardClick={(service, certificateIndex, certificateUrl) => {
+                      onCardClick={(
+                        service,
+                        certificateIndex,
+                        certificateUrl,
+                      ) => {
                         // TODO: Add card click functionality
-                        console.log('Rejected certificate card clicked:', { service, certificateIndex, certificateUrl });
+                        console.log("Rejected certificate card clicked:", {
+                          service,
+                          certificateIndex,
+                          certificateUrl,
+                        });
                       }}
                     />
                   ))}

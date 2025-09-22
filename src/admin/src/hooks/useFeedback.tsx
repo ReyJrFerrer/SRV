@@ -6,7 +6,6 @@ import feedbackCanisterService, {
 } from "../services/feedbackCanisterService";
 export type { AppFeedback, FeedbackStats };
 
-
 export const useFeedback = () => {
   const { isAuthenticated, identity } = useAuth();
 
@@ -18,7 +17,6 @@ export const useFeedback = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
   const initializeFeedbackCanister = useCallback(async () => {
     if (isAuthenticated && identity) {
       try {
@@ -28,7 +26,6 @@ export const useFeedback = () => {
       }
     }
   }, [isAuthenticated, identity]);
-
 
   const fetchAllFeedback = useCallback(async () => {
     if (!isAuthenticated || !identity) {
@@ -48,7 +45,6 @@ export const useFeedback = () => {
     }
   }, [isAuthenticated, identity]);
 
-
   const fetchMyFeedback = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       return;
@@ -67,7 +63,6 @@ export const useFeedback = () => {
     }
   }, [isAuthenticated, identity]);
 
-
   const fetchFeedbackStats = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -81,7 +76,6 @@ export const useFeedback = () => {
       setLoading(false);
     }
   }, [identity]);
-
 
   const fetchRecentFeedback = useCallback(
     async (limit: number = 10) => {

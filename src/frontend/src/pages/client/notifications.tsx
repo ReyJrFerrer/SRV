@@ -106,6 +106,42 @@ const NotificationItem: React.FC<{
     return Math.floor(seconds) + "s ago";
   };
 
+  // Enhanced notification message formatting
+  const getEnhancedMessage = () => {
+    const providerName = notification.providerName ? ` by ${notification.providerName}` : '';
+
+    switch (notification.type) {
+      case "booking_accepted":
+        return `Your booking has been accepted${providerName}. Service is confirmed and scheduled.`;
+      case "booking_declined":
+        return `Your booking was declined${providerName}. Please try booking with another provider.`;
+      case "booking_cancelled":
+        return `Your booking has been cancelled${providerName}. You can book again anytime.`;
+      case "booking_completed":
+        return `Service completed${providerName}. Thank you for using our platform!`;
+      case "payment_received":
+        return `Payment received successfully${providerName}. Your transaction is complete.`;
+      case "payment_failed":
+        return `Payment failed${providerName}. Please check your payment method and try again.`;
+      case "provider_message":
+        return `New message${providerName}. Tap to view and respond.`;
+      case "system_announcement":
+        return `System announcement: ${notification.message || 'Important update from SRV team.'}`;
+      case "service_rescheduled":
+        return `Service rescheduled${providerName}. Your appointment has been moved to a new time.`;
+      case "service_reminder":
+        return `Service reminder${providerName}. Your appointment is coming up soon.`;
+      case "promo_offer":
+        return `Special offer available! ${notification.message || 'Check out our latest promotions.'}`;
+      case "provider_on_the_way":
+        return `Provider is on the way${providerName}. They should arrive shortly.`;
+      case "review_reminder":
+        return `Please review your experience${providerName}. Your feedback helps improve our service.`;
+      default:
+        return notification.message || 'New notification from SRV';
+    }
+  };
+
   return (
     <div
       onClick={onClick}
@@ -120,14 +156,16 @@ const NotificationItem: React.FC<{
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-blue-900">
-          {notification.message}{" "}
-          {notification.providerName && (
-            <span className="font-bold text-blue-700">
-              {notification.providerName}
-            </span>
-          )}
-          .
+          {getEnhancedMessage()}
         </p>
+        {notification.message && 
+         notification.type !== "system_announcement" && 
+         notification.type !== "promo_offer" && 
+         notification.message !== getEnhancedMessage() && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            {notification.message}
+          </p>
+        )}
         <p className="mt-1 text-xs text-gray-500">
           {timeAgo(notification.timestamp)}
         </p>

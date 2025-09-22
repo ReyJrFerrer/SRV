@@ -984,38 +984,42 @@ export const mediaService = {
    */
   async getMediaItemDetails(url: string): Promise<{
     url: string;
-    validationStatus?: 'Pending' | 'Validated' | 'Rejected';
+    validationStatus?: "Pending" | "Validated" | "Rejected";
     error: string | null;
   }> {
     try {
       // Extract media ID from URL
-      const mediaId = url.split('/media/')[1];
+      const mediaId = url.split("/media/")[1];
       if (!mediaId) {
         return { url, error: "Invalid media URL format" };
       }
 
       // Get media item from canister
       const result = await media.getMediaItem(mediaId);
-      
+
       if ("ok" in result) {
         const mediaItem = result.ok;
-        
+
         console.log("Media item details:", {
           mediaId,
           mediaType: mediaItem.mediaType,
           validationStatus: mediaItem.validationStatus,
-          validationStatusType: typeof mediaItem.validationStatus
+          validationStatusType: typeof mediaItem.validationStatus,
         });
-        
+
         // Convert backend validation status to frontend format
-        let validationStatus: 'Pending' | 'Validated' | 'Rejected' | undefined;
-        if (mediaItem.validationStatus && Array.isArray(mediaItem.validationStatus) && mediaItem.validationStatus.length > 0) {
+        let validationStatus: "Pending" | "Validated" | "Rejected" | undefined;
+        if (
+          mediaItem.validationStatus &&
+          Array.isArray(mediaItem.validationStatus) &&
+          mediaItem.validationStatus.length > 0
+        ) {
           const status = mediaItem.validationStatus[0]; // Extract from Candid optional array
           console.log("Processing validation status:", status);
-          if (typeof status === 'object') {
-            if ('Pending' in status) validationStatus = 'Pending';
-            else if ('Validated' in status) validationStatus = 'Validated';
-            else if ('Rejected' in status) validationStatus = 'Rejected';
+          if (typeof status === "object") {
+            if ("Pending" in status) validationStatus = "Pending";
+            else if ("Validated" in status) validationStatus = "Validated";
+            else if ("Rejected" in status) validationStatus = "Rejected";
           }
         }
 
@@ -1027,7 +1031,10 @@ export const mediaService = {
     } catch (error) {
       return {
         url,
-        error: error instanceof Error ? error.message : "Failed to get media details"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to get media details",
       };
     }
   },

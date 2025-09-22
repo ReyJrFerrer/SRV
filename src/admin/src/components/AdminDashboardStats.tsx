@@ -115,7 +115,10 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
           const CardContent = (
             <div
               className={`${card.bgColor} relative overflow-hidden rounded-lg border border-gray-200 p-6 transition-all hover:shadow-md ${
-                card.title === "Pending Validations" || card.title === "Pending Tickets" ? "cursor-pointer" : ""
+                card.title === "Pending Validations" ||
+                card.title === "Pending Tickets"
+                  ? "cursor-pointer"
+                  : ""
               }`}
             >
               {card.isAlert && (
@@ -145,7 +148,6 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
                   ⚠️ Requires attention
                 </div>
               )}
-
             </div>
           );
 
@@ -158,9 +160,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
               {CardContent}
             </Link>
           ) : (
-            <div key={index}>
-              {CardContent}
-            </div>
+            <div key={index}>{CardContent}</div>
           );
         })}
       </div>

@@ -375,14 +375,14 @@ export const useServiceCertificates = (
               enableCache: true,
               ...options,
             }),
-            mediaService.getMediaItemDetails(url)
+            mediaService.getMediaItemDetails(url),
           ]);
-          
-          return { 
-            url, 
-            dataUrl, 
+
+          return {
+            url,
+            dataUrl,
             validationStatus: mediaDetails.validationStatus,
-            error: null 
+            error: null,
           };
         } catch (error) {
           return {

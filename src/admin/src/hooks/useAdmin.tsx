@@ -154,16 +154,18 @@ export const useAdmin = (): UseAdminReturn => {
   const [systemSettings, setSystemSettings] =
     useState<FrontendSystemSettings | null>(null);
   const [users, setUsers] = useState<Profile[]>([]);
-  
+
   // Initialize userLockStatus from localStorage
-  const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('adminUserLockStatus');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(
+    () => {
+      try {
+        const saved = localStorage.getItem("adminUserLockStatus");
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    },
+  );
 
   // Helper function to handle loading state updates
   const updateLoadingState = useCallback(
@@ -567,32 +569,39 @@ export const useAdmin = (): UseAdminReturn => {
   );
 
   // Update user lock status in local state and localStorage
-  const updateUserLockStatus = useCallback((userId: string, isLocked: boolean) => {
-    setUserLockStatus(prevStatus => {
-      const newStatus = { ...prevStatus, [userId]: isLocked };
+  const updateUserLockStatus = useCallback(
+    (userId: string, isLocked: boolean) => {
+      setUserLockStatus((prevStatus) => {
+        const newStatus = { ...prevStatus, [userId]: isLocked };
 
-      try {
-        localStorage.setItem('adminUserLockStatus', JSON.stringify(newStatus));
-      } catch (error) {
-        console.error('Failed to save lock status to localStorage:', error);
-      }
-      
-      return newStatus;
-    });
-  }, []);
+        try {
+          localStorage.setItem(
+            "adminUserLockStatus",
+            JSON.stringify(newStatus),
+          );
+        } catch (error) {
+          console.error("Failed to save lock status to localStorage:", error);
+        }
+
+        return newStatus;
+      });
+    },
+    [],
+  );
 
   // Get user lock status
-  const getUserLockStatus = useCallback((userId: string): boolean => {
-    return userLockStatus[userId] || false;
-  }, [userLockStatus]);
+  const getUserLockStatus = useCallback(
+    (userId: string): boolean => {
+      return userLockStatus[userId] || false;
+    },
+    [userLockStatus],
+  );
 
   // Initialize canister references
   const initializeCanisterReferences = useCallback(async () => {
     try {
       await adminServiceCanister.setCanisterReferences();
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   }, []);
 
   // Utility function to refresh all data

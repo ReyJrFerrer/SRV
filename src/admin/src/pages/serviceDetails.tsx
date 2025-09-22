@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { Dialog } from "@headlessui/react";
-import { useServiceImages, useServiceCertificates } from "../../../frontend/src/hooks/useMediaLoader";
+import {
+  useServiceImages,
+  useServiceCertificates,
+} from "../../../frontend/src/hooks/useMediaLoader";
 import {
   ArrowLeftIcon,
   BriefcaseIcon,
@@ -18,10 +21,12 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon } from "@heroicons/react/24/outline";
-import { adminServiceCanister, ServiceData } from "../services/adminServiceCanister";
+import {
+  adminServiceCanister,
+  ServiceData,
+} from "../services/adminServiceCanister";
 import { serviceCanisterService } from "../../../frontend/src/services/serviceCanisterService";
 import { useAdmin } from "../hooks/useAdmin";
-
 
 interface UserData {
   id: string;
@@ -33,7 +38,6 @@ interface UserData {
   };
   reputationScore?: number;
 }
-
 
 // Helper to format time (e.g., "09:00" -> "9:00 AM")
 const formatTime = (time: string) => {
@@ -65,12 +69,14 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
 );
 
 // Reputation Score Component
-const ReputationScore: React.FC<{ reputationScore: number }> = ({ reputationScore }) => {
+const ReputationScore: React.FC<{ reputationScore: number }> = ({
+  reputationScore,
+}) => {
   const score = reputationScore || 50;
   let iconColor = "text-blue-600";
   let bgColor = "bg-blue-50";
   let textColor = "text-blue-700";
-  
+
   if (score >= 80) {
     iconColor = "text-blue-600";
     bgColor = "bg-blue-50";
@@ -102,7 +108,10 @@ const ReputationScore: React.FC<{ reputationScore: number }> = ({ reputationScor
 };
 
 const ServiceDetailsPage: React.FC = () => {
-  const { serviceId, userId } = useParams<{ serviceId: string; userId: string }>();
+  const { serviceId, userId } = useParams<{
+    serviceId: string;
+    userId: string;
+  }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { users: backendUsers } = useAdmin();
@@ -122,10 +131,10 @@ const ServiceDetailsPage: React.FC = () => {
   const handleBackClick = () => {
     const from = location.state?.from;
     const urlParams = new URLSearchParams(location.search);
-    const fromParam = urlParams.get('from');
-    
-    if (from === 'validation-inbox' || fromParam === 'validation-inbox') {
-      navigate('/validation-inbox', { replace: true });
+    const fromParam = urlParams.get("from");
+
+    if (from === "validation-inbox" || fromParam === "validation-inbox") {
+      navigate("/validation-inbox", { replace: true });
     } else {
       navigate(`/user/${userId}/services`);
     }
@@ -135,10 +144,11 @@ const ServiceDetailsPage: React.FC = () => {
   const isPdfFile = (url: string) => url?.toLowerCase().endsWith(".pdf");
 
   // Load service images using the useServiceImages hook
-  const { images: serviceImages, isLoading: isLoadingImages, error: imageError } = useServiceImages(
-    service?.id,
-    service?.imageUrls || [],
-  );
+  const {
+    images: serviceImages,
+    isLoading: isLoadingImages,
+    error: imageError,
+  } = useServiceImages(service?.id, service?.imageUrls || []);
 
   // Debug logging for images
   useEffect(() => {
@@ -150,10 +160,11 @@ const ServiceDetailsPage: React.FC = () => {
   }, [serviceImages, imageError, isLoadingImages]);
 
   // Load service certificates using the provider's useServiceCertificates hook
-  const { certificates: serviceCertificates, isLoading: isLoadingCertificates, error: certificateError } = useServiceCertificates(
-    service?.id,
-    service?.certificateUrls || [],
-  );
+  const {
+    certificates: serviceCertificates,
+    isLoading: isLoadingCertificates,
+    error: certificateError,
+  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
 
   // Debug logging for certificates
   useEffect(() => {
@@ -176,23 +187,40 @@ const ServiceDetailsPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log("Loading service data for serviceId:", serviceId, "userId:", userId);
+        console.log(
+          "Loading service data for serviceId:",
+          serviceId,
+          "userId:",
+          userId,
+        );
 
         // Use provider's serviceCanisterService.getService directly - same as provider
         const serviceData = await serviceCanisterService.getService(serviceId);
-        
+
         if (serviceData) {
           console.log("Service data retrieved:", serviceData);
           console.log("Service imageUrls:", serviceData.imageUrls);
           console.log("Service certificateUrls:", serviceData.certificateUrls);
           console.log("Service location:", serviceData.location);
-          console.log("Service location.address:", serviceData.location?.address);
+          console.log(
+            "Service location.address:",
+            serviceData.location?.address,
+          );
           console.log("Service location.city:", serviceData.location?.city);
           console.log("Service location.state:", serviceData.location?.state);
-          console.log("Service location.country:", serviceData.location?.country);
-          console.log("Service imageUrls length:", serviceData.imageUrls?.length);
-          console.log("Service certificateUrls length:", serviceData.certificateUrls?.length);
-          
+          console.log(
+            "Service location.country:",
+            serviceData.location?.country,
+          );
+          console.log(
+            "Service imageUrls length:",
+            serviceData.imageUrls?.length,
+          );
+          console.log(
+            "Service certificateUrls length:",
+            serviceData.certificateUrls?.length,
+          );
+
           // Map provider's Service to admin's ServiceData format
           const mappedService: ServiceData = {
             id: serviceData.id,
@@ -211,7 +239,7 @@ const ServiceDetailsPage: React.FC = () => {
               country: "",
               postalCode: "",
               latitude: 0,
-              longitude: 0
+              longitude: 0,
             },
             scheduledDate: undefined,
             completedDate: undefined,
@@ -224,25 +252,35 @@ const ServiceDetailsPage: React.FC = () => {
             reviewCount: serviceData.reviewCount,
             imageUrls: serviceData.imageUrls || [],
             certificateUrls: serviceData.certificateUrls || [],
-            weeklySchedule: serviceData.weeklySchedule?.map(schedule => ({
-              dayOfWeek: schedule.day === "Monday" ? 0 : 
-                        schedule.day === "Tuesday" ? 1 :
-                        schedule.day === "Wednesday" ? 2 :
-                        schedule.day === "Thursday" ? 3 :
-                        schedule.day === "Friday" ? 4 :
-                        schedule.day === "Saturday" ? 5 : 6,
-              availability: {
-                isAvailable: schedule.availability.isAvailable,
-                slots: schedule.availability.slots || []
-              }
-            })) || [],
-            packages: [] // Will be loaded separately
+            weeklySchedule:
+              serviceData.weeklySchedule?.map((schedule) => ({
+                dayOfWeek:
+                  schedule.day === "Monday"
+                    ? 0
+                    : schedule.day === "Tuesday"
+                      ? 1
+                      : schedule.day === "Wednesday"
+                        ? 2
+                        : schedule.day === "Thursday"
+                          ? 3
+                          : schedule.day === "Friday"
+                            ? 4
+                            : schedule.day === "Saturday"
+                              ? 5
+                              : 6,
+                availability: {
+                  isAvailable: schedule.availability.isAvailable,
+                  slots: schedule.availability.slots || [],
+                },
+              })) || [],
+            packages: [], // Will be loaded separately
           };
           setService(mappedService);
 
           // Load service packages using provider's getServicePackages
           try {
-            const servicePackages = await serviceCanisterService.getServicePackages(serviceId);
+            const servicePackages =
+              await serviceCanisterService.getServicePackages(serviceId);
             console.log("Service packages loaded:", servicePackages);
             setPackages(servicePackages || []);
           } catch (packageError) {
@@ -257,19 +295,27 @@ const ServiceDetailsPage: React.FC = () => {
         }
 
         // Find provider information
-        const providerUser = backendUsers.find(u => u.id.toString() === userId);
+        const providerUser = backendUsers.find(
+          (u) => u.id.toString() === userId,
+        );
         if (providerUser) {
           // Get real reputation data for provider
           try {
-            const reputation = await adminServiceCanister.getUserReputation(userId);
+            const reputation =
+              await adminServiceCanister.getUserReputation(userId);
             setProvider({
               id: providerUser.id.toString(),
               name: providerUser.name,
               phone: providerUser.phone,
-              profilePicture: providerUser.profilePicture && providerUser.profilePicture.length > 0 && providerUser.profilePicture[0] ? {
-                imageUrl: providerUser.profilePicture[0].imageUrl,
-                thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
-              } : undefined,
+              profilePicture:
+                providerUser.profilePicture &&
+                providerUser.profilePicture.length > 0 &&
+                providerUser.profilePicture[0]
+                  ? {
+                      imageUrl: providerUser.profilePicture[0].imageUrl,
+                      thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
+                    }
+                  : undefined,
               reputationScore: reputation.reputationScore,
             });
           } catch (err) {
@@ -279,15 +325,19 @@ const ServiceDetailsPage: React.FC = () => {
               id: providerUser.id.toString(),
               name: providerUser.name,
               phone: providerUser.phone,
-              profilePicture: providerUser.profilePicture && providerUser.profilePicture.length > 0 && providerUser.profilePicture[0] ? {
-                imageUrl: providerUser.profilePicture[0].imageUrl,
-                thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
-              } : undefined,
+              profilePicture:
+                providerUser.profilePicture &&
+                providerUser.profilePicture.length > 0 &&
+                providerUser.profilePicture[0]
+                  ? {
+                      imageUrl: providerUser.profilePicture[0].imageUrl,
+                      thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
+                    }
+                  : undefined,
               reputationScore: 50, // Default value since Profile doesn't have reputationScore // Use actual reputation score
             });
           }
         }
-
       } catch (err) {
         console.error("Error loading service data:", err);
         setError("Failed to load service data");
@@ -301,13 +351,13 @@ const ServiceDetailsPage: React.FC = () => {
 
   const handleDeleteService = async () => {
     if (!service || !serviceId) return;
-    
+
     try {
       setIsDeleting(true);
-      
+
       // Call the admin service to delete the service
       await adminServiceCanister.deleteService(serviceId);
-      
+
       // Navigate back based on where user came from
       handleBackClick();
     } catch (err) {
@@ -318,7 +368,6 @@ const ServiceDetailsPage: React.FC = () => {
       setShowDeleteConfirm(false);
     }
   };
-
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -338,9 +387,9 @@ const ServiceDetailsPage: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
     }).format(amount);
   };
 
@@ -353,7 +402,6 @@ const ServiceDetailsPage: React.FC = () => {
       minute: "2-digit",
     });
   };
-
 
   if (loading) {
     return (
@@ -459,14 +507,16 @@ const ServiceDetailsPage: React.FC = () => {
         <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
           <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-            {serviceImages && serviceImages.length > 0 && serviceImages[0]?.dataUrl ? (
+            {serviceImages &&
+            serviceImages.length > 0 &&
+            serviceImages[0]?.dataUrl ? (
               <img
                 src={serviceImages[0].dataUrl}
                 alt="Service Hero"
                 className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-200 via-blue-100 to-white flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
                 <CameraIcon className="h-16 w-16 text-gray-400" />
               </div>
             )}
@@ -538,7 +588,8 @@ const ServiceDetailsPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <StarRatingDisplay rating={service.rating} />
                     <span className="text-lg font-medium text-blue-800">
-                      {service.rating.toFixed(1)} ({service.reviewCount} reviews)
+                      {service.rating.toFixed(1)} ({service.reviewCount}{" "}
+                      reviews)
                     </span>
                   </div>
                 )}
@@ -550,14 +601,16 @@ const ServiceDetailsPage: React.FC = () => {
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-8 lg:col-span-2">
             {/* Service Description */}
             <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
               <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
                 <DocumentTextIcon className="h-6 w-6 text-blue-400" />
                 Service Description
               </h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{service.description}</p>
+              <p className="whitespace-pre-wrap text-gray-700">
+                {service.description}
+              </p>
             </section>
 
             {/* Service Images */}
@@ -603,12 +656,24 @@ const ServiceDetailsPage: React.FC = () => {
                             className="h-full w-full object-cover"
                             loading="lazy"
                             onLoad={(e) => {
-                              console.log("Service image loaded successfully:", url);
-                              console.log("Image natural dimensions:", e.currentTarget.naturalWidth, "x", e.currentTarget.naturalHeight);
+                              console.log(
+                                "Service image loaded successfully:",
+                                url,
+                              );
+                              console.log(
+                                "Image natural dimensions:",
+                                e.currentTarget.naturalWidth,
+                                "x",
+                                e.currentTarget.naturalHeight,
+                              );
                             }}
                             onError={(e) => {
-                              console.log("Service image failed to load:", url, image.error);
-                              e.currentTarget.style.display = 'none';
+                              console.log(
+                                "Service image failed to load:",
+                                url,
+                                image.error,
+                              );
+                              e.currentTarget.style.display = "none";
                             }}
                           />
                         )}
@@ -648,22 +713,38 @@ const ServiceDetailsPage: React.FC = () => {
                     Availability
                   </label>
                   <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
-                    {service.weeklySchedule?.filter(
-                      (day) => {
-                        const availability = day.availability || { isAvailable: false, slots: [] };
-                        return availability.isAvailable;
-                      }
-                    ).length ? (
+                    {service.weeklySchedule?.filter((day) => {
+                      const availability = day.availability || {
+                        isAvailable: false,
+                        slots: [],
+                      };
+                      return availability.isAvailable;
+                    }).length ? (
                       service.weeklySchedule
                         .filter((day) => {
-                          const availability = day.availability || { isAvailable: false, slots: [] };
+                          const availability = day.availability || {
+                            isAvailable: false,
+                            slots: [],
+                          };
                           return availability.isAvailable;
                         })
                         .map((day, index) => {
-                          const availability = day.availability || { isAvailable: false, slots: [] };
-                          const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                          const dayName = dayNames[day.dayOfWeek] || `Day ${day.dayOfWeek}`;
-                          
+                          const availability = day.availability || {
+                            isAvailable: false,
+                            slots: [],
+                          };
+                          const dayNames = [
+                            "Sunday",
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                          ];
+                          const dayName =
+                            dayNames[day.dayOfWeek] || `Day ${day.dayOfWeek}`;
+
                           return (
                             <div
                               key={index}
@@ -673,21 +754,27 @@ const ServiceDetailsPage: React.FC = () => {
                                 <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                                 {dayName}
                               </span>
-                              {availability.slots && availability.slots.length > 0 ? (
+                              {availability.slots &&
+                              availability.slots.length > 0 ? (
                                 <ul className="ml-1 space-y-1">
-                                  {availability.slots.map((slot: any, idx: number) => (
-                                    <li
-                                      key={idx}
-                                      className="flex items-center gap-2 text-xs text-blue-900"
-                                    >
-                                      <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
-                                        {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                                      </span>
-                                    </li>
-                                  ))}
+                                  {availability.slots.map(
+                                    (slot: any, idx: number) => (
+                                      <li
+                                        key={idx}
+                                        className="flex items-center gap-2 text-xs text-blue-900"
+                                      >
+                                        <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                                          {formatTime(slot.startTime)} -{" "}
+                                          {formatTime(slot.endTime)}
+                                        </span>
+                                      </li>
+                                    ),
+                                  )}
                                 </ul>
                               ) : (
-                                <span className="text-xs text-blue-400">No slots</span>
+                                <span className="text-xs text-blue-400">
+                                  No slots
+                                </span>
                               )}
                             </div>
                           );
@@ -732,7 +819,7 @@ const ServiceDetailsPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-blue-300">
+                <div className="py-8 text-center text-blue-300">
                   <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
                   <p>No packages available</p>
                 </div>
@@ -750,22 +837,36 @@ const ServiceDetailsPage: React.FC = () => {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Category
+                  </label>
                   <p className="text-gray-900">{service.category}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <p className="text-2xl font-bold text-blue-800">{formatCurrency(service.price, service.currency)}</p>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Price
+                  </label>
+                  <p className="text-2xl font-bold text-blue-800">
+                    {formatCurrency(service.price, service.currency)}
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(service.status)}`}>
-                    {service.status.replace('_', ' ')}
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(service.status)}`}
+                  >
+                    {service.status.replace("_", " ")}
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Created Date</label>
-                  <p className="text-gray-900">{formatDate(service.createdDate)}</p>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Created Date
+                  </label>
+                  <p className="text-gray-900">
+                    {formatDate(service.createdDate)}
+                  </p>
                 </div>
               </div>
             </section>
@@ -777,7 +878,7 @@ const ServiceDetailsPage: React.FC = () => {
                   <UserIcon className="h-6 w-6 text-blue-400" />
                   Provider Information
                 </h3>
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="mb-4 flex items-center space-x-3">
                   {provider.profilePicture ? (
                     <img
                       src={provider.profilePicture.imageUrl}
@@ -785,24 +886,26 @@ const ServiceDetailsPage: React.FC = () => {
                       className="h-12 w-12 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-300">
                       <UserIcon className="h-6 w-6 text-gray-600" />
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{provider.name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {provider.name}
+                    </p>
                     <p className="text-sm text-gray-500">{provider.phone}</p>
                   </div>
                 </div>
-                
+
                 {provider.reputationScore && (
                   <ReputationScore reputationScore={provider.reputationScore} />
                 )}
-                
+
                 <div className="mt-4">
                   <Link
                     to={`/user/${provider.id}`}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-800"
                   >
                     View Provider Profile →
                   </Link>
@@ -818,49 +921,63 @@ const ServiceDetailsPage: React.FC = () => {
               </h3>
               {serviceCertificates && serviceCertificates.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {serviceCertificates.map((certificate: any, index: number) => {
-                    const url = certificate.dataUrl || certificate.url;
-                    if (!url) return null;
+                  {serviceCertificates.map(
+                    (certificate: any, index: number) => {
+                      const url = certificate.dataUrl || certificate.url;
+                      if (!url) return null;
 
-                    return (
-                      <button
-                        key={index}
-                        className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
-                        onClick={() => {
-                          setPreviewUrl(url);
-                          setPreviewType(isPdfFile(url) ? "pdf" : "image");
-                        }}
-                        type="button"
-                        tabIndex={0}
-                        aria-label="Inspect certificate"
-                      >
-                        {certificate.error ? (
-                          <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                            <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
-                            <p className="mt-1">Failed to load</p>
-                          </div>
-                        ) : (
-                          <img
-                            src={url}
-                            alt={`Certificate ${index + 1}`}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                            onLoad={(e) => {
-                              console.log("Certificate loaded successfully:", url);
-                              console.log("Certificate natural dimensions:", e.currentTarget.naturalWidth, "x", e.currentTarget.naturalHeight);
-                            }}
-                            onError={(e) => {
-                              console.log("Certificate failed to load:", url, certificate.error);
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={index}
+                          className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
+                          onClick={() => {
+                            setPreviewUrl(url);
+                            setPreviewType(isPdfFile(url) ? "pdf" : "image");
+                          }}
+                          type="button"
+                          tabIndex={0}
+                          aria-label="Inspect certificate"
+                        >
+                          {certificate.error ? (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                              <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          ) : (
+                            <img
+                              src={url}
+                              alt={`Certificate ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onLoad={(e) => {
+                                console.log(
+                                  "Certificate loaded successfully:",
+                                  url,
+                                );
+                                console.log(
+                                  "Certificate natural dimensions:",
+                                  e.currentTarget.naturalWidth,
+                                  "x",
+                                  e.currentTarget.naturalHeight,
+                                );
+                              }}
+                              onError={(e) => {
+                                console.log(
+                                  "Certificate failed to load:",
+                                  url,
+                                  certificate.error,
+                                );
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          )}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-blue-300">
+                <div className="py-8 text-center text-blue-300">
                   <AcademicCapIcon className="mx-auto mb-2 h-8 w-8" />
                   <p>No certificates available</p>
                 </div>
@@ -874,7 +991,7 @@ const ServiceDetailsPage: React.FC = () => {
           <button
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 hover:bg-red-400 hover:text-white"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-400 hover:text-white focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
           >
             <TrashIcon className="h-6 w-6" />
             {isDeleting ? "Deleting..." : "Delete Service"}

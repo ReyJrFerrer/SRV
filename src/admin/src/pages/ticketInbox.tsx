@@ -9,8 +9,7 @@ const parseReportData = (description: string) => {
     if (data.title && data.description && data.category) {
       return data;
     }
-  } catch (e) {
-  }
+  } catch (e) {}
   return null;
 };
 
@@ -18,27 +17,30 @@ const parseReportData = (description: string) => {
 const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
   return reports.map((report) => {
     const parsedData = parseReportData(report.description);
-    
+
     let ticket: Ticket;
     if (parsedData) {
       ticket = {
         id: `REPORT-${report.id}`,
         title: parsedData.title,
         description: parsedData.description,
-        status: (report.status || "open") as Ticket['status'],
-        category: parsedData.category as Ticket['category'],
+        status: (report.status || "open") as Ticket["status"],
+        category: parsedData.category as Ticket["category"],
         submittedBy: report.userName || `User_${report.userId}`,
         submittedById: report.userId,
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
-        tags: [parsedData.source === "provider_report" ? "provider" : "client", "user-report"],
+        tags: [
+          parsedData.source === "provider_report" ? "provider" : "client",
+          "user-report",
+        ],
       };
     } else {
       ticket = {
         id: `REPORT-${report.id}`,
         title: "User Report",
         description: report.description,
-        status: (report.status || "open") as Ticket['status'],
+        status: (report.status || "open") as Ticket["status"],
         category: "other" as const,
         submittedBy: report.userName || `User_${report.userId}`,
         submittedById: report.userId,
@@ -101,10 +103,10 @@ const getCategoryColor = (category: string) => {
 };
 
 // Ticket card component
-const TicketCard: React.FC<{ ticket: Ticket; onView: (ticket: Ticket) => void }> = ({
-  ticket,
-  onView,
-}) => {
+const TicketCard: React.FC<{
+  ticket: Ticket;
+  onView: (ticket: Ticket) => void;
+}> = ({ ticket, onView }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -117,50 +119,52 @@ const TicketCard: React.FC<{ ticket: Ticket; onView: (ticket: Ticket) => void }>
 
   return (
     <div
-      className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
       onClick={() => onView(ticket)}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">{ticket.title}</h3>
+          <div className="mb-2 flex items-center space-x-2">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {ticket.title}
+            </h3>
           </div>
-          
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+
+          <p className="mb-3 line-clamp-2 text-sm text-gray-600">
             {ticket.description}
           </p>
-          
+
           <div className="flex items-center space-x-4 text-xs text-gray-500">
             <span>ID: {ticket.id}</span>
             <span>By: {ticket.submittedBy}</span>
             <span>Submitted: {formatDate(ticket.submittedAt)}</span>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end space-y-2">
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-              ticket.status
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+              ticket.status,
             )}`}
           >
             {ticket.status.replace("_", " ").toUpperCase()}
           </span>
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
-              ticket.category
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(
+              ticket.category,
             )}`}
           >
             {ticket.category.toUpperCase()}
           </span>
         </div>
       </div>
-      
+
       {ticket.tags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">
           {ticket.tags.map((tag, index) => (
             <span
               key={index}
-              className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
+              className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
             >
               #{tag}
             </span>
@@ -173,8 +177,12 @@ const TicketCard: React.FC<{ ticket: Ticket; onView: (ticket: Ticket) => void }>
 
 export const TicketInboxPage: React.FC = () => {
   const navigate = useNavigate();
-  const { initializeCanisterReferences, refreshUsers, users: backendUsers } = useAdmin();
-  
+  const {
+    initializeCanisterReferences,
+    refreshUsers,
+    users: backendUsers,
+  } = useAdmin();
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -194,7 +202,7 @@ export const TicketInboxPage: React.FC = () => {
         console.error("Error initializing data:", error);
       }
     };
-    
+
     initializeData();
   }, [initializeCanisterReferences, refreshUsers]);
 
@@ -202,7 +210,9 @@ export const TicketInboxPage: React.FC = () => {
   const loadReportsAsTickets = async () => {
     setLoadingReports(true);
     try {
-      const { getReportsFromFeedbackCanister } = await import("../services/adminServiceCanister");
+      const { getReportsFromFeedbackCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       const reports = await getReportsFromFeedbackCanister();
       const reportTickets = convertReportsToTickets(reports, backendUsers);
       return reportTickets;
@@ -219,11 +229,11 @@ export const TicketInboxPage: React.FC = () => {
     if (backendUsers.length > 0) {
       const loadAllTickets = async () => {
         const reportTickets = await loadReportsAsTickets();
-        
+
         setTickets(reportTickets);
         setFilteredTickets(reportTickets);
       };
-      
+
       loadAllTickets();
     }
   }, [backendUsers]);
@@ -231,14 +241,17 @@ export const TicketInboxPage: React.FC = () => {
   // Filter and search tickets
   useEffect(() => {
     let filtered = tickets.filter((ticket) => {
-      const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
-      const matchesCategory = categoryFilter === "all" || ticket.category === categoryFilter;
-      
+      const matchesSearch =
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" || ticket.status === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" || ticket.category === categoryFilter;
+
       return matchesSearch && matchesStatus && matchesCategory;
     });
 
@@ -246,9 +259,15 @@ export const TicketInboxPage: React.FC = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+          return (
+            new Date(b.submittedAt).getTime() -
+            new Date(a.submittedAt).getTime()
+          );
         case "oldest":
-          return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+          return (
+            new Date(a.submittedAt).getTime() -
+            new Date(b.submittedAt).getTime()
+          );
         case "status":
           return a.status.localeCompare(b.status);
         default:
@@ -264,11 +283,11 @@ export const TicketInboxPage: React.FC = () => {
     try {
       // Refresh users first
       await refreshUsers();
-      
+
       if (backendUsers.length > 0) {
         // Load real reports only (removed mock tickets)
         const reportTickets = await loadReportsAsTickets();
-        
+
         setTickets(reportTickets);
         setFilteredTickets(reportTickets);
       }
@@ -285,9 +304,9 @@ export const TicketInboxPage: React.FC = () => {
 
   const stats = {
     total: tickets.length,
-    open: tickets.filter(t => t.status === "open").length,
-    inProgress: tickets.filter(t => t.status === "in_progress").length,
-    resolved: tickets.filter(t => t.status === "resolved").length,
+    open: tickets.filter((t) => t.status === "open").length,
+    inProgress: tickets.filter((t) => t.status === "in_progress").length,
+    resolved: tickets.filter((t) => t.status === "resolved").length,
   };
 
   return (
@@ -299,11 +318,21 @@ export const TicketInboxPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => navigate('/dashboard')}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
                   </svg>
                   Back
                 </button>
@@ -312,7 +341,8 @@ export const TicketInboxPage: React.FC = () => {
                     Ticket Inbox
                   </h1>
                   <p className="mt-2 text-sm text-gray-600">
-                    Manage and resolve support tickets from users and service providers
+                    Manage and resolve support tickets from users and service
+                    providers
                   </p>
                 </div>
               </div>
@@ -320,13 +350,23 @@ export const TicketInboxPage: React.FC = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={loading || loadingReports}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   {loading || loadingReports ? (
-                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-b-2 border-gray-600"></div>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
                   ) : (
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
                     </svg>
                   )}
                   {loadingReports ? "Loading Reports..." : "Refresh"}
@@ -380,7 +420,7 @@ export const TicketInboxPage: React.FC = () => {
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Search
                 </label>
                 <input
@@ -388,18 +428,18 @@ export const TicketInboxPage: React.FC = () => {
                   placeholder="Search tickets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 >
                   <option value="all">All Status</option>
                   <option value="open">Open</option>
@@ -408,16 +448,15 @@ export const TicketInboxPage: React.FC = () => {
                   <option value="closed">Closed</option>
                 </select>
               </div>
-              
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Category
                 </label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 >
                   <option value="all">All Categories</option>
                   <option value="technical">Technical</option>
@@ -427,15 +466,15 @@ export const TicketInboxPage: React.FC = () => {
                   <option value="other">Other</option>
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Sort By
                 </label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 >
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
@@ -487,7 +526,9 @@ export const TicketInboxPage: React.FC = () => {
                     No tickets found
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    {searchTerm || statusFilter !== "all" || categoryFilter !== "all"
+                    {searchTerm ||
+                    statusFilter !== "all" ||
+                    categoryFilter !== "all"
                       ? "Try adjusting your filters to see more tickets."
                       : "No support tickets have been submitted yet."}
                   </p>

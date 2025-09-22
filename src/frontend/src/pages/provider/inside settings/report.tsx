@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, CogIcon, UserIcon, BriefcaseIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  CogIcon,
+  UserIcon,
+  BriefcaseIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useFeedback } from "../../../hooks/useFeedback";
 
 // Ticket-compatible interfaces (same as client version)
@@ -10,7 +16,6 @@ interface TicketCategory {
   description: string;
   icon: React.ComponentType<any>;
 }
-
 
 const TICKET_CATEGORIES: TicketCategory[] = [
   {
@@ -34,7 +39,8 @@ const TICKET_CATEGORIES: TicketCategory[] = [
   {
     id: "service",
     name: "Service Related",
-    description: "Service management, bookings, client interactions, certificates",
+    description:
+      "Service management, bookings, client interactions, certificates",
     icon: BriefcaseIcon,
   },
   {
@@ -44,7 +50,6 @@ const TICKET_CATEGORIES: TicketCategory[] = [
     icon: QuestionMarkCircleIcon,
   },
 ];
-
 
 const ReportIssuePage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,7 +77,7 @@ const ReportIssuePage: React.FC = () => {
         category,
         timestamp: new Date().toISOString(),
         source: "provider_report", // Identify source for admin
-      })
+      }),
     };
 
     const success = await submitReport(reportData);
@@ -164,15 +169,21 @@ const ReportIssuePage: React.FC = () => {
                       name="category"
                       value={cat.id}
                       checked={category === cat.id}
-                      onChange={(e) => setCategory(e.target.value as TicketCategory["id"])}
+                      onChange={(e) =>
+                        setCategory(e.target.value as TicketCategory["id"])
+                      }
                       className="sr-only"
                       disabled={submitting}
                     />
                     <div className="flex items-start">
-                      <IconComponent className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                      <IconComponent className="mt-0.5 mr-3 h-5 w-5 text-yellow-600" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{cat.name}</div>
-                        <div className="text-xs text-gray-500">{cat.description}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {cat.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {cat.description}
+                        </div>
                       </div>
                     </div>
                   </label>
@@ -180,7 +191,6 @@ const ReportIssuePage: React.FC = () => {
               })}
             </div>
           </div>
-
 
           {/* Issue Description */}
           <div>

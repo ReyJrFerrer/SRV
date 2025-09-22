@@ -31,7 +31,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
   onUpdateCommission,
-  outstandingCommission = 3200.00,
+  outstandingCommission = 3200.0,
   userData,
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -71,25 +71,27 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const stats = userData ? {
-    monthlyRevenue: userData.monthlyRevenue || userData.totalEarnings * 0.3,
-    pendingPayout: userData.pendingCommission,
-    completedJobs: userData.completedJobs,
-    averageRating: userData.averageRating,
-    totalReviews: userData.totalReviews,
-    completionRate: userData.completionRate,
-    totalRevenue: userData.totalRevenue || userData.totalEarnings,
-    outstandingCommission: userData.pendingCommission,
-  } : {
-    monthlyRevenue: 15750.00,
-    pendingPayout: 3200.00,
-    completedJobs: 23,
-    averageRating: 4.7,
-    totalReviews: 18,
-    completionRate: 92,
-    totalRevenue: 45200.00,
-    outstandingCommission: 3200.00,
-  };
+  const stats = userData
+    ? {
+        monthlyRevenue: userData.monthlyRevenue || userData.totalEarnings * 0.3,
+        pendingPayout: userData.pendingCommission,
+        completedJobs: userData.completedJobs,
+        averageRating: userData.averageRating,
+        totalReviews: userData.totalReviews,
+        completionRate: userData.completionRate,
+        totalRevenue: userData.totalRevenue || userData.totalEarnings,
+        outstandingCommission: userData.pendingCommission,
+      }
+    : {
+        monthlyRevenue: 15750.0,
+        pendingPayout: 3200.0,
+        completedJobs: 23,
+        averageRating: 4.7,
+        totalReviews: 18,
+        completionRate: 92,
+        totalRevenue: 45200.0,
+        outstandingCommission: 3200.0,
+      };
 
   const statsCards = React.useMemo(() => {
     return [
@@ -148,7 +150,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       </div>
       <button
         onClick={handleOpenModal}
-        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
       >
         <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
           <path
@@ -228,7 +230,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       {externalLoading
         ? Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-32 animate-pulse rounded-2xl bg-gray-200"></div>
+            <div
+              key={index}
+              className="h-32 animate-pulse rounded-2xl bg-gray-200"
+            ></div>
           ))
         : statsCards.map((stat, index) => (
             <StatCard
@@ -252,26 +257,28 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
       {/* Update Commission Modal */}
       {showCommissionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Update Commission</h3>
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Update Commission
+              </h3>
             </div>
             <div className="px-6 py-4">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Outstanding Commission Amount
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                       <span className="text-gray-500 sm:text-sm">₱</span>
                     </div>
                     <input
                       type="number"
                       value={newCommissionAmount}
                       onChange={(e) => setNewCommissionAmount(e.target.value)}
-                      className="block w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full rounded-md border border-gray-300 py-2 pr-3 pl-7 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -283,17 +290,21 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={handleCloseModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateCommission}
-                disabled={!newCommissionAmount || isNaN(parseFloat(newCommissionAmount)) || parseFloat(newCommissionAmount) < 0}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  !newCommissionAmount ||
+                  isNaN(parseFloat(newCommissionAmount)) ||
+                  parseFloat(newCommissionAmount) < 0
+                }
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Update Commission
               </button>

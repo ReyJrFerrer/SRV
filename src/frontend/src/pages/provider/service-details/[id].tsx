@@ -1262,13 +1262,15 @@ const ProviderServiceDetailPage: React.FC = () => {
     // Check for duplicate package names
     const trimmedName = packageFormTitle.trim().toLowerCase();
     const duplicatePackage = packages.find(
-      (pkg) => 
-        pkg.title.trim().toLowerCase() === trimmedName && 
-        pkg.id !== currentPackageId // Exclude current package when editing
+      (pkg) =>
+        pkg.title.trim().toLowerCase() === trimmedName &&
+        pkg.id !== currentPackageId, // Exclude current package when editing
     );
 
     if (duplicatePackage) {
-      toast.error(`Package name "${packageFormTitle.trim()}" already exists. Please choose a different name.`);
+      toast.error(
+        `Package name "${packageFormTitle.trim()}" already exists. Please choose a different name.`,
+      );
       return;
     }
 
@@ -1808,9 +1810,9 @@ const ProviderServiceDetailPage: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 flex items-center gap-2 text-l font-semibold text-blue-700">
-                       <HomeIcon className="h-4 w-4 text-blue-400" />
-                      Full Address
+                    <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
+                      <HomeIcon className="h-4 w-4 text-blue-400" />
+                      Address
                     </label>
                     <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
                       {service.location.city}
@@ -1818,7 +1820,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 flex items-center gap-2 text-l font-semibold text-blue-700">
+                    <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
                       <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                       Availability
                     </label>
@@ -1832,7 +1834,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                           .map((entry) => (
                             <div
                               key={entry.day}
-                              className="flex w-full sm:min-w-[140px] sm:w-auto flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow"
+                              className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
                             >
                               <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
                                 <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
@@ -1983,99 +1985,102 @@ const ProviderServiceDetailPage: React.FC = () => {
                   </div>
                 )}
 
-      {/* Redesigned package cards */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {packages.length > 0
-          ? packages.map((pkg) => (
-              <div
-                key={pkg.id}
-                className="group bg-white rounded-2xl border border-gray-300 p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:border-blue-200"
-              >
-                {/* Header with title and pricing */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-                      {pkg.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-                      {pkg.description}
-                    </p>
-                  </div>
-                  
-                  {/* Pricing section */}
-                  <div className="ml-4 text-right flex-shrink-0">
-                    <div className="text-xl font-bold text-blue-600 mb-1">
-                      ₱{pkg.price.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      + ₱{pkg.commissionFee.toFixed(2)} commission
-                    </div>
-                    <div className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 text-sm font-semibold rounded-full">
-                      ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
-                    </div>
-                  </div>
-                </div>
+                {/* Redesigned package cards */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  {packages.length > 0
+                    ? packages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
+                        >
+                          {/* Header with title and pricing */}
+                          <div className="mb-4 flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
+                                {pkg.title}
+                              </h3>
+                              <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                                {pkg.description}
+                              </p>
+                            </div>
 
-                {/* Divider */}
-                <div className="border-t border-gray-100 my-4"></div>
+                            {/* Pricing section */}
+                            <div className="ml-4 flex-shrink-0 text-right">
+                              <div className="mb-1 text-xl font-bold text-blue-600">
+                                ₱{pkg.price.toFixed(2)}
+                              </div>
+                              <div className="mb-1 text-xs text-gray-500">
+                                + ₱{pkg.commissionFee.toFixed(2)} commission
+                              </div>
+                              <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
+                                ₱{(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
+                                total
+                              </div>
+                            </div>
+                          </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-3">
-                    <button
-                      onClick={
-                        hasActiveBookings
-                          ? undefined
-                          : () => handleEditPackage(pkg)
-                      }
-                      className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all duration-200 ${
-                        hasActiveBookings || isAddingOrEditingPackage
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
-                      }`}
-                      aria-label={`Edit ${pkg.title}`}
-                      disabled={hasActiveBookings || isAddingOrEditingPackage}
-                    >
-                      Edit Package
-                    </button>
-            
-                  
-                
-                    <button
-                      onClick={
-                        hasActiveBookings
-                          ? undefined
-                          : () => handleDeletePackage(pkg.id)
-                      }
-                      className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                        hasActiveBookings || isAddingOrEditingPackage
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                      }`}
-                      aria-label={`Delete ${pkg.title}`}
-                      disabled={hasActiveBookings || isAddingOrEditingPackage}
-                    >
-                      Delete
-                    </button>
-                
+                          {/* Divider */}
+                          <div className="my-4 border-t border-gray-100"></div>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-3">
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleEditPackage(pkg)
+                              }
+                              className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                              }`}
+                              aria-label={`Edit ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
+                            >
+                              Edit Package
+                            </button>
+
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleDeletePackage(pkg.id)
+                              }
+                              className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                              }`}
+                              aria-label={`Delete ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    : !isAddingOrEditingPackage && (
+                        <div className="col-span-full">
+                          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                              <BriefcaseIcon className="h-8 w-8 text-blue-400" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                              No packages available
+                            </h3>
+                            <p className="mx-auto max-w-md text-gray-600">
+                              Packages help customers choose specific service
+                              options with different pricing tiers
+                            </p>
+                          </div>
+                        </div>
+                      )}
                 </div>
-              </div>
-            ))
-          : !isAddingOrEditingPackage && (
-              <div className="col-span-full">
-                <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
-                  <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                    <BriefcaseIcon className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No packages available
-                  </h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
-                    Packages help customers choose specific service options with different pricing tiers
-                  </p>
-                </div>
-              </div>
-            )}
-      </div>
               </div>
             </section>
           </div>

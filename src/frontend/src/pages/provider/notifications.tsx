@@ -69,6 +69,36 @@ const NotificationItem: React.FC<{
     return Math.floor(seconds) + "s ago";
   };
 
+  // Enhanced notification message formatting
+  const getEnhancedMessage = () => {
+    const clientName = notification.clientName ? ` from ${notification.clientName}` : '';
+
+    switch (notification.type) {
+      case "new_booking_request":
+        return `New booking request${clientName}. Tap to view details and respond.`;
+      case "booking_confirmation":
+        return `Booking confirmed${clientName}. Service is scheduled and ready.`;
+      case "payment_completed":
+        return `Payment received${clientName}. Transaction completed successfully.`;
+      case "service_completion_reminder":
+        return `Service completion reminder${clientName}. Don't forget to mark as completed.`;
+      case "review_request":
+        return `Review request${clientName}. Customer wants to leave feedback.`;
+      case "chat_message":
+        return `New message${clientName}. Tap to view and respond.`;
+      case "booking_cancelled":
+        return `Booking cancelled${clientName}. Service has been cancelled.`;
+      case "booking_rescheduled":
+        return `Booking rescheduled${clientName}. New time has been set.`;
+      case "client_no_show":
+        return `Client no-show${clientName}. Customer didn't show up for appointment.`;
+      case "payment_issue":
+        return `Payment issue${clientName}. There's a problem with the transaction.`;
+      default:
+        return notification.message || 'New notification';
+    }
+  };
+
   return (
     <div
       onClick={onClick}
@@ -83,11 +113,13 @@ const NotificationItem: React.FC<{
       </div>
       <div className="flex-1">
         <p className="text-sm text-gray-800">
-          {notification.message}{" "}
-          {notification.clientName && (
-            <span className="font-bold">{notification.clientName}</span>
-          )}
+          {getEnhancedMessage()}
         </p>
+        {notification.message && notification.message !== getEnhancedMessage() && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            {notification.message}
+          </p>
+        )}
         <p className="mt-1 text-xs text-gray-500">
           {timeAgo(notification.timestamp)}
         </p>

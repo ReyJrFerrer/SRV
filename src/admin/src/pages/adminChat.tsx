@@ -28,7 +28,7 @@ export const AdminChatPage: React.FC = () => {
   const { users: backendUsers } = useAdmin();
   const { identity } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const [messages, setMessages] = useState<FrontendMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -36,7 +36,9 @@ export const AdminChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("User");
   const [userImage, setUserImage] = useState<string | undefined>(undefined);
-  const [conversation, setConversation] = useState<FrontendConversation | null>(null);
+  const [conversation, setConversation] = useState<FrontendConversation | null>(
+    null,
+  );
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const conversationCreationInProgress = useRef(false);
 
@@ -47,81 +49,102 @@ export const AdminChatPage: React.FC = () => {
       hasIdentity: !!identity,
       isLoadingConversation,
       conversationCreationInProgress: conversationCreationInProgress.current,
-      hasConversation: !!conversation
+      hasConversation: !!conversation,
     });
-    
-    if (!userId || !identity || isLoadingConversation || conversationCreationInProgress.current || globalConversationCreationInProgress) {
+
+    if (
+      !userId ||
+      !identity ||
+      isLoadingConversation ||
+      conversationCreationInProgress.current ||
+      globalConversationCreationInProgress
+    ) {
       console.log("loadConversation blocked");
       return;
     }
 
     const currentAdminId = identity.getPrincipal().toString();
-    if (conversation && (conversation.clientId === userId || conversation.providerId === userId)) {
-      console.log("loadConversation blocked - already have conversation for this user");
+    if (
+      conversation &&
+      (conversation.clientId === userId || conversation.providerId === userId)
+    ) {
+      console.log(
+        "loadConversation blocked - already have conversation for this user",
+      );
       return;
     }
 
     const conversationKey = `admin_chat_${currentAdminId}_${userId}`;
     const existingConversationId = localStorage.getItem(conversationKey);
-    
+
     if (existingConversationId) {
-      console.log("loadConversation blocked - conversation already exists in localStorage");
+      console.log(
+        "loadConversation blocked - conversation already exists in localStorage",
+      );
       return;
     }
     if (conversationCreationAttempts.has(conversationKey)) {
-      console.log("loadConversation blocked - conversation creation already attempted for this user");
+      console.log(
+        "loadConversation blocked - conversation creation already attempted for this user",
+      );
       return;
     }
-    
+
     try {
       setIsLoadingConversation(true);
       setLoading(true);
       setError(null);
-      
+
       // Update chat actor with admin identity
       updateChatActor(identity);
-      
+
       // Get all existing conversations
-      const existingConversations = await chatCanisterService.getMyConversations();
-      
+      const existingConversations =
+        await chatCanisterService.getMyConversations();
+
       // Look for existing conversation with this user
       const adminId = identity.getPrincipal().toString();
-      const existingConversation = existingConversations.find(conv => {
+      const existingConversation = existingConversations.find((conv) => {
         const convClientId = conv.conversation.clientId;
         const convProviderId = conv.conversation.providerId;
-        
+
         // Check if this conversation involves the admin and the target user
-        return (convClientId === userId && convProviderId === adminId) ||
-               (convClientId === adminId && convProviderId === userId);
+        return (
+          (convClientId === userId && convProviderId === adminId) ||
+          (convClientId === adminId && convProviderId === userId)
+        );
       });
-      
+
       if (existingConversation) {
         // Use existing conversation
         setConversation(existingConversation.conversation);
-        
+
         // Load messages for existing conversation
         const messagePage = await chatCanisterService.getConversationMessages(
-          existingConversation.conversation.id, 
-          50, 
-          0
+          existingConversation.conversation.id,
+          50,
+          0,
         );
         setMessages(messagePage.messages);
       } else {
         const conversationKey = `admin_chat_${adminId}_${userId}`;
         const existingConversationId = localStorage.getItem(conversationKey);
-        
+
         if (existingConversationId) {
           // load the existing conversation
           try {
-            const conversation = await chatCanisterService.getConversation(existingConversationId);
+            const conversation = await chatCanisterService.getConversation(
+              existingConversationId,
+            );
             if (conversation) {
               setConversation(conversation);
 
-              const messagePage = await chatCanisterService.getConversationMessages(
-                conversation.id, 
-                50, 
-                0
-              );
+              const messagePage =
+                await chatCanisterService.getConversationMessages(
+                  conversation.id,
+                  50,
+                  0,
+                );
               setMessages(messagePage.messages);
               return;
             }
@@ -134,45 +157,53 @@ export const AdminChatPage: React.FC = () => {
         globalConversationCreationInProgress = true;
         conversationCreationAttempts.set(conversationKey, true);
         cleanupOldAttempts();
-        
+
         try {
           const newConversation = await chatCanisterService.createConversation(
-            userId, 
-            currentAdminId
+            userId,
+            currentAdminId,
           );
           if (newConversation) {
             localStorage.setItem(conversationKey, newConversation.id);
-            
+
             setConversation(newConversation);
-            
+
             // Load messages for new conversation
-            const messagePage = await chatCanisterService.getConversationMessages(
-              newConversation.id, 
-              50, 
-              0
-            );
+            const messagePage =
+              await chatCanisterService.getConversationMessages(
+                newConversation.id,
+                50,
+                0,
+              );
             setMessages(messagePage.messages);
           }
         } catch (error) {
           console.error("Error creating conversation:", error);
-          const existingConversations = await chatCanisterService.getMyConversations();
-          const existingConversation = existingConversations.find(conv => {
+          const existingConversations =
+            await chatCanisterService.getMyConversations();
+          const existingConversation = existingConversations.find((conv) => {
             const convClientId = conv.conversation.clientId;
             const convProviderId = conv.conversation.providerId;
-            return (convClientId === userId && convProviderId === currentAdminId) ||
-                   (convClientId === currentAdminId && convProviderId === userId);
+            return (
+              (convClientId === userId && convProviderId === currentAdminId) ||
+              (convClientId === currentAdminId && convProviderId === userId)
+            );
           });
-          
+
           if (existingConversation) {
             console.log("Found existing conversation after creation failure");
             setConversation(existingConversation.conversation);
-            localStorage.setItem(conversationKey, existingConversation.conversation.id);
-            
-            const messagePage = await chatCanisterService.getConversationMessages(
-              existingConversation.conversation.id, 
-              50, 
-              0
+            localStorage.setItem(
+              conversationKey,
+              existingConversation.conversation.id,
             );
+
+            const messagePage =
+              await chatCanisterService.getConversationMessages(
+                existingConversation.conversation.id,
+                50,
+                0,
+              );
             setMessages(messagePage.messages);
           }
         } finally {
@@ -180,7 +211,6 @@ export const AdminChatPage: React.FC = () => {
           globalConversationCreationInProgress = false;
         }
       }
-      
     } catch (err) {
       console.error("Error loading conversation:", err);
       setError("Failed to load conversation. Please try again.");
@@ -195,10 +225,14 @@ export const AdminChatPage: React.FC = () => {
   // Find user information
   useEffect(() => {
     if (userId && backendUsers.length > 0) {
-      const user = backendUsers.find(u => u.id.toString() === userId);
+      const user = backendUsers.find((u) => u.id.toString() === userId);
       if (user) {
         setUserName(user.name);
-        if (user.profilePicture && user.profilePicture.length > 0 && user.profilePicture[0]) {
+        if (
+          user.profilePicture &&
+          user.profilePicture.length > 0 &&
+          user.profilePicture[0]
+        ) {
           setUserImage(user.profilePicture[0].imageUrl);
         }
       }
@@ -208,12 +242,12 @@ export const AdminChatPage: React.FC = () => {
   // Refresh conversation messages
   const refreshMessages = async () => {
     if (!conversation) return;
-    
+
     try {
       const messagePage = await chatCanisterService.getConversationMessages(
-        conversation.id, 
-        50, 
-        0
+        conversation.id,
+        50,
+        0,
       );
       setMessages(messagePage.messages);
     } catch (err) {
@@ -227,10 +261,15 @@ export const AdminChatPage: React.FC = () => {
       userId,
       hasIdentity: !!identity,
       conversationCreationInProgress: conversationCreationInProgress.current,
-      globalConversationCreationInProgress
+      globalConversationCreationInProgress,
     });
-    
-    if (userId && identity && !conversationCreationInProgress.current && !globalConversationCreationInProgress) {
+
+    if (
+      userId &&
+      identity &&
+      !conversationCreationInProgress.current &&
+      !globalConversationCreationInProgress
+    ) {
       console.log("✅ useEffect proceeding with loadConversation");
       setConversation(null);
       setMessages([]);
@@ -243,7 +282,7 @@ export const AdminChatPage: React.FC = () => {
       const timeoutId = setTimeout(() => {
         loadConversation();
       }, 50);
-      
+
       return () => {
         clearTimeout(timeoutId);
       };
@@ -283,23 +322,23 @@ export const AdminChatPage: React.FC = () => {
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || sendingMessage || !conversation || !userId) return;
+    if (!messageText.trim() || sendingMessage || !conversation || !userId)
+      return;
 
     setSendingMessage(true);
-    
+
     try {
       // Send message using chat canister service
       const newMessage = await chatCanisterService.sendMessage(
         conversation.id,
         userId,
-        messageText.trim()
+        messageText.trim(),
       );
-      
+
       if (newMessage) {
         setMessageText("");
         await refreshMessages();
       }
-      
     } catch (err) {
       console.error("Error sending message:", err);
       setError("Failed to send message. Please try again.");
@@ -314,11 +353,18 @@ export const AdminChatPage: React.FC = () => {
     userName: string;
     size?: string;
     className?: string;
-  }> = ({ profilePictureUrl, userName, size = "h-10 w-10", className = "" }) => {
+  }> = ({
+    profilePictureUrl,
+    userName,
+    size = "h-10 w-10",
+    className = "",
+  }) => {
     if (!profilePictureUrl) {
       return (
-        <div className={`${size} ${className} rounded-full bg-gray-300 flex items-center justify-center`}>
-          <span className="text-gray-600 font-medium text-sm">
+        <div
+          className={`${size} ${className} flex items-center justify-center rounded-full bg-gray-300`}
+        >
+          <span className="text-sm font-medium text-gray-600">
             {userName.charAt(0).toUpperCase()}
           </span>
         </div>
@@ -364,20 +410,20 @@ export const AdminChatPage: React.FC = () => {
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
               <p className="text-lg text-gray-500">Loading conversation...</p>
             </div>
           </div>
         ) : error ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
-              <p className="text-lg text-red-500 mb-4">{error}</p>
+              <p className="mb-4 text-lg text-red-500">{error}</p>
               <button
                 onClick={() => {
                   setError(null);
                   loadConversation();
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Retry
               </button>
@@ -430,8 +476,8 @@ export const AdminChatPage: React.FC = () => {
                 {/* Admin avatar (if from admin) */}
                 {fromAdmin && (
                   <div className="relative h-9 w-9 flex-shrink-0">
-                    <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center">
-                      <span className="text-white font-medium text-sm">A</span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600">
+                      <span className="text-sm font-medium text-white">A</span>
                     </div>
                   </div>
                 )}
@@ -459,7 +505,9 @@ export const AdminChatPage: React.FC = () => {
           />
           <button
             type="submit"
-            disabled={sendingMessage || !messageText.trim() || loading || !conversation}
+            disabled={
+              sendingMessage || !messageText.trim() || loading || !conversation
+            }
             className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
           >
             {sendingMessage ? (
