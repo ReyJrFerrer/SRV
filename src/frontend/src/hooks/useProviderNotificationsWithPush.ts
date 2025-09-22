@@ -255,7 +255,7 @@ export const useProviderNotificationsWithPush = () => {
         const serviceReminders = uncoveredBookings
           .filter((booking) => booking.status === "InProgress")
           .map((booking) => ({
-            id: `reminder-${booking.id}`,
+            id: `frontend-reminder-${booking.id}-${Date.now()}`,
             message: `Don't forget to complete the service for`,
             type: "service_completion_reminder" as const,
             timestamp: new Date().toISOString(),
@@ -338,8 +338,8 @@ export const useProviderNotificationsWithPush = () => {
       console.error("Error marking provider notification as read:", error);
       // If it's a frontend-generated notification (not in canister), just update locally
       if (
-        notificationId.startsWith("reminder-") ||
-        notificationId.startsWith("new-booking-")
+        notificationId.startsWith("frontend-reminder-") ||
+        notificationId.startsWith("frontend-new-booking-")
       ) {
         console.log(
           "Frontend-generated provider notification, updating locally only",

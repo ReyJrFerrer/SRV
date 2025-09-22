@@ -17,6 +17,7 @@ import {
   checkProviderOnboarding,
 } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useLocationStore } from "../../store/locationStore";
 
 // --- Payment Section Sub-Component ---
 
@@ -178,6 +179,10 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Auth context ---
   const { identity } = useAuth();
 
+  // --- Use Zustand location store ---
+  const { userAddress, userProvince, locationLoading, requestLocation } =
+    useLocationStore();
+
   // --- Section refs for scrolling/highlighting ---
   const barangayRef = useRef<HTMLSelectElement>(null);
   const otherBarangayRef = useRef<HTMLInputElement>(null);
@@ -227,74 +232,16 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Routing ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
-  // --- Location detection state ---
-  const [locationStatus, setLocationStatus] = useState<
-    "detecting" | "allowed" | "denied"
-  >("detecting");
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [, setMarkerPosition] = useState<[number, number] | null>(null);
-  const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
-  const [displayProvince, setDisplayProvince] = useState<string>("");
-  // --- Detect location on mount ---
+
+  // Initialize location on component mount
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("denied");
-      return;
-    }
-    setLocationStatus("detecting");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationStatus("allowed");
-        setLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-        setMarkerPosition([pos.coords.latitude, pos.coords.longitude]);
-      },
-      () => {
-        setLocationStatus("denied");
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, []);
-  // --- Reverse geocode to get municipality/city and province ---
-  useEffect(() => {
-    if (locationStatus === "allowed" && location) {
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.address) {
-            const {
-              city,
-              town,
-              municipality,
-              village,
-              county,
-              state,
-              region,
-              province,
-            } = data.address;
-            let detectedCity = city || town || municipality || village || "";
-            let detectedProvince = county || state || region || province || "";
-            if (detectedCity.trim().toLowerCase() === "baguio")
-              detectedCity = "Baguio City";
-            if (detectedProvince === "Cordillera Administrative Region")
-              detectedProvince = "Benguet";
-            setDisplayMunicipality(detectedCity);
-            setDisplayProvince(detectedProvince);
-          }
-        })
-        .catch(() => {
-          setDisplayMunicipality("");
-          setDisplayProvince("");
-        });
-    }
-  }, [locationStatus, location]);
+    requestLocation();
+  }, [requestLocation]);
+
+  // Set displayMunicipality and displayProvince from Zustand store
+  const displayMunicipality = userAddress || "";
+  const displayProvince = userProvince || "";
+
   // --- Service and booking data (from hook) ---
   const {
     service,
@@ -311,7 +258,6 @@ const ClientBookingPageComponent: React.FC = () => {
     calculateTotalPrice,
   } = useBookRequest();
 
-  console.log(hookPackages);
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
@@ -490,7 +436,7 @@ const ClientBookingPageComponent: React.FC = () => {
           );
           setIsProviderOnboarded(isOnboarded);
         } catch (error) {
-          console.error("Error checking provider onboarding:", error);
+          // console.error("Error checking provider onboarding:", error);
           setIsProviderOnboarded(false);
         }
       }
@@ -1557,7 +1503,7 @@ const ClientBookingPageComponent: React.FC = () => {
                           <input
                             type="text"
                             value={
-                              locationStatus === "detecting"
+                              locationLoading
                                 ? "Detecting..."
                                 : (displayMunicipality || "")
                                       .trim()
@@ -1577,7 +1523,7 @@ const ClientBookingPageComponent: React.FC = () => {
                           <input
                             type="text"
                             value={
-                              locationStatus === "detecting"
+                              locationLoading
                                 ? "Detecting..."
                                 : displayProvince ===
                                     "Cordillera Administrative Region"

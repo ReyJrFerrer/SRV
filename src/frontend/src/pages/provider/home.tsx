@@ -7,23 +7,17 @@ import ServiceManagementNextjs from "../../components/provider/ServiceManagement
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import { useLocationStore } from "../../store/locationStore";
 
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
-// Add location permission state
-type LocationStatus = "pending" | "allowed" | "denied";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
 
-  // --- Location permission state ---
-  const [locationStatus, setLocationStatus] =
-    useState<LocationStatus>("pending");
-  const [, setGeoLocation] = useState<{
-    province: string;
-    municipality: string;
-  } | null>(null);
+  // --- Use Zustand location store for location status ---
+  const { locationStatus } = useLocationStore();
 
   // Use the service management hook
   const {
@@ -64,32 +58,6 @@ const ProviderHomePage: React.FC = () => {
       isActive: true,
     };
   }, [userProfile]);
-
-  // --- Location permission effect (reference: client home.tsx) ---
-  useEffect(() => {
-    if (!("geolocation" in navigator)) {
-      setLocationStatus("denied");
-      return;
-    }
-    setLocationStatus("pending");
-    navigator.geolocation.getCurrentPosition(
-      (_position) => {
-        setLocationStatus("allowed");
-        setGeoLocation({
-          province: "",
-          municipality: "",
-        });
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationStatus("denied");
-        } else {
-          setLocationStatus("pending");
-        }
-      },
-      { timeout: 5000 },
-    );
-  }, []);
 
   useEffect(() => {
     const loadProviderData = async () => {

@@ -1,17 +1,14 @@
 const functions = require("firebase-functions");
-const { Xendit } = require("xendit-node");
-const { admin } = require("./firebase-admin");
+const {Xendit} = require("xendit-node");
+const {admin} = require("./firebase-admin");
 
 // Initialize Xendit client with proper error handling
 let xendit;
 try {
-  const config = functions.config();
-  const secretKey =
-    (config.xendit && config.xendit.secret_key) ||
-    process.env.XENDIT_SECRET_KEY;
+  const secretKey = process.env.XENDIT_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("Xendit secret key not found in config or environment");
+    console.warn("Xendit secret key not found in environment variables");
     xendit = null;
   } else {
     xendit = new Xendit({
@@ -31,25 +28,42 @@ try {
 exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
   console.log("=== createTopupInvoice function started ===");
   console.log("Request method:", req.method);
-  console.log("Request body:", JSON.stringify(req.body, null, 2));
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
 
   try {
-    // Only accept POST requests
+    // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
-      console.log("Invalid method, returning 405");
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-
-    // Enable CORS for local development
-    res.set("Access-Control-Allow-Origin", "*");
-    res.set("Access-Control-Allow-Methods", "GET, POST");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") {
-      console.log("OPTIONS request, returning 200");
-      return res.status(200).end();
+      return res.status(405).json({error: "Method not allowed"});
     }
 
     console.log("Processing POST request...");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
     const data = req.body.data || req.body;
     console.log("Extracted data:", JSON.stringify(data, null, 2));
 
@@ -119,7 +133,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
 
         // Fallback: Check if provider exists in Xendit Customer API
         try {
-          const { Customer } = xendit;
+          const {Customer} = xendit;
           const customerResponse = await Customer.getCustomerByReferenceID({
             referenceId: providerId,
           });
@@ -155,7 +169,9 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
             mobileNumber: xenditCustomer.mobileNumber || "09000000000",
             name:
               xenditCustomer.metadata?.business_name ||
-              `${xenditCustomer.individualDetail?.givenNames || "Provider"} ${xenditCustomer.individualDetail?.surname || ""}`.trim(),
+              `${xenditCustomer.individualDetail?.givenNames || "Provider"} ${
+                xenditCustomer.individualDetail?.surname || ""
+              }`.trim(),
           };
 
           console.log(
@@ -190,7 +206,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
     }
 
     // Create top-up invoice using Invoice API
-    const { Invoice } = xendit;
+    const {Invoice} = xendit;
     const invoiceData = {
       externalId: `topup-${providerId}-${Date.now()}`,
       amount: amount,
@@ -225,7 +241,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
     console.log("Creating Xendit invoice with data:", invoiceData);
     let invoice;
     try {
-      invoice = await Invoice.createInvoice({ data: invoiceData });
+      invoice = await Invoice.createInvoice({data: invoiceData});
       console.log("Xendit invoice created:", invoice.id);
     } catch (xenditError) {
       console.error("Xendit invoice creation error:", xenditError);

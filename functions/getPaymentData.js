@@ -1,4 +1,4 @@
-const { onRequest } = require("firebase-functions/v2/https");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 // Ensure Firebase Admin is initialized
@@ -25,7 +25,37 @@ if (admin.apps.length === 0) {
  * Get payment/booking data from Firestore using invoice ID
  * This retrieves the booking data that was stored when the invoice was created
  */
-exports.getPaymentData = onRequest({ cors: true }, async (req, res) => {
+exports.getPaymentData = functions.https.onRequest(async (req, res) => {
+  console.log("=== getPaymentData function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -34,7 +64,7 @@ exports.getPaymentData = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    const { invoiceId } = req.body.data;
+    const {invoiceId} = req.body.data;
 
     if (!invoiceId) {
       return res.status(400).json({

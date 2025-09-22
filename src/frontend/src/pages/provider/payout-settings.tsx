@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { onboardProvider } from "../../services/firebase";
 import {
   BanknotesIcon,
   CheckCircleIcon,
@@ -20,14 +21,14 @@ const PayoutSettingsPage: React.FC = () => {
     gcashNumber: "",
     gcashName: "",
     businessName: "",
-    businessType: "INDIVIDUAL",
+    businessType: "INDIVIDUAL" as "INDIVIDUAL" | "CORPORATION" | "PARTNERSHIP",
     email: "",
     phoneNumber: "",
   });
 
   // Set document title
   useEffect(() => {
-    document.title = "Payout Settings | SRV";
+    document.title = "Complete Onboarding | SRV";
   }, []);
 
   // Initialize form with user data
@@ -115,52 +116,30 @@ const PayoutSettingsPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Call Firebase Cloud Function via HTTP
-      const projectId = "devsrv-rey"; // Your Firebase project ID
-      //   const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/onboardProvider`;
-      const functionUrl = `http://127.0.0.1:5001/${projectId}/us-central1/onboardProvider`;
-
       const providerId = identity?.getPrincipal().toString();
       if (!providerId) {
         throw new Error("Unable to get provider ID");
       }
 
-      const response = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: {
-            providerId: providerId,
-            gcashNumber: formData.gcashNumber,
-            gcashName: formData.gcashName,
-            businessName:
-              formData.businessName || `${formData.gcashName} Services`,
-            businessType: formData.businessType,
-            email: formData.email,
-            phoneNumber: formData.phoneNumber
-              ? `+${formData.phoneNumber}`
-              : `+63${formData.gcashNumber.slice(1)}`,
-          },
-        }),
+      const result = await onboardProvider({
+        providerId: providerId,
+        gcashNumber: formData.gcashNumber,
+        gcashName: formData.gcashName,
+        businessName: formData.businessName || `${formData.gcashName} Services`,
+        businessType: formData.businessType,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber
+          ? `+${formData.phoneNumber}`
+          : `+63${formData.gcashNumber.slice(1)}`,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.result?.success) {
+      if (result.success) {
         setSuccess(true);
         // Optional: Store onboarding status locally
         localStorage.setItem("provider_onboarded", "true");
       } else {
         throw new Error(
-          result.result?.message ||
-            result.error ||
-            "Failed to set up payout settings",
+          result.message || result.error || "Failed to set up payout settings",
         );
       }
     } catch (err: any) {
@@ -203,7 +182,7 @@ const PayoutSettingsPage: React.FC = () => {
               Back to Settings
             </button>
             <h1 className="text-xl font-extrabold text-black">
-              Payout Settings
+              Complete Onboarding
             </h1>
             <div className="w-20" /> {/* Spacer */}
           </div>
@@ -213,25 +192,24 @@ const PayoutSettingsPage: React.FC = () => {
           <div className="rounded-2xl border border-green-200 bg-white p-8 text-center shadow-md">
             <CheckCircleIcon className="mx-auto mb-4 h-16 w-16 text-green-500" />
             <h2 className="mb-2 text-2xl font-bold text-green-700">
-              Payout Settings Configured!
+              Welcome to SRV!
             </h2>
             <p className="mb-6 text-gray-600">
-              Your GCash account has been successfully linked for direct
-              payments. You can now receive payments directly to your GCash
-              wallet.
+              Your provider account has been successfully set up! You can now
+              Top-up your wallet and start offering your services.
             </p>
             <div className="space-y-3">
               <button
-                onClick={() => navigate("/provider/wallet")}
+                onClick={() => navigate("/provider/dashboard")}
                 className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
               >
-                View Wallet
+                Go to Dashboard
               </button>
               <button
-                onClick={() => navigate("/provider/settings")}
+                onClick={() => navigate("/provider/wallet")}
                 className="w-full rounded-lg border border-gray-300 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
-                Back to Settings
+                View Wallet
               </button>
             </div>
           </div>
@@ -251,7 +229,9 @@ const PayoutSettingsPage: React.FC = () => {
             <ArrowLeftIcon className="mr-2 h-5 w-5" />
             Back
           </button>
-          <h1 className="text-xl font-extrabold text-black">Payout Settings</h1>
+          <h1 className="text-xl font-extrabold text-black">
+            Complete Onboarding
+          </h1>
           <div className="w-16" /> {/* Spacer */}
         </div>
       </header>
@@ -262,11 +242,12 @@ const PayoutSettingsPage: React.FC = () => {
             <div className="mb-6 text-center">
               <BanknotesIcon className="mx-auto mb-3 h-12 w-12 text-blue-500" />
               <h2 className="mb-2 text-xl font-bold text-blue-900">
-                Set Up Direct Payments
+                Set Up Your Provider Account
               </h2>
               <p className="text-sm text-gray-600">
-                Link your GCash account to receive payments directly when
-                clients book your services
+                Complete your onboarding by setting up your payout information.
+                This enables you to top-up your wallet and accept client booking
+                request to your services.
               </p>
             </div>
 
@@ -412,15 +393,16 @@ const PayoutSettingsPage: React.FC = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Setting up..." : "Set Up Payout Settings"}
+                {loading ? "Completing Onboarding..." : "Complete Onboarding"}
               </button>
             </form>
 
             <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
               <p className="text-xs text-blue-700">
-                <strong>Secure & Private:</strong> Your GCash information is
-                encrypted and stored securely. We use Xendit's secure payment
-                platform to process transactions.
+                <strong>Secure & Private:</strong> Your information is encrypted
+                and stored securely. We use Xendit's secure payment platform to
+                process transactions. This is a one-time setup to activate your
+                provider account.
               </p>
             </div>
           </div>

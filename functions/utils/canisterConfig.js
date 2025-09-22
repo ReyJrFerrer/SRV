@@ -1,5 +1,5 @@
-const { HttpAgent } = require("@dfinity/agent");
-const { Actor } = require("@dfinity/agent");
+const {HttpAgent} = require("@dfinity/agent");
+const {Actor} = require("@dfinity/agent");
 
 // Import the actual commission canister declarations
 const fs = require("fs");
@@ -7,6 +7,7 @@ const path = require("path");
 
 /**
  * Load IDL factory from declarations
+ * @return {Function} The IDL factory function
  */
 function loadCommissionIdlFactory() {
   try {
@@ -18,7 +19,7 @@ function loadCommissionIdlFactory() {
 
     if (fs.existsSync(declarationsPath)) {
       // Use dynamic import for ES module
-      const { idlFactory } = require(declarationsPath);
+      const {idlFactory} = require(declarationsPath);
       return idlFactory;
     }
 
@@ -38,9 +39,10 @@ function loadCommissionIdlFactory() {
 
 /**
  * Manual IDL definition based on the commission.mo interface
+ * @return {Function} The IDL factory function
  */
 function getManualCommissionIdl() {
-  return ({ IDL }) => {
+  return ({IDL}) => {
     const CommissionTier = IDL.Variant({
       TierA: IDL.Null,
       TierB: IDL.Null,
@@ -53,7 +55,8 @@ function getManualCommissionIdl() {
       rates: IDL.Vec(IDL.Float64),
     });
 
-    const CommissionBreakdown = IDL.Record({
+    // Commission breakdown structure for IDL
+    const CommissionBreakdownIDL = IDL.Record({
       baseFee: IDL.Nat,
       structure: FeeStructure,
       breakdown: IDL.Text,
@@ -66,15 +69,7 @@ function getManualCommissionIdl() {
       get_category_tier: IDL.Func([IDL.Text], [CommissionTier], ["query"]),
       get_commission_breakdown: IDL.Func(
         [IDL.Text, IDL.Nat],
-        [
-          IDL.Record({
-            baseFee: IDL.Nat,
-            structure: FeeStructure,
-            breakdown: IDL.Text,
-            tier: CommissionTier,
-            calculatedCommission: IDL.Nat,
-          }),
-        ],
+        [CommissionBreakdownIDL],
         ["query"],
       ),
     });
@@ -86,7 +81,10 @@ function getManualCommissionIdl() {
  * Handles local, IC mainnet, and playground environments
  */
 
-// Environment detection
+/**
+ * Environment detection
+ * @return {string} The detected environment
+ */
 function detectEnvironment() {
   if (
     process.env.FUNCTIONS_EMULATOR === "true" ||
@@ -148,6 +146,7 @@ const HOSTS = {
 
 /**
  * Get canister configuration for current environment
+ * @return {Object} The canister configuration
  */
 function getCanisterConfig() {
   const environment = detectEnvironment();
@@ -193,6 +192,9 @@ async function createAgent() {
 
 /**
  * Create a canister actor with proper configuration
+ * @param {string} canisterName - The name of the canister
+ * @param {Function} idlFactory - The IDL factory function
+ * @return {Object} The canister actor
  */
 async function createCanisterActor(canisterName, idlFactory) {
   const config = getCanisterConfig();
@@ -216,14 +218,16 @@ async function createCanisterActor(canisterName, idlFactory) {
 
 /**
  * Commission canister IDL factory - uses actual declarations
+ * @return {Function} The IDL factory function
  */
 const commissionIdlFactory = loadCommissionIdlFactory();
 
 /**
  * Wallet canister IDL factory
+ * @return {Function} The IDL factory function
  */
-const walletIdlFactory = ({ IDL }) => {
-  const WalletResult = IDL.Variant({ ok: IDL.Nat, err: IDL.Text });
+const walletIdlFactory = ({IDL}) => {
+  const WalletResult = IDL.Variant({ok: IDL.Nat, err: IDL.Text});
 
   return IDL.Service({
     get_balance: IDL.Func([IDL.Principal], [WalletResult], ["query"]),
@@ -242,6 +246,9 @@ const walletIdlFactory = ({ IDL }) => {
 
 /**
  * Get commission calculation from canister
+ * @param {string} category - Service category
+ * @param {number} amount - Transaction amount
+ * @return {Promise<number>} The calculated commission
  */
 async function getCommissionFromCanister(category, amount) {
   try {
@@ -270,9 +277,9 @@ async function getCommissionFromCanister(category, amount) {
 
     // Fallback to static calculation
     console.log("Falling back to static commission calculation");
-    const fallbackRate = category.toLowerCase().includes("cleaning")
-      ? 0.035
-      : 0.05;
+    const fallbackRate = category.toLowerCase().includes("cleaning") ?
+      0.035 :
+      0.05;
     const fallbackCommission = Math.round(amount * fallbackRate);
 
     return {
@@ -286,6 +293,9 @@ async function getCommissionFromCanister(category, amount) {
 
 /**
  * Get detailed commission breakdown from canister
+ * @param {string} category - Service category
+ * @param {number} amount - Transaction amount
+ * @return {Promise<Object>} The commission breakdown
  */
 async function getCommissionBreakdown(category, amount) {
   try {

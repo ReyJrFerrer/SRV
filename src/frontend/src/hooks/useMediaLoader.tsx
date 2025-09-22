@@ -369,15 +369,26 @@ export const useServiceCertificates = (
 
       const certificatePromises = validUrls.map(async (url) => {
         try {
-          const dataUrl = await mediaService.getImageDataUrl(url, {
-            enableCache: true,
-            ...options,
-          });
-          return { url, dataUrl, error: null };
+          // Get both image data and validation status
+          const [dataUrl, mediaDetails] = await Promise.all([
+            mediaService.getImageDataUrl(url, {
+              enableCache: true,
+              ...options,
+            }),
+            mediaService.getMediaItemDetails(url),
+          ]);
+
+          return {
+            url,
+            dataUrl,
+            validationStatus: mediaDetails.validationStatus,
+            error: null,
+          };
         } catch (error) {
           return {
             url,
             dataUrl: null,
+            validationStatus: undefined,
             error:
               error instanceof Error
                 ? error.message

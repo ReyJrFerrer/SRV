@@ -12,7 +12,6 @@ const LandingPage = () => {
   const { isAuthenticated, identity, login, isLoading } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
-  console.log("Rey was here");
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
       if (isAuthenticated && identity) {

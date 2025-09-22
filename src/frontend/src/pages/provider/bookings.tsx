@@ -360,7 +360,7 @@ const ProviderBookingsPage: React.FC = () => {
           </div>
         </div>
 
-        <main className="flex-grow overflow-y-auto pb-20">
+        <main className="flex-grow overflow-y-auto pb-10">
           {currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
               {currentBookings.map((booking) => (

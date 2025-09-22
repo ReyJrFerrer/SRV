@@ -14,6 +14,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
+import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -27,6 +28,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   onUpdateStatus,
 }) => {
   const navigate = useNavigate();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -40,6 +42,34 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       refetch();
     }
   }, [userImageUrl, refetch]);
+  const [commissionValidation, setCommissionValidation] = useState<{
+    estimatedCommission: number;
+  }>({
+    estimatedCommission: 0,
+  });
+
+  // --- Effect: Check commission validation for cash bookings ---
+  useEffect(() => {
+    const validateCommission = async () => {
+      // Only validate commission for cash payment bookings
+      if (!booking || booking.paymentMethod !== "CashOnHand") {
+        setCommissionValidation({ estimatedCommission: 0 });
+        return;
+      }
+
+      try {
+        const validation = await checkCommissionValidation(booking);
+        setCommissionValidation({
+          estimatedCommission: validation.estimatedCommission,
+        });
+      } catch (error) {
+        console.error("Error checking commission:", error);
+        setCommissionValidation({ estimatedCommission: 0 });
+      }
+    };
+
+    validateCommission();
+  }, [booking, checkCommissionValidation]);
 
   // --- Effect: Check review status when booking is finished ---
   useEffect(() => {
@@ -274,6 +304,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
+  console.log(booking);
+
   // --- Render: Booking Card Layout ---
   return (
     <Link
@@ -338,7 +370,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 <p className="flex items-center">
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-green-600">
-                    ₱{booking.price.toFixed(2)}
+                    ₱
+                    {(
+                      booking.price + commissionValidation.estimatedCommission
+                    ).toFixed(2)}
                   </span>
                 </p>
               )}

@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updateAllAdminActors(identity);
           await initializeCanisters(isAuth, identity);
 
-          // Check if user has admin privileges - COMMENTED OUT FOR NOW
+          // Check if user has admin privileges
           // try {
           //   // Import the admin service function to check admin role
           //   const { checkAdminRole } = await import(
@@ -118,7 +118,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authClient.login({
         identityProvider:
-          process.env.DFX_NETWORK === "ic"
+          process.env.DFX_NETWORK === "ic" ||
+          process.env.DFX_NETWORK === "playground"
             ? "https://identity.ic0.app"
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
         onSuccess: async () => {

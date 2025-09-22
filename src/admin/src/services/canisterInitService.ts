@@ -8,11 +8,6 @@ interface CanisterInitResult {
   error?: string;
 }
 
-/**
- * Initialize canister references for all canisters after successful authentication
- * This ensures all canisters can communicate with each other properly
- * Optimized for instant execution with parallel task processing
- */
 export const initializeCanisterReferences = async (): Promise<{
   success: boolean;
   results: CanisterInitResult[];

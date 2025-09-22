@@ -11,6 +11,7 @@ import {
   FrontendMediaItem,
   FrontendSystemStats,
 } from "../services/adminServiceCanister";
+import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import {
   remittanceServiceCanister,
   RemittanceServiceError,
@@ -47,6 +48,7 @@ interface AdminLoadingStates {
   systemSettings: boolean;
   paymentValidation: boolean;
   mediaItems: boolean;
+  users: boolean;
 }
 
 // Admin hook return type
@@ -61,11 +63,17 @@ interface UseAdminReturn {
   commissionRules: FrontendCommissionRule[];
   userRoles: FrontendUserRoleAssignment[];
   systemSettings: FrontendSystemSettings | null;
+  users: Profile[];
 
   // System Statistics
   refreshSystemStats: (showSuccessToast?: boolean) => Promise<void>;
 
-  // Service Provider Management (mock functions for now)
+  // User Management
+  refreshUsers: (showSuccessToast?: boolean) => Promise<void>;
+  updateUserLockStatus: (userId: string, isLocked: boolean) => void;
+  getUserLockStatus: (userId: string) => boolean;
+
+  // Service Provider Management
   refreshServiceProviders: (showSuccessToast?: boolean) => Promise<void>;
 
   // Pending Validations
@@ -112,6 +120,7 @@ interface UseAdminReturn {
 
   // Utility functions
   refreshAll: () => Promise<void>;
+  initializeCanisterReferences: () => Promise<void>;
 }
 
 export const useAdmin = (): UseAdminReturn => {
@@ -125,6 +134,7 @@ export const useAdmin = (): UseAdminReturn => {
     systemSettings: false,
     paymentValidation: false,
     mediaItems: false,
+    users: false,
   });
 
   // Initialize data states
@@ -143,6 +153,19 @@ export const useAdmin = (): UseAdminReturn => {
   const [userRoles, setUserRoles] = useState<FrontendUserRoleAssignment[]>([]);
   const [systemSettings, setSystemSettings] =
     useState<FrontendSystemSettings | null>(null);
+  const [users, setUsers] = useState<Profile[]>([]);
+
+  // Initialize userLockStatus from localStorage
+  const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(
+    () => {
+      try {
+        const saved = localStorage.getItem("adminUserLockStatus");
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    },
+  );
 
   // Helper function to handle loading state updates
   const updateLoadingState = useCallback(
@@ -154,7 +177,6 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Helper function to handle errors
   const handleError = useCallback((error: unknown, context: string) => {
-    //console.error(`${context} Error:`, error);
     if (
       error instanceof AdminServiceError ||
       error instanceof RemittanceServiceError ||
@@ -187,12 +209,30 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleError],
   );
 
-  // Service Provider Management - silent by default
+  // User Management
+  const refreshUsers = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("users", true);
+      try {
+        const allUsers = await adminServiceCanister.getAllUsers();
+        setUsers(allUsers);
+        if (showSuccessToast) {
+          toast.success("Users updated successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh users");
+      } finally {
+        updateLoadingState("users", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
+
+  // Service Provider Management
   const refreshServiceProviders = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("serviceProviders", true);
       try {
-        // Get all service providers from remittance service
         const providers =
           await remittanceServiceCanister.getAllServiceProviders();
         setServiceProviders(providers);
@@ -208,7 +248,7 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleError],
   );
 
-  // Pending Validations - silent by default
+  // Pending Validations
   const refreshPendingValidations = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("pendingValidations", true);
@@ -528,10 +568,47 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleError, refreshSystemSettings],
   );
 
+  // Update user lock status in local state and localStorage
+  const updateUserLockStatus = useCallback(
+    (userId: string, isLocked: boolean) => {
+      setUserLockStatus((prevStatus) => {
+        const newStatus = { ...prevStatus, [userId]: isLocked };
+
+        try {
+          localStorage.setItem(
+            "adminUserLockStatus",
+            JSON.stringify(newStatus),
+          );
+        } catch (error) {
+          console.error("Failed to save lock status to localStorage:", error);
+        }
+
+        return newStatus;
+      });
+    },
+    [],
+  );
+
+  // Get user lock status
+  const getUserLockStatus = useCallback(
+    (userId: string): boolean => {
+      return userLockStatus[userId] || false;
+    },
+    [userLockStatus],
+  );
+
+  // Initialize canister references
+  const initializeCanisterReferences = useCallback(async () => {
+    try {
+      await adminServiceCanister.setCanisterReferences();
+    } catch (error) {}
+  }, []);
+
   // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
     const refreshPromises = [
       refreshSystemStats(),
+      refreshUsers(),
       refreshServiceProviders(),
       refreshPendingValidations(),
       refreshCommissionRules(),
@@ -547,6 +624,7 @@ export const useAdmin = (): UseAdminReturn => {
     }
   }, [
     refreshSystemStats,
+    refreshUsers,
     refreshServiceProviders,
     refreshPendingValidations,
     refreshCommissionRules,
@@ -566,9 +644,15 @@ export const useAdmin = (): UseAdminReturn => {
     commissionRules,
     userRoles,
     systemSettings,
+    users,
 
     // System Statistics
     refreshSystemStats,
+
+    // User Management
+    refreshUsers,
+    updateUserLockStatus,
+    getUserLockStatus,
 
     // Service Provider Management
     refreshServiceProviders,
@@ -600,5 +684,6 @@ export const useAdmin = (): UseAdminReturn => {
 
     // Utility functions
     refreshAll,
+    initializeCanisterReferences,
   };
 };

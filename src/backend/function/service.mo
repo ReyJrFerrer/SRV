@@ -9,6 +9,7 @@ import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
+import Debug "mo:base/Debug";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
@@ -48,6 +49,7 @@ persistent actor ServiceCanister {
     private transient var reputationCanisterId : ?Principal = null;
     private transient var mediaCanisterId : ?Principal = null;
     private transient var commissionCanisterId : ?Principal = null;
+    private transient var adminCanisterId : ?Principal = null;
 
     // Constants
     private transient let MIN_TITLE_LENGTH : Nat = 1;
@@ -66,7 +68,8 @@ persistent actor ServiceCanister {
         review : ?Principal,
         reputation : ?Principal,
         media : ?Principal,
-        commission : ?Principal
+        commission : ?Principal,
+        admin : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
@@ -75,6 +78,7 @@ persistent actor ServiceCanister {
         reputationCanisterId := reputation;
         mediaCanisterId := media;
         commissionCanisterId := commission;
+        adminCanisterId := admin;
         return #ok("Canister references set successfully");
     };
 
@@ -443,6 +447,34 @@ persistent actor ServiceCanister {
             };
         };
 
+        // Create certificate validation entry if certificates were uploaded
+        if (certificateUrls.size() > 0) {
+            switch (adminCanisterId) {
+                case (?adminCanister) {
+                    let adminActor = actor(Principal.toText(adminCanister)) : actor {
+                        createCertificateValidation: (Text, Principal, [Text], Text) -> async Types.Result<Text>;
+                    };
+                    
+                    try {
+                        let result = await adminActor.createCertificateValidation(serviceId, caller, certificateUrls, title);
+                        switch (result) {
+                            case (#ok(_)) {};
+                            case (#err(msg)) {
+                                Debug.print("Failed to create certificate validation for service: " # serviceId # " - " # msg);
+                            };
+                        };
+                    } catch (_) {
+                        // Log error but don't fail service creation
+                        Debug.print("Failed to create certificate validation for service: " # serviceId);
+                    };
+                };
+                case (null) {
+                    // Admin canister not configured - log but don't fail
+                    Debug.print("Admin canister not configured - cannot create certificate validation");
+                };
+            };
+        };
+
         return #ok(newService);
     };
     
@@ -457,6 +489,7 @@ persistent actor ServiceCanister {
             };
         };
     };
+
     
     // Get services by provider
     public query func getServicesByProvider(providerId : Principal) : async [Service] {
@@ -1387,6 +1420,7 @@ persistent actor ServiceCanister {
     public query func getAllServices() : async [Service] {
         return Iter.toArray(services.vals());
     };
+
 
     // AVAILABILITY MANAGEMENT FUNCTIONS
 

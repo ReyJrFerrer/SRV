@@ -37,6 +37,7 @@ module {
         filePath: Text;
         url: Text;
         thumbnailUrl: ?Text;
+        validationStatus: ?CertificateValidationStatus; // Only applies to ServiceCertificate type
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };
@@ -46,6 +47,27 @@ module {
         contentType: Text;
         mediaType: MediaType;
         fileData: Blob;
+        validationStatus: ?CertificateValidationStatus; // Default to #Pending for certificates
+    };
+
+    // Certificate validation types
+    public type CertificateValidationStatus = {
+        #Pending;
+        #Validated;
+        #Rejected;
+    };
+
+    public type CertificateValidation = {
+        id: Text;
+        serviceId: Text;
+        providerId: Principal;
+        certificateUrls: [Text];
+        serviceTitle: Text;
+        status: CertificateValidationStatus;
+        submittedAt: Time.Time;
+        reviewedAt: ?Time.Time;
+        reviewedBy: ?Principal;
+        reviewReason: ?Text;
     };
     // Removed Profile
     public type Profile = {
@@ -191,6 +213,7 @@ module {
         id: Text;
         clientId: Principal;
         providerId: Principal;
+        providerName: ?Text; // Provider name for display
         serviceId: Text;
         servicePackageId: [Text];  // Array of package IDs for multiple package bookings
         status: BookingStatus;
@@ -265,6 +288,7 @@ module {
         userName: Text;
         userPhone: Text;
         description: Text;
+        status: ?Text; // Admin-managed status: "open", "in_progress", "resolved", "closed"
         createdAt: Time.Time;
     };
 

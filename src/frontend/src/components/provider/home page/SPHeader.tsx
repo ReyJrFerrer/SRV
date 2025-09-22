@@ -8,6 +8,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
+import { useLocationStore } from "../../../store/locationStore";
 
 // --- Props ---
 export interface HeaderProps {
@@ -34,22 +35,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // Notification count from custom hook
   const { unreadCount } = useProviderNotifications();
 
-  // --- State: Geolocation for map modal ---
-  const [geoLocation, setGeoLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  // --- Use Zustand location store ---
+  const {
+    location: geoLocation,
+    userAddress,
+    userProvince,
+    locationLoading,
+  } = useLocationStore();
+
+  // Get locationStore separately to avoid dependency issues
+  const locationStore = useLocationStore();
 
   // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
-
-  // --- State: Location display ---
-  const [userAddress, setUserAddress] = useState<string>("");
-  const [userProvince, setUserProvince] = useState<string>("");
-  const [locationLoading, setLocationLoading] = useState(true);
-
-  // --- State: Modal for denied location permission ---
-  const [, setShowDeniedModal] = useState(false);
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
@@ -57,105 +55,29 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  // --- Effect: Fetch user profile ---
+  // --- Effect: Fetch user profile and initialize location ---
   useEffect(() => {
-    if (isAuthenticated) {
-      authCanisterService
-        .getMyProfile()
-        .then(setProfile)
-        .catch(() => {});
-    }
-  }, [isAuthenticated]);
+    const loadInitialData = async () => {
+      // Fetch user profile if authenticated
+      if (isAuthenticated) {
+        try {
+          const userProfile = await authCanisterService.getMyProfile();
+          setProfile(userProfile);
+        } catch (error) {
+          /* Profile fetch failed */
+        }
+      }
 
-  // --- Effect: Detect and set location ---
-  useEffect(() => {
-    setLocationLoading(true);
-    if (!navigator.geolocation) {
-      setUserAddress("Geolocation not supported");
-      setLocationLoading(false);
-      return;
+      // Initialize location through Zustand store (will check cache first)
+      if (!isAuthLoading) {
+        locationStore.requestLocation();
+      }
+    };
+
+    if (!isAuthLoading) {
+      loadInitialData();
     }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setGeoLocation({ latitude, longitude });
-        // Try to get cached address
-        const cacheKey = `address_${latitude}_${longitude}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          try {
-            let { city, province } = JSON.parse(cached);
-            // --- Baguio/Benguet normalization ---
-            if (
-              (city === "Baguio" || city === "Baguio City") &&
-              (province === "Cordillera Administrative Region" ||
-                province === "Cordillera Administrative region")
-            ) {
-              city = "Baguio City";
-              province = "Benguet";
-            }
-            setUserAddress(city);
-            setUserProvince(province);
-            setLocationLoading(false);
-            return;
-          } catch {}
-        }
-        // Fetch address from OpenStreetMap
-        fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            if (data && data.address) {
-              const {
-                city,
-                town,
-                municipality,
-                county,
-                state,
-                region,
-                province,
-              } = data.address;
-              // --- Normalize Baguio/Benguet ---
-              let cityPart = city || town || municipality || "";
-              let provincePart = county || state || region || province || "";
-              if (
-                (cityPart === "Baguio" || cityPart === "Baguio City") &&
-                (provincePart === "Cordillera Administrative Region" ||
-                  provincePart === "Cordillera Administrative region")
-              ) {
-                cityPart = "Baguio City";
-                provincePart = "Benguet";
-              }
-              setUserAddress(cityPart || "Could not determine city");
-              setUserProvince(provincePart);
-              localStorage.setItem(
-                cacheKey,
-                JSON.stringify({ city: cityPart, province: provincePart }),
-              );
-            } else {
-              setUserAddress("Could not determine city");
-              setUserProvince("");
-            }
-          })
-          .catch(() => {
-            setUserAddress("Could not determine city");
-            setUserProvince("");
-          })
-          .finally(() => setLocationLoading(false));
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setShowDeniedModal(true);
-          setUserAddress("Location not shared");
-        } else {
-          setUserAddress("Could not determine location");
-        }
-        setLocationLoading(false);
-      },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated, isAuthLoading, locationStore]);
 
   // --- Map Modal: Shows user's detected location on a map ---
   const MapModal: React.FC = () => {
@@ -228,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <div className="h-10 border-l-2 border-blue-100"></div>
           <div className="flex flex-col">
             <span className="text-2xl font-semibold tracking-wide text-blue-700">
-              Welcome Back,{" "}
+              Welcome,{" "}
               <span className="text-2xl font-bold text-gray-800">
                 {displayName}
               </span>

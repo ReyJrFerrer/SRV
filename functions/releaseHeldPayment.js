@@ -1,18 +1,15 @@
 const functions = require("firebase-functions");
-const { Xendit } = require("xendit-node");
+const {Xendit} = require("xendit-node");
 const admin = require("firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
+const {FieldValue} = require("firebase-admin/firestore");
 
 // Initialize Xendit client with proper error handling
 let xendit;
 try {
-  const config = functions.config();
-  const secretKey =
-    (config.xendit && config.xendit.secret_key) ||
-    process.env.XENDIT_SECRET_KEY;
+  const secretKey = process.env.XENDIT_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("Xendit secret key not found in config or environment");
+    console.warn("Xendit secret key not found in environment variables");
     xendit = null;
   } else {
     xendit = new Xendit({
@@ -48,7 +45,7 @@ if (admin.apps.length === 0) {
 /**
  * Get payment data by invoice ID (same logic as getPaymentData.js)
  * @param {string} invoiceId - Invoice ID
- * @returns {Object|null} Payment data or null if not found
+ * @return {Object|null} Payment data or null if not found
  */
 async function getPaymentDataByInvoiceId(invoiceId) {
   try {
@@ -80,7 +77,7 @@ async function getPaymentDataByInvoiceId(invoiceId) {
 /**
  * Check invoice status (same logic as checkInvoiceStatus.js)
  * @param {string} invoiceId - Invoice ID
- * @returns {Object} Status result
+ * @return {Object} Status result
  */
 async function checkInvoiceStatus(invoiceId) {
   try {
@@ -135,7 +132,7 @@ async function checkInvoiceStatus(invoiceId) {
     }
 
     // Fetch invoice status from Xendit
-    const { Invoice } = xendit;
+    const {Invoice} = xendit;
     let invoice;
 
     try {
@@ -195,8 +192,38 @@ async function checkInvoiceStatus(invoiceId) {
  * This function uses invoiceId to directly fetch payment data and process payout
  */
 exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
+  console.log("=== releaseHeldPayment function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
+
   try {
-    // Only accept POST requests
+    // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
       return res.status(405).json({
         success: false,
@@ -204,17 +231,9 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       });
     }
 
-    // Enable CORS for local development
-    res.set("Access-Control-Allow-Origin", "*");
-    res.set("Access-Control-Allow-Methods", "GET, POST");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") {
-      return res.status(200).end();
-    }
-
     // Extract data from request body
     const requestData = req.body.data || req.body;
-    const { invoiceId, reason = "Booking completed" } = requestData;
+    const {invoiceId, reason = "Booking completed"} = requestData;
 
     console.log("📦 Request received:", {
       invoiceId,
@@ -306,7 +325,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
  * Process the payment release including payout and status updates
  * @param {Object} paymentData - Payment data from payments collection
  * @param {string} reason - Reason for release
- * @returns {Object} Release result with success flag and details
+ * @return {Object} Release result with success flag and details
  */
 async function processPaymentRelease(paymentData, reason) {
   const {
@@ -370,7 +389,8 @@ async function processPaymentRelease(paymentData, reason) {
         statusHistory: FieldValue.arrayUnion({
           status: "released",
           timestamp: new Date().toISOString(),
-          description: `Payment released to provider: ₱${providerAmount}, Commission retained: ₱${commissionAmount}`,
+          description: `Payment released to provider: ₱${providerAmount}, ` +
+            `Commission retained: ₱${commissionAmount}`,
           reason: reason,
           payoutId: payoutId,
         }),
@@ -473,10 +493,10 @@ async function processPaymentRelease(paymentData, reason) {
  * @param {Object} paymentData - Payment data from payments collection
  * @param {number} providerAmount - Amount to pay to provider
  * @param {string} bookingId - Booking ID for reference
- * @returns {Object} Payout result
+ * @return {Object} Payout result
  */
 async function processProviderPayout(paymentData, providerAmount, bookingId) {
-  const { providerId } = paymentData;
+  const {providerId} = paymentData;
 
   try {
     // Get provider's payout information from the provider document
@@ -522,7 +542,7 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
     }
 
     // Create payout using Xendit Payout API
-    const { Payout } = xendit;
+    const {Payout} = xendit;
     const payoutData = {
       referenceId: `release-payout-${bookingId}-${Date.now()}`,
       channelCode: providerPayoutInfo.channelCode || "PH_GCASH",
@@ -560,9 +580,9 @@ async function processProviderPayout(paymentData, providerAmount, bookingId) {
         accountNumber: providerPayoutInfo.gcashNumber,
         accountHolderName: providerPayoutInfo.accountHolderName,
         createdAt: new Date().toISOString(),
-        estimatedArrival: payout.estimatedArrivalTime
-          ? new Date(payout.estimatedArrivalTime).toISOString()
-          : null,
+        estimatedArrival: payout.estimatedArrivalTime ?
+          new Date(payout.estimatedArrivalTime).toISOString() :
+          null,
       });
 
     console.log(
@@ -673,12 +693,12 @@ async function sendReleaseNotifications(
         const providerMessage = {
           token: providerFcmToken,
           notification: {
-            title: payoutSuccess
-              ? "Payment Released!"
-              : "Payment Released (Processing)",
-            body: payoutSuccess
-              ? `₱${providerAmount.toLocaleString()} has been sent to your account!`
-              : `₱${providerAmount.toLocaleString()} is being processed to your account.`,
+            title: payoutSuccess ?
+              "Payment Released!" :
+              "Payment Released (Processing)",
+            body: payoutSuccess ?
+              `₱${providerAmount.toLocaleString()} has been sent to your account!` :
+              `₱${providerAmount.toLocaleString()} is being processed to your account.`,
           },
           data: {
             type: "PAYMENT_RELEASED",

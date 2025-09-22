@@ -243,7 +243,7 @@ export const useNotificationsWithPush = () => {
         const reviewReminderNotifications: Notification[] = uncoveredBookings
           .filter((b) => b.status === "Completed")
           .map((booking) => ({
-            id: `review-${booking.id}`,
+            id: `frontend-review-${booking.id}-${Date.now()}`,
             message: `Please review your recent "${booking.serviceName}" service`,
             type: "review_reminder",
             timestamp: new Date(
@@ -328,8 +328,8 @@ export const useNotificationsWithPush = () => {
       console.error("Error marking notification as read:", error);
       // If it's a frontend-generated notification (not in canister), just update locally
       if (
-        notificationId.startsWith("review-") ||
-        notificationId.startsWith("booking-status-")
+        notificationId.startsWith("frontend-review-") ||
+        notificationId.startsWith("frontend-booking-status-")
       ) {
         console.log("Frontend-generated notification, updating locally only");
       } else {

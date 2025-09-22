@@ -86,16 +86,14 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`mb-2 flex flex-col gap-3 rounded-lg border p-3 shadow-sm sm:gap-2 lg:flex-row lg:items-center ${
+      className={`mb-2 flex flex-col gap-2 rounded-lg border p-3 shadow-sm ${
         isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
       }`}
     >
-      <div className="flex w-full flex-col gap-3 sm:gap-2 lg:flex-row lg:items-center lg:gap-2">
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
         {/* Start Time */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className="text-sm font-medium text-gray-600 sm:hidden">
-            Start:
-          </span>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <span className="text-sm font-medium text-gray-600">Start:</span>
           <div className="flex gap-1 sm:gap-2">
             <select
               value={slot.startHour}
@@ -140,16 +138,14 @@ const TimeSlotInput: React.FC<{
           </div>
         </div>
 
-        <span className="hidden text-gray-500 lg:inline">to</span>
-        <span className="text-center text-sm font-medium text-gray-500 sm:hidden">
-          to
-        </span>
+        {/* "to" separator - more compact */}
+        <div className="flex items-center justify-center lg:px-2">
+          <span className="text-sm font-medium text-gray-500">to</span>
+        </div>
 
         {/* End Time */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className="text-sm font-medium text-gray-600 sm:hidden">
-            End:
-          </span>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <span className="text-sm font-medium text-gray-600">End:</span>
           <div className="flex gap-1 sm:gap-2">
             <select
               value={slot.endHour}
@@ -192,10 +188,11 @@ const TimeSlotInput: React.FC<{
           </div>
         </div>
       </div>
+      {/* Delete button */}
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 sm:self-end lg:ml-auto"
+        className="mt-3 self-center self-end rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:mt-0 lg:ml-auto"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />
@@ -538,7 +535,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="flex h-16 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100"
+                  className="flex h-16 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2 text-sm font-medium text-red-600 shadow-sm hover:border-red-300 hover:bg-red-100"
                 >
                   Clear All
                 </button>
@@ -609,7 +606,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="flex h-16 w-28 items-center justify-center rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 shadow-sm hover:bg-gray-100"
+                  className="flex h-16 w-28 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-base font-medium text-red-600 shadow-sm hover:border-red-300 hover:bg-red-100"
                 >
                   Clear All
                 </button>

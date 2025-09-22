@@ -6,6 +6,7 @@ import {
   TrashIcon,
   MapPinIcon,
   CalendarDaysIcon,
+  HomeIcon,
   TagIcon,
   BriefcaseIcon,
   LockClosedIcon,
@@ -631,7 +632,6 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       try {
         const serviceData = await getService(id);
-        console.log(serviceData);
 
         if (serviceData) {
           // Ensure weeklySchedule has 'slots' array for existing data
@@ -724,11 +724,11 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     if (!editedTitle.trim()) {
-      alert("Service title cannot be empty.");
+      toast.error("Service title cannot be empty.");
       return;
     }
     if (!editedCategory.trim()) {
-      alert("Service category cannot be empty.");
+      toast.error("Service category cannot be empty.");
       return;
     }
 
@@ -788,7 +788,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     if (!editedCity.trim()) {
-      alert("City cannot be empty.");
+      toast.error("City cannot be empty.");
       return;
     }
 
@@ -798,7 +798,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         for (let i = 0; i < day.availability.slots.length; i++) {
           const slotA = day.availability.slots[i];
           if (slotA.startTime >= slotA.endTime) {
-            alert(
+            toast.error(
               `For ${day.day}, start time (${formatTime(slotA.startTime)}) must be before end time (${formatTime(slotA.endTime)}).`,
             );
             return;
@@ -810,7 +810,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               slotA.startTime < slotB.endTime &&
               slotB.startTime < slotA.endTime
             ) {
-              alert(
+              toast.error(
                 `For ${day.day}, time slots overlap: ${formatTime(
                   slotA.startTime,
                 )}-${formatTime(slotA.endTime)} and ${formatTime(
@@ -1250,12 +1250,27 @@ const ProviderServiceDetailPage: React.FC = () => {
       !packageFormDescription.trim() ||
       !packageFormPrice.trim()
     ) {
-      alert("Please fill in all package fields.");
+      toast.error("Please fill in all package fields.");
       return;
     }
     const parsedPrice = parseFloat(packageFormPrice);
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      alert("Price must be a positive number.");
+      toast.error("Price must be a positive number.");
+      return;
+    }
+
+    // Check for duplicate package names
+    const trimmedName = packageFormTitle.trim().toLowerCase();
+    const duplicatePackage = packages.find(
+      (pkg) =>
+        pkg.title.trim().toLowerCase() === trimmedName &&
+        pkg.id !== currentPackageId, // Exclude current package when editing
+    );
+
+    if (duplicatePackage) {
+      toast.error(
+        `Package name "${packageFormTitle.trim()}" already exists. Please choose a different name.`,
+      );
       return;
     }
 
@@ -1795,8 +1810,9 @@ const ProviderServiceDetailPage: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-blue-700">
-                      Full Address
+                    <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
+                      <HomeIcon className="h-4 w-4 text-blue-400" />
+                      Address
                     </label>
                     <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
                       {service.location.city}
@@ -1804,11 +1820,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-700">
+                    <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
                       <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                       Availability
                     </label>
-                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+                    <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
                       {service.weeklySchedule?.filter(
                         (entry) => entry.availability.isAvailable,
                       ).length ? (
@@ -1818,7 +1834,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                           .map((entry) => (
                             <div
                               key={entry.day}
-                              className="flex min-w-[140px] flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow"
+                              className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
                             >
                               <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
                                 <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
@@ -1970,96 +1986,98 @@ const ProviderServiceDetailPage: React.FC = () => {
                 )}
 
                 {/* Redesigned package cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {packages.length > 0
                     ? packages.map((pkg) => (
                         <div
                           key={pkg.id}
-                          className="flex flex-col justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 p-4 shadow transition-shadow hover:shadow-lg"
+                          className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
                         >
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-lg font-semibold break-words text-blue-900">
+                          {/* Header with title and pricing */}
+                          <div className="mb-4 flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
                                 {pkg.title}
-                              </h4>
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-blue-600">
-                                  ₱{pkg.price.toFixed(2)}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  + ₱{pkg.commissionFee.toFixed(2)} commission
-                                </div>
-                                <div className="text-sm font-medium text-green-600">
-                                  = ₱
-                                  {(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
-                                  total
-                                </div>
+                              </h3>
+                              <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                                {pkg.description}
+                              </p>
+                            </div>
+
+                            {/* Pricing section */}
+                            <div className="ml-4 flex-shrink-0 text-right">
+                              <div className="mb-1 text-xl font-bold text-blue-600">
+                                ₱{pkg.price.toFixed(2)}
+                              </div>
+                              <div className="mb-1 text-xs text-gray-500">
+                                + ₱{pkg.commissionFee.toFixed(2)} commission
+                              </div>
+                              <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
+                                ₱{(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
+                                total
                               </div>
                             </div>
-                            <p className="mt-1 text-sm break-words text-blue-700">
-                              {pkg.description}
-                            </p>
                           </div>
-                          <div className="mt-4 flex gap-2">
-                            <Tooltip
-                              content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                              disabled={hasActiveBookings}
+
+                          {/* Divider */}
+                          <div className="my-4 border-t border-gray-100"></div>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-3">
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleEditPackage(pkg)
+                              }
+                              className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                              }`}
+                              aria-label={`Edit ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
                             >
-                              <button
-                                onClick={
-                                  hasActiveBookings
-                                    ? undefined
-                                    : () => handleEditPackage(pkg)
-                                }
-                                className={`rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 ${
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                                }`}
-                                aria-label={`Edit ${pkg.title}`}
-                                disabled={
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                }
-                              >
-                                Edit
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                              disabled={hasActiveBookings}
+                              Edit Package
+                            </button>
+
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleDeletePackage(pkg.id)
+                              }
+                              className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                              }`}
+                              aria-label={`Delete ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
                             >
-                              <button
-                                onClick={
-                                  hasActiveBookings
-                                    ? undefined
-                                    : () => handleDeletePackage(pkg.id)
-                                }
-                                className={`rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 ${
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                                }`}
-                                aria-label={`Delete ${pkg.title}`}
-                                disabled={
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                }
-                              >
-                                Delete
-                              </button>
-                            </Tooltip>
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))
                     : !isAddingOrEditingPackage && (
-                        <div className="col-span-full py-8 text-center text-blue-300">
-                          <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
-                          <p className="mb-2 text-blue-400">
-                            No packages available for this service
-                          </p>
-                          <p className="text-sm">
-                            Packages help customers choose specific service
-                            options with different pricing
-                          </p>
+                        <div className="col-span-full">
+                          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                              <BriefcaseIcon className="h-8 w-8 text-blue-400" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                              No packages available
+                            </h3>
+                            <p className="mx-auto max-w-md text-gray-600">
+                              Packages help customers choose specific service
+                              options with different pricing tiers
+                            </p>
+                          </div>
                         </div>
                       )}
                 </div>

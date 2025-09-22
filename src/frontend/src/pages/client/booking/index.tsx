@@ -205,7 +205,7 @@ const MyBookingsPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
         {/* Search/Filter Bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
           <div className="hide-scrollbar flex justify-start overflow-x-auto p-2 whitespace-nowrap sm:justify-center">
@@ -261,7 +261,10 @@ const MyBookingsPage: React.FC = () => {
           </div>
         </div>
 
-        <main className="container mx-auto flex-grow p-3 pb-[120px] sm:p-4 md:pb-[120px]">
+        <main
+          className="container mx-auto flex-grow p-3 pb-[120px] sm:p-4 md:pb-[120px]"
+          style={{ minHeight: "calc(100vh - 180px)" }}
+        >
           {bookingManagement.loading ? (
             <div className="py-16 text-center">
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
@@ -291,16 +294,8 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
-                    {sameDayBookings.map((booking, idx) => (
-                      <div
-                        key={booking.id}
-                        className={
-                          idx === sameDayBookings.length - 1 &&
-                          scheduledBookings.length === 0
-                            ? "pb-36 md:pb-40"
-                            : ""
-                        }
-                      >
+                    {sameDayBookings.map((booking) => (
+                      <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelBooking={handleCancelBookingOnListPage}
@@ -319,15 +314,8 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking, idx) => (
-                      <div
-                        key={booking.id}
-                        className={
-                          idx === scheduledBookings.length - 1
-                            ? "pb-36 md:pb-40"
-                            : ""
-                        }
-                      >
+                    {scheduledBookings.map((booking) => (
+                      <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelBooking={handleCancelBookingOnListPage}

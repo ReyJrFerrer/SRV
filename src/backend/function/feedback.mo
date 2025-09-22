@@ -386,6 +386,7 @@ persistent actor FeedbackCanister {
                             userName = profile.name;
                             userPhone = profile.phone;
                             description = description;
+                            status = ?"open"; // Default status for new reports
                             createdAt = Time.now();
                         };
                         
@@ -437,6 +438,35 @@ persistent actor FeedbackCanister {
             else if (a.createdAt < b.createdAt) { #greater }
             else { #equal }
         })
+    };
+
+    // Update report status (admin function)
+    public shared(msg) func updateReportStatus(
+        reportId : Text,
+        newStatus : Text
+    ) : async Result<AppReport> {
+        // In a real implementation, should check admin permissions
+        // For now, allow any caller to update status
+        
+        switch (reports.get(reportId)) {
+            case (?existingReport) {
+                let updatedReport : AppReport = {
+                    id = existingReport.id;
+                    userId = existingReport.userId;
+                    userName = existingReport.userName;
+                    userPhone = existingReport.userPhone;
+                    description = existingReport.description;
+                    status = ?newStatus;
+                    createdAt = existingReport.createdAt;
+                };
+                
+                reports.put(reportId, updatedReport);
+                return #ok(updatedReport);
+            };
+            case (null) {
+                return #err("Report not found");
+            };
+        };
     };
 
     // Get report statistics

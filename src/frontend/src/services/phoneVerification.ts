@@ -19,6 +19,8 @@ class PhoneVerificationService {
   private currentPhoneNumber: string = "";
   private resendTimer: NodeJS.Timeout | null = null;
   private resendCooldown: number = 60; // seconds
+  private attemptCount: number = 0;
+  private maxAttempts: number = 5; // Allow 5 attempts before requiring resend
 
   /**
    * Initialize the phone verification service
@@ -44,6 +46,7 @@ class PhoneVerificationService {
       }
 
       this.currentPhoneNumber = phoneNumber;
+      this.attemptCount = 0; // Reset attempt count for new verification
 
       // Setup reCAPTCHA
       await firebaseAuthService.setupRecaptcha(recaptchaContainerId);
@@ -84,6 +87,8 @@ class PhoneVerificationService {
         throw new Error("Please enter a valid 6-digit code");
       }
 
+      this.attemptCount++;
+
       const isVerified = await firebaseAuthService.verifyOTP(
         this.confirmationResult,
         otpCode,
@@ -100,10 +105,35 @@ class PhoneVerificationService {
       }
     } catch (error: any) {
       console.error("Error verifying code:", error);
+
+      // Check if error suggests reload
+      const shouldReload = (error as any).shouldReload;
+
+      // Don't invalidate confirmation result for invalid codes unless max attempts reached
+      if (
+        error.message?.includes("Invalid verification code") &&
+        this.attemptCount < this.maxAttempts
+      ) {
+        return {
+          success: false,
+          phoneNumber: this.currentPhoneNumber,
+          error: `Invalid code. ${this.maxAttempts - this.attemptCount} attempts remaining.`,
+        };
+      }
+
+      // For other errors or max attempts reached, suggest appropriate action
+      let errorMessage = error.message || "Invalid verification code";
+      if (shouldReload) {
+        errorMessage = error.message;
+      } else if (this.attemptCount >= this.maxAttempts) {
+        errorMessage = "Too many failed attempts. Please request a new code.";
+        this.confirmationResult = null; // Invalidate current verification
+      }
+
       return {
         success: false,
         phoneNumber: this.currentPhoneNumber,
-        error: error.message || "Invalid verification code",
+        error: errorMessage,
       };
     }
   }
@@ -215,6 +245,7 @@ class PhoneVerificationService {
    */
   private cleanup(): void {
     this.confirmationResult = null;
+    this.attemptCount = 0;
     this.clearResendTimer();
     firebaseAuthService.clearRecaptcha();
   }

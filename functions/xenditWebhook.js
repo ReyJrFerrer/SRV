@@ -1,17 +1,14 @@
 const functions = require("firebase-functions");
-const { Xendit } = require("xendit-node");
+const {Xendit} = require("xendit-node");
 const admin = require("firebase-admin");
 
 // Initialize Xendit client with proper error handling
 let xendit;
 try {
-  const config = functions.config();
-  const secretKey =
-    (config.xendit && config.xendit.secret_key) ||
-    process.env.XENDIT_SECRET_KEY;
+  const secretKey = process.env.XENDIT_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("Xendit secret key not found in config or environment");
+    console.warn("Xendit secret key not found in environment variables");
     xendit = null;
   } else {
     xendit = new Xendit({
@@ -34,16 +31,44 @@ if (!admin.apps.length) {
  * This is the most critical function that receives payment status updates
  */
 exports.xenditWebhook = functions.https.onRequest(async (req, res) => {
+  console.log("=== xenditWebhook function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-callback-token");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS preflight request");
+    return res.status(204).send();
+  }
+
   try {
-    // Only accept POST requests
+    // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
     }
 
     // Verify webhook signature from Xendit
-    const callbackToken =
-      (functions.config().xendit && functions.config().xendit.callback_token) ||
-      process.env.XENDIT_CALLBACK_TOKEN;
+    const callbackToken = process.env.XENDIT_CALLBACK_TOKEN;
     const receivedSignature = req.headers["x-callback-token"];
 
     if (!receivedSignature || receivedSignature !== callbackToken) {
@@ -81,7 +106,7 @@ exports.xenditWebhook = functions.https.onRequest(async (req, res) => {
  * @param {Object} webhookData - Webhook data from Xendit
  */
 async function handlePaidInvoice(webhookData) {
-  const { id, externalId } = webhookData;
+  const {id, externalId} = webhookData;
 
   try {
     // Determine if this is a direct payment or wallet top-up
@@ -103,7 +128,7 @@ async function handlePaidInvoice(webhookData) {
  * @param {Object} webhookData - Webhook data from Xendit
  */
 async function handleWalletTopupPaid(webhookData) {
-  const { id, paidAmount, amount } = webhookData;
+  const {id, paidAmount, amount} = webhookData;
   const actualPaidAmount = paidAmount || amount;
 
   try {
@@ -178,7 +203,7 @@ async function handleWalletTopupPaid(webhookData) {
  * @param {Object} webhookData - Webhook data from Xendit
  */
 async function handleDirectPaymentPaid(webhookData) {
-  const { id, paidAmount, amount } = webhookData;
+  const {id, paidAmount, amount} = webhookData;
   const actualPaidAmount = paidAmount || amount;
 
   try {
@@ -336,9 +361,9 @@ async function handleDirectPaymentPaid(webhookData) {
 /**
  * Process payout to provider's GCash account
  * @param {Object} paymentData - Payment record data
- * @param {number} paidAmount - Amount that was actually paid
+ * @param {number} _paidAmount - Amount that was actually paid (unused for now)
  */
-async function processProviderPayout(paymentData, paidAmount) {
+async function _processProviderPayout(paymentData, _paidAmount) {
   const {
     providerId,
     providerAmount,
@@ -358,7 +383,7 @@ async function processProviderPayout(paymentData, paidAmount) {
     }
 
     // Create payout using Xendit Payout API
-    const { Payout } = xendit;
+    const {Payout} = xendit;
     const payoutData = {
       referenceId: `payout-${bookingId}-${Date.now()}`,
       channelCode: providerPayoutInfo.channelCode || "PH_GCASH",
@@ -395,9 +420,9 @@ async function processProviderPayout(paymentData, paidAmount) {
         accountNumber: providerPayoutInfo.gcashNumber,
         accountHolderName: providerPayoutInfo.accountHolderName,
         createdAt: new Date().toISOString(),
-        estimatedArrival: payout.estimatedArrivalTime
-          ? new Date(payout.estimatedArrivalTime).toISOString()
-          : null,
+        estimatedArrival: payout.estimatedArrivalTime ?
+          new Date(payout.estimatedArrivalTime).toISOString() :
+          null,
       });
 
     console.log(
@@ -425,7 +450,7 @@ async function processProviderPayout(paymentData, paidAmount) {
  * @param {Object} webhookData - Webhook data from Xendit
  */
 async function handleExpiredInvoice(webhookData) {
-  const { id, externalId } = webhookData;
+  const {id, externalId} = webhookData;
 
   try {
     if (externalId && externalId.startsWith("topup-")) {
@@ -512,7 +537,7 @@ async function sendTopupNotification(providerId, amount) {
  * @param {string} providerId - Provider ID
  * @param {number} amount - Payment amount
  */
-async function sendPaymentNotifications(
+async function _sendPaymentNotifications(
   bookingId,
   clientId,
   providerId,

@@ -5,6 +5,7 @@ import { createActor, canisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
+import { canisterId as remittanceCanisterId } from "../../../declarations/remittance";
 import { canisterId as commissionCanisterId } from "../../../declarations/commission";
 import { canisterId as walletCanisterId } from "../../../declarations/wallet";
 import { canisterId as notificationCanisterId } from "../../../declarations/notification";
@@ -1038,6 +1039,7 @@ export const bookingCanisterService = {
         [Principal.fromText(commissionCanisterId)],
         [Principal.fromText(walletCanisterId)],
         [Principal.fromText(notificationCanisterId)],
+        [Principal.fromText(remittanceCanisterId)],
       );
 
       if ("ok" in result) {
@@ -1096,6 +1098,42 @@ export const bookingCanisterService = {
     } catch (error) {
       //console.error("Error fetching client analytics:", error);
       throw new Error(`Failed to fetch client analytics: ${error}`);
+    }
+  },
+
+  /**
+   * Get client analytics for admin (bypasses security check)
+   * @param clientId Principal ID of the client
+   * @param startDate Optional start date for analytics range
+   * @param endDate Optional end date for analytics range
+   */
+  async getClientAnalyticsForAdmin(
+    clientId: Principal,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<ClientAnalytics | null> {
+    try {
+      const actor = getBookingActor();
+      const startTimestamp = startDate
+        ? [BigInt(startDate.getTime() * 1000000)]
+        : [];
+      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
+
+      const result = await actor.getClientAnalyticsForAdmin(
+        clientId,
+        startTimestamp as [] | [bigint],
+        endTimestamp as [] | [bigint],
+      );
+
+      if ("ok" in result) {
+        return convertCanisterClientAnalytics(result.ok);
+      } else {
+        //console.error("Error fetching client analytics for admin:", result.err);
+        return null;
+      }
+    } catch (error) {
+      //console.error("Error fetching client analytics for admin:", error);
+      throw new Error(`Failed to fetch client analytics for admin: ${error}`);
     }
   },
 

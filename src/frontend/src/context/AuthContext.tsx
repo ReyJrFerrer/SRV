@@ -17,22 +17,16 @@ import {
   initializeCanisterReferences,
   shouldInitializeCanisters,
 } from "../services/canisterInitService";
+import {
+  useLocationStore,
+  type LocationStatus,
+  type Location,
+  type ManualFields,
+} from "../store/locationStore";
+import { usePWA, PWAState } from "../hooks/usePWA";
 
-// --- NEW: Types for Location State ---
-type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
-interface Location {
-  latitude: number;
-  longitude: number;
-}
-// --- Shared manual address fields ---
-export interface ManualFields {
-  barangay: string;
-  street: string;
-  houseNumber: string;
-  landmark?: string;
-  municipality?: string;
-  province?: string;
-}
+// Re-export types for backward compatibility
+export type { LocationStatus, Location, ManualFields };
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -42,17 +36,21 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  // --- Location properties ---
+  // --- Location properties (now delegated to Zustand store) ---
   location: Location | null;
   locationStatus: LocationStatus;
   setLocation: (status: LocationStatus, location?: Location | null) => void;
-  // --- Shared address state ---
+  // --- Shared address state (now delegated to Zustand store) ---
   addressMode: "context" | "manual";
   setAddressMode: (mode: "context" | "manual") => void;
   displayAddress: string;
   setDisplayAddress: (address: string) => void;
   manualFields: ManualFields;
   setManualFields: (fields: ManualFields) => void;
+  // --- PWA properties ---
+  pwaState: PWAState;
+  enablePushNotifications: (userId: string) => Promise<boolean>;
+  disablePushNotifications: (userId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,49 +90,71 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Initialize location from GPS location stored in localStorage on mount
-  useEffect(() => {
-    // Check for stored GPS location first
-    const storedLocation = localStorage.getItem("userLocation");
-    const storedPermission = localStorage.getItem("locationPermission");
+  // --- Use Zustand location store instead of local state ---
+  const locationStore = useLocationStore();
 
-    if (storedLocation && storedPermission === "allowed") {
-      try {
-        const location = JSON.parse(storedLocation);
-        setLocationState(location);
-        setLocationStatus("allowed");
-      } catch {
-        // If parsing fails, clear invalid data
-        localStorage.removeItem("userLocation");
-        localStorage.removeItem("locationPermission");
-      }
-    }
-  }, []);
+  // --- Use PWA hook for push notification management ---
+  const {
+    pwaState,
+    enablePushNotifications: enablePushNotificationsPWA,
+    disablePushNotifications: disablePushNotificationsPWA,
+  } = usePWA();
+
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Location state ---
-  const [location, setLocationState] = useState<Location | null>(null);
-  const [locationStatus, setLocationStatus] =
-    useState<LocationStatus>("not_set");
-  // --- Shared address state ---
-  const [addressMode, setAddressMode] = useState<"context" | "manual">(
-    "context",
-  );
-  const [displayAddress, setDisplayAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [manualFields, setManualFields] = useState<ManualFields>({
-    barangay: "",
-    street: "",
-    houseNumber: "",
-    landmark: "",
-    municipality: "",
-    province: "",
-  });
+  // Initialize location store on mount
+  useEffect(() => {
+    locationStore.initialize();
+  }, [locationStore]);
+
+  // Auto-enable push notifications when user authenticates
+  useEffect(() => {
+    const autoEnablePushNotifications = async () => {
+      // Only attempt auto-enable if:
+      // 1. User is authenticated
+      // 2. PWA state is loaded (not loading)
+      // 3. Push notifications are supported
+      // 4. User hasn't explicitly denied permissions
+      // 5. Not already subscribed
+      if (
+        isAuthenticated &&
+        identity &&
+        !pwaState.pushSubscribed &&
+        pwaState.pushNotificationSupported &&
+        pwaState.pushPermission !== "denied" &&
+        pwaState.browserInfo.canReceivePushNotifications
+      ) {
+        try {
+          const userId = identity.getPrincipal().toString();
+          const success = await enablePushNotificationsPWA(userId);
+          if (success) {
+            // console.log("✅ Auto-enabled push notifications for user:", userId);
+          }
+        } catch (error) {
+          // Silently fail auto-enable - user can still enable manually if desired
+          // console.log("ℹ️ Auto-enable push notifications failed (this is normal):", error);
+        }
+      }
+    };
+
+    // Only run auto-enable after initial PWA state is loaded
+    if (!isLoading && isAuthenticated) {
+      autoEnablePushNotifications();
+    }
+  }, [
+    isAuthenticated,
+    identity,
+    pwaState.pushSubscribed,
+    pwaState.pushNotificationSupported,
+    pwaState.pushPermission,
+    pwaState.browserInfo.canReceivePushNotifications,
+    isLoading,
+    enablePushNotificationsPWA,
+  ]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -160,25 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
-
-  // --- Function to update location state ---
-  const setLocation = (
-    status: LocationStatus,
-    newLocation?: Location | null,
-  ) => {
-    setLocationStatus(status);
-    if (newLocation) {
-      setLocationState(newLocation);
-      // Store location in localStorage for persistence
-      localStorage.setItem("userLocation", JSON.stringify(newLocation));
-    } else if (status !== "allowed") {
-      // Clear stored location if status is not allowed
-      localStorage.removeItem("userLocation");
-      setLocationState(null);
-    }
-    // Store the permission status to avoid asking on every visit
-    localStorage.setItem("locationPermission", status);
-  };
 
   const login = async () => {
     if (!authClient) return;
@@ -232,15 +233,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
-    location,
-    locationStatus,
-    setLocation,
-    addressMode,
-    setAddressMode,
-    displayAddress,
-    setDisplayAddress,
-    manualFields,
-    setManualFields,
+    // Delegate location properties to Zustand store
+    location: locationStore.location,
+    locationStatus: locationStore.locationStatus,
+    setLocation: locationStore.setLocation,
+    addressMode: locationStore.addressMode,
+    setAddressMode: locationStore.setAddressMode,
+    displayAddress: locationStore.displayAddress,
+    setDisplayAddress: locationStore.setDisplayAddress,
+    manualFields: locationStore.manualFields,
+    setManualFields: locationStore.setManualFields,
+    // PWA properties
+    pwaState,
+    enablePushNotifications: enablePushNotificationsPWA,
+    disablePushNotifications: disablePushNotificationsPWA,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

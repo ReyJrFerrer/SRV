@@ -216,6 +216,16 @@ export const useReputation = () => {
   }, [fetchReputation]);
 
   /**
+   * Force refresh reputation data (clears cache and refetches)
+   */
+  const forceRefreshReputation = useCallback(async () => {
+    setReputation(null);
+    setLoading(true);
+    setError(null);
+    await fetchReputation();
+  }, [fetchReputation]);
+
+  /**
    * Get simplified reputation score for display
    */
   const getReputationDisplay = useCallback(() => {
@@ -239,6 +249,7 @@ export const useReputation = () => {
     loading,
     error,
     refreshReputation,
+    forceRefreshReputation,
     getReputationDisplay,
     fetchUserReputation,
     isAuthenticated,

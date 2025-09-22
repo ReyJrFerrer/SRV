@@ -1,18 +1,14 @@
-const { onRequest } = require("firebase-functions/v2/https");
-const { Xendit } = require("xendit-node");
+const {onRequest} = require("firebase-functions/v2/https");
+const {Xendit} = require("xendit-node");
 const admin = require("firebase-admin");
-const functions = require("firebase-functions");
 
 // Initialize Xendit client
 let xendit;
 try {
-  const config = functions.config();
-  const secretKey =
-    (config.xendit && config.xendit.secret_key) ||
-    process.env.XENDIT_SECRET_KEY;
+  const secretKey = process.env.XENDIT_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn("Xendit secret key not found in config or environment");
+    console.warn("Xendit secret key not found in environment variables");
     xendit = null;
   } else {
     xendit = new Xendit({
@@ -51,7 +47,36 @@ if (admin.apps.length === 0) {
  * Check the status of a Xendit invoice
  * This function fetches the current status of an invoice from Xendit
  */
-exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
+exports.checkInvoiceStatus = onRequest(async (req, res) => {
+  console.log("=== checkInvoiceStatus function started ===");
+  console.log("Request method:", req.method);
+  console.log("Request headers origin:", req.headers.origin);
+
+  // Set CORS headers first, before any other logic
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // For development and testing, allow localhost
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -60,7 +85,7 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    const { invoiceId } = req.body.data;
+    const {invoiceId} = req.body.data;
 
     if (!invoiceId) {
       return res.status(400).json({
@@ -122,7 +147,7 @@ exports.checkInvoiceStatus = onRequest({ cors: true }, async (req, res) => {
     }
 
     // Fetch invoice status from Xendit
-    const { Invoice } = xendit;
+    const {Invoice} = xendit;
     let invoice;
 
     try {

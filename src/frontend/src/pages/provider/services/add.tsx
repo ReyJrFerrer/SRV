@@ -976,48 +976,6 @@ const AddServicePage: React.FC = () => {
                         );
                       })}
                   </div>
-                  {/* Commission Summary */}
-                  {/* {Object.keys(commissionQuotes).length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <svg 
-                          className="h-6 w-6 text-blue-400" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          viewBox="0 0 24 24">
-                          <path d="M7 6h8a4 4 0 0 1 0 8h-8m0-8v12m0-8h8m-8 4h6" />
-                        </svg>
-                        Commission Summary
-                      </h4>
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        {(() => {
-                          const totalCommission = Object.values(commissionQuotes).reduce((sum, quote) => sum + quote.commissionFee, 0);
-                          const totalOriginalPrice = formData.servicePackages
-                            .filter(pkg => pkg.name.trim() && pkg.description.trim() && pkg.price && commissionQuotes[pkg.id])
-                            .reduce((sum, pkg) => sum + Number(pkg.price), 0);
-                          const totalWithCommission = totalOriginalPrice + totalCommission;
-                          
-                          return (
-                            <div className="text-sm space-y-1">
-                              <div className="flex justify-between">
-                                <span>Total Service Price:</span>
-                                <span>₱{totalOriginalPrice.toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Total Commission:</span>
-                                <span>₱{totalCommission.toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold text-blue-600 pt-1 border-t border-blue-200">
-                                <span>Total to Client:</span>
-                                <span>₱{totalWithCommission.toLocaleString()}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  )} */}
                 </div>
                 <div className="rounded-lg bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">

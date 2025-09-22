@@ -248,6 +248,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // State for decline confirmation dialog
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
+  const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
 
@@ -330,20 +335,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
 
-      // Only check for cash payment bookings that can be accepted
-      if (
-        specificBooking.paymentMethod !== "CashOnHand" ||
-        !specificBooking.canAccept
-      ) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: false,
-          commissionValidationMessage: "No commission validation needed",
-          loading: false,
-        });
-        return;
-      }
-
       try {
         setCommissionValidation((prev) => ({ ...prev, loading: true }));
         const validation = await checkCommissionValidation(specificBooking);
@@ -409,18 +400,33 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const handleDeclineBooking = async () => {
     if (!specificBooking) return;
-    const success = await declineBookingById(
-      specificBooking.id,
-      "Declined by provider",
-    );
-    if (success) {
-      await refreshBookings();
-      const updatedBooking = bookings.find(
-        (booking) => booking.id === specificBooking.id,
+
+    // Show confirmation dialog instead of window.confirm
+    setShowDeclineConfirm(true);
+  };
+
+  // New function to handle the actual decline after confirmation
+  const handleConfirmDecline = async () => {
+    if (!specificBooking) return;
+
+    setIsDeclinining(true);
+    try {
+      const success = await declineBookingById(
+        specificBooking.id,
+        "Declined by provider",
       );
-      if (updatedBooking) {
-        setSpecificBooking(updatedBooking);
+      if (success) {
+        await refreshBookings();
+        const updatedBooking = bookings.find(
+          (booking) => booking.id === specificBooking.id,
+        );
+        if (updatedBooking) {
+          setSpecificBooking(updatedBooking);
+        }
       }
+    } finally {
+      setIsDeclinining(false);
+      setShowDeclineConfirm(false);
     }
   };
 
@@ -663,6 +669,38 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // --- Main Page Layout ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      {/* Decline Confirmation Dialog */}
+      {showDeclineConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Decline Booking?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to decline this booking from{" "}
+              <b>{specificBooking?.clientName || "this client"}</b>? This action
+              cannot be undone and the client will be notified.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowDeclineConfirm(false)}
+                disabled={isDeclinining}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={handleConfirmDecline}
+                disabled={isDeclinining}
+              >
+                {isDeclinining ? "Declining..." : "Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center px-4 py-3">
@@ -772,7 +810,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 <span className="font-medium text-gray-700">
                   Price:{" "}
                   <span className="font-semibold text-green-700">
-                    ₱{price.toFixed(2)}
+                    ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}
                   </span>
                 </span>
               </div>
