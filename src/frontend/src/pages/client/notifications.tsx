@@ -108,7 +108,9 @@ const NotificationItem: React.FC<{
 
   // Enhanced notification message formatting
   const getEnhancedMessage = () => {
-    const providerName = notification.providerName ? ` by ${notification.providerName}` : '';
+    const providerName = notification.providerName
+      ? ` by ${notification.providerName}`
+      : "";
 
     switch (notification.type) {
       case "booking_accepted":
@@ -126,19 +128,19 @@ const NotificationItem: React.FC<{
       case "provider_message":
         return `New message${providerName}. Tap to view and respond.`;
       case "system_announcement":
-        return `System announcement: ${notification.message || 'Important update from SRV team.'}`;
+        return `System announcement: ${notification.message || "Important update from SRV team."}`;
       case "service_rescheduled":
         return `Service rescheduled${providerName}. Your appointment has been moved to a new time.`;
       case "service_reminder":
         return `Service reminder${providerName}. Your appointment is coming up soon.`;
       case "promo_offer":
-        return `Special offer available! ${notification.message || 'Check out our latest promotions.'}`;
+        return `Special offer available! ${notification.message || "Check out our latest promotions."}`;
       case "provider_on_the_way":
         return `Provider is on the way${providerName}. They should arrive shortly.`;
       case "review_reminder":
         return `Please review your experience${providerName}. Your feedback helps improve our service.`;
       default:
-        return notification.message || 'New notification from SRV';
+        return notification.message || "New notification from SRV";
     }
   };
 
@@ -158,14 +160,14 @@ const NotificationItem: React.FC<{
         <p className="text-sm font-medium text-blue-900">
           {getEnhancedMessage()}
         </p>
-        {notification.message && 
-         notification.type !== "system_announcement" && 
-         notification.type !== "promo_offer" && 
-         notification.message !== getEnhancedMessage() && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            {notification.message}
-          </p>
-        )}
+        {notification.message &&
+          notification.type !== "system_announcement" &&
+          notification.type !== "promo_offer" &&
+          notification.message !== getEnhancedMessage() && (
+            <p className="mt-1 text-xs text-gray-600 italic">
+              {notification.message}
+            </p>
+          )}
         <p className="mt-1 text-xs text-gray-500">
           {timeAgo(notification.timestamp)}
         </p>

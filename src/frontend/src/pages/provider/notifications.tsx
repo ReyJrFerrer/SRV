@@ -71,7 +71,9 @@ const NotificationItem: React.FC<{
 
   // Enhanced notification message formatting
   const getEnhancedMessage = () => {
-    const clientName = notification.clientName ? ` from ${notification.clientName}` : '';
+    const clientName = notification.clientName
+      ? ` from ${notification.clientName}`
+      : "";
 
     switch (notification.type) {
       case "new_booking_request":
@@ -95,7 +97,7 @@ const NotificationItem: React.FC<{
       case "payment_issue":
         return `Payment issue${clientName}. There's a problem with the transaction.`;
       default:
-        return notification.message || 'New notification';
+        return notification.message || "New notification";
     }
   };
 
@@ -112,14 +114,13 @@ const NotificationItem: React.FC<{
         <NotificationIcon type={notification.type} />
       </div>
       <div className="flex-1">
-        <p className="text-sm text-gray-800">
-          {getEnhancedMessage()}
-        </p>
-        {notification.message && notification.message !== getEnhancedMessage() && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            {notification.message}
-          </p>
-        )}
+        <p className="text-sm text-gray-800">{getEnhancedMessage()}</p>
+        {notification.message &&
+          notification.message !== getEnhancedMessage() && (
+            <p className="mt-1 text-xs text-gray-600 italic">
+              {notification.message}
+            </p>
+          )}
         <p className="mt-1 text-xs text-gray-500">
           {timeAgo(notification.timestamp)}
         </p>
