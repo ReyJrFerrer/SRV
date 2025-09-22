@@ -1,11 +1,40 @@
 {
-  "admin": {
-    "ic": "l2bzp-dyaaa-aaaaf-qbtla-cai"
-  },
+  "admin": {},
+  "admin-frontend": {},
   "auth": {
-    "ic": "l5a73-oaaaa-aaaaf-qbtlq-cai"
+    "ic": "cdxpl-oiaaa-aaaad-ab56q-cai"
   },
   "booking": {
-    "ic": "kqo3v-biaaa-aaaaf-qbtma-cai"
+    "ic": "ckuex-yaaaa-aaaad-ab57a-cai"
+  },
+  "chat": {
+    "ic": "b2hor-eaaaa-aaaad-ab5xa-cai"
+  },
+  "commission": {
+    "ic": "b5gif-jyaaa-aaaad-ab5xq-cai"
+  },
+  "feedback": {
+    "ic": "da3gn-2qaaa-aaaad-ab5ya-cai"
+  },
+  "media": {
+    "ic": "dh2az-xiaaa-aaaad-ab5yq-cai"
+  },
+  "notification": {
+    "ic": "dozlf-baaaa-aaaad-ab5za-cai"
+  },
+  "remittance": {
+    "ic": "djynr-myaaa-aaaad-ab5zq-cai"
+  },
+  "reputation": {
+    "ic": "d4744-nqaaa-aaaad-ab52a-cai"
+  },
+  "review": {
+    "ic": "d362i-aiaaa-aaaad-ab52q-cai"
+  },
+  "service": {
+    "ic": "ds5ru-waaaa-aaaad-ab53a-cai"
+  },
+  "wallet": {
+    "ic": "dv4xa-3yaaa-aaaad-ab53q-cai"
   }
 }

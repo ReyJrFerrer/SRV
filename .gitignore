@@ -23,3 +23,5 @@ dist/
 
 firebase-debug.log
 firestore-debug.log
+
+canister_ids.json
