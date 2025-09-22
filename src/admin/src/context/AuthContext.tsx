@@ -117,12 +117,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       await authClient.login({
-          identityProvider:
+        identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
             ? "https://identity.ic0.app"
-            : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
-           ,
+            : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
         onSuccess: async () => {
           try {
             const identity = authClient.getIdentity();

@@ -271,7 +271,9 @@ export default function MainPage({
             <div className="hero-text-container mb-8">
               <h1 className="hero-text text-center text-3xl leading-tight font-extrabold text-blue-800 drop-shadow-lg md:text-5xl">
                 <div className="text-line mb-2 flex items-center justify-center gap-2">
-                  <span className="text-segment">Ang <span className="text-yellow-400">S</span>erbisyo</span>
+                  <span className="text-segment">
+                    Ang <span className="text-yellow-400">S</span>erbisyo
+                  </span>
                   <span className="component-group-after flex items-center gap-1">
                     <span className="arrow-circle">
                       <img
@@ -292,7 +294,9 @@ export default function MainPage({
                       className="star-image h-6 w-6 drop-shadow md:h-8 md:w-8"
                     />
                   </span>
-                  <span className="text-segment"><span className="text-blue-400">R</span>ito ay</span>
+                  <span className="text-segment">
+                    <span className="text-blue-400">R</span>ito ay
+                  </span>
                   <span className="component-group-after">
                     <img
                       src="/hero/message-load.svg"
@@ -314,7 +318,9 @@ export default function MainPage({
                     </div>
                   </span>
 
-                  <span className="text-segment">always <span className="text-yellow-400">V</span>alued!</span>
+                  <span className="text-segment">
+                    always <span className="text-yellow-400">V</span>alued!
+                  </span>
                   <span className="component-group-after flex gap-1">
                     <img
                       src="/hero/polygon1.svg"
