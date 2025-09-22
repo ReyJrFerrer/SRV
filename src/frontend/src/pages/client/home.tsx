@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { useLocationStore } from "../../store/locationStore";
+import { toast } from "sonner";
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
 
@@ -104,7 +105,7 @@ const ClientHomePage: React.FC = () => {
                 className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={async () => {
                   if (feedbackRating === 0) {
-                    alert("Please select a rating before submitting.");
+                    toast.error("Please select a rating before submitting.");
                     return;
                   }
 
@@ -120,10 +121,10 @@ const ClientHomePage: React.FC = () => {
                     setShowFeedbackPopup(false);
 
                     // Show success message
-                    alert("Thank you for your feedback!");
+                    toast.success("Thank you for your feedback!");
                   } catch (error) {
                     //console.error("Failed to submit feedback:", error);
-                    alert("Failed to submit feedback. Please try again.");
+                    toast.error("Failed to submit feedback. Please try again.");
                   }
                 }}
                 disabled={submitting}
