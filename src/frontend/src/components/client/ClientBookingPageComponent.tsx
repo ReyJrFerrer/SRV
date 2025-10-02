@@ -278,6 +278,8 @@ const ClientBookingPageComponent: React.FC = () => {
     lng: number;
     address?: string;
   } | null>(null);
+  const [mapPreciseAddress, setMapPreciseAddress] = useState<string>("");
+  const [mapDisplayAddress, setMapDisplayAddress] = useState<string>("");
   const [showFallbackForms, setShowFallbackForms] = useState<boolean>(false);
   // --- Update manualBarangayOptions when manualProvince or manualCity changes ---
   useEffect(() => {
@@ -1501,15 +1503,46 @@ const ClientBookingPageComponent: React.FC = () => {
                 </h3>
                 <div className="mb-4">
                   <LocationMapPicker
-                    value={mapLocation}
-                    onChange={(loc) => {
+                    value={
+                      mapLocation
+                        ? { ...mapLocation, address: mapLocation.address ?? "" }
+                        : null
+                    }
+                    onChange={(loc: any) => {
+                      // Save structured map location
                       setMapLocation(loc);
+                      const preciseAddressForDB =
+                        loc.formatted_address || loc.address || "";
+                      const placeName = loc.rawName;
+                      let displayAddress = preciseAddressForDB;
+                      if (
+                        placeName &&
+                        !preciseAddressForDB.startsWith(placeName)
+                      ) {
+                        displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                      }
+                      setMapPreciseAddress(preciseAddressForDB);
+                      setMapDisplayAddress(displayAddress);
                       if (highlightInput === "mapLocation")
                         setHighlightInput("");
                     }}
-                    label="Pin / Search Location"
+                    includeProvince={false}
+                    persistKey="booking:lastLocation"
                     highlight={highlightInput === "mapLocation"}
+                    label="Pin / Search Location"
                   />
+                  {mapDisplayAddress && (
+                    <p className="mt-2 truncate text-xs text-gray-600">
+                      {mapDisplayAddress}
+                    </p>
+                  )}
+                  {mapPreciseAddress &&
+                    mapDisplayAddress &&
+                    mapDisplayAddress !== mapPreciseAddress && (
+                      <p className="mt-1 truncate text-[10px] text-gray-400">
+                        Provider reference: {mapPreciseAddress}
+                      </p>
+                    )}
                   <p className="mt-2 text-xs text-gray-500">
                     Drop or drag the pin to set your service location. If you
                     cannot pin your location, open the fallback address form.

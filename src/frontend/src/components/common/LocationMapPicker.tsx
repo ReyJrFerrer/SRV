@@ -14,12 +14,25 @@ const containerStyle: React.CSSProperties = {
 
 const defaultCenter = { lat: 16.413, lng: 120.5914 }; // Manila fallback
 
+interface StructuredLocation {
+  lat: number;
+  lng: number;
+  address: string;
+  rawName?: string;
+  route?: string;
+  barangay?: string; // sublocality/neighborhood
+  city?: string;
+  province?: string;
+}
+
 interface LocationMapPickerProps {
-  value?: { lat: number; lng: number; address?: string } | null;
-  onChange: (loc: { lat: number; lng: number; address?: string }) => void;
+  value?: StructuredLocation | null;
+  onChange: (loc: StructuredLocation) => void;
   apiKey?: string; // optional override
   label?: string;
   highlight?: boolean; // highlight if validation failed
+  includeProvince?: boolean; // append province if true and not already present
+  persistKey?: string; // localStorage key to persist last selection
 }
 
 const libraries: "places"[] = ["places"];
@@ -30,6 +43,8 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   apiKey,
   label = "Map Location",
   highlight = false,
+  includeProvince = false,
+  persistKey,
 }) => {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -46,6 +61,40 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const buildDisplayAddress = (parts: {
+    rawName?: string;
+    route?: string;
+    barangay?: string;
+    city?: string;
+    province?: string;
+  }): string => {
+    // Format: (House/store/building), street, barangay, city[, province]
+    const seq: string[] = [];
+    if (parts.rawName) seq.push(parts.rawName);
+    if (parts.route && !seq.join(", ").includes(parts.route))
+      seq.push(parts.route);
+    if (parts.barangay && !seq.join(", ").includes(parts.barangay))
+      seq.push(parts.barangay);
+    if (parts.city && !seq.join(", ").includes(parts.city))
+      seq.push(parts.city);
+    if (
+      includeProvince &&
+      parts.province &&
+      !seq.join(", ").includes(parts.province)
+    ) {
+      seq.push(parts.province);
+    }
+    return seq.filter(Boolean).join(", ");
+  };
+
+  const persistLocation = (loc: StructuredLocation) => {
+    if (persistKey && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(persistKey, JSON.stringify(loc));
+      } catch {}
+    }
+  };
+
   const reverseGeocodeAndUpdate = useCallback(
     (pos: { lat: number; lng: number }) => {
       if (!geocoderRef.current && (window as any).google) {
@@ -55,18 +104,74 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       if (geocoder) {
         geocoder.geocode({ location: pos }, (results, status) => {
           if (status === "OK" && results && results[0]) {
-            const address = results[0].formatted_address;
-            if (inputRef.current) inputRef.current.value = address;
-            onChange({ ...pos, address });
+            const primary = results[0];
+            const getComponent = (type: string): string => {
+              const comp = primary.address_components?.find((c: any) =>
+                c.types.includes(type),
+              );
+              return comp ? comp.long_name : "";
+            };
+            const rawName =
+              getComponent("point_of_interest") ||
+              getComponent("premise") ||
+              getComponent("establishment") ||
+              "";
+            const route = getComponent("route");
+            const barangay =
+              getComponent("sublocality_level_1") ||
+              getComponent("sublocality") ||
+              getComponent("neighborhood") ||
+              "";
+            const city =
+              getComponent("locality") ||
+              getComponent("administrative_area_level_2") ||
+              "";
+            const province = getComponent("administrative_area_level_1") || "";
+            let displayAddress = buildDisplayAddress({
+              rawName,
+              route,
+              barangay,
+              city,
+              province,
+            });
+            if (!displayAddress) {
+              let formatted = primary.formatted_address || "";
+              formatted = formatted.replace(/^\+[^,]+,\s*/i, "");
+              displayAddress =
+                formatted || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+            }
+            if (inputRef.current) inputRef.current.value = displayAddress;
+            const structured: StructuredLocation = {
+              lat: pos.lat,
+              lng: pos.lng,
+              address: displayAddress,
+              rawName: rawName || undefined,
+              route: route || undefined,
+              barangay: barangay || undefined,
+              city: city || undefined,
+              province: province || undefined,
+            };
+            onChange(structured);
+            persistLocation(structured);
           } else {
             const fallbackAddress = `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
             if (inputRef.current) inputRef.current.value = fallbackAddress;
-            onChange({ ...pos, address: fallbackAddress });
+            const structured: StructuredLocation = {
+              lat: pos.lat,
+              lng: pos.lng,
+              address: fallbackAddress,
+            };
+            onChange(structured);
+            persistLocation(structured);
           }
         });
       } else {
-        // No geocoder available yet
-        onChange(pos);
+        const structured: StructuredLocation = {
+          lat: pos.lat,
+          lng: pos.lng,
+          address: `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`,
+        };
+        onChange(structured);
       }
     },
     [onChange],
@@ -97,21 +202,72 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.geometry && place.geometry.location) {
-        const loc = {
+        // Build user-friendly address from components (avoid raw formatted address / plus codes)
+        const rawName = place.name || "";
+        const getAddressComponent = (type: string): string => {
+          if (!place.address_components) return "";
+          const comp = place.address_components.find((c: any) =>
+            c.types.includes(type),
+          );
+          return comp ? comp.long_name : "";
+        };
+        const route = getAddressComponent("route");
+        const barangay =
+          getAddressComponent("sublocality_level_1") ||
+          getAddressComponent("sublocality") ||
+          getAddressComponent("neighborhood");
+        const city =
+          getAddressComponent("locality") ||
+          getAddressComponent("administrative_area_level_2");
+        const province = getAddressComponent("administrative_area_level_1");
+
+        let displayAddress = buildDisplayAddress({
+          rawName,
+          route,
+          barangay: barangay || undefined,
+          city: city || undefined,
+          province: province || undefined,
+        });
+        if (!displayAddress) {
+          displayAddress =
+            place.formatted_address ||
+            `${place.geometry.location.lat().toFixed(5)}, ${place.geometry.location.lng().toFixed(5)}`;
+        }
+        const structured: StructuredLocation = {
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
-          address: place.formatted_address,
+          address: displayAddress,
+          rawName: rawName || undefined,
+          route: route || undefined,
+          barangay: barangay || undefined,
+          city: city || undefined,
+          province: province || undefined,
         };
-        setInternalPosition(loc);
-        if (inputRef.current && place.formatted_address) {
-          inputRef.current.value = place.formatted_address;
-        }
-        onChange(loc);
-        map?.panTo(loc);
-        map?.setZoom(15);
+        setInternalPosition({ lat: structured.lat, lng: structured.lng });
+        if (inputRef.current) inputRef.current.value = structured.address;
+        onChange(structured);
+        persistLocation(structured);
+        map?.panTo({ lat: structured.lat, lng: structured.lng });
+        map?.setZoom(17);
       }
     }
   };
+
+  // Load persisted location if available and no value provided
+  React.useEffect(() => {
+    if (!value && persistKey && typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(persistKey);
+        if (raw) {
+          const parsed: StructuredLocation = JSON.parse(raw);
+          if (parsed.lat && parsed.lng) {
+            setInternalPosition({ lat: parsed.lat, lng: parsed.lng });
+            onChange(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [value, persistKey, onChange]);
 
   if (!isLoaded)
     return <div className="text-sm text-gray-500">Loading map...</div>;
@@ -158,9 +314,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           />
         </GoogleMap>
       </div>
-      {value?.address && (
-        <p className="truncate text-xs text-gray-500">{value.address}</p>
-      )}
+
       <p className="text-[10px] text-gray-400">
         Click map or drag marker to refine. Powered by Google Maps.
       </p>
