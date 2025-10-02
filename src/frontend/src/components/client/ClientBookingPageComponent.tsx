@@ -851,8 +851,24 @@ const ClientBookingPageComponent: React.FC = () => {
       // Build final address: map pin (primary) else fallback to manual/detected structured address
       let finalAddress: string;
       if (isUsingMapPin) {
-        // Prefer geocoded address then append landmark if provided
-        const base = mapLocation!.address?.trim();
+        // Base address preference: user-friendly display address if we built one; else mapLocation.address
+        let base = mapDisplayAddress || mapLocation!.address?.trim() || "";
+        // Ensure barangay is present (only insert if we have a barangay from fallback selection or detection and it's not already there)
+        const normalizedBase = base.toLowerCase();
+        if (
+          barangayValue &&
+          barangayValue.trim() &&
+          !normalizedBase.includes(barangayValue.trim().toLowerCase())
+        ) {
+          // Insert barangay before city if possible
+          if (finalMunicipality && base.includes(finalMunicipality)) {
+            // Split at municipality occurrence
+            const parts = base.split(finalMunicipality);
+            base = `${parts[0].replace(/,\s*$/, "")}, ${barangayValue}, ${finalMunicipality}${parts.slice(1).join(finalMunicipality)}`;
+          } else {
+            base = `${base}, ${barangayValue}`;
+          }
+        }
         const landmarkPart = landmark ? ` (${landmark})` : "";
         finalAddress = base
           ? `${base}${landmarkPart}`
@@ -890,6 +906,10 @@ const ClientBookingPageComponent: React.FC = () => {
         if (mapLocation.address) {
           (bookingData as any).geocodedAddress = mapLocation.address;
         }
+        if (mapPreciseAddress)
+          (bookingData as any).preciseAddress = mapPreciseAddress;
+        if (mapDisplayAddress)
+          (bookingData as any).displayAddress = mapDisplayAddress;
       }
 
       // Handle different payment methods
@@ -1526,27 +1546,48 @@ const ClientBookingPageComponent: React.FC = () => {
                       if (highlightInput === "mapLocation")
                         setHighlightInput("");
                     }}
-                    includeProvince={false}
                     persistKey="booking:lastLocation"
                     highlight={highlightInput === "mapLocation"}
                     label="Pin / Search Location"
                   />
-                  {mapDisplayAddress && (
-                    <p className="mt-2 truncate text-xs text-gray-600">
-                      {mapDisplayAddress}
-                    </p>
+                  {(mapDisplayAddress || mapPreciseAddress) && (
+                    <div className="mt-2 space-y-1">
+                      {mapDisplayAddress && (
+                        <div className="flex items-start gap-1">
+                          <span
+                            className="truncate text-xs font-medium text-gray-700"
+                            title={mapDisplayAddress}
+                          >
+                            {mapDisplayAddress}
+                          </span>
+                          <span
+                            className="cursor-help text-[10px] text-blue-500"
+                            title="Display Address: Readable version (place/building, street, barangay, city)."
+                          >
+                            (?)
+                          </span>
+                        </div>
+                      )}
+                      {mapPreciseAddress &&
+                        mapDisplayAddress &&
+                        mapDisplayAddress !== mapPreciseAddress && (
+                          <div className="flex items-start gap-1">
+                            <span
+                              className="truncate text-[10px] text-gray-500"
+                              title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                            >
+                              Provider reference: {mapPreciseAddress}
+                            </span>
+                            <span
+                              className="cursor-help text-[10px] text-blue-400"
+                              title="Used internally to help the provider navigate accurately."
+                            >
+                              (i)
+                            </span>
+                          </div>
+                        )}
+                    </div>
                   )}
-                  {mapPreciseAddress &&
-                    mapDisplayAddress &&
-                    mapDisplayAddress !== mapPreciseAddress && (
-                      <p className="mt-1 truncate text-[10px] text-gray-400">
-                        Provider reference: {mapPreciseAddress}
-                      </p>
-                    )}
-                  <p className="mt-2 text-xs text-gray-500">
-                    Drop or drag the pin to set your service location. If you
-                    cannot pin your location, open the fallback address form.
-                  </p>
                 </div>
                 {!showFallbackForms && (
                   <button

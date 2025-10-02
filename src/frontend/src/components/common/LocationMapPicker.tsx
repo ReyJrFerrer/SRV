@@ -31,7 +31,6 @@ interface LocationMapPickerProps {
   apiKey?: string; // optional override
   label?: string;
   highlight?: boolean; // highlight if validation failed
-  includeProvince?: boolean; // append province if true and not already present
   persistKey?: string; // localStorage key to persist last selection
 }
 
@@ -43,7 +42,6 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   apiKey,
   label = "Map Location",
   highlight = false,
-  includeProvince = false,
   persistKey,
 }) => {
   const { isLoaded } = useJsApiLoader({
@@ -61,30 +59,26 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const buildDisplayAddress = (parts: {
-    rawName?: string;
-    route?: string;
-    barangay?: string;
-    city?: string;
-    province?: string;
-  }): string => {
-    // Format: (House/store/building), street, barangay, city[, province]
-    const seq: string[] = [];
-    if (parts.rawName) seq.push(parts.rawName);
-    if (parts.route && !seq.join(", ").includes(parts.route))
-      seq.push(parts.route);
-    if (parts.barangay && !seq.join(", ").includes(parts.barangay))
-      seq.push(parts.barangay);
-    if (parts.city && !seq.join(", ").includes(parts.city))
-      seq.push(parts.city);
+  // Compose a display address that prioritizes Google's formatted_address, but
+  // will prepend a place/establishment name (rawName) if it's available and
+  // not already present at the start. We still strip any leading plus codes.
+  const composeFormattedWithPlace = (
+    rawName: string | undefined,
+    formattedAddress: string | undefined,
+  ): string => {
+    let formatted = (formattedAddress || "").trim();
+    // Remove leading Plus Code if present (e.g., "+2345+X7, ...")
+    formatted = formatted.replace(/^\+[^,]+,\s*/i, "").trim();
+    if (!formatted) return rawName || "";
     if (
-      includeProvince &&
-      parts.province &&
-      !seq.join(", ").includes(parts.province)
+      rawName &&
+      rawName.trim() &&
+      !formatted.toLowerCase().startsWith(rawName.trim().toLowerCase()) &&
+      !formatted.toLowerCase().includes(rawName.trim().toLowerCase())
     ) {
-      seq.push(parts.province);
+      return `${rawName.trim()}, ${formatted}`;
     }
-    return seq.filter(Boolean).join(", ");
+    return formatted;
   };
 
   const persistLocation = (loc: StructuredLocation) => {
@@ -127,18 +121,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               getComponent("administrative_area_level_2") ||
               "";
             const province = getComponent("administrative_area_level_1") || "";
-            let displayAddress = buildDisplayAddress({
+            // Primary strategy now: use Google's formatted address, optionally
+            // prefixed with the raw place/establishment name if absent.
+            let displayAddress = composeFormattedWithPlace(
               rawName,
-              route,
-              barangay,
-              city,
-              province,
-            });
+              primary.formatted_address,
+            );
             if (!displayAddress) {
-              let formatted = primary.formatted_address || "";
-              formatted = formatted.replace(/^\+[^,]+,\s*/i, "");
-              displayAddress =
-                formatted || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+              displayAddress = `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
             }
             if (inputRef.current) inputRef.current.value = displayAddress;
             const structured: StructuredLocation = {
@@ -221,17 +211,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           getAddressComponent("administrative_area_level_2");
         const province = getAddressComponent("administrative_area_level_1");
 
-        let displayAddress = buildDisplayAddress({
+        let displayAddress = composeFormattedWithPlace(
           rawName,
-          route,
-          barangay: barangay || undefined,
-          city: city || undefined,
-          province: province || undefined,
-        });
+          place.formatted_address,
+        );
         if (!displayAddress) {
-          displayAddress =
-            place.formatted_address ||
-            `${place.geometry.location.lat().toFixed(5)}, ${place.geometry.location.lng().toFixed(5)}`;
+          displayAddress = `${place.geometry.location
+            .lat()
+            .toFixed(5)}, ${place.geometry.location.lng().toFixed(5)}`;
         }
         const structured: StructuredLocation = {
           lat: place.geometry.location.lat(),
