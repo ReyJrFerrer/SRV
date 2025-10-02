@@ -18,6 +18,7 @@ import {
 } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useLocationStore } from "../../store/locationStore";
+import LocationMapPicker from "../common/LocationMapPicker";
 
 // --- Payment Section Sub-Component ---
 
@@ -264,13 +265,20 @@ const ClientBookingPageComponent: React.FC = () => {
   const [otherBarangay, setOtherBarangay] = useState("");
   // Add new state for location input mode and manual province/city selection
   const [locationInputMode, setLocationInputMode] = useState<
-    "detected" | "manual"
-  >("detected");
+    "detected" | "manual" | "hidden"
+  >("hidden");
   const [manualProvince, setManualProvince] = useState<string>("");
   const [manualCity, setManualCity] = useState<string>("");
   const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>(
     [],
   );
+  // Map picker integration state (map always visible)
+  const [mapLocation, setMapLocation] = useState<{
+    lat: number;
+    lng: number;
+    address?: string;
+  } | null>(null);
+  const [showFallbackForms, setShowFallbackForms] = useState<boolean>(false);
   // --- Update manualBarangayOptions when manualProvince or manualCity changes ---
   useEffect(() => {
     if (manualProvince && manualCity) {
@@ -719,47 +727,57 @@ const ClientBookingPageComponent: React.FC = () => {
         return;
       }
 
-      // 3. Service Location (barangay, otherBarangay, street, houseNumber)
-      if (!selectedBarangay.trim()) {
-        setFormError("Please select your Barangay before proceeding.");
-        highlightField = "barangay";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-      if (
-        selectedBarangay === "__other__" &&
-        (!otherBarangay ||
-          otherBarangay.trim().length < 3 ||
-          otherBarangay.trim().length > 20)
-      ) {
-        setFormError(
-          "Please enter a valid barangay name (3-20 characters) for 'Others'.",
-        );
-        highlightField = "otherBarangay";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-      if (street.trim().length < 3 || street.trim().length > 20) {
-        setFormError("Street Name must be between 3 and 20 characters.");
-        highlightField = "street";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-      if (
-        !houseNumber.trim() ||
-        houseNumber.length > 15 ||
-        !/\d/.test(houseNumber)
-      ) {
-        setFormError(
-          "House/Unit No. must be at most 15 characters and contain at least one number.",
-        );
-        highlightField = "houseNumber";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
+      // 3. Service Location validation
+      // If a map pin has been chosen, skip granular address validation (treat form as fallback)
+      const isUsingMapPin = !!(
+        mapLocation &&
+        mapLocation.lat &&
+        mapLocation.lng
+      );
+      if (!isUsingMapPin) {
+        if (!selectedBarangay.trim()) {
+          setFormError(
+            "Please select your Barangay before proceeding (or drop a map pin).",
+          );
+          highlightField = "barangay";
+          setIsSubmitting(false);
+          setHighlightInput(highlightField);
+          return;
+        }
+        if (
+          selectedBarangay === "__other__" &&
+          (!otherBarangay ||
+            otherBarangay.trim().length < 3 ||
+            otherBarangay.trim().length > 20)
+        ) {
+          setFormError(
+            "Please enter a valid barangay name (3-20 characters) for 'Others'.",
+          );
+          highlightField = "otherBarangay";
+          setIsSubmitting(false);
+          setHighlightInput(highlightField);
+          return;
+        }
+        if (street.trim().length < 3 || street.trim().length > 20) {
+          setFormError("Street Name must be between 3 and 20 characters.");
+          highlightField = "street";
+          setIsSubmitting(false);
+          setHighlightInput(highlightField);
+          return;
+        }
+        if (
+          !houseNumber.trim() ||
+          houseNumber.length > 15 ||
+          !/\d/.test(houseNumber)
+        ) {
+          setFormError(
+            "House/Unit No. must be at most 15 characters and contain at least one number.",
+          );
+          highlightField = "houseNumber";
+          setIsSubmitting(false);
+          setHighlightInput(highlightField);
+          return;
+        }
       }
 
       // 4. Payment Method (if cash)
@@ -828,16 +846,27 @@ const ClientBookingPageComponent: React.FC = () => {
       const finalProvince =
         locationInputMode === "manual" ? manualProvince : displayProvince;
 
-      const finalAddress = [
-        houseNumber,
-        street,
-        barangayValue,
-        finalMunicipality,
-        finalProvince,
-        landmark,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      // Build final address: map pin (primary) else fallback to manual/detected structured address
+      let finalAddress: string;
+      if (isUsingMapPin) {
+        // Prefer geocoded address then append landmark if provided
+        const base = mapLocation!.address?.trim();
+        const landmarkPart = landmark ? ` (${landmark})` : "";
+        finalAddress = base
+          ? `${base}${landmarkPart}`
+          : `Pinned Location (${mapLocation!.lat.toFixed(5)}, ${mapLocation!.lng.toFixed(5)})${landmarkPart}`;
+      } else {
+        finalAddress = [
+          houseNumber,
+          street,
+          barangayValue,
+          finalMunicipality,
+          finalProvince,
+          landmark,
+        ]
+          .filter(Boolean)
+          .join(", ");
+      }
       const bookingData: BookingRequest = {
         serviceId: service!.id,
         serviceName: service!.title,
@@ -852,6 +881,14 @@ const ClientBookingPageComponent: React.FC = () => {
         amountToPay: parseFloat(amountPaid),
         paymentMethod: paymentMethod, // Include the selected payment method
       };
+      // Append raw coordinates if map picker used
+      if (mapLocation?.lat && mapLocation?.lng) {
+        (bookingData as any).latitude = mapLocation.lat;
+        (bookingData as any).longitude = mapLocation.lng;
+        if (mapLocation.address) {
+          (bookingData as any).geocodedAddress = mapLocation.address;
+        }
+      }
 
       // Handle different payment methods
       if (paymentMethod === "GCash") {
@@ -1454,42 +1491,79 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- Service Location Section --- */}
-              {/* --- Service Location Section (uses location from Header.tsx context or manual selection) --- */}
-              <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+              {/* --- Service Location Section (Map primary; fallback hidden initially) --- */}
+              <div
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
+              >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
-                <div className="mb-4 flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="locationInputMode"
-                      value="detected"
-                      checked={locationInputMode === "detected"}
-                      onChange={() => setLocationInputMode("detected")}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Use Detected Location
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="locationInputMode"
-                      value="manual"
-                      checked={locationInputMode === "manual"}
-                      onChange={() => setLocationInputMode("manual")}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Choose Diffferent Location
-                    </span>
-                  </label>
+                <div className="mb-4">
+                  <LocationMapPicker
+                    value={mapLocation}
+                    onChange={(loc) => {
+                      setMapLocation(loc);
+                      if (highlightInput === "mapLocation")
+                        setHighlightInput("");
+                    }}
+                    label="Pin / Search Location"
+                    highlight={highlightInput === "mapLocation"}
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Drop or drag the pin to set your service location. If you
+                    cannot pin your location, open the fallback address form.
+                  </p>
                 </div>
-                {locationInputMode === "detected" ? (
+                {!showFallbackForms && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFallbackForms(true);
+                      setLocationInputMode("detected");
+                    }}
+                    className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Use Fallback Address Form
+                  </button>
+                )}
+                {showFallbackForms && (
+                  <div className="mb-4 flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="locationInputMode"
+                        value="detected"
+                        checked={locationInputMode === "detected"}
+                        onChange={() => setLocationInputMode("detected")}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-gray-700">Use Detected</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="locationInputMode"
+                        value="manual"
+                        checked={locationInputMode === "manual"}
+                        onChange={() => setLocationInputMode("manual")}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-gray-700">Manual City/Prov</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFallbackForms(false);
+                        setLocationInputMode("hidden");
+                      }}
+                      className="ml-auto text-xs text-blue-600 underline"
+                    >
+                      Hide Fallback
+                    </button>
+                  </div>
+                )}
+                {showFallbackForms && locationInputMode === "detected" ? (
                   <div className="mt-2 space-y-3">
                     <p className="text-xs text-gray-600">
                       Your location is automatically detected.
@@ -1636,7 +1710,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                     />
                   </div>
-                ) : (
+                ) : showFallbackForms && locationInputMode === "manual" ? (
                   <div className="mt-2 space-y-3">
                     <div className="flex gap-2">
                       <div className="flex-1">
@@ -1782,7 +1856,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                     />
                   </div>
-                )}
+                ) : null}
               </div>
               <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
