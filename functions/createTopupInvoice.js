@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
-const {Xendit} = require("xendit-node");
-const {admin} = require("./firebase-admin");
+const { Xendit } = require("xendit-node");
+const { admin } = require("./firebase-admin");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -59,7 +59,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
   try {
     // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
-      return res.status(405).json({error: "Method not allowed"});
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
     console.log("Processing POST request...");
@@ -133,7 +133,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
 
         // Fallback: Check if provider exists in Xendit Customer API
         try {
-          const {Customer} = xendit;
+          const { Customer } = xendit;
           const customerResponse = await Customer.getCustomerByReferenceID({
             referenceId: providerId,
           });
@@ -206,7 +206,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
     }
 
     // Create top-up invoice using Invoice API
-    const {Invoice} = xendit;
+    const { Invoice } = xendit;
     const invoiceData = {
       externalId: `topup-${providerId}-${Date.now()}`,
       amount: amount,
@@ -241,7 +241,7 @@ exports.createTopupInvoice = functions.https.onRequest(async (req, res) => {
     console.log("Creating Xendit invoice with data:", invoiceData);
     let invoice;
     try {
-      invoice = await Invoice.createInvoice({data: invoiceData});
+      invoice = await Invoice.createInvoice({ data: invoiceData });
       console.log("Xendit invoice created:", invoice.id);
     } catch (xenditError) {
       console.error("Xendit invoice creation error:", xenditError);

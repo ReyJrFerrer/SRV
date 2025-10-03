@@ -1,5 +1,5 @@
-const {HttpAgent} = require("@dfinity/agent");
-const {Actor} = require("@dfinity/agent");
+const { HttpAgent } = require("@dfinity/agent");
+const { Actor } = require("@dfinity/agent");
 
 // Import the actual commission canister declarations
 const fs = require("fs");
@@ -19,7 +19,7 @@ function loadCommissionIdlFactory() {
 
     if (fs.existsSync(declarationsPath)) {
       // Use dynamic import for ES module
-      const {idlFactory} = require(declarationsPath);
+      const { idlFactory } = require(declarationsPath);
       return idlFactory;
     }
 
@@ -42,7 +42,7 @@ function loadCommissionIdlFactory() {
  * @return {Function} The IDL factory function
  */
 function getManualCommissionIdl() {
-  return ({IDL}) => {
+  return ({ IDL }) => {
     const CommissionTier = IDL.Variant({
       TierA: IDL.Null,
       TierB: IDL.Null,
@@ -226,8 +226,8 @@ const commissionIdlFactory = loadCommissionIdlFactory();
  * Wallet canister IDL factory
  * @return {Function} The IDL factory function
  */
-const walletIdlFactory = ({IDL}) => {
-  const WalletResult = IDL.Variant({ok: IDL.Nat, err: IDL.Text});
+const walletIdlFactory = ({ IDL }) => {
+  const WalletResult = IDL.Variant({ ok: IDL.Nat, err: IDL.Text });
 
   return IDL.Service({
     get_balance: IDL.Func([IDL.Principal], [WalletResult], ["query"]),
@@ -277,9 +277,9 @@ async function getCommissionFromCanister(category, amount) {
 
     // Fallback to static calculation
     console.log("Falling back to static commission calculation");
-    const fallbackRate = category.toLowerCase().includes("cleaning") ?
-      0.035 :
-      0.05;
+    const fallbackRate = category.toLowerCase().includes("cleaning")
+      ? 0.035
+      : 0.05;
     const fallbackCommission = Math.round(amount * fallbackRate);
 
     return {
