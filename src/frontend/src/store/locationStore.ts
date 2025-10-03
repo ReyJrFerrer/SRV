@@ -360,7 +360,7 @@ export const useLocationStore = create<LocationState>()(
     {
       name: "location-storage",
       // Only persist essential data, not loading states
-      partialize: (state) => ({
+      partialize: (state: any) => ({
         location: state.location,
         locationStatus: state.locationStatus,
         userAddress: state.userAddress,

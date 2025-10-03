@@ -115,7 +115,7 @@ class FirebaseAuthService {
                 console.log("reCAPTCHA rendered successfully");
                 resolve();
               })
-              .catch((error) => {
+              .catch((error: any) => {
                 console.error("reCAPTCHA render error:", error);
                 this.clearRecaptcha();
                 reject(
