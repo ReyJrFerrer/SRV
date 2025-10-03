@@ -35,7 +35,7 @@ const createAuthActor = (identity?: Identity | null): AuthService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
-      host: 
+      host:
         process.env.DFX_NETWORK !== "ic" &&
         process.env.DFX_NETWORK !== "playground"
           ? "http://localhost:4943"
