@@ -63,9 +63,6 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Compose a display address that prioritizes Google's formatted_address, but
-  // will prepend a place/establishment name (rawName) if it's available and
-  // not already present at the start. We still strip any leading plus codes.
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,

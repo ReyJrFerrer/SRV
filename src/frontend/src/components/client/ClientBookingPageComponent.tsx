@@ -1737,7 +1737,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     }}
                     className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Use Fallback Address Form
+                    Use Manual Address Form
                   </button>
                 )}
                 {showFallbackForms && (
@@ -1772,7 +1772,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       }}
                       className="ml-auto text-xs text-blue-600 underline"
                     >
-                      Hide Fallback
+                      Use Maps
                     </button>
                   </div>
                 )}
