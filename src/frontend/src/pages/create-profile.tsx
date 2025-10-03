@@ -1,10 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authCanisterService } from "../services/authCanisterService";
 import TermsAndConditionsModal from "../components/common/TermsAndConditionsModal";
-import OtpModal from "../components/auth/OtpModal";
-import { phoneVerificationService } from "../services/phoneVerification";
 import {
   UserIcon,
   WrenchScrewdriverIcon,
@@ -16,7 +15,6 @@ import {
 
 export default function CreateProfilePage() {
   const [showTerms, setShowTerms] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, identity, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,22 +28,10 @@ export default function CreateProfilePage() {
     phone: "",
   });
   const [reauthRequired, setReauthRequired] = useState(false);
-  const [isPhoneVerificationInitialized, setIsPhoneVerificationInitialized] =
-    useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
   // Set document title using React 19 approach
   useEffect(() => {
     document.title = "Create Profile | SRV";
-  }, []);
-
-  // Initialize phone verification service
-  useEffect(() => {
-    const initPhoneVerification = async () => {
-      const success = await phoneVerificationService.initialize();
-      setIsPhoneVerificationInitialized(success);
-    };
-    initPhoneVerification();
   }, []);
 
   useEffect(() => {
@@ -119,65 +105,13 @@ export default function CreateProfilePage() {
       return;
     }
 
-    // Check if phone verification service is initialized
-    if (!isPhoneVerificationInitialized) {
-      setError(
-        "Phone verification service is not available. Please try again.",
-      );
-      return;
-    }
-
-    // Start phone verification process
-    setIsLoading(true);
-    try {
-      const result = await phoneVerificationService.startVerification(
-        formData.phone.trim(),
-        "recaptcha-container-profile",
-      );
-
-      if (result.step === "otp-input") {
-        setShowOtpModal(true);
-      } else if (result.step === "error") {
-        const errorMessage = result.error || "Failed to send verification code";
-        setError(errorMessage);
-
-        // Show reload suggestion for Firebase service errors
-        if (errorMessage.includes("reload the page")) {
-          // The error message already contains the reload instruction
-        }
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to send verification code";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handler for when phone verification is complete
-  const handlePhoneVerified = () => {
-    setShowOtpModal(false);
-    setIsPhoneVerified(true);
-    // Show terms modal after phone verification
+    // Show terms modal before actual profile creation
     setShowTerms(true);
-  };
-
-  // Handler for OTP modal close
-  const handleOtpModalClose = () => {
-    setShowOtpModal(false);
-    phoneVerificationService.cancel();
   };
 
   // Actual profile creation after agreeing to terms
   const handleCreateProfile = async () => {
     setShowTerms(false);
-
-    // Ensure phone verification was completed
-    if (!isPhoneVerified) {
-      setError("Phone verification is required before creating profile.");
-      return;
-    }
-
     setIsLoading(true);
     setSuccess(false);
     setError("");
@@ -236,9 +170,6 @@ export default function CreateProfilePage() {
 
   return (
     <>
-      {/* Hidden reCAPTCHA container */}
-      <div id="recaptcha-container-profile" className="hidden"></div>
-
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-yellow-50 to-blue-100 p-4">
         <div className="w-full max-w-4xl overflow-hidden rounded-3xl bg-white/70 shadow-2xl ring-1 ring-blue-100 backdrop-blur-md md:flex">
           <div className="hidden flex-col items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500/90 p-12 text-center text-white md:flex md:w-1/2">
@@ -415,12 +346,12 @@ export default function CreateProfilePage() {
                         {isLoading && !reauthRequired ? (
                           <>
                             <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-                            <span>Sending Verification...</span>
+                            <span>Creating Profile...</span>
                           </>
                         ) : (
                           <>
                             <UserPlusIcon className="mr-2 h-6 w-6" />
-                            Verify Phone & Create Profile
+                            Create Profile
                           </>
                         )}
                       </button>
@@ -432,15 +363,6 @@ export default function CreateProfilePage() {
           </div>
         </div>
       </div>
-
-      {/* OTP Verification Modal */}
-      <OtpModal
-        open={showOtpModal}
-        onClose={handleOtpModalClose}
-        onVerified={handlePhoneVerified}
-        phoneNumber={formData.phone}
-      />
-
       {/* Terms and Conditions Modal */}
       <TermsAndConditionsModal
         open={showTerms}
@@ -450,3 +372,4 @@ export default function CreateProfilePage() {
     </>
   );
 }
+

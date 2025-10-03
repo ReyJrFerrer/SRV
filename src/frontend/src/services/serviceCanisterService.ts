@@ -31,11 +31,8 @@ const createServiceActor = (identity?: Identity | null): ServiceService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
+      host: "https://id.ai"
+          
     },
   }) as ServiceService;
 };
