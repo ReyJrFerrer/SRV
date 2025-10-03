@@ -12,7 +12,7 @@ The Internet Computer for High-Security Specializations: We are retaining the IC
 
 Decentralized Identity: Users will still log in with Internet Identity. A new "Identity Bridge" function will verify their Principal and create a Firebase session.
 AI-Powered Reputation: The reputation.mo canister, which contains your unique AI sentiment analysis logic, will remain the on-chain source of truth for our decentralized trust scores. It will be updated securely by a "Reputation Bridge" Cloud Function.
- 
+
 **Your Core Directives:**
 
 1.  **Read First:** Before starting any task, you **MUST** first read the `README.md` and `CHANGELOG.md` files to understand the project's existing architecture, features, and history. This migration builds upon patterns already established.
