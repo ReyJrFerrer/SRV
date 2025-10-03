@@ -44,11 +44,15 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   highlight = false,
   persistKey,
 }) => {
+  // Attempt to load via shared loader; if already present we'll rely on global
+  let loaderKey = apiKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
   const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: apiKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+    id: "header-gmap-script",
+    googleMapsApiKey: loaderKey,
     libraries,
   });
+
+  const effectiveLoaded = isLoaded || !!(window as any).google?.maps;
 
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
@@ -59,9 +63,6 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Compose a display address that prioritizes Google's formatted_address, but
-  // will prepend a place/establishment name (rawName) if it's available and
-  // not already present at the start. We still strip any leading plus codes.
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
@@ -256,7 +257,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   }, [value, persistKey, onChange]);
 
-  if (!isLoaded)
+  if (!effectiveLoaded)
     return <div className="text-sm text-gray-500">Loading map...</div>;
 
   return (

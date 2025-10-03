@@ -2,6 +2,17 @@
 
 **Objective:** Execute a strategic architectural migration from a pure Internet Computer backend to a hybrid ICP-Firebase architecture over three phases.
 
+**Summary** We are executing a strategic migration from a monolithic backend running purely on the Internet Computer (IC) to a specialized hybrid architecture combining the IC and Firebase.
+
+This new architecture divides responsibilities to use the best tool for each job:
+
+Firebase as the Operational Backend: All high-frequency marketplace operations (bookings, chat, user profiles, wallet transactions) are being moved to a serverless backend using Firestore for real-time data and Cloud Functions for business logic. This will significantly improve performance, scalability, and cost-efficiency.
+
+The Internet Computer for High-Security Specializations: We are retaining the IC exclusively for its most unique and valuable features:
+
+Decentralized Identity: Users will still log in with Internet Identity. A new "Identity Bridge" function will verify their Principal and create a Firebase session.
+AI-Powered Reputation: The reputation.mo canister, which contains your unique AI sentiment analysis logic, will remain the on-chain source of truth for our decentralized trust scores. It will be updated securely by a "Reputation Bridge" Cloud Function.
+ 
 **Your Core Directives:**
 
 1.  **Read First:** Before starting any task, you **MUST** first read the `README.md` and `CHANGELOG.md` files to understand the project's existing architecture, features, and history. This migration builds upon patterns already established.

@@ -19,6 +19,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useLocationStore } from "../../store/locationStore";
 import LocationMapPicker from "../common/LocationMapPicker";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 
 // --- Payment Section Sub-Component ---
 
@@ -181,8 +182,13 @@ const ClientBookingPageComponent: React.FC = () => {
   const { identity } = useAuth();
 
   // --- Use Zustand location store ---
-  const { userAddress, userProvince, locationLoading, requestLocation } =
-    useLocationStore();
+  const {
+    userAddress,
+    userProvince,
+    locationLoading,
+    requestLocation,
+    location: geoLocation,
+  } = useLocationStore();
 
   // --- Section refs for scrolling/highlighting ---
   const barangayRef = useRef<HTMLSelectElement>(null);
@@ -272,7 +278,7 @@ const ClientBookingPageComponent: React.FC = () => {
   const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>(
     [],
   );
-  // Map picker integration state (map always visible)
+  // Map picker integration state (custom pin/search)
   const [mapLocation, setMapLocation] = useState<{
     lat: number;
     lng: number;
@@ -281,6 +287,69 @@ const ClientBookingPageComponent: React.FC = () => {
   const [mapPreciseAddress, setMapPreciseAddress] = useState<string>("");
   const [mapDisplayAddress, setMapDisplayAddress] = useState<string>("");
   const [showFallbackForms, setShowFallbackForms] = useState<boolean>(false);
+  // Detected vs custom map mode
+  const [mapMode, setMapMode] = useState<"detected" | "custom">("detected");
+  const [detectedAddress, setDetectedAddress] = useState<string>("");
+  const [detectedStatus, setDetectedStatus] = useState<
+    "idle" | "loading" | "ok" | "failed" | "denied" | "na"
+  >("idle");
+
+  // Detected map readiness (avoid second loader conflict). Poll for global google maps (Header / other components load script)
+  const [mapsReady, setMapsReady] = useState<boolean>(false);
+  useEffect(() => {
+    if ((window as any).google?.maps) {
+      setMapsReady(true);
+      return;
+    }
+    let attempts = 0;
+    const iv = setInterval(() => {
+      if ((window as any).google?.maps) {
+        setMapsReady(true);
+        clearInterval(iv);
+      } else if (attempts++ > 50) {
+        // Stop after ~10s (50 * 200ms)
+        clearInterval(iv);
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, []);
+
+  // Reverse geocode detected coordinates (borrow logic concept from Header)
+  useEffect(() => {
+    if (mapMode !== "detected") return;
+    if (detectedStatus === "loading" || detectedStatus === "ok") return;
+    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude) return;
+    if (!mapsReady) return;
+    try {
+      if (!(window as any).google?.maps) return;
+      setDetectedStatus("loading");
+      const geocoder = new (window as any).google.maps.Geocoder();
+      const loc = { lat: geoLocation.latitude, lng: geoLocation.longitude };
+      geocoder.geocode({ location: loc }, (results: any, status: string) => {
+        if (status === "OK" && results && results[0]) {
+          const addr = results[0].formatted_address as string;
+          setDetectedAddress(addr);
+          setDetectedStatus("ok");
+          setMapLocation(
+            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr },
+          );
+          if (!mapPreciseAddress) setMapPreciseAddress(addr);
+          if (!mapDisplayAddress) setMapDisplayAddress(addr);
+        } else {
+          setDetectedStatus("failed");
+        }
+      });
+    } catch {
+      setDetectedStatus("failed");
+    }
+  }, [
+    mapMode,
+    geoLocation,
+    mapsReady,
+    detectedStatus,
+    mapPreciseAddress,
+    mapDisplayAddress,
+  ]);
   // --- Update manualBarangayOptions when manualProvince or manualCity changes ---
   useEffect(() => {
     if (manualProvince && manualCity) {
@@ -1513,7 +1582,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- Service Location Section (Map primary; fallback hidden initially) --- */}
+              {/* --- Service Location Section (Detected default; custom pin/search secondary) --- */}
               <div
                 className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
               >
@@ -1521,74 +1590,144 @@ const ClientBookingPageComponent: React.FC = () => {
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
-                <div className="mb-4">
-                  <LocationMapPicker
-                    value={
-                      mapLocation
-                        ? { ...mapLocation, address: mapLocation.address ?? "" }
-                        : null
-                    }
-                    onChange={(loc: any) => {
-                      // Save structured map location
-                      setMapLocation(loc);
-                      const preciseAddressForDB =
-                        loc.formatted_address || loc.address || "";
-                      const placeName = loc.rawName;
-                      let displayAddress = preciseAddressForDB;
-                      if (
-                        placeName &&
-                        !preciseAddressForDB.startsWith(placeName)
-                      ) {
-                        displayAddress = `${placeName}, ${preciseAddressForDB}`;
-                      }
-                      setMapPreciseAddress(preciseAddressForDB);
-                      setMapDisplayAddress(displayAddress);
-                      if (highlightInput === "mapLocation")
-                        setHighlightInput("");
-                    }}
-                    persistKey="booking:lastLocation"
-                    highlight={highlightInput === "mapLocation"}
-                    label="Pin / Search Location"
-                  />
-                  {(mapDisplayAddress || mapPreciseAddress) && (
-                    <div className="mt-2 space-y-1">
-                      {mapDisplayAddress && (
-                        <div className="flex items-start gap-1">
-                          <span
-                            className="truncate text-xs font-medium text-gray-700"
-                            title={mapDisplayAddress}
-                          >
-                            {mapDisplayAddress}
-                          </span>
-                          <span
-                            className="cursor-help text-[10px] text-blue-500"
-                            title="Display Address: Readable version (place/building, street, barangay, city)."
-                          >
-                            (?)
-                          </span>
+                {/* Toggle buttons */}
+                <div className="mb-4 flex gap-3 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setMapMode("detected")}
+                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                  >
+                    Use Detected Location
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMapMode("custom")}
+                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                  >
+                    Pin / Search Location
+                  </button>
+                </div>
+                {mapMode === "detected" && (
+                  <div className="mb-6">
+                    <div className="mb-2 text-[11px] font-medium text-gray-600">
+                      Automatically detected via browser geolocation. Drop a
+                      custom pin if this is inaccurate.
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-gray-200">
+                      {mapsReady && geoLocation ? (
+                        <GoogleMap
+                          mapContainerStyle={{ width: "100%", height: 260 }}
+                          center={{
+                            lat: geoLocation.latitude,
+                            lng: geoLocation.longitude,
+                          }}
+                          zoom={16}
+                          options={{
+                            disableDefaultUI: true,
+                            zoomControl: true,
+                          }}
+                        >
+                          <Marker
+                            position={{
+                              lat: geoLocation.latitude,
+                              lng: geoLocation.longitude,
+                            }}
+                          />
+                        </GoogleMap>
+                      ) : (
+                        <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                          {locationLoading || detectedStatus === "loading"
+                            ? "Detecting location..."
+                            : "Map loading..."}
                         </div>
                       )}
-                      {mapPreciseAddress &&
-                        mapDisplayAddress &&
-                        mapDisplayAddress !== mapPreciseAddress && (
+                    </div>
+                    <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
+                      {detectedStatus === "ok" && detectedAddress
+                        ? detectedAddress
+                        : detectedStatus === "failed"
+                          ? "Unable to resolve address. You can switch to Pin / Search."
+                          : detectedStatus === "loading" || locationLoading
+                            ? "Resolving detected address..."
+                            : !geoLocation
+                              ? "Location not yet available."
+                              : "Detected."}
+                    </div>
+                  </div>
+                )}
+                {mapMode === "custom" && (
+                  <div className="mb-4">
+                    <LocationMapPicker
+                      value={
+                        mapLocation
+                          ? {
+                              ...mapLocation,
+                              address: mapLocation.address ?? "",
+                            }
+                          : null
+                      }
+                      onChange={(loc: any) => {
+                        // Save structured map location
+                        setMapLocation(loc);
+                        const preciseAddressForDB =
+                          loc.formatted_address || loc.address || "";
+                        const placeName = loc.rawName;
+                        let displayAddress = preciseAddressForDB;
+                        if (
+                          placeName &&
+                          !preciseAddressForDB.startsWith(placeName)
+                        ) {
+                          displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                        }
+                        setMapPreciseAddress(preciseAddressForDB);
+                        setMapDisplayAddress(displayAddress);
+                        if (highlightInput === "mapLocation")
+                          setHighlightInput("");
+                      }}
+                      persistKey="booking:lastLocation"
+                      highlight={highlightInput === "mapLocation"}
+                      label="Pin / Search Location"
+                    />
+                    {(mapDisplayAddress || mapPreciseAddress) && (
+                      <div className="mt-2 space-y-1">
+                        {mapDisplayAddress && (
                           <div className="flex items-start gap-1">
                             <span
-                              className="truncate text-[10px] text-gray-500"
-                              title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                              className="truncate text-xs font-medium text-gray-700"
+                              title={mapDisplayAddress}
                             >
-                              Provider reference: {mapPreciseAddress}
+                              {mapDisplayAddress}
                             </span>
                             <span
-                              className="cursor-help text-[10px] text-blue-400"
-                              title="Used internally to help the provider navigate accurately."
+                              className="cursor-help text-[10px] text-blue-500"
+                              title="Display Address: Readable version (place/building, street, barangay, city)."
                             >
-                              (i)
+                              (?)
                             </span>
                           </div>
                         )}
-                    </div>
-                  )}
-                </div>
+                        {mapPreciseAddress &&
+                          mapDisplayAddress &&
+                          mapDisplayAddress !== mapPreciseAddress && (
+                            <div className="flex items-start gap-1">
+                              <span
+                                className="truncate text-[10px] text-gray-500"
+                                title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                              >
+                                Provider reference: {mapPreciseAddress}
+                              </span>
+                              <span
+                                className="cursor-help text-[10px] text-blue-400"
+                                title="Used internally to help the provider navigate accurately."
+                              >
+                                (i)
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {!showFallbackForms && (
                   <button
                     type="button"
@@ -1598,7 +1737,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     }}
                     className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Use Fallback Address Form
+                    Use Manual Address Form
                   </button>
                 )}
                 {showFallbackForms && (
@@ -1633,7 +1772,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       }}
                       className="ml-auto text-xs text-blue-600 underline"
                     >
-                      Hide Fallback
+                      Use Maps
                     </button>
                   </div>
                 )}
