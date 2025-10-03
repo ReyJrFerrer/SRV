@@ -178,25 +178,32 @@ const ProviderBookingsPage: React.FC = () => {
       const inProgress = filteredBookings.filter(
         (b) => b.status?.toLowerCase() === "inprogress",
       );
-      const requested = filteredBookings.filter(
+      const confirmed = filteredBookings.filter(
         (b) =>
-          b.status?.toLowerCase() === "requested" ||
-          b.status?.toLowerCase() === "pending",
+          b.status?.toLowerCase() === "confirmed" ||
+          b.status?.toLowerCase() === "accepted",
       );
-      const accepted = filteredBookings.filter(
+      const pending = filteredBookings.filter(
         (b) =>
-          b.status?.toLowerCase() === "accepted" ||
-          b.status?.toLowerCase() === "confirmed",
+          b.status?.toLowerCase() === "pending" ||
+          b.status?.toLowerCase() === "requested",
+      );
+      const cancelled = filteredBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "cancelled" ||
+          b.status?.toLowerCase() === "declined",
       );
       const others = filteredBookings.filter(
         (b) =>
-          b.status?.toLowerCase() !== "requested" &&
-          b.status?.toLowerCase() !== "pending" &&
-          b.status?.toLowerCase() !== "accepted" &&
+          b.status?.toLowerCase() !== "inprogress" &&
           b.status?.toLowerCase() !== "confirmed" &&
-          b.status?.toLowerCase() !== "inprogress",
+          b.status?.toLowerCase() !== "accepted" &&
+          b.status?.toLowerCase() !== "pending" &&
+          b.status?.toLowerCase() !== "requested" &&
+          b.status?.toLowerCase() !== "cancelled" &&
+          b.status?.toLowerCase() !== "declined",
       );
-      return [...inProgress, ...requested, ...accepted, ...others];
+      return [...inProgress, ...confirmed, ...pending, ...cancelled, ...others];
     }
 
     return filteredBookings;
