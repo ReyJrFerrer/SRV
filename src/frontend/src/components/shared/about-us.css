@@ -164,14 +164,37 @@
 }
 @media (max-width: 768px) {
   /* Further tighten vertical spacing in About hero for smaller devices */
-  .about-hero-section { padding: 2.2rem 0 2.6rem 0; }
-  .about-hero-content { grid-template-columns: 1fr; gap: 1.1rem; }
-  .about-hero-image { margin-top: 0.5rem !important; }
-  .about-hero-text { margin-top: 0.25rem !important; gap: 0.75rem; }
-  .about-hero-title { font-size: 2rem; line-height: 1.15; }
-  .about-hero-description { font-size: 0.98rem; line-height: 1.45; margin-top: 0; }
-  .about-hero-buttons { margin-top: 0.25rem; }
-  .about-hero-buttons .btn-primary { width: 100%; padding: 0.85rem 1.75rem; font-size: 1rem; }
+  .about-hero-section {
+    padding: 2.2rem 0 2.6rem 0;
+  }
+  .about-hero-content {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+  .about-hero-image {
+    margin-top: 0.5rem !important;
+  }
+  .about-hero-text {
+    margin-top: 0.25rem !important;
+    gap: 0.75rem;
+  }
+  .about-hero-title {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+  .about-hero-description {
+    font-size: 0.98rem;
+    line-height: 1.45;
+    margin-top: 0;
+  }
+  .about-hero-buttons {
+    margin-top: 0.25rem;
+  }
+  .about-hero-buttons .btn-primary {
+    width: 100%;
+    padding: 0.85rem 1.75rem;
+    font-size: 1rem;
+  }
 }
 
 .about-hero-content {
@@ -217,7 +240,7 @@
 .mission-image .video-wrapper {
   max-width: 560px; /* reasonable max width to sit next to the text */
   max-height: 450px;
-  border-radius: 0.75rem
+  border-radius: 0.75rem;
 }
 
 /* Device background (green-screen photo) — iframe is positioned to sit over the green screen area */
@@ -225,7 +248,7 @@
   position: relative;
   width: 100%;
   /* use the laptop mockup SVG located in public/about-us/ */
-  background-image: url('/about-us/laptop%20mockup.svg');
+  background-image: url("/about-us/laptop%20mockup.svg");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -496,15 +519,19 @@
   width: 48px;
   height: 48px;
   color: #ffffff;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.12);
   padding: 8px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.12);
-  transition: background 0.18s ease, transform 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .metric-card .metric-icon svg {
@@ -518,7 +545,7 @@
   background: #fdcc38;
   color: #1e293b;
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(2,6,23,0.14);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.14);
 }
 
 .metric-icon:hover svg {
@@ -530,7 +557,7 @@
   background: #fdcc38;
   color: #1e293b;
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(2,6,23,0.14);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.14);
 }
 
 .metric-card:hover .metric-icon svg {
@@ -631,7 +658,7 @@
 
   .footer-bottom {
     padding-top: 8px !important;
-    border-top: 1px solid rgba(255,255,255,0.06) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
   }
 }
 
@@ -820,10 +847,17 @@
   width: 100%;
   padding: 2.2rem 2.6rem; /* larger padding */
   /* expanded yellow gradient covering more of the image */
-  background: linear-gradient(180deg, rgba(253,204,56,0.0) 0%, rgba(253,204,56,0.18) 30%, rgba(253,204,56,0.9) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(253, 204, 56, 0) 0%,
+    rgba(253, 204, 56, 0.18) 30%,
+    rgba(253, 204, 56, 0.9) 100%
+  );
   color: #0f172a;
   opacity: 1; /* show by default */
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .gallery-image-wrapper:hover .image-overlay {
@@ -839,7 +873,7 @@
 
 .overlay-description {
   font-size: 1rem;
-  color: rgba(255,255,255,0.95); /* white-ish description for contrast */
+  color: rgba(255, 255, 255, 0.95); /* white-ish description for contrast */
 }
 
 .gallery-controls {
@@ -1047,9 +1081,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(253,204,56,0.95), rgba(253,204,56,0.85));
+  background: linear-gradient(
+    180deg,
+    rgba(253, 204, 56, 0.95),
+    rgba(253, 204, 56, 0.85)
+  );
   opacity: 0;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
   padding: 18px;
   text-align: center;
 }
@@ -1067,7 +1107,9 @@
 .member-image-wrapper:hover .member-image {
   transform: scale(1.02);
   filter: brightness(0.45) saturate(0.9);
-  transition: filter 0.22s ease, transform 0.22s ease;
+  transition:
+    filter 0.22s ease,
+    transform 0.22s ease;
 }
 
 .member-image-wrapper:hover .member-overlay {
@@ -1087,15 +1129,21 @@
   border-radius: 50%;
   position: relative;
 }
-.member-flip:focus { outline:none; }
-.member-flip:focus-visible { box-shadow:0 0 0 4px rgba(253,204,56,0.55); }
+.member-flip:focus {
+  outline: none;
+}
+.member-flip:focus-visible {
+  box-shadow: 0 0 0 4px rgba(253, 204, 56, 0.55);
+}
 
 .flip-inner {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform .85s cubic-bezier(.85,.02,.2,1), filter .4s ease;
+  transition:
+    transform 0.85s cubic-bezier(0.85, 0.02, 0.2, 1),
+    filter 0.4s ease;
   border-radius: 50%;
 }
 
@@ -1118,56 +1166,71 @@
 }
 
 .flip-front {
-  background:#fff;
+  background: #fff;
 }
 .flip-front img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .flip-back {
   transform: rotateY(180deg);
-  background: linear-gradient(145deg,#ffe16b,#fdcc38,#f4b400);
-  color:#0f172a;
-  padding:22px 24px;
-  text-align:center;
-  font-family: 'rubik';
-  font-size: .95rem;
-  line-height:1.35;
-  font-weight:600;
-  display:flex;
-  flex-direction:column;
-  gap:.75rem;
+  background: linear-gradient(145deg, #ffe16b, #fdcc38, #f4b400);
+  color: #0f172a;
+  padding: 22px 24px;
+  text-align: center;
+  font-family: "rubik";
+  font-size: 0.95rem;
+  line-height: 1.35;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
-.flip-back p { margin:0; }
+.flip-back p {
+  margin: 0;
+}
 
 /* Add subtle shine overlay on the gradient side */
 .flip-back::before {
-  content:"";
-  position:absolute;
-  inset:0;
-  background:radial-gradient(circle at 30% 25%, rgba(255,255,255,0.55), transparent 60%);
-  mix-blend-mode:overlay;
-  pointer-events:none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(255, 255, 255, 0.55),
+    transparent 60%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
 }
 
 /* Reduce text size on smaller breakpoints */
 @media (max-width: 992px) {
-  .flip-back { font-size:.85rem; padding:18px 18px; }
+  .flip-back {
+    font-size: 0.85rem;
+    padding: 18px 18px;
+  }
 }
 @media (max-width: 600px) {
-  .flip-back { font-size:.8rem; padding:16px 14px; }
+  .flip-back {
+    font-size: 0.8rem;
+    padding: 16px 14px;
+  }
 }
 
 /* Fallback for no-hover (touch). We'll expose a tap toggler via a helper JS class if needed. */
-@media (hover: none) { 
-  .member-flip:hover .flip-inner { transform:none; }
+@media (hover: none) {
+  .member-flip:hover .flip-inner {
+    transform: none;
+  }
   /* Enable tap-driven flip via added .touch-flipped class */
-  .member-flip.touch-flipped .flip-inner { transform: rotateY(180deg) !important; }
+  .member-flip.touch-flipped .flip-inner {
+    transform: rotateY(180deg) !important;
+  }
 }
-
 
 .member-social {
   position: absolute;
@@ -1622,11 +1685,19 @@
 /* === Mobile header spacing adjustment (remove extra right gap after burger icon addition) === */
 @media (max-width: 768px) {
   /* Tighten horizontal padding inside the mobile header container */
-  .site-header .container { padding-left: 10px !important; padding-right: 10px !important; }
+  .site-header .container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
   /* Ensure burger button sits flush without creating extra scroll width */
-  .mobile-menu-toggle { margin-right: 0 !important; }
+  .mobile-menu-toggle {
+    margin-right: 0 !important;
+  }
   /* Prevent any horizontal overflow from off-canvas nav translation */
-  html, body { overflow-x: hidden; }
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 body.menu-open {
   overflow: hidden;
@@ -1774,7 +1845,6 @@ body.menu-open {
   .about-cta-title {
     font-size: 2.2rem;
   }
-
 
   .about-hero-content,
   .mission-content {
@@ -2313,7 +2383,7 @@ body.menu-open {
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(2,6,23,0.08);
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.08);
 }
 
 @media (max-width: 768px) {
@@ -2554,18 +2624,21 @@ body.menu-open {
   border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 12px;
   padding: 18px;
-  box-shadow: 0 12px 30px rgba(2,6,23,0.04);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.04);
 }
 
 .milestone-card {
   position: relative;
-  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
 }
 
 .milestone-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 30px 60px rgba(2,6,23,0.08);
-  border-color: rgba(37,99,235,0.12);
+  box-shadow: 0 30px 60px rgba(2, 6, 23, 0.08);
+  border-color: rgba(37, 99, 235, 0.12);
 }
 
 .milestone-media {
@@ -2586,7 +2659,7 @@ body.menu-open {
   background: linear-gradient(180deg, #ffffff, #f8fbff);
   border-radius: 10px;
   padding: 10px;
-  box-shadow: 0 6px 18px rgba(16,24,40,0.02);
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.02);
 }
 
 .milestone-body {
@@ -2620,12 +2693,12 @@ body.menu-open {
 
 /* Variant accents for left/right cards */
 .milestone-left {
-  border-left: 6px solid rgba(59,130,246,0.15);
+  border-left: 6px solid rgba(59, 130, 246, 0.15);
   background: linear-gradient(180deg, #ffffff, #f7fbff);
 }
 
 .milestone-right {
-  border-left: 6px solid rgba(250,204,21,0.12);
+  border-left: 6px solid rgba(250, 204, 21, 0.12);
   background: linear-gradient(180deg, #ffffff, #fffaf4);
 }
 
@@ -2634,7 +2707,7 @@ body.menu-open {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(15,23,42,0.06);
+  background: rgba(15, 23, 42, 0.06);
   color: #0f172a;
   padding: 6px 10px;
   border-radius: 999px;
@@ -2653,7 +2726,9 @@ body.menu-open {
   border-radius: 8px;
   text-decoration: none;
   font-weight: 700;
-  transition: background 0.2s ease, transform 0.12s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.12s ease;
 }
 
 .milestone-cta:hover {
@@ -2676,10 +2751,18 @@ body.menu-open {
 }
 
 @media (max-width: 480px) {
-  .milestone-media { flex: 0 0 56px; }
-  .milestone-logo { max-width: 64px; }
-  .milestone-title { font-size: 1rem; }
-  .milestone-text { font-size: 0.95rem; }
+  .milestone-media {
+    flex: 0 0 56px;
+  }
+  .milestone-logo {
+    max-width: 64px;
+  }
+  .milestone-title {
+    font-size: 1rem;
+  }
+  .milestone-text {
+    font-size: 0.95rem;
+  }
 }
 
 /* Mission video: inherit hero video dimensions */
@@ -2748,11 +2831,11 @@ body.menu-open {
     padding-bottom: 4px !important;
   }
   .footer-content {
-    gap: 4px !important;              /* reduce large gaps causing extra height */
+    gap: 4px !important; /* reduce large gaps causing extra height */
   }
   /* Make only the nav text links (Home / About / Contact) bigger without enlarging height */
   .footer-nav .nav-links .footer-link {
-    font-size: 1.05rem !important;     /* slightly larger than default */
+    font-size: 1.05rem !important; /* slightly larger than default */
     font-weight: 600;
     line-height: 1.2;
     /* Remove the big circular 50px box so footer shrinks */
@@ -2770,13 +2853,15 @@ body.menu-open {
     padding-bottom: 4px !important;
   }
   .footer-nav .nav-links .footer-link {
-    font-size: 1rem !important;        /* still a bump over old 0.9rem */
+    font-size: 1rem !important; /* still a bump over old 0.9rem */
     padding: 4px 6px !important;
   }
 }
 /* === END FOOTER MOBILE HEIGHT & NAV FONT ADJUSTMENTS === */
 @keyframes loading-bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.8);
     opacity: 0.5;
   }

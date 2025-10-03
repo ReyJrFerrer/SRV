@@ -50,10 +50,10 @@ export const JoinWaitlistButton: React.FC<JoinWaitlistButtonProps> = ({
           "Loading..."
         )
       ) : (
-          <>
-            <FingerPrintIcon className="mr-3 h-6 w-6" />
-            <span>Login / Sign Up</span>
-          </>
+        <>
+          <FingerPrintIcon className="mr-3 h-6 w-6" />
+          <span>Login / Sign Up</span>
+        </>
       )}
     </button>
   );

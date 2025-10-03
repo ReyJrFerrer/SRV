@@ -18,67 +18,73 @@
 **Goal:** Set up the complete Firebase backend, including databases, functions, and security rules, and create the critical "bridge" functions that will communicate with the IC.
 
 **1.0. Validate Existing Firebase Setup**
+
 - **Validation:** Your project has already been configured for Firebase Functions and Firestore, as indicated by the existing `functions` directory and its usage of `admin.firestore()`.
 - **Action:** No initialization is needed. The first action is to ensure our security rules are comprehensive.
 
 **1.1. Define Firestore Security Rules**
+
 - **Action:** MODIFY `firestore.rules`.
 - **Content:** Implement foundational security rules. This is a critical step to secure data.
-    ```
-    rules_version = '2';
-    service cloud.firestore {
-      match /databases/{database}/documents {
-        // Users can only read their own profile, admins can read any.
-        match /users/{userId} {
-          allow read: if request.auth.uid == userId || request.auth.token.isAdmin == true;
-          allow write: if request.auth.uid == userId;
-        }
-        // Services can be read by anyone, but only written by the provider or an admin.
-        match /services/{serviceId} {
-            allow read: if request.auth != null;
-            allow write: if resource.data.providerId == request.auth.uid || request.auth.token.isAdmin == true;
-        }
-        // Bookings can only be read/written by participants or an admin.
-        match /bookings/{bookingId} {
-            allow read, write: if request.auth.uid == resource.data.clientId || request.auth.uid == resource.data.providerId || request.auth.token.isAdmin == true;
-        }
-        // Reviews can be created by authenticated users, but not modified.
-        match /reviews/{reviewId} {
-            allow read: if true;
-            allow create: if request.auth != null;
-            allow update, delete: if false; // Reviews are immutable
-        }
+  ```
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      // Users can only read their own profile, admins can read any.
+      match /users/{userId} {
+        allow read: if request.auth.uid == userId || request.auth.token.isAdmin == true;
+        allow write: if request.auth.uid == userId;
+      }
+      // Services can be read by anyone, but only written by the provider or an admin.
+      match /services/{serviceId} {
+          allow read: if request.auth != null;
+          allow write: if resource.data.providerId == request.auth.uid || request.auth.token.isAdmin == true;
+      }
+      // Bookings can only be read/written by participants or an admin.
+      match /bookings/{bookingId} {
+          allow read, write: if request.auth.uid == resource.data.clientId || request.auth.uid == resource.data.providerId || request.auth.token.isAdmin == true;
+      }
+      // Reviews can be created by authenticated users, but not modified.
+      match /reviews/{reviewId} {
+          allow read: if true;
+          allow create: if request.auth != null;
+          allow update, delete: if false; // Reviews are immutable
       }
     }
-    ```
+  }
+  ```
 
 **1.2. Create the "Identity Bridge" Cloud Function**
+
 - **Action:** CREATE `functions/src/auth.ts`.
 - **Content:** Implement the `signInWithInternetIdentity` function. This is the cornerstone of the hybrid architecture.
-    - It must be an HTTP `onRequest` function.
-    - It will receive a `principal` in the request body.
-    - It will use `@dfinity/agent` to securely call the `isPrincipalValid` query on the `auth.mo` canister.
-    - If valid, it will use `firebase-admin` to `createCustomToken(principal)`. It will also check if a user profile exists in Firestore and create a shell profile if it's a new user.
-    - It returns the custom token to the client.
+  - It must be an HTTP `onRequest` function.
+  - It will receive a `principal` in the request body.
+  - It will use `@dfinity/agent` to securely call the `isPrincipalValid` query on the `auth.mo` canister.
+  - If valid, it will use `firebase-admin` to `createCustomToken(principal)`. It will also check if a user profile exists in Firestore and create a shell profile if it's a new user.
+  - It returns the custom token to the client.
 
 **1.3. Create the "Reputation Bridge" Cloud Function**
+
 - **Action:** CREATE `functions/src/review.ts`.
 - **Content:** Implement the `processReputation` function.
-    - This will be a Firestore `onCreate` trigger on the `reviews` collection.
-    - When a new review is added, this function fires.
-    - It will authenticate itself as a trusted service agent (using a stored private key for a dedicated Principal).
-    - It will call the `updateReputationFromReview` method on the `reputation.mo` canister, passing the review data.
+  - This will be a Firestore `onCreate` trigger on the `reviews` collection.
+  - When a new review is added, this function fires.
+  - It will authenticate itself as a trusted service agent (using a stored private key for a dedicated Principal).
+  - It will call the `updateReputationFromReview` method on the `reputation.mo` canister, passing the review data.
 
 **1.4. Port Wallet & Admin Logic**
+
 - **Action:** CREATE `functions/src/wallet.ts` and `functions/src/admin.ts`.
 - **Content for `wallet.ts`:**
-    - Create `creditProvider` and `debitProvider` functions.
-    - These functions **MUST** use Firestore Transactions (`db.runTransaction()`) to ensure atomic updates to balance fields in the `users` collection.
+  - Create `creditProvider` and `debitProvider` functions.
+  - These functions **MUST** use Firestore Transactions (`db.runTransaction()`) to ensure atomic updates to balance fields in the `users` collection.
 - **Content for `admin.ts`:**
-    - Port the logic from `admin.mo`. Create functions like `grantAdminRole`.
-    - Every function **MUST** start with a guard clause that checks `context.auth.token.isAdmin === true`. If not, throw an `unauthenticated` error.
+  - Port the logic from `admin.mo`. Create functions like `grantAdminRole`.
+  - Every function **MUST** start with a guard clause that checks `context.auth.token.isAdmin === true`. If not, throw an `unauthenticated` error.
 
 **PAUSE FOR CONFIRMATION (End of Phase 1)**
+
 - **Action:** Stop and report to the user: "Phase 1 is complete. The Firebase backend infrastructure is scaffolded, security rules are in place, and the critical 'bridge' functions for identity and reputation have been created. Backend logic for wallets and admin is ported. Shall I proceed with Phase 2 to refactor the Motoko canisters?"
 
 ---
@@ -88,24 +94,28 @@
 **Goal:** Slim down the on-chain footprint to only what is absolutely necessary, reducing complexity and cost.
 
 **2.0. Modify `auth.mo` Canister**
+
 - **Action:** MODIFY `src/backend/function/auth.mo`.
 - **Content:**
-    - Remove all functions and logic *except* for a single, public `query` function: `public query func isPrincipalValid(principal: Principal): async Bool`.
-    - This function's only job is to confirm that a given Principal is legitimate. Its internal logic for validation should be kept, but all other features (role management, etc.) should be deleted.
+  - Remove all functions and logic _except_ for a single, public `query` function: `public query func isPrincipalValid(principal: Principal): async Bool`.
+  - This function's only job is to confirm that a given Principal is legitimate. Its internal logic for validation should be kept, but all other features (role management, etc.) should be deleted.
 
 **2.1. Modify `reputation.mo` Canister**
+
 - **Action:** MODIFY `src/backend/function/reputation.mo` (or equivalent).
 - **Content:**
-    - Expose a new `update` function: `public func updateReputationFromReview(reviewText: Text, rating: Nat)`.
-    - Secure this function so it can only be called by the Principal of our Firebase service agent. Store this trusted Principal as an immutable variable.
+  - Expose a new `update` function: `public func updateReputationFromReview(reviewText: Text, rating: Nat)`.
+  - Secure this function so it can only be called by the Principal of our Firebase service agent. Store this trusted Principal as an immutable variable.
 
 **2.2. Deprecate and Remove Canisters**
+
 - **Action:** MODIFY `dfx.json`.
 - **Content:**
-    - Remove the following canisters from the `canisters` list: `booking`, `chat`, `feedback`, `media`, `notification`, `review`, `service`, `wallet`, `commission`, `admin`.
+  - Remove the following canisters from the `canisters` list: `booking`, `chat`, `feedback`, `media`, `notification`, `review`, `service`, `wallet`, `commission`, `admin`.
 - **Action:** DELETE the corresponding `.mo` source files from the `src/backend/function/` directory.
 
 **PAUSE FOR CONFIRMATION (End of Phase 2)**
+
 - **Action:** Stop and report to the user: "Phase 2 is complete. The on-chain footprint has been minimized. The `auth` canister is now a simple oracle, the `reputation` canister is secured for backend calls, and all other operational canisters have been removed from the project. Shall I proceed with Phase 3 to migrate the frontend client?"
 
 ---
@@ -115,31 +125,36 @@
 **Goal:** Rewire the entire frontend application to communicate with the new Firebase backend instead of the deprecated canisters.
 
 **3.0. Refactor the Authentication Flow**
+
 - **Action:** MODIFY the primary authentication context/hook (e.g., `src/frontend/src/context/AuthContext.tsx`).
 - **Content:**
-    - The `login` function must be completely rewritten.
-    1.  It still calls the Internet Identity client to get the user's `Principal`.
-    2.  It then makes an HTTPS call to our new `signInWithInternetIdentity` Cloud Function.
-    3.  It receives the custom Firebase token and calls `signInWithCustomToken(auth, token)` from the Firebase SDK.
-    4.  The user's session is now managed by Firebase.
+  - The `login` function must be completely rewritten.
+  1.  It still calls the Internet Identity client to get the user's `Principal`.
+  2.  It then makes an HTTPS call to our new `signInWithInternetIdentity` Cloud Function.
+  3.  It receives the custom Firebase token and calls `signInWithCustomToken(auth, token)` from the Firebase SDK.
+  4.  The user's session is now managed by Firebase.
 
 **3.1. Refactor Data Fetching and Mutations**
+
 - **Action:** Globally search for and replace all Motoko actor calls (`actor.some_method()`).
 - **Content:**
-    - **Mutations (Writes):** Replace `actor` calls with `https.Callable` calls to the new Cloud Functions (e.g., `createBooking`, `acceptBooking`).
-    - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). This will make the app feel significantly faster and more reactive, directly impacting components that use hooks like `useProviderBookingManagement.tsx` to display data with status colors.
+  - **Mutations (Writes):** Replace `actor` calls with `https.Callable` calls to the new Cloud Functions (e.g., `createBooking`, `acceptBooking`).
+  - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). This will make the app feel significantly faster and more reactive, directly impacting components that use hooks like `useProviderBookingManagement.tsx` to display data with status colors.
 
 **3.2. Refactor Admin Panel**
+
 - **Action:** MODIFY all pages and components within the `src/admin/` directory.
 - **Content:**
-    - All data tables, like `ServiceProviderCommissionTable` and `transactionHistory`, must now fetch their data from Firestore.
-    - All admin actions (e.g., suspending a user) must now call the new, secure admin Cloud Functions. The frontend will need to send the user's Firebase ID token in the authorization header of these calls.
+  - All data tables, like `ServiceProviderCommissionTable` and `transactionHistory`, must now fetch their data from Firestore.
+  - All admin actions (e.g., suspending a user) must now call the new, secure admin Cloud Functions. The frontend will need to send the user's Firebase ID token in the authorization header of these calls.
 
 **3.3. Update UI based on Real-Time Data**
+
 - **Action:** MODIFY components like `src/frontend/src/components/provider/BookingRequests.tsx`.
 - **Content:**
-    - Logic that previously called a canister to check a provider's wallet balance before enabling an "Accept" button must now read this data directly from a Firestore document.
-    - Thanks to `onSnapshot`, the button will enable/disable automatically and instantly as the wallet balance changes.
+  - Logic that previously called a canister to check a provider's wallet balance before enabling an "Accept" button must now read this data directly from a Firestore document.
+  - Thanks to `onSnapshot`, the button will enable/disable automatically and instantly as the wallet balance changes.
 
 **PAUSE FOR CONFIRMATION (End of Project)**
+
 - **Action:** Stop and report to the user: "Project complete. The architectural migration is finished. The frontend is fully integrated with the Firebase backend, leveraging Internet Identity for login and Firestore for real-time data. The on-chain logic is now focused exclusively on reputation and identity verification."
