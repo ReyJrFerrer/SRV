@@ -493,7 +493,6 @@ export default function AboutUs({
         </div>
       </section>
 
-
       {/* Map Section - Baguio City Pin */}
       <section className="map-section">
         <div className="container">
