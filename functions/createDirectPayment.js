@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
-const {Xendit} = require("xendit-node");
-const {admin} = require("./firebase-admin");
-const {detectEnvironment} = require("./utils/canisterConfig");
+const { Xendit } = require("xendit-node");
+const { admin } = require("./firebase-admin");
+const { detectEnvironment } = require("./utils/canisterConfig");
 
 // Initialize Xendit client with proper error handling
 let xendit;
@@ -36,7 +36,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     // Only accept POST requests
     if (req.method !== "POST") {
       console.log("Invalid method, returning 405");
-      return res.status(405).json({error: "Method not allowed"});
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
     // Enable CORS for local development
@@ -151,7 +151,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
 
         // Fallback: Check if provider exists in Xendit Customer API
         try {
-          const {Customer} = xendit;
+          const { Customer } = xendit;
           const customerResponse = await Customer.getCustomerByReferenceID({
             referenceId: providerId,
           });
@@ -254,11 +254,11 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
 
     const commissionAmount = Number(totalCommission);
     const categoryStr =
-      packages.length > 0 && packages[0].category ?
-        typeof packages[0].category === "object" ?
-          JSON.stringify(packages[0].category) :
-          String(packages[0].category) :
-        "General";
+      packages.length > 0 && packages[0].category
+        ? typeof packages[0].category === "object"
+          ? JSON.stringify(packages[0].category)
+          : String(packages[0].category)
+        : "General";
 
     // Create commission breakdown from packages for metadata
     const commissionBreakdown = {
@@ -266,9 +266,9 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         title: pkg.title, // Changed from name to title
         price: pkg.price,
         commissionFee: pkg.commissionFee,
-        commissionRate: pkg.commissionFee ?
-          (pkg.commissionFee / pkg.price) * 100 :
-          0,
+        commissionRate: pkg.commissionFee
+          ? (pkg.commissionFee / pkg.price) * 100
+          : 0,
       })),
       totalPackagePrice: totalAmount,
       totalCommissionFee: totalCommission,
@@ -279,7 +279,7 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
     const paymentMethods = ["GCASH", "PAYMAYA", "GRABPAY"];
 
     // Create invoice to collect payment from client with payment holding logic
-    const {Invoice} = xendit;
+    const { Invoice } = xendit;
     const currentEnvironment = detectEnvironment();
 
     const invoiceData = {
@@ -423,11 +423,11 @@ exports.createDirectPayment = functions.https.onRequest(async (req, res) => {
         serviceTitle: bookingData.serviceName || serviceTitle,
         packages: bookingData.packages,
         bookingType: bookingData.bookingType,
-        scheduledDate: bookingData.scheduledDate ?
-          typeof bookingData.scheduledDate === "string" ?
-            bookingData.scheduledDate :
-            new Date(bookingData.scheduledDate).toISOString() :
-          null,
+        scheduledDate: bookingData.scheduledDate
+          ? typeof bookingData.scheduledDate === "string"
+            ? bookingData.scheduledDate
+            : new Date(bookingData.scheduledDate).toISOString()
+          : null,
         scheduledTime: bookingData.scheduledTime,
         location: bookingData.location,
         notes: bookingData.notes,
