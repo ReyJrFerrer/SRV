@@ -1,5 +1,5 @@
 import React from "react";
-import { JoinWaitlistButton } from "../shared/JoinWaitlistButton";
+import { JoinWaitlistButton } from "../shared/LoginButton";
 
 interface CommunityCTASectionProps {
   onOpenCommunity: () => void;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { JoinWaitlistButton } from "../shared/JoinWaitlistButton";
+import { JoinWaitlistButton } from "../shared/LoginButton";
 
 export interface SiteHeaderProps {
   current: "home" | "about" | "contact";

@@ -1,5 +1,5 @@
 import React from "react";
-
+import { FingerPrintIcon } from "@heroicons/react/24/solid";
 export interface JoinWaitlistButtonProps {
   onClick: () => void;
   loading?: boolean;
@@ -44,13 +44,16 @@ export const JoinWaitlistButton: React.FC<JoinWaitlistButtonProps> = ({
         variant === "desktop" ? (
           <>
             <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800" />
-            <span>Processing...</span>
+            <span>Connecting...</span>
           </>
         ) : (
           "Loading..."
         )
       ) : (
-        "Join the Waitlist"
+          <>
+            <FingerPrintIcon className="mr-3 h-6 w-6" />
+            <span>Login / Sign Up</span>
+          </>
       )}
     </button>
   );
