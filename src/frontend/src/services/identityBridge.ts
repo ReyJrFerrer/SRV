@@ -1,6 +1,6 @@
 /**
  * Identity Bridge Service
- * 
+ *
  * This service handles the integration between Internet Identity and Firebase Auth.
  * It communicates with the Identity Bridge Cloud Function to exchange IC principals
  * for Firebase custom tokens.
@@ -14,7 +14,8 @@ const FIREBASE_PROJECT_ID = "devsrv-rey";
 const FIREBASE_REGION = "us-central1";
 
 // Determine if we're in development mode
-const isDevelopment = import.meta.env.DEV || window.location.hostname === "localhost";
+const isDevelopment =
+  import.meta.env.DEV || window.location.hostname === "localhost";
 
 // Use Firebase emulator in development, production URL in production
 const IDENTITY_BRIDGE_URL = isDevelopment
@@ -48,11 +49,11 @@ interface SignInResult {
  * @returns SignInResult with Firebase User and profile status
  */
 export async function signInWithInternetIdentity(
-  principal: string
+  principal: string,
 ): Promise<SignInResult> {
   try {
     console.log("🔗 Calling Identity Bridge for principal:", principal);
-    
+
     // Call the Identity Bridge Cloud Function
     const response = await fetch(IDENTITY_BRIDGE_URL, {
       method: "POST",
@@ -66,7 +67,9 @@ export async function signInWithInternetIdentity(
 
     if (!response.ok) {
       const errorData: IdentityBridgeError = await response.json();
-      throw new Error(errorData.details || errorData.error || "Authentication failed");
+      throw new Error(
+        errorData.details || errorData.error || "Authentication failed",
+      );
     }
 
     const data: IdentityBridgeResponse = await response.json();
@@ -109,12 +112,12 @@ export async function signInWithInternetIdentity(
 export async function createProfile(
   name: string,
   phone: string,
-  role: "Client" | "ServiceProvider"
+  role: "Client" | "ServiceProvider",
 ): Promise<any> {
   try {
     const functions = getFirebaseFunctions();
     const createProfileFn = httpsCallable(functions, "createProfile");
-    
+
     const result = await createProfileFn({
       name,
       phone,
@@ -137,7 +140,7 @@ export async function getProfile(userId?: string): Promise<any> {
   try {
     const functions = getFirebaseFunctions();
     const getProfileFn = httpsCallable(functions, "getProfile");
-    
+
     const result = await getProfileFn({
       userId,
     });
@@ -157,12 +160,12 @@ export async function getProfile(userId?: string): Promise<any> {
  */
 export async function updateProfile(
   name?: string,
-  phone?: string
+  phone?: string,
 ): Promise<any> {
   try {
     const functions = getFirebaseFunctions();
     const updateProfileFn = httpsCallable(functions, "updateProfile");
-    
+
     const result = await updateProfileFn({
       name,
       phone,
@@ -183,7 +186,7 @@ export async function switchUserRole(): Promise<any> {
   try {
     const functions = getFirebaseFunctions();
     const switchRoleFn = httpsCallable(functions, "switchUserRole");
-    
+
     const result = await switchRoleFn({});
 
     return result.data;
@@ -201,7 +204,7 @@ export async function getAllServiceProviders(): Promise<any> {
   try {
     const functions = getFirebaseFunctions();
     const getProvidersFn = httpsCallable(functions, "getAllServiceProviders");
-    
+
     const result = await getProvidersFn({});
 
     return result.data;

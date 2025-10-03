@@ -1,13 +1,17 @@
 /**
  * Firebase App Initialization
- * 
+ *
  * This module provides a centralized Firebase app initialization
  * that can be imported and used across the application.
  */
 
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth, connectAuthEmulator } from "firebase/auth";
-import { getFunctions, Functions, connectFunctionsEmulator } from "firebase/functions";
+import {
+  getFunctions,
+  Functions,
+  connectFunctionsEmulator,
+} from "firebase/functions";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -27,28 +31,44 @@ let emulatorsConnected = false;
  * Initialize Firebase App
  * This should be called once at app startup
  */
-export function initializeFirebase(): { app: FirebaseApp; auth: Auth; functions: Functions } {
+export function initializeFirebase(): {
+  app: FirebaseApp;
+  auth: Auth;
+  functions: Functions;
+} {
   try {
     // Check if Firebase is already initialized
     if (getApps().length > 0) {
       firebaseApp = getApps()[0];
       firebaseAuth = getAuth(firebaseApp);
       firebaseFunctions = getFunctions(firebaseApp);
-      
+
       // Connect to emulators if in development and not already connected
-      if (!emulatorsConnected && (import.meta.env.DEV || window.location.hostname === "localhost")) {
+      if (
+        !emulatorsConnected &&
+        (import.meta.env.DEV || window.location.hostname === "localhost")
+      ) {
         try {
-          connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", { disableWarnings: true });
+          connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
+            disableWarnings: true,
+          });
           connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
           emulatorsConnected = true;
           console.log("🔧 Connected to Firebase Emulators");
         } catch (emulatorError) {
-          console.warn("Emulator connection skipped (may already be connected):", emulatorError);
+          console.warn(
+            "Emulator connection skipped (may already be connected):",
+            emulatorError,
+          );
         }
       }
-      
+
       console.log("Firebase already initialized");
-      return { app: firebaseApp, auth: firebaseAuth, functions: firebaseFunctions };
+      return {
+        app: firebaseApp,
+        auth: firebaseAuth,
+        functions: firebaseFunctions,
+      };
     }
 
     // Firebase configuration from environment variables
@@ -75,7 +95,9 @@ export function initializeFirebase(): { app: FirebaseApp; auth: Auth; functions:
     // Connect to emulators in development
     if (import.meta.env.DEV || window.location.hostname === "localhost") {
       try {
-        connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", { disableWarnings: true });
+        connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
+          disableWarnings: true,
+        });
         connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
         emulatorsConnected = true;
         console.log("🔧 Connected to Firebase Emulators");
@@ -88,7 +110,11 @@ export function initializeFirebase(): { app: FirebaseApp; auth: Auth; functions:
     firebaseAuth.languageCode = "en";
 
     console.log("✅ Firebase initialized successfully");
-    return { app: firebaseApp, auth: firebaseAuth, functions: firebaseFunctions };
+    return {
+      app: firebaseApp,
+      auth: firebaseAuth,
+      functions: firebaseFunctions,
+    };
   } catch (error) {
     console.error("❌ Failed to initialize Firebase:", error);
     throw error;

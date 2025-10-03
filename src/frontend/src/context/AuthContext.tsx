@@ -7,7 +7,11 @@ import React, {
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
-import { signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import {
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from "firebase/auth";
 import { getFirebaseAuth } from "../services/firebaseApp";
 import { updateAuthActor } from "../services/authCanisterService";
 import { updateBookingActor } from "../services/bookingCanisterService";
@@ -65,31 +69,31 @@ const updateAllActors = (identity: Identity | null) => {
   } catch (error) {
     console.warn("Failed to update auth actor:", error);
   }
-  
+
   try {
     updateBookingActor(identity);
   } catch (error) {
     console.warn("Failed to update booking actor:", error);
   }
-  
+
   try {
     updateServiceActor(identity);
   } catch (error) {
     console.warn("Failed to update service actor:", error);
   }
-  
+
   try {
     updateReviewActor(identity);
   } catch (error) {
     console.warn("Failed to update review actor:", error);
   }
-  
+
   try {
     updateReputationActor(identity);
   } catch (error) {
     console.warn("Failed to update reputation actor:", error);
   }
-  
+
   try {
     updateChatActor(identity);
   } catch (error) {
@@ -247,10 +251,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = authClient.getIdentity();
           setIsAuthenticated(true);
           setIdentity(identity);
-          
+
           console.log("✅ Successfully authenticated with Internet Identity");
           console.log("Principal:", identity.getPrincipal().toString());
-          
+
           // Update actors (with error handling)
           updateAllActors(identity);
 
@@ -258,13 +262,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           try {
             const principal = identity.getPrincipal().toString();
             console.log("🔄 Attempting to authenticate with Firebase...");
-            
+
             const result = await signInWithInternetIdentity(principal);
             setFirebaseUser(result.user);
-            
+
             console.log("✅ Successfully authenticated with Firebase!");
             console.log("Firebase UID:", result.user.uid);
-            
+
             // Notify user if they need to create a profile
             if (result.needsProfile) {
               console.log("📝 New user detected - profile creation required");
