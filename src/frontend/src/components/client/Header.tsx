@@ -1,31 +1,26 @@
 // --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { useJsApiLoader } from "@react-google-maps/api"; // Google Maps loader for reverse geocoding
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useLocationStore } from "../../store/locationStore";
-
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
 }
 
-// --- Fix leaflet marker icon for proper display ---
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+// (Leaflet removed in favor of Google Maps for consistency)
+
+// Define Google Maps libraries (places for potential future autocomplete)
+const gmapLibraries: "places"[] = ["places"];
+// Cooldown config: skip geolocation attempts if user denied within this window (ms)
+const GEO_DENIAL_KEY = "geoDeniedAt";
+const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
@@ -67,6 +62,97 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
+
+  // --- New: Resolved formatted geocoded address (Google Maps) ---
+  const [gmapsAddress, setGmapsAddress] = useState<string>(
+    "Detecting location...",
+  );
+  const [gmapsStatus, setGmapsStatus] = useState<
+    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
+  >("idle");
+
+  // Pre-check: if user previously denied recently, set status immediately
+  useEffect(() => {
+    try {
+      const raw =
+        typeof window !== "undefined"
+          ? localStorage.getItem(GEO_DENIAL_KEY)
+          : null;
+      if (raw) {
+        const ts = Number(raw);
+        if (!isNaN(ts) && Date.now() - ts < GEO_DENIAL_COOLDOWN_MS) {
+          setGmapsStatus("denied");
+          setGmapsAddress("Location access previously denied");
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Load Google Maps script (will use env key if provided)
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const { isLoaded: mapsReady } = useJsApiLoader({
+    id: "header-gmap-script",
+    googleMapsApiKey: mapsApiKey,
+    libraries: gmapLibraries,
+  });
+
+  // Reverse geocode via Google on mount (independent from internal store)
+  useEffect(() => {
+    if (!mapsReady) return; // wait for script
+    if (gmapsStatus !== "idle") return; // skip if preset (e.g., denied cooldown)
+    if (!("geolocation" in navigator)) {
+      setGmapsStatus("unsupported");
+      setGmapsAddress("Geolocation not supported");
+      return;
+    }
+    setGmapsStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          if (!(window as any).google || !(window as any).google.maps) {
+            setGmapsStatus("failed");
+            setGmapsAddress("Maps not available");
+            return;
+          }
+          const geocoder = new (window as any).google.maps.Geocoder();
+          geocoder.geocode(
+            { location: { lat: latitude, lng: longitude } },
+            (results: any, status: string) => {
+              if (status === "OK" && results && results[0]) {
+                setGmapsAddress(results[0].formatted_address);
+                setGmapsStatus("ok");
+              } else {
+                setGmapsStatus("failed");
+                setGmapsAddress("Unable to resolve address");
+              }
+            },
+          );
+        } catch (e) {
+          setGmapsStatus("failed");
+          setGmapsAddress("Reverse geocode failed");
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGmapsStatus("denied");
+          setGmapsAddress("Location access denied");
+          try {
+            localStorage.setItem(GEO_DENIAL_KEY, Date.now().toString());
+          } catch {
+            /* ignore */
+          }
+        } else {
+          setGmapsStatus("failed");
+          setGmapsAddress("Failed to get location");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, [mapsReady, gmapsStatus]);
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -147,11 +233,12 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const MapModal: React.FC = () => {
     if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
       return null;
-    // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        setShowMap(false);
-      }
+      if (e.target === e.currentTarget) setShowMap(false);
+    };
+    const center = {
+      lat: geoLocation.latitude,
+      lng: geoLocation.longitude,
     };
     return (
       <div
@@ -160,8 +247,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         role="dialog"
         aria-modal="true"
       >
-        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-lg">
-          {/* Close Button */}
+        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
           <button
             className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
             onClick={() => setShowMap(false)}
@@ -170,21 +256,26 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           >
             <span className="text-xl font-bold text-gray-700">&times;</span>
           </button>
-          <div className="flex-1 overflow-hidden rounded-b-lg">
-            <MapContainer
-              center={[geoLocation.latitude, geoLocation.longitude]}
-              zoom={16}
-              scrollWheelZoom={true}
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[geoLocation.latitude, geoLocation.longitude]}>
-                <Popup>You are here</Popup>
-              </Marker>
-            </MapContainer>
+          <div className="flex-1">
+            {mapsReady ? (
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={center}
+                zoom={16}
+                options={{ disableDefaultUI: false, mapTypeControl: false }}
+              >
+                <Marker position={center} />
+              </GoogleMap>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                Loading map...
+              </div>
+            )}
+          </div>
+          <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
+            {gmapsStatus === "ok" && gmapsAddress !== "Detecting location..."
+              ? gmapsAddress
+              : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
           </div>
         </div>
       </div>
@@ -269,21 +360,35 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         </div>
         <div className="mt-2 flex items-center gap-2">
           <div className="flex w-full items-center justify-start">
-            {locationLoading || isAuthLoading ? (
-              <span className="animate-pulse text-gray-500">
+            {/* Priority order: Google reverse geocode -> stored userAddress/province -> status messages */}
+            {gmapsStatus === "ok" ? (
+              <button
+                type="button"
+                className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+                onClick={() => setShowMap(true)}
+                title={gmapsAddress}
+              >
+                {gmapsAddress}
+              </button>
+            ) : locationLoading ||
+              isAuthLoading ||
+              gmapsStatus === "loading" ? (
+              <span className="animate-pulse text-sm text-gray-500">
                 Detecting location...
               </span>
             ) : userAddress && userProvince ? (
               <button
                 type="button"
-                className="text-left font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
-                style={{ textDecoration: "none" }}
+                className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
                 onClick={() => setShowMap(true)}
+                title={`${userAddress}, ${userProvince}`}
               >
                 {userAddress}, {userProvince}
               </button>
             ) : (
-              <span className="text-left text-gray-500">Location not set</span>
+              <span className="text-left text-sm text-gray-500">
+                {gmapsAddress}
+              </span>
             )}
           </div>
         </div>
