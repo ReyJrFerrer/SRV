@@ -123,7 +123,7 @@ const Contact = ({
                 community.
               </p>
               <div className="contact-details">
-                <div className="contact-item">
+                <div className="contact-item contact-phone-item">
                   <div className="contact-icon email-icon">
                     <svg
                       width="24"
@@ -148,7 +148,7 @@ const Contact = ({
                       />
                     </svg>
                   </div>
-                  <div className="contact-content">
+                  <div className="contact-content contact-phone-text-wrapper">
                     <h3 className="contact-label">E-mail</h3>
                     <p className="contact-value">hello@srvpinoy.com</p>
                   </div>
