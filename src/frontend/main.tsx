@@ -64,6 +64,7 @@ import ProviderBookingDetails from "./src/pages/provider/booking/[id]";
 import ProviderActiveService from "./src/pages/provider/active-service/[bookingId]";
 import ProviderCompleteService from "./src/pages/provider/complete-service/[bookingId]";
 import ProviderReceipt from "./src/pages/provider/receipt/[bookingId]";
+import ProviderDirectionsPage from "./src/pages/provider/directions/[bookingId]";
 
 // Provider Review
 import ProviderReview from "./src/pages/provider/review/[id]";
@@ -184,6 +185,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route
                 path="active-service/:bookingId"
                 element={<ProviderActiveService />}
+              />
+              <Route
+                path="directions/:bookingId"
+                element={<ProviderDirectionsPage />}
               />
               <Route
                 path="complete-service/:bookingId"
