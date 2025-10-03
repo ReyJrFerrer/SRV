@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import {
@@ -22,6 +22,7 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useReputation } from "../../../hooks/useReputation";
 
 // --- Client Reputation Score Section (patterned after ServiceDetailPageComponent) ---
@@ -557,6 +558,216 @@ const ProviderBookingDetailsPage: React.FC = () => {
       );
     }
   };
+  // Geocode enhancement state (before early returns to keep hook order stable)
+  const [resolvedCoords, setResolvedCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [geocodeStatus, setGeocodeStatus] = useState<
+    "idle" | "pending" | "ok" | "failed"
+  >("idle");
+  const [, setGeocodeSource] = useState<string>("");
+
+  const mapApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const { isLoaded: mapReady } = useJsApiLoader({
+    id: "provider-booking-map-script",
+    googleMapsApiKey: mapApiKey,
+  });
+
+  const clientLocation = useMemo(() => {
+    try {
+      const lat = (specificBooking as any)?.latitude;
+      const lng = (specificBooking as any)?.longitude;
+      if (
+        typeof lat === "number" &&
+        !isNaN(lat) &&
+        typeof lng === "number" &&
+        !isNaN(lng)
+      ) {
+        return { lat, lng };
+      }
+      // Attempt to derive from location structure
+      const rawLocation = (specificBooking as any)?.location;
+      let locString: string | undefined;
+      if (typeof rawLocation === "string") {
+        locString = rawLocation;
+      } else if (rawLocation && typeof rawLocation === "object") {
+        if (typeof rawLocation.address === "string")
+          locString = rawLocation.address;
+        else if (typeof rawLocation.displayAddress === "string")
+          locString = rawLocation.displayAddress;
+      }
+      if (locString && typeof locString === "string") {
+        const match = locString.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (match) {
+          return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+        }
+      }
+    } catch {}
+    return { lat: 14.5995, lng: 120.9842 }; // fallback
+  }, [specificBooking]);
+
+  const hasExplicitCoords = useMemo(() => {
+    return (
+      typeof (specificBooking as any)?.latitude === "number" &&
+      typeof (specificBooking as any)?.longitude === "number"
+    );
+  }, [specificBooking]);
+
+  const preciseAddress = (specificBooking as any)?.preciseAddress;
+  const displayAddress = (specificBooking as any)?.displayAddress;
+  const geocodedAddress = (specificBooking as any)?.geocodedAddress;
+
+  // ------------------------------------------------------
+  // Compute bookingLocation BEFORE any early returns so hooks that depend
+  // on it (geocode effect) can run without changing hook order.
+  // ------------------------------------------------------
+  let bookingLocation = "Location not specified";
+  if (
+    typeof specificBooking?.location === "string" &&
+    (specificBooking.location as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.location as string;
+  } else if (
+    typeof specificBooking?.serviceDetails?.location === "string" &&
+    (specificBooking.serviceDetails.location as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.serviceDetails.location as string;
+  } else if (
+    typeof specificBooking?.formattedLocation === "string" &&
+    (specificBooking.formattedLocation as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.formattedLocation as string;
+  }
+
+  // ---------------- Geocode Cache Helpers ----------------
+  // Cache structure in localStorage under key GEOCODE_CACHE_V1: { [normalizedAddress]: { lat:number, lng:number, ts:number } }
+  const GEOCODE_CACHE_KEY = "GEOCODE_CACHE_V1";
+  interface CachedGeo {
+    lat: number;
+    lng: number;
+    ts: number;
+  }
+  const loadGeoCache = (): Record<string, CachedGeo> => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(GEOCODE_CACHE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) || {};
+    } catch {
+      return {};
+    }
+  };
+  const saveGeoCache = (cache: Record<string, CachedGeo>) => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache));
+    } catch {}
+  };
+  const normalizeAddr = (addr: string) => addr.trim().toLowerCase();
+  const getCachedCoords = (
+    addr: string,
+  ): { lat: number; lng: number } | null => {
+    const cache = loadGeoCache();
+    const hit = cache[normalizeAddr(addr)];
+    if (!hit) return null;
+    // Optionally expire after 30 days
+    const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
+    if (Date.now() - hit.ts > THIRTY_DAYS) return null;
+    return { lat: hit.lat, lng: hit.lng };
+  };
+  const putCachedCoords = (addr: string, lat: number, lng: number) => {
+    const cache = loadGeoCache();
+    cache[normalizeAddr(addr)] = { lat, lng, ts: Date.now() };
+    saveGeoCache(cache);
+  };
+
+  // Attempt geocoding if we lack explicit coords and haven't resolved yet.
+  useEffect(() => {
+    if (resolvedCoords || geocodeStatus === "pending") return;
+    const hasCoordsAlready = hasExplicitCoords;
+    if (hasCoordsAlready) return;
+    if (!mapReady) return; // wait until maps script loaded
+    const addrCandidates: { label: string; value?: string }[] = [];
+    if (
+      bookingLocation &&
+      bookingLocation !== "Location not specified" &&
+      typeof bookingLocation === "string"
+    ) {
+      addrCandidates.push({ label: "bookingLocation", value: bookingLocation });
+    }
+    const serviceLocRaw = specificBooking?.serviceDetails?.location;
+    if (
+      serviceLocRaw &&
+      typeof serviceLocRaw === "string" &&
+      (serviceLocRaw as string).trim() &&
+      serviceLocRaw !== bookingLocation
+    ) {
+      const serviceLoc = serviceLocRaw as string;
+      addrCandidates.push({
+        label: "serviceDetails.location",
+        value: serviceLoc,
+      });
+    }
+    if (addrCandidates.length === 0) return;
+    const apiKeyMissing = mapApiKey === "REPLACE_WITH_KEY";
+    if (apiKeyMissing) return; // can't geocode without real key
+
+    // First attempt cache lookups
+    for (const c of addrCandidates) {
+      if (!c.value) continue;
+      const cached = getCachedCoords(c.value);
+      if (cached) {
+        setResolvedCoords(cached);
+        setGeocodeStatus("ok");
+        setGeocodeSource(c.label + " (cache)");
+        return; // short-circuit effect
+      }
+    }
+
+    setGeocodeStatus("pending");
+    const geocoder = new google.maps.Geocoder();
+
+    // Try sequentially until one succeeds
+    let index = 0;
+    const tryNext = () => {
+      if (index >= addrCandidates.length) {
+        setGeocodeStatus("failed");
+        return;
+      }
+      const candidate = addrCandidates[index++];
+      if (!candidate.value) {
+        tryNext();
+        return;
+      }
+      geocoder.geocode({ address: candidate.value }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          const loc = results[0].geometry.location;
+          const lat = loc.lat();
+          const lng = loc.lng();
+          setResolvedCoords({ lat, lng });
+          setGeocodeStatus("ok");
+          setGeocodeSource(candidate.label);
+          // Persist to cache
+          if (candidate.value) {
+            putCachedCoords(candidate.value, lat, lng);
+          }
+        } else {
+          tryNext();
+        }
+      });
+    };
+    tryNext();
+  }, [
+    resolvedCoords,
+    geocodeStatus,
+    hasExplicitCoords,
+    mapReady,
+    bookingLocation,
+    specificBooking?.serviceDetails?.location,
+    mapApiKey,
+  ]);
 
   // Determine loading state
   const isLoading = hookLoading || localLoading;
@@ -636,28 +847,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     "Contact not available";
 
   const providerImage = userImageUrl || "/default-client.svg";
+
   const clientId =
     specificBooking?.clientProfile?.id?.toString() ||
     specificBooking?.clientId?.toString();
-
-  // Format location string
-  let bookingLocation = "Location not specified";
-  if (
-    typeof specificBooking?.location === "string" &&
-    (specificBooking.location as string).trim() !== ""
-  ) {
-    bookingLocation = specificBooking.location as string;
-  } else if (
-    typeof specificBooking?.serviceDetails?.location === "string" &&
-    (specificBooking.serviceDetails.location as string).trim() !== ""
-  ) {
-    bookingLocation = specificBooking.serviceDetails.location as string;
-  } else if (
-    typeof specificBooking?.formattedLocation === "string" &&
-    (specificBooking.formattedLocation as string).trim() !== ""
-  ) {
-    bookingLocation = specificBooking.formattedLocation as string;
-  }
 
   const price =
     specificBooking?.price ??
@@ -793,15 +986,49 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 </span>
               </span>
             </div>
-            {/* Booking location */}
-            <div className="mb-2 flex items-center gap-2">
-              <MapPinIcon className="h-5 w-5 text-blue-500" />
-              <span className="font-medium text-gray-700">
-                Location:{" "}
-                <span className="font-normal text-gray-700">
+            {/* Booking location (basic line plus variants) */}
+            <div className="mb-2 flex items-start gap-2">
+              <MapPinIcon className="mt-0.5 h-5 w-5 text-blue-500" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-700">Location:</span>
+                <span className="text-sm leading-snug font-normal text-gray-700">
                   {bookingLocation}
                 </span>
-              </span>
+                {(displayAddress || preciseAddress || geocodedAddress) && (
+                  <div className="mt-1 space-y-0.5">
+                    {displayAddress && (
+                      <p className="text-[11px] text-gray-700">
+                        <span className="font-medium">Display:</span>{" "}
+                        {displayAddress}
+                      </p>
+                    )}
+                    {preciseAddress && preciseAddress !== displayAddress && (
+                      <p className="text-[11px] text-gray-500">
+                        <span className="font-medium text-gray-600">
+                          Provider ref:
+                        </span>{" "}
+                        {preciseAddress}
+                      </p>
+                    )}
+                    {geocodedAddress &&
+                      geocodedAddress !== displayAddress &&
+                      geocodedAddress !== preciseAddress && (
+                        <p className="text-[11px] text-gray-400">
+                          <span className="font-medium text-gray-500">
+                            Geocoded:
+                          </span>{" "}
+                          {geocodedAddress}
+                        </p>
+                      )}
+                    {hasExplicitCoords && (
+                      <p className="text-[10px] text-gray-400">
+                        Lat/Lng: {clientLocation.lat.toFixed(5)},{" "}
+                        {clientLocation.lng.toFixed(5)}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             {/* Booking price */}
             {price !== undefined && (
@@ -921,6 +1148,119 @@ const ProviderBookingDetailsPage: React.FC = () => {
               )}
             </div>
           )}
+
+        {/* Map Section */}
+        <section className="rounded-2xl bg-white p-4 shadow-lg">
+          <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
+            <MapPinIcon className="h-5 w-5 text-blue-500" /> Service Location
+            Map
+          </h3>
+          <p className="mb-2 text-xs text-gray-500">
+            Interactive map centered on the client's provided location. Use the
+            navigation button to open directions in Google Maps.
+          </p>
+          {/* Static preview while loading interactive map */}
+          {!mapReady && (
+            <div className="relative mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              {(() => {
+                const coord =
+                  resolvedCoords || (hasExplicitCoords ? clientLocation : null);
+                const staticKey =
+                  mapApiKey === "REPLACE_WITH_KEY" ? null : mapApiKey;
+                const staticUrl =
+                  coord && staticKey
+                    ? `https://maps.googleapis.com/maps/api/staticmap?center=${coord.lat},${coord.lng}&zoom=15&size=640x300&maptype=roadmap&markers=color:red%7C${coord.lat},${coord.lng}&key=${staticKey}`
+                    : null;
+                return staticUrl ? (
+                  <img
+                    src={staticUrl}
+                    alt="Map preview"
+                    className="h-64 w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">
+                    Loading map script...
+                  </div>
+                );
+              })()}
+              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] leading-tight font-medium text-white">
+                {bookingLocation !== "Location not specified"
+                  ? bookingLocation
+                  : displayAddress || preciseAddress || "Location pending"}
+              </div>
+            </div>
+          )}
+          {mapReady ? (
+            <div>
+              <GoogleMap
+                mapContainerStyle={{
+                  width: "100%",
+                  height: "260px",
+                  borderRadius: "12px",
+                }}
+                center={resolvedCoords || clientLocation}
+                zoom={16}
+                options={{ disableDefaultUI: true, zoomControl: true }}
+              >
+                <Marker position={resolvedCoords || clientLocation} />
+              </GoogleMap>
+              {/* Address overlay on interactive map */}
+              <div className="mt-2 rounded bg-gray-900/70 px-3 py-1 text-[11px] leading-snug text-gray-100">
+                {bookingLocation !== "Location not specified"
+                  ? bookingLocation
+                  : displayAddress ||
+                    preciseAddress ||
+                    geocodedAddress ||
+                    "Location not specified"}
+              </div>
+              {!hasExplicitCoords && geocodeStatus === "pending" && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Resolving location on map...
+                </p>
+              )}
+              {!hasExplicitCoords && geocodeStatus === "failed" && (
+                <p className="mt-2 text-xs text-red-500">
+                  Could not resolve the address to coordinates.
+                </p>
+              )}
+
+              {mapApiKey === "REPLACE_WITH_KEY" && (
+                <p className="mt-2 text-xs text-orange-600">
+                  Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for
+                  full accuracy.
+                </p>
+              )}
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${(resolvedCoords || clientLocation).lat},${(resolvedCoords || clientLocation).lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white shadow hover:bg-blue-700"
+                >
+                  Open in Google Maps
+                </a>
+                {(hasExplicitCoords || resolvedCoords) && (
+                  <button
+                    onClick={() => {
+                      const c = resolvedCoords || clientLocation;
+                      navigator.clipboard
+                        .writeText(`${c.lat},${c.lng}`)
+                        .catch(() => {});
+                    }}
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    Copy Coordinates
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+              Loading map...
+            </div>
+          )}
+        </section>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
