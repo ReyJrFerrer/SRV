@@ -6,7 +6,7 @@ let isInitialized = false;
  * Initialize Firebase Admin SDK with proper emulator settings
  */
 function initializeFirebaseAdmin() {
-  if (isInitialized) {
+  if (isInitialized || admin.apps.length > 0) {
     return;
   }
 

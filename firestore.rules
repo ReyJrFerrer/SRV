@@ -1,10 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for development
-    // In production, you should implement proper security rules
-    match /{document=**} {
-      allow read, write: if true;
+    // Users can only read their own profile, admins can read any.
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || request.auth.token.isAdmin == true;
+      allow write: if request.auth.uid == userId;
+    }
+    // Services can be read by anyone, but only written by the provider or an admin.
+    match /services/{serviceId} {
+        allow read: if request.auth != null;
+        allow write: if resource.data.providerId == request.auth.uid || request.auth.token.isAdmin == true;
+    }
+    // Bookings can only be read/written by participants or an admin.
+    match /bookings/{bookingId} {
+        allow read, write: if request.auth.uid == resource.data.clientId || request.auth.uid == resource.data.providerId || request.auth.token.isAdmin == true;
+    }
+    // Reviews can be created by authenticated users, but not modified.
+    match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        allow update, delete: if false; // Reviews are immutable
     }
   }
 }

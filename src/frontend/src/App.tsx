@@ -5,6 +5,14 @@ import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
 import Contact from "./components/Contact";
+import { initializeFirebase } from "./services/firebaseApp";
+
+// Initialize Firebase as early as possible
+try {
+  initializeFirebase();
+} catch (error) {
+  console.error("Failed to initialize Firebase in App.tsx:", error);
+}
 
 type CurrentView = "main" | "about" | "contact";
 

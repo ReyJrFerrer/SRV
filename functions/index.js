@@ -20,6 +20,19 @@ const {getPaymentData} = require("./getPaymentData");
 const {checkInvoiceStatus} = require("./checkInvoiceStatus");
 const {releaseHeldPayment} = require("./releaseHeldPayment");
 
+// Import Identity Bridge function
+const {signInWithInternetIdentity} = require("./src/auth");
+
+// Import Account Management functions
+const {
+  createProfile,
+  getProfile,
+  updateProfile,
+  switchUserRole,
+  getAllServiceProviders,
+  getAllUsers,
+} = require("./src/account");
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -29,4 +42,15 @@ exports.checkProviderOnboarding = checkProviderOnboarding;
 exports.getPaymentData = getPaymentData;
 exports.checkInvoiceStatus = checkInvoiceStatus;
 exports.releaseHeldPayment = releaseHeldPayment;
+
+// Export Identity Bridge function
+exports.signInWithInternetIdentity = signInWithInternetIdentity;
+
+// Export Account Management functions
+exports.createProfile = createProfile;
+exports.getProfile = getProfile;
+exports.updateProfile = updateProfile;
+exports.switchUserRole = switchUserRole;
+exports.getAllServiceProviders = getAllServiceProviders;
+exports.getAllUsers = getAllUsers;
 
