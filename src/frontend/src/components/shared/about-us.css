@@ -26,7 +26,7 @@
   padding-left: 2%;
   padding-right: 2%;
   position: relative;
-  height: 80px;
+  height: 60px; /* reduced global header height for sleeker look */
 }
 
 .footer-button {
@@ -55,7 +55,7 @@
 }
 
 .logo-image {
-  width: 80px;
+  width: 70px; /* smaller logo by default */
   height: auto;
 }
 
@@ -162,6 +162,17 @@
   position: relative;
   overflow: hidden;
 }
+@media (max-width: 768px) {
+  /* Further tighten vertical spacing in About hero for smaller devices */
+  .about-hero-section { padding: 2.2rem 0 2.6rem 0; }
+  .about-hero-content { grid-template-columns: 1fr; gap: 1.1rem; }
+  .about-hero-image { margin-top: 0.5rem !important; }
+  .about-hero-text { margin-top: 0.25rem !important; gap: 0.75rem; }
+  .about-hero-title { font-size: 2rem; line-height: 1.15; }
+  .about-hero-description { font-size: 0.98rem; line-height: 1.45; margin-top: 0; }
+  .about-hero-buttons { margin-top: 0.25rem; }
+  .about-hero-buttons .btn-primary { width: 100%; padding: 0.85rem 1.75rem; font-size: 1rem; }
+}
 
 .about-hero-content {
   position: relative;
@@ -182,6 +193,60 @@
   width: 100%;
   height: auto;
   border-radius: 1rem;
+  object-fit: cover;
+}
+
+/* Responsive YouTube embed wrapper */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+}
+
+/* mission-specific video sizing so it lines up with mission text */
+.mission-image .video-wrapper {
+  max-width: 560px; /* reasonable max width to sit next to the text */
+  max-height: 450px;
+  border-radius: 0.75rem
+}
+
+/* Device background (green-screen photo) — iframe is positioned to sit over the green screen area */
+.device-bg {
+  position: relative;
+  width: 100%;
+  /* use the laptop mockup SVG located in public/about-us/ */
+  background-image: url('/about-us/laptop%20mockup.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* Reserve a 56.25% area so the container keeps 16:9 space by default */
+  padding-bottom: 56.25%;
+  height: 0;
+}
+
+.device-bg .video-inner {
+  position: absolute;
+
+  inset: 0; /* top:0; right:0; bottom:0; left:0; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-bg .video-inner iframe {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
   object-fit: cover;
 }
 
@@ -256,8 +321,13 @@
   max-width: 600px;
   height: 500px;
   border-radius: 1rem;
-  padding: auto;
-  object-fit: fill;
+  /* center the video inside this column */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .mission-img {
@@ -374,7 +444,7 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   margin-top: 0;
   transition: all 0.3s ease;
-  cursor: pointer;
+  cursor: default; /* ensure container doesn't force click-pointer for non-interactive area */
 }
 .impact-container:hover {
   transform: translateY(-8px);
@@ -405,6 +475,7 @@
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(5px);
+  cursor: default; /* metrics are informational; avoid pointer cursor */
 }
 
 .metric-number {
@@ -418,6 +489,52 @@
   font-size: 0.95rem;
   line-height: 1.4;
   margin: 0;
+}
+
+/* Icon for metrics */
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  color: #ffffff;
+  background: rgba(255,255,255,0.12);
+  padding: 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.12);
+  transition: background 0.18s ease, transform 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.metric-card .metric-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+
+/* Hover state: make icon background yellow and icon dark */
+.metric-icon:hover {
+  background: #fdcc38;
+  color: #1e293b;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(2,6,23,0.14);
+}
+
+.metric-icon:hover svg {
+  fill: currentColor;
+}
+
+/* Also trigger icon hover state when the whole metric card is hovered */
+.metric-card:hover .metric-icon {
+  background: #fdcc38;
+  color: #1e293b;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(2,6,23,0.14);
+}
+
+.metric-card:hover .metric-icon svg {
+  fill: currentColor;
 }
 
 @media (max-width: 992px) {
@@ -444,15 +561,154 @@
   .metrics-grid {
     grid-template-columns: 1fr 1fr;
   }
-}
 
-@media (max-width: 576px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
+  .site-header {
+    /* reduce overall visual footprint */
+    backdrop-filter: blur(6px);
   }
 
-  .impact-container {
-    padding: 40px 20px;
+  .header-content {
+    height: 44px !important;
+    padding: 0.35rem 2% !important;
+    gap: 0.35rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .logo-image {
+    width: 45px !important;
+    height: auto !important;
+  }
+
+  .mobile-menu-toggle {
+    width: 26px !important;
+    height: 18px !important;
+  }
+
+  .hamburger-line {
+    height: 1.5px !important;
+    border-radius: 2px !important;
+  }
+
+  .header-button {
+    display: none !important; /* keep header compact by hiding large header CTA on small screens */
+  }
+
+  .footer {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .footer-logo {
+    width: 44px !important;
+    height: auto !important;
+    margin: 0 auto !important;
+  }
+
+  .footer-brand-description,
+  .footer-contact,
+  .footer-copyright {
+    font-size: 0.82rem !important;
+  }
+
+  .footer-links {
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .social-icon-main,
+  .social-icon-footer {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .footer-bottom {
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    height: 40px !important;
+    padding: 0.3rem 1.5% !important;
+  }
+
+  .logo-image {
+    width: 50px !important;
+  }
+
+  .mobile-menu-toggle {
+    width: 24px !important;
+    height: 16px !important;
+  }
+
+  .hamburger-line {
+    height: 1.2px !important;
+  }
+
+  .footer {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .footer-logo {
+    width: 36px !important;
+  }
+
+  .footer-content {
+    gap: 6px !important;
+  }
+
+  .footer-brand-description,
+  .footer-contact,
+  .footer-copyright {
+    font-size: 0.75rem !important;
+  }
+
+  .social-icon-main,
+  .social-icon-footer {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .footer-bottom {
+    padding-top: 6px !important;
+  }
+}
+
+/* Desktop/Laptop header compact override - targets the actual header structure used in MainPage.tsx */
+@media (min-width: 992px) {
+  /* reduce the visible header height and tighten paddings */
+  .site-header {
+    height: 56px;
+  }
+
+  .site-header .container {
+    height: 60px !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* shrink the logo inside the header specifically */
+  .site-header .logo-image {
+    width: 55px !important;
+    height: auto !important;
+  }
+
+  /* reduce header CTA size so it doesn't stretch the header */
+  .site-header .header-button .btn-primary {
+    padding: 0.5rem 0.9rem !important;
+    font-size: 0.95rem !important;
   }
 }
 
@@ -524,11 +780,11 @@
 
 .gallery-container {
   position: relative;
-  width: 70%;
-  height: 650px;
+  width: 62%;
+  height: 520px; /* slightly smaller */
   overflow: hidden;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   margin: 0 auto;
 }
 
@@ -542,6 +798,8 @@
   transition: opacity 0.7s ease;
   transform: scale(1.05);
 }
+
+/* Category icon overlay (shared with MainPage gallery) */
 
 .gallery-image-wrapper.active {
   opacity: 1;
@@ -560,11 +818,12 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 2rem;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  color: white;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  padding: 2.2rem 2.6rem; /* larger padding */
+  /* expanded yellow gradient covering more of the image */
+  background: linear-gradient(180deg, rgba(253,204,56,0.0) 0%, rgba(253,204,56,0.18) 30%, rgba(253,204,56,0.9) 100%);
+  color: #0f172a;
+  opacity: 1; /* show by default */
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .gallery-image-wrapper:hover .image-overlay {
@@ -572,29 +831,30 @@
 }
 
 .overlay-title {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+  font-weight: 800;
+  color: #ffffff; /* ensure overlay title is white on yellow gradient */
 }
 
 .overlay-description {
-  font-size: 1.1rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 1rem;
+  color: rgba(255,255,255,0.95); /* white-ish description for contrast */
 }
 
 .gallery-controls {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .gallery-control {
   background: #3b82f6;
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -618,8 +878,8 @@
 }
 
 .gallery-indicator {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: #cbd5e1;
   cursor: pointer;
@@ -737,8 +997,9 @@
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 36px;
+  align-items: center;
 }
 
 .team-member {
@@ -750,9 +1011,9 @@
 
 .member-image-container {
   position: relative;
-  width: 330px;
-  height: 330px;
-  margin-bottom: 25px;
+  width: 420px;
+  height: 420px;
+  margin-bottom: 18px;
   background-color: #1984ce;
   border-radius: 50%;
   display: flex;
@@ -761,15 +1022,16 @@
 }
 
 .member-image-wrapper {
-  width: 80%;
-  height: 80%;
+  width: 86%;
+  height: 86%;
   border-radius: 50%;
   overflow: hidden;
   background-color: #fff;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .member-image {
@@ -777,6 +1039,135 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* Hover overlay inside profile circle */
+.member-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(253,204,56,0.95), rgba(253,204,56,0.85));
+  opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  padding: 18px;
+  text-align: center;
+}
+
+.member-overlay-text {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+/* On hover, fade image and reveal overlay */
+.member-image-wrapper:hover .member-image {
+  transform: scale(1.02);
+  filter: brightness(0.45) saturate(0.9);
+  transition: filter 0.22s ease, transform 0.22s ease;
+}
+
+.member-image-wrapper:hover .member-overlay {
+  opacity: 1;
+}
+
+.member-image-wrapper:hover .member-overlay-text {
+  opacity: 1;
+}
+
+/* ===================== TEAM MEMBER FLIP CIRCLE (New) ===================== */
+
+.member-flip {
+  perspective: 1400px;
+  width: 86%;
+  height: 86%;
+  border-radius: 50%;
+  position: relative;
+}
+.member-flip:focus { outline:none; }
+.member-flip:focus-visible { box-shadow:0 0 0 4px rgba(253,204,56,0.55); }
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .85s cubic-bezier(.85,.02,.2,1), filter .4s ease;
+  border-radius: 50%;
+}
+
+/* Triggered states (hover, focus, explicit class for touch) */
+.member-flip:hover .flip-inner,
+.member-flip:focus .flip-inner,
+.member-flip.touch-flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-front {
+  background:#fff;
+}
+.flip-front img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.flip-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg,#ffe16b,#fdcc38,#f4b400);
+  color:#0f172a;
+  padding:22px 24px;
+  text-align:center;
+  font-family: 'rubik';
+  font-size: .95rem;
+  line-height:1.35;
+  font-weight:600;
+  display:flex;
+  flex-direction:column;
+  gap:.75rem;
+}
+.flip-back p { margin:0; }
+
+/* Add subtle shine overlay on the gradient side */
+.flip-back::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 30% 25%, rgba(255,255,255,0.55), transparent 60%);
+  mix-blend-mode:overlay;
+  pointer-events:none;
+}
+
+/* Reduce text size on smaller breakpoints */
+@media (max-width: 992px) {
+  .flip-back { font-size:.85rem; padding:18px 18px; }
+}
+@media (max-width: 600px) {
+  .flip-back { font-size:.8rem; padding:16px 14px; }
+}
+
+/* Fallback for no-hover (touch). We'll expose a tap toggler via a helper JS class if needed. */
+@media (hover: none) { 
+  .member-flip:hover .flip-inner { transform:none; }
+  /* Enable tap-driven flip via added .touch-flipped class */
+  .member-flip.touch-flipped .flip-inner { transform: rotateY(180deg) !important; }
+}
+
 
 .member-social {
   position: absolute;
@@ -1122,6 +1513,16 @@
   transition: 0.3s;
   border-radius: 2px;
 }
+/* Support alternate markup that uses .burger-bar (current MobileSiteHeader) */
+.burger-bar {
+  width: 100%;
+  height: 3px;
+  background-color: #1e293b;
+  margin: 2px 0;
+  transition: 0.3s;
+  border-radius: 2px;
+  display: block;
+}
 
 .header-button {
   display: block;
@@ -1206,6 +1607,26 @@
   .mobile-menu-toggle.active .hamburger-line:nth-child(3) {
     transform: rotate(-45deg) translate(7px, -6px);
   }
+  /* Mirror transforms for .burger-bar variant */
+  .mobile-menu-toggle.active .burger-bar:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+  .mobile-menu-toggle.active .burger-bar:nth-child(2) {
+    opacity: 0;
+  }
+  .mobile-menu-toggle.active .burger-bar:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+  }
+}
+
+/* === Mobile header spacing adjustment (remove extra right gap after burger icon addition) === */
+@media (max-width: 768px) {
+  /* Tighten horizontal padding inside the mobile header container */
+  .site-header .container { padding-left: 10px !important; padding-right: 10px !important; }
+  /* Ensure burger button sits flush without creating extra scroll width */
+  .mobile-menu-toggle { margin-right: 0 !important; }
+  /* Prevent any horizontal overflow from off-canvas nav translation */
+  html, body { overflow-x: hidden; }
 }
 body.menu-open {
   overflow: hidden;
@@ -1332,9 +1753,6 @@ body.menu-open {
     overflow: hidden;
     background-color: #fff;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 }
 
@@ -1357,23 +1775,29 @@ body.menu-open {
     font-size: 2.2rem;
   }
 
+
   .about-hero-content,
   .mission-content {
     grid-template-columns: 1fr;
     gap: 2.5rem;
     text-align: center;
+    align-items: center;
   }
 
-  .about-hero-text {
+  /* On mobile place the video above the hero text and center content */
+  .about-hero-image {
     order: 1;
   }
 
-  .about-hero-image {
+  .about-hero-text {
     order: 2;
+    text-align: center;
   }
 
+  /* Ensure mission media is visible and centered on mobile */
   .mission-text {
     order: 2;
+    text-align: center;
   }
 
   .mission-image {
@@ -1381,6 +1805,43 @@ body.menu-open {
     max-width: 300px;
     height: 400px;
     margin: 0 auto;
+    display: block;
+  }
+
+  .mission-image .video-wrapper {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Force iframe to be visible and full width on small screens */
+  .mission-image .video-wrapper iframe {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .mission-tagline,
+  .mission-description {
+    text-align: center;
+  }
+
+  /* Emergency override: if any other rule hides the mission iframe on mobile, force it visible */
+  .mission-image,
+  .mission-image .video-wrapper,
+  .mission-image .video-wrapper iframe {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .mission-image {
+    z-index: 5; /* bring above potential overlays */
+    min-height: 180px; /* ensure iframe has some height */
+  }
+
+  .mission-image .video-wrapper iframe {
+    min-height: 180px !important;
+    height: auto !important;
   }
 
   .pillars-grid {
@@ -1451,20 +1912,22 @@ body.menu-open {
   }
 
   .about-hero-section {
-    padding: 3rem 0 4rem 0;
+    padding: 2rem 0 2.5rem 0;
   }
 
   .about-hero-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
+    text-align: center;
   }
 
   .about-hero-description {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    text-align: center;
   }
 
   .about-hero-buttons {
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .about-hero-buttons .btn-primary {
@@ -1546,14 +2009,15 @@ body.menu-open {
     gap: 25px;
   }
 
+  /* Increase team member circle sizes on small tablets / large phones for better prominence */
   .member-image-container {
-    width: 180px;
-    height: 180px;
+    width: 260px;
+    height: 260px;
   }
 
   .member-image-wrapper {
-    width: 140px;
-    height: 140px;
+    width: 200px;
+    height: 200px;
   }
 
   .gallery-container {
@@ -1628,15 +2092,17 @@ body.menu-open {
   }
 
   .about-hero-section {
-    padding: 2rem 0 3rem 0;
+    padding: 1.5rem 0 2rem 0;
   }
 
   .about-hero-title {
-    font-size: 2rem;
+    font-size: 1.6rem;
+    text-align: center;
   }
 
   .about-hero-description {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-align: center;
   }
 
   .about-hero-buttons .btn-primary {
@@ -1735,14 +2201,15 @@ body.menu-open {
     gap: 20px;
   }
 
+  /* Make member circles larger on narrow phones while keeping layout single-column */
   .member-image-container {
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
   }
 
   .member-image-wrapper {
-    width: 120px;
-    height: 120px;
+    width: 170px;
+    height: 170px;
   }
 
   .member-name {
@@ -1802,6 +2269,56 @@ body.menu-open {
   .modal-content {
     width: 95%;
     padding: 1.5rem;
+  }
+}
+
+/* Hide footer logo on mobile to save vertical space */
+@media (max-width: 768px) {
+  .footer .footer-logo {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer .footer-logo {
+    display: none !important;
+  }
+}
+
+/* Map section styles */
+.map-section {
+  padding: 4rem 0 6rem 0;
+  background-color: #ffffff;
+}
+
+.map-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.map-title {
+  font-family: "rubik";
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.map-description {
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+.map-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.08);
+}
+
+@media (max-width: 768px) {
+  .map-wrapper iframe {
+    height: 300px;
   }
 }
 
@@ -1981,5 +2498,290 @@ body.menu-open {
 
   .info-description {
     font-size: 0.85rem;
+  }
+}
+
+/* Milestones section */
+.milestones-section {
+  padding: 4rem 0;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+}
+
+/* Final defensive overrides: ensure mission iframe is visible on small screens */
+@media (max-width: 992px) {
+  .mission-section,
+  .mission-content,
+  .mission-image,
+  .mission-image .video-wrapper,
+  .mission-image .video-wrapper iframe {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .mission-image {
+    height: auto !important;
+    min-height: 200px !important;
+    z-index: 9999 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .mission-image .video-wrapper {
+    padding-bottom: 56.25% !important; /* restore 16:9 spacing if other rules removed it */
+  }
+
+  .mission-image .video-wrapper iframe {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.milestones-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.milestone-card {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.04);
+}
+
+.milestone-card {
+  position: relative;
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.milestone-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 60px rgba(2,6,23,0.08);
+  border-color: rgba(37,99,235,0.12);
+}
+
+.milestone-media {
+  flex: 0 0 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milestone-logo {
+  max-width: 88px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.milestone-media {
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.02);
+}
+
+.milestone-body {
+  flex: 1 1 auto;
+}
+
+.milestone-title {
+  font-family: "rubik";
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #0f172a;
+}
+
+.milestone-text {
+  margin: 0 0 10px 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.milestone-link {
+  display: inline-block;
+  text-decoration: none;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.milestone-link:hover {
+  text-decoration: underline;
+}
+
+/* Variant accents for left/right cards */
+.milestone-left {
+  border-left: 6px solid rgba(59,130,246,0.15);
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+}
+
+.milestone-right {
+  border-left: 6px solid rgba(250,204,21,0.12);
+  background: linear-gradient(180deg, #ffffff, #fffaf4);
+}
+
+/* Small badge label */
+.milestone-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(15,23,42,0.06);
+  color: #0f172a;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* CTA button style (used for external links) */
+.milestone-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #2563eb;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: background 0.2s ease, transform 0.12s ease;
+}
+
+.milestone-cta:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .milestones-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .milestone-media {
+    flex: 0 0 72px;
+  }
+
+  .milestone-card {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .milestone-media { flex: 0 0 56px; }
+  .milestone-logo { max-width: 64px; }
+  .milestone-title { font-size: 1rem; }
+  .milestone-text { font-size: 0.95rem; }
+}
+
+/* Mission video: inherit hero video dimensions */
+.mission-image.about-hero-image {
+  /* ensures identical responsive behavior */
+  flex: 1;
+}
+.mission-image.about-hero-image .video-wrapper,
+.mission-image.about-hero-image iframe {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+}
+/* Optional: keep same border radius if hero video has one */
+.mission-image.about-hero-image .video-wrapper iframe {
+  border-radius: inherit;
+}
+
+/* === BEGIN MOBILE VIDEO SIZE MATCH === */
+@media (max-width: 992px) {
+  .about-hero-image,
+  .mission-image.about-hero-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 auto !important;
+  }
+  .about-hero-image .video-wrapper,
+  .mission-image.about-hero-image .video-wrapper {
+    width: 100% !important;
+    padding-bottom: 56.25% !important; /* 16:9 */
+    height: 0 !important;
+    position: relative !important;
+  }
+  .about-hero-image .video-wrapper iframe,
+  .mission-image.about-hero-image .video-wrapper iframe {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0.75rem !important;
+  }
+}
+
+/* Reinforce at narrower breakpoints in case of later rules */
+@media (max-width: 480px), (max-width: 360px), (max-width: 320px) {
+  .about-hero-image,
+  .mission-image.about-hero-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  .about-hero-image .video-wrapper,
+  .mission-image.about-hero-image .video-wrapper {
+    padding-bottom: 56.25% !important;
+  }
+}
+/* === END MOBILE VIDEO SIZE MATCH === */
+
+/* === FOOTER MOBILE HEIGHT & NAV FONT ADJUSTMENTS (shorter + slightly larger links) === */
+@media (max-width: 768px) {
+  /* Tighten overall vertical space */
+  .footer {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+  .footer-content {
+    gap: 4px !important;              /* reduce large gaps causing extra height */
+  }
+  /* Make only the nav text links (Home / About / Contact) bigger without enlarging height */
+  .footer-nav .nav-links .footer-link {
+    font-size: 1.05rem !important;     /* slightly larger than default */
+    font-weight: 600;
+    line-height: 1.2;
+    /* Remove the big circular 50px box so footer shrinks */
+    width: auto !important;
+    height: auto !important;
+    padding: 4px 6px !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+  .footer-nav .nav-links .footer-link {
+    font-size: 1rem !important;        /* still a bump over old 0.9rem */
+    padding: 4px 6px !important;
+  }
+}
+/* === END FOOTER MOBILE HEIGHT & NAV FONT ADJUSTMENTS === */
+@keyframes loading-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
   }
 }

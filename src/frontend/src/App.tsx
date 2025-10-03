@@ -4,8 +4,9 @@ import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
+import Contact from "./components/Contact";
 
-type CurrentView = "main" | "about";
+type CurrentView = "main" | "about" | "contact";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -57,6 +58,9 @@ const LandingPage = () => {
   const handleNavigateToMain = () => {
     setCurrentView("main");
   };
+  const handleNavigateToContact = () => {
+    setCurrentView("contact");
+  };
 
   return (
     <main className="bg-gray-50">
@@ -65,6 +69,7 @@ const LandingPage = () => {
           onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToAbout={handleNavigateToAbout}
+          onNavigateToContact={handleNavigateToContact}
         />
       )}
 
@@ -73,6 +78,16 @@ const LandingPage = () => {
           onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToMain={handleNavigateToMain}
+          onNavigateToContact={handleNavigateToContact}
+        />
+      )}
+
+      {currentView === "contact" && (
+        <Contact
+          onLoginClick={login}
+          isLoginLoading={isLoading}
+          onNavigateToMain={handleNavigateToMain}
+          onNavigateToAbout={handleNavigateToAbout}
         />
       )}
     </main>

@@ -1,23 +1,33 @@
 import "./shared/about-us.css";
-import { FingerPrintIcon } from "@heroicons/react/24/solid";
-import { useState, useEffect } from "react";
+import {
+  MagnifyingGlassIcon,
+  ChartBarIcon,
+  BoltIcon,
+  ShieldCheckIcon,
+  FingerPrintIcon,
+} from "@heroicons/react/24/solid";
+import { useEffect } from "react";
+import "./shared/animations.css"; // ensure animation classes available
+import { SiteHeader } from "./layout/SiteHeader";
+import { SiteFooter } from "./layout/SiteFooter";
+import { MobileSiteHeader } from "./layout/MobileSiteHeader";
+import "./shared/styles.css";
+import { CommunityCTASection } from "./layout/CommunityCTASection";
 
 interface AboutUsProps {
   onLoginClick: () => void;
   isLoginLoading: boolean;
   onNavigateToMain: () => void;
+  onNavigateToContact: () => void;
 }
 export default function AboutUs({
   onLoginClick,
   isLoginLoading,
   onNavigateToMain,
+  onNavigateToContact,
 }: AboutUsProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-    const nav = document.querySelector(".main-nav");
-    nav?.classList.toggle("active");
+  const handleLoginClick = () => {
+    onLoginClick();
   };
 
   function initServiceGallery() {
@@ -97,124 +107,225 @@ export default function AboutUs({
 
   useEffect(() => {
     initServiceGallery();
+    // (waitlist count not shown; no fetch needed now)
+    // About SRV (slide from right)
+    const aboutSection = document.querySelector<HTMLElement>(
+      ".about-hero-section",
+    );
+    if (aboutSection) {
+      aboutSection.classList.add("about-slide-right-init");
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              aboutSection.classList.add("about-slide-right-in");
+              obs.disconnect();
+            }
+          });
+        },
+        { threshold: 0.25 },
+      );
+      obs.observe(aboutSection);
+    }
+    // Mission (slide from left)
+    const missionSection =
+      document.querySelector<HTMLElement>(".mission-section");
+    if (missionSection) {
+      missionSection.classList.add("mission-slide-left-init");
+      const obs2 = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              missionSection.classList.add("mission-slide-left-in");
+              obs2.disconnect();
+            }
+          });
+        },
+        { threshold: 0.25 },
+      );
+      obs2.observe(missionSection);
+    }
+  }, []);
+
+  // Impact & Milestones pop animations
+  useEffect(() => {
+    // Our Potential Impact
+    const impactSection = document.querySelector<HTMLElement>(
+      ".pillars-section .impact-container",
+    );
+    const metricCards = Array.from(
+      document.querySelectorAll<HTMLElement>(".pillars-section .metric-card"),
+    );
+    if (impactSection) {
+      impactSection.classList.add("impact-pop-init");
+    }
+    metricCards.forEach((card, i) => {
+      card.classList.add("impact-pop-init");
+      card.style.setProperty("--impact-delay", `${120 + i * 120}ms`);
+    });
+    let impactTriggered = false;
+    const impactObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!impactTriggered && entry.isIntersecting) {
+            impactTriggered = true;
+            if (impactSection) impactSection.classList.add("impact-pop-in");
+            metricCards.forEach((c) => c.classList.add("impact-pop-in"));
+            impactObserver.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    if (impactSection) impactObserver.observe(impactSection);
+
+    // Milestones
+    const milestoneCards = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".milestones-section .milestone-card",
+      ),
+    );
+    milestoneCards.forEach((card, i) => {
+      card.classList.add("milestone-pop-init");
+      card.style.setProperty("--mile-delay", `${100 + i * 180}ms`);
+    });
+    let mileTriggered = false;
+    const mileSection = document.querySelector<HTMLElement>(
+      ".milestones-section",
+    );
+    const mileObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!mileTriggered && entry.isIntersecting) {
+            mileTriggered = true;
+            milestoneCards.forEach((c) => c.classList.add("milestone-pop-in"));
+            mileObserver.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+    if (mileSection) mileObserver.observe(mileSection);
+
+    return () => {
+      impactObserver.disconnect();
+      mileObserver.disconnect();
+    };
+  }, []);
+
+  // Team & Map pop animations
+  useEffect(() => {
+    // Team Section
+    const teamSection = document.querySelector<HTMLElement>(".team-section");
+    const teamMembers = Array.from(
+      document.querySelectorAll<HTMLElement>(".team-section .team-member"),
+    );
+    if (teamSection) teamSection.classList.add("team-pop-init");
+    teamMembers.forEach((m, i) => {
+      m.classList.add("team-pop-init");
+      m.style.setProperty("--team-delay", `${140 + i * 140}ms`);
+    });
+    let teamTriggered = false;
+    const teamObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!teamTriggered && entry.isIntersecting) {
+            teamTriggered = true;
+            if (teamSection) teamSection.classList.add("team-pop-in");
+            teamMembers.forEach((m) => m.classList.add("team-pop-in"));
+            teamObserver.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    if (teamSection) teamObserver.observe(teamSection);
+
+    // Map Section
+    const mapSection = document.querySelector<HTMLElement>(
+      ".map-section .map-wrapper",
+    );
+    if (mapSection) mapSection.classList.add("map-pop-init");
+    let mapTriggered = false;
+    const mapObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!mapTriggered && entry.isIntersecting) {
+            mapTriggered = true;
+            mapSection?.classList.add("map-pop-in");
+            mapObserver.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    if (mapSection) mapObserver.observe(mapSection);
+
+    return () => {
+      teamObserver.disconnect();
+      mapObserver.disconnect();
+    };
   }, []);
 
   return (
     <div>
-      {/* Header Section */}
-      <header className="site-header">
-        <div className="container">
-          <div className="header-content">
-            <div className="logo-container">
-              <a href="/" className="logo-link" aria-label="SRV Home">
-                <img src="/logo.svg" alt="SRV Logo" className="logo-image" />
-              </a>
-            </div>
+      <MobileSiteHeader
+        current="about"
+        onHome={() => {
+          onNavigateToMain();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onAbout={() => window.scrollTo(0, 0)}
+        onContact={() => {
+          onNavigateToContact?.();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onLogin={handleLoginClick}
+        isLoginLoading={isLoginLoading}
+      />
+      <SiteHeader
+        current="about"
+        onHome={() => {
+          onNavigateToMain();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onAbout={() => window.scrollTo(0, 0)}
+        onContact={() => {
+          onNavigateToContact?.();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onLogin={handleLoginClick}
+        isLoginLoading={isLoginLoading}
+      />
 
-            <button
-              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""} ml-auto`}
-              aria-label="Toggle menu"
-              onClick={toggleMobileMenu}
-            >
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-            </button>
-
-            <nav className={`main-nav ${isMobileMenuOpen ? "active" : ""}`}>
-              <ul className="nav-list">
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="nav-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigateToMain();
-                    }}
-                  >
-                    Home
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="nav-link nav-link-active"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    About
-                  </a>
-                </li>
-                <li className="nav-item nav-cta">
-                  <button
-                    onClick={onLoginClick}
-                    disabled={isLoginLoading}
-                    className={"btn-primary"}
-                  >
-                    {isLoginLoading ? (
-                      <>
-                        <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                        <span>Connecting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FingerPrintIcon className="mr-3 h-6 w-6" />
-                        <span>Login / Sign Up</span>
-                      </>
-                    )}
-                  </button>
-                </li>
-              </ul>
-            </nav>
-
-            <div className="header-button">
-              <button
-                onClick={onLoginClick}
-                disabled={isLoginLoading}
-                className={"btn-primary"}
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="mr-3 h-6 w-6" />
-                    <span>Login / Sign Up</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
       <section className="about-hero-section">
         <div className="container">
           <div className="about-hero-content">
             <div className="about-hero-image mt-10">
-              <img
-                src="about-srv.jpeg"
-                alt="SRV Service Platform"
-                className="hero-image"
-              />
+              <div className="video-wrapper">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/jW0rTOmDPI0?start=7&autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1"
+                  title="SRV Introduction"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                ></iframe>
+              </div>
             </div>
             <div className="about-hero-text mt-10">
               <h1 className="about-hero-title">About SRV</h1>
               <p className="about-hero-description">
-                Mobile Phone? Laptop? Computer? Any other devices? SRV
-                (Serbisyo, Rito, Valid) is here for you anywhere, anytime.
-                Designed to act as a centralized digital marketplace connecting
-                clients seeking various services with independent, local
-                freelance service providers in Baguio City. Built specifically
-                for the Filipino community, SRV bridges the gap between reliable
-                service needs and trusted local professionals, moving beyond the
-                limitations of Facebook groups and word-of-mouth referrals.
+                SRV is a digital marketplace connecting the Filipino community
+                in Baguio City with trusted, local freelance service providers.
+                It's the reliable, all-device alternative to risky Facebook
+                groups and referrals. Your service, validated, right here.
               </p>
               <div className="about-hero-buttons">
                 <button
-                  onClick={onLoginClick}
+                  onClick={handleLoginClick}
                   disabled={isLoginLoading}
-                  className={"btn-primary"}
+                  className="btn-primary flex items-center"
                 >
                   {isLoginLoading ? (
                     <>
@@ -239,8 +350,10 @@ export default function AboutUs({
           <div className="mission-content">
             <div className="mission-text">
               <h2 className="mission-tagline">
-                <span className="tagline-primary">Smarter Services.</span>
-                <span className="tagline-secondary">Better Communities.</span>
+                <span className="tagline-primary">Building Tech</span>
+                <span className="tagline-secondary">
+                  That <b>SRVs</b>.
+                </span>
               </h2>
               <p className="mission-description">
                 We're here to connect every barangay by guiding Filipinos to
@@ -248,122 +361,18 @@ export default function AboutUs({
                 through a reliable platform.
               </p>
             </div>
-            <div className="mission-image">
-              <img
-                src="smarter-services.png"
-                alt="Connected Community"
-                className="mission-img"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="services-preview-section">
-        <div className="container">
-          <div className="services-header">
-            <h2 className="services-title">Services We Connect</h2>
-          </div>
-
-          <div className="services-gallery">
-            <div className="gallery-container">
-              <div className="gallery-image-wrapper active" data-index="0">
-                <img
-                  src="services/electrician.jpeg"
-                  alt="Home Repairs"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Home Repairs</h3>
-                  <p className="overlay-description">
-                    Electricians, plumbers, carpenters
-                  </p>
-                </div>
+            <div className="mission-image about-hero-image /* same sizing as hero video */">
+              <div className="video-wrapper">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/EphPJADIL8U?start=7&autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1"
+                  title="SRV - Smarter Services, Better Communities"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  style={{ pointerEvents: "auto" }}
+                ></iframe>
               </div>
-              <div className="gallery-image-wrapper" data-index="1">
-                <img
-                  src="services/mechanic.jpeg"
-                  alt="Automobile Repairs"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Automobile Repairs</h3>
-                  <p className="overlay-description">
-                    Mechanics, car detailing
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="2">
-                <img
-                  src="services/technician.jpeg"
-                  alt="Gadget & Appliance Tech"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Gadget & Appliance Tech</h3>
-                  <p className="overlay-description">
-                    Phone repair, appliance fixing
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="3">
-                <img
-                  src="services/hair-stylist.jpeg"
-                  alt="Beauty Services"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Beauty Services</h3>
-                  <p className="overlay-description">
-                    Hair styling, manicures, facials
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="4">
-                <img
-                  src="services/massager.jpeg"
-                  alt="Wellness Services"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Wellness Services</h3>
-                  <p className="overlay-description">
-                    Massage therapy, relaxation treatments
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="5">
-                <img
-                  src="services/delivery-man.jpeg"
-                  alt="Delivery & Errands"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Delivery & Errands</h3>
-                  <p className="overlay-description">
-                    Shopping, document delivery
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="6">
-                <img
-                  src="services/tutor.jpeg"
-                  alt="Tutoring"
-                  className="gallery-image"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Tutoring</h3>
-                  <p className="overlay-description">
-                    Academic support, skill training
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="gallery-controls">
-              <button className="gallery-control prev-btn">◀</button>
-              <div className="gallery-indicators"></div>
-              <button className="gallery-control next-btn">▶</button>
             </div>
           </div>
         </div>
@@ -371,71 +380,7 @@ export default function AboutUs({
 
       <section className="pillars-section">
         <div className="container">
-          <div className="section-header-ab">
-            <h2 className="section-title-ab">Our Core Pillars</h2>
-          </div>
-
           <div className="pillars-impact-container">
-            <div className="pillars-grid">
-              <div className="pillar-card">
-                <div className="pillar-header">
-                  <h3 className="pillar-title">Our Story</h3>
-                  <img
-                    src="three-pillars/story.svg"
-                    alt="Story Icon"
-                    className="pillar-icon"
-                  />
-                </div>
-                <div className="pillar-content">
-                  <p className="pillar-description">
-                    Rooted in Baguio, we built SRV to rethink how communities
-                    and service providers connect moving beyond inconsistent
-                    Facebook groups and word-of-mouth searches, we created a
-                    platform where trust meets convenience.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pillar-card">
-                <div className="pillar-header">
-                  <h3 className="pillar-title">Our Mission</h3>
-                  <img
-                    src="three-pillars/mission.svg"
-                    alt="Mission Icon"
-                    className="pillar-icon"
-                  />
-                </div>
-                <div className="pillar-content">
-                  <p className="pillar-description">
-                    To connect every Filipino with reliable local services-one
-                    verified provider at a time. Together with empowering local
-                    freelancers while making quality services accessible to
-                    everyone in the community.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pillar-card">
-                <div className="pillar-header">
-                  <h3 className="pillar-title">What Makes Us Unique?</h3>
-                  <img
-                    src="three-pillars/unique.svg"
-                    alt="Unique Icon"
-                    className="pillar-icon"
-                  />
-                </div>
-                <div className="pillar-content">
-                  <p className="pillar-description">
-                    Local insights enhanced with technology to create a platform
-                    that understands Filipino service culture. Built on
-                    decentralized blockchain technology (ICP) with verified
-                    provider profiles, transparent pricing, and community-driven
-                    reviews.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <div className="impact-container">
               <div className="impact-header">
                 <h2 className="impact-title">Our Potential Impact</h2>
@@ -443,6 +388,7 @@ export default function AboutUs({
 
               <div className="metrics-grid">
                 <div className="metric-card">
+                  <MagnifyingGlassIcon className="metric-icon" />
                   <div className="metric-number">85%</div>
                   <p className="metric-description">
                     reduction in time spent searching for reliable service
@@ -451,6 +397,7 @@ export default function AboutUs({
                 </div>
 
                 <div className="metric-card">
+                  <ChartBarIcon className="metric-icon" />
                   <div className="metric-number">3x</div>
                   <p className="metric-description">
                     increase in bookings for local freelance service providers
@@ -458,6 +405,7 @@ export default function AboutUs({
                 </div>
 
                 <div className="metric-card">
+                  <BoltIcon className="metric-icon" />
                   <div className="metric-number">40%</div>
                   <p className="metric-description">
                     faster service request fulfillment through location-based
@@ -466,6 +414,7 @@ export default function AboutUs({
                 </div>
 
                 <div className="metric-card">
+                  <ShieldCheckIcon className="metric-icon" />
                   <div className="metric-number">90%</div>
                   <p className="metric-description">
                     improvement in service quality assurance through verified
@@ -478,45 +427,67 @@ export default function AboutUs({
         </div>
       </section>
 
-      <section className="additional-info-section">
+      <section className="milestones-section">
         <div className="section-header-ab">
-          <h2 className="section-title-ab">Ways to Connect</h2>
+          <h2 className="section-title-ab">Milestones</h2>
         </div>
 
         <div className="container">
-          <div className="info-grid">
-            <div className="info-card">
-              <h3 className="info-title">For Service Providers</h3>
-              <p className="info-description">
-                Ready to contribute to the network of trusted local service
-                providers? Highlight what you're great at - Do what you do best!
-              </p>
-              <button className="btn-secondary" id="providerBtn2">
-                Preregister Now
-              </button>
+          <div className="milestones-grid">
+            <div className="milestone-card milestone-left">
+              <div className="milestone-badge">Incubator</div>
+              <div className="milestone-media">
+                <img
+                  src="/about-us/intto logo.svg"
+                  alt="INTTO - University of the Cordilleras Innovation & Technology Transfer Office"
+                  className="milestone-logo"
+                />
+              </div>
+              <div className="milestone-body">
+                <h3 className="milestone-title">Incubation</h3>
+                <p className="milestone-text">
+                  SRV is currently being incubated by the University of the
+                  Cordilleras Innovation and Technology Transfer Office (UC
+                  InTTO). The UC InTTO supports early-stage startups with
+                  mentorship, technical resources, and go-to-market guidance.
+                </p>
+                <a
+                  className="milestone-cta"
+                  href="https://preview.canva.site/0d91fe27-9cd7-4de4-b6eb-81fd83058c91/intto-startups.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit UC InTTO
+                </a>
+              </div>
             </div>
 
-            <div className="info-card">
-              <h3 className="info-title">For Partnerships</h3>
-              <p className="info-description">
-                Looking to partner with SRV? We're open to collaborations with
-                businesses, organizations, and community leaders.
-              </p>
-              <a href="contact.html" className="btn-secondary">
-                Email Partnerships
-              </a>
-            </div>
-
-            <div className="info-card">
-              <h3 className="info-title">For Support</h3>
-              <p className="info-description">
-                Need technical support or have questions about using SRV? Our
-                support team is here to help.
-              </p>
-              <a href="contact.html" className="btn-secondary">
-                {" "}
-                Get Support{" "}
-              </a>
+            <div className="milestone-card milestone-right">
+              <div className="milestone-badge">Award</div>
+              <div className="milestone-media">
+                <img
+                  src="/about-us/wchl logo.svg"
+                  alt="WCHL - World Computer Hackathon League"
+                  className="milestone-logo"
+                />
+              </div>
+              <div className="milestone-body">
+                <h3 className="milestone-title">WCHL Recognition</h3>
+                <p className="milestone-text">
+                  SRV placed 2nd in the World Computer Hackathon League
+                  (Philippine-China-Korea funnel) and will represent the
+                  Philippines in the Asian rounds. This recognition validates
+                  our technical approach and community impact.
+                </p>
+                <a
+                  className="milestone-cta"
+                  href="https://dorahacks.io/hackathon/wchl25-national-round/winner"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View WCHL Winners
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -532,58 +503,47 @@ export default function AboutUs({
             </p>
           </div>
 
-          <div className="team-grid">
+          <div className="team-grid team-grid-2x2">
+            {/* Row 1 */}
+
             <div className="team-member">
               <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/don.jpg"
-                    alt="Don - Team Member"
-                    className="member-image"
-                  />
-                </div>
-                <div className="member-social">
-                  <a
-                    href="https://www.facebook.com/share/16V1X4FiAZ/"
-                    className="social-link"
-                    aria-label="Facebook"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-facebook.svg"
-                      alt="Facebook"
-                      className="social-icon"
-                    />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/in/don-daryll-dela-concha-081ab6320?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
-                    className="social-link"
-                    aria-label="LinkedIn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-linkedin.svg"
-                      alt="LinkedIn"
-                      className="social-icon"
-                    />
-                  </a>
-                </div>
-              </div>
-              <div className="member-info">
-                <h3 className="member-name">Don Daryll Dela Concha</h3>
-                <p className="member-role">Frontend Support</p>
-              </div>
-            </div>
-            <div className="team-member">
-              <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/jd.png"
-                    alt="JD - Team Member"
-                    className="member-image"
-                  />
+                <div
+                  className="member-flip"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    const el = e.currentTarget;
+                    const isTouchEnv =
+                      window.matchMedia("(hover: none)").matches ||
+                      window.innerWidth <= 820;
+                    if (!isTouchEnv) return; // keep pure hover on desktop
+                    // close others
+                    document
+                      .querySelectorAll(".member-flip.touch-flipped")
+                      .forEach((other) => {
+                        if (other !== el)
+                          other.classList.remove("touch-flipped");
+                      });
+                    el.classList.toggle("touch-flipped");
+                  }}
+                  aria-label="More about Jan Dale Zarate"
+                >
+                  <div className="flip-inner">
+                    <div className="flip-face flip-front">
+                      <img
+                        src="about-us/jd.png"
+                        alt="Tutor avatar representing Jan Dale"
+                        className="member-image"
+                      />
+                    </div>
+                    <div className="flip-face flip-back">
+                      <p>
+                        An IT student at Saint Louis University (Baguio City).
+                        He serves as the business developer of the group as well
+                        as builds interactive UI and components.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="member-social">
                   <a
@@ -616,17 +576,49 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Jan Dale Zarate</h3>
-                <p className="member-role">Frontend Developer</p>
+                <p className="member-role">
+                  Business Developer / Frontend Developer
+                </p>
               </div>
             </div>
+
             <div className="team-member">
               <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/rey.png"
-                    alt="Rey - Team Member"
-                    className="member-image"
-                  />
+                <div
+                  className="member-flip"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    const el = e.currentTarget;
+                    const isTouchEnv =
+                      window.matchMedia("(hover: none)").matches ||
+                      window.innerWidth <= 820;
+                    if (!isTouchEnv) return;
+                    document
+                      .querySelectorAll(".member-flip.touch-flipped")
+                      .forEach((other) => {
+                        if (other !== el)
+                          other.classList.remove("touch-flipped");
+                      });
+                    el.classList.toggle("touch-flipped");
+                  }}
+                  aria-label="More about Reynaldo Jr Ferrer"
+                >
+                  <div className="flip-inner">
+                    <div className="flip-face flip-front">
+                      <img
+                        src="about-us/rey.png"
+                        alt="Plumber avatar representing Reynaldo"
+                        className="member-image"
+                      />
+                    </div>
+                    <div className="flip-face flip-back">
+                      <p>
+                        Lead developer focusing on backend development and
+                        architecture; IT student at Saint Louis University
+                        (Baguio City).
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="member-social">
                   <a
@@ -663,14 +655,116 @@ export default function AboutUs({
               </div>
             </div>
 
+            {/* Row 2 */}
             <div className="team-member">
               <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/hannah.jpg"
-                    alt="Hannah - Team Member"
-                    className="member-image"
-                  />
+                <div
+                  className="member-flip"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    const el = e.currentTarget;
+                    const isTouchEnv =
+                      window.matchMedia("(hover: none)").matches ||
+                      window.innerWidth <= 820;
+                    if (!isTouchEnv) return;
+                    document
+                      .querySelectorAll(".member-flip.touch-flipped")
+                      .forEach((other) => {
+                        if (other !== el)
+                          other.classList.remove("touch-flipped");
+                      });
+                    el.classList.toggle("touch-flipped");
+                  }}
+                  aria-label="More about Don Daryll Dela Concha"
+                >
+                  <div className="flip-inner">
+                    <div className="flip-face flip-front">
+                      <img
+                        src="about-us/don.jpg"
+                        alt="Tech specialist avatar representing Don"
+                        className="member-image"
+                      />
+                    </div>
+                    <div className="flip-face flip-back">
+                      <p>
+                        IT student at Saint Louis University (Baguio City)
+                        helping keep UI components tidy and responsive.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="member-social">
+                  <a
+                    href="https://www.facebook.com/share/16V1X4FiAZ/"
+                    className="social-link"
+                    aria-label="Facebook"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src="socials/brand-facebook.svg"
+                      alt="Facebook"
+                      className="social-icon"
+                    />
+                  </a>
+                  <a
+                    href="https://www.linkedin.com/in/don-daryll-dela-concha-081ab6320?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                    className="social-link"
+                    aria-label="LinkedIn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src="socials/brand-linkedin.svg"
+                      alt="LinkedIn"
+                      className="social-icon"
+                    />
+                  </a>
+                </div>
+              </div>
+              <div className="member-info">
+                <h3 className="member-name">Don Daryll Dela Concha</h3>
+                <p className="member-role">Development Support</p>
+              </div>
+            </div>
+
+            <div className="team-member">
+              <div className="member-image-container">
+                <div
+                  className="member-flip"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    const el = e.currentTarget;
+                    const isTouchEnv =
+                      window.matchMedia("(hover: none)").matches ||
+                      window.innerWidth <= 820;
+                    if (!isTouchEnv) return;
+                    document
+                      .querySelectorAll(".member-flip.touch-flipped")
+                      .forEach((other) => {
+                        if (other !== el)
+                          other.classList.remove("touch-flipped");
+                      });
+                    el.classList.toggle("touch-flipped");
+                  }}
+                  aria-label="More about Princess Hannah Arzadon"
+                >
+                  <div className="flip-inner">
+                    <div className="flip-face flip-front">
+                      <img
+                        src="about-us/hannah.jpg"
+                        alt="Female avatar representing Princess Hannah"
+                        className="member-image"
+                      />
+                    </div>
+                    <div className="flip-face flip-back">
+                      <p>
+                        IT student at the University of the Cordilleras handling
+                        on-the-ground activities: marketing, outreach, and
+                        community engagement.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="member-social">
                   <a
@@ -703,184 +797,54 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Princess Hannah Arzadon</h3>
-                <p className="member-role">Project Manager</p>
-              </div>
-            </div>
-            <div className="team-member">
-              <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/yanni.jpg"
-                    alt="Alexie - Team Member"
-                    className="member-image"
-                  />
-                </div>
-                <div className="member-social">
-                  <a
-                    href="https://www.facebook.com/hyaeniferrer"
-                    className="social-link"
-                    aria-label="Facebook"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-facebook.svg"
-                      alt="Facebook"
-                      className="social-icon"
-                    />
-                  </a>
-                  <a
-                    href=""
-                    className="social-link"
-                    aria-label="LinkedIn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-linkedin.svg"
-                      alt="LinkedIn"
-                      className="social-icon"
-                    />
-                  </a>
-                </div>
-              </div>
-              <div className="member-info">
-                <h3 className="member-name">Hyaeni Ferrer</h3>
-                <p className="member-role">UI/UX Designer</p>
+                <p className="member-role">Operations Manager</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="about-cta-section">
+      {/* Map Section - Baguio City Pin */}
+      <section className="map-section">
         <div className="container">
-          <div className="about-cta-card">
-            <h2 className="about-cta-title">Join the SRV Community Today</h2>
-            <p className="about-cta-description">
-              Connect with trusted local service providers and discover a better
-              way to get things done in your community.
+          <div className="map-header">
+            <h2 className="map-title">Where we're focused</h2>
+            <p className="map-description">
+              SRV is proudly serving the Baguio City community. Find us here.
             </p>
-            <div className="about-cta-button-container">
-              <button
-                onClick={onLoginClick}
-                disabled={isLoginLoading}
-                className={"btn-primary"}
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="mr-3 h-6 w-6" />
-                    <span>Login / Sign Up</span>
-                  </>
-                )}
-              </button>
-            </div>
+          </div>
+
+          <div className="map-wrapper">
+            {/* Google Maps embed centered on Baguio City, Philippines with a marker */}
+            <iframe
+              title="SRV - University of the Cordilleras (Legarda Campus)"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3827.2841143403452!2d120.59157560000001!3d16.4103908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3391a1685e7b7073%3A0xe6bda988e8558d2!2sUniversity%20of%20Cordilleras%20Legarda!5e0!3m2!1sen!2sph!4v1759030399917!5m2!1sen!2sph"
+              width="100%"
+              height="420"
+              style={{ border: 0, borderRadius: 12 }}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </div>
       </section>
 
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-brand">
-              <a href="/" className="footer-logo-link">
-                <img src="logo.svg" alt="SRV Logo" className="footer-logo" />
-              </a>
-            </div>
-            <div className="footer-section footer-nav">
-              <ul className="footer-links nav-links">
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="footer-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigateToMain();
-                    }}
-                  >
-                    Home
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="footer-link"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    About
-                  </a>
-                </li>
-              </ul>
-            </div>
+      {/* Restored Join Community CTA (inline section) */}
+      <CommunityCTASection onOpenCommunity={handleLoginClick} />
 
-            <div className="footer-section">
-              <ul className="footer-links">
-                <li className="social-item">
-                  <a
-                    href="https://www.facebook.com/srvpinoy"
-                    className="footer-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-facebook.svg"
-                      alt="Facebook"
-                      className="social-icon-footer"
-                    />
-                  </a>
-                  <a
-                    href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr"
-                    className="footer-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-instagram.svg"
-                      alt="Instagram"
-                      className="social-icon-footer"
-                    />
-                  </a>
-                  <a
-                    href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-"
-                    className="footer-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-youtube.svg"
-                      alt="Youtube"
-                      className="social-icon-footer"
-                    />
-                  </a>
-                  <a
-                    href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
-                    className="footer-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-tiktok.svg"
-                      alt="Tiktok"
-                      className="social-icon-footer"
-                    />
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="footer-bottom">
-            <p className="footer-copyright">
-              © 2025 SRV Service Booking. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter
+        current="about"
+        onHome={() => {
+          onNavigateToMain();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onAbout={() => window.scrollTo(0, 0)}
+        onContact={() => {
+          onNavigateToContact?.();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+      />
     </div>
   );
 }
