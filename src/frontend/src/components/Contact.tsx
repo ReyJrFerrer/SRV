@@ -81,7 +81,7 @@ const Contact = ({
   };
 
   return (
-    <div>
+    <div className="contact-page-wrapper">
       <MobileSiteHeader
         current="contact"
         onHome={() => {
@@ -112,7 +112,7 @@ const Contact = ({
       />
 
       <section className="contact-section">
-        <div className="container">
+        <div className="contact-container">
           <div className="contact-layout">
             <div className="contact-info">
               <h1 className="contact-title">Contact Us</h1>
@@ -241,15 +241,15 @@ const Contact = ({
                 id="contactForm"
                 onSubmit={handleContactSubmit}
               >
-                <div className="form-group">
-                  <label htmlFor="name" className="form-label">
+                <div className="contact-form-group">
+                  <label htmlFor="name" className="contact-form-label">
                     Name
                   </label>
                   <input
                     type="text"
                     id="name"
                     name="name"
-                    className="form-input"
+                    className="contact-form-input"
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleInputChange}
@@ -257,15 +257,15 @@ const Contact = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="email" className="form-label">
+                <div className="contact-form-group">
+                  <label htmlFor="email" className="contact-form-label">
                     Email Address
                   </label>
                   <input
                     type="email"
                     id="email"
                     name="email"
-                    className="form-input"
+                    className="contact-form-input"
                     placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -273,15 +273,15 @@ const Contact = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="subject" className="form-label">
+                <div className="contact-form-group">
+                  <label htmlFor="subject" className="contact-form-label">
                     Subject
                   </label>
                   <input
                     type="text"
                     id="subject"
                     name="subject"
-                    className="form-input"
+                    className="contact-form-input"
                     placeholder="e.g. Partnership Inquiry, Feedback, Support"
                     value={formData.subject}
                     onChange={handleInputChange}
@@ -289,14 +289,14 @@ const Contact = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="message" className="form-label">
+                <div className="contact-form-group">
+                  <label htmlFor="message" className="contact-form-label">
                     Message
                   </label>
                   <textarea
                     id="message"
                     name="message"
-                    className="form-textarea"
+                    className="contact-form-textarea"
                     placeholder="Tell us about your inquiry, feedback, or how we can help you..."
                     rows={6}
                     value={formData.message}
@@ -307,14 +307,14 @@ const Contact = ({
 
                 <button
                   type="submit"
-                  className="btn-submit"
+                  className="contact-btn-submit"
                   disabled={isSubmitting}
                 >
                   <span className="btn-text">
                     {isSubmitting ? "Sending..." : "Submit"}
                   </span>
                   <div
-                    className="loading-spinner"
+                    className="contact-loading-spinner"
                     style={{ display: isSubmitting ? "inline-block" : "none" }}
                   ></div>
                 </button>
@@ -322,7 +322,7 @@ const Contact = ({
               {formMessage && (
                 <div
                   id="formMessage"
-                  className={`form-message ${messageType}`}
+                  className={`contact-form-message ${messageType}`}
                   style={{ display: "block" }}
                 >
                   {formMessage}
@@ -334,7 +334,7 @@ const Contact = ({
       </section>
       {showMapModal && (
         <div
-          className="modal"
+          className="contact-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Map showing SRV location in Baguio City"
