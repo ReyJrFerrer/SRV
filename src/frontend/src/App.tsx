@@ -18,36 +18,52 @@ type CurrentView = "main" | "about" | "contact";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, identity, login, isLoading } = useAuth();
+  const { isAuthenticated, identity, firebaseUser, login, isLoading } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
+  
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
-      if (isAuthenticated && identity) {
+      // CRITICAL: Only check profile if BOTH IC and Firebase auth are ready
+      if (isAuthenticated && identity && firebaseUser) {
         setIsCheckingProfile(true);
 
         try {
           const profile = await authCanisterService.getMyProfile();
-          if (profile) {
-            if (profile.activeRole === "Client") navigate("/client/home");
-            else if (profile.activeRole === "ServiceProvider")
+          
+          // If profile exists, redirect based on role
+          if (profile && profile.name && profile.phone) {
+            if (profile.activeRole === "Client") {
+              navigate("/client/home");
+            } else if (profile.activeRole === "ServiceProvider") {
               navigate("/provider/home");
-            else navigate("/create-profile");
+            } else {
+              // Profile exists but no valid role - go to create profile
+              navigate("/create-profile");
+            }
           } else {
+            // No profile or incomplete profile - go to create profile
+            console.log("No complete profile found, redirecting to create profile");
             navigate("/create-profile");
           }
         } catch (err) {
-          //console.error("Profile check error:", err);
+          // Any error (including "Profile not found") - go to create profile
+          console.log("Error fetching profile, redirecting to create profile:", err);
+          navigate("/create-profile");
         } finally {
           setIsCheckingProfile(false);
         }
+      } else if (isAuthenticated && identity && !firebaseUser) {
+        // IC auth ready but Firebase not ready yet - keep loading
+        console.log("Waiting for Firebase auth...");
+        setIsCheckingProfile(true);
       } else {
-        // If not authenticated, we are done checking.
+        // Not authenticated - done checking
         setIsCheckingProfile(false);
       }
     };
     checkProfileAndRedirect();
-  }, [isAuthenticated, identity, navigate]);
+  }, [isAuthenticated, identity, firebaseUser, navigate]);
 
   // Show a loading indicator while checking the user's session.
   if (isCheckingProfile) {

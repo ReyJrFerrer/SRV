@@ -234,31 +234,17 @@ async function checkPrincipal(principal) {
 }
 
 /**
- * Create or get user profile in Firestore
+ * Check if user profile exists in Firestore
  * @param {string} principalText - The principal as text (UID)
- * @return {Promise<Object>} User profile data
+ * @return {Promise<Object|null>} User profile data or null if not found
  */
-async function ensureUserProfile(principalText) {
+async function getUserProfile(principalText) {
   const db = admin.firestore();
   const userRef = db.collection("users").doc(principalText);
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    // Create a shell profile for new users
-    const now = new Date().toISOString();
-    const newProfile = {
-      id: principalText,
-      createdAt: now,
-      updatedAt: now,
-      isActive: true,
-      role: "ServiceProvider", // Default role - everyone is a service provider
-      activeRole: "Client", // Default active role
-      reputationScore: 0,
-      totalEarnings: 0,
-    };
-
-    await userRef.set(newProfile);
-    return newProfile;
+    return null;
   }
 
   return userDoc.data();
@@ -320,14 +306,14 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
       return;
     }
 
-    // Ensure user profile exists in Firestore
-    // For new users (hasProfile = false), this creates a shell profile
-    const profile = await ensureUserProfile(principalText);
+    // Check if user has a Firestore profile (for existing users)
+    const profile = await getUserProfile(principalText);
+    const hasFirestoreProfile = !!profile;
 
-    console.log(`✅ User profile ready:`, {
+    console.log(`✅ Authentication check complete:`, {
       principal: principalText,
-      hasProfile,
-      profileExists: !!profile,
+      hasProfile: hasFirestoreProfile,
+      needsProfile: !hasFirestoreProfile,
     });
 
     // Create Firebase custom token
@@ -335,16 +321,16 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
       // Add custom claims here if needed
       provider: "internet-identity",
       icPrincipal: principalText,
-      hasProfile: hasProfile,
+      hasProfile: hasFirestoreProfile,
     });
 
     res.status(200).json({
       success: true,
       customToken,
       principal: principalText,
-      hasProfile, // Let frontend know if user needs to create profile
-      needsProfile: !hasProfile, // Explicit flag for new users
-      message: hasProfile ?
+      hasProfile: hasFirestoreProfile, // Let frontend know if user needs to create profile
+      needsProfile: !hasFirestoreProfile, // Explicit flag for new users
+      message: hasFirestoreProfile ?
         "Successfully authenticated with Internet Identity" :
         "Successfully authenticated. Please complete your profile.",
     });

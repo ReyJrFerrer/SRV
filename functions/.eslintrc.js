@@ -15,12 +15,12 @@ module.exports = {
   rules: {
     "no-restricted-globals": ["error", "name", "length"],
     "prefer-arrow-callback": "error",
-    quotes: ["error", "double", { allowTemplateLiterals: true }],
-    semi: ["error", "always"],
-    "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    "quotes": ["error", "double", {allowTemplateLiterals: true}],
+    "semi": ["error", "always"],
+    "no-unused-vars": ["warn", {argsIgnorePattern: "^_"}],
     "no-console": "off",
-    "max-len": ["error", { code: 100, ignoreUrls: true }], // Google style guide
-    indent: ["error", 2], // 2-space indentation
+    "max-len": ["error", {code: 100, ignoreUrls: true}], // Google style guide
+    "indent": ["error", 2], // 2-space indentation
     "new-cap": [
       "error",
       {

@@ -13,7 +13,6 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { getFirebaseAuth } from "../services/firebaseApp";
-import { updateAuthActor } from "../services/authCanisterService";
 import { updateBookingActor } from "../services/bookingCanisterService";
 import { updateServiceActor } from "../services/serviceCanisterService";
 import { updateReviewActor } from "../services/reviewCanisterService";
@@ -64,11 +63,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const updateAllActors = (identity: Identity | null) => {
-  try {
-    updateAuthActor(identity);
-  } catch (error) {
-    console.warn("Failed to update auth actor:", error);
-  }
+  // try {
+  //   updateAuthActor(identity);
+  // } catch (error) {
+  //   console.warn("Failed to update auth actor:", error);
+  // }
 
   try {
     updateBookingActor(identity);

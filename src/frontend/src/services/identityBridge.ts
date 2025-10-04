@@ -88,7 +88,25 @@ export async function signInWithInternetIdentity(
     const auth = getFirebaseAuth();
     const userCredential = await signInWithCustomToken(auth, data.customToken);
 
-    console.log("✅ Firebase sign-in successful");
+    // CRITICAL: Wait for onAuthStateChanged to fire
+    // This ensures the auth state is fully propagated before we return
+    await new Promise<void>((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user && user.uid === userCredential.user.uid) {
+          console.log("✅ Firebase auth state confirmed:", user.uid);
+          unsubscribe();
+          resolve();
+        }
+      });
+      
+      // Failsafe timeout in case the listener doesn't fire
+      setTimeout(() => {
+        unsubscribe();
+        resolve();
+      }, 2000);
+    });
+
+    console.log("✅ Firebase sign-in successful and auth state ready");
 
     return {
       user: userCredential.user,

@@ -89,16 +89,26 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
  * HTTP onCall Cloud Function
  */
 exports.createProfile = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
+  // Debug logging
+  console.log("🔍 createProfile called:", {
+    hasContextAuth: !!context.auth,
+    hasDataAuth: !!data.auth,
+    authUid: auth?.uid,
+  });
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
+    console.error("❌ No authentication context found!");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to create a profile",
     );
   }
 
-  const principalId = context.auth.uid;
-  const {name, phone, role} = data;
+  const principalId = auth.uid;
+  const {name, phone, role} = data.data || data;
 
   // Validate inputs
   if (!validateName(name)) {
@@ -165,16 +175,19 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
  * HTTP onCall Cloud Function
  */
 exports.getProfile = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  const actualData = data.data || data;
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
-  const {userId} = data;
-  const targetUserId = userId || context.auth.uid;
+  const {userId} = actualData;
+  const targetUserId = userId || auth.uid;
 
   const db = admin.firestore();
   const userRef = db.collection("users").doc(targetUserId);
@@ -198,16 +211,19 @@ exports.getProfile = functions.https.onCall(async (data, context) => {
  * HTTP onCall Cloud Function
  */
 exports.updateProfile = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  const actualData = data.data || data;
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to update profile",
     );
   }
 
-  const principalId = context.auth.uid;
-  const {name, phone} = data;
+  const principalId = auth.uid;
+  const {name, phone} = actualData;
 
   // Validate inputs if provided
   if (name !== undefined && !validateName(name)) {
@@ -274,15 +290,17 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
  * HTTP onCall Cloud Function
  */
 exports.switchUserRole = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to switch role",
     );
   }
 
-  const principalId = context.auth.uid;
+  const principalId = auth.uid;
   const db = admin.firestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
@@ -316,8 +334,10 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
  * HTTP onCall Cloud Function
  */
 exports.getAllServiceProviders = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated",
@@ -346,8 +366,10 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
  * HTTP onCall Cloud Function
  */
 exports.getAllUsers = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
   // Check authentication
-  if (!context.auth) {
+  if (!auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated",
@@ -355,7 +377,7 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   // TODO: Add admin role check in production
-  // if (!context.auth.token.admin) {
+  // if (!auth.token.admin) {
   //   throw new functions.https.HttpsError(
   //     "permission-denied",
   //     "Only admins can access all users"
