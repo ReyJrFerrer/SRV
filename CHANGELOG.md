@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provider directions page (`/provider/directions/:bookingId`) showing turn-by-turn route from provider current location to client destination with ability to start service upon arrival. Uses unified Google Maps loader to avoid duplicate script issues.
+
+### Added
+
 - Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots
 
 ## Payment Integration Feature

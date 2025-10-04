@@ -278,7 +278,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     bookings,
     acceptBookingById,
     declineBookingById,
-    startBookingById,
     completeBookingById,
     isBookingActionInProgress,
     loading: hookLoading,
@@ -431,15 +430,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Updated: Navigate to directions page first; actual start occurs from directions view
   const handleStartService = async () => {
     if (!specificBooking) return;
-    const success = await startBookingById(specificBooking.id);
-    if (success) {
-      const actualStartTime = new Date().toISOString();
-      navigate(
-        `/provider/active-service/${specificBooking.id}?startTime=${actualStartTime}`,
-      );
-    }
+    navigate(`/provider/directions/${specificBooking.id}`);
   };
 
   const handleCompleteService = async () => {
@@ -570,9 +564,13 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const mapApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  // Use the same loader id & libraries as headers / other map components to avoid
+  // the "Loader must not be called again with different options" runtime error.
+  // All Google Maps consumers must share identical options (id, libraries, language, region, etc.).
   const { isLoaded: mapReady } = useJsApiLoader({
-    id: "provider-booking-map-script",
+    id: "header-gmap-script", // unified script id used across the app
     googleMapsApiKey: mapApiKey,
+    libraries: ["places"], // match existing loader elsewhere (superset of plain maps needs)
   });
 
   const clientLocation = useMemo(() => {
@@ -727,6 +725,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
 
     setGeocodeStatus("pending");
+    // Guard: if google maps object not yet present (race condition), bail and let effect re-run.
+    if (typeof window === "undefined" || !(window as any).google?.maps) {
+      return; // wait for script
+    }
     const geocoder = new google.maps.Geocoder();
 
     // Try sequentially until one succeeds
@@ -1358,10 +1360,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {specificBooking?.canStart && (
             <button
               onClick={handleStartService}
-              disabled={
-                isBookingActionInProgress(specificBooking?.id || "", "start") ||
-                !canStartServiceNow()
-              }
+              disabled={!canStartServiceNow()}
               className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
                 !canStartServiceNow()
                   ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
@@ -1370,13 +1369,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
               title={
                 !canStartServiceNow()
                   ? "Service can only be started on or after the scheduled date and time"
-                  : ""
+                  : "Navigate to directions"
               }
             >
               <ArrowPathIcon className="mr-2 h-5 w-5" />
-              {isBookingActionInProgress(specificBooking?.id || "", "start")
-                ? "Starting..."
-                : "Start Service"}
+              Start Service
             </button>
           )}
 
