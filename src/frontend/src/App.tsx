@@ -18,10 +18,11 @@ type CurrentView = "main" | "about" | "contact";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, identity, firebaseUser, login, isLoading } = useAuth();
+  const { isAuthenticated, identity, firebaseUser, login, isLoading } =
+    useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
-  
+
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
       // CRITICAL: Only check profile if BOTH IC and Firebase auth are ready
@@ -30,7 +31,7 @@ const LandingPage = () => {
 
         try {
           const profile = await authCanisterService.getMyProfile();
-          
+
           // If profile exists, redirect based on role
           if (profile && profile.name && profile.phone) {
             if (profile.activeRole === "Client") {
@@ -43,12 +44,17 @@ const LandingPage = () => {
             }
           } else {
             // No profile or incomplete profile - go to create profile
-            console.log("No complete profile found, redirecting to create profile");
+            console.log(
+              "No complete profile found, redirecting to create profile",
+            );
             navigate("/create-profile");
           }
         } catch (err) {
           // Any error (including "Profile not found") - go to create profile
-          console.log("Error fetching profile, redirecting to create profile:", err);
+          console.log(
+            "Error fetching profile, redirecting to create profile:",
+            err,
+          );
           navigate("/create-profile");
         } finally {
           setIsCheckingProfile(false);

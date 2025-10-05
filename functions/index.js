@@ -33,6 +33,34 @@ const {
   getAllUsers,
 } = require("./src/account");
 
+// Import Service Management functions
+const {
+  createService,
+  getService,
+  getServicesByProvider,
+  getServicesByCategory,
+  updateServiceStatus,
+  searchServicesByLocation,
+  updateService,
+  deleteService,
+  getAllServices,
+  uploadServiceImages,
+  removeServiceImage,
+  reorderServiceImages,
+  uploadServiceCertificates,
+  removeServiceCertificate,
+  verifyService,
+  addCategory,
+  getAllCategories,
+  createServicePackage,
+  getServicePackages,
+  getPackage,
+  updateServicePackage,
+  deleteServicePackage,
+  getCommissionQuote,
+  updateServiceRating,
+} = require("./src/service");
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -54,3 +82,28 @@ exports.switchUserRole = switchUserRole;
 exports.getAllServiceProviders = getAllServiceProviders;
 exports.getAllUsers = getAllUsers;
 
+// Export Service Management functions
+exports.createService = createService;
+exports.getService = getService;
+exports.getServicesByProvider = getServicesByProvider;
+exports.getServicesByCategory = getServicesByCategory;
+exports.updateServiceStatus = updateServiceStatus;
+exports.searchServicesByLocation = searchServicesByLocation;
+exports.updateService = updateService;
+exports.deleteService = deleteService;
+exports.getAllServices = getAllServices;
+exports.uploadServiceImages = uploadServiceImages;
+exports.removeServiceImage = removeServiceImage;
+exports.reorderServiceImages = reorderServiceImages;
+exports.uploadServiceCertificates = uploadServiceCertificates;
+exports.removeServiceCertificate = removeServiceCertificate;
+exports.verifyService = verifyService;
+exports.addCategory = addCategory;
+exports.getAllCategories = getAllCategories;
+exports.createServicePackage = createServicePackage;
+exports.getServicePackages = getServicePackages;
+exports.getPackage = getPackage;
+exports.updateServicePackage = updateServicePackage;
+exports.deleteServicePackage = deleteServicePackage;
+exports.getCommissionQuote = getCommissionQuote;
+exports.updateServiceRating = updateServiceRating;

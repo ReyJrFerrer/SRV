@@ -98,7 +98,7 @@ export async function signInWithInternetIdentity(
           resolve();
         }
       });
-      
+
       // Failsafe timeout in case the listener doesn't fire
       setTimeout(() => {
         unsubscribe();

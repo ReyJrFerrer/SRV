@@ -20,10 +20,6 @@
       "type": "motoko",
       "main": "src/backend/function/review.mo"
     },
-    "service": {
-      "type": "motoko",
-      "main": "src/backend/function/service.mo"
-    },
     "chat": {
       "dependencies": [],
       "type": "motoko",
@@ -65,7 +61,6 @@
         "booking",
         "reputation",
         "review",
-        "service",
         "chat",
         "media",
         "remittance",

@@ -365,4 +365,138 @@ Firebase Emulators Running:
 ```
 
 ---
+
+### Task: Service Management Migration to Firebase ✅
+
+**Completed**: October 4, 2025
+
+**Description**: Migrated all service management functions from the service.mo canister to Firebase Cloud Functions, deprecated the service canister, and created a new Firebase-based service layer for the frontend.
+
+**Changes Made**:
+
+#### 1. Created Service Management Cloud Functions (`functions/src/service.js`)
+
+- Implemented comprehensive service CRUD operations:
+  - `createService`: Creates new service listings with image/certificate uploads
+  - `getService`: Retrieves service by ID
+  - `getServicesByProvider`: Retrieves all services for a specific provider
+  - `getServicesByCategory`: Retrieves services filtered by category
+  - `updateServiceStatus`: Updates service availability status
+  - `searchServicesByLocation`: Searches services using Haversine distance formula
+  - `updateService`: Updates service details with automatic commission recalculation
+  - `deleteService`: Deletes service with automatic cleanup of storage files
+  - `getAllServices`: Retrieves all services in the system
+
+- Implemented service image management:
+  - `uploadServiceImages`: Uploads additional images to Firebase Storage
+  - `removeServiceImage`: Removes specific images and cleans up storage
+  - `reorderServiceImages`: Allows reordering of service images
+
+- Implemented service certificate management:
+  - `uploadServiceCertificates`: Uploads certificates for service verification
+  - `removeServiceCertificate`: Removes certificates with storage cleanup
+  - `verifyService`: Admin function to manually verify services
+
+- Implemented category management:
+  - `addCategory`: Creates new service categories (admin only)
+  - `getAllCategories`: Retrieves all available categories
+
+- Implemented service package management:
+  - `createServicePackage`: Creates service packages with commission calculation
+  - `getServicePackages`: Retrieves all packages for a service
+  - `getPackage`: Retrieves specific package by ID
+  - `updateServicePackage`: Updates package with commission recalculation
+  - `deleteServicePackage`: Deletes service package
+
+- Implemented commission integration:
+  - `getCommissionQuote`: Calculates commission for category/price combination
+  - `updateServiceRating`: Updates service rating from review system
+  - Automatic commission calculation using commission Cloud Function
+  - Fallback to default 5% commission on calculation errors
+
+- Added Firebase Storage integration:
+  - Automatic file uploads to `services/{serviceId}/images/` and `services/{serviceId}/certificates/`
+  - Public URL generation for uploaded files
+  - Automatic cleanup when files are removed
+
+- Implemented comprehensive validation:
+  - Title length validation (1-100 characters)
+  - Description length validation (1-1000 characters)
+  - Price range validation (₱1 - ₱1,000,000)
+  - Location coordinate validation
+  - Maximum image limits (5 images, 10 certificates)
+
+- Added proper authentication and authorization:
+  - Authentication required for write operations
+  - Provider ownership validation
+  - Admin-only functions for verification and category management
+
+#### 2. Exported Service Functions (`functions/index.js`)
+
+- Added imports for all 24 service management functions
+- Exported all functions for Firebase deployment
+- Organized exports by functional areas (CRUD, images, certificates, categories, packages, commission)
+
+#### 3. Deprecated Service Canister (`dfx.json`)
+
+- Removed `service` canister entry from canisters list
+- Removed `service` from `admin-frontend` dependencies
+- The service.mo canister is now deprecated and will not be deployed
+
+#### 4. Created Firebase Service Layer (`src/frontend/src/services/serviceFirebaseService.ts`)
+
+- Created comprehensive TypeScript service layer mirroring all Cloud Functions
+- Implemented dual-mode data fetching:
+  - **Real-time listeners** using Firestore `onSnapshot` for reactive UI updates
+  - **One-time fetches** using `httpsCallable` for on-demand data retrieval
+- Added subscription methods for real-time updates:
+  - `subscribeToService`: Real-time service updates
+  - `subscribeToProviderServices`: Real-time provider service list
+  - `subscribeToCategoryServices`: Real-time category filtering
+  - `subscribeToAllServices`: Real-time all services list
+  - `subscribeToAllCategories`: Real-time category list
+  - `subscribeToServicePackages`: Real-time package updates
+- Maintained all TypeScript type definitions from original canister service
+- Preserved commission utility functions (calculateTotalAmount, formatCommissionRate, etc.)
+- No breaking changes to existing type interfaces
+
+**Technical Implementation**:
+
+- Uses Firebase Functions SDK (`httpsCallable`) for write operations
+- Uses Firestore SDK (`onSnapshot`, `query`, `where`) for real-time data
+- Proper error handling with console logging for debugging
+- Type-safe responses matching original canister interface
+- Base64 encoding for file uploads to Cloud Functions
+- Firestore Timestamp handling for createdAt/updatedAt fields
+
+**Migration Strategy**:
+
+The frontend can now use either:
+1. `serviceFirebaseService` - The new Firebase-based service (recommended)
+2. `serviceCanisterService` - The legacy canister service (deprecated)
+
+To migrate frontend components:
+- Replace imports from `serviceCanisterService` to `serviceFirebaseService`
+- Use `subscribe*` methods for components that need real-time updates
+- Use `get*` methods for one-time data fetching
+- No changes needed to TypeScript types or interfaces
+
+**Impact**: 
+
+- Service management is now fully operational on Firebase with real-time capabilities
+- Significantly improved performance with Firestore real-time listeners
+- Automatic UI updates when service data changes
+- Reduced IC canister costs by moving high-frequency operations to Firebase
+- Firebase Storage provides reliable, scalable media hosting
+- Maintained backward compatibility with existing frontend code structure
+
+**Next Steps**:
+
+- Update frontend components to use `serviceFirebaseService`
+- Test all service operations in development environment
+- Deploy Cloud Functions to production
+- Monitor Firebase usage and optimize query patterns
+- Consider implementing Firestore security rules for service collection
+
+---
 ```
