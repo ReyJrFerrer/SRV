@@ -5,7 +5,6 @@ import {
   useJsApiLoader,
   DirectionsRenderer,
   MarkerF,
-  Polyline,
 } from "@react-google-maps/api";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
@@ -29,7 +28,6 @@ const containerStyle: React.CSSProperties = {
 
 // Math helpers (Haversine + bearing) to avoid geometry library
 const toRad = (deg: number) => (deg * Math.PI) / 180;
-const toDeg = (rad: number) => (rad * 180) / Math.PI;
 const EARTH_RADIUS_M = 6371000; // meters
 
 function haversineDistanceMeters(
@@ -47,47 +45,7 @@ function haversineDistanceMeters(
   return EARTH_RADIUS_M * c;
 }
 
-function bearingDegrees(
-  a: google.maps.LatLngLiteral,
-  b: google.maps.LatLngLiteral,
-) {
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  const brng = Math.atan2(y, x);
-  return (toDeg(brng) + 360) % 360;
-}
-
-// Compute a destination point given start, distance (m) and bearing (deg)
-function offsetPoint(
-  start: google.maps.LatLngLiteral,
-  distanceM: number,
-  bearingDeg: number,
-): google.maps.LatLngLiteral {
-  const δ = distanceM / EARTH_RADIUS_M; // angular distance
-  const θ = toRad(bearingDeg);
-  const φ1 = toRad(start.lat);
-  const λ1 = toRad(start.lng);
-
-  const sinφ1 = Math.sin(φ1),
-    cosφ1 = Math.cos(φ1);
-  const sinδ = Math.sin(δ),
-    cosδ = Math.cos(δ);
-  const sinθ = Math.sin(θ),
-    cosθ = Math.cos(θ);
-
-  const sinφ2 = sinφ1 * cosδ + cosφ1 * sinδ * cosθ;
-  const φ2 = Math.asin(sinφ2);
-  const y = sinθ * sinδ * cosφ1;
-  const x = cosδ - sinφ1 * sinφ2;
-  const λ2 = λ1 + Math.atan2(y, x);
-
-  return { lat: toDeg(φ2), lng: ((toDeg(λ2) + 540) % 360) - 180 };
-}
+// toDeg/bearing/offsetPoint removed as heading/forward-view are not used
 
 // Use same libraries + loader id as rest of app to avoid duplicate loader error; must match globally
 const libraries: "places"[] = ["places"];
@@ -116,16 +74,114 @@ const ProviderDirectionsPage: React.FC = () => {
     "idle" | "pending" | "ok" | "failed"
   >("idle");
 
-  // Enhancements state
-  const [trail, setTrail] = useState<google.maps.LatLngLiteral[]>([]);
-  const [speedKph, setSpeedKph] = useState<number | null>(null);
-  const [headingDeg, setHeadingDeg] = useState<number | null>(null);
+  // Enhancements state removed (speed, heading, trail)
   const lastRouteTimeRef = useRef<number>(0);
   const lastOriginRef = useRef<google.maps.LatLngLiteral | null>(null);
   const recomputeCooldownMs = 90_000; // 90s
   const driftThresholdMeters = 120; // 120m drift threshold
   const etaIntervalRef = useRef<number | null>(null);
-  const etaRefreshIntervalMs = 180_000; // 3 minutes
+  const etaRefreshIntervalMs = 180_000; // default 3 minutes
+  // New: Route deviation threshold (distance to current route polyline)
+  const routeDeviationMeters = 60; // reroute when > 60m from current route
+  // Low-power mode, speed, heading, and trail removed
+
+  // Decode Google encoded polyline to LatLngLiteral[] (fallback when steps.path absent)
+  const decodePolyline = (encoded: string): google.maps.LatLngLiteral[] => {
+    let index = 0,
+      lat = 0,
+      lng = 0,
+      coordinates: google.maps.LatLngLiteral[] = [];
+    while (index < encoded.length) {
+      let b: number,
+        shift = 0,
+        result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = result & 1 ? ~(result >> 1) : result >> 1;
+      lat += dlat;
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = result & 1 ? ~(result >> 1) : result >> 1;
+      lng += dlng;
+      coordinates.push({ lat: lat / 1e5, lng: lng / 1e5 });
+    }
+    return coordinates;
+  };
+
+  // Flatten route into a sequence of points for deviation checks
+  const getRoutePath = useCallback((): google.maps.LatLngLiteral[] => {
+    const path: google.maps.LatLngLiteral[] = [];
+    if (!directionsResponse) return path;
+    const route = directionsResponse.routes[0];
+    if (!route) return path;
+    try {
+      // Prefer steps[].path if available
+      for (const leg of route.legs) {
+        for (const step of leg.steps) {
+          if (Array.isArray((step as any).path)) {
+            for (const p of (step as any).path) {
+              const lat = (p as any).lat ? (p as any).lat() : (p as any).lat;
+              const lng = (p as any).lng ? (p as any).lng() : (p as any).lng;
+              if (typeof lat === "number" && typeof lng === "number")
+                path.push({ lat, lng });
+            }
+          }
+        }
+      }
+      if (path.length > 1) return path;
+    } catch {}
+    // Fallback: decode overview_polyline if present
+    const poly = (route as any).overview_polyline?.points;
+    if (typeof poly === "string" && poly.length > 0) {
+      return decodePolyline(poly);
+    }
+    return path;
+  }, [directionsResponse]);
+
+  // Distance from point to polyline (equirectangular approximation, meters)
+  const pointToPolylineDistanceM = (
+    pt: google.maps.LatLngLiteral,
+    poly: google.maps.LatLngLiteral[],
+  ) => {
+    if (poly.length < 2) return Infinity;
+    // Local projection around pt
+    const lat0 = toRad(pt.lat);
+    const cosLat0 = Math.cos(lat0);
+    const toXY = (q: google.maps.LatLngLiteral) => {
+      return {
+        x: toRad(q.lng - pt.lng) * cosLat0 * EARTH_RADIUS_M,
+        y: toRad(q.lat - pt.lat) * EARTH_RADIUS_M,
+      };
+    };
+    const P = { x: 0, y: 0 };
+    let minD = Infinity;
+    for (let i = 0; i < poly.length - 1; i++) {
+      const a = toXY(poly[i]);
+      const b = toXY(poly[i + 1]);
+      const ABx = b.x - a.x,
+        ABy = b.y - a.y;
+      const APx = P.x - a.x,
+        APy = P.y - a.y;
+      const ab2 = ABx * ABx + ABy * ABy;
+      let t = ab2 > 0 ? (APx * ABx + APy * ABy) / ab2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const projX = a.x + t * ABx;
+      const projY = a.y + t * ABy;
+      const dx = P.x - projX;
+      const dy = P.y - projY;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < minD) minD = d;
+    }
+    return minD;
+  };
 
   const mapApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
@@ -138,7 +194,7 @@ const ProviderDirectionsPage: React.FC = () => {
   // Track provider's moving location via watchPosition
   useEffect(() => {
     if (!navigator.geolocation) return;
-    let prevPos: GeolocationPosition | null = null;
+    // prevPos removed as speed/heading computation is no longer used
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const latest: google.maps.LatLngLiteral = {
@@ -146,37 +202,6 @@ const ProviderDirectionsPage: React.FC = () => {
           lng: pos.coords.longitude,
         };
         setProviderLocation(latest);
-        setTrail((t) => {
-          const next = [...t, latest];
-          return next.length > 100 ? next.slice(next.length - 100) : next;
-        });
-        // Speed (prefer native m/s, fallback to compute)
-        if (typeof pos.coords.speed === "number" && !isNaN(pos.coords.speed)) {
-          setSpeedKph(Math.max(0, pos.coords.speed) * 3.6);
-        } else if (prevPos) {
-          const dt = (pos.timestamp - prevPos.timestamp) / 1000; // seconds
-          if (dt > 0) {
-            const dist = haversineDistanceMeters(
-              { lat: prevPos.coords.latitude, lng: prevPos.coords.longitude },
-              latest,
-            );
-            setSpeedKph((dist / dt) * 3.6);
-          }
-        }
-        // Heading (prefer native, fallback to compute)
-        if (
-          typeof pos.coords.heading === "number" &&
-          !isNaN(pos.coords.heading)
-        ) {
-          setHeadingDeg(pos.coords.heading);
-        } else if (prevPos) {
-          setHeadingDeg(
-            bearingDegrees(
-              { lat: prevPos.coords.latitude, lng: prevPos.coords.longitude },
-              latest,
-            ),
-          );
-        }
         // Initialize baseOrigin once
         if (!baseOrigin) setBaseOrigin(latest);
         // Drift detection vs last origin; recompute with cooldown
@@ -193,7 +218,18 @@ const ProviderDirectionsPage: React.FC = () => {
             computeDirections(latest);
           }
         }
-        prevPos = pos;
+        // Route deviation check: distance to current route polyline
+        if (directionsResponse) {
+          const path = getRoutePath();
+          if (path.length > 1) {
+            const d = pointToPolylineDistanceM(latest, path);
+            const sinceLast = Date.now() - lastRouteTimeRef.current;
+            if (d > routeDeviationMeters && sinceLast > recomputeCooldownMs) {
+              computeDirections(latest);
+            }
+          }
+        }
+        // prevPos not used
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) setGeoDenied(true);
@@ -268,20 +304,15 @@ const ProviderDirectionsPage: React.FC = () => {
     baseOrigin,
   ]);
 
-  // Forward-view auto-pan: center slightly ahead along heading
+  // Auto-pan: center on provider's current location
   const mapRef = useRef<google.maps.Map | null>(null);
   const handleMapLoad = (m: google.maps.Map) => {
     mapRef.current = m;
   };
   useEffect(() => {
     if (!mapRef.current || !providerLocation) return;
-    if (headingDeg != null) {
-      const projected = offsetPoint(providerLocation, 60, headingDeg);
-      mapRef.current.panTo(projected);
-    } else {
-      mapRef.current.panTo(providerLocation);
-    }
-  }, [providerLocation, headingDeg]);
+    mapRef.current.panTo(providerLocation);
+  }, [providerLocation]);
 
   // -------- Destination coordinate resolution (fallback geocode) ---------
   useEffect(() => {
@@ -427,16 +458,9 @@ const ProviderDirectionsPage: React.FC = () => {
           options={{ disableDefaultUI: true, zoomControl: true }}
         >
           {directionsResponse && (
-            <DirectionsRenderer directions={directionsResponse} />
-          )}
-          {trail.length > 1 && (
-            <Polyline
-              path={trail}
-              options={{
-                strokeColor: "#2563eb",
-                strokeOpacity: 0.5,
-                strokeWeight: 3,
-              }}
+            <DirectionsRenderer
+              directions={directionsResponse}
+              options={{ suppressMarkers: true }}
             />
           )}
           {providerLocation && (
@@ -452,37 +476,82 @@ const ProviderDirectionsPage: React.FC = () => {
               }}
             />
           )}
+          {destinationHasCoords && destinationCoords && (
+            <MarkerF position={destinationCoords} />
+          )}
         </GoogleMap>
       )}
       {/* Overlay controls */}
       <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-        <div className="rounded-lg bg-white/90 p-3 shadow backdrop-blur">
-          <p className="text-xs font-medium text-gray-700">
-            {directionsStatus === "pending" && "Calculating route..."}
-            {directionsStatus === "ok" &&
-              directionsResponse &&
-              (() => {
+        {/* Re-center button above the card, right-aligned */}
+        <div className="flex justify-end pr-1">
+          <button
+            type="button"
+            onClick={() => {
+              if (mapRef.current && providerLocation) {
+                mapRef.current.panTo(providerLocation);
+                const currentZoom = mapRef.current.getZoom();
+                if (!currentZoom || currentZoom < 15)
+                  mapRef.current.setZoom(15);
+              }
+            }}
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
+            title="Re-center map on your location"
+            aria-label="Re-center map"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-4 w-4"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
+              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
+            </svg>
+          </button>
+        </div>
+        <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
+          {/* Re-center moved above card */}
+          {directionsStatus === "pending" && (
+            <p className="text-center text-sm font-medium text-gray-700">
+              Calculating route...
+            </p>
+          )}
+          {directionsStatus === "ok" && directionsResponse && (
+            <div className="text-center">
+              {(() => {
                 const leg = directionsResponse.routes[0].legs[0];
-                return `ETA: ${leg.duration?.text || "N/A"} • Distance: ${leg.distance?.text || "N/A"}`;
+                const eta = leg.duration?.text || "N/A";
+                const dist = leg.distance?.text || "N/A";
+                return (
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <div className="text-lg font-extrabold text-gray-900">
+                      Estimated time of arrival: {eta}
+                    </div>
+                    <span className="text-gray-300">•</span>
+                    <div className="text-base font-semibold text-gray-700">
+                      Distance: {dist}
+                    </div>
+                  </div>
+                );
               })()}
-            {directionsStatus === "failed" && "Could not compute directions."}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-600">
-            {speedKph != null && <span>Speed: {speedKph.toFixed(1)} km/h</span>}
-            {headingDeg != null && (
-              <span>
-                Heading: {Math.round(((headingDeg % 360) + 360) % 360)}°
-              </span>
-            )}
-            {trail.length > 1 && <span>Trail pts: {trail.length}</span>}
-          </div>
+            </div>
+          )}
+          {directionsStatus === "failed" && (
+            <p className="text-center text-sm font-medium text-red-600">
+              Could not compute directions.
+            </p>
+          )}
           {!destinationHasCoords && destResolveStatus !== "pending" && (
-            <p className="mt-1 text-[11px] text-red-600">
+            <p className="mt-2 text-center text-xs text-red-600">
               Destination coordinates missing for this booking.
             </p>
           )}
           {!destinationHasCoords && destResolveStatus === "pending" && (
-            <p className="mt-1 text-[11px] text-gray-600">
+            <p className="mt-2 text-center text-xs text-gray-600">
               Resolving destination...
             </p>
           )}
@@ -501,6 +570,7 @@ const ProviderDirectionsPage: React.FC = () => {
           Back
         </button>
       </div>
+      {/* Floating button removed; recenter is in overlay */}
       {mapApiKey === "REPLACE_WITH_KEY" && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
           Missing Google Maps API key
