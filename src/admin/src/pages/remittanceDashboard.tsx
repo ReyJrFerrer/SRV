@@ -30,7 +30,11 @@ export const RemittanceDashboardPage: React.FC = () => {
     refreshRemittanceOrders();
     refreshRemittanceProviders();
     refreshRemittanceStats();
-  }, [refreshRemittanceOrders, refreshRemittanceProviders, refreshRemittanceStats]);
+  }, [
+    refreshRemittanceOrders,
+    refreshRemittanceProviders,
+    refreshRemittanceStats,
+  ]);
 
   useEffect(() => {
     // Get recent orders (last 10)
@@ -90,7 +94,10 @@ export const RemittanceDashboardPage: React.FC = () => {
     }
   };
 
-  const isLoading = loading.remittanceOrders || loading.remittanceProviders || loading.remittanceStats;
+  const isLoading =
+    loading.remittanceOrders ||
+    loading.remittanceProviders ||
+    loading.remittanceStats;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -98,21 +105,21 @@ export const RemittanceDashboardPage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <Link
-                   to="/dashboard"
-                   className="text-sm text-gray-500 hover:text-gray-700"
-                 >
-                   ← Back to Dashboard
-                 </Link>
-                 <h1 className="text-2xl font-bold text-gray-900 mt-2">
-                   Remittance Dashboard
-                 </h1>
-                 <p className="mt-2 text-sm text-gray-600">
-                   Overview of commission payments and remittance activity
-                 </p>
-               </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Link
+                  to="/dashboard"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Dashboard
+                </Link>
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
+                  Remittance Dashboard
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">
+                  Overview of commission payments and remittance activity
+                </p>
+              </div>
               <div className="flex space-x-4">
                 <Link
                   to="/remittance/analytics"
@@ -144,17 +151,17 @@ export const RemittanceDashboardPage: React.FC = () => {
         {/* Stats Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">O</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
+                    <span className="text-sm font-medium text-white">O</span>
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
@@ -167,21 +174,23 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Settled Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
                     <CheckCircleIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Settled Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : remittanceStats?.totalSettledOrders || 0}
+                      {isLoading
+                        ? "..."
+                        : remittanceStats?.totalSettledOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -190,21 +199,23 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Pending Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500">
                     <ClockIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Pending Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : remittanceStats?.totalPendingOrders || 0}
+                      {isLoading
+                        ? "..."
+                        : remittanceStats?.totalPendingOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -213,21 +224,23 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Overdue Orders */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-500">
                     <ExclamationTriangleIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Overdue Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : remittanceStats?.totalOverdueOrders || 0}
+                      {isLoading
+                        ? "..."
+                        : remittanceStats?.totalOverdueOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -239,7 +252,7 @@ export const RemittanceDashboardPage: React.FC = () => {
         {/* Financial Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Total Commission Paid */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -247,11 +260,15 @@ export const RemittanceDashboardPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Commission Paid
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : formatCurrency(remittanceStats?.totalCommissionPaid || 0)}
+                      {isLoading
+                        ? "..."
+                        : formatCurrency(
+                            remittanceStats?.totalCommissionPaid || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -260,7 +277,7 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Total Service Amount */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -268,11 +285,15 @@ export const RemittanceDashboardPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Service Amount
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : formatCurrency(remittanceStats?.totalServiceAmount || 0)}
+                      {isLoading
+                        ? "..."
+                        : formatCurrency(
+                            remittanceStats?.totalServiceAmount || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -281,7 +302,7 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Average Commission Rate */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -289,11 +310,13 @@ export const RemittanceDashboardPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Avg Commission Rate
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {isLoading ? "..." : `${(remittanceStats?.averageCommissionRate || 0).toFixed(2)}%`}
+                      {isLoading
+                        ? "..."
+                        : `${(remittanceStats?.averageCommissionRate || 0).toFixed(2)}%`}
                     </dd>
                   </dl>
                 </div>
@@ -305,8 +328,8 @@ export const RemittanceDashboardPage: React.FC = () => {
         {/* Recent Orders and Top Providers */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Recent Orders */}
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">
                   Recent Orders
@@ -344,7 +367,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                   {recentOrders.map((order) => (
                     <div
                       key={order.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
@@ -352,17 +375,19 @@ export const RemittanceDashboardPage: React.FC = () => {
                             {order.id}
                           </span>
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
                           >
                             {getStatusIcon(order.status)}
                             <span className="ml-1">{order.status}</span>
                           </span>
                         </div>
                         <div className="mt-1 text-sm text-gray-500">
-                          Provider: {order.serviceProviderName || order.serviceProviderId}
+                          Provider:{" "}
+                          {order.serviceProviderName || order.serviceProviderId}
                         </div>
                         <div className="mt-1 text-sm text-gray-500">
-                          Amount: {formatCurrency(order.amount)} | Commission: {formatCurrency(order.commissionAmount)}
+                          Amount: {formatCurrency(order.amount)} | Commission:{" "}
+                          {formatCurrency(order.commissionAmount)}
                         </div>
                       </div>
                       <div className="text-right">
@@ -378,8 +403,8 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Top Providers */}
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">
                   Top Providers
@@ -409,7 +434,8 @@ export const RemittanceDashboardPage: React.FC = () => {
                     No providers found
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    Service providers will appear here once they have remittance activity.
+                    Service providers will appear here once they have remittance
+                    activity.
                   </p>
                 </div>
               ) : (
@@ -417,7 +443,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                   {remittanceProviders.slice(0, 5).map((provider) => (
                     <div
                       key={provider.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
                     >
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">
@@ -427,7 +453,8 @@ export const RemittanceDashboardPage: React.FC = () => {
                           {provider.phone}
                         </div>
                         <div className="mt-1 text-sm text-gray-500">
-                          Outstanding: {formatCurrency(provider.outstandingBalance)}
+                          Outstanding:{" "}
+                          {formatCurrency(provider.outstandingBalance)}
                         </div>
                       </div>
                       <div className="text-right">

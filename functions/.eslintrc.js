@@ -15,29 +15,38 @@ module.exports = {
   rules: {
     "no-restricted-globals": ["error", "name", "length"],
     "prefer-arrow-callback": "error",
-    "quotes": ["error", "double", {allowTemplateLiterals: true}],
-    "semi": ["error", "always"],
-    "no-unused-vars": ["warn", {argsIgnorePattern: "^_"}],
+    quotes: ["error", "double", { allowTemplateLiterals: true }],
+    semi: ["error", "always"],
+    "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "no-console": "off",
-    "max-len": ["error", {code: 100, ignoreUrls: true}], // Google style guide
-    "indent": ["error", 2], // 2-space indentation
-    "new-cap": ["error", {
-      "capIsNewExceptions": ["IDL"], // Allow IDL constructors
-      "properties": false,
-    }],
-    "valid-jsdoc": ["error", {
-      "requireReturn": false, // Don't require @return for all functions
-      "requireParamDescription": false, // Don't require param descriptions
-    }],
-    "require-jsdoc": ["error", {
-      "require": {
-        "FunctionDeclaration": true,
-        "MethodDefinition": false,
-        "ClassDeclaration": false,
-        "ArrowFunctionExpression": false,
-        "FunctionExpression": false,
+    "max-len": ["error", { code: 100, ignoreUrls: true }], // Google style guide
+    indent: ["error", 2], // 2-space indentation
+    "new-cap": [
+      "error",
+      {
+        capIsNewExceptions: ["IDL"], // Allow IDL constructors
+        properties: false,
       },
-    }],
+    ],
+    "valid-jsdoc": [
+      "error",
+      {
+        requireReturn: false, // Don't require @return for all functions
+        requireParamDescription: false, // Don't require param descriptions
+      },
+    ],
+    "require-jsdoc": [
+      "error",
+      {
+        require: {
+          FunctionDeclaration: true,
+          MethodDefinition: false,
+          ClassDeclaration: false,
+          ArrowFunctionExpression: false,
+          FunctionExpression: false,
+        },
+      },
+    ],
   },
   overrides: [
     {

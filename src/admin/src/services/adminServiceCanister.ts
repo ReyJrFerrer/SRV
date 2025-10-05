@@ -1842,8 +1842,10 @@ export const adminServiceCanister = {
           totalBookings: Number(analyticsData.totalBookings || 0),
           servicesCompleted: Number(analyticsData.servicesCompleted || 0),
           totalSpent: Number(analyticsData.totalSpent || 0),
-          memberSince: analyticsData.memberSince 
-            ? convertTimeToDate(BigInt(analyticsData.memberSince)).toLocaleDateString()
+          memberSince: analyticsData.memberSince
+            ? convertTimeToDate(
+                BigInt(analyticsData.memberSince),
+              ).toLocaleDateString()
             : "Unknown",
         };
       }

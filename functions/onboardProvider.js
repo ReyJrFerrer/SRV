@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const {Xendit} = require("xendit-node");
+const { Xendit } = require("xendit-node");
 const admin = require("firebase-admin");
 
 // Initialize Xendit client with proper error handling
@@ -64,7 +64,7 @@ exports.onboardProvider = functions.https.onRequest(async (req, res) => {
   try {
     // Only accept POST requests after handling OPTIONS
     if (req.method !== "POST") {
-      return res.status(405).json({error: "Method not allowed"});
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
     const data = req.body.data || req.body;
@@ -106,7 +106,7 @@ exports.onboardProvider = functions.https.onRequest(async (req, res) => {
     }
 
     // Create Xendit Customer for the provider
-    const {Customer} = xendit;
+    const { Customer } = xendit;
     const customerData = {
       referenceId: providerId,
       type: "INDIVIDUAL",
@@ -174,7 +174,7 @@ exports.onboardProvider = functions.https.onRequest(async (req, res) => {
         .firestore()
         .collection("providers")
         .doc(providerId)
-        .set(providerData, {merge: true});
+        .set(providerData, { merge: true });
       console.log("Provider data saved to Firestore successfully");
     } catch (firestoreError) {
       console.error("Error saving to Firestore:", firestoreError);

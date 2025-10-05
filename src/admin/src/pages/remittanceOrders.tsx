@@ -80,8 +80,12 @@ export const RemittanceOrdersPage: React.FC = () => {
       filtered = filtered.filter(
         (order) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.serviceProviderName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.serviceProviderId.toLowerCase().includes(searchTerm.toLowerCase())
+          order.serviceProviderName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          order.serviceProviderId
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -92,7 +96,9 @@ export const RemittanceOrdersPage: React.FC = () => {
 
     // Provider filter
     if (providerFilter) {
-      filtered = filtered.filter((order) => order.serviceProviderId === providerFilter);
+      filtered = filtered.filter(
+        (order) => order.serviceProviderId === providerFilter,
+      );
     }
 
     // Date filter
@@ -102,7 +108,11 @@ export const RemittanceOrdersPage: React.FC = () => {
 
       switch (dateFilter) {
         case "today":
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          startDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+          );
           break;
         case "week":
           startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -118,7 +128,9 @@ export const RemittanceOrdersPage: React.FC = () => {
           startDate = new Date(0);
       }
 
-      filtered = filtered.filter((order) => new Date(order.createdAt) >= startDate);
+      filtered = filtered.filter(
+        (order) => new Date(order.createdAt) >= startDate,
+      );
     }
 
     setFilteredOrders(filtered);
@@ -180,7 +192,11 @@ export const RemittanceOrdersPage: React.FC = () => {
     if (!selectedOrder) return;
 
     try {
-      await validateRemittancePayment(selectedOrder.id, validationApproved, validationReason);
+      await validateRemittancePayment(
+        selectedOrder.id,
+        validationApproved,
+        validationReason,
+      );
       setShowValidationModal(false);
       setSelectedOrder(null);
       setValidationReason("");
@@ -202,7 +218,7 @@ export const RemittanceOrdersPage: React.FC = () => {
 
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   const totalPages = Math.ceil(filteredOrders.length / pageSize);
@@ -213,21 +229,21 @@ export const RemittanceOrdersPage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <Link
-                   to="/remittance"
-                   className="text-sm text-gray-500 hover:text-gray-700"
-                 >
-                   ← Back to Remittance
-                 </Link>
-                 <h1 className="text-2xl font-bold text-gray-900 mt-2">
-                   Remittance Orders
-                 </h1>
-                 <p className="mt-2 text-sm text-gray-600">
-                   Manage and track commission payment orders
-                 </p>
-               </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Link
+                  to="/remittance"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Remittance
+                </Link>
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
+                  Remittance Orders
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">
+                  Manage and track commission payment orders
+                </p>
+              </div>
               <div className="flex space-x-4">
                 <button
                   onClick={() => refreshRemittanceOrders(true)}
@@ -246,21 +262,24 @@ export const RemittanceOrdersPage: React.FC = () => {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Filters */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="search"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Search
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
                   id="search"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                   placeholder="Search orders..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -270,12 +289,15 @@ export const RemittanceOrdersPage: React.FC = () => {
 
             {/* Status Filter */}
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="status"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Status
               </label>
               <select
                 id="status"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -289,12 +311,15 @@ export const RemittanceOrdersPage: React.FC = () => {
 
             {/* Provider Filter */}
             <div>
-              <label htmlFor="provider" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="provider"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Provider
               </label>
               <select
                 id="provider"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={providerFilter}
                 onChange={(e) => setProviderFilter(e.target.value)}
               >
@@ -309,12 +334,15 @@ export const RemittanceOrdersPage: React.FC = () => {
 
             {/* Date Filter */}
             <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="date"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Date Range
               </label>
               <select
                 id="date"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
               >
@@ -335,7 +363,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                   setProviderFilter("");
                   setDateFilter("");
                 }}
-                className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
               >
                 <FunnelIcon className="mr-2 h-4 w-4" />
                 Clear Filters
@@ -345,8 +373,8 @@ export const RemittanceOrdersPage: React.FC = () => {
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium text-gray-900">
                 Orders ({filteredOrders.length})
@@ -358,9 +386,7 @@ export const RemittanceOrdersPage: React.FC = () => {
             {loading.remittanceOrders ? (
               <div className="py-12 text-center">
                 <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                <p className="mt-4 text-sm text-gray-500">
-                  Loading orders...
-                </p>
+                <p className="mt-4 text-sm text-gray-500">Loading orders...</p>
               </div>
             ) : filteredOrders.length === 0 ? (
               <div className="py-12 text-center">
@@ -380,66 +406,68 @@ export const RemittanceOrdersPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Order ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Commission
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 bg-white">
                   {paginatedOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                         {order.id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         <div>
                           <div className="font-medium text-gray-900">
                             {order.serviceProviderName || "Unknown Provider"}
                           </div>
-                          <div className="text-gray-500">{order.serviceProviderId}</div>
+                          <div className="text-gray-500">
+                            {order.serviceProviderId}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {formatCurrency(order.amount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {formatCurrency(order.commissionAmount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
                         >
                           {getStatusIcon(order.status)}
                           <span className="ml-1">{order.status}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         {formatDate(order.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                         <div className="flex space-x-2">
                           {order.status === "AwaitingPayment" && (
                             <button
                               onClick={() => handleCancelOrder(order.id)}
-                              className="inline-flex items-center px-3 py-1.5 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                              className="inline-flex items-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
                             >
                               Cancel
                             </button>
@@ -448,7 +476,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                             <>
                               <button
                                 onClick={() => setSelectedOrder(order)}
-                                className="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="inline-flex items-center rounded-md border border-indigo-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                               >
                                 View Proof
                               </button>
@@ -458,7 +486,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                                   setShowValidationModal(true);
                                   setValidationApproved(true);
                                 }}
-                                className="inline-flex items-center px-3 py-1.5 border border-green-300 text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                className="inline-flex items-center rounded-md border border-green-300 bg-white px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
                               >
                                 Validate
                               </button>
@@ -475,23 +503,27 @@ export const RemittanceOrdersPage: React.FC = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200">
+            <div className="border-t border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} results
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, filteredOrders.length)} of{" "}
+                  {filteredOrders.length} results
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -504,10 +536,10 @@ export const RemittanceOrdersPage: React.FC = () => {
 
       {/* Validation Modal */}
       {showValidationModal && selectedOrder && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="mb-4 text-lg font-medium text-gray-900">
                 Validate Payment
               </h3>
               <div className="mb-4">
@@ -522,7 +554,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                 </p>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Decision
                 </label>
                 <div className="space-y-2">
@@ -551,13 +583,13 @@ export const RemittanceOrdersPage: React.FC = () => {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Reason (Optional)
                 </label>
                 <textarea
                   value={validationReason}
                   onChange={(e) => setValidationReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                   rows={3}
                   placeholder="Enter reason for approval/rejection..."
                 />
@@ -570,13 +602,13 @@ export const RemittanceOrdersPage: React.FC = () => {
                     setValidationReason("");
                     setValidationApproved(true);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleValidatePayment}
-                  className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                  className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
                     validationApproved
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-red-600 hover:bg-red-700"

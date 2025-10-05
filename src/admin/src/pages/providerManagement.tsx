@@ -24,27 +24,32 @@ export const ProviderManagementPage: React.FC = () => {
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "totalEarnings" | "outstandingBalance" | "lastActivity">("totalEarnings");
+  const [sortBy, setSortBy] = useState<
+    "name" | "totalEarnings" | "outstandingBalance" | "lastActivity"
+  >("totalEarnings");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerDashboard, setProviderDashboard] = useState<any | null>(null);
   const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
-  const [dateRange, setDateRange] = useState<"week" | "month" | "quarter" | "year">("month");
+  const [dateRange, setDateRange] = useState<
+    "week" | "month" | "quarter" | "year"
+  >("month");
 
   useEffect(() => {
     refreshRemittanceProviders();
   }, [refreshRemittanceProviders]);
 
   const filteredProviders = remittanceProviders
-    .filter((provider) =>
-      provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.id.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (provider) =>
+        provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider.id.toLowerCase().includes(searchTerm.toLowerCase()),
     )
     .sort((a, b) => {
       let aValue: any, bValue: any;
-      
+
       switch (sortBy) {
         case "name":
           aValue = a.name.toLowerCase();
@@ -92,8 +97,10 @@ export const ProviderManagementPage: React.FC = () => {
 
   const formatRelativeTime = (date: Date) => {
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
+
     if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
@@ -103,13 +110,13 @@ export const ProviderManagementPage: React.FC = () => {
   const handleViewProvider = async (provider: any) => {
     setSelectedProvider(provider);
     setShowProviderDetails(true);
-    
+
     try {
       const [dashboard, analytics] = await Promise.all([
         getProviderDashboard(provider.id),
-        getProviderAnalytics(provider.id, getDateRangeStart(), new Date())
+        getProviderAnalytics(provider.id, getDateRangeStart(), new Date()),
       ]);
-      
+
       setProviderDashboard(dashboard);
       setProviderAnalytics(analytics);
     } catch (error) {
@@ -152,21 +159,21 @@ export const ProviderManagementPage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <Link
-                   to="/remittance"
-                   className="text-sm text-gray-500 hover:text-gray-700"
-                 >
-                   ← Back to Remittance
-                 </Link>
-                 <h1 className="text-2xl font-bold text-gray-900 mt-2">
-                   Provider Management
-                 </h1>
-                 <p className="mt-2 text-sm text-gray-600">
-                   Manage service providers and their commission payments
-                 </p>
-               </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Link
+                  to="/remittance"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Remittance
+                </Link>
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
+                  Provider Management
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">
+                  Manage service providers and their commission payments
+                </p>
+              </div>
               <div className="flex space-x-4">
                 <button
                   onClick={() => refreshRemittanceProviders(true)}
@@ -186,21 +193,23 @@ export const ProviderManagementPage: React.FC = () => {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-4">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
                     <UserIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Providers
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders ? "..." : remittanceProviders.length}
+                      {loading.remittanceProviders
+                        ? "..."
+                        : remittanceProviders.length}
                     </dd>
                   </dl>
                 </div>
@@ -208,23 +217,28 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
                     <CurrencyDollarIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Earnings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders ? "..." : formatCurrency(
-                        remittanceProviders.reduce((sum, p) => sum + p.totalEarnings, 0)
-                      )}
+                      {loading.remittanceProviders
+                        ? "..."
+                        : formatCurrency(
+                            remittanceProviders.reduce(
+                              (sum, p) => sum + p.totalEarnings,
+                              0,
+                            ),
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -232,23 +246,28 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500">
                     <ClockIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Outstanding Balance
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders ? "..." : formatCurrency(
-                        remittanceProviders.reduce((sum, p) => sum + p.outstandingBalance, 0)
-                      )}
+                      {loading.remittanceProviders
+                        ? "..."
+                        : formatCurrency(
+                            remittanceProviders.reduce(
+                              (sum, p) => sum + p.outstandingBalance,
+                              0,
+                            ),
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -256,21 +275,26 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-500">
                     <ExclamationTriangleIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Overdue Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders ? "..." : remittanceProviders.reduce((sum, p) => sum + p.overdueOrders, 0)}
+                      {loading.remittanceProviders
+                        ? "..."
+                        : remittanceProviders.reduce(
+                            (sum, p) => sum + p.overdueOrders,
+                            0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -280,21 +304,24 @@ export const ProviderManagementPage: React.FC = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="search"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Search Providers
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
                   id="search"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                   placeholder="Search by name, phone, or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -304,12 +331,15 @@ export const ProviderManagementPage: React.FC = () => {
 
             {/* Sort By */}
             <div>
-              <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="sortBy"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Sort By
               </label>
               <select
                 id="sortBy"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
               >
@@ -322,12 +352,15 @@ export const ProviderManagementPage: React.FC = () => {
 
             {/* Sort Order */}
             <div>
-              <label htmlFor="sortOrder" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="sortOrder"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Order
               </label>
               <select
                 id="sortOrder"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as any)}
               >
@@ -339,8 +372,8 @@ export const ProviderManagementPage: React.FC = () => {
         </div>
 
         {/* Providers Table */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
               Service Providers ({filteredProviders.length})
             </h2>
@@ -372,36 +405,36 @@ export const ProviderManagementPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Total Earnings
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Outstanding
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Last Activity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredProviders.map((provider) => (
                     <tr key={provider.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center">
+                          <div className="h-10 w-10 flex-shrink-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500">
                               <span className="text-sm font-medium text-white">
                                 {provider.name.charAt(0).toUpperCase()}
                               </span>
@@ -419,28 +452,33 @@ export const ProviderManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-500">
-                          <PhoneIcon className="h-4 w-4 mr-2" />
+                          <PhoneIcon className="mr-2 h-4 w-4" />
                           {provider.phone}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {formatCurrency(provider.totalEarnings)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {formatCurrency(provider.outstandingBalance)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${getStatusColor(provider.overdueOrders, provider.pendingOrders)}`}>
-                          {getStatusText(provider.overdueOrders, provider.pendingOrders)}
+                        <span
+                          className={`text-sm font-medium ${getStatusColor(provider.overdueOrders, provider.pendingOrders)}`}
+                        >
+                          {getStatusText(
+                            provider.overdueOrders,
+                            provider.pendingOrders,
+                          )}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         {formatRelativeTime(new Date(provider.lastActivity))}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                         <button
                           onClick={() => handleViewProvider(provider)}
-                          className="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          className="inline-flex items-center rounded-md border border-indigo-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Details
                         </button>
@@ -456,10 +494,10 @@ export const ProviderManagementPage: React.FC = () => {
 
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-4/5 max-w-6xl rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
                   Provider Details - {selectedProvider.name}
                 </h3>
@@ -476,72 +514,126 @@ export const ProviderManagementPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Provider Info */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Provider Information</h4>
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                    Provider Information
+                  </h4>
                   <div className="space-y-3">
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Name:</span>
-                      <p className="text-sm text-gray-900">{selectedProvider.name}</p>
+                      <span className="text-sm font-medium text-gray-500">
+                        Name:
+                      </span>
+                      <p className="text-sm text-gray-900">
+                        {selectedProvider.name}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Phone:</span>
-                      <p className="text-sm text-gray-900">{selectedProvider.phone}</p>
+                      <span className="text-sm font-medium text-gray-500">
+                        Phone:
+                      </span>
+                      <p className="text-sm text-gray-900">
+                        {selectedProvider.phone}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Provider ID:</span>
-                      <p className="text-sm text-gray-900 font-mono">{selectedProvider.id}</p>
+                      <span className="text-sm font-medium text-gray-500">
+                        Provider ID:
+                      </span>
+                      <p className="font-mono text-sm text-gray-900">
+                        {selectedProvider.id}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Last Activity:</span>
-                      <p className="text-sm text-gray-900">{formatDate(new Date(selectedProvider.lastActivity))}</p>
+                      <span className="text-sm font-medium text-gray-500">
+                        Last Activity:
+                      </span>
+                      <p className="text-sm text-gray-900">
+                        {formatDate(new Date(selectedProvider.lastActivity))}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Financial Summary */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Financial Summary</h4>
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                    Financial Summary
+                  </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Total Earnings:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedProvider.totalEarnings)}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Total Earnings:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(selectedProvider.totalEarnings)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Settled Commission:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedProvider.settledCommission)}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Settled Commission:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(selectedProvider.settledCommission)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Outstanding Balance:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedProvider.outstandingBalance)}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Outstanding Balance:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(selectedProvider.outstandingBalance)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Pending Commission:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedProvider.pendingCommission)}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Pending Commission:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(selectedProvider.pendingCommission)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Average Order Value:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedProvider.averageOrderValue)}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Average Order Value:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(selectedProvider.averageOrderValue)}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Order Statistics */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Order Statistics</h4>
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                    Order Statistics
+                  </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Total Orders Completed:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedProvider.totalOrdersCompleted}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Total Orders Completed:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {selectedProvider.totalOrdersCompleted}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Pending Orders:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedProvider.pendingOrders}</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Pending Orders:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {selectedProvider.pendingOrders}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Overdue Orders:</span>
-                      <span className={`text-sm font-medium ${selectedProvider.overdueOrders > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                      <span className="text-sm font-medium text-gray-500">
+                        Overdue Orders:
+                      </span>
+                      <span
+                        className={`text-sm font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
+                      >
                         {selectedProvider.overdueOrders}
                       </span>
                     </div>
@@ -550,21 +642,38 @@ export const ProviderManagementPage: React.FC = () => {
 
                 {/* Recent Activity */}
                 {providerDashboard && (
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h4>
+                  <div className="rounded-lg bg-gray-50 p-6">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900">
+                      Recent Activity
+                    </h4>
                     <div className="space-y-3">
                       <div>
-                        <span className="text-sm font-medium text-gray-500">Orders Awaiting Payment:</span>
-                        <p className="text-sm text-gray-900">{providerDashboard.ordersAwaitingPayment?.length || 0}</p>
+                        <span className="text-sm font-medium text-gray-500">
+                          Orders Awaiting Payment:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {providerDashboard.ordersAwaitingPayment?.length || 0}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-500">Orders Pending Validation:</span>
-                        <p className="text-sm text-gray-900">{providerDashboard.ordersPendingValidation?.length || 0}</p>
+                        <span className="text-sm font-medium text-gray-500">
+                          Orders Pending Validation:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {providerDashboard.ordersPendingValidation?.length ||
+                            0}
+                        </p>
                       </div>
                       {providerDashboard.nextDeadline && (
                         <div>
-                          <span className="text-sm font-medium text-gray-500">Next Deadline:</span>
-                          <p className="text-sm text-gray-900">{formatDate(new Date(providerDashboard.nextDeadline))}</p>
+                          <span className="text-sm font-medium text-gray-500">
+                            Next Deadline:
+                          </span>
+                          <p className="text-sm text-gray-900">
+                            {formatDate(
+                              new Date(providerDashboard.nextDeadline),
+                            )}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -580,13 +689,13 @@ export const ProviderManagementPage: React.FC = () => {
                     setProviderDashboard(null);
                     setProviderAnalytics(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Close
                 </button>
                 <Link
                   to={`/remittance/analytics?provider=${selectedProvider.id}`}
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                 >
                   View Analytics
                 </Link>

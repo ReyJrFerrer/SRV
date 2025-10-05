@@ -26,7 +26,9 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const selectedProviderId = searchParams.get("provider");
 
-  const [dateRange, setDateRange] = useState<"week" | "month" | "quarter" | "year">("month");
+  const [dateRange, setDateRange] = useState<
+    "week" | "month" | "quarter" | "year"
+  >("month");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
@@ -38,7 +40,9 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedProviderId) {
-      const provider = remittanceProviders.find(p => p.id === selectedProviderId);
+      const provider = remittanceProviders.find(
+        (p) => p.id === selectedProviderId,
+      );
       if (provider) {
         setSelectedProvider(provider);
         setShowProviderDetails(true);
@@ -49,7 +53,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
   const loadProviderAnalytics = async (providerId: string) => {
     try {
-      const analytics = await getProviderAnalytics(providerId, getDateRangeStart(), new Date());
+      const analytics = await getProviderAnalytics(
+        providerId,
+        getDateRangeStart(),
+        new Date(),
+      );
       setProviderAnalytics(analytics);
     } catch (error) {
       console.error("Failed to load provider analytics:", error);
@@ -97,11 +105,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
     .slice(0, 5);
 
   const overdueProviders = remittanceProviders
-    .filter(p => p.overdueOrders > 0)
+    .filter((p) => p.overdueOrders > 0)
     .sort((a, b) => b.overdueOrders - a.overdueOrders);
 
   const highValueProviders = remittanceProviders
-    .filter(p => p.averageOrderValue > 1000)
+    .filter((p) => p.averageOrderValue > 1000)
     .sort((a, b) => b.averageOrderValue - a.averageOrderValue);
 
   return (
@@ -118,7 +126,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 >
                   ← Back to Remittance
                 </Link>
-                <h1 className="text-2xl font-bold text-gray-900 mt-2">
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
                   Remittance Analytics
                 </h1>
                 <p className="mt-2 text-sm text-gray-600">
@@ -131,7 +139,9 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                     refreshRemittanceStats(true);
                     refreshRemittanceProviders(true);
                   }}
-                  disabled={loading.remittanceStats || loading.remittanceProviders}
+                  disabled={
+                    loading.remittanceStats || loading.remittanceProviders
+                  }
                   className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
@@ -146,9 +156,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Date Range Selector */}
-        <div className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Analytics Period</h2>
+            <h2 className="text-lg font-medium text-gray-900">
+              Analytics Period
+            </h2>
             <div className="flex space-x-2">
               {[
                 { value: "week", label: "This Week" },
@@ -159,10 +171,10 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 <button
                   key={option.value}
                   onClick={() => setDateRange(option.value as any)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  className={`rounded-md px-4 py-2 text-sm font-medium ${
                     dateRange === option.value
-                      ? "bg-indigo-100 text-indigo-700 border border-indigo-200"
-                      : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      ? "border border-indigo-200 bg-indigo-100 text-indigo-700"
+                      : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   {option.label}
@@ -174,21 +186,23 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
         {/* System Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
                     <ChartBarIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : remittanceStats?.totalOrders || 0}
+                      {loading.remittanceStats
+                        ? "..."
+                        : remittanceStats?.totalOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -196,21 +210,23 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
                     <CheckCircleIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Settled Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : remittanceStats?.totalSettledOrders || 0}
+                      {loading.remittanceStats
+                        ? "..."
+                        : remittanceStats?.totalSettledOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -218,21 +234,25 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500">
                     <CurrencyDollarIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Commission
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : formatCurrency(remittanceStats?.totalCommissionPaid || 0)}
+                      {loading.remittanceStats
+                        ? "..."
+                        : formatCurrency(
+                            remittanceStats?.totalCommissionPaid || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -240,21 +260,25 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500">
                     <ChartBarIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Avg Commission Rate
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : formatPercentage(remittanceStats?.averageCommissionRate || 0)}
+                      {loading.remittanceStats
+                        ? "..."
+                        : formatPercentage(
+                            remittanceStats?.averageCommissionRate || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -265,7 +289,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
         {/* Financial Metrics */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -273,11 +297,15 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Total Service Amount
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : formatCurrency(remittanceStats?.totalServiceAmount || 0)}
+                      {loading.remittanceStats
+                        ? "..."
+                        : formatCurrency(
+                            remittanceStats?.totalServiceAmount || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -285,7 +313,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -293,11 +321,15 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Average Order Value
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : formatCurrency(remittanceStats?.averageOrderValue || 0)}
+                      {loading.remittanceStats
+                        ? "..."
+                        : formatCurrency(
+                            remittanceStats?.averageOrderValue || 0,
+                          )}
                     </dd>
                   </dl>
                 </div>
@@ -305,7 +337,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -313,11 +345,13 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Overdue Orders
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceStats ? "..." : remittanceStats?.totalOverdueOrders || 0}
+                      {loading.remittanceStats
+                        ? "..."
+                        : remittanceStats?.totalOverdueOrders || 0}
                     </dd>
                   </dl>
                 </div>
@@ -329,8 +363,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
         {/* Provider Analytics */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Top Providers */}
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-medium text-gray-900">
                 Top Performing Providers
               </h2>
@@ -339,20 +373,26 @@ export const RemittanceAnalyticsPage: React.FC = () => {
               {loading.remittanceProviders ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="mt-4 text-sm text-gray-500">Loading providers...</p>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading providers...
+                  </p>
                 </div>
               ) : topProviders.length === 0 ? (
                 <div className="py-12 text-center">
                   <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-4 text-sm font-medium text-gray-900">No providers found</h3>
-                  <p className="mt-2 text-sm text-gray-500">No provider data available for the selected period.</p>
+                  <h3 className="mt-4 text-sm font-medium text-gray-900">
+                    No providers found
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    No provider data available for the selected period.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {topProviders.map((provider, index) => (
                     <div
                       key={provider.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
                       onClick={() => {
                         setSelectedProvider(provider);
                         setShowProviderDetails(true);
@@ -361,7 +401,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                     >
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500">
                             <span className="text-sm font-medium text-white">
                               {index + 1}
                             </span>
@@ -392,8 +432,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
           </div>
 
           {/* Overdue Providers */}
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-medium text-gray-900">
                 Providers with Overdue Orders
               </h2>
@@ -402,20 +442,26 @@ export const RemittanceAnalyticsPage: React.FC = () => {
               {loading.remittanceProviders ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="mt-4 text-sm text-gray-500">Loading providers...</p>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading providers...
+                  </p>
                 </div>
               ) : overdueProviders.length === 0 ? (
                 <div className="py-12 text-center">
                   <CheckCircleIcon className="mx-auto h-12 w-12 text-green-400" />
-                  <h3 className="mt-4 text-sm font-medium text-gray-900">All Clear!</h3>
-                  <p className="mt-2 text-sm text-gray-500">No providers have overdue orders.</p>
+                  <h3 className="mt-4 text-sm font-medium text-gray-900">
+                    All Clear!
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    No providers have overdue orders.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {overdueProviders.map((provider) => (
                     <div
                       key={provider.id}
-                      className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50 hover:bg-red-100 cursor-pointer"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 hover:bg-red-100"
                       onClick={() => {
                         setSelectedProvider(provider);
                         setShowProviderDetails(true);
@@ -440,7 +486,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                           {provider.overdueOrders} overdue
                         </div>
                         <div className="text-sm text-gray-500">
-                          {formatCurrency(provider.outstandingBalance)} outstanding
+                          {formatCurrency(provider.outstandingBalance)}{" "}
+                          outstanding
                         </div>
                       </div>
                     </div>
@@ -452,8 +499,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
         </div>
 
         {/* High Value Providers */}
-        <div className="mt-8 bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="mt-8 rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
               High Value Providers (Avg Order &gt; ₱1,000)
             </h2>
@@ -462,20 +509,26 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             {loading.remittanceProviders ? (
               <div className="py-12 text-center">
                 <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                <p className="mt-4 text-sm text-gray-500">Loading providers...</p>
+                <p className="mt-4 text-sm text-gray-500">
+                  Loading providers...
+                </p>
               </div>
             ) : highValueProviders.length === 0 ? (
               <div className="py-12 text-center">
                 <CurrencyDollarIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-4 text-sm font-medium text-gray-900">No high value providers</h3>
-                <p className="mt-2 text-sm text-gray-500">No providers with average order value above ₱1,000.</p>
+                <h3 className="mt-4 text-sm font-medium text-gray-900">
+                  No high value providers
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  No providers with average order value above ₱1,000.
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {highValueProviders.map((provider) => (
                   <div
                     key={provider.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
                     onClick={() => {
                       setSelectedProvider(provider);
                       setShowProviderDetails(true);
@@ -484,7 +537,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500">
                           <span className="text-sm font-medium text-white">
                             {provider.name.charAt(0).toUpperCase()}
                           </span>
@@ -512,10 +565,10 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-4/5 max-w-4xl rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
                   Provider Analytics - {selectedProvider.name}
                 </h3>
@@ -532,39 +585,69 @@ export const RemittanceAnalyticsPage: React.FC = () => {
               </div>
 
               {providerAnalytics ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">Order Statistics</h4>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="rounded-lg bg-gray-50 p-6">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900">
+                      Order Statistics
+                    </h4>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Total Orders:</span>
-                        <span className="text-sm font-medium text-gray-900">{providerAnalytics.totalOrders}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Total Orders:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {providerAnalytics.totalOrders}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Settled Orders:</span>
-                        <span className="text-sm font-medium text-gray-900">{providerAnalytics.settledOrders}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Settled Orders:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {providerAnalytics.settledOrders}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Pending Orders:</span>
-                        <span className="text-sm font-medium text-gray-900">{providerAnalytics.pendingOrders}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Pending Orders:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {providerAnalytics.pendingOrders}
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">Financial Metrics</h4>
+                  <div className="rounded-lg bg-gray-50 p-6">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900">
+                      Financial Metrics
+                    </h4>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Total Commission Paid:</span>
-                        <span className="text-sm font-medium text-gray-900">{formatCurrency(providerAnalytics.totalCommissionPaid)}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Total Commission Paid:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {formatCurrency(
+                            providerAnalytics.totalCommissionPaid,
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Total Service Amount:</span>
-                        <span className="text-sm font-medium text-gray-900">{formatCurrency(providerAnalytics.totalServiceAmount)}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Total Service Amount:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {formatCurrency(providerAnalytics.totalServiceAmount)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">Average Order Value:</span>
-                        <span className="text-sm font-medium text-gray-900">{formatCurrency(providerAnalytics.averageOrderValue)}</span>
+                        <span className="text-sm font-medium text-gray-500">
+                          Average Order Value:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {formatCurrency(providerAnalytics.averageOrderValue)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -572,7 +655,9 @@ export const RemittanceAnalyticsPage: React.FC = () => {
               ) : (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="mt-4 text-sm text-gray-500">Loading provider analytics...</p>
+                  <p className="mt-4 text-sm text-gray-500">
+                    Loading provider analytics...
+                  </p>
                 </div>
               )}
 
@@ -583,7 +668,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                     setSelectedProvider(null);
                     setProviderAnalytics(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Close
                 </button>

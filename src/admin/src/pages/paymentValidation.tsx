@@ -33,9 +33,10 @@ export const PaymentValidationPage: React.FC = () => {
     refreshPendingValidations();
   }, [refreshPendingValidations]);
 
-  const filteredOrders = pendingValidations.filter((order) =>
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.serviceProviderId.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOrders = pendingValidations.filter(
+    (order) =>
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.serviceProviderId.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const formatCurrency = (amount: number) => {
@@ -72,7 +73,11 @@ export const PaymentValidationPage: React.FC = () => {
     if (!selectedOrder) return;
 
     try {
-      await validateRemittancePayment(selectedOrder.id, validationApproved, validationReason);
+      await validateRemittancePayment(
+        selectedOrder.id,
+        validationApproved,
+        validationReason,
+      );
       setShowValidationModal(false);
       setSelectedOrder(null);
       setValidationReason("");
@@ -101,21 +106,21 @@ export const PaymentValidationPage: React.FC = () => {
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <Link
-                   to="/remittance"
-                   className="text-sm text-gray-500 hover:text-gray-700"
-                 >
-                   ← Back to Remittance
-                 </Link>
-                 <h1 className="text-2xl font-bold text-gray-900 mt-2">
-                   Payment Validation
-                 </h1>
-                 <p className="mt-2 text-sm text-gray-600">
-                   Review and validate payment proofs from service providers
-                 </p>
-               </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Link
+                  to="/remittance"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Remittance
+                </Link>
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
+                  Payment Validation
+                </h1>
+                <p className="mt-2 text-sm text-gray-600">
+                  Review and validate payment proofs from service providers
+                </p>
+              </div>
               <div className="flex space-x-4">
                 <button
                   onClick={() => refreshPendingValidations(true)}
@@ -135,21 +140,23 @@ export const PaymentValidationPage: React.FC = () => {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Stats Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500">
                     <EyeIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Pending Validation
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.pendingValidations ? "..." : filteredOrders.length}
+                      {loading.pendingValidations
+                        ? "..."
+                        : filteredOrders.length}
                     </dd>
                   </dl>
                 </div>
@@ -157,24 +164,32 @@ export const PaymentValidationPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500">
                     <ClockIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Recent Submissions
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.pendingValidations ? "..." : filteredOrders.filter(order => {
-                        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-                        return new Date(order.paymentSubmittedAt || order.createdAt) > oneHourAgo;
-                      }).length}
+                      {loading.pendingValidations
+                        ? "..."
+                        : filteredOrders.filter((order) => {
+                            const oneHourAgo = new Date(
+                              Date.now() - 60 * 60 * 1000,
+                            );
+                            return (
+                              new Date(
+                                order.paymentSubmittedAt || order.createdAt,
+                              ) > oneHourAgo
+                            );
+                          }).length}
                     </dd>
                   </dl>
                 </div>
@@ -182,23 +197,29 @@ export const PaymentValidationPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-500">
                     <ExclamationTriangleIcon className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="truncate text-sm font-medium text-gray-500">
                       Overdue
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.pendingValidations ? "..." : filteredOrders.filter(order => 
-                        isOverdue(new Date(order.paymentSubmittedAt || order.createdAt))
-                      ).length}
+                      {loading.pendingValidations
+                        ? "..."
+                        : filteredOrders.filter((order) =>
+                            isOverdue(
+                              new Date(
+                                order.paymentSubmittedAt || order.createdAt,
+                              ),
+                            ),
+                          ).length}
                     </dd>
                   </dl>
                 </div>
@@ -208,19 +229,22 @@ export const PaymentValidationPage: React.FC = () => {
         </div>
 
         {/* Search */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="max-w-md">
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="search"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Search Orders
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 id="search"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 placeholder="Search by order ID or provider..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -230,8 +254,8 @@ export const PaymentValidationPage: React.FC = () => {
         </div>
 
         {/* Orders List */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
               Pending Validations ({filteredOrders.length})
             </h2>
@@ -264,8 +288,10 @@ export const PaymentValidationPage: React.FC = () => {
                 {filteredOrders.map((order) => (
                   <div
                     key={order.id}
-                    className={`p-6 border rounded-lg hover:bg-gray-50 ${
-                      isOverdue(new Date(order.paymentSubmittedAt || order.createdAt))
+                    className={`rounded-lg border p-6 hover:bg-gray-50 ${
+                      isOverdue(
+                        new Date(order.paymentSubmittedAt || order.createdAt),
+                      )
                         ? "border-red-200 bg-red-50"
                         : "border-gray-200"
                     }`}
@@ -276,51 +302,69 @@ export const PaymentValidationPage: React.FC = () => {
                           <h3 className="text-lg font-medium text-gray-900">
                             {order.id}
                           </h3>
-                          {isOverdue(new Date(order.paymentSubmittedAt || order.createdAt)) && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                          {isOverdue(
+                            new Date(
+                              order.paymentSubmittedAt || order.createdAt,
+                            ),
+                          ) && (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                              <ExclamationTriangleIcon className="mr-1 h-3 w-3" />
                               Overdue
                             </span>
                           )}
                         </div>
                         <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Provider</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Provider
+                            </p>
                             <p className="text-sm text-gray-900">
                               Provider {order.serviceProviderId}
                             </p>
-                            <p className="text-xs text-gray-500">{order.serviceProviderId}</p>
+                            <p className="text-xs text-gray-500">
+                              {order.serviceProviderId}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Amount</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Amount
+                            </p>
                             <p className="text-sm text-gray-900">
                               {formatCurrency(order.amount)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Commission: {formatCurrency(order.commissionAmount)}
+                              Commission:{" "}
+                              {formatCurrency(order.commissionAmount)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Submitted</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Submitted
+                            </p>
                             <p className="text-sm text-gray-900">
-                              {formatDate(new Date(order.paymentSubmittedAt || order.createdAt))}
+                              {formatDate(
+                                new Date(
+                                  order.paymentSubmittedAt || order.createdAt,
+                                ),
+                              )}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {order.paymentProofMediaIds.length} proof(s) uploaded
+                              {order.paymentProofMediaIds.length} proof(s)
+                              uploaded
                             </p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex space-x-2 ml-4">
+                      <div className="ml-4 flex space-x-2">
                         <button
                           onClick={() => handleViewOrder(order)}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Proof
                         </button>
                         <button
                           onClick={() => openValidationModal(order)}
-                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm leading-4 font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                           Validate
                         </button>
@@ -336,10 +380,10 @@ export const PaymentValidationPage: React.FC = () => {
 
       {/* Media Modal */}
       {showMediaModal && selectedOrder && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-4/5 max-w-4xl rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
                   Payment Proofs - {selectedOrder.id}
                 </h3>
@@ -354,60 +398,87 @@ export const PaymentValidationPage: React.FC = () => {
                   <XCircleIcon className="h-6 w-6" />
                 </button>
               </div>
-              
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+
+              <div className="mb-4 rounded-lg bg-gray-50 p-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium text-gray-700">Provider:</span>
-                    <p className="text-gray-900">Provider {selectedOrder.serviceProviderId}</p>
+                    <p className="text-gray-900">
+                      Provider {selectedOrder.serviceProviderId}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Amount:</span>
-                    <p className="text-gray-900">{formatCurrency(selectedOrder.amount)}</p>
+                    <p className="text-gray-900">
+                      {formatCurrency(selectedOrder.amount)}
+                    </p>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Commission:</span>
-                    <p className="text-gray-900">{formatCurrency(selectedOrder.commissionAmount)}</p>
+                    <span className="font-medium text-gray-700">
+                      Commission:
+                    </span>
+                    <p className="text-gray-900">
+                      {formatCurrency(selectedOrder.commissionAmount)}
+                    </p>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Submitted:</span>
-                    <p className="text-gray-900">{formatDate(new Date(selectedOrder.paymentSubmittedAt || selectedOrder.createdAt))}</p>
+                    <span className="font-medium text-gray-700">
+                      Submitted:
+                    </span>
+                    <p className="text-gray-900">
+                      {formatDate(
+                        new Date(
+                          selectedOrder.paymentSubmittedAt ||
+                            selectedOrder.createdAt,
+                        ),
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {orderMedia.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {orderMedia.map((media, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-2">
+                    <div key={index} className="rounded-lg border p-4">
+                      <h4 className="mb-2 font-medium text-gray-900">
                         Proof #{index + 1}
                       </h4>
-                      {media.mimeType?.startsWith('image/') ? (
+                      {media.mimeType?.startsWith("image/") ? (
                         <img
-                          src={media.url || `data:${media.mimeType};base64,${media.data}`}
+                          src={
+                            media.url ||
+                            `data:${media.mimeType};base64,${media.data}`
+                          }
                           alt={`Payment proof ${index + 1}`}
-                          className="w-full h-64 object-contain border rounded"
+                          className="h-64 w-full rounded border object-contain"
                           onError={(e) => {
-                            e.currentTarget.src = '/placeholder-image.png';
+                            e.currentTarget.src = "/placeholder-image.png";
                           }}
                         />
                       ) : (
-                        <div className="w-full h-64 border rounded flex items-center justify-center bg-gray-100">
+                        <div className="flex h-64 w-full items-center justify-center rounded border bg-gray-100">
                           <p className="text-gray-500">Preview not available</p>
                         </div>
                       )}
                       <div className="mt-2 text-xs text-gray-500">
-                        <p>Type: {media.mimeType || 'Unknown'}</p>
-                        <p>Size: {media.sizeBytes ? `${Math.round(media.sizeBytes / 1024)} KB` : 'Unknown'}</p>
+                        <p>Type: {media.mimeType || "Unknown"}</p>
+                        <p>
+                          Size:{" "}
+                          {media.sizeBytes
+                            ? `${Math.round(media.sizeBytes / 1024)} KB`
+                            : "Unknown"}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="py-8 text-center">
                   <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No proof images</h3>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No proof images
+                  </h3>
                   <p className="mt-1 text-sm text-gray-500">
                     No payment proof images were uploaded for this order.
                   </p>
@@ -421,7 +492,7 @@ export const PaymentValidationPage: React.FC = () => {
                     setSelectedOrder(null);
                     setOrderMedia([]);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Close
                 </button>
@@ -430,7 +501,7 @@ export const PaymentValidationPage: React.FC = () => {
                     setShowMediaModal(false);
                     openValidationModal(selectedOrder);
                   }}
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                 >
                   Validate Payment
                 </button>
@@ -442,10 +513,10 @@ export const PaymentValidationPage: React.FC = () => {
 
       {/* Validation Modal */}
       {showValidationModal && selectedOrder && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="mb-4 text-lg font-medium text-gray-900">
                 Validate Payment
               </h3>
               <div className="mb-4">
@@ -460,7 +531,7 @@ export const PaymentValidationPage: React.FC = () => {
                 </p>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Decision
                 </label>
                 <div className="space-y-2">
@@ -489,13 +560,13 @@ export const PaymentValidationPage: React.FC = () => {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Reason (Optional)
                 </label>
                 <textarea
                   value={validationReason}
                   onChange={(e) => setValidationReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                   rows={3}
                   placeholder="Enter reason for approval/rejection..."
                 />
@@ -508,13 +579,13 @@ export const PaymentValidationPage: React.FC = () => {
                     setValidationReason("");
                     setValidationApproved(true);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleValidatePayment}
-                  className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                  className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
                     validationApproved
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-red-600 hover:bg-red-700"

@@ -24,7 +24,9 @@ export const SettlementInstructionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("AwaitingPayment");
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [settlementInstruction, setSettlementInstruction] = useState<any | null>(null);
+  const [settlementInstruction, setSettlementInstruction] = useState<
+    any | null
+  >(null);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -41,12 +43,15 @@ export const SettlementInstructionsPage: React.FC = () => {
   }, [refreshRemittanceOrders]);
 
   const filteredOrders = remittanceOrders.filter((order) => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.serviceProviderName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.serviceProviderName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       order.serviceProviderId.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -70,12 +75,14 @@ export const SettlementInstructionsPage: React.FC = () => {
   const formatTimeRemaining = (expiresAt: Date) => {
     const now = new Date();
     const diffInMs = expiresAt.getTime() - now.getTime();
-    
+
     if (diffInMs <= 0) return "Expired";
-    
+
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInMinutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+    const diffInMinutes = Math.floor(
+      (diffInMs % (1000 * 60 * 60)) / (1000 * 60),
+    );
+
     if (diffInHours > 0) {
       return `${diffInHours}h ${diffInMinutes}m remaining`;
     } else {
@@ -156,7 +163,7 @@ export const SettlementInstructionsPage: React.FC = () => {
                 >
                   ← Back to Remittance
                 </Link>
-                <h1 className="text-2xl font-bold text-gray-900 mt-2">
+                <h1 className="mt-2 text-2xl font-bold text-gray-900">
                   Settlement Instructions
                 </h1>
                 <p className="mt-2 text-sm text-gray-600">
@@ -181,7 +188,7 @@ export const SettlementInstructionsPage: React.FC = () => {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Instructions Info */}
-        <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-6">
           <div className="flex">
             <div className="flex-shrink-0">
               <DocumentTextIcon className="h-6 w-6 text-blue-400" />
@@ -192,8 +199,9 @@ export const SettlementInstructionsPage: React.FC = () => {
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <p>
-                  Generate payment instructions for service providers to pay their commission fees.
-                  Instructions include GCash account details, reference numbers, and payment amounts.
+                  Generate payment instructions for service providers to pay
+                  their commission fees. Instructions include GCash account
+                  details, reference numbers, and payment amounts.
                 </p>
               </div>
             </div>
@@ -201,21 +209,24 @@ export const SettlementInstructionsPage: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="search"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Search Orders
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
                   id="search"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                   placeholder="Search by order ID or provider..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -225,12 +236,15 @@ export const SettlementInstructionsPage: React.FC = () => {
 
             {/* Status Filter */}
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="status"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Order Status
               </label>
               <select
                 id="status"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -245,8 +259,8 @@ export const SettlementInstructionsPage: React.FC = () => {
         </div>
 
         {/* Orders List */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="border-b border-gray-200 px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
               Orders ({filteredOrders.length})
             </h2>
@@ -256,9 +270,7 @@ export const SettlementInstructionsPage: React.FC = () => {
             {loading.remittanceOrders ? (
               <div className="py-12 text-center">
                 <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                <p className="mt-4 text-sm text-gray-500">
-                  Loading orders...
-                </p>
+                <p className="mt-4 text-sm text-gray-500">Loading orders...</p>
               </div>
             ) : filteredOrders.length === 0 ? (
               <div className="py-12 text-center">
@@ -279,7 +291,7 @@ export const SettlementInstructionsPage: React.FC = () => {
                 {filteredOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-6 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className="rounded-lg border border-gray-200 p-6 hover:bg-gray-50"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -288,7 +300,7 @@ export const SettlementInstructionsPage: React.FC = () => {
                             {order.id}
                           </h3>
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
                           >
                             {getStatusIcon(order.status)}
                             <span className="ml-1">{order.status}</span>
@@ -296,23 +308,32 @@ export const SettlementInstructionsPage: React.FC = () => {
                         </div>
                         <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Provider</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Provider
+                            </p>
                             <p className="text-sm text-gray-900">
                               {order.serviceProviderName || "Unknown Provider"}
                             </p>
-                            <p className="text-xs text-gray-500">{order.serviceProviderId}</p>
+                            <p className="text-xs text-gray-500">
+                              {order.serviceProviderId}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Amount</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Amount
+                            </p>
                             <p className="text-sm text-gray-900">
                               {formatCurrency(order.amount)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Commission: {formatCurrency(order.commissionAmount)}
+                              Commission:{" "}
+                              {formatCurrency(order.commissionAmount)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Created</p>
+                            <p className="text-sm font-medium text-gray-500">
+                              Created
+                            </p>
                             <p className="text-sm text-gray-900">
                               {formatDate(order.createdAt)}
                             </p>
@@ -322,20 +343,22 @@ export const SettlementInstructionsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex space-x-2 ml-4">
+                      <div className="ml-4 flex space-x-2">
                         <button
                           onClick={() => handleGenerateInstruction(order)}
-                          disabled={isGenerating || order.status !== "AwaitingPayment"}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={
+                            isGenerating || order.status !== "AwaitingPayment"
+                          }
+                          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm leading-4 font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {isGenerating ? (
                             <>
-                              <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                              <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
                               Generating...
                             </>
                           ) : (
                             <>
-                              <DocumentTextIcon className="h-4 w-4 mr-2" />
+                              <DocumentTextIcon className="mr-2 h-4 w-4" />
                               Generate Instruction
                             </>
                           )}
@@ -352,10 +375,10 @@ export const SettlementInstructionsPage: React.FC = () => {
 
       {/* Settlement Instruction Modal */}
       {showInstructionModal && selectedOrder && settlementInstruction && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+          <div className="relative top-20 mx-auto w-4/5 max-w-4xl rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
                   Settlement Instruction - {selectedOrder.id}
                 </h3>
@@ -372,18 +395,18 @@ export const SettlementInstructionsPage: React.FC = () => {
               </div>
 
               {/* Instruction Card */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+              <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <DocumentTextIcon className="h-6 w-6 text-blue-400" />
                   </div>
                   <div className="ml-3 flex-1">
-                    <h4 className="text-lg font-medium text-blue-900 mb-4">
+                    <h4 className="mb-4 text-lg font-medium text-blue-900">
                       Payment Instructions
                     </h4>
                     <div className="space-y-3">
-                      <div className="bg-white p-4 rounded border">
-                        <p className="text-sm text-gray-700 whitespace-pre-line">
+                      <div className="rounded border bg-white p-4">
+                        <p className="text-sm whitespace-pre-line text-gray-700">
                           {settlementInstruction.instructions}
                         </p>
                       </div>
@@ -393,24 +416,34 @@ export const SettlementInstructionsPage: React.FC = () => {
               </div>
 
               {/* Payment Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h4>
+              <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                    Payment Details
+                  </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Amount to Pay:</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Amount to Pay:
+                      </span>
                       <span className="text-sm font-medium text-gray-900">
                         {formatCurrency(settlementInstruction.commissionAmount)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">GCash Account:</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        GCash Account:
+                      </span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">
                           {settlementInstruction.corporateGcashAccount}
                         </span>
                         <button
-                          onClick={() => copyToClipboard(settlementInstruction.corporateGcashAccount)}
+                          onClick={() =>
+                            copyToClipboard(
+                              settlementInstruction.corporateGcashAccount,
+                            )
+                          }
                           className="text-indigo-600 hover:text-indigo-900"
                         >
                           Copy
@@ -418,13 +451,19 @@ export const SettlementInstructionsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Reference Number:</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Reference Number:
+                      </span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900 font-mono">
+                        <span className="font-mono text-sm font-medium text-gray-900">
                           {settlementInstruction.referenceNumber}
                         </span>
                         <button
-                          onClick={() => copyToClipboard(settlementInstruction.referenceNumber)}
+                          onClick={() =>
+                            copyToClipboard(
+                              settlementInstruction.referenceNumber,
+                            )
+                          }
                           className="text-indigo-600 hover:text-indigo-900"
                         >
                           Copy
@@ -434,29 +473,38 @@ export const SettlementInstructionsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Validity</h4>
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                    Validity
+                  </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Expires At:</span>
+                      <span className="text-sm font-medium text-gray-500">
+                        Expires At:
+                      </span>
                       <span className="text-sm font-medium text-gray-900">
                         {formatDate(settlementInstruction.expiresAt)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">Time Remaining:</span>
-                      <span className={`text-sm font-medium ${
-                        isExpired(settlementInstruction.expiresAt) 
-                          ? 'text-red-600' 
-                          : 'text-gray-900'
-                      }`}>
+                      <span className="text-sm font-medium text-gray-500">
+                        Time Remaining:
+                      </span>
+                      <span
+                        className={`text-sm font-medium ${
+                          isExpired(settlementInstruction.expiresAt)
+                            ? "text-red-600"
+                            : "text-gray-900"
+                        }`}
+                      >
                         {formatTimeRemaining(settlementInstruction.expiresAt)}
                       </span>
                     </div>
                     {isExpired(settlementInstruction.expiresAt) && (
-                      <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded">
+                      <div className="mt-2 rounded border border-red-200 bg-red-100 p-2">
                         <p className="text-xs text-red-800">
-                          This instruction has expired. Generate a new one if needed.
+                          This instruction has expired. Generate a new one if
+                          needed.
                         </p>
                       </div>
                     )}
@@ -465,34 +513,58 @@ export const SettlementInstructionsPage: React.FC = () => {
               </div>
 
               {/* Order Information */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Order Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mb-6 rounded-lg bg-gray-50 p-6">
+                <h4 className="mb-4 text-lg font-medium text-gray-900">
+                  Order Information
+                </h4>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Order ID:</span>
-                    <p className="text-sm text-gray-900 font-mono">{selectedOrder.id}</p>
+                    <span className="text-sm font-medium text-gray-500">
+                      Order ID:
+                    </span>
+                    <p className="font-mono text-sm text-gray-900">
+                      {selectedOrder.id}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Service Provider:</span>
+                    <span className="text-sm font-medium text-gray-500">
+                      Service Provider:
+                    </span>
                     <p className="text-sm text-gray-900">
                       {selectedOrder.serviceProviderName || "Unknown Provider"}
                     </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Service Amount:</span>
-                    <p className="text-sm text-gray-900">{formatCurrency(selectedOrder.amount)}</p>
+                    <span className="text-sm font-medium text-gray-500">
+                      Service Amount:
+                    </span>
+                    <p className="text-sm text-gray-900">
+                      {formatCurrency(selectedOrder.amount)}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Commission Amount:</span>
-                    <p className="text-sm text-gray-900">{formatCurrency(selectedOrder.commissionAmount)}</p>
+                    <span className="text-sm font-medium text-gray-500">
+                      Commission Amount:
+                    </span>
+                    <p className="text-sm text-gray-900">
+                      {formatCurrency(selectedOrder.commissionAmount)}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Service Type:</span>
-                    <p className="text-sm text-gray-900">{selectedOrder.serviceType}</p>
+                    <span className="text-sm font-medium text-gray-500">
+                      Service Type:
+                    </span>
+                    <p className="text-sm text-gray-900">
+                      {selectedOrder.serviceType}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Created:</span>
-                    <p className="text-sm text-gray-900">{formatDate(selectedOrder.createdAt)}</p>
+                    <span className="text-sm font-medium text-gray-500">
+                      Created:
+                    </span>
+                    <p className="text-sm text-gray-900">
+                      {formatDate(selectedOrder.createdAt)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -504,7 +576,7 @@ export const SettlementInstructionsPage: React.FC = () => {
                     setSelectedOrder(null);
                     setSettlementInstruction(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Close
                 </button>
@@ -513,7 +585,7 @@ export const SettlementInstructionsPage: React.FC = () => {
                     const instructionText = `${settlementInstruction.instructions}\n\nReference: ${settlementInstruction.referenceNumber}\nAmount: ${formatCurrency(settlementInstruction.commissionAmount)}\nGCash: ${settlementInstruction.corporateGcashAccount}`;
                     copyToClipboard(instructionText);
                   }}
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                 >
                   Copy All
                 </button>
