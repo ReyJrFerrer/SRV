@@ -152,7 +152,7 @@ export const serviceFirebaseService = {
       fileName: string;
       contentType: string;
       fileData: string; // base64 encoded
-    }>
+    }>,
   ): Promise<Service | null> {
     try {
       const createServiceFn = httpsCallable(functions, "createService");
@@ -183,7 +183,7 @@ export const serviceFirebaseService = {
    */
   subscribeToService(
     serviceId: string,
-    callback: (service: Service | null) => void
+    callback: (service: Service | null) => void,
   ): Unsubscribe {
     const serviceRef = doc(db, "services", serviceId);
     return onSnapshot(
@@ -198,7 +198,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to service:", error);
         callback(null);
-      }
+      },
     );
   },
 
@@ -223,7 +223,7 @@ export const serviceFirebaseService = {
    */
   subscribeToProviderServices(
     providerId: string,
-    callback: (services: Service[]) => void
+    callback: (services: Service[]) => void,
   ): Unsubscribe {
     const servicesRef = collection(db, "services");
     const q = query(servicesRef, where("providerId", "==", providerId));
@@ -240,7 +240,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to provider services:", error);
         callback([]);
-      }
+      },
     );
   },
 
@@ -251,7 +251,7 @@ export const serviceFirebaseService = {
     try {
       const getServicesByProviderFn = httpsCallable(
         functions,
-        "getServicesByProvider"
+        "getServicesByProvider",
       );
       const result = await getServicesByProviderFn({ providerId });
 
@@ -268,7 +268,7 @@ export const serviceFirebaseService = {
    */
   subscribeToCategoryServices(
     categoryId: string,
-    callback: (services: Service[]) => void
+    callback: (services: Service[]) => void,
   ): Unsubscribe {
     const servicesRef = collection(db, "services");
     const q = query(servicesRef, where("category.id", "==", categoryId));
@@ -285,7 +285,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to category services:", error);
         callback([]);
-      }
+      },
     );
   },
 
@@ -296,7 +296,7 @@ export const serviceFirebaseService = {
     try {
       const getServicesByCategoryFn = httpsCallable(
         functions,
-        "getServicesByCategory"
+        "getServicesByCategory",
       );
       const result = await getServicesByCategoryFn({ categoryId });
 
@@ -313,12 +313,12 @@ export const serviceFirebaseService = {
    */
   async updateServiceStatus(
     serviceId: string,
-    status: ServiceStatus
+    status: ServiceStatus,
   ): Promise<Service | null> {
     try {
       const updateServiceStatusFn = httpsCallable(
         functions,
-        "updateServiceStatus"
+        "updateServiceStatus",
       );
       const result = await updateServiceStatusFn({ serviceId, status });
 
@@ -336,12 +336,12 @@ export const serviceFirebaseService = {
   async searchServicesByLocation(
     location: Location,
     radiusKm: number,
-    categoryId?: string
+    categoryId?: string,
   ): Promise<Service[]> {
     try {
       const searchServicesByLocationFn = httpsCallable(
         functions,
-        "searchServicesByLocation"
+        "searchServicesByLocation",
       );
       const result = await searchServicesByLocationFn({
         userLocation: location,
@@ -370,7 +370,7 @@ export const serviceFirebaseService = {
     weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
     instantBookingEnabled?: boolean,
     bookingNoticeHours?: number,
-    maxBookingsPerDay?: number
+    maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
       const updateServiceFn = httpsCallable(functions, "updateService");
@@ -429,7 +429,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to all services:", error);
         callback([]);
-      }
+      },
     );
   },
 
@@ -458,12 +458,12 @@ export const serviceFirebaseService = {
       fileName: string;
       contentType: string;
       fileData: string;
-    }>
+    }>,
   ): Promise<Service | null> {
     try {
       const uploadServiceImagesFn = httpsCallable(
         functions,
-        "uploadServiceImages"
+        "uploadServiceImages",
       );
       const result = await uploadServiceImagesFn({ serviceId, serviceImages });
 
@@ -480,12 +480,12 @@ export const serviceFirebaseService = {
    */
   async removeServiceImage(
     serviceId: string,
-    imageUrl: string
+    imageUrl: string,
   ): Promise<Service | null> {
     try {
       const removeServiceImageFn = httpsCallable(
         functions,
-        "removeServiceImage"
+        "removeServiceImage",
       );
       const result = await removeServiceImageFn({ serviceId, imageUrl });
 
@@ -502,12 +502,12 @@ export const serviceFirebaseService = {
    */
   async reorderServiceImages(
     serviceId: string,
-    orderedImageUrls: string[]
+    orderedImageUrls: string[],
   ): Promise<Service | null> {
     try {
       const reorderServiceImagesFn = httpsCallable(
         functions,
-        "reorderServiceImages"
+        "reorderServiceImages",
       );
       const result = await reorderServiceImagesFn({
         serviceId,
@@ -531,12 +531,12 @@ export const serviceFirebaseService = {
       fileName: string;
       contentType: string;
       fileData: string;
-    }>
+    }>,
   ): Promise<Service | null> {
     try {
       const uploadServiceCertificatesFn = httpsCallable(
         functions,
-        "uploadServiceCertificates"
+        "uploadServiceCertificates",
       );
       const result = await uploadServiceCertificatesFn({
         serviceId,
@@ -556,12 +556,12 @@ export const serviceFirebaseService = {
    */
   async removeServiceCertificate(
     serviceId: string,
-    certificateUrl: string
+    certificateUrl: string,
   ): Promise<Service | null> {
     try {
       const removeServiceCertificateFn = httpsCallable(
         functions,
-        "removeServiceCertificate"
+        "removeServiceCertificate",
       );
       const result = await removeServiceCertificateFn({
         serviceId,
@@ -581,7 +581,7 @@ export const serviceFirebaseService = {
    */
   async verifyService(
     serviceId: string,
-    isVerified: boolean
+    isVerified: boolean,
   ): Promise<Service | null> {
     try {
       const verifyServiceFn = httpsCallable(functions, "verifyService");
@@ -603,7 +603,7 @@ export const serviceFirebaseService = {
     slug: string,
     parentId: string | undefined,
     description: string,
-    imageUrl: string
+    imageUrl: string,
   ): Promise<ServiceCategory | null> {
     try {
       const addCategoryFn = httpsCallable(functions, "addCategory");
@@ -630,7 +630,7 @@ export const serviceFirebaseService = {
    * Get all categories (real-time listener)
    */
   subscribeToAllCategories(
-    callback: (categories: ServiceCategory[]) => void
+    callback: (categories: ServiceCategory[]) => void,
   ): Unsubscribe {
     const categoriesRef = collection(db, "categories");
 
@@ -646,7 +646,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to categories:", error);
         callback([]);
-      }
+      },
     );
   },
 
@@ -676,12 +676,12 @@ export const serviceFirebaseService = {
     serviceId: string,
     title: string,
     description: string,
-    price: number
+    price: number,
   ): Promise<ServicePackage | null> {
     try {
       const createServicePackageFn = httpsCallable(
         functions,
-        "createServicePackage"
+        "createServicePackage",
       );
       const result = await createServicePackageFn({
         serviceId,
@@ -706,7 +706,7 @@ export const serviceFirebaseService = {
    */
   subscribeToServicePackages(
     serviceId: string,
-    callback: (packages: ServicePackage[]) => void
+    callback: (packages: ServicePackage[]) => void,
   ): Unsubscribe {
     const packagesRef = collection(db, "service_packages");
     const q = query(packagesRef, where("serviceId", "==", serviceId));
@@ -723,7 +723,7 @@ export const serviceFirebaseService = {
       (error) => {
         console.error("Error listening to service packages:", error);
         callback([]);
-      }
+      },
     );
   },
 
@@ -734,7 +734,7 @@ export const serviceFirebaseService = {
     try {
       const getServicePackagesFn = httpsCallable(
         functions,
-        "getServicePackages"
+        "getServicePackages",
       );
       const result = await getServicePackagesFn({ serviceId });
 
@@ -775,12 +775,12 @@ export const serviceFirebaseService = {
     packageId: string,
     title?: string,
     description?: string,
-    price?: number
+    price?: number,
   ): Promise<ServicePackage | null> {
     try {
       const updateServicePackageFn = httpsCallable(
         functions,
-        "updateServicePackage"
+        "updateServicePackage",
       );
       const result = await updateServicePackageFn({
         packageId,
@@ -807,7 +807,7 @@ export const serviceFirebaseService = {
     try {
       const deleteServicePackageFn = httpsCallable(
         functions,
-        "deleteServicePackage"
+        "deleteServicePackage",
       );
       const result = await deleteServicePackageFn({ packageId });
 
@@ -824,12 +824,12 @@ export const serviceFirebaseService = {
    */
   async getCommissionQuote(
     categoryName: string,
-    price: number
+    price: number,
   ): Promise<CommissionQuote | null> {
     try {
       const getCommissionQuoteFn = httpsCallable(
         functions,
-        "getCommissionQuote"
+        "getCommissionQuote",
       );
       const result = await getCommissionQuoteFn({ categoryName, price });
 
@@ -847,12 +847,12 @@ export const serviceFirebaseService = {
   async updateServiceRating(
     serviceId: string,
     newRating: number,
-    newReviewCount: number
+    newReviewCount: number,
   ): Promise<Service | null> {
     try {
       const updateServiceRatingFn = httpsCallable(
         functions,
-        "updateServiceRating"
+        "updateServiceRating",
       );
       const result = await updateServiceRatingFn({
         serviceId,
@@ -872,7 +872,7 @@ export const serviceFirebaseService = {
 // Commission utility functions
 export const calculateTotalAmount = (
   price: number,
-  commissionFee: number
+  commissionFee: number,
 ): number => {
   return price + commissionFee;
 };
@@ -883,7 +883,7 @@ export const formatCommissionRate = (rate: number): string => {
 
 export const formatPriceWithCommission = (
   price: number,
-  commissionFee: number
+  commissionFee: number,
 ): string => {
   const total = calculateTotalAmount(price, commissionFee);
   return `₱${price.toLocaleString()} + ₱${commissionFee.toLocaleString()} commission = ₱${total.toLocaleString()}`;
@@ -891,14 +891,14 @@ export const formatPriceWithCommission = (
 
 // Enhanced service/package with computed commission fields
 export const enhanceServiceWithCommission = (
-  service: Service
+  service: Service,
 ): Service & { totalAmount: number } => ({
   ...service,
   totalAmount: calculateTotalAmount(service.price, service.commissionFee),
 });
 
 export const enhancePackageWithCommission = (
-  pkg: ServicePackage
+  pkg: ServicePackage,
 ): ServicePackage & { totalAmount: number } => ({
   ...pkg,
   totalAmount: calculateTotalAmount(pkg.price, pkg.commissionFee),

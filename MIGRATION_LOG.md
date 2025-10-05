@@ -481,7 +481,7 @@ To migrate frontend components:
 - Use `get*` methods for one-time data fetching
 - No changes needed to TypeScript types or interfaces
 
-**Impact**: 
+**Impact**:
 
 - Service management is now fully operational on Firebase with real-time capabilities
 - Significantly improved performance with Firestore real-time listeners
