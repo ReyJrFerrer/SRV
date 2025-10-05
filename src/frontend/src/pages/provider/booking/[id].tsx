@@ -23,6 +23,9 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+
+// Keep libraries as a stable reference to avoid reloading the script
+const gmapLibraries: "places"[] = ["places"];
 import { useReputation } from "../../../hooks/useReputation";
 
 // --- Client Reputation Score Section (patterned after ServiceDetailPageComponent) ---
@@ -570,7 +573,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const { isLoaded: mapReady } = useJsApiLoader({
     id: "header-gmap-script", // unified script id used across the app
     googleMapsApiKey: mapApiKey,
-    libraries: ["places"], // match existing loader elsewhere (superset of plain maps needs)
+    libraries: gmapLibraries, // stable reference to silence reload warnings
   });
 
   const clientLocation = useMemo(() => {
