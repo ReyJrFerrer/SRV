@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 interface AdminDashboardStatsProps {
   stats: {
@@ -12,12 +13,14 @@ interface AdminDashboardStatsProps {
   };
   loading?: boolean;
   onRefresh: () => void;
+  showRefresh?: boolean;
 }
 
 export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   stats,
   loading = false,
   onRefresh,
+  showRefresh = true,
 }) => {
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
@@ -58,7 +61,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       title: "Pending Validations",
       value: formatNumber(stats.totalPendingValidations),
       subtitle: "Awaiting review",
-      bgColor: "bg-yellow-50",
+      bgColor: "bg-blue-50",
       textColor: "text-yellow-600",
       iconColor: "bg-yellow-100",
       isAlert: stats.totalPendingValidations > 0,
@@ -67,7 +70,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       title: "Pending Tickets",
       value: formatNumber(stats.totalPendingTickets),
       subtitle: "Awaiting resolution",
-      bgColor: "bg-red-50",
+      bgColor: "bg-blue-50",
       textColor: "text-red-600",
       iconColor: "bg-red-100",
       isAlert: stats.totalPendingTickets > 0,
@@ -76,7 +79,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       title: "Admin Users",
       value: formatNumber(stats.totalAdminUsers),
       subtitle: "System administrators",
-      bgColor: "bg-gray-50",
+      bgColor: "bg-blue-50",
       textColor: "text-gray-600",
       iconColor: "bg-gray-100",
     },
@@ -84,7 +87,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       title: "Pending Commission",
       value: formatCurrency(stats.totalPendingCommission),
       subtitle: "Awaiting settlement",
-      bgColor: "bg-orange-50",
+      bgColor: "bg-blue-50",
       textColor: "text-orange-600",
       iconColor: "bg-orange-100",
     },
@@ -92,7 +95,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       title: "Settled Commission",
       value: formatCurrency(stats.totalSettledCommission),
       subtitle: "Total processed",
-      bgColor: "bg-green-50",
+      bgColor: "bg-blue-50",
       textColor: "text-green-600",
       iconColor: "bg-green-100",
     },
@@ -102,12 +105,17 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">System Overview</h2>
-        <button
-          onClick={onRefresh}
-          className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-        >
-          Refresh Stats
-        </button>
+        {showRefresh && (
+          <button
+            onClick={onRefresh}
+            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            <ArrowPathIcon
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
