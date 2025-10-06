@@ -2,16 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   MagnifyingGlassIcon,
   CurrencyDollarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
-  EyeIcon,
   ArrowPathIcon,
   PhoneIcon,
   UserIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
@@ -20,7 +18,6 @@ export const ProviderManagementPage: React.FC = () => {
     loading,
     refreshRemittanceProviders,
     getProviderDashboard,
-    getProviderAnalytics,
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,11 +27,8 @@ export const ProviderManagementPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerDashboard, setProviderDashboard] = useState<any | null>(null);
-  const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
+  // Removed unused providerAnalytics state
   const [showProviderDetails, setShowProviderDetails] = useState(false);
-  const [dateRange, setDateRange] = useState<
-    "week" | "month" | "quarter" | "year"
-  >("month");
 
   useEffect(() => {
     refreshRemittanceProviders();
@@ -112,32 +106,10 @@ export const ProviderManagementPage: React.FC = () => {
     setShowProviderDetails(true);
 
     try {
-      const [dashboard, analytics] = await Promise.all([
-        getProviderDashboard(provider.id),
-        getProviderAnalytics(provider.id, getDateRangeStart(), new Date()),
-      ]);
-
+      const dashboard = await getProviderDashboard(provider.id);
       setProviderDashboard(dashboard);
-      setProviderAnalytics(analytics);
     } catch (error) {
       console.error("Failed to load provider details:", error);
-    }
-  };
-
-  const getDateRangeStart = () => {
-    const now = new Date();
-    switch (dateRange) {
-      case "week":
-        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      case "month":
-        return new Date(now.getFullYear(), now.getMonth(), 1);
-      case "quarter":
-        const quarter = Math.floor(now.getMonth() / 3);
-        return new Date(now.getFullYear(), quarter * 3, 1);
-      case "year":
-        return new Date(now.getFullYear(), 0, 1);
-      default:
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
   };
 
@@ -156,7 +128,7 @@ export const ProviderManagementPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center justify-between">
@@ -506,7 +478,6 @@ export const ProviderManagementPage: React.FC = () => {
                     setShowProviderDetails(false);
                     setSelectedProvider(null);
                     setProviderDashboard(null);
-                    setProviderAnalytics(null);
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -687,7 +658,6 @@ export const ProviderManagementPage: React.FC = () => {
                     setShowProviderDetails(false);
                     setSelectedProvider(null);
                     setProviderDashboard(null);
-                    setProviderAnalytics(null);
                   }}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >

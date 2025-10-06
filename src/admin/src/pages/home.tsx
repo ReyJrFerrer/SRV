@@ -289,7 +289,7 @@ export const AdminHomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-blue-50">
       {/* Media View Modal */}
       <MediaViewModal
         isOpen={mediaModal.isOpen}
@@ -300,7 +300,7 @@ export const AdminHomePage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center justify-between">
@@ -316,10 +316,10 @@ export const AdminHomePage: React.FC = () => {
               <div className="flex space-x-4">
                 <Link
                   to="/remittance"
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
                 >
                   <svg
-                    className="mr-2 h-4 w-4"
+                    className="mr-2 h-4 w-4 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -335,10 +335,10 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                 >
                   <svg
-                    className="mr-2 h-4 w-4"
+                    className="mr-2 h-4 w-4 text-blue-700"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -352,25 +352,7 @@ export const AdminHomePage: React.FC = () => {
                   </svg>
                   View Users
                 </Link>
-                <button
-                  onClick={() => refreshAll()}
-                  className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v6h6M20 20v-6h-6M5 19a9 9 0 0114-7M19 5a9 9 0 00-14 7"
-                    />
-                  </svg>
-                  Refresh
-                </button>
+                {/* Refresh button removed as per design update */}
               </div>
             </div>
           </div>
@@ -404,8 +386,8 @@ export const AdminHomePage: React.FC = () => {
           />
 
           {/* Pending Validations Section */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -417,7 +399,7 @@ export const AdminHomePage: React.FC = () => {
                   </p>
                 </div>
                 {pendingValidations.length > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
                     {pendingValidations.length} pending
                   </span>
                 )}
@@ -434,7 +416,7 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               ) : pendingValidations.length === 0 ? (
                 <div className="py-12 text-center">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
+                  <div className="mx-auto h-12 w-12 text-blue-300">
                     <svg
                       fill="none"
                       stroke="currentColor"

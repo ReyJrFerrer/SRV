@@ -20,7 +20,12 @@ interface ServiceProviderCommissionTableProps {
 
 export const ServiceProviderCommissionTable: React.FC<
   ServiceProviderCommissionTableProps
-> = ({ providers, loading = false, onRefresh, showRefresh = true }) => {
+> = ({
+  providers,
+  loading = false,
+  onRefresh: _onRefresh,
+  showRefresh: _showRefresh = false,
+}) => {
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
   };
@@ -49,15 +54,15 @@ export const ServiceProviderCommissionTable: React.FC<
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">
+    <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
+        <h2 className="text-lg font-semibold text-blue-900">
           Service Provider Commission Overview
         </h2>
-        {showRefresh && (
+        {_showRefresh && (
           <button
-            onClick={onRefresh}
-            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            onClick={_onRefresh}
+            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 focus:outline-none disabled:opacity-50"
           >
             <ArrowPathIcon
               className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -68,30 +73,30 @@ export const ServiceProviderCommissionTable: React.FC<
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-blue-100">
+          <thead className="bg-blue-50/60">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Service Provider
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Total Earnings
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Pending Commission
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Settled Commission
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Last Activity
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Status
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-blue-50 bg-white">
             {providers.length === 0 ? (
               <tr>
                 <td
@@ -103,18 +108,18 @@ export const ServiceProviderCommissionTable: React.FC<
               </tr>
             ) : (
               providers.map((provider) => (
-                <tr key={provider.id} className="hover:bg-gray-50">
+                <tr key={provider.id} className="hover:bg-blue-50/40">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300">
-                          <span className="text-sm font-medium text-gray-700">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                          <span className="text-sm font-medium text-blue-800">
                             {provider.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-semibold text-gray-900">
                           {provider.name}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -137,10 +142,10 @@ export const ServiceProviderCommissionTable: React.FC<
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
                         provider.pendingCommission > 0
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-green-100 text-green-800"
+                          ? "bg-orange-100 text-orange-800 ring-orange-200"
+                          : "bg-green-100 text-green-800 ring-green-200"
                       }`}
                     >
                       {provider.pendingCommission > 0
@@ -156,7 +161,7 @@ export const ServiceProviderCommissionTable: React.FC<
       </div>
 
       {providers.length > 0 && (
-        <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+        <div className="border-t border-blue-100 bg-blue-50/60 px-6 py-4">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>Showing {providers.length} service providers</span>
             <div className="flex space-x-6">

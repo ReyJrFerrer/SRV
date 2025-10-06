@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
-  ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowPathIcon,
-  CalendarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 
@@ -88,13 +85,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
     }).format(amount);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
+  // Removed unused formatDate helper to satisfy noUnusedLocals
 
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
@@ -115,7 +106,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center justify-between">
