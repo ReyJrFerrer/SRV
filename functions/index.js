@@ -6,9 +6,35 @@
  */
 
 const {setGlobalOptions} = require("firebase-functions");
+const admin = require("firebase-admin");
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 // Set global options for all functions
 setGlobalOptions({maxInstances: 10});
+
+/**
+ * Initialize categories on startup
+ * This function runs automatically when Firebase Functions are deployed
+ */
+async function initializeOnStartup() {
+  try {
+    console.log("Initializing categories on startup...");
+    const {initializeCategoriesDirectly} = require("./src/service");
+
+    // Call the direct initialization function
+    const result = await initializeCategoriesDirectly();
+    console.log("Categories initialization result:", result);
+  } catch (error) {
+    console.error("Error initializing categories on startup:", error);
+  }
+}
+
+// Run initialization
+initializeOnStartup();
 
 // Import and export all payment-related functions
 const {onboardProvider} = require("./onboardProvider");
@@ -22,6 +48,13 @@ const {releaseHeldPayment} = require("./releaseHeldPayment");
 
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
+
+// Import Commission functions
+const {
+  calculateCommission,
+  getCategoryTier,
+  getCommissionBreakdown,
+} = require("./src/commission");
 
 // Import Account Management functions
 const {
@@ -52,6 +85,7 @@ const {
   verifyService,
   addCategory,
   getAllCategories,
+  initializeCategories,
   createServicePackage,
   getServicePackages,
   getPackage,
@@ -59,6 +93,9 @@ const {
   deleteServicePackage,
   getCommissionQuote,
   updateServiceRating,
+  setServiceAvailability,
+  getServiceAvailability,
+  getAvailableTimeSlots,
 } = require("./src/service");
 
 // Export all functions
@@ -73,6 +110,11 @@ exports.releaseHeldPayment = releaseHeldPayment;
 
 // Export Identity Bridge function
 exports.signInWithInternetIdentity = signInWithInternetIdentity;
+
+// Export Commission functions
+exports.calculateCommission = calculateCommission;
+exports.getCategoryTier = getCategoryTier;
+exports.getCommissionBreakdown = getCommissionBreakdown;
 
 // Export Account Management functions
 exports.createProfile = createProfile;
@@ -100,6 +142,7 @@ exports.removeServiceCertificate = removeServiceCertificate;
 exports.verifyService = verifyService;
 exports.addCategory = addCategory;
 exports.getAllCategories = getAllCategories;
+exports.initializeCategories = initializeCategories;
 exports.createServicePackage = createServicePackage;
 exports.getServicePackages = getServicePackages;
 exports.getPackage = getPackage;
@@ -107,3 +150,7 @@ exports.updateServicePackage = updateServicePackage;
 exports.deleteServicePackage = deleteServicePackage;
 exports.getCommissionQuote = getCommissionQuote;
 exports.updateServiceRating = updateServiceRating;
+exports.setServiceAvailability = setServiceAvailability;
+exports.getServiceAvailability = getServiceAvailability;
+exports.getAvailableTimeSlots = getAvailableTimeSlots;
+

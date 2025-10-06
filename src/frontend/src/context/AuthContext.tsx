@@ -14,7 +14,6 @@ import {
 } from "firebase/auth";
 import { getFirebaseAuth } from "../services/firebaseApp";
 import { updateBookingActor } from "../services/bookingCanisterService";
-import { updateServiceActor } from "../services/serviceCanisterService";
 import { updateReviewActor } from "../services/reviewCanisterService";
 import { updateReputationActor } from "../services/reputationCanisterService";
 import { updateChatActor } from "../services/chatCanisterService";
@@ -73,12 +72,6 @@ const updateAllActors = (identity: Identity | null) => {
     updateBookingActor(identity);
   } catch (error) {
     console.warn("Failed to update booking actor:", error);
-  }
-
-  try {
-    updateServiceActor(identity);
-  } catch (error) {
-    console.warn("Failed to update service actor:", error);
   }
 
   try {

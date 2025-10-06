@@ -1037,7 +1037,7 @@ export const useAdmin = (): UseAdminReturn => {
   );
 
   const getProviderAnalytics = useCallback(
-    async (providerId: string, fromDate?: Date, toDate?: Date) => {
+    async (providerId: string) => {
       try {
         // Mock data for provider analytics
         const mockAnalytics: FrontendProviderAnalytics = {

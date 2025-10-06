@@ -454,18 +454,28 @@ export const useServiceManagement = (): ServiceManagementHook => {
       try {
         setOperationLoading("createService", true);
 
-        // Process service images if provided using mediaService utilities
+        // Helper function to convert Uint8Array to base64
+        const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
+          let binary = "";
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return btoa(binary);
+        };
+
+        // Process service images if provided - convert Uint8Array to base64
         let processedImages:
           | Array<{
               fileName: string;
               contentType: string;
-              fileData: Uint8Array;
+              fileData: string; // base64 encoded
             }>
           | undefined;
 
         if (request.serviceImages && request.serviceImages.length > 0) {
           try {
-            // Images are already processed, just validate the structure and maintain order
+            // Convert images to base64 format
             processedImages = request.serviceImages.map((image, index) => {
               if (!image.fileName || !image.contentType || !image.fileData) {
                 throw new Error(`Invalid image data at position ${index + 1}`);
@@ -473,28 +483,20 @@ export const useServiceManagement = (): ServiceManagementHook => {
               return {
                 fileName: image.fileName,
                 contentType: image.contentType,
-                fileData: image.fileData,
+                fileData: uint8ArrayToBase64(image.fileData),
               };
             });
-
-            // //console.log(
-            //   `Successfully prepared ${processedImages.length} images for service creation`,
-            // );
           } catch (imageError) {
-            // //console.warn(
-            //   "Image processing failed, creating service without images:",
-            //   imageError,
-            // );
             processedImages = undefined;
           }
         }
 
-        // Process service certificates if provided
+        // Process service certificates if provided - convert Uint8Array to base64
         let processedCertificates:
           | Array<{
               fileName: string;
               contentType: string;
-              fileData: Uint8Array;
+              fileData: string; // base64 encoded
             }>
           | undefined;
 
@@ -503,7 +505,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
           request.serviceCertificates.length > 0
         ) {
           try {
-            // Certificates are already processed, just validate the structure and maintain order
+            // Convert certificates to base64 format
             processedCertificates = request.serviceCertificates.map(
               (certificate, index) => {
                 if (
@@ -518,19 +520,11 @@ export const useServiceManagement = (): ServiceManagementHook => {
                 return {
                   fileName: certificate.fileName,
                   contentType: certificate.contentType,
-                  fileData: certificate.fileData,
+                  fileData: uint8ArrayToBase64(certificate.fileData),
                 };
               },
             );
-
-            // //console.log(
-            //   `Successfully prepared ${processedCertificates.length} certificates for service creation`,
-            // );
           } catch (certificateError) {
-            // //console.warn(
-            //   "Certificate processing failed, creating service without certificates:",
-            //   certificateError,
-            // );
             processedCertificates = undefined;
           }
         }
@@ -826,16 +820,19 @@ export const useServiceManagement = (): ServiceManagementHook => {
     [setOperationLoading, handleError],
   );
 
-  // Fixed: getAvailableSlots now uses Date parameter and correct method name
+  // Fixed: getAvailableSlots now uses Date parameter and converts to timestamp
   const getAvailableSlots = useCallback(
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
         // Add delay to ensure agents are ready
         await new Promise((resolve) => setTimeout(resolve, 100));
 
+        // Convert Date to Unix timestamp in milliseconds
+        const timestamp = date.getTime();
+
         return await serviceCanisterService.getAvailableTimeSlots(
           serviceId,
-          date,
+          timestamp,
         );
       } catch (error) {
         handleError(error, "get available slots");

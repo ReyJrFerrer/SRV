@@ -2,14 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
-  EyeIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 

@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
-  ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowPathIcon,
-  CalendarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 
@@ -87,15 +84,6 @@ export const RemittanceAnalyticsPage: React.FC = () => {
       currency: "PHP",
     }).format(amount);
   };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
   };

@@ -1956,7 +1956,7 @@ persistent actor BookingCanister {
                 };
             };
             case (null) {
-                Debug.print("Admin canister not configured");
+               
             };
         };
 

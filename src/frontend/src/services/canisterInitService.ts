@@ -1,7 +1,6 @@
 // Canister Initialization Service
 import { authCanisterService } from "./authCanisterService";
 import { bookingCanisterService } from "./bookingCanisterService";
-import { serviceCanisterService } from "./serviceCanisterService";
 import { reviewCanisterService } from "./reviewCanisterService";
 import reputationCanisterService from "./reputationCanisterService";
 
@@ -31,10 +30,6 @@ export const initializeCanisterReferences = async (): Promise<{
     {
       name: "Booking",
       task: bookingCanisterService.setCanisterReferences(),
-    },
-    {
-      name: "Service",
-      task: serviceCanisterService.setCanisterReferences(),
     },
     {
       name: "Review",

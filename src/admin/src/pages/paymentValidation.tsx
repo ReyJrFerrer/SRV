@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   CheckCircleIcon,
   XCircleIcon,
   EyeIcon,

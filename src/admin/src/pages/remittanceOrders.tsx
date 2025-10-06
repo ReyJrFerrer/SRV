@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
-  EyeIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
@@ -20,7 +18,6 @@ export const RemittanceOrdersPage: React.FC = () => {
     loading,
     refreshRemittanceOrders,
     queryRemittanceOrders,
-    getRemittanceOrder,
     validateRemittancePayment,
     cancelRemittanceOrder,
   } = useAdmin();

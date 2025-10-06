@@ -2,16 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
-  ArrowLeftIcon,
   MagnifyingGlassIcon,
   CurrencyDollarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
-  EyeIcon,
   ArrowPathIcon,
   PhoneIcon,
   UserIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
@@ -30,11 +28,9 @@ export const ProviderManagementPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerDashboard, setProviderDashboard] = useState<any | null>(null);
-  const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
+  const [, setProviderAnalytics] = useState<any | null>(null);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
-  const [dateRange, setDateRange] = useState<
-    "week" | "month" | "quarter" | "year"
-  >("month");
+  const [dateRange] = useState<"week" | "month" | "quarter" | "year">("month");
 
   useEffect(() => {
     refreshRemittanceProviders();

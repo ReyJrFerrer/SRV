@@ -147,6 +147,18 @@ export const convertBlobToDataUrl = (
 };
 
 /**
+ * Converts Uint8Array to base64 string
+ */
+export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
+  let binary = "";
+  const len = uint8Array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary);
+};
+
+/**
  * Preloads an image to ensure it's in cache
  */
 export const preloadImage = async (mediaUrl: string): Promise<void> => {
@@ -382,9 +394,7 @@ export const processServiceImageFiles = async (
 export const processServiceCertificateFiles = async (
   files: File[],
   options: ImageUploadOptions = {},
-): Promise<
-  { fileName: string; contentType: string; fileData: Uint8Array }[]
-> => {
+): Promise<{ fileName: string; contentType: string; fileData: string }[]> => {
   try {
     if (files.length === 0) {
       return [];
@@ -398,7 +408,7 @@ export const processServiceCertificateFiles = async (
     const processedFiles: {
       fileName: string;
       contentType: string;
-      fileData: Uint8Array;
+      fileData: string;
     }[] = [];
 
     for (const file of files) {
@@ -456,13 +466,14 @@ export const processServiceCertificateFiles = async (
         }
       }
 
-      // Convert to Uint8Array
+      // Convert to Uint8Array then to base64
       const fileData = await fileToUint8Array(processedFile);
+      const base64Data = uint8ArrayToBase64(fileData);
 
       processedFiles.push({
         fileName: processedFile.name,
         contentType: processedFile.type,
-        fileData,
+        fileData: base64Data,
       });
     }
 
@@ -755,7 +766,7 @@ export const uploadServiceImagesWithDescaling = async (
     const processedFiles: {
       fileName: string;
       contentType: string;
-      fileData: Uint8Array;
+      fileData: string;
     }[] = [];
 
     for (const file of files) {
@@ -792,13 +803,14 @@ export const uploadServiceImagesWithDescaling = async (
         );
       }
 
-      // Convert to Uint8Array
+      // Convert to Uint8Array then to base64
       const fileData = await fileToUint8Array(processedFile);
+      const base64Data = uint8ArrayToBase64(fileData);
 
       processedFiles.push({
         fileName: processedFile.name,
         contentType: processedFile.type,
-        fileData,
+        fileData: base64Data,
       });
     }
 

@@ -663,8 +663,7 @@ const AddServicePage: React.FC = () => {
         | undefined;
       if (certificationFiles.length > 0) {
         try {
-          processedServiceCertificates =
-            await processServiceCertificateFiles(certificationFiles);
+          await processServiceCertificateFiles(certificationFiles);
         } catch {
           processedServiceCertificates = undefined;
         }

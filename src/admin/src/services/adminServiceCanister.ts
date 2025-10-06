@@ -1085,16 +1085,6 @@ export const adminServiceCanister = {
       const { canisterId: reputationCanisterId } = await import(
         "../../../declarations/reputation"
       );
-      const { canisterId: commissionCanisterId } = await import(
-        "../../../declarations/commission"
-      );
-      const { canisterId: walletCanisterId } = await import(
-        "../../../declarations/wallet"
-      );
-      const { canisterId: notificationCanisterId } = await import(
-        "../../../declarations/notification"
-      );
-
       const reviewPrincipal: [] | [Principal] = reviewCanisterId
         ? [Principal.fromText(reviewCanisterId)]
         : [];

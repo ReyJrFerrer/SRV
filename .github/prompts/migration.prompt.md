@@ -20,6 +20,85 @@ AI-Powered Reputation: The reputation.mo canister, which contains your unique AI
 3.  **Follow the Plan:** Execute the tasks sequentially. Do not skip steps, as they are interdependent.
 4.  **Stop and Ask:** When you reach a "PAUSE FOR CONFIRMATION" step, stop and present the required information to the user and ask for confirmation before proceeding.
 
+**🔧 Firebase Functions Coding Standards:**
+
+When migrating Motoko functions to Firebase Cloud Functions, **ALWAYS** follow these critical patterns established in `functions/src/service.js`:
+
+**A. Data Extraction Pattern:**
+
+```javascript
+// ALWAYS extract payload from data.data first
+const payload = data.data || data;
+const { param1, param2, param3 } = payload;
+```
+
+**B. Authentication Pattern:**
+
+```javascript
+// ALWAYS use the getAuthInfo helper function for authentication
+function getAuthInfo(context, data) {
+  const auth = context.auth || data.auth;
+  return {
+    uid: auth?.uid || null,
+    isAdmin: auth?.token?.isAdmin || false,
+    hasAuth: !!auth,
+  };
+}
+
+// In every function that requires authentication:
+const authInfo = getAuthInfo(context, data);
+if (!authInfo.hasAuth) {
+  throw new functions.https.HttpsError(
+    "unauthenticated",
+    "User must be authenticated",
+  );
+}
+```
+
+**C. Logic Migration Pattern:**
+
+- **Mirror Motoko Logic:** Keep the same validation rules, business logic flow, and error handling patterns from the original Motoko functions
+- **Preserve Null Handling:** Use the same null/undefined data preservation patterns established in `updateService`
+- **Timestamp Pattern:** Use `new Date().toISOString()` instead of `Time.now()` for timestamps
+- **Error Handling:** Use `functions.https.HttpsError` with appropriate error codes matching Motoko's `#err` responses
+
+**D. Function Structure Template:**
+
+```javascript
+exports.functionName = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const { requiredParam } = payload;
+
+  // Authentication (if required)
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  // Validation (mirror Motoko validation)
+  if (!requiredParam) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Required parameter missing",
+    );
+  }
+
+  try {
+    // Business logic (follow Motoko patterns)
+    // Use Firestore transactions for data consistency
+    // Return success response matching Motoko format
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error in functionName:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+```
+
 ---
 
 ## 📜 The Plan
@@ -67,32 +146,114 @@ AI-Powered Reputation: The reputation.mo canister, which contains your unique AI
 
 **1.2. Create the "Identity Bridge" Cloud Function**
 
-- **Action:** CREATE `functions/src/auth.ts`.
+- **Action:** CREATE `functions/src/auth.js`.
 - **Content:** Implement the `signInWithInternetIdentity` function. This is the cornerstone of the hybrid architecture.
-  - It must be an HTTP `onRequest` function.
-  - It will receive a `principal` in the request body.
-  - It will use `@dfinity/agent` to securely call the `isPrincipalValid` query on the `auth.mo` canister.
-  - If valid, it will use `firebase-admin` to `createCustomToken(principal)`. It will also check if a user profile exists in Firestore and create a shell profile if it's a new user.
-  - It returns the custom token to the client.
+  - **MUST** follow the established coding patterns:
+    ```javascript
+    exports.signInWithInternetIdentity = functions.https.onCall(
+      async (data, context) => {
+        // Extract payload from data.data
+        const payload = data.data || data;
+        const { principal } = payload;
+
+        // Validation (mirror Motoko logic)
+        if (!principal) {
+          throw new functions.https.HttpsError(
+            "invalid-argument",
+            "Principal is required",
+          );
+        }
+
+        try {
+          // Use @dfinity/agent to call isPrincipalValid on auth.mo canister
+          // Mirror the Motoko validation logic
+          // Use firebase-admin to createCustomToken(principal)
+          // Check/create user profile in Firestore
+          return { success: true, customToken: token };
+        } catch (error) {
+          console.error("Error in signInWithInternetIdentity:", error);
+          throw new functions.https.HttpsError("internal", error.message);
+        }
+      },
+    );
+    ```
 
 **1.3. Create the "Reputation Bridge" Cloud Function**
 
-- **Action:** CREATE `functions/src/review.ts`.
+- **Action:** CREATE `functions/src/review.js`.
 - **Content:** Implement the `processReputation` function.
-  - This will be a Firestore `onCreate` trigger on the `reviews` collection.
-  - When a new review is added, this function fires.
-  - It will authenticate itself as a trusted service agent (using a stored private key for a dedicated Principal).
-  - It will call the `updateReputationFromReview` method on the `reputation.mo` canister, passing the review data.
+  - **MUST** follow the established coding patterns:
+    ```javascript
+    exports.processReputation = functions.firestore
+      .document("reviews/{reviewId}")
+      .onCreate(async (snap, context) => {
+        const reviewData = snap.data();
+
+        try {
+          // Mirror Motoko validation logic for review data
+          if (!reviewData.rating || !reviewData.reviewText) {
+            console.error("Invalid review data");
+            return;
+          }
+
+          // Authenticate as trusted service agent
+          // Call updateReputationFromReview on reputation.mo canister
+          // Follow same error handling patterns as Motoko
+          console.log(
+            "Reputation updated for review:",
+            context.params.reviewId,
+          );
+        } catch (error) {
+          console.error("Error processing reputation:", error);
+          // Don't throw - this is a trigger function
+        }
+      });
+    ```
 
 **1.4. Port Wallet & Admin Logic**
 
-- **Action:** CREATE `functions/src/wallet.ts` and `functions/src/admin.ts`.
-- **Content for `wallet.ts`:**
-  - Create `creditProvider` and `debitProvider` functions.
-  - These functions **MUST** use Firestore Transactions (`db.runTransaction()`) to ensure atomic updates to balance fields in the `users` collection.
-- **Content for `admin.ts`:**
-  - Port the logic from `admin.mo`. Create functions like `grantAdminRole`.
-  - Every function **MUST** start with a guard clause that checks `context.auth.token.isAdmin === true`. If not, throw an `unauthenticated` error.
+- **Action:** CREATE `functions/src/wallet.js` and `functions/src/admin.js`.
+- **Content for `wallet.js`:**
+  - **MUST** follow established patterns when creating `creditProvider` and `debitProvider` functions:
+    ```javascript
+    exports.creditProvider = functions.https.onCall(async (data, context) => {
+      const payload = data.data || data;
+      const { providerId, amount, transactionId } = payload;
+
+      const authInfo = getAuthInfo(context, data);
+      if (!authInfo.hasAuth) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "User must be authenticated",
+        );
+      }
+
+      // Mirror Motoko validation logic
+      // Use Firestore Transactions for atomic updates
+      return db.runTransaction(async (transaction) => {
+        // Follow same balance update patterns as wallet.mo
+      });
+    });
+    ```
+- **Content for `admin.js`:**
+  - **MUST** follow established patterns when porting from `admin.mo`:
+    ```javascript
+    exports.grantAdminRole = functions.https.onCall(async (data, context) => {
+      const payload = data.data || data;
+      const { userId } = payload;
+
+      const authInfo = getAuthInfo(context, data);
+      if (!authInfo.hasAuth || !authInfo.isAdmin) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Admin access required",
+        );
+      }
+
+      // Mirror exact logic from admin.mo grantAdminRole function
+      // Use same validation patterns and error handling
+    });
+    ```
 
 **PAUSE FOR CONFIRMATION (End of Phase 1)**
 
@@ -149,15 +310,28 @@ AI-Powered Reputation: The reputation.mo canister, which contains your unique AI
 
 - **Action:** Globally search for and replace all Motoko actor calls (`actor.some_method()`).
 - **Content:**
-  - **Mutations (Writes):** Replace `actor` calls with `https.Callable` calls to the new Cloud Functions (e.g., `createBooking`, `acceptBooking`).
-  - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). This will make the app feel significantly faster and more reactive, directly impacting components that use hooks like `useProviderBookingManagement.tsx` to display data with status colors.
+  - **Mutations (Writes):** Replace `actor` calls with `https.Callable` calls to the new Cloud Functions:
+    ```javascript
+    // OLD: await serviceActor.createService({...params});
+    // NEW:
+    const createService = httpsCallable(functions, "createService");
+    await createService({ data: { ...params } }); // Note: wrap in data object
+    ```
+  - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). **IMPORTANT:** Ensure frontend expects the same data structure patterns established in the migrated functions.
+  - **Authentication Headers:** All Cloud Function calls must include the Firebase ID token in headers for proper authentication via the `getAuthInfo` helper.
 
 **3.2. Refactor Admin Panel**
 
 - **Action:** MODIFY all pages and components within the `src/admin/` directory.
 - **Content:**
   - All data tables, like `ServiceProviderCommissionTable` and `transactionHistory`, must now fetch their data from Firestore.
-  - All admin actions (e.g., suspending a user) must now call the new, secure admin Cloud Functions. The frontend will need to send the user's Firebase ID token in the authorization header of these calls.
+  - All admin actions (e.g., suspending a user) must now call the new, secure admin Cloud Functions:
+    ```javascript
+    // Ensure calls follow the established data pattern
+    const adminAction = httpsCallable(functions, "adminFunctionName");
+    await adminAction({ data: { userId, action: "suspend" } });
+    ```
+  - **Critical:** Admin functions will use the `getAuthInfo` helper to verify `authInfo.isAdmin` - ensure frontend passes proper Firebase ID tokens.
 
 **3.3. Update UI based on Real-Time Data**
 
