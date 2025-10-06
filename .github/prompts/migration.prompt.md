@@ -149,6 +149,7 @@ exports.functionName = functions.https.onCall(async (data, context) => {
 - **Action:** CREATE `functions/src/auth.js`.
 - **Content:** Implement the `signInWithInternetIdentity` function. This is the cornerstone of the hybrid architecture.
   - **MUST** follow the established coding patterns:
+
     ```javascript
     exports.signInWithInternetIdentity = functions.https.onCall(
       async (data, context) => {
@@ -183,6 +184,7 @@ exports.functionName = functions.https.onCall(async (data, context) => {
 - **Action:** CREATE `functions/src/review.js`.
 - **Content:** Implement the `processReputation` function.
   - **MUST** follow the established coding patterns:
+
     ```javascript
     exports.processReputation = functions.firestore
       .document("reviews/{reviewId}")
@@ -215,6 +217,7 @@ exports.functionName = functions.https.onCall(async (data, context) => {
 - **Action:** CREATE `functions/src/wallet.js` and `functions/src/admin.js`.
 - **Content for `wallet.js`:**
   - **MUST** follow established patterns when creating `creditProvider` and `debitProvider` functions:
+
     ```javascript
     exports.creditProvider = functions.https.onCall(async (data, context) => {
       const payload = data.data || data;
@@ -235,8 +238,10 @@ exports.functionName = functions.https.onCall(async (data, context) => {
       });
     });
     ```
+
 - **Content for `admin.js`:**
   - **MUST** follow established patterns when porting from `admin.mo`:
+
     ```javascript
     exports.grantAdminRole = functions.https.onCall(async (data, context) => {
       const payload = data.data || data;

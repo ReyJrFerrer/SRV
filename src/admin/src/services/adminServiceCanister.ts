@@ -1810,77 +1810,77 @@ export const adminServiceCanister = {
   /**
    * Get user client analytics (real data from booking canister)
    */
-  async getUserClientAnalytics(userId: string): Promise<{
-    totalBookings: number;
-    servicesCompleted: number;
-    totalSpent: number;
-    memberSince: string;
-  }> {
-    try {
-      // Use admin canister to get client analytics data (properly authenticated)
-      const actor = getAdminActor();
-      if (typeof (actor as any).getUserClientAnalytics === "function") {
-        const result = await (actor as any).getUserClientAnalytics(
-          Principal.fromText(userId),
-        );
-        const analyticsData = handleResult<any>(
-          result,
-          "Failed to get client analytics data",
-        );
+  // async getUserClientAnalytics(userId: string): Promise<{
+  //   totalBookings: number;
+  //   servicesCompleted: number;
+  //   totalSpent: number;
+  //   memberSince: string;
+  // }> {
+  //   try {
+  //     // Use admin canister to get client analytics data (properly authenticated)
+  //     const actor = getAdminActor();
+  //     if (typeof (actor as any).getUserClientAnalytics === "function") {
+  //       const result = await (actor as any).getUserClientAnalytics(
+  //         Principal.fromText(userId),
+  //       );
+  //       const analyticsData = handleResult<any>(
+  //         result,
+  //         "Failed to get client analytics data",
+  //       );
 
-        return {
-          totalBookings: Number(analyticsData.totalBookings || 0),
-          servicesCompleted: Number(analyticsData.servicesCompleted || 0),
-          totalSpent: Number(analyticsData.totalSpent || 0),
-          memberSince: analyticsData.memberSince
-            ? convertTimeToDate(
-                BigInt(analyticsData.memberSince),
-              ).toLocaleDateString()
-            : "Unknown",
-        };
-      }
+  //       return {
+  //         totalBookings: Number(analyticsData.totalBookings || 0),
+  //         servicesCompleted: Number(analyticsData.servicesCompleted || 0),
+  //         totalSpent: Number(analyticsData.totalSpent || 0),
+  //         memberSince: analyticsData.memberSince
+  //           ? convertTimeToDate(
+  //               BigInt(analyticsData.memberSince),
+  //             ).toLocaleDateString()
+  //           : "Unknown",
+  //       };
+  //     }
 
-      if (!currentIdentity) {
-        throw new AdminServiceError({
-          message: "Authentication required to get client analytics data",
-          code: "AUTH_REQUIRED",
-        } as AdminServiceError);
-      }
+  //     if (!currentIdentity) {
+  //       throw new AdminServiceError({
+  //         message: "Authentication required to get client analytics data",
+  //         code: "AUTH_REQUIRED",
+  //       } as AdminServiceError);
+  //     }
 
-      const { bookingCanisterService } = await import(
-        "../../../frontend/src/services/bookingCanisterService"
-      );
-      const userPrincipal = Principal.fromText(userId);
+  //     const { bookingCanisterService } = await import(
+  //       "../../../frontend/src/services/bookingCanisterService"
+  //     );
+  //     const userPrincipal = Principal.fromText(userId);
 
-      const analyticsResult =
-        await bookingCanisterService.getClientAnalyticsForAdmin(userPrincipal);
+  //     const analyticsResult =
+  //       await bookingCanisterService.getClientAnalyticsForAdmin(userPrincipal);
 
-      if (analyticsResult) {
-        return {
-          totalBookings: Number(analyticsResult.totalBookings),
-          servicesCompleted: Number(analyticsResult.servicesCompleted),
-          totalSpent: Number(analyticsResult.totalSpent),
-          memberSince: analyticsResult.memberSince,
-        };
-      } else {
-        logError("No client analytics found for user");
-        return {
-          totalBookings: 0,
-          servicesCompleted: 0,
-          totalSpent: 0,
-          memberSince: "Unknown",
-        };
-      }
-    } catch (error) {
-      logError("Error fetching user client analytics", error);
-      return {
-        totalBookings: 0,
-        servicesCompleted: 0,
-        totalSpent: 0,
-        memberSince: "Unknown",
-      };
-    }
-  },
+  //     if (analyticsResult) {
+  //       return {
+  //         totalBookings: Number(analyticsResult.totalBookings),
+  //         servicesCompleted: Number(analyticsResult.servicesCompleted),
+  //         totalSpent: Number(analyticsResult.totalSpent),
+  //         memberSince: analyticsResult.memberSince,
+  //       };
+  //     } else {
+  //       logError("No client analytics found for user");
+  //       return {
+  //         totalBookings: 0,
+  //         servicesCompleted: 0,
+  //         totalSpent: 0,
+  //         memberSince: "Unknown",
+  //       };
+  //     }
+  //   } catch (error) {
+  //     logError("Error fetching user client analytics", error);
+  //     return {
+  //       totalBookings: 0,
+  //       servicesCompleted: 0,
+  //       totalSpent: 0,
+  //       memberSince: "Unknown",
+  //     };
+  //   }
+  // },
 
   /**
    * Get user commission data (real data from remittance canister)

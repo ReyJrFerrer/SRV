@@ -98,6 +98,25 @@ const {
   getAvailableTimeSlots,
 } = require("./src/service");
 
+const {
+  createBooking,
+  acceptBooking,
+  declineBooking,
+  startBooking,
+  completeBooking,
+  cancelBooking,
+  getBooking,
+  getClientBookings,
+  getProviderBookings,
+  getBookingsByStatus,
+  disputeBooking,
+  getServiceAvailableSlots,
+  checkServiceAvailability,
+  getClientAnalytics,
+  releasePayment,
+} = require("./src/booking");
+
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -153,4 +172,21 @@ exports.updateServiceRating = updateServiceRating;
 exports.setServiceAvailability = setServiceAvailability;
 exports.getServiceAvailability = getServiceAvailability;
 exports.getAvailableTimeSlots = getAvailableTimeSlots;
+
+// Export Booking Management Functions
+exports.createBooking = createBooking;
+exports.acceptBooking = acceptBooking;
+exports.declineBooking = declineBooking;
+exports.startBooking = startBooking;
+exports.completeBooking = completeBooking;
+exports.cancelBooking = cancelBooking;
+exports.getBooking = getBooking;
+exports.getClientBookings = getClientBookings;
+exports.getProviderBookings = getProviderBookings;
+exports.getBookingsByStatus = getBookingsByStatus;
+exports.disputeBooking = disputeBooking;
+exports.getServiceAvailableSlots = getServiceAvailableSlots;
+exports.checkServiceAvailability = checkServiceAvailability;
+exports.getClientAnalytics = getClientAnalytics;
+exports.releasePayment = releasePayment;
 

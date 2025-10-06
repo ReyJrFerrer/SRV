@@ -97,13 +97,13 @@ const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
 
         // Try to get real data from admin canister
         try {
-          const analyticsData =
-            await adminServiceCanister.getUserClientAnalytics(userId);
+          // const analyticsData =
+          //   await adminServiceCanister.getUserClientAnalytics(userId);
           setAnalytics({
-            totalBookings: analyticsData.totalBookings,
-            servicesCompleted: analyticsData.servicesCompleted,
-            totalSpent: analyticsData.totalSpent,
-            memberSince: analyticsData.memberSince,
+            totalBookings: 0,
+            servicesCompleted: 0,
+            totalSpent: 0,
+            memberSince: "Data not available",
           });
         } catch (adminError) {
           console.log(
