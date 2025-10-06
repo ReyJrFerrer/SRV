@@ -1,4 +1,5 @@
 import React from "react";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 interface ServiceProviderData {
   id: string;
@@ -14,11 +15,12 @@ interface ServiceProviderCommissionTableProps {
   providers: ServiceProviderData[];
   loading?: boolean;
   onRefresh: () => void;
+  showRefresh?: boolean;
 }
 
 export const ServiceProviderCommissionTable: React.FC<
   ServiceProviderCommissionTableProps
-> = ({ providers, loading = false, onRefresh }) => {
+> = ({ providers, loading = false, onRefresh, showRefresh = true }) => {
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
   };
@@ -52,12 +54,17 @@ export const ServiceProviderCommissionTable: React.FC<
         <h2 className="text-lg font-semibold text-gray-900">
           Service Provider Commission Overview
         </h2>
-        <button
-          onClick={onRefresh}
-          className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-        >
-          Refresh
-        </button>
+        {showRefresh && (
+          <button
+            onClick={onRefresh}
+            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            <ArrowPathIcon
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">

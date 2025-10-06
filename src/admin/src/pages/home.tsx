@@ -352,6 +352,25 @@ export const AdminHomePage: React.FC = () => {
                   </svg>
                   View Users
                 </Link>
+                <button
+                  onClick={() => refreshAll()}
+                  className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                >
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v6h6M20 20v-6h-6M5 19a9 9 0 0114-7M19 5a9 9 0 00-14 7"
+                    />
+                  </svg>
+                  Refresh
+                </button>
               </div>
             </div>
           </div>
@@ -366,6 +385,7 @@ export const AdminHomePage: React.FC = () => {
             stats={dashboardStats}
             loading={loading.systemStats}
             onRefresh={() => refreshSystemStats(true)}
+            showRefresh={false}
           />
 
           {/* Service Provider Commission Table */}
@@ -373,12 +393,14 @@ export const AdminHomePage: React.FC = () => {
             providers={serviceProviders}
             loading={loading.serviceProviders}
             onRefresh={() => refreshServiceProviders(true)}
+            showRefresh={false}
           />
 
           {/* User Feedback Section */}
           <AdminFeedback
             loading={loading.systemStats}
             onRefresh={() => refreshSystemStats(true)}
+            showRefresh={false}
           />
 
           {/* Pending Validations Section */}
