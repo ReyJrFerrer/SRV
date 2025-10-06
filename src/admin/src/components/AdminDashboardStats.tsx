@@ -113,7 +113,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
           const Icon = card.icon;
           const CardContent = (
             <div
-              className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-yellow-50 p-6 shadow-sm transition-all hover:shadow-md ${
+              className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-white p-6 shadow-sm transition-all hover:shadow-md ${
                 card.title === "Pending Validations" ||
                 card.title === "Pending Tickets"
                   ? "cursor-pointer"

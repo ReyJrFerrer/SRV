@@ -293,7 +293,7 @@ export const AdminFeedback: React.FC<AdminFeedbackProps> = ({
             <div className="rounded-lg border border-blue-100 bg-white p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChatBubbleLeftEllipsisIcon className="h-8 w-8 text-blue-600" />
+                  <ChatBubbleLeftEllipsisIcon className="h-8 w-8 text-yellow-500" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">
@@ -332,7 +332,7 @@ export const AdminFeedback: React.FC<AdminFeedbackProps> = ({
             <div className="rounded-lg border border-blue-100 bg-white p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChatBubbleLeftEllipsisIcon className="h-8 w-8 text-green-600" />
+                  <ChatBubbleLeftEllipsisIcon className="h-8 w-8 text-yellow-500" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">
@@ -356,31 +356,55 @@ export const AdminFeedback: React.FC<AdminFeedbackProps> = ({
 
             {/* Rating Distribution */}
             <div className="rounded-lg border border-blue-100 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-gray-500">
-                Rating Distribution
-              </h3>
-              <div className="mt-3 space-y-2">
-                {feedbackStats.ratingDistribution.map(([rating, count]) => {
-                  const percentage =
-                    feedbackStats.totalFeedback > 0
-                      ? (count / feedbackStats.totalFeedback) * 100
-                      : 0;
-                  return (
-                    <div key={rating} className="flex items-center">
-                      <span className="w-8 text-xs text-gray-500">
-                        {rating}★
-                      </span>
-                      <div className="mx-2 h-2 flex-1 rounded-full bg-blue-100">
-                        <div
-                          className="h-2 rounded-full bg-yellow-400"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="w-8 text-xs text-gray-500">{count}</span>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <StarIcon className="h-8 w-8 text-yellow-500" />
+                </div>
+                <h3 className="ml-4 text-sm font-medium text-gray-500">
+                  Rating Distribution
+                </h3>
               </div>
+              {feedbackStats.totalFeedback > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {(() => {
+                    // Normalize to always show 5★..1★ even if backend returns empty/missing data
+                    const raw = Array.isArray(feedbackStats.ratingDistribution)
+                      ? feedbackStats.ratingDistribution
+                      : [];
+                    const normalized = [5, 4, 3, 2, 1].map((star) => {
+                      const found = raw.find(([rating]) => rating === star);
+                      const count = found ? found[1] : 0;
+                      const percentage =
+                        feedbackStats.totalFeedback > 0
+                          ? (count / feedbackStats.totalFeedback) * 100
+                          : 0;
+                      return { star, count, percentage };
+                    });
+
+                    return normalized.map(({ star, count, percentage }) => (
+                      <div key={star} className="flex items-center">
+                        <span className="w-8 text-xs text-gray-500">
+                          {star}★
+                        </span>
+                        <div className="mx-2 h-2 flex-1 rounded-full bg-blue-100">
+                          <div
+                            className="h-2 rounded-full bg-yellow-400 transition-[width] duration-300"
+                            style={{ width: `${percentage}%` }}
+                            aria-label={`${star} star percentage`}
+                          />
+                        </div>
+                        <span className="w-8 text-xs text-gray-500">
+                          {count}
+                        </span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-gray-400">
+                  No ratings yet. New reviews will appear here.
+                </p>
+              )}
             </div>
           </>
         ) : null}
