@@ -13,7 +13,6 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { getFirebaseAuth } from "../services/firebaseApp";
-import { updateReviewActor } from "../services/reviewCanisterService";
 import { updateReputationActor } from "../services/reputationCanisterService";
 import { updateChatActor } from "../services/chatCanisterService";
 // import {
@@ -67,11 +66,6 @@ const updateAllActors = (identity: Identity | null) => {
   //   console.warn("Failed to update auth actor:", error);
   // }
 
-  try {
-    updateReviewActor(identity);
-  } catch (error) {
-    console.warn("Failed to update review actor:", error);
-  }
 
   try {
     updateReputationActor(identity);

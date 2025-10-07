@@ -505,7 +505,8 @@ const WalletPage: React.FC = () => {
                                 <span className="font-medium text-gray-900">
                                   {display.type}
                                 </span>
-                                {transaction.transaction_type === "Transfer" && (
+                                {transaction.transaction_type ===
+                                  "Transfer" && (
                                   <span className="text-xs text-gray-500">
                                     • Transfer
                                   </span>
@@ -527,9 +528,7 @@ const WalletPage: React.FC = () => {
                               {showRunningBalance && (
                                 <p className="mt-1 text-xs text-gray-500">
                                   Balance:{" "}
-                                  {formatCurrency(
-                                    transaction.running_balance ,
-                                  )}
+                                  {formatCurrency(transaction.running_balance)}
                                 </p>
                               )}
                             </div>

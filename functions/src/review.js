@@ -75,6 +75,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {bookingId, rating, comment = ""} = payload;
+  console.log("Submit Review Payload", payload);
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -222,6 +223,7 @@ exports.getReview = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {reviewId} = payload;
+  console.log("Get Review Payload", payload);
 
   if (!reviewId) {
     throw new functions.https.HttpsError(
@@ -266,6 +268,7 @@ exports.getBookingReviews = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {bookingId} = payload;
+  console.log("Get booking Review Payload", payload);
 
   if (!bookingId) {
     throw new functions.https.HttpsError(
@@ -300,6 +303,7 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {userId} = payload;
+  console.log("Get User Review Payload", payload);
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -347,6 +351,7 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {reviewId, rating, comment = ""} = payload;
+  console.log("Update Review Payload", payload);
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -462,6 +467,7 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
   const {reviewId} = payload;
+  console.log("Delete Review Payload", payload);
 
   // Authentication
   const authInfo = getAuthInfo(context, data);

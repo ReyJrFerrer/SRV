@@ -78,8 +78,8 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
 // Individual review item component
 const ReviewItem: React.FC<{
   review: any;
-  formatReviewDate: (date: number) => string;
-  getRelativeTime: (date: number) => string;
+  formatReviewDate: (date: string) => string;
+  getRelativeTime: (date: string) => string;
 }> = ({ review, formatReviewDate, getRelativeTime }) => {
   const { userImageUrl: clientImageUrl } = useUserImage(
     review.clientProfile?.profilePicture?.imageUrl,
@@ -183,15 +183,15 @@ const ServiceReviewsPage: React.FC = () => {
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return b.createdAt - a.createdAt;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case "oldest":
-          return a.createdAt - b.createdAt;
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         case "highest":
           return b.rating - a.rating;
         case "lowest":
           return a.rating - b.rating;
         default:
-          return b.createdAt - a.createdAt;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
   }, [reviews, sortBy, filterRating]);

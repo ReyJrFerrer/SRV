@@ -42,7 +42,7 @@ export const walletCanisterService = {
       });
 
       console.log("✅ [walletCanisterService] getBalance raw result:", result);
-      const responseData = (result.data as { success: boolean; balance: number });
+      const responseData = result.data as { success: boolean; balance: number };
       console.log(
         "✅ [walletCanisterService] getBalance extracted data:",
         responseData,
@@ -77,8 +77,14 @@ export const walletCanisterService = {
         data: { fromUserId, toUserId, amount },
       });
 
-      console.log("✅ [walletCanisterService] transferFunds raw result:", result);
-      const responseData = (result.data as { success: boolean; transactionId: string });
+      console.log(
+        "✅ [walletCanisterService] transferFunds raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        transactionId: string;
+      };
       console.log(
         "✅ [walletCanisterService] transferFunds extracted data:",
         responseData,
@@ -117,8 +123,14 @@ export const walletCanisterService = {
         data: { userId, amount, paymentChannel, description },
       });
 
-      console.log("✅ [walletCanisterService] creditBalance raw result:", result);
-      const responseData = (result.data as { success: boolean; newBalance: number });
+      console.log(
+        "✅ [walletCanisterService] creditBalance raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        newBalance: number;
+      };
       console.log(
         "✅ [walletCanisterService] creditBalance extracted data:",
         responseData,
@@ -156,18 +168,21 @@ export const walletCanisterService = {
         data: { userId, amount, description, paymentChannel },
       });
 
-      console.log("✅ [walletCanisterService] debitBalance raw result:", result);
-      const responseData = (result.data as { success: boolean; newBalance: number });
+      console.log(
+        "✅ [walletCanisterService] debitBalance raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        newBalance: number;
+      };
       console.log(
         "✅ [walletCanisterService] debitBalance extracted data:",
         responseData,
       );
       return responseData.newBalance;
     } catch (error) {
-      console.error(
-        "❌ [walletCanisterService] Error debiting wallet:",
-        error,
-      );
+      console.error("❌ [walletCanisterService] Error debiting wallet:", error);
       throw new Error(`Failed to debit wallet: ${error}`);
     }
   },
@@ -176,11 +191,17 @@ export const walletCanisterService = {
    * Get transaction history for a user
    */
   async getTransactionHistory(userId: string): Promise<Transaction[]> {
-    console.log("🚀 [walletCanisterService] getTransactionHistory called with:", {
-      userId,
-    });
+    console.log(
+      "🚀 [walletCanisterService] getTransactionHistory called with:",
+      {
+        userId,
+      },
+    );
     try {
-      const getTransactionHistoryFn = httpsCallable(functions, "getTransactionHistory");
+      const getTransactionHistoryFn = httpsCallable(
+        functions,
+        "getTransactionHistory",
+      );
 
       const result = await getTransactionHistoryFn({
         data: { userId },
@@ -190,7 +211,10 @@ export const walletCanisterService = {
         "✅ [walletCanisterService] getTransactionHistory raw result:",
         result,
       );
-      const responseData = (result.data as { success: boolean; transactions: Transaction[] });
+      const responseData = result.data as {
+        success: boolean;
+        transactions: Transaction[];
+      };
       console.log(
         "✅ [walletCanisterService] getTransactionHistory extracted data:",
         responseData,
@@ -209,11 +233,17 @@ export const walletCanisterService = {
    * Add authorized controller (Admin function)
    */
   async addAuthorizedController(userId: string): Promise<string> {
-    console.log("🚀 [walletCanisterService] addAuthorizedController called with:", {
-      userId,
-    });
+    console.log(
+      "🚀 [walletCanisterService] addAuthorizedController called with:",
+      {
+        userId,
+      },
+    );
     try {
-      const addAuthorizedControllerFn = httpsCallable(functions, "addAuthorizedController");
+      const addAuthorizedControllerFn = httpsCallable(
+        functions,
+        "addAuthorizedController",
+      );
 
       const result = await addAuthorizedControllerFn({
         data: { userId },
@@ -223,7 +253,7 @@ export const walletCanisterService = {
         "✅ [walletCanisterService] addAuthorizedController raw result:",
         result,
       );
-      const responseData = (result.data as { success: boolean; message: string });
+      const responseData = result.data as { success: boolean; message: string };
       console.log(
         "✅ [walletCanisterService] addAuthorizedController extracted data:",
         responseData,
@@ -242,11 +272,17 @@ export const walletCanisterService = {
    * Remove authorized controller (Admin function)
    */
   async removeAuthorizedController(userId: string): Promise<string> {
-    console.log("🚀 [walletCanisterService] removeAuthorizedController called with:", {
-      userId,
-    });
+    console.log(
+      "🚀 [walletCanisterService] removeAuthorizedController called with:",
+      {
+        userId,
+      },
+    );
     try {
-      const removeAuthorizedControllerFn = httpsCallable(functions, "removeAuthorizedController");
+      const removeAuthorizedControllerFn = httpsCallable(
+        functions,
+        "removeAuthorizedController",
+      );
 
       const result = await removeAuthorizedControllerFn({
         data: { userId },
@@ -256,7 +292,7 @@ export const walletCanisterService = {
         "✅ [walletCanisterService] removeAuthorizedController raw result:",
         result,
       );
-      const responseData = (result.data as { success: boolean; message: string });
+      const responseData = result.data as { success: boolean; message: string };
       console.log(
         "✅ [walletCanisterService] removeAuthorizedController extracted data:",
         responseData,
@@ -277,7 +313,10 @@ export const walletCanisterService = {
   async getAuthorizedControllers(): Promise<any[]> {
     console.log("🚀 [walletCanisterService] getAuthorizedControllers called");
     try {
-      const getAuthorizedControllersFn = httpsCallable(functions, "getAuthorizedControllers");
+      const getAuthorizedControllersFn = httpsCallable(
+        functions,
+        "getAuthorizedControllers",
+      );
 
       const result = await getAuthorizedControllersFn({});
 
@@ -285,7 +324,10 @@ export const walletCanisterService = {
         "✅ [walletCanisterService] getAuthorizedControllers raw result:",
         result,
       );
-      const responseData = (result.data as { success: boolean; controllers: any[] });
+      const responseData = result.data as {
+        success: boolean;
+        controllers: any[];
+      };
       console.log(
         "✅ [walletCanisterService] getAuthorizedControllers extracted data:",
         responseData,
@@ -309,7 +351,7 @@ export const walletCanisterService = {
   },
 
   /**
-   * Get transaction history for a specific principal (legacy compatibility) 
+   * Get transaction history for a specific principal (legacy compatibility)
    * @deprecated Use getTransactionHistory with userId string instead
    */
   async getTransactionHistoryOf(principal: Principal): Promise<Transaction[]> {

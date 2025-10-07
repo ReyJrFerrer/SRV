@@ -137,8 +137,8 @@ export interface UseReviewManagementReturn {
   calculateAnalytics: () => ReviewAnalytics;
 
   // Utility functions
-  formatReviewDate: (timestamp: number) => string;
-  getRelativeTime: (timestamp: number) => string;
+  formatReviewDate: (dateString: string) => string;
+  getRelativeTime: (dateString: string) => string;
   getStatusColor: (status: "Visible" | "Hidden" | "Flagged") => string;
   enrichReviewWithProfileData: (review: Review) => Promise<EnhancedReview>;
 
@@ -298,10 +298,10 @@ export const useReviewManagement = (
   );
 
   // Date and time formatting utilities
-  const formatReviewDate = useCallback((timestamp: number): string => {
-    if (!timestamp) return "Unknown date";
+  const formatReviewDate = useCallback((dateString: string): string => {
+    if (!dateString) return "Unknown date";
 
-    const date = new Date(timestamp);
+    const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -311,11 +311,11 @@ export const useReviewManagement = (
     });
   }, []);
 
-  const getRelativeTime = useCallback((timestamp: number): string => {
-    if (!timestamp) return "Unknown time";
+  const getRelativeTime = useCallback((dateString: string): string => {
+    if (!dateString) return "Unknown time";
 
     const now = new Date();
-    const date = new Date(timestamp);
+    const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -796,9 +796,10 @@ export const useReviewManagement = (
       if (!targetProviderId) return null;
 
       try {
-        return await reviewCanisterService.calculateProviderRating(
+        const response = await reviewCanisterService.calculateProviderRating(
           targetProviderId,
         );
+        return response.averageRating;
       } catch (error) {
         handleReviewError(
           error,
@@ -813,7 +814,8 @@ export const useReviewManagement = (
   const calculateServiceRating = useCallback(
     async (serviceId: string): Promise<number | null> => {
       try {
-        return await reviewCanisterService.calculateServiceRating(serviceId);
+        const response = await reviewCanisterService.calculateServiceRating(serviceId);
+        return response.averageRating;
       } catch (error) {
         handleReviewError(error, `calculate service rating for ${serviceId}`);
         return null;
@@ -857,9 +859,9 @@ export const useReviewManagement = (
           return false;
         if (filters.bookingId && review.bookingId !== filters.bookingId)
           return false;
-        if (filters.dateFrom && review.createdAt < filters.dateFrom.getTime())
+        if (filters.dateFrom && new Date(review.createdAt) < filters.dateFrom)
           return false;
-        if (filters.dateTo && review.createdAt > filters.dateTo.getTime())
+        if (filters.dateTo && new Date(review.createdAt) > filters.dateTo)
           return false;
 
         return true;

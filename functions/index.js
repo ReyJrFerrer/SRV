@@ -128,6 +128,24 @@ const {
   getAuthorizedControllers,
 } = require("./src/wallet");
 
+// Import Review Management functions
+const {
+  submitReview,
+  getReview,
+  getBookingReviews,
+  getUserReviews,
+  updateReview,
+  deleteReview,
+  calculateProviderRating,
+  calculateServiceRating,
+  calculateUserAverageRating,
+  getAllReviews,
+  getReviewStatistics,
+  flagReview,
+  getProviderReviews,
+  getServiceReviews,
+} = require("./src/review");
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -210,4 +228,20 @@ exports.getTransactionHistory = getTransactionHistory;
 exports.addAuthorizedController = addAuthorizedController;
 exports.removeAuthorizedController = removeAuthorizedController;
 exports.getAuthorizedControllers = getAuthorizedControllers;
+
+// Export Review Management Functions
+exports.submitReview = submitReview;
+exports.getReview = getReview;
+exports.getBookingReviews = getBookingReviews;
+exports.getUserReviews = getUserReviews;
+exports.updateReview = updateReview;
+exports.deleteReview = deleteReview;
+exports.calculateProviderRating = calculateProviderRating;
+exports.calculateServiceRating = calculateServiceRating;
+exports.calculateUserAverageRating = calculateUserAverageRating;
+exports.getAllReviews = getAllReviews;
+exports.getReviewStatistics = getReviewStatistics;
+exports.flagReview = flagReview;
+exports.getProviderReviews = getProviderReviews;
+exports.getServiceReviews = getServiceReviews;
 
