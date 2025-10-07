@@ -116,6 +116,17 @@ const {
   releasePayment,
 } = require("./src/booking");
 
+// Import Wallet Management functions
+const {
+  getBalance,
+  creditBalance,
+  debitBalance,
+  transferFunds,
+  getTransactionHistory,
+  addAuthorizedController,
+  removeAuthorizedController,
+  getAuthorizedControllers,
+} = require("./src/wallet");
 
 // Export all functions
 exports.onboardProvider = onboardProvider;
@@ -189,4 +200,14 @@ exports.getServiceAvailableSlots = getServiceAvailableSlots;
 exports.checkServiceAvailability = checkServiceAvailability;
 exports.getClientAnalytics = getClientAnalytics;
 exports.releasePayment = releasePayment;
+
+// Export Wallet Management Functions
+exports.getBalance = getBalance;
+exports.creditBalance = creditBalance;
+exports.debitBalance = debitBalance;
+exports.transferFunds = transferFunds;
+exports.getTransactionHistory = getTransactionHistory;
+exports.addAuthorizedController = addAuthorizedController;
+exports.removeAuthorizedController = removeAuthorizedController;
+exports.getAuthorizedControllers = getAuthorizedControllers;
 

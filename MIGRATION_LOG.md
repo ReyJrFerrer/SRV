@@ -783,6 +783,56 @@ The fix uses a defensive pattern `const payload = data.data || data;` which:
 
 **Impact**: The booking system is now fully operational in Firebase with complete feature parity to the original Motoko canister. All booking operations, payment processing, analytics, and availability checking are ready for frontend integration in Phase 3. The `booking.mo` canister can be safely removed in Phase 2 of the migration.
 
+## Phase 3: Frontend Client Migration
+
+### Task 3.1: Migrate Wallet Canister to Firebase Cloud Functions ✅
+
+**Completed**: October 7, 2025
+
+**Description**: Successfully migrated the wallet canister from Internet Computer Motoko to Firebase Cloud Functions, maintaining exact business logic while enabling hybrid architecture integration.
+
+**Changes Made**:
+
+1. **Backend Migration** (`functions/src/wallet.js`):
+   - Created 8 Firebase Cloud Functions mirroring all wallet.mo functions
+   - `getBalance`: Query user wallet balance with proper authentication
+   - `creditBalance`: Add funds to user wallet (admin only)
+   - `debitBalance`: Remove funds from user wallet (admin only) 
+   - `transferFunds`: Transfer funds between users with atomic transactions
+   - `getTransactionHistory`: Retrieve user transaction history
+   - `addAuthorizedController`: Admin function to add wallet controllers
+   - `removeAuthorizedController`: Admin function to remove controllers
+   - `getAuthorizedControllers`: Admin function to list all controllers
+
+2. **Business Logic Preservation**:
+   - Exact replication of Motoko validation patterns and error handling
+   - Preserved `safeSub` logic for insufficient balance protection
+   - Maintained transaction recording with running balance tracking
+   - Mirrored authorization patterns with admin/controller permission checks
+   - Kept same data structures and field names for consistency
+
+3. **Firebase Integration** (`functions/index.js`):
+   - Added wallet function imports and exports to make them available as HTTP endpoints
+   - Integrated with existing Firebase Functions deployment structure
+
+4. **Frontend Migration** (`src/frontend/src/services/walletCanisterService.ts`):
+   - Completely rewrote service to use Firebase Cloud Functions via `httpsCallable`
+   - Followed established patterns from `bookingCanisterService.ts`
+   - Added comprehensive logging for debugging and monitoring
+   - Maintained interface compatibility for existing frontend code
+   - Added admin functions for controller management
+   - Included legacy compatibility methods for Principal-based operations
+
+**Technical Implementation**:
+
+- Uses Firestore collections: `wallets` (user balances), `transactions` (transaction history), `authorized_controllers` (admin access)
+- Implements atomic transactions using Firestore's `runTransaction` for balance updates
+- Preserves exact Motoko business logic including amount validation, balance checks, and error messages
+- Follows established authentication patterns with `getAuthInfo` helper function
+- Uses ISO timestamp format instead of Motoko's nanosecond timestamps
+
+**Impact**: The wallet system is now fully migrated to Firebase with complete feature parity to the original Motoko canister. All wallet operations (balance queries, credits, debits, transfers, transaction history) are ready for Firebase-based operations. The frontend service maintains compatibility while leveraging Firebase's real-time capabilities. The `wallet.mo` canister can be safely removed in Phase 2 of the migration.
+
 ---
 
 ```

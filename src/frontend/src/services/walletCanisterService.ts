@@ -1,142 +1,94 @@
-// Wallet Canister Service
+// Wallet Service (Firebase Cloud Functions)
 import { Principal } from "@dfinity/principal";
-import { createActor, canisterId } from "../../../declarations/wallet";
-import { Identity } from "@dfinity/agent";
-import type {
-  _SERVICE as WalletService,
-  Transaction as CanisterTransaction,
-  TransactionType as CanisterTransactionType,
-} from "../../../declarations/wallet/wallet.did";
+import { httpsCallable } from "firebase/functions";
+import { initializeFirebase } from "./firebaseApp";
 
-/**
- * Creates a wallet actor with the provided identity
- * @param identity The user's identity from AuthContext
- * @returns An authenticated WalletService actor
- */
-const createWalletActor = (identity?: Identity | null): WalletService => {
-  return createActor(canisterId, {
-    agentOptions: {
-      identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://id.ai",
-    },
-  }) as WalletService;
-};
+// Initialize Firebase
+const { functions } = initializeFirebase();
 
-// Singleton actor instance with identity tracking
-let walletActor: WalletService | null = null;
-let currentIdentity: Identity | null = null;
-
-/**
- * Updates the wallet actor with a new identity
- * This should be called when the user's authentication state changes
- */
-export const updateWalletActor = (identity: Identity | null) => {
-  if (currentIdentity !== identity) {
-    walletActor = createWalletActor(identity);
-    currentIdentity = identity;
-  }
-};
-
-/**
- * Gets the current wallet actor
- * Throws error if no authenticated identity is available for auth-required operations
- */
-const getWalletActor = (requireAuth: boolean = false): WalletService => {
-  if (requireAuth && !currentIdentity) {
-    throw new Error(
-      "Authentication required: Please log in to perform this action",
-    );
-  }
-
-  if (!walletActor) {
-    walletActor = createWalletActor(currentIdentity);
-  }
-
-  return walletActor;
-};
+// Firebase authentication will be handled automatically by httpsCallable functions
 
 // Type mappings for frontend compatibility
 export type TransactionType = "Credit" | "Debit" | "Transfer";
 
 export interface Transaction {
   id: string;
-  from?: Principal;
-  to?: Principal;
+  from?: string;
+  to?: string;
   amount: number;
-  transactionType: TransactionType;
+  transaction_type: TransactionType;
   timestamp: string;
   description: string;
-  paymentChannel?: string;
-  runningBalance: number;
+  payment_channel?: string;
+  running_balance: number;
 }
 
-// Helper functions to convert between canister and frontend types
-const convertCanisterTransactionType = (
-  type: CanisterTransactionType,
-): TransactionType => {
-  if ("Credit" in type) return "Credit";
-  if ("Debit" in type) return "Debit";
-  if ("Transfer" in type) return "Transfer";
-  return "Credit"; // fallback
-};
+// Firebase wallet data is already in the correct format, no conversion needed
 
-const convertCanisterTransaction = (
-  transaction: CanisterTransaction,
-): Transaction => ({
-  id: transaction.id,
-  from: transaction.from[0],
-  to: transaction.to[0],
-  amount: Number(transaction.amount),
-  transactionType: convertCanisterTransactionType(transaction.transaction_type),
-  timestamp: new Date(Number(transaction.timestamp) / 1000000).toISOString(),
-  description: transaction.description,
-  paymentChannel: (transaction as any).payment_channel?.[0] || undefined,
-  runningBalance: Number((transaction as any).running_balance || 0),
-});
-
-// Wallet Canister Service Functions (Non-Admin Only)
+// Wallet Service Functions
 export const walletCanisterService = {
   /**
-   * Get balance for a specific principal
+   * Get balance for a specific user
    */
-  async getBalanceOf(principal: Principal): Promise<number> {
+  async getBalanceOf(userId: string): Promise<number> {
+    console.log("🚀 [walletCanisterService] getBalanceOf called with:", {
+      userId,
+    });
     try {
-      const actor = getWalletActor();
-      const balance = await actor.get_balance_of(principal);
-      // Convert from centavos to pesos (divide by 100)
-      return Number(balance) / 100;
+      const getBalanceFn = httpsCallable(functions, "getBalance");
+
+      const result = await getBalanceFn({
+        data: { userId },
+      });
+
+      console.log("✅ [walletCanisterService] getBalance raw result:", result);
+      const responseData = (result.data as { success: boolean; balance: number });
+      console.log(
+        "✅ [walletCanisterService] getBalance extracted data:",
+        responseData,
+      );
+      return responseData.balance || 0;
     } catch (error) {
-      //console.error("Error fetching balance for principal:", error);
-      throw new Error(`Failed to fetch balance for principal: ${error}`);
+      console.error(
+        "❌ [walletCanisterService] Error fetching balance:",
+        error,
+      );
+      throw new Error(`Failed to fetch balance: ${error}`);
     }
   },
 
   /**
    * Transfer funds to another user
    */
-  async transfer(to: Principal, amount: number): Promise<string | null> {
+  async transfer(
+    fromUserId: string,
+    toUserId: string,
+    amount: number,
+  ): Promise<string | null> {
+    console.log("🚀 [walletCanisterService] transfer called with:", {
+      fromUserId,
+      toUserId,
+      amount,
+    });
     try {
-      const actor = getWalletActor(true); // Requires authentication
-      if (!currentIdentity) {
-        throw new Error("No authenticated identity available");
-      }
+      const transferFundsFn = httpsCallable(functions, "transferFunds");
 
-      const fromPrincipal = Principal.fromText(
-        currentIdentity.getPrincipal().toString(),
+      const result = await transferFundsFn({
+        data: { fromUserId, toUserId, amount },
+      });
+
+      console.log("✅ [walletCanisterService] transferFunds raw result:", result);
+      const responseData = (result.data as { success: boolean; transactionId: string });
+      console.log(
+        "✅ [walletCanisterService] transferFunds extracted data:",
+        responseData,
       );
-      const result = await actor.transfer(fromPrincipal, to, BigInt(amount));
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        throw new Error(result.err);
-      }
+      return responseData.transactionId;
     } catch (error) {
-      //console.error("Error transferring funds:", error);
+      console.error(
+        "❌ [walletCanisterService] Error transferring funds:",
+        error,
+      );
       throw new Error(`Failed to transfer funds: ${error}`);
     }
   },
@@ -147,81 +99,224 @@ export const walletCanisterService = {
    * to add funds to a user's wallet after external payments
    */
   async creditWallet(
-    principal: Principal,
+    userId: string,
     amount: number,
     paymentChannel?: string,
     description?: string,
-  ): Promise<string> {
+  ): Promise<number> {
+    console.log("🚀 [walletCanisterService] creditWallet called with:", {
+      userId,
+      amount,
+      paymentChannel,
+      description,
+    });
     try {
-      const actor = getWalletActor(true); // Requires authentication
+      const creditBalanceFn = httpsCallable(functions, "creditBalance");
 
-      // Convert amount to bigint (assuming the amount is in the smallest unit)
-      const amountBigInt = BigInt(Math.round(amount * 100)); // Convert to centavos
+      const result = await creditBalanceFn({
+        data: { userId, amount, paymentChannel, description },
+      });
 
-      const result = await (actor as any).credit(
-        principal,
-        amountBigInt,
-        paymentChannel ? [paymentChannel] : [],
-        description ? [description] : [],
+      console.log("✅ [walletCanisterService] creditBalance raw result:", result);
+      const responseData = (result.data as { success: boolean; newBalance: number });
+      console.log(
+        "✅ [walletCanisterService] creditBalance extracted data:",
+        responseData,
       );
-
-      if ("ok" in result) {
-        return result.ok.toString();
-      } else {
-        throw new Error(result.err);
-      }
+      return responseData.newBalance;
     } catch (error) {
-      console.error("Error crediting wallet:", error);
+      console.error(
+        "❌ [walletCanisterService] Error crediting wallet:",
+        error,
+      );
       throw new Error(`Failed to credit wallet: ${error}`);
     }
   },
 
   /**
-   * Get transaction history for current user
+   * Debit (remove funds from) a user's wallet
+   * This function is typically called by authorized controllers for system operations
    */
-  async getTransactionHistory(): Promise<Transaction[]> {
+  async debitWallet(
+    userId: string,
+    amount: number,
+    description?: string,
+    paymentChannel?: string,
+  ): Promise<number> {
+    console.log("🚀 [walletCanisterService] debitWallet called with:", {
+      userId,
+      amount,
+      description,
+      paymentChannel,
+    });
     try {
-      const actor = getWalletActor(true); // Requires authentication
-      if (!currentIdentity) {
-        throw new Error("No authenticated identity available");
-      }
+      const debitBalanceFn = httpsCallable(functions, "debitBalance");
 
-      const userPrincipal = Principal.fromText(
-        currentIdentity.getPrincipal().toString(),
+      const result = await debitBalanceFn({
+        data: { userId, amount, description, paymentChannel },
+      });
+
+      console.log("✅ [walletCanisterService] debitBalance raw result:", result);
+      const responseData = (result.data as { success: boolean; newBalance: number });
+      console.log(
+        "✅ [walletCanisterService] debitBalance extracted data:",
+        responseData,
       );
-      const transactions = await actor.get_transaction_history(userPrincipal);
-      return transactions.map(convertCanisterTransaction);
+      return responseData.newBalance;
     } catch (error) {
-      //console.error("Error fetching transaction history:", error);
-      throw new Error(`Failed to fetch transaction history: ${error}`);
+      console.error(
+        "❌ [walletCanisterService] Error debiting wallet:",
+        error,
+      );
+      throw new Error(`Failed to debit wallet: ${error}`);
     }
   },
 
   /**
-   * Get transaction history for a specific principal
+   * Get transaction history for a user
+   */
+  async getTransactionHistory(userId: string): Promise<Transaction[]> {
+    console.log("🚀 [walletCanisterService] getTransactionHistory called with:", {
+      userId,
+    });
+    try {
+      const getTransactionHistoryFn = httpsCallable(functions, "getTransactionHistory");
+
+      const result = await getTransactionHistoryFn({
+        data: { userId },
+      });
+
+      console.log(
+        "✅ [walletCanisterService] getTransactionHistory raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; transactions: Transaction[] });
+      console.log(
+        "✅ [walletCanisterService] getTransactionHistory extracted data:",
+        responseData,
+      );
+      return responseData.transactions || [];
+    } catch (error) {
+      console.error(
+        "❌ [walletCanisterService] Error fetching transaction history:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Add authorized controller (Admin function)
+   */
+  async addAuthorizedController(userId: string): Promise<string> {
+    console.log("🚀 [walletCanisterService] addAuthorizedController called with:", {
+      userId,
+    });
+    try {
+      const addAuthorizedControllerFn = httpsCallable(functions, "addAuthorizedController");
+
+      const result = await addAuthorizedControllerFn({
+        data: { userId },
+      });
+
+      console.log(
+        "✅ [walletCanisterService] addAuthorizedController raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; message: string });
+      console.log(
+        "✅ [walletCanisterService] addAuthorizedController extracted data:",
+        responseData,
+      );
+      return responseData.message;
+    } catch (error) {
+      console.error(
+        "❌ [walletCanisterService] Error adding authorized controller:",
+        error,
+      );
+      throw new Error(`Failed to add authorized controller: ${error}`);
+    }
+  },
+
+  /**
+   * Remove authorized controller (Admin function)
+   */
+  async removeAuthorizedController(userId: string): Promise<string> {
+    console.log("🚀 [walletCanisterService] removeAuthorizedController called with:", {
+      userId,
+    });
+    try {
+      const removeAuthorizedControllerFn = httpsCallable(functions, "removeAuthorizedController");
+
+      const result = await removeAuthorizedControllerFn({
+        data: { userId },
+      });
+
+      console.log(
+        "✅ [walletCanisterService] removeAuthorizedController raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; message: string });
+      console.log(
+        "✅ [walletCanisterService] removeAuthorizedController extracted data:",
+        responseData,
+      );
+      return responseData.message;
+    } catch (error) {
+      console.error(
+        "❌ [walletCanisterService] Error removing authorized controller:",
+        error,
+      );
+      throw new Error(`Failed to remove authorized controller: ${error}`);
+    }
+  },
+
+  /**
+   * Get all authorized controllers (Admin function)
+   */
+  async getAuthorizedControllers(): Promise<any[]> {
+    console.log("🚀 [walletCanisterService] getAuthorizedControllers called");
+    try {
+      const getAuthorizedControllersFn = httpsCallable(functions, "getAuthorizedControllers");
+
+      const result = await getAuthorizedControllersFn({});
+
+      console.log(
+        "✅ [walletCanisterService] getAuthorizedControllers raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; controllers: any[] });
+      console.log(
+        "✅ [walletCanisterService] getAuthorizedControllers extracted data:",
+        responseData,
+      );
+      return responseData.controllers || [];
+    } catch (error) {
+      console.error(
+        "❌ [walletCanisterService] Error fetching authorized controllers:",
+        error,
+      );
+      return []; // Return empty array on error
+    }
+  },
+
+  /**
+   * Get balance for a specific principal (legacy compatibility)
+   * @deprecated Use getBalanceOf with userId string instead
+   */
+  async getBalanceOfPrincipal(principal: Principal): Promise<number> {
+    return this.getBalanceOf(principal.toString());
+  },
+
+  /**
+   * Get transaction history for a specific principal (legacy compatibility) 
+   * @deprecated Use getTransactionHistory with userId string instead
    */
   async getTransactionHistoryOf(principal: Principal): Promise<Transaction[]> {
-    try {
-      const actor = getWalletActor();
-      const transactions = await actor.get_transaction_history(principal);
-      return transactions.map(convertCanisterTransaction);
-    } catch (error) {
-      //console.error("Error fetching transaction history for principal:", error);
-      throw new Error(
-        `Failed to fetch transaction history for principal: ${error}`,
-      );
-    }
+    return this.getTransactionHistory(principal.toString());
   },
 };
 
-// Reset functions for authentication state changes
-export const resetWalletActor = () => {
-  walletActor = null;
-};
-
-export const refreshWalletActor = async () => {
-  resetWalletActor();
-  return await getWalletActor();
-};
+// Firebase functions don't require actor management or reset functionality
 
 export default walletCanisterService;

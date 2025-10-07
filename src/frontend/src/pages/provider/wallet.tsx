@@ -281,7 +281,7 @@ const WalletPage: React.FC = () => {
   };
 
   const getTransactionIcon = (transaction: Transaction) => {
-    switch (transaction.transactionType) {
+    switch (transaction.transaction_type) {
       case "Credit":
         return <ArrowDownIcon className="h-5 w-5 text-green-600" />;
       case "Debit":
@@ -505,7 +505,7 @@ const WalletPage: React.FC = () => {
                                 <span className="font-medium text-gray-900">
                                   {display.type}
                                 </span>
-                                {transaction.transactionType === "Transfer" && (
+                                {transaction.transaction_type === "Transfer" && (
                                   <span className="text-xs text-gray-500">
                                     • Transfer
                                   </span>
@@ -522,13 +522,13 @@ const WalletPage: React.FC = () => {
                             <div className="text-right">
                               <span className={`font-medium ${display.color}`}>
                                 {display.sign}
-                                {formatCurrency(transaction.amount / 100)}
+                                {formatCurrency(transaction.amount)}
                               </span>
                               {showRunningBalance && (
                                 <p className="mt-1 text-xs text-gray-500">
                                   Balance:{" "}
                                   {formatCurrency(
-                                    transaction.runningBalance / 100,
+                                    transaction.running_balance ,
                                   )}
                                 </p>
                               )}
