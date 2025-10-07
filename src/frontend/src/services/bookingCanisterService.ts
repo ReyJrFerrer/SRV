@@ -147,7 +147,7 @@ export interface Booking {
 // Helper function to map backend field names to frontend interface
 const mapBookingFields = (booking: any): Booking => ({
   ...booking,
-  servicePackageId: booking.servicePackageIds || booking.servicePackageId || []
+  servicePackageId: booking.servicePackageIds || booking.servicePackageId || [],
 });
 
 // Booking Canister Service Functions
@@ -257,12 +257,12 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] getBooking extracted data:",
         responseData,
       );
-      
+
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       if (responseData) {
         return mapBookingFields(responseData);
       }
-      
+
       return responseData;
     } catch (error) {
       console.error(
@@ -294,13 +294,11 @@ export const bookingCanisterService = {
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      console.log( "Booking Canister Data function",
-        responseData
-      );
-      
+      console.log("Booking Canister Data function", responseData);
+
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
-      
+
       return mappedBookings;
     } catch (error) {
       console.error(
@@ -338,10 +336,10 @@ export const bookingCanisterService = {
       console.log(
         `✅ [bookingCanisterService] getProviderBookings extracted ${responseData?.length ?? 0} bookings.`,
       );
-      
+
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
-      
+
       return mappedBookings;
     } catch (error) {
       console.error(
@@ -377,10 +375,10 @@ export const bookingCanisterService = {
       console.log(
         `✅ [bookingCanisterService] getBookingsByStatus extracted ${responseData?.length ?? 0} bookings.`,
       );
-      
+
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
-      
+
       return mappedBookings;
     } catch (error) {
       console.error(

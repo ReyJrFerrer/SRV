@@ -36,16 +36,16 @@ function generateBookingId() {
  */
 function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
-    "REQUESTED": ["ACCEPTED", "DECLINED", "CANCELLED"],
-    "ACCEPTED": ["IN_PROGRESS", "CANCELLED"],
-    "IN_PROGRESS": ["COMPLETED", "DISPUTED"],
-    "COMPLETED": ["DISPUTED"],
-    "DECLINED": [],
-    "CANCELLED": [],
-    "DISPUTED": [],
+    "Requested": ["Accepted", "Declined", "Cancelled"],
+    "Accepted": ["InProgress", "Cancelled"],
+    "InProgress": ["Completed", "Disputed"],
+    "Completed": ["Disputed"],
+    "Declined": [],
+    "Cancelled": [],
+    "Disputed": [],
   };
 
-  return validTransitions[currentStatus]?.includes(newStatus) || newStatus === "DISPUTED";
+  return validTransitions[currentStatus]?.includes(newStatus) || newStatus === "Disputed";
 }
 
 /**
@@ -69,7 +69,7 @@ async function checkBookingConflicts(
 
     const query = db.collection("bookings")
       .where("providerId", "==", providerId)
-      .where("status", "in", ["ACCEPTED", "IN_PROGRESS"])
+      .where("status", "in", ["Accepted", "InProgress"])
       .where("scheduledDate", ">=", startTime.toISOString())
       .where("scheduledDate", "<=", endTime.toISOString());
 
@@ -319,7 +319,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       providerName: null, // Will be populated by UI
       serviceId,
       servicePackageIds,
-      status: "REQUESTED",
+      status: "Requested",
       requestedDate,
       scheduledDate: null,
       startedDate: null,
@@ -425,11 +425,11 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition
-    if (!isValidStatusTransition(booking.status, "ACCEPTED")) {
+    if (!isValidStatusTransition(booking.status, "Accepted")) {
       console.error(`❌ [acceptBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to ACCEPTED`,
+        `Invalid status transition from ${booking.status} to Accepted`,
       );
     }
 
@@ -462,16 +462,16 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 
     const updatedBooking = {
       ...booking,
-      status: "ACCEPTED",
+      status: "Accepted",
       scheduledDate,
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`📝 [acceptBooking] Updating booking ${bookingId} to ACCEPTED.`);
+    console.log(`📝 [acceptBooking] Updating booking ${bookingId} to Accepted.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "ACCEPTED",
+        status: "Accepted",
         scheduledDate,
         updatedAt: new Date().toISOString(),
       });
@@ -548,25 +548,25 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition
-    if (!isValidStatusTransition(booking.status, "DECLINED")) {
+    if (!isValidStatusTransition(booking.status, "Declined")) {
       console.error(`❌ [declineBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to DECLINED`,
+        `Invalid status transition from ${booking.status} to Declined`,
       );
     }
 
     const updatedBooking = {
       ...booking,
-      status: "DECLINED",
+      status: "Declined",
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`📝 [declineBooking] Updating booking ${bookingId} to DECLINED.`);
+    console.log(`📝 [declineBooking] Updating booking ${bookingId} to Declined.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "DECLINED",
+        status: "Declined",
         updatedAt: new Date().toISOString(),
       });
     });
@@ -642,26 +642,26 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition
-    if (!isValidStatusTransition(booking.status, "IN_PROGRESS")) {
+    if (!isValidStatusTransition(booking.status, "InProgress")) {
       console.error(`❌ [startBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to IN_PROGRESS`,
+        `Invalid status transition from ${booking.status} to InProgress`,
       );
     }
 
     const updatedBooking = {
       ...booking,
-      status: "IN_PROGRESS",
+      status: "InProgress",
       startedDate: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`📝 [startBooking] Updating booking ${bookingId} to IN_PROGRESS.`);
+    console.log(`📝 [startBooking] Updating booking ${bookingId} to InProgress.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "IN_PROGRESS",
+        status: "InProgress",
         startedDate: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -741,28 +741,28 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition
-    if (!isValidStatusTransition(booking.status, "COMPLETED")) {
+    if (!isValidStatusTransition(booking.status, "Completed")) {
       console.error(`❌ [completeBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to COMPLETED`,
+        `Invalid status transition from ${booking.status} to Completed`,
       );
     }
 
     const completedDate = new Date().toISOString();
     const updatedBooking = {
       ...booking,
-      status: "COMPLETED",
+      status: "Completed",
       completedDate,
       amountPaid: amountPaid || booking.amountPaid,
       updatedAt: completedDate,
     };
 
-    console.log(`📝 [completeBooking] Updating booking ${bookingId} to COMPLETED.`);
+    console.log(`📝 [completeBooking] Updating booking ${bookingId} to Completed.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "COMPLETED",
+        status: "Completed",
         completedDate,
         amountPaid: amountPaid || booking.amountPaid,
         updatedAt: completedDate,
@@ -893,25 +893,25 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition
-    if (!isValidStatusTransition(booking.status, "CANCELLED")) {
+    if (!isValidStatusTransition(booking.status, "Cancelled")) {
       console.error(`❌ [cancelBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to CANCELLED`,
+        `Invalid status transition from ${booking.status} to Cancelled`,
       );
     }
 
     const updatedBooking = {
       ...booking,
-      status: "CANCELLED",
+      status: "Cancelled",
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`📝 [cancelBooking] Updating booking ${bookingId} to CANCELLED.`);
+    console.log(`📝 [cancelBooking] Updating booking ${bookingId} to Cancelled.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "CANCELLED",
+        status: "Cancelled",
         updatedAt: new Date().toISOString(),
       });
     });
@@ -1197,25 +1197,25 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Validate status transition - can only dispute completed bookings or in-progress bookings
-    if (!isValidStatusTransition(booking.status, "DISPUTED")) {
+    if (!isValidStatusTransition(booking.status, "Disputed")) {
       console.error(`❌ [disputeBooking] Invalid status transition from ${booking.status}.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        `Invalid status transition from ${booking.status} to DISPUTED`,
+        `Invalid status transition from ${booking.status} to Disputed`,
       );
     }
 
     const updatedBooking = {
       ...booking,
-      status: "DISPUTED",
+      status: "Disputed",
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(`📝 [disputeBooking] Updating booking ${bookingId} to DISPUTED.`);
+    console.log(`📝 [disputeBooking] Updating booking ${bookingId} to Disputed.`);
     // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "DISPUTED",
+        status: "Disputed",
         updatedAt: new Date().toISOString(),
       });
     });
@@ -1519,7 +1519,7 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
 
     const bookingsQuery = await db.collection("bookings")
       .where("serviceId", "==", serviceId)
-      .where("status", "in", ["ACCEPTED", "IN_PROGRESS"])
+      .where("status", "in", ["Accepted", "InProgress"])
       .where("scheduledDate", ">=", startOfDay.toISOString())
       .where("scheduledDate", "<=", endOfDay.toISOString())
       .get();
@@ -1644,7 +1644,7 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
     console.log(`[getClientAnalytics] Found ${totalBookings} total bookings.`);
 
     // Count completed bookings only
-    const completedBookings = clientBookings.filter((booking) => booking.status === "COMPLETED");
+    const completedBookings = clientBookings.filter((booking) => booking.status === "Completed");
     const servicesCompleted = completedBookings.length;
 
     // Calculate total spending from completed bookings only
@@ -1739,9 +1739,9 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
 
     const booking = bookingDoc.data();
 
-    // Validate booking status - can only release payment for completed bookings
-    if (booking.status !== "COMPLETED") {
-      console.error(`❌ [releasePayment] Booking status is ${booking.status}, not COMPLETED.`);
+    // Validate booking status - can only release payment for Completed bookings
+    if (booking.status !== "Completed") {
+      console.error(`❌ [releasePayment] Booking status is ${booking.status}, not Completed.`);
       throw new functions.https.HttpsError(
         "failed-precondition",
         "Payment can only be released for completed bookings",

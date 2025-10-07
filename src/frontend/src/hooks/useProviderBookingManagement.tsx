@@ -605,7 +605,7 @@ export const useProviderBookingManagement =
               !booking.servicePackageId ||
               booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
-
+          console.log('From useProviderBookingManagement', enhancedBooking);
           return enhancedBooking;
         } catch (error) {
           //console.error(`❌ Error enriching booking ${booking.id}:`, error);

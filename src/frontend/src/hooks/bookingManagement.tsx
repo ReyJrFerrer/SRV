@@ -509,10 +509,13 @@ export const useBookingManagement = (): BookingManagementHook => {
 
   // Transform base bookings to our extended booking interface
   const transformBooking = useCallback((baseBooking: BaseBooking): Booking => {
+    // Handle field name mismatch: backend returns 'servicePackageIds', frontend expects 'servicePackageId'
+    const backendBooking = baseBooking as any;
+    
     return {
       ...baseBooking,
-      // servicePackageId should already exist in baseBooking from backend
-      // Just ensure it's properly typed
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      servicePackageId: backendBooking.servicePackageIds || backendBooking.servicePackageId || [],
       packageName: undefined, // Will be populated from service data
     };
   }, []);
