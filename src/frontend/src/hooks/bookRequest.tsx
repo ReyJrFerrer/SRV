@@ -135,14 +135,15 @@ export const useBookRequest = (): UseBookRequestReturn => {
     async (serviceId: string): Promise<boolean> => {
       try {
         const now = new Date(); // Use actual current time
+        // Create today's date without changing the day of week
         const todayForBackend = new Date(
           now.getFullYear(),
           now.getMonth(),
           now.getDate(),
-          12,
+          now.getHours(), // Use current hour instead of fixed 12
+          now.getMinutes(), // Use current minute
           0,
-          0,
-          0,
+          0
         );
 
         // Get service data if not already loaded
@@ -201,14 +202,15 @@ export const useBookRequest = (): UseBookRequestReturn => {
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
         // IMPORTANT: Now using booking canister for availability (with conflict checking)
+        // Preserve the exact date without changing day of week
         const adjustedDate = new Date(
           date.getFullYear(),
           date.getMonth(),
           date.getDate(),
-          12,
+          9, // Use 9 AM as a safe default hour for date queries
           0,
           0,
-          0,
+          0
         );
         const slots = await bookingCanisterService.getServiceAvailableSlots(
           serviceId,
@@ -241,11 +243,12 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         if (timeSlot.includes("-")) {
           // Handle time range, use start time
-          const startTime = timeSlot.split("-")[0];
+          const startTime = timeSlot.split("-")[0].trim();
           [hours, minutes] = startTime.split(":").map(Number);
         } else {
           // Handle single time
-          [hours, minutes] = timeSlot.split(":").map(Number);
+          const cleanTimeSlot = timeSlot.trim();
+          [hours, minutes] = cleanTimeSlot.split(":").map(Number);
         }
 
         if (isNaN(hours) || isNaN(minutes)) {
@@ -264,7 +267,21 @@ export const useBookRequest = (): UseBookRequestReturn => {
           0,
         );
 
-        // IMPORTANT: Using booking canister for availability check (with conflict checking)
+          // Debug logging
+          const currentTime = new Date();
+          const isToday = date.toDateString() === currentTime.toDateString();
+          console.log("🔍 [checkTimeSlotAvailability] Debug info:", {
+            originalTimeSlot: timeSlot,
+            parsedHours: hours,
+            parsedMinutes: minutes,
+            originalDate: date.toISOString(),
+            requestedDateTime: requestedDateTime.toISOString(),
+            dayOfWeek: requestedDateTime.getDay(),
+            dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDateTime.getDay()],
+            isToday,
+            currentTime: currentTime.toISOString(),
+            timeDifferenceHours: (requestedDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60)
+          });        // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(
             serviceId,
@@ -333,6 +350,17 @@ export const useBookRequest = (): UseBookRequestReturn => {
             }
 
             requestedDate.setHours(startHour, startMinute, 0, 0);
+
+            // Debug logging for same-day
+            console.log("🔍 [createBookingRequest] Same-day debugging:", {
+              originalTime: new Date().toISOString(),
+              requestedDateTime: requestedDate.toISOString(),
+              requestedDayOfWeek: requestedDate.getDay(),
+              requestedDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDate.getDay()],
+              scheduledTime: bookingData.scheduledTime,
+              parsedHour: startHour,
+              parsedMinute: startMinute
+            });
           }
         } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
           // Parse the time string (format: "HH:MM-HH:MM" or "HH:MM")
@@ -365,8 +393,29 @@ export const useBookRequest = (): UseBookRequestReturn => {
             throw new Error("Invalid time format");
           }
 
-          requestedDate = new Date(bookingData.scheduledDate);
-          requestedDate.setHours(startHour, startMinute, 0, 0);
+          // Create a new date preserving the original date components to avoid timezone shifts
+          requestedDate = new Date(
+            bookingData.scheduledDate.getFullYear(),
+            bookingData.scheduledDate.getMonth(),
+            bookingData.scheduledDate.getDate(),
+            startHour,
+            startMinute,
+            0,
+            0
+          );
+
+          // Debug logging
+          console.log("🔍 [createBookingRequest] Date debugging:", {
+            originalScheduledDate: bookingData.scheduledDate.toISOString(),
+            originalDayOfWeek: bookingData.scheduledDate.getDay(),
+            originalDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][bookingData.scheduledDate.getDay()],
+            requestedDateTime: requestedDate.toISOString(),
+            requestedDayOfWeek: requestedDate.getDay(),
+            requestedDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDate.getDay()],
+            scheduledTime: bookingData.scheduledTime,
+            parsedHour: startHour,
+            parsedMinute: startMinute
+          });
         } else {
           throw new Error(
             "Invalid booking data: missing date or time for scheduled booking",

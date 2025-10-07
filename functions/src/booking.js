@@ -128,6 +128,20 @@ async function validateCommissionBalance(booking) {
 }
 
 /**
+ * Check if service is active based on multiple possible field formats
+ * @param {object} service - Service object
+ * @return {boolean} True if service is active
+ */
+function isServiceActive(service) {
+  return service.isActive === true ||
+         service.active === true ||
+         service.status === "Available" ||
+         service.status === "active" ||
+         service.isActive === "true" ||
+         service.active === "true";
+}
+
+/**
  * Create notification for users
  * @param {string} targetUserId - Target user ID
  * @param {string} userType - User type (client/provider)
@@ -231,6 +245,16 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Service does not belong to the specified provider",
+      );
+    }
+
+    // Check if service is active
+    if (!isServiceActive(service)) {
+      console.error(`❌ [createBooking] Service ${serviceId} is not active.` +
+        ` Status: ${service.status}`);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Service is not available for booking",
       );
     }
 
@@ -1252,8 +1276,17 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
     }
 
     const service = serviceDoc.data();
-    if (!service.isActive) {
-      console.warn(`⚠️ [checkServiceAvailability] Service ${serviceId} is not active.`);
+    console.log(`🔍 [checkServiceAvailability] Service data:`, {
+      isActive: service.isActive,
+      active: service.active,
+      status: service.status,
+      serviceData: JSON.stringify(service, null, 2),
+    });
+
+    // Check if service is active - handle different possible field names/formats
+    if (!isServiceActive(service)) {
+      console.warn(`⚠️ [checkServiceAvailability] Service ${serviceId} is not active.` +
+        ` Status: ${service.status}, isActive: ${service.isActive}`);
       return {success: true, data: {available: false, reason: "Service is not active"}};
     }
 
@@ -1273,50 +1306,83 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
       };
     }
 
-    // Check provider availability settings if they exist
-    console.log(`📝 [checkServiceAvailability]
-       Checking provider availability for ${service.providerId}...`);
-    const availabilityDoc = await db.collection("providerAvailability")
-      .doc(service.providerId)
-      .get();
+    // Check service availability using its weeklySchedule
+    console.log(`📝 [checkServiceAvailability] Checking service availability schedule...`);
 
-    if (availabilityDoc.exists) {
-      const availability = availabilityDoc.data();
+    if (service.weeklySchedule && service.weeklySchedule.length > 0) {
       const requestedDate = new Date(requestedDateTime);
-      const dayOfWeek = requestedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      const requestedHour = requestedDate.getHours();
 
-      // Check if provider is available on this day and time
+      // Convert UTC time to Philippine time (UTC+8) since service slots are in local time
+      const philippineOffset = 8 * 60; // 8 hours in minutes
+      const localDate = new Date(requestedDate.getTime() + (philippineOffset * 60 * 1000));
+      const dayOfWeek = localDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const requestedHour = localDate.getHours();
+
+      // Map day of week to day names
       const dayNames = [
-        "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
       ];
-      const daySchedule = availability.schedule?.[dayNames[dayOfWeek]];
+      const requestedDayName = dayNames[dayOfWeek];
 
-      if (!daySchedule || !daySchedule.isAvailable) {
+      // Find the schedule for the requested day
+      const daySchedule = service.weeklySchedule.find((schedule) =>
+        schedule.day === requestedDayName,
+      );
+
+      if (!daySchedule || !daySchedule.availability?.isAvailable) {
         console.warn(`⚠️ [checkServiceAvailability] 
-          Provider not available on ${dayNames[dayOfWeek]}.`);
+          Service not available on ${requestedDayName}.`);
         return {
           success: true,
-          data: {available: false, reason: "Provider not available on this day"},
+          data: {available: false, reason: `Service not available on ${requestedDayName}`},
         };
       }
 
-      // Check time slots
-      if (daySchedule.timeSlots && daySchedule.timeSlots.length > 0) {
-        const isWithinTimeSlot = daySchedule.timeSlots.some((slot) => {
+      // Check time slots - allow booking at any time within available slots
+      if (daySchedule.availability.slots && daySchedule.availability.slots.length > 0) {
+        console.log(`🔍 [checkServiceAvailability] Time slot check:`, {
+          requestedDateTime,
+          requestedHour,
+          availableSlots: daySchedule.availability.slots.length,
+        });
+
+        const isWithinTimeSlot = daySchedule.availability.slots.some((slot) => {
           const startHour = parseInt(slot.startTime.split(":")[0]);
+          const startMinute = parseInt(slot.startTime.split(":")[1] || "0");
           const endHour = parseInt(slot.endTime.split(":")[0]);
-          return requestedHour >= startHour && requestedHour < endHour;
+          const endMinute = parseInt(slot.endTime.split(":")[1] || "0");
+
+          console.log(`🔍 [checkServiceAvailability] Checking slot` +
+            ` ${slot.startTime}-${slot.endTime}:`, {
+            requestedHour,
+            requestedMinute: localDate.getMinutes(),
+            slotStartHour: startHour,
+            slotStartMinute: startMinute,
+            slotEndHour: endHour,
+            slotEndMinute: endMinute,
+            requestedDateTime: requestedDate.toISOString(),
+            localDateTime: localDate.toISOString(),
+          });
+
+          // Check if requested time is within the slot (no notice period restriction)
+          const requestedMinute = localDate.getMinutes();
+          const isInSlotRange = (requestedHour > startHour ||
+                                (requestedHour === startHour && requestedMinute >= startMinute)) &&
+                               (requestedHour < endHour ||
+                                (requestedHour === endHour && requestedMinute < endMinute));
+
+          console.log(`🔍 [checkServiceAvailability] Slot check result: ${isInSlotRange}`);
+          return isInSlotRange;
         });
 
         if (!isWithinTimeSlot) {
           console.warn(`⚠️ [checkServiceAvailability] 
-            Requested time is outside provider's available hours.`);
+            Requested time is outside service's available hours.`);
           return {
             success: true,
             data: {
               available: false,
-              reason: "Requested time is outside provider's available hours",
+              reason: "Requested time is outside service's available hours",
             },
           };
         }
@@ -1375,27 +1441,59 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     }
 
     const service = serviceDoc.data();
+    console.log(`🔍 [getServiceAvailableSlots] Service data:`, {
+      isActive: service.isActive,
+      active: service.active,
+      status: service.status,
+      providerId: service.providerId,
+    });
 
-    // Get provider availability settings
-    console.log(`📝 [getServiceAvailableSlots] 
-      Fetching availability for provider ${service.providerId}...`);
-    const availabilityDoc = await db.collection("providerAvailability")
-      .doc(service.providerId)
-      .get();
-
-    if (!availabilityDoc.exists) {
+    // Check if service is active first
+    if (!isServiceActive(service)) {
+      console.warn(`⚠️ [getServiceAvailableSlots] Service ${serviceId} is not active.` +
+        ` Status: ${service.status}`);
       return {success: true, data: []};
     }
 
-    const availability = availabilityDoc.data();
+    // Get service availability from weeklySchedule
+    console.log(`📝 [getServiceAvailableSlots] 
+      Checking service weeklySchedule for availability...`);
+
+    if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
+      console.warn(`⚠️ [getServiceAvailableSlots] No weeklySchedule found for service` +
+        ` ${serviceId}`);
+      return {success: true, data: []};
+    }
+
     const requestedDate = new Date(date);
     const dayOfWeek = requestedDate.getDay();
-    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    const daySchedule = availability.schedule?.[dayNames[dayOfWeek]];
+    const dayNames = [
+      "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+    ];
+    const requestedDayName = dayNames[dayOfWeek];
 
-    if (!daySchedule || !daySchedule.isAvailable || !daySchedule.timeSlots) {
+    // Find the schedule for the requested day
+    const daySchedule = service.weeklySchedule.find((schedule) =>
+      schedule.day === requestedDayName,
+    );
+
+    console.log(`🔍 [getServiceAvailableSlots] Availability debug:`, {
+      requestedDate: requestedDate.toISOString(),
+      dayOfWeek,
+      dayName: requestedDayName,
+      hasWeeklySchedule: !!service.weeklySchedule,
+      weeklyScheduleLength: service.weeklySchedule?.length || 0,
+      daySchedule: daySchedule ? {
+        day: daySchedule.day,
+        isAvailable: daySchedule.availability?.isAvailable,
+        slots: daySchedule.availability?.slots,
+      } : null,
+    });
+
+    if (!daySchedule || !daySchedule.availability?.isAvailable ||
+        !daySchedule.availability?.slots) {
       console.warn(`⚠️ [getServiceAvailableSlots] 
-        No schedule available for ${dayNames[dayOfWeek]}.`);
+        No schedule available for ${requestedDayName}.`);
       return {success: true, data: []};
     }
 
@@ -1418,12 +1516,17 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     console.log(`[getServiceAvailableSlots] Found ${existingBookings.length} existing bookings.`);
 
     // Create available slots with conflict information
-    const availableSlots = daySchedule.timeSlots.map((slot) => {
+    console.log(`🔍 [getServiceAvailableSlots] Slot availability check:`, {
+      requestedDate: requestedDate.toISOString(),
+      slotsCount: daySchedule.availability.slots.length,
+    });
+
+    const availableSlots = daySchedule.availability.slots.map((slot) => {
       const slotStart = parseInt(slot.startTime.split(":")[0]);
       const slotEnd = parseInt(slot.endTime.split(":")[0]);
 
       // Check for conflicts with existing bookings
-      const hasConflict = existingBookings.some((booking) => {
+      const hasBookingConflict = existingBookings.some((booking) => {
         if (!booking.scheduledDate) return false;
 
         const bookingDate = new Date(booking.scheduledDate);
@@ -1433,13 +1536,19 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
         return bookingHour >= slotStart && bookingHour < slotEnd;
       });
 
+      // Slot is available if no booking conflicts exist
+      const isSlotAvailable = !hasBookingConflict;
+      const conflictReason = hasBookingConflict ?
+        "Time slot conflicts with existing booking" :
+        null;
+
       return {
         timeSlot: {
           startTime: slot.startTime,
           endTime: slot.endTime,
         },
-        isAvailable: !hasConflict,
-        conflictReason: hasConflict ? "Time slot conflicts with existing booking" : null,
+        isAvailable: isSlotAvailable,
+        conflictReason,
       };
     });
 

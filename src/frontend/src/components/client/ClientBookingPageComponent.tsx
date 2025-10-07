@@ -559,10 +559,10 @@ const ClientBookingPageComponent: React.FC = () => {
               today.getFullYear(),
               today.getMonth(),
               today.getDate(),
-              12,
+              9, // Use 9 AM instead of noon to avoid any timezone edge cases
               0,
               0,
-              0,
+              0
             )
           : selectedDate;
 
@@ -601,10 +601,11 @@ const ClientBookingPageComponent: React.FC = () => {
           availabilityMap[timeSlotKey] = false;
         } else {
           try {
+            // Use just the start time for availability checking
             const isAvailable = await checkTimeSlotAvailability(
               service.id,
               dateToCheck,
-              timeSlotKey,
+              slot.timeSlot.startTime, // Pass just the start time instead of the full range
             );
             availabilityMap[timeSlotKey] = isAvailable;
           } catch (error) {
@@ -717,10 +718,10 @@ const ClientBookingPageComponent: React.FC = () => {
           currentDate.getFullYear(),
           currentDate.getMonth(),
           currentDate.getDate(),
-          12,
+          9, // Use 9 AM for consistency
           0,
           0,
-          0,
+          0
         );
       }
 
@@ -733,15 +734,15 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
     if (date) {
-      // Create a new date object to avoid timezone issues
+      // Create a new date object to avoid timezone issues, use 9 AM
       const adjustedDate = new Date(
         date.getFullYear(),
         date.getMonth(),
         date.getDate(),
-        12,
+        9, // Use 9 AM instead of noon to be consistent with business hours
         0,
         0,
-        0,
+        0
       );
       setSelectedDate(adjustedDate);
     } else {
