@@ -12,10 +12,6 @@
       "type": "motoko",
       "main": "src/backend/function/reputation.mo"
     },
-    "review": {
-      "type": "motoko",
-      "main": "src/backend/function/review.mo"
-    },
     "chat": {
       "dependencies": [],
       "type": "motoko",
@@ -43,7 +39,6 @@
         "llm",
         "auth",
         "reputation",
-        "review",
         "chat",
         "media",
         "feedback",

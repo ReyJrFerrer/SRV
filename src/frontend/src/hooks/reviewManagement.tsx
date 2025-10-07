@@ -796,9 +796,8 @@ export const useReviewManagement = (
       if (!targetProviderId) return null;
 
       try {
-        const response = await reviewCanisterService.calculateProviderRating(
-          targetProviderId,
-        );
+        const response =
+          await reviewCanisterService.calculateProviderRating(targetProviderId);
         return response.averageRating;
       } catch (error) {
         handleReviewError(
@@ -814,7 +813,8 @@ export const useReviewManagement = (
   const calculateServiceRating = useCallback(
     async (serviceId: string): Promise<number | null> => {
       try {
-        const response = await reviewCanisterService.calculateServiceRating(serviceId);
+        const response =
+          await reviewCanisterService.calculateServiceRating(serviceId);
         return response.averageRating;
       } catch (error) {
         handleReviewError(error, `calculate service rating for ${serviceId}`);

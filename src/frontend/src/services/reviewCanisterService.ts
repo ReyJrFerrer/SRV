@@ -76,7 +76,10 @@ export const reviewCanisterService = {
         data: { bookingId, rating, comment },
       });
 
-      console.log("✅ [reviewCanisterService] submitReview raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] submitReview raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review };
       console.log(
         "✅ [reviewCanisterService] submitReview extracted data:",
@@ -84,7 +87,10 @@ export const reviewCanisterService = {
       );
       return responseData.data;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error submitting review:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error submitting review:",
+        error,
+      );
       throw new Error(`Failed to submit review: ${error}`);
     }
   },
@@ -130,7 +136,10 @@ export const reviewCanisterService = {
         data: { bookingId },
       });
 
-      console.log("✅ [reviewCanisterService] getBookingReviews raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] getBookingReviews raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review[] };
       console.log(
         "✅ [reviewCanisterService] getBookingReviews extracted data:",
@@ -138,7 +147,10 @@ export const reviewCanisterService = {
       );
       return responseData.data || [];
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting booking reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting booking reviews:",
+        error,
+      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -157,7 +169,10 @@ export const reviewCanisterService = {
         data: { userId },
       });
 
-      console.log("✅ [reviewCanisterService] getUserReviews raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] getUserReviews raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review[] };
       console.log(
         "✅ [reviewCanisterService] getUserReviews extracted data:",
@@ -165,7 +180,10 @@ export const reviewCanisterService = {
       );
       return responseData.data || [];
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting user reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting user reviews:",
+        error,
+      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -190,7 +208,10 @@ export const reviewCanisterService = {
         data: { reviewId, rating, comment },
       });
 
-      console.log("✅ [reviewCanisterService] updateReview raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] updateReview raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review };
       console.log(
         "✅ [reviewCanisterService] updateReview extracted data:",
@@ -217,7 +238,10 @@ export const reviewCanisterService = {
         data: { reviewId },
       });
 
-      console.log("✅ [reviewCanisterService] deleteReview raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] deleteReview raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; message: string };
       console.log(
         "✅ [reviewCanisterService] deleteReview extracted data:",
@@ -232,26 +256,43 @@ export const reviewCanisterService = {
   /**
    * Calculate average rating for a provider
    */
-  async calculateProviderRating(providerId: string): Promise<ProviderRatingResponse> {
-    console.log("🚀 [reviewCanisterService] calculateProviderRating called with:", {
-      providerId,
-    });
+  async calculateProviderRating(
+    providerId: string,
+  ): Promise<ProviderRatingResponse> {
+    console.log(
+      "🚀 [reviewCanisterService] calculateProviderRating called with:",
+      {
+        providerId,
+      },
+    );
     try {
-      const calculateProviderRatingFn = httpsCallable(functions, "calculateProviderRating");
+      const calculateProviderRatingFn = httpsCallable(
+        functions,
+        "calculateProviderRating",
+      );
 
       const result = await calculateProviderRatingFn({
         data: { providerId },
       });
 
-      console.log("✅ [reviewCanisterService] calculateProviderRating raw result:", result);
-      const responseData = result.data as { success: boolean; data: ProviderRatingResponse };
+      console.log(
+        "✅ [reviewCanisterService] calculateProviderRating raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: ProviderRatingResponse;
+      };
       console.log(
         "✅ [reviewCanisterService] calculateProviderRating extracted data:",
         responseData,
       );
       return responseData.data;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error calculating provider rating:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error calculating provider rating:",
+        error,
+      );
       throw new Error(`Failed to calculate provider rating: ${error}`);
     }
   },
@@ -259,26 +300,43 @@ export const reviewCanisterService = {
   /**
    * Calculate average rating for a service
    */
-  async calculateServiceRating(serviceId: string): Promise<ServiceRatingResponse> {
-    console.log("🚀 [reviewCanisterService] calculateServiceRating called with:", {
-      serviceId,
-    });
+  async calculateServiceRating(
+    serviceId: string,
+  ): Promise<ServiceRatingResponse> {
+    console.log(
+      "🚀 [reviewCanisterService] calculateServiceRating called with:",
+      {
+        serviceId,
+      },
+    );
     try {
-      const calculateServiceRatingFn = httpsCallable(functions, "calculateServiceRating");
+      const calculateServiceRatingFn = httpsCallable(
+        functions,
+        "calculateServiceRating",
+      );
 
       const result = await calculateServiceRatingFn({
         data: { serviceId },
       });
 
-      console.log("✅ [reviewCanisterService] calculateServiceRating raw result:", result);
-      const responseData = result.data as { success: boolean; data: ServiceRatingResponse };
+      console.log(
+        "✅ [reviewCanisterService] calculateServiceRating raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: ServiceRatingResponse;
+      };
       console.log(
         "✅ [reviewCanisterService] calculateServiceRating extracted data:",
         responseData,
       );
       return responseData.data;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error calculating service rating:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error calculating service rating:",
+        error,
+      );
       throw new Error(`Failed to calculate service rating: ${error}`);
     }
   },
@@ -286,26 +344,43 @@ export const reviewCanisterService = {
   /**
    * Calculate user average rating
    */
-  async calculateUserAverageRating(userId?: string): Promise<UserRatingResponse> {
-    console.log("🚀 [reviewCanisterService] calculateUserAverageRating called with:", {
-      userId,
-    });
+  async calculateUserAverageRating(
+    userId?: string,
+  ): Promise<UserRatingResponse> {
+    console.log(
+      "🚀 [reviewCanisterService] calculateUserAverageRating called with:",
+      {
+        userId,
+      },
+    );
     try {
-      const calculateUserAverageRatingFn = httpsCallable(functions, "calculateUserAverageRating");
+      const calculateUserAverageRatingFn = httpsCallable(
+        functions,
+        "calculateUserAverageRating",
+      );
 
       const result = await calculateUserAverageRatingFn({
         data: { userId },
       });
 
-      console.log("✅ [reviewCanisterService] calculateUserAverageRating raw result:", result);
-      const responseData = result.data as { success: boolean; data: UserRatingResponse };
+      console.log(
+        "✅ [reviewCanisterService] calculateUserAverageRating raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: UserRatingResponse;
+      };
       console.log(
         "✅ [reviewCanisterService] calculateUserAverageRating extracted data:",
         responseData,
       );
       return responseData.data;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error calculating user average rating:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error calculating user average rating:",
+        error,
+      );
       throw new Error(`Failed to calculate user average rating: ${error}`);
     }
   },
@@ -313,7 +388,11 @@ export const reviewCanisterService = {
   /**
    * Get all reviews (admin function)
    */
-  async getAllReviews(limit?: number, offset?: number, status?: string): Promise<Review[]> {
+  async getAllReviews(
+    limit?: number,
+    offset?: number,
+    status?: string,
+  ): Promise<Review[]> {
     console.log("🚀 [reviewCanisterService] getAllReviews called with:", {
       limit,
       offset,
@@ -326,7 +405,10 @@ export const reviewCanisterService = {
         data: { limit, offset, status },
       });
 
-      console.log("✅ [reviewCanisterService] getAllReviews raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] getAllReviews raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review[] };
       console.log(
         "✅ [reviewCanisterService] getAllReviews extracted data:",
@@ -334,7 +416,10 @@ export const reviewCanisterService = {
       );
       return responseData.data || [];
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting all reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting all reviews:",
+        error,
+      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -345,19 +430,31 @@ export const reviewCanisterService = {
   async getReviewStatistics(): Promise<ReviewStatistics> {
     console.log("🚀 [reviewCanisterService] getReviewStatistics called");
     try {
-      const getReviewStatisticsFn = httpsCallable(functions, "getReviewStatistics");
+      const getReviewStatisticsFn = httpsCallable(
+        functions,
+        "getReviewStatistics",
+      );
 
       const result = await getReviewStatisticsFn({});
 
-      console.log("✅ [reviewCanisterService] getReviewStatistics raw result:", result);
-      const responseData = result.data as { success: boolean; data: ReviewStatistics };
+      console.log(
+        "✅ [reviewCanisterService] getReviewStatistics raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: ReviewStatistics;
+      };
       console.log(
         "✅ [reviewCanisterService] getReviewStatistics extracted data:",
         responseData,
       );
       return responseData.data;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting review statistics:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting review statistics:",
+        error,
+      );
       throw new Error(`Failed to get review statistics: ${error}`);
     }
   },
@@ -392,20 +489,30 @@ export const reviewCanisterService = {
   /**
    * Get reviews for a specific provider
    */
-  async getProviderReviews(providerId: string, limit?: number, offset?: number): Promise<Review[]> {
+  async getProviderReviews(
+    providerId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<Review[]> {
     console.log("🚀 [reviewCanisterService] getProviderReviews called with:", {
       providerId,
       limit,
       offset,
     });
     try {
-      const getProviderReviewsFn = httpsCallable(functions, "getProviderReviews");
+      const getProviderReviewsFn = httpsCallable(
+        functions,
+        "getProviderReviews",
+      );
 
       const result = await getProviderReviewsFn({
         data: { providerId, limit, offset },
       });
 
-      console.log("✅ [reviewCanisterService] getProviderReviews raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] getProviderReviews raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review[] };
       console.log(
         "✅ [reviewCanisterService] getProviderReviews extracted data:",
@@ -413,7 +520,10 @@ export const reviewCanisterService = {
       );
       return responseData.data || [];
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting provider reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting provider reviews:",
+        error,
+      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -421,7 +531,11 @@ export const reviewCanisterService = {
   /**
    * Get reviews for a specific service
    */
-  async getServiceReviews(serviceId: string, limit?: number, offset?: number): Promise<Review[]> {
+  async getServiceReviews(
+    serviceId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<Review[]> {
     console.log("🚀 [reviewCanisterService] getServiceReviews called with:", {
       serviceId,
       limit,
@@ -434,7 +548,10 @@ export const reviewCanisterService = {
         data: { serviceId, limit, offset },
       });
 
-      console.log("✅ [reviewCanisterService] getServiceReviews raw result:", result);
+      console.log(
+        "✅ [reviewCanisterService] getServiceReviews raw result:",
+        result,
+      );
       const responseData = result.data as { success: boolean; data: Review[] };
       console.log(
         "✅ [reviewCanisterService] getServiceReviews extracted data:",
@@ -442,7 +559,10 @@ export const reviewCanisterService = {
       );
       return responseData.data || [];
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting service reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting service reviews:",
+        error,
+      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -464,7 +584,10 @@ export const reviewCanisterService = {
       // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error checking if user can review booking:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error checking if user can review booking:",
+        error,
+      );
       return false;
     }
   },
@@ -480,13 +603,17 @@ export const reviewCanisterService = {
       );
 
       // Sort by creation date (most recent first)
-      visibleReviews.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      visibleReviews.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting recent reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting recent reviews:",
+        error,
+      );
       return []; // Return empty array on error
     }
   },
@@ -514,7 +641,10 @@ export const reviewCanisterService = {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error getting top rated reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error getting top rated reviews:",
+        error,
+      );
       return []; // Return empty array on error
     }
   },
@@ -524,12 +654,17 @@ export const reviewCanisterService = {
    * This is a placeholder for compatibility - Firebase doesn't need static initialization
    */
   async initializeStaticReviewsManually(): Promise<string> {
-    console.log("🚀 [reviewCanisterService] initializeStaticReviewsManually called");
+    console.log(
+      "🚀 [reviewCanisterService] initializeStaticReviewsManually called",
+    );
     try {
       // Firebase doesn't need static initialization like Motoko canisters
       return "Firebase reviews are dynamically managed, no static initialization needed";
     } catch (error) {
-      console.error("❌ [reviewCanisterService] Error initializing static reviews:", error);
+      console.error(
+        "❌ [reviewCanisterService] Error initializing static reviews:",
+        error,
+      );
       throw new Error(`Failed to initialize static reviews: ${error}`);
     }
   },

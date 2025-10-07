@@ -240,7 +240,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
               </span>
               <div className="mt-2 flex justify-center">
                 <StarRatingDisplay rating={averageRating} />
-              </div>
+              </div>  
               <p className="mt-1 text-sm text-gray-500">
                 based on {totalReviews} review{totalReviews > 1 ? "s" : ""}
               </p>
@@ -629,6 +629,7 @@ const ServiceDetailPage: React.FC = () => {
   }
 
   const { rating, providerName, name, category, location } = service;
+  console.log("Service Detail Page Component", service);
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;

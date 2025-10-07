@@ -66,7 +66,6 @@ const updateAllActors = (identity: Identity | null) => {
   //   console.warn("Failed to update auth actor:", error);
   // }
 
-
   try {
     updateReputationActor(identity);
   } catch (error) {

@@ -73,7 +73,7 @@ function calculateQualityScore(review) {
  */
 exports.submitReview = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {bookingId, rating, comment = ""} = payload;
   console.log("Submit Review Payload", payload);
 
@@ -110,6 +110,8 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
   try {
     return await db.runTransaction(async (transaction) => {
+      // ===== ALL READ OPERATIONS FIRST =====
+
       // Check if booking exists and user is the client
       const bookingRef = db.collection("bookings").doc(bookingId);
       const bookingSnap = await transaction.get(bookingRef);
@@ -122,6 +124,26 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
       }
 
       const booking = bookingSnap.data();
+
+      // Check if review already exists
+      const existingReviewsSnap = await db
+        .collection("reviews")
+        .where("bookingId", "==", bookingId)
+        .where("clientId", "==", authInfo.uid)
+        .get();
+
+      if (!existingReviewsSnap.empty) {
+        throw new functions.https.HttpsError(
+          "already-exists",
+          "Review already exists for this booking",
+        );
+      }
+
+      // Read service data for rating statistics update
+      const serviceRef = db.collection("services").doc(booking.serviceId);
+      const serviceSnap = await transaction.get(serviceRef);
+
+      // ===== VALIDATION CHECKS =====
 
       // Verify user is the client of this booking
       if (booking.clientId !== authInfo.uid) {
@@ -148,19 +170,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      // Check if review already exists
-      const existingReviewsSnap = await db
-        .collection("reviews")
-        .where("bookingId", "==", bookingId)
-        .where("clientId", "==", authInfo.uid)
-        .get();
-
-      if (!existingReviewsSnap.empty) {
-        throw new functions.https.HttpsError(
-          "already-exists",
-          "Review already exists for this booking",
-        );
-      }
+      // ===== ALL WRITE OPERATIONS AFTER =====
 
       // Create new review
       const reviewId = generateId();
@@ -188,8 +198,6 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
       transaction.set(reviewRef, newReview);
 
       // Update service rating statistics
-      const serviceRef = db.collection("services").doc(booking.serviceId);
-      const serviceSnap = await transaction.get(serviceRef);
 
       if (serviceSnap.exists) {
         const service = serviceSnap.data();
@@ -219,9 +227,9 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 /**
  * Get review by ID
  */
-exports.getReview = functions.https.onCall(async (data, context) => {
+exports.getReview = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {reviewId} = payload;
   console.log("Get Review Payload", payload);
 
@@ -264,9 +272,9 @@ exports.getReview = functions.https.onCall(async (data, context) => {
 /**
  * Get reviews for a booking
  */
-exports.getBookingReviews = functions.https.onCall(async (data, context) => {
+exports.getBookingReviews = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {bookingId} = payload;
   console.log("Get booking Review Payload", payload);
 
@@ -301,7 +309,7 @@ exports.getBookingReviews = functions.https.onCall(async (data, context) => {
  */
 exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {userId} = payload;
   console.log("Get User Review Payload", payload);
 
@@ -349,7 +357,7 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
  */
 exports.updateReview = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {reviewId, rating, comment = ""} = payload;
   console.log("Update Review Payload", payload);
 
@@ -386,6 +394,8 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
 
   try {
     return await db.runTransaction(async (transaction) => {
+      // ===== ALL READ OPERATIONS FIRST =====
+
       const reviewRef = db.collection("reviews").doc(reviewId);
       const reviewSnap = await transaction.get(reviewRef);
 
@@ -397,6 +407,12 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
       }
 
       const existingReview = reviewSnap.data();
+
+      // Read service data if we might need to update rating
+      const serviceRef = db.collection("services").doc(existingReview.serviceId);
+      const serviceSnap = await transaction.get(serviceRef);
+
+      // ===== VALIDATION CHECKS =====
 
       // Verify user owns this review
       if (existingReview.clientId !== authInfo.uid) {
@@ -413,6 +429,8 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
         );
       }
 
+      // ===== ALL WRITE OPERATIONS AFTER =====
+
       const now = new Date().toISOString();
       const updatedReview = {
         ...existingReview,
@@ -428,25 +446,20 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
       transaction.update(reviewRef, updatedReview);
 
       // Update service rating if rating changed
-      if (existingReview.rating !== rating) {
-        const serviceRef = db.collection("services").doc(existingReview.serviceId);
-        const serviceSnap = await transaction.get(serviceRef);
+      if (existingReview.rating !== rating && serviceSnap.exists) {
+        const service = serviceSnap.data();
+        const currentRating = service.averageRating || 0;
+        const reviewCount = service.reviewCount || 1;
 
-        if (serviceSnap.exists) {
-          const service = serviceSnap.data();
-          const currentRating = service.averageRating || 0;
-          const reviewCount = service.reviewCount || 1;
+        // Recalculate average by removing old rating and adding new rating
+        const oldTotal = currentRating * reviewCount;
+        const newTotal = oldTotal - existingReview.rating + rating;
+        const newAverageRating = newTotal / reviewCount;
 
-          // Recalculate average by removing old rating and adding new rating
-          const oldTotal = currentRating * reviewCount;
-          const newTotal = oldTotal - existingReview.rating + rating;
-          const newAverageRating = newTotal / reviewCount;
-
-          transaction.update(serviceRef, {
-            averageRating: newAverageRating,
-            updatedAt: now,
-          });
-        }
+        transaction.update(serviceRef, {
+          averageRating: newAverageRating,
+          updatedAt: now,
+        });
       }
 
       return {success: true, data: updatedReview};
@@ -465,7 +478,7 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
  */
 exports.deleteReview = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {reviewId} = payload;
   console.log("Delete Review Payload", payload);
 
@@ -487,6 +500,8 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 
   try {
     return await db.runTransaction(async (transaction) => {
+      // ===== ALL READ OPERATIONS FIRST =====
+
       const reviewRef = db.collection("reviews").doc(reviewId);
       const reviewSnap = await transaction.get(reviewRef);
 
@@ -498,6 +513,12 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
       }
 
       const existingReview = reviewSnap.data();
+
+      // Read service data for rating statistics update
+      const serviceRef = db.collection("services").doc(existingReview.serviceId);
+      const serviceSnap = await transaction.get(serviceRef);
+
+      // ===== VALIDATION CHECKS =====
 
       // Verify user owns this review or is admin
       if (existingReview.clientId !== authInfo.uid && !authInfo.isAdmin) {
@@ -514,6 +535,8 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
+      // ===== ALL WRITE OPERATIONS AFTER =====
+
       const now = new Date().toISOString();
       const updatedReview = {
         ...existingReview,
@@ -524,8 +547,6 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
       transaction.update(reviewRef, updatedReview);
 
       // Update service rating statistics
-      const serviceRef = db.collection("services").doc(existingReview.serviceId);
-      const serviceSnap = await transaction.get(serviceRef);
 
       if (serviceSnap.exists) {
         const service = serviceSnap.data();
@@ -561,9 +582,9 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 /**
  * Calculate average rating for a provider
  */
-exports.calculateProviderRating = functions.https.onCall(async (data, context) => {
+exports.calculateProviderRating = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {providerId} = payload;
 
   if (!providerId) {
@@ -618,9 +639,9 @@ exports.calculateProviderRating = functions.https.onCall(async (data, context) =
 /**
  * Calculate average rating for a service
  */
-exports.calculateServiceRating = functions.https.onCall(async (data, context) => {
+exports.calculateServiceRating = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
@@ -677,7 +698,7 @@ exports.calculateServiceRating = functions.https.onCall(async (data, context) =>
  */
 exports.calculateUserAverageRating = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {userId} = payload;
 
   // Authentication
@@ -754,8 +775,12 @@ exports.getAllReviews = functions.https.onCall(async (data, context) => {
   }
 
   // Extract payload for pagination
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {limit = 50, offset = 0, status = null} = payload;
+
+  // Convert limit and offset to integers
+  const limitInt = parseInt(limit) || 50;
+  const offsetInt = parseInt(offset) || 0;
 
   try {
     let query = db.collection("reviews").orderBy("createdAt", "desc");
@@ -764,7 +789,7 @@ exports.getAllReviews = functions.https.onCall(async (data, context) => {
       query = query.where("status", "==", status);
     }
 
-    query = query.limit(limit).offset(offset);
+    query = query.limit(limitInt).offset(offsetInt);
 
     const reviewsSnap = await query.get();
 
@@ -786,7 +811,8 @@ exports.getAllReviews = functions.https.onCall(async (data, context) => {
 exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
   // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+  // Removed the is not an admin
+  if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "permission-denied",
       "Admin access required",
@@ -822,7 +848,7 @@ exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
  */
 exports.flagReview = functions.https.onCall(async (data, context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {reviewId, reason} = payload;
 
   // Authentication - Admin only
@@ -881,9 +907,9 @@ exports.flagReview = functions.https.onCall(async (data, context) => {
 /**
  * Get reviews for a specific provider
  */
-exports.getProviderReviews = functions.https.onCall(async (data, context) => {
+exports.getProviderReviews = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {providerId, limit = 20, offset = 0} = payload;
 
   if (!providerId) {
@@ -893,14 +919,18 @@ exports.getProviderReviews = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // Convert limit and offset to integers
+  const limitInt = parseInt(limit) || 20;
+  const offsetInt = parseInt(offset) || 0;
+
   try {
     const reviewsSnap = await db
       .collection("reviews")
       .where("providerId", "==", providerId)
       .where("status", "==", "Visible")
       .orderBy("createdAt", "desc")
-      .limit(limit)
-      .offset(offset)
+      .limit(limitInt)
+      .offset(offsetInt)
       .get();
 
     const reviews = [];
@@ -918,10 +948,11 @@ exports.getProviderReviews = functions.https.onCall(async (data, context) => {
 /**
  * Get reviews for a service with pagination
  */
-exports.getServiceReviews = functions.https.onCall(async (data, context) => {
+exports.getServiceReviews = functions.https.onCall(async (data, _context) => {
   // Extract payload
-  const payload = data.data || data;
+  const payload = data.data.data || data;
   const {serviceId, limit = 20, offset = 0} = payload;
+  console.log("Get Service Reviews ", payload);
 
   if (!serviceId) {
     throw new functions.https.HttpsError(
@@ -930,14 +961,18 @@ exports.getServiceReviews = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // Convert limit and offset to integers
+  const limitInt = parseInt(limit) || 20;
+  const offsetInt = parseInt(offset) || 0;
+
   try {
     const reviewsSnap = await db
       .collection("reviews")
       .where("serviceId", "==", serviceId)
       .where("status", "==", "Visible")
       .orderBy("createdAt", "desc")
-      .limit(limit)
-      .offset(offset)
+      .limit(limitInt)
+      .offset(offsetInt)
       .get();
 
     const reviews = [];
