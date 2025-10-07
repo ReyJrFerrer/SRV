@@ -25,10 +25,6 @@
       "type": "motoko",
       "main": "src/backend/function/admin.mo"
     },
-    "feedback": {
-      "type": "motoko",
-      "main": "src/backend/function/feedback.mo"
-    },
     "notification": {
       "type": "motoko",
       "main": "src/backend/function/notification.mo"
@@ -41,7 +37,6 @@
         "reputation",
         "chat",
         "media",
-        "feedback",
         "notification"
       ],
       "type": "assets",

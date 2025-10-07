@@ -930,6 +930,49 @@ The fix uses a defensive pattern `const payload = data.data || data;` which:
 
 **Impact**: The wallet system is now fully migrated to Firebase with complete feature parity to the original Motoko canister. All wallet operations (balance queries, credits, debits, transfers, transaction history) are ready for Firebase-based operations. The frontend service maintains compatibility while leveraging Firebase's real-time capabilities. The `wallet.mo` canister can be safely removed in Phase 2 of the migration.
 
+## Task 3.1: Feedback Canister Migration ✅
+
+**Completed**: October 7, 2025
+
+**Description**: Migrated the feedback.mo canister to Firebase Cloud Functions following the established patterns.
+
+**Actions Taken**:
+
+1. Created `functions/src/feedback.js` with all functions from the feedback.mo canister:
+   - `submitFeedback` - Submit app feedback with rating and optional comment
+   - `getAllFeedback` - Get all feedback (admin function)
+   - `getMyFeedback` - Get user's own feedback
+   - `getFeedbackStats` - Get feedback statistics including averages and distribution
+   - `getFeedbackById` - Get specific feedback by ID
+   - `getRecentFeedback` - Get recent feedback with limit
+   - `submitReport` - Submit app reports for issues
+   - `getAllReports` - Get all reports (admin function)
+   - `getMyReports` - Get user's own reports
+   - `updateReportStatus` - Update report status (admin function)
+   - `getReportStats` - Get report statistics
+   - `getReportById` - Get specific report by ID
+   - `getRecentReports` - Get recent reports with limit
+
+2. Updated `functions/index.js` to import and export all feedback functions
+
+3. Completely refactored `src/frontend/src/services/feedbackCanisterService.ts` to use Firebase Cloud Functions:
+   - Replaced Motoko actor pattern with Firebase httpsCallable pattern
+   - Updated interfaces to use ISO string dates instead of Date objects
+   - Added proper logging and error handling following established patterns
+   - Used `data: { data: { ...params } }` payload structure as specified
+   - Added helper function `getTopRatedFeedback` for frontend convenience
+
+**Technical Details**:
+
+- All functions follow the established Firebase coding patterns with proper payload extraction (`data.data.data`)
+- Authentication handled via `getAuthInfo` helper function
+- Proper validation mirroring the original Motoko logic
+- Error handling with `functions.https.HttpsError`
+- Firestore collections: `app_feedback` and `app_reports`
+- Admin functions protected with `authInfo.isAdmin` checks
+
+**Result**: The feedback canister functionality is now fully migrated to Firebase Cloud Functions and the frontend service is updated to use the new Firebase-based API.
+
 ---
 
 ```

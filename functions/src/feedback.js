@@ -28,7 +28,7 @@ const MAX_COMMENT_LENGTH = 1000;
  * @return {string} Unique feedback ID
  */
 function generateFeedbackId() {
-  const timestamp = Date.now();
+  const timestamp = Date.now(); // Convert to seconds
   const random = Math.floor(Math.random() * 10000);
   return `feedback_${timestamp}_${random}`;
 }
@@ -38,7 +38,7 @@ function generateFeedbackId() {
  * @return {string} Unique report ID
  */
 function generateReportId() {
-  const timestamp = Date.now();
+  const timestamp = Date.now(); // Convert to seconds
   const random = Math.floor(Math.random() * 10000);
   return `report_${timestamp}_${random}`;
 }
@@ -117,17 +117,20 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
     }
 
     const userProfile = userSnap.data();
+    console.log("User profile data:", userProfile);
 
     const feedbackId = generateFeedbackId();
     const newFeedback = {
       id: feedbackId,
       userId: authInfo.uid,
-      userName: userProfile.name,
-      userPhone: userProfile.phone,
-      rating: rating,
-      comment: comment,
+      userName: userProfile?.name || "Unknown",
+      userPhone: userProfile?.phone || "Unknown",
+      rating: Number(rating), // Ensure it's a safe number
+      comment: comment || null,
       createdAt: new Date().toISOString(),
     };
+
+    console.log("New feedback object:", newFeedback);
 
     // Save feedback to Firestore
     await db.collection("app_feedback").doc(feedbackId).set(newFeedback);
@@ -217,7 +220,7 @@ exports.getMyFeedback = functions.https.onCall(async (data, context) => {
  * Get feedback statistics
  * Mirrors the Motoko getFeedbackStats function
  */
-exports.getFeedbackStats = functions.https.onCall(async (data, context) => {
+exports.getFeedbackStats = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get Feedback Stats Payload", payload);
@@ -292,7 +295,7 @@ exports.getFeedbackStats = functions.https.onCall(async (data, context) => {
  * Get feedback by ID
  * Mirrors the Motoko getFeedbackById function
  */
-exports.getFeedbackById = functions.https.onCall(async (data, context) => {
+exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   const {feedbackId} = payload;
@@ -327,7 +330,7 @@ exports.getFeedbackById = functions.https.onCall(async (data, context) => {
  * Get recent feedback (limited number)
  * Mirrors the Motoko getRecentFeedback function
  */
-exports.getRecentFeedback = functions.https.onCall(async (data, context) => {
+exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   const {limit} = payload;
@@ -398,17 +401,20 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     }
 
     const userProfile = userSnap.data();
+    console.log("User profile data for report:", userProfile);
 
     const reportId = generateReportId();
     const newReport = {
       id: reportId,
       userId: authInfo.uid,
-      userName: userProfile.name,
-      userPhone: userProfile.phone,
-      description: description,
+      userName: userProfile?.name || "Unknown",
+      userPhone: userProfile?.phone || "Unknown",
+      description: String(description), // Ensure it's a string
       status: "open", // Default status for new reports
       createdAt: new Date().toISOString(),
     };
+
+    console.log("New report object:", newReport);
 
     // Save report to Firestore
     await db.collection("app_reports").doc(reportId).set(newReport);
@@ -558,7 +564,7 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
  * Get report statistics
  * Mirrors the Motoko getReportStats function
  */
-exports.getReportStats = functions.https.onCall(async (data, context) => {
+exports.getReportStats = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get Report Stats Payload", payload);
@@ -602,7 +608,7 @@ exports.getReportStats = functions.https.onCall(async (data, context) => {
  * Get report by ID
  * Mirrors the Motoko getReportById function
  */
-exports.getReportById = functions.https.onCall(async (data, context) => {
+exports.getReportById = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   const {reportId} = payload;
@@ -637,7 +643,7 @@ exports.getReportById = functions.https.onCall(async (data, context) => {
  * Get recent reports (limited number)
  * Mirrors the Motoko getRecentReports function
  */
-exports.getRecentReports = functions.https.onCall(async (data, context) => {
+exports.getRecentReports = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data.data || data;
   const {limit} = payload;

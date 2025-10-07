@@ -146,6 +146,23 @@ const {
   getServiceReviews,
 } = require("./src/review");
 
+// Import Feedback Management functions
+const {
+  submitFeedback,
+  getAllFeedback,
+  getMyFeedback,
+  getFeedbackStats,
+  getFeedbackById,
+  getRecentFeedback,
+  submitReport,
+  getAllReports,
+  getMyReports,
+  updateReportStatus,
+  getReportStats,
+  getReportById,
+  getRecentReports,
+} = require("./src/feedback");
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -244,4 +261,19 @@ exports.getReviewStatistics = getReviewStatistics;
 exports.flagReview = flagReview;
 exports.getProviderReviews = getProviderReviews;
 exports.getServiceReviews = getServiceReviews;
+
+// Export Feedback Management Functions
+exports.submitFeedback = submitFeedback;
+exports.getAllFeedback = getAllFeedback;
+exports.getMyFeedback = getMyFeedback;
+exports.getFeedbackStats = getFeedbackStats;
+exports.getFeedbackById = getFeedbackById;
+exports.getRecentFeedback = getRecentFeedback;
+exports.submitReport = submitReport;
+exports.getAllReports = getAllReports;
+exports.getMyReports = getMyReports;
+exports.updateReportStatus = updateReportStatus;
+exports.getReportStats = getReportStats;
+exports.getReportById = getReportById;
+exports.getRecentReports = getRecentReports;
 
