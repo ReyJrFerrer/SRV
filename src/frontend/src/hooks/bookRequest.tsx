@@ -143,7 +143,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           now.getHours(), // Use current hour instead of fixed 12
           now.getMinutes(), // Use current minute
           0,
-          0
+          0,
         );
 
         // Get service data if not already loaded
@@ -210,7 +210,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           9, // Use 9 AM as a safe default hour for date queries
           0,
           0,
-          0
+          0,
         );
         const slots = await bookingCanisterService.getServiceAvailableSlots(
           serviceId,
@@ -267,21 +267,31 @@ export const useBookRequest = (): UseBookRequestReturn => {
           0,
         );
 
-          // Debug logging
-          const currentTime = new Date();
-          const isToday = date.toDateString() === currentTime.toDateString();
-          console.log("🔍 [checkTimeSlotAvailability] Debug info:", {
-            originalTimeSlot: timeSlot,
-            parsedHours: hours,
-            parsedMinutes: minutes,
-            originalDate: date.toISOString(),
-            requestedDateTime: requestedDateTime.toISOString(),
-            dayOfWeek: requestedDateTime.getDay(),
-            dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDateTime.getDay()],
-            isToday,
-            currentTime: currentTime.toISOString(),
-            timeDifferenceHours: (requestedDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60)
-          });        // IMPORTANT: Using booking canister for availability check (with conflict checking)
+        // Debug logging
+        const currentTime = new Date();
+        const isToday = date.toDateString() === currentTime.toDateString();
+        console.log("🔍 [checkTimeSlotAvailability] Debug info:", {
+          originalTimeSlot: timeSlot,
+          parsedHours: hours,
+          parsedMinutes: minutes,
+          originalDate: date.toISOString(),
+          requestedDateTime: requestedDateTime.toISOString(),
+          dayOfWeek: requestedDateTime.getDay(),
+          dayName: [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ][requestedDateTime.getDay()],
+          isToday,
+          currentTime: currentTime.toISOString(),
+          timeDifferenceHours:
+            (requestedDateTime.getTime() - currentTime.getTime()) /
+            (1000 * 60 * 60),
+        }); // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(
             serviceId,
@@ -356,10 +366,18 @@ export const useBookRequest = (): UseBookRequestReturn => {
               originalTime: new Date().toISOString(),
               requestedDateTime: requestedDate.toISOString(),
               requestedDayOfWeek: requestedDate.getDay(),
-              requestedDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDate.getDay()],
+              requestedDayName: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ][requestedDate.getDay()],
               scheduledTime: bookingData.scheduledTime,
               parsedHour: startHour,
-              parsedMinute: startMinute
+              parsedMinute: startMinute,
             });
           }
         } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
@@ -401,20 +419,36 @@ export const useBookRequest = (): UseBookRequestReturn => {
             startHour,
             startMinute,
             0,
-            0
+            0,
           );
 
           // Debug logging
           console.log("🔍 [createBookingRequest] Date debugging:", {
             originalScheduledDate: bookingData.scheduledDate.toISOString(),
             originalDayOfWeek: bookingData.scheduledDate.getDay(),
-            originalDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][bookingData.scheduledDate.getDay()],
+            originalDayName: [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ][bookingData.scheduledDate.getDay()],
             requestedDateTime: requestedDate.toISOString(),
             requestedDayOfWeek: requestedDate.getDay(),
-            requestedDayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][requestedDate.getDay()],
+            requestedDayName: [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ][requestedDate.getDay()],
             scheduledTime: bookingData.scheduledTime,
             parsedHour: startHour,
-            parsedMinute: startMinute
+            parsedMinute: startMinute,
           });
         } else {
           throw new Error(

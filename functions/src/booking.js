@@ -239,6 +239,9 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     }
 
     const service = serviceDoc.data();
+    console.log(`[createBooking] Fetched service data for serviceId ${serviceId}:`,
+      JSON.stringify(service, null, 2));
+
     if (service.providerId !== providerId) {
       console.error(`❌ [createBooking] 
         Service provider mismatch. Expected ${providerId}, got ${service.providerId}.`);
@@ -265,16 +268,24 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     if (servicePackageIds.length > 0) {
       for (const packageId of servicePackageIds) {
         console.log(`📦 [createBooking] Validating package ${packageId}...`);
-        const packageDoc = await db.collection("servicePackages").doc(packageId).get();
+        // Corrected collection name from "servicePackages" to "service_packages"
+        const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
-          throw new functions.https.HttpsError("not-found", `Package ${packageId} not found`);
+          const errorMsg =
+          `Package with ID ${packageId} not found in 'servicePackages' collection.`;
+          console.error(`❌ [createBooking] Package validation failed. ${errorMsg}`);
+          throw new functions.https.HttpsError("not-found", errorMsg);
         }
 
         const packageData = packageDoc.data();
         if (packageData.serviceId !== serviceId) {
+          const errorMsg =
+           `Package ${packageId} belongs to service ${packageData.serviceId}, 
+           but booking is for service ${serviceId}.`;
+          console.error(`❌ [createBooking] Package service mismatch. ${errorMsg}`);
           throw new functions.https.HttpsError(
             "permission-denied",
-            `Package ${packageId} does not belong to the specified service`,
+            errorMsg,
           );
         }
 
@@ -290,10 +301,11 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     console.log("🔄 [createBooking] Checking for booking conflicts...");
     const hasConflict = await checkBookingConflicts(serviceId, providerId, requestedDate);
     if (hasConflict) {
-      console.warn("⚠️ [createBooking] Booking conflict detected.");
+      const errorMsg = "The requested time conflicts with an existing booking.";
+      console.warn(`⚠️ [createBooking] Booking conflict detected. ${errorMsg}`);
       throw new functions.https.HttpsError(
         "failed-precondition",
-        "The requested time conflicts with an existing booking",
+        errorMsg,
       );
     }
 

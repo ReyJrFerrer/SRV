@@ -114,7 +114,8 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
-  servicePackageId: string[]; // Array of package IDs for multiple package bookings
+  servicePackageId: string[]; // Array of package IDs for multiple package bookings (frontend field name)
+  servicePackageIds?: string[]; // Backend field name (optional for compatibility)
   status: BookingStatus;
   requestedDate: string;
   scheduledDate?: string;
@@ -142,6 +143,12 @@ export interface Booking {
 }
 
 // Firebase booking data is already in the correct format, no conversion needed
+
+// Helper function to map backend field names to frontend interface
+const mapBookingFields = (booking: any): Booking => ({
+  ...booking,
+  servicePackageId: booking.servicePackageIds || booking.servicePackageId || []
+});
 
 // Booking Canister Service Functions
 export const bookingCanisterService = {
@@ -250,6 +257,12 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] getBooking extracted data:",
         responseData,
       );
+      
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      if (responseData) {
+        return mapBookingFields(responseData);
+      }
+      
       return responseData;
     } catch (error) {
       console.error(
@@ -281,10 +294,14 @@ export const bookingCanisterService = {
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      console.log(
-        `✅ [bookingCanisterService] getClientBookings extracted ${responseData?.length ?? 0} bookings.`,
+      console.log( "Booking Canister Data function",
+        responseData
       );
-      return responseData || [];
+      
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+      
+      return mappedBookings;
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error fetching client bookings:",
@@ -321,7 +338,11 @@ export const bookingCanisterService = {
       console.log(
         `✅ [bookingCanisterService] getProviderBookings extracted ${responseData?.length ?? 0} bookings.`,
       );
-      return responseData || [];
+      
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+      
+      return mappedBookings;
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error fetching provider bookings:",
@@ -356,7 +377,11 @@ export const bookingCanisterService = {
       console.log(
         `✅ [bookingCanisterService] getBookingsByStatus extracted ${responseData?.length ?? 0} bookings.`,
       );
-      return responseData || [];
+      
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+      
+      return mappedBookings;
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error fetching bookings by status:",
@@ -395,7 +420,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] acceptBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error accepting booking:",
@@ -427,7 +452,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] declineBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error declining booking:",
@@ -459,7 +484,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] cancelBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error cancelling booking:",
@@ -491,7 +516,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] startBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error starting booking:",
@@ -530,7 +555,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] completeBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error completing booking:",
@@ -562,7 +587,7 @@ export const bookingCanisterService = {
         "✅ [bookingCanisterService] disputeBooking extracted data:",
         responseData,
       );
-      return responseData;
+      return mapBookingFields(responseData);
     } catch (error) {
       console.error(
         "❌ [bookingCanisterService] Error disputing booking:",

@@ -562,7 +562,7 @@ const ClientBookingPageComponent: React.FC = () => {
               9, // Use 9 AM instead of noon to avoid any timezone edge cases
               0,
               0,
-              0
+              0,
             )
           : selectedDate;
 
@@ -721,7 +721,7 @@ const ClientBookingPageComponent: React.FC = () => {
           9, // Use 9 AM for consistency
           0,
           0,
-          0
+          0,
         );
       }
 
@@ -742,7 +742,7 @@ const ClientBookingPageComponent: React.FC = () => {
         9, // Use 9 AM instead of noon to be consistent with business hours
         0,
         0,
-        0
+        0,
       );
       setSelectedDate(adjustedDate);
     } else {
