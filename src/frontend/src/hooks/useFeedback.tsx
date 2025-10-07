@@ -76,9 +76,7 @@ export const useFeedback = () => {
       return await feedbackCanisterService.getMyFeedback();
     } catch (err) {
       console.error("Failed to get my feedback:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to get feedback",
-      );
+      setError(err instanceof Error ? err.message : "Failed to get feedback");
       return [];
     }
   }, [isAuthenticated]);

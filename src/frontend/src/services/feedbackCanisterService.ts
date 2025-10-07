@@ -57,7 +57,7 @@ export const feedbackCanisterService = {
       const submitFeedbackFn = httpsCallable(functions, "submitFeedback");
 
       const result = await submitFeedbackFn({
-        data: { rating, comment  },
+        data: { rating, comment },
       });
 
       console.log(
@@ -91,7 +91,7 @@ export const feedbackCanisterService = {
       const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
 
       const result = await getAllFeedbackFn({
-        data: { },
+        data: {},
       });
 
       console.log(
@@ -125,7 +125,7 @@ export const feedbackCanisterService = {
       const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
 
       const result = await getMyFeedbackFn({
-        data: { },
+        data: {},
       });
 
       console.log(
@@ -195,7 +195,7 @@ export const feedbackCanisterService = {
       const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
 
       const result = await getFeedbackByIdFn({
-        data: { feedbackId  },
+        data: { feedbackId },
       });
 
       console.log(
@@ -334,7 +334,7 @@ export const feedbackCanisterService = {
       const getMyReportsFn = httpsCallable(functions, "getMyReports");
 
       const result = await getMyReportsFn({
-        data: { },
+        data: {},
       });
 
       console.log(
