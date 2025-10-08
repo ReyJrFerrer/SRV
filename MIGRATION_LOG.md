@@ -1065,6 +1065,7 @@ The fix uses a defensive pattern `const payload = data.data || data;` which:
 **Real-Time Capabilities**:
 
 The migrated chat service enables:
+
 - ✅ **Real-time message delivery**: Firestore listeners for instant message updates
 - ✅ **Live conversation lists**: Auto-updating conversation summaries
 - ✅ **Instant read receipts**: Real-time status updates when messages are read

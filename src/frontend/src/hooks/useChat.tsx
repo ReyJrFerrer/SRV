@@ -371,7 +371,7 @@ export const useChat = () => {
     if (!identity) return 0;
 
     const currentUserId = identity.getPrincipal().toString();
-    
+
     return conversations.reduce((total, convoSummary) => {
       // unreadCount is now an object: { [userId: string]: number }
       const count = convoSummary.conversation.unreadCount[currentUserId] || 0;

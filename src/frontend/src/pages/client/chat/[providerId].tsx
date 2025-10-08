@@ -148,7 +148,7 @@ const ConversationPage: React.FC = () => {
   // Format timestamp for display in chat bubbles
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
-    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);

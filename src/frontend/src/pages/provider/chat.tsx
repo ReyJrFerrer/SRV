@@ -38,7 +38,7 @@ const ProviderChatPage: React.FC = () => {
   // Helper for timestamp formatting (accepts string or Date)
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
-    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
@@ -98,7 +98,8 @@ const ProviderChatPage: React.FC = () => {
                   const otherUserImageUrl =
                     conversationSummary.otherUserImageUrl;
                   // Get unread count for current user (unreadCount is now an object)
-                  const unreadCount = conversation.unreadCount[currentUserId] || 0;
+                  const unreadCount =
+                    conversation.unreadCount[currentUserId] || 0;
 
                   return (
                     <li

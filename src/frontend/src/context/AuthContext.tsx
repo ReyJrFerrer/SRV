@@ -71,10 +71,7 @@ const updateAllActors = (identity: Identity | null) => {
   } catch (error) {
     console.warn("Failed to update reputation actor:", error);
   }
-
-
 };
-
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

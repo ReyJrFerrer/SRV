@@ -45,7 +45,6 @@ export interface FrontendMessagePage {
   nextPageToken?: string;
 }
 
-
 // Helper function to adapt backend message format to frontend format
 const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
   const getMessageType = (type: any): "Text" | "File" => {
@@ -144,9 +143,8 @@ export const chatCanisterService = {
         "✅ [chatCanisterService] createConversation raw result:",
         result,
       );
-      const responseData = (
-        result.data as { success: boolean; data: any }
-      ).data;
+      const responseData = (result.data as { success: boolean; data: any })
+        .data;
       console.log(
         "✅ [chatCanisterService] createConversation extracted data:",
         responseData,
@@ -196,9 +194,8 @@ export const chatCanisterService = {
       });
 
       console.log("✅ [chatCanisterService] sendMessage raw result:", result);
-      const responseData = (
-        result.data as { success: boolean; data: any }
-      ).data;
+      const responseData = (result.data as { success: boolean; data: any })
+        .data;
       console.log(
         "✅ [chatCanisterService] sendMessage extracted data:",
         responseData,
@@ -227,9 +224,8 @@ export const chatCanisterService = {
         "✅ [chatCanisterService] getMyConversations raw result:",
         result,
       );
-      const responseData = (
-        result.data as { success: boolean; data: any[] }
-      ).data;
+      const responseData = (result.data as { success: boolean; data: any[] })
+        .data;
       console.log(
         `✅ [chatCanisterService] getMyConversations extracted ${responseData?.length ?? 0} conversations.`,
       );
@@ -336,9 +332,8 @@ export const chatCanisterService = {
         "✅ [chatCanisterService] markMessagesAsRead raw result:",
         result,
       );
-      const responseData = (
-        result.data as { success: boolean; data: boolean }
-      ).data;
+      const responseData = (result.data as { success: boolean; data: boolean })
+        .data;
       console.log(
         "✅ [chatCanisterService] markMessagesAsRead extracted data:",
         responseData,
@@ -375,9 +370,8 @@ export const chatCanisterService = {
         "✅ [chatCanisterService] getConversation raw result:",
         result,
       );
-      const responseData = (
-        result.data as { success: boolean; data: any }
-      ).data;
+      const responseData = (result.data as { success: boolean; data: any })
+        .data;
       console.log(
         "✅ [chatCanisterService] getConversation extracted data:",
         responseData,
