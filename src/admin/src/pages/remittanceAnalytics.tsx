@@ -84,6 +84,9 @@ export const RemittanceAnalyticsPage: React.FC = () => {
       currency: "PHP",
     }).format(amount);
   };
+
+  // Removed unused formatDate helper to satisfy noUnusedLocals
+
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
   };
@@ -103,7 +106,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex items-center justify-between">

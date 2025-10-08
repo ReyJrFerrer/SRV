@@ -9,7 +9,10 @@ import {
   ArrowPathIcon,
   PhoneIcon,
   UserIcon,
-  XCircleIcon,
+  CheckCircleIcon,
+  ChartBarIcon,
+  ArrowLeftIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
@@ -18,7 +21,6 @@ export const ProviderManagementPage: React.FC = () => {
     loading,
     refreshRemittanceProviders,
     getProviderDashboard,
-    getProviderAnalytics,
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,13 +30,22 @@ export const ProviderManagementPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerDashboard, setProviderDashboard] = useState<any | null>(null);
-  const [, setProviderAnalytics] = useState<any | null>(null);
+  // Removed unused providerAnalytics state
   const [showProviderDetails, setShowProviderDetails] = useState(false);
-  const [dateRange] = useState<"week" | "month" | "quarter" | "year">("month");
+  const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
     refreshRemittanceProviders();
   }, [refreshRemittanceProviders]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowMobileBar(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const filteredProviders = remittanceProviders
     .filter(
@@ -108,39 +119,25 @@ export const ProviderManagementPage: React.FC = () => {
     setShowProviderDetails(true);
 
     try {
-      const [dashboard, analytics] = await Promise.all([
-        getProviderDashboard(provider.id),
-        getProviderAnalytics(provider.id, getDateRangeStart(), new Date()),
-      ]);
-
+      const dashboard = await getProviderDashboard(provider.id);
       setProviderDashboard(dashboard);
-      setProviderAnalytics(analytics);
     } catch (error) {
       console.error("Failed to load provider details:", error);
     }
   };
 
-  const getDateRangeStart = () => {
-    const now = new Date();
-    switch (dateRange) {
-      case "week":
-        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      case "month":
-        return new Date(now.getFullYear(), now.getMonth(), 1);
-      case "quarter":
-        const quarter = Math.floor(now.getMonth() / 3);
-        return new Date(now.getFullYear(), quarter * 3, 1);
-      case "year":
-        return new Date(now.getFullYear(), 0, 1);
-      default:
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    }
+  // Status chip helpers for provider status
+  const getStatusColor = (overdueOrders: number, pendingOrders: number) => {
+    if (overdueOrders > 0) return "bg-red-100 text-red-800";
+    if (pendingOrders > 0) return "bg-yellow-100 text-yellow-800";
+    return "bg-green-100 text-green-800";
   };
 
-  const getStatusColor = (overdueOrders: number, pendingOrders: number) => {
-    if (overdueOrders > 0) return "text-red-600";
-    if (pendingOrders > 0) return "text-yellow-600";
-    return "text-green-600";
+  const getStatusIcon = (overdueOrders: number, pendingOrders: number) => {
+    if (overdueOrders > 0)
+      return <ExclamationTriangleIcon className="h-4 w-4" />;
+    if (pendingOrders > 0) return <ClockIcon className="h-4 w-4" />;
+    return <CheckCircleIcon className="h-4 w-4" />;
   };
 
   const getStatusText = (overdueOrders: number, pendingOrders: number) => {
@@ -152,50 +149,94 @@ export const ProviderManagementPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Link
-                  to="/remittance"
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  ← Back to Remittance
-                </Link>
-                <h1 className="mt-2 text-2xl font-bold text-gray-900">
-                  Provider Management
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">
-                  Manage service providers and their commission payments
-                </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Provider Management
+                  </h1>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Manage service providers and their commission payments
+                  </p>
+                </div>
               </div>
-              <div className="flex space-x-4">
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={() => refreshRemittanceProviders(true)}
                   disabled={loading.remittanceProviders}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
+                <Link
+                  to="/remittance/analytics"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
+                  Analytics
+                </Link>
+                <Link
+                  to="/remittance"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={() => refreshRemittanceProviders(true)}
+              disabled={loading.remittanceProviders}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon className="mr-2 h-4 w-4" />
+              Refresh
+            </button>
+            <Link
+              to="/remittance/analytics"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
+              Analytics
+            </Link>
+            <Link
+              to="/remittance"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         {/* Stats Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-4">
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
-                    <UserIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <UserIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -213,13 +254,11 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
-                    <CurrencyDollarIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -242,13 +281,11 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500">
-                    <ClockIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ClockIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -271,13 +308,11 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-500">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -300,7 +335,7 @@ export const ProviderManagementPage: React.FC = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-lg border border-yellow-100 bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Search */}
             <div>
@@ -368,8 +403,8 @@ export const ProviderManagementPage: React.FC = () => {
         </div>
 
         {/* Providers Table */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-6 py-4">
+        <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+          <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
               Service Providers ({filteredProviders.length})
             </h2>
@@ -399,7 +434,7 @@ export const ProviderManagementPage: React.FC = () => {
               </div>
             ) : (
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-blue-50/60">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Provider
@@ -430,11 +465,13 @@ export const ProviderManagementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500">
-                              <span className="text-sm font-medium text-white">
-                                {provider.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
+                            <img
+                              src={encodeURI(
+                                "/images/srv characters (SVG)/plumber.svg",
+                              )}
+                              alt="Provider"
+                              className="h-10 w-10 rounded-full border border-blue-100 bg-white object-contain p-1"
+                            />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
@@ -460,12 +497,18 @@ export const ProviderManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`text-sm font-medium ${getStatusColor(provider.overdueOrders, provider.pendingOrders)}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(provider.overdueOrders, provider.pendingOrders)}`}
                         >
-                          {getStatusText(
+                          {getStatusIcon(
                             provider.overdueOrders,
                             provider.pendingOrders,
                           )}
+                          <span className="ml-1">
+                            {getStatusText(
+                              provider.overdueOrders,
+                              provider.pendingOrders,
+                            )}
+                          </span>
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -474,7 +517,7 @@ export const ProviderManagementPage: React.FC = () => {
                       <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                         <button
                           onClick={() => handleViewProvider(provider)}
-                          className="inline-flex items-center rounded-md border border-indigo-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                          className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Details
                         </button>
@@ -490,111 +533,155 @@ export const ProviderManagementPage: React.FC = () => {
 
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
-          <div className="relative top-20 mx-auto w-4/5 max-w-6xl rounded-md border bg-white p-5 shadow-lg">
-            <div className="mt-3">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Provider Details - {selectedProvider.name}
+        <div
+          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-5xl rounded-xl border border-blue-100 bg-white shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
+                  <UserIcon className="h-5 w-5 text-blue-600" />
+                </span>
+                <h3 className="text-base font-semibold text-gray-900">
+                  Provider Details
                 </h3>
-                <button
-                  onClick={() => {
-                    setShowProviderDetails(false);
-                    setSelectedProvider(null);
-                    setProviderDashboard(null);
-                    setProviderAnalytics(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircleIcon className="h-6 w-6" />
-                </button>
+                <span className="hidden text-sm text-gray-500 sm:inline">
+                  – {selectedProvider.name}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setShowProviderDetails(false);
+                  setSelectedProvider(null);
+                  setProviderDashboard(null);
+                }}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4">
+              {/* Profile summary */}
+              <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={encodeURI("/images/srv characters (SVG)/plumber.svg")}
+                    alt="Provider"
+                    className="h-14 w-14 rounded-full border border-blue-100 bg-white object-contain p-1"
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-semibold text-gray-900">
+                      {selectedProvider.name}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                      <span className="inline-flex items-center">
+                        <PhoneIcon className="mr-1 h-4 w-4 text-gray-500" />
+                        {selectedProvider.phone}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <span className="font-mono text-gray-700">
+                        {selectedProvider.id}
+                      </span>
+                      {typeof selectedProvider.overdueOrders === "number" &&
+                        typeof selectedProvider.pendingOrders === "number" && (
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(selectedProvider.overdueOrders, selectedProvider.pendingOrders)}`}
+                          >
+                            {getStatusIcon(
+                              selectedProvider.overdueOrders,
+                              selectedProvider.pendingOrders,
+                            )}
+                            <span className="ml-1">
+                              {getStatusText(
+                                selectedProvider.overdueOrders,
+                                selectedProvider.pendingOrders,
+                              )}
+                            </span>
+                          </span>
+                        )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Details grid */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {/* Provider Info */}
-                <div className="rounded-lg bg-gray-50 p-6">
-                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                <div className="rounded-lg border border-blue-50 bg-white p-5">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
                     Provider Information
                   </h4>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">
-                        Name:
-                      </span>
-                      <p className="text-sm text-gray-900">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Name:</span>
+                      <span className="font-medium text-gray-900">
                         {selectedProvider.name}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">
-                        Phone:
                       </span>
-                      <p className="text-sm text-gray-900">
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Phone:</span>
+                      <span className="font-medium text-gray-900">
                         {selectedProvider.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">
-                        Provider ID:
                       </span>
-                      <p className="font-mono text-sm text-gray-900">
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Provider ID:</span>
+                      <span className="font-mono text-gray-900">
                         {selectedProvider.id}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">
-                        Last Activity:
                       </span>
-                      <p className="text-sm text-gray-900">
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Last Activity:</span>
+                      <span className="font-medium text-gray-900">
                         {formatDate(new Date(selectedProvider.lastActivity))}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Financial Summary */}
-                <div className="rounded-lg bg-gray-50 p-6">
-                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                <div className="rounded-lg border border-blue-50 bg-white p-5">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
                     Financial Summary
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Total Earnings:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-gray-500">Total Earnings:</span>
+                      <span className="font-medium text-gray-900">
                         {formatCurrency(selectedProvider.totalEarnings)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Settled Commission:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-gray-500">Settled Commission:</span>
+                      <span className="font-medium text-gray-900">
                         {formatCurrency(selectedProvider.settledCommission)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-gray-500">
                         Outstanding Balance:
                       </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="font-medium text-gray-900">
                         {formatCurrency(selectedProvider.outstandingBalance)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Pending Commission:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-gray-500">Pending Commission:</span>
+                      <span className="font-medium text-gray-900">
                         {formatCurrency(selectedProvider.pendingCommission)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-gray-500">
                         Average Order Value:
                       </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="font-medium text-gray-900">
                         {formatCurrency(selectedProvider.averageOrderValue)}
                       </span>
                     </div>
@@ -602,33 +689,29 @@ export const ProviderManagementPage: React.FC = () => {
                 </div>
 
                 {/* Order Statistics */}
-                <div className="rounded-lg bg-gray-50 p-6">
-                  <h4 className="mb-4 text-lg font-medium text-gray-900">
+                <div className="rounded-lg border border-blue-50 bg-white p-5">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
                     Order Statistics
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-gray-500">
                         Total Orders Completed:
                       </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="font-medium text-gray-900">
                         {selectedProvider.totalOrdersCompleted}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Pending Orders:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-gray-500">Pending Orders:</span>
+                      <span className="font-medium text-gray-900">
                         {selectedProvider.pendingOrders}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Overdue Orders:
-                      </span>
+                      <span className="text-gray-500">Overdue Orders:</span>
                       <span
-                        className={`text-sm font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
+                        className={`font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
                       >
                         {selectedProvider.overdueOrders}
                       </span>
@@ -638,64 +721,62 @@ export const ProviderManagementPage: React.FC = () => {
 
                 {/* Recent Activity */}
                 {providerDashboard && (
-                  <div className="rounded-lg bg-gray-50 p-6">
-                    <h4 className="mb-4 text-lg font-medium text-gray-900">
+                  <div className="rounded-lg border border-blue-50 bg-white p-5">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-900">
                       Recent Activity
                     </h4>
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-sm font-medium text-gray-500">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
                           Orders Awaiting Payment:
                         </span>
-                        <p className="text-sm text-gray-900">
+                        <span className="font-medium text-gray-900">
                           {providerDashboard.ordersAwaitingPayment?.length || 0}
-                        </p>
+                        </span>
                       </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-500">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
                           Orders Pending Validation:
                         </span>
-                        <p className="text-sm text-gray-900">
+                        <span className="font-medium text-gray-900">
                           {providerDashboard.ordersPendingValidation?.length ||
                             0}
-                        </p>
+                        </span>
                       </div>
                       {providerDashboard.nextDeadline && (
-                        <div>
-                          <span className="text-sm font-medium text-gray-500">
-                            Next Deadline:
-                          </span>
-                          <p className="text-sm text-gray-900">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Next Deadline:</span>
+                          <span className="font-medium text-gray-900">
                             {formatDate(
                               new Date(providerDashboard.nextDeadline),
                             )}
-                          </p>
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowProviderDetails(false);
-                    setSelectedProvider(null);
-                    setProviderDashboard(null);
-                    setProviderAnalytics(null);
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Close
-                </button>
-                <Link
-                  to={`/remittance/analytics?provider=${selectedProvider.id}`}
-                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-                >
-                  View Analytics
-                </Link>
-              </div>
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={() => {
+                  setShowProviderDetails(false);
+                  setSelectedProvider(null);
+                  setProviderDashboard(null);
+                }}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <Link
+                to={`/remittance/analytics?provider=${selectedProvider.id}`}
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+              >
+                View Analytics
+              </Link>
             </div>
           </div>
         </div>

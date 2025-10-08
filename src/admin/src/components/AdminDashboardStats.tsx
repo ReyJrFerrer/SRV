@@ -1,5 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  UserGroupIcon,
+  ClipboardDocumentListIcon,
+  TicketIcon,
+  ShieldCheckIcon,
+  CurrencyDollarIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/solid";
 
 interface AdminDashboardStatsProps {
   stats: {
@@ -12,12 +20,14 @@ interface AdminDashboardStatsProps {
   };
   loading?: boolean;
   onRefresh: () => void;
+  showRefresh?: boolean;
 }
 
 export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   stats,
   loading = false,
-  onRefresh,
+  onRefresh: _onRefresh,
+  showRefresh: _showRefresh = false,
 }) => {
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
@@ -45,76 +55,65 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     );
   }
 
-  const statCards = [
+  const statCards: Array<{
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: React.ElementType;
+    isAlert?: boolean;
+  }> = [
     {
       title: "Service Providers",
       value: formatNumber(stats.totalServiceProviders),
       subtitle: "Active providers",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-600",
-      iconColor: "bg-blue-100",
+      icon: UserGroupIcon,
     },
     {
       title: "Pending Validations",
       value: formatNumber(stats.totalPendingValidations),
-      subtitle: "Awaiting review",
-      bgColor: "bg-yellow-50",
-      textColor: "text-yellow-600",
-      iconColor: "bg-yellow-100",
+      subtitle: "CLICK HERE TO VIEW →",
+      icon: ClipboardDocumentListIcon,
       isAlert: stats.totalPendingValidations > 0,
     },
     {
       title: "Pending Tickets",
       value: formatNumber(stats.totalPendingTickets),
-      subtitle: "Awaiting resolution",
-      bgColor: "bg-red-50",
-      textColor: "text-red-600",
-      iconColor: "bg-red-100",
+      subtitle: "CLICK HERE TO VIEW →",
+      icon: TicketIcon,
       isAlert: stats.totalPendingTickets > 0,
     },
     {
       title: "Admin Users",
       value: formatNumber(stats.totalAdminUsers),
       subtitle: "System administrators",
-      bgColor: "bg-gray-50",
-      textColor: "text-gray-600",
-      iconColor: "bg-gray-100",
+      icon: ShieldCheckIcon,
     },
     {
       title: "Pending Commission",
       value: formatCurrency(stats.totalPendingCommission),
       subtitle: "Awaiting settlement",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-600",
-      iconColor: "bg-orange-100",
+      icon: CurrencyDollarIcon,
     },
     {
       title: "Settled Commission",
       value: formatCurrency(stats.totalSettledCommission),
       subtitle: "Total processed",
-      bgColor: "bg-green-50",
-      textColor: "text-green-600",
-      iconColor: "bg-green-100",
+      icon: BanknotesIcon,
     },
   ];
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">System Overview</h2>
-        <button
-          onClick={onRefresh}
-          className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-        >
-          Refresh Stats
-        </button>
+        <h2 className="text-xl font-semibold text-blue-900">System Overview</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card, index) => {
+          const Icon = card.icon;
           const CardContent = (
             <div
-              className={`${card.bgColor} relative overflow-hidden rounded-lg border border-gray-200 p-6 transition-all hover:shadow-md ${
+              className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-white p-6 shadow-sm transition-all hover:shadow-md ${
                 card.title === "Pending Validations" ||
                 card.title === "Pending Tickets"
                   ? "cursor-pointer"
@@ -123,28 +122,28 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             >
               {card.isAlert && (
                 <div className="absolute top-2 right-2">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-400"></div>
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></div>
                 </div>
               )}
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="mb-1 text-sm font-medium text-gray-600">
+                  <p className="mb-1 text-sm font-medium text-yellow-800">
                     {card.title}
                   </p>
-                  <p className={`text-2xl font-bold ${card.textColor}`}>
+                  <p className="text-3xl font-bold text-yellow-700">
                     {card.value}
                   </p>
                   <p className="mt-1 text-xs text-gray-500">{card.subtitle}</p>
                 </div>
 
-                <div className={`${card.iconColor} rounded-full p-3`}>
-                  <div className="h-6 w-6 rounded bg-current opacity-20"></div>
+                <div className="rounded-full bg-yellow-100 p-3 ring-1 ring-yellow-200">
+                  <Icon className="h-6 w-6 text-yellow-600" />
                 </div>
               </div>
 
               {card.isAlert && (
-                <div className="mt-3 text-xs font-medium text-yellow-700">
+                <div className="mt-3 text-xs font-medium text-yellow-800">
                   ⚠️ Requires attention
                 </div>
               )}

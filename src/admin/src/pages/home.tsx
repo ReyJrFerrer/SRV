@@ -7,6 +7,7 @@ import {
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 
 // Types for media modal
@@ -182,6 +183,9 @@ export const AdminHomePage: React.FC = () => {
     viewMediaItems,
   } = useAdmin();
 
+  // Mobile bottom action bar visibility
+  const [showMobileBar, setShowMobileBar] = useState(false);
+
   // State for media modal
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
@@ -220,6 +224,16 @@ export const AdminHomePage: React.FC = () => {
   useEffect(() => {
     refreshAll();
   }, [refreshAll]);
+
+  // Toggle mobile bottom bar when header scrolls out of view
+  useEffect(() => {
+    const onScroll = () => {
+      setShowMobileBar(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Handlers for actions
   const handleApprovePayment = async (orderId: string, reason?: string) => {
@@ -288,6 +302,12 @@ export const AdminHomePage: React.FC = () => {
     });
   };
 
+  // Simple loading flag for refresh action
+  const isRefreshing =
+    loading.systemStats ||
+    loading.serviceProviders ||
+    loading.pendingValidations;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Media View Modal */}
@@ -300,26 +320,35 @@ export const AdminHomePage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      <header className="z-50 border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Admin Dashboard
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">
-                  Monitor service providers, validate payments, and manage
-                  system settings
-                </p>
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div className="w-full sm:w-auto">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/images/srv%20characters%20(SVG)/tech guy.svg"
+                    alt="Tech Guy illustration"
+                    className="h-12 w-12 sm:h-16 sm:w-16"
+                  />
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      Admin Dashboard
+                    </h1>
+                    <p className="mt-2 text-sm text-gray-600">
+                      Monitor service providers, validate payments, and manage
+                      system settings
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="flex space-x-4">
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <Link
                   to="/remittance"
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
                 >
                   <svg
-                    className="mr-2 h-4 w-4"
+                    className="mr-2 h-4 w-4 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -335,10 +364,10 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                 >
                   <svg
-                    className="mr-2 h-4 w-4"
+                    className="mr-2 h-4 w-4 text-blue-700"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -352,6 +381,7 @@ export const AdminHomePage: React.FC = () => {
                   </svg>
                   View Users
                 </Link>
+                {/* Refresh button removed as per design update */}
               </div>
             </div>
           </div>
@@ -359,13 +389,14 @@ export const AdminHomePage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:pb-8 lg:px-8">
+        <div className="space-y-6">
           {/* Dashboard Stats */}
           <AdminDashboardStats
             stats={dashboardStats}
             loading={loading.systemStats}
             onRefresh={() => refreshSystemStats(true)}
+            showRefresh={false}
           />
 
           {/* Service Provider Commission Table */}
@@ -373,19 +404,21 @@ export const AdminHomePage: React.FC = () => {
             providers={serviceProviders}
             loading={loading.serviceProviders}
             onRefresh={() => refreshServiceProviders(true)}
+            showRefresh={false}
           />
 
           {/* User Feedback Section */}
           <AdminFeedback
             loading={loading.systemStats}
             onRefresh={() => refreshSystemStats(true)}
+            showRefresh={false}
           />
 
           {/* Pending Validations Section */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div>
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-white px-6 py-4">
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <div className="w-full sm:w-auto">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Pending Payment Validations
                   </h2>
@@ -395,7 +428,7 @@ export const AdminHomePage: React.FC = () => {
                   </p>
                 </div>
                 {pendingValidations.length > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                  <span className="mt-2 inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200 sm:mt-0">
                     {pendingValidations.length} pending
                   </span>
                 )}
@@ -412,7 +445,7 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               ) : pendingValidations.length === 0 ? (
                 <div className="py-12 text-center">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
+                  <div className="mx-auto h-12 w-12 text-blue-300">
                     <svg
                       fill="none"
                       stroke="currentColor"
@@ -468,6 +501,65 @@ export const AdminHomePage: React.FC = () => {
           </div>
         </div>
       </main>
+      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={refreshAll}
+              disabled={isRefreshing}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon className="mr-2 h-4 w-4" />
+              Refresh
+            </button>
+            <Link
+              to="/remittance"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+            >
+              <svg
+                className="mr-2 h-4 w-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Remittance
+            </Link>
+            <Link
+              to="/users"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+            >
+              <svg
+                className="mr-2 h-4 w-4 text-blue-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                />
+              </svg>
+              View Users
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
