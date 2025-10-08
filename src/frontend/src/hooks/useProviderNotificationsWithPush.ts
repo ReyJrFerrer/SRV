@@ -192,11 +192,6 @@ export const useProviderNotificationsWithPush = () => {
     initializeIntegration();
   }, [identity, pwaState.pushSubscribed]);
 
-  // Update push status when it changes
-  useEffect(() => {
-    notificationIntegrationService.updatePushStatus(pwaState.pushSubscribed);
-  }, [pwaState.pushSubscribed]);
-
   // Subscribe to the provider notification store
   useEffect(() => {
     const unsubscribe = providerNotificationStore.subscribe(() => {

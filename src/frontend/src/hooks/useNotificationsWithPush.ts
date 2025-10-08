@@ -180,11 +180,6 @@ export const useNotificationsWithPush = () => {
     initializeIntegration();
   }, [identity, pwaState.pushSubscribed]);
 
-  // Update push status when it changes
-  useEffect(() => {
-    notificationIntegrationService.updatePushStatus(pwaState.pushSubscribed);
-  }, [pwaState.pushSubscribed]);
-
   // Subscribe to the notification store to keep the unread count in sync
   useEffect(() => {
     const unsubscribe = notificationStore.subscribe(() => {

@@ -278,7 +278,7 @@ export const usePWA = () => {
         }
 
         // FCM handles initialization internally, no need for explicit init check
-        
+
         // Request permission with improved error handling
         // console.log("📋 PWA Hook: Requesting notification permission");
         const permission = await pwaService.requestNotificationPermission();
@@ -315,7 +315,7 @@ export const usePWA = () => {
 
         // Subscription is automatically stored by fcmService
         // console.log("💾 PWA Hook: Push subscription created");
-        
+
         setPwaState((prev) => ({ ...prev, pushSubscribed: true }));
         // console.log("✅ PWA Hook: Push notifications enabled successfully");
         return true;

@@ -533,14 +533,14 @@ class PWAService {
     try {
       // Initialize FCM and get token
       const token = await fcmService.initialize();
-      
+
       if (!token) {
         throw new Error("Failed to get FCM token");
       }
 
       // Register token with backend
       const registered = await fcmService.registerToken(token);
-      
+
       if (!registered) {
         throw new Error("Failed to register FCM token with backend");
       }
@@ -578,7 +578,7 @@ class PWAService {
    */
   async getCurrentPushSubscription(): Promise<PushSubscriptionData | null> {
     const token = fcmService.getToken();
-    
+
     if (token) {
       return {
         endpoint: token,
@@ -588,7 +588,7 @@ class PWAService {
         },
       };
     }
-    
+
     return null;
   }
 

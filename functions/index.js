@@ -188,6 +188,22 @@ const {
   cleanupNotificationFrequency,
 } = require("./src/notification");
 
+// Import Media Management functions
+const {
+  uploadMedia,
+  getMediaItem,
+  getFileData,
+  getMediaByOwner,
+  getMediaByTypeAndOwner,
+  deleteMedia,
+  updateMediaMetadata,
+  getStorageStats,
+  validateMediaItems,
+  getRemittanceMediaItems,
+  updateCertificateValidationStatus,
+  getCertificatesByValidationStatus,
+} = require("./src/media");
+
 
 // Export all functions
 exports.onboardProvider = onboardProvider;
@@ -323,4 +339,18 @@ exports.getNotificationStats = getNotificationStats;
 exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 exports.canReceiveNotification = canReceiveNotification;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
+
+// Export Media Management Functions
+exports.uploadMedia = uploadMedia;
+exports.getMediaItem = getMediaItem;
+exports.getFileData = getFileData;
+exports.getMediaByOwner = getMediaByOwner;
+exports.getMediaByTypeAndOwner = getMediaByTypeAndOwner;
+exports.deleteMedia = deleteMedia;
+exports.updateMediaMetadata = updateMediaMetadata;
+exports.getStorageStats = getStorageStats;
+exports.validateMediaItems = validateMediaItems;
+exports.getRemittanceMediaItems = getRemittanceMediaItems;
+exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
+exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 

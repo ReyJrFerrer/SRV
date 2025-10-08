@@ -160,10 +160,8 @@ export const notificationCanisterService = {
       );
 
       const result = await getUserNotificationsFunc({
-        data: {
-          userId,
-          filter,
-        },
+        userId,
+        filter,
       });
 
       const response = result.data as any;
@@ -187,9 +185,7 @@ export const notificationCanisterService = {
       const markAsReadFunc = httpsCallable(functions, "markNotificationAsRead");
 
       const result = await markAsReadFunc({
-        data: {
-          notificationId,
-        },
+        notificationId,
       });
 
       const response = result.data as any;
@@ -214,9 +210,7 @@ export const notificationCanisterService = {
       );
 
       const result = await markAsPushSentFunc({
-        data: {
-          notificationId,
-        },
+        notificationId,
       });
 
       const response = result.data as any;
@@ -243,9 +237,7 @@ export const notificationCanisterService = {
       );
 
       const result = await getForPushFunc({
-        data: {
-          userId,
-        },
+        userId,
       });
 
       const response = result.data as any;
@@ -272,9 +264,7 @@ export const notificationCanisterService = {
 
       // For FCM, we use the endpoint as the token
       const result = await storeFCMTokenFunc({
-        data: {
-          fcmToken: subscriptionData.endpoint,
-        },
+        fcmToken: subscriptionData.endpoint,
       });
 
       const response = result.data as any;
@@ -325,9 +315,7 @@ export const notificationCanisterService = {
       const getStatsFunc = httpsCallable(functions, "getNotificationStats");
 
       const result = await getStatsFunc({
-        data: {
-          userId,
-        },
+        userId,
       });
 
       const response = result.data as any;
@@ -379,10 +367,8 @@ export const notificationCanisterService = {
       const canReceiveFunc = httpsCallable(functions, "canReceiveNotification");
 
       const result = await canReceiveFunc({
-        data: {
-          userId,
-          notificationType,
-        },
+        userId,
+        notificationType,
       });
 
       const response = result.data as any;
@@ -423,15 +409,13 @@ export const notificationCanisterService = {
       );
 
       const result = await createNotificationFunc({
-        data: {
-          targetUserId,
-          userType,
-          notificationType,
-          title,
-          message,
-          relatedEntityId,
-          metadata,
-        },
+        targetUserId,
+        userType,
+        notificationType,
+        title,
+        message,
+        relatedEntityId,
+        metadata,
       });
 
       const response = result.data as any;

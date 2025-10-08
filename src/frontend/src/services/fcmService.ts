@@ -1,11 +1,17 @@
-import { getMessaging, getToken, onMessage, deleteToken, type Messaging } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  deleteToken,
+  type Messaging,
+} from "firebase/messaging";
 import { getFirebaseApp } from "./firebaseApp";
 import notificationCanisterService from "./notificationCanisterService";
 
 /**
  * Pure Firebase Cloud Messaging (FCM) service wrapper
  * Handles ONLY FCM-specific operations with no business logic
- * 
+ *
  * Responsibilities:
  * - Initialize Firebase Messaging
  * - Request notification permission
@@ -18,6 +24,7 @@ class FCMService {
   private messaging: Messaging | null = null;
   private currentToken: string | null = null;
   private isInitialized = false;
+  private initializationPromise: Promise<string | null> | null = null;
 
   private constructor() {}
 
@@ -30,12 +37,39 @@ class FCMService {
 
   /**
    * Initialize FCM messaging and request permission
+   * Uses existing service worker registration
+   * Prevents multiple concurrent initialization attempts
    * @returns FCM token if successful, null otherwise
    */
   async initialize(): Promise<string | null> {
-    if (this.isInitialized) {
+    // Return existing token if already initialized
+    if (this.isInitialized && this.currentToken) {
+      console.log("FCM: Already initialized, returning cached token");
       return this.currentToken;
     }
+
+    // Return pending initialization if in progress
+    if (this.initializationPromise) {
+      console.log("FCM: Initialization already in progress, waiting...");
+      return this.initializationPromise;
+    }
+
+    // Start new initialization
+    this.initializationPromise = this.performInitialization();
+    
+    try {
+      const token = await this.initializationPromise;
+      return token;
+    } finally {
+      // Clear the promise once done (success or failure)
+      this.initializationPromise = null;
+    }
+  }
+
+  /**
+   * Perform actual FCM initialization
+   */
+  private async performInitialization(): Promise<string | null> {
 
     try {
       // Check if notifications are supported
@@ -44,41 +78,61 @@ class FCMService {
         return null;
       }
 
-      // Initialize Firebase Messaging
+      // Wait for service worker to be ready
+      if (!navigator.serviceWorker) {
+        console.error("FCM: Service Worker not supported");
+        return null;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      console.log("FCM: Using existing Service Worker registration");
+
+      // Initialize Firebase Messaging with existing service worker
       this.messaging = getMessaging(getFirebaseApp());
 
       // Request notification permission
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== "granted") {
         console.info("FCM: Notification permission denied");
         return null;
       }
 
-      // Get FCM token
+      // Get FCM token using existing service worker
       const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
       if (!vapidKey) {
         console.error("FCM: VAPID key not configured");
         return null;
       }
 
-      const token = await getToken(this.messaging, { vapidKey });
-      
+      const token = await getToken(this.messaging, {
+        vapidKey,
+        serviceWorkerRegistration: registration,
+      });
+
       if (token) {
         this.currentToken = token;
         this.isInitialized = true;
         console.log("FCM: Token obtained successfully");
-        
+
         // Setup foreground message listener
         this.setupForegroundListener();
-        
+
         return token;
       } else {
         console.warn("FCM: No registration token available");
         return null;
       }
-    } catch (error) {
-      console.error("FCM: Initialization failed", error);
+    } catch (error: any) {
+      // Handle rate limiting specifically
+      if (error?.code === 'messaging/too-many-requests' || 
+          error?.message?.includes('429') || 
+          error?.message?.includes('Too Many Requests')) {
+        console.error("FCM: Rate limit exceeded. Please wait a few minutes before trying again.");
+        console.info("FCM: This usually happens during development with frequent refreshes.");
+      } else {
+        console.error("FCM: Initialization failed", error);
+      }
       return null;
     }
   }
@@ -93,14 +147,14 @@ class FCMService {
 
     onMessage(this.messaging, (payload) => {
       console.log("FCM: Received foreground message", payload);
-      
+
       // Display notification if notification payload exists
       if (payload.notification) {
         this.displayNotification(
           payload.notification.title || "SRV Notification",
           payload.notification.body || "",
           payload.notification.icon || "/logo.svg",
-          payload.data || {}
+          payload.data || {},
         );
       }
     });
@@ -113,7 +167,7 @@ class FCMService {
     title: string,
     body: string,
     icon: string,
-    data: Record<string, any>
+    data: Record<string, any>,
   ): void {
     try {
       const notification = new Notification(title, {

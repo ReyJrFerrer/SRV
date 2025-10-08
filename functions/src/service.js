@@ -3,6 +3,12 @@ const admin = require("firebase-admin");
 
 const db = admin.firestore();
 
+// Import media upload functions for consistent media handling
+const {
+  uploadMediaInternal,
+  deleteMediaInternal,
+} = require("./media");
+
 /**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
@@ -149,61 +155,47 @@ async function calculateCommissionInfo(categoryName, price) {
 }
 
 /**
- * Upload images to Firebase Storage
- * @param {string} serviceId - Service ID
+ * Upload images using media.js for consistent handling
+ * This ensures all uploads are tracked in Firestore with proper metadata
+ * @param {string} ownerId - Owner ID (provider ID)
  * @param {Array} images - Array of image objects
- * @param {string} folder - Storage folder name
- * @return {Promise<Array>} Array of public URLs
+ * @param {string} mediaType - Media type (ServiceImage or ServiceCertificate)
+ * @return {Promise<Array>} Array of media items with URLs and metadata
  */
-async function uploadImagesToStorage(serviceId, images, folder) {
-  const bucket = admin.storage().bucket();
-  const uploadedUrls = [];
+async function uploadImagesToStorage(ownerId, images, mediaType) {
+  const uploadedMedia = [];
 
   for (const image of images) {
     const {fileName, contentType, fileData} = image;
-    const filePath = `services/${serviceId}/${folder}/${fileName}`;
-    const file = bucket.file(filePath);
 
-    // Convert base64 to buffer if needed
-    const buffer = Buffer.isBuffer(fileData) ?
-      fileData :
-      Buffer.from(fileData, "base64");
-
-    await file.save(buffer, {
-      metadata: {
-        contentType: contentType,
-      },
+    // Call media.js uploadMediaInternal to create media with metadata
+    const mediaItem = await uploadMediaInternal({
+      fileName,
+      contentType,
+      mediaType,
+      fileData,
+      ownerId,
     });
 
-    // Make file publicly accessible
-    await file.makePublic();
-
-    // Get public URL
-    const publicUrl =
-      `https://storage.googleapis.com/${bucket.name}/${filePath}`;
-    uploadedUrls.push(publicUrl);
+    uploadedMedia.push(mediaItem);
   }
 
-  return uploadedUrls;
+  return uploadedMedia;
 }
 
 /**
- * Delete images from Firebase Storage
- * @param {Array} imageUrls - Array of image URLs to delete
+ * Delete media items using media.js for consistent handling
+ * This ensures metadata is also removed from Firestore
+ * @param {Array} mediaItems - Array of media items with id and url
  * @return {Promise<void>} Promise that resolves when deletion is complete
  */
-async function deleteImagesFromStorage(imageUrls) {
-  const bucket = admin.storage().bucket();
-
-  for (const url of imageUrls) {
+async function deleteImagesFromStorage(mediaItems) {
+  for (const item of mediaItems) {
     try {
-      // Extract file path from URL
-      const filePath = url.split(`${bucket.name}/`)[1];
-      if (filePath) {
-        await bucket.file(filePath).delete();
-      }
+      // Call media.js deleteMediaInternal to remove both Storage file and Firestore metadata
+      await deleteMediaInternal(item.id);
     } catch (error) {
-      console.error(`Error deleting image ${url}:`, error);
+      console.error(`Error deleting media ${item.id}:`, error);
     }
   }
 }
@@ -340,31 +332,31 @@ exports.createService = functions.https.onCall(async (data, context) => {
     const serviceId = serviceRef.id;
 
     // Upload service images if provided
-    let imageUrls = [];
+    let imageMedia = [];
     if (serviceImages && serviceImages.length > 0) {
       if (serviceImages.length > MAX_SERVICE_IMAGES) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           `Maximum ${MAX_SERVICE_IMAGES} service images allowed`);
       }
-      imageUrls = await uploadImagesToStorage(
-        serviceId,
+      imageMedia = await uploadImagesToStorage(
+        providerId,
         serviceImages,
-        "images");
+        "ServiceImage");
     }
 
     // Upload service certificates if provided
-    let certificateUrls = [];
+    let certificateMedia = [];
     if (serviceCertificates && serviceCertificates.length > 0) {
       if (serviceCertificates.length > MAX_SERVICE_CERTIFICATES) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           `Maximum ${MAX_SERVICE_CERTIFICATES} service certificates allowed`);
       }
-      certificateUrls = await uploadImagesToStorage(
-        serviceId,
+      certificateMedia = await uploadImagesToStorage(
+        providerId,
         serviceCertificates,
-        "certificates");
+        "ServiceCertificate");
     }
 
     // Calculate commission
@@ -387,9 +379,11 @@ exports.createService = functions.https.onCall(async (data, context) => {
       status: "Available",
       rating: null,
       reviewCount: 0,
-      imageUrls,
-      certificateUrls,
-      isVerifiedService: certificateUrls.length > 0,
+      imageUrls: imageMedia.map((m) => m.url),
+      imageMedia: imageMedia, // Store full media metadata
+      certificateUrls: certificateMedia.map((m) => m.url),
+      certificateMedia: certificateMedia, // Store full media metadata
+      isVerifiedService: certificateMedia.length > 0,
       weeklySchedule: weeklySchedule || null,
       instantBookingEnabled: instantBookingEnabled || false,
       bookingNoticeHours: bookingNoticeHours || null,
@@ -861,14 +855,14 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Delete service images from storage
-    if (service.imageUrls && service.imageUrls.length > 0) {
-      await deleteImagesFromStorage(service.imageUrls);
+    // Delete service images from storage and metadata
+    if (service.imageMedia && service.imageMedia.length > 0) {
+      await deleteImagesFromStorage(service.imageMedia);
     }
 
-    // Delete service certificates from storage
-    if (service.certificateUrls && service.certificateUrls.length > 0) {
-      await deleteImagesFromStorage(service.certificateUrls);
+    // Delete service certificates from storage and metadata
+    if (service.certificateMedia && service.certificateMedia.length > 0) {
+      await deleteImagesFromStorage(service.certificateMedia);
     }
 
     // Delete the service document
@@ -955,17 +949,20 @@ exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
     }
 
     // Upload new images
-    const newImageUrls = await uploadImagesToStorage(
-      serviceId,
+    const newImageMedia = await uploadImagesToStorage(
+      service.providerId,
       serviceImages,
-      "images",
+      "ServiceImage",
     );
 
     // Update service with new images
-    const updatedImageUrls = [...(service.imageUrls || []), ...newImageUrls];
+    const existingImageMedia = service.imageMedia || [];
+    const updatedImageMedia = [...existingImageMedia, ...newImageMedia];
+    const updatedImageUrls = updatedImageMedia.map((m) => m.url);
 
     await serviceRef.update({
       imageUrls: updatedImageUrls,
+      imageMedia: updatedImageMedia,
       updatedAt: new Date().toISOString(),
     });
 
@@ -1025,14 +1022,22 @@ exports.removeServiceImage = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Delete image from storage
-    await deleteImagesFromStorage([imageUrl]);
+    // Find the media item to delete
+    const imageMedia = service.imageMedia || [];
+    const mediaToDelete = imageMedia.find((m) => m.url === imageUrl);
 
-    // Remove image URL from service
-    const updatedImageUrls = service.imageUrls.filter((url) => url !== imageUrl);
+    if (mediaToDelete) {
+      // Delete image from storage and metadata
+      await deleteImagesFromStorage([mediaToDelete]);
+    }
+
+    // Remove image from service
+    const updatedImageMedia = imageMedia.filter((m) => m.url !== imageUrl);
+    const updatedImageUrls = updatedImageMedia.map((m) => m.url);
 
     await serviceRef.update({
       imageUrls: updatedImageUrls,
+      imageMedia: updatedImageMedia,
       updatedAt: new Date().toISOString(),
     });
 
@@ -1168,18 +1173,21 @@ exports.uploadServiceCertificates = functions.https.onCall(
       }
 
       // Upload new certificates
-      const newCertUrls = await uploadImagesToStorage(
-        serviceId,
+      const newCertMedia = await uploadImagesToStorage(
+        service.providerId,
         serviceCertificates,
-        "certificates",
+        "ServiceCertificate",
       );
 
       // Update service with new certificates
-      const updatedCertUrls = [...(service.certificateUrls || []), ...newCertUrls];
+      const existingCertMedia = service.certificateMedia || [];
+      const updatedCertMedia = [...existingCertMedia, ...newCertMedia];
+      const updatedCertUrls = updatedCertMedia.map((m) => m.url);
 
       await serviceRef.update({
         certificateUrls: updatedCertUrls,
-        isVerifiedService: updatedCertUrls.length > 0,
+        certificateMedia: updatedCertMedia,
+        isVerifiedService: updatedCertMedia.length > 0,
         updatedAt: new Date().toISOString(),
       });
 
@@ -1244,17 +1252,23 @@ exports.removeServiceCertificate = functions.https.onCall(
         );
       }
 
-      // Delete certificate from storage
-      await deleteImagesFromStorage([certificateUrl]);
+      // Find the media item to delete
+      const certMedia = service.certificateMedia || [];
+      const mediaToDelete = certMedia.find((m) => m.url === certificateUrl);
 
-      // Remove certificate URL from service
-      const updatedCertUrls = service.certificateUrls.filter(
-        (url) => url !== certificateUrl,
-      );
+      if (mediaToDelete) {
+        // Delete certificate from storage and metadata
+        await deleteImagesFromStorage([mediaToDelete]);
+      }
+
+      // Remove certificate from service
+      const updatedCertMedia = certMedia.filter((m) => m.url !== certificateUrl);
+      const updatedCertUrls = updatedCertMedia.map((m) => m.url);
 
       await serviceRef.update({
         certificateUrls: updatedCertUrls,
-        isVerifiedService: updatedCertUrls.length > 0,
+        certificateMedia: updatedCertMedia,
+        isVerifiedService: updatedCertMedia.length > 0,
         updatedAt: new Date().toISOString(),
       });
 

@@ -14,7 +14,8 @@ class NotificationIntegrationService {
 
   static getInstance(): NotificationIntegrationService {
     if (!NotificationIntegrationService.instance) {
-      NotificationIntegrationService.instance = new NotificationIntegrationService();
+      NotificationIntegrationService.instance =
+        new NotificationIntegrationService();
     }
     return NotificationIntegrationService.instance;
   }
@@ -40,14 +41,14 @@ class NotificationIntegrationService {
     try {
       // Initialize FCM and get token
       const token = await fcmService.initialize();
-      
+
       if (token) {
         // Register token with backend
         const registered = await fcmService.registerToken(token);
         this.pushEnabled = registered;
         return registered;
       }
-      
+
       return false;
     } catch (error) {
       console.error("Failed to enable push notifications:", error);
@@ -62,10 +63,10 @@ class NotificationIntegrationService {
     try {
       // Unregister token from backend
       await fcmService.unregisterToken();
-      
+
       // Delete FCM token
       await fcmService.deleteToken();
-      
+
       this.pushEnabled = false;
       return true;
     } catch (error) {
@@ -108,6 +109,6 @@ class NotificationIntegrationService {
 }
 
 // Export singleton instance
-export const notificationIntegrationService = NotificationIntegrationService.getInstance();
+export const notificationIntegrationService =
+  NotificationIntegrationService.getInstance();
 export default notificationIntegrationService;
-

@@ -44,5 +44,17 @@ service cloud.firestore {
     match /notificationFrequency/{freqId} {
         allow read, write: if false; // Only accessible via Cloud Functions
     }
+    // Media items can be read by anyone authenticated, but only written/deleted by owner or admin
+    match /media/{mediaId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update: if request.auth.uid == resource.data.ownerId || request.auth.token.isAdmin == true;
+        allow delete: if request.auth.uid == resource.data.ownerId || request.auth.token.isAdmin == true;
+    }
+    // User media index - only accessible by the user themselves or admins
+    match /users/{userId}/media/{mediaId} {
+        allow read: if request.auth.uid == userId || request.auth.token.isAdmin == true;
+        allow write: if request.auth.uid == userId || request.auth.token.isAdmin == true;
+    }
   }
 }

@@ -1,7 +1,10 @@
 // Media Service for handling file uploads and conversions
 import { authCanisterService } from "./authCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
-import { media } from "../../../declarations/media";
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+// Get Firebase Functions instance
+const functions = getFunctions();
 
 export interface ImageUploadOptions {
   maxSizeKB?: number;
@@ -44,7 +47,17 @@ const imageCache = new Map<string, string>();
  */
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
-    // Handle URLs in format: /media/{mediaId} or media://{mediaId}
+    // Handle Firebase Storage URLs
+    if (url.includes("storage.googleapis.com")) {
+      // Extract from URL like: https://storage.googleapis.com/.../users/uid/mediaId_filename
+      const parts = url.split("/");
+      const filename = parts[parts.length - 1];
+      // Extract mediaId from filename (format: {mediaId}_{filename})
+      const mediaId = filename.split("_")[0];
+      return mediaId || null;
+    }
+
+    // Handle old format: /media/{mediaId} or media://{mediaId}
     if (url.startsWith("media://")) {
       return url.replace("media://", "").split("/").pop() || null;
     }
@@ -61,7 +74,8 @@ export const extractMediaIdFromUrl = (url: string): string | null => {
 };
 
 /**
- * Converts a media canister URL to a data URL for direct use in img tags
+ * Converts a media URL to a data URL for direct use in img tags
+ * Now works with Firebase Storage URLs
  */
 export const getImageDataUrl = async (
   mediaUrl: string,
@@ -75,44 +89,42 @@ export const getImageDataUrl = async (
       return imageCache.get(mediaUrl)!;
     }
 
-    // Extract media ID from URL
+    // For Firebase Storage URLs, return directly (they're already public URLs)
+    if (mediaUrl.includes("storage.googleapis.com")) {
+      if (opts.enableCache) {
+        imageCache.set(mediaUrl, mediaUrl);
+      }
+      return mediaUrl;
+    }
+
+    // For old format URLs, try to get from Cloud Function
     const mediaId = extractMediaIdFromUrl(mediaUrl);
     if (!mediaId) {
       //console.warn("Could not extract media ID from URL:", mediaUrl);
       return opts.fallbackImageUrl;
     }
 
-    // Get file data from media canister
-    if (!media) {
-      //console.error("Media canister not available");
+    // Get file URL from Cloud Function
+    const getFileDataFn = httpsCallable<
+      { mediaId: string },
+      { success: boolean; data: string }
+    >(functions, "getFileData");
+    
+    const result = await getFileDataFn({ mediaId });
+    
+    if (!result.data.success) {
+      //console.warn("Failed to retrieve image data from Cloud Function");
       return opts.fallbackImageUrl;
     }
 
-    const result = await media.getFileData(mediaId);
-
-    if ("err" in result) {
-      //console.warn("Failed to retrieve image data:", result.err);
-      return opts.fallbackImageUrl;
-    }
-
-    // Get media item for content type
-    const mediaItemResult = await media.getMediaItem(mediaId);
-    if ("err" in mediaItemResult) {
-      //console.warn("Failed to retrieve media item:", mediaItemResult.err);
-      return opts.fallbackImageUrl;
-    }
-
-    // Convert Uint8Array to data URL
-    const uint8Array = new Uint8Array(result.ok);
-    const contentType = mediaItemResult.ok.contentType;
-    const dataUrl = await convertBlobToDataUrl(uint8Array, contentType);
+    const url = result.data.data;
 
     // Cache the result if enabled
     if (opts.enableCache) {
-      imageCache.set(mediaUrl, dataUrl);
+      imageCache.set(mediaUrl, url);
     }
 
-    return dataUrl;
+    return url;
   } catch (error) {
     //console.error("Error retrieving image data:", error);
     return opts.fallbackImageUrl;
@@ -822,7 +834,7 @@ export const uploadServiceImagesWithDescaling = async (
 
     return result;
   } catch (error) {
-    //console.error("Error uploading service images with descaling:", error);
+    console.error("Error uploading service images with descaling:", error);
     throw error;
   }
 };
@@ -854,7 +866,7 @@ export const uploadServiceCertificatesWithProcessing = async (
 
     return result;
   } catch (error) {
-    //console.error("Error uploading service certificates:", error);
+    console.error("Error uploading service certificates:", error);
     throw error;
   }
 };
@@ -1001,44 +1013,29 @@ export const mediaService = {
   }> {
     try {
       // Extract media ID from URL
-      const mediaId = url.split("/media/")[1];
+      const mediaId = extractMediaIdFromUrl(url);
       if (!mediaId) {
         return { url, error: "Invalid media URL format" };
       }
 
-      // Get media item from canister
-      const result = await media.getMediaItem(mediaId);
+      // Get media item from Cloud Function
+      const getMediaItemFn = httpsCallable<
+        { mediaId: string },
+        { success: boolean; data: any }
+      >(functions, "getMediaItem");
+      
+      const result = await getMediaItemFn({ mediaId });
 
-      if ("ok" in result) {
-        const mediaItem = result.ok;
+      if (result.data.success) {
+        const mediaItem = result.data.data;
 
-        console.log("Media item details:", {
-          mediaId,
-          mediaType: mediaItem.mediaType,
+        return {
+          url,
           validationStatus: mediaItem.validationStatus,
-          validationStatusType: typeof mediaItem.validationStatus,
-        });
-
-        // Convert backend validation status to frontend format
-        let validationStatus: "Pending" | "Validated" | "Rejected" | undefined;
-        if (
-          mediaItem.validationStatus &&
-          Array.isArray(mediaItem.validationStatus) &&
-          mediaItem.validationStatus.length > 0
-        ) {
-          const status = mediaItem.validationStatus[0]; // Extract from Candid optional array
-          console.log("Processing validation status:", status);
-          if (typeof status === "object") {
-            if ("Pending" in status) validationStatus = "Pending";
-            else if ("Validated" in status) validationStatus = "Validated";
-            else if ("Rejected" in status) validationStatus = "Rejected";
-          }
-        }
-
-        console.log("Final validation status:", validationStatus);
-        return { url, validationStatus, error: null };
+          error: null,
+        };
       } else {
-        return { url, error: result.err };
+        return { url, error: "Failed to get media item" };
       }
     } catch (error) {
       return {

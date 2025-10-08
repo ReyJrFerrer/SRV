@@ -1,5 +1,7 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
 
 const db = admin.firestore();
 
@@ -147,7 +149,7 @@ async function updateNotificationFrequency(userId, notificationType) {
           userId,
           notificationType,
           timestamps: [now],
-          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: FieldValue.serverTimestamp(),
         });
       } else {
         const timestamps = freqDoc.data().timestamps || [];
@@ -156,7 +158,7 @@ async function updateNotificationFrequency(userId, notificationType) {
 
         transaction.update(freqRef, {
           timestamps: recentTimestamps,
-          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: FieldValue.serverTimestamp(),
         });
       }
     });
@@ -251,7 +253,7 @@ async function sendFCMNotification(userId, notification) {
     ) {
       try {
         await db.collection("users").doc(userId).update({
-          fcmToken: admin.firestore.FieldValue.delete(),
+          fcmToken: FieldValue.delete(),
         });
         console.log(`Removed invalid FCM token for user ${userId}`);
       } catch (updateError) {
@@ -364,7 +366,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
       metadata: metadata || null,
       href,
       status: NOTIFICATION_STATUS.UNREAD,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       readAt: null,
       pushSentAt: null,
       expiresAt,
@@ -531,7 +533,7 @@ exports.markNotificationAsRead = functions.https.onCall(
 
         transaction.update(notificationRef, {
           status: newStatus,
-          readAt: admin.firestore.FieldValue.serverTimestamp(),
+          readAt: FieldValue.serverTimestamp(),
         });
       });
 
@@ -607,7 +609,7 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
         transaction.update(notificationRef, {
           status: newStatus,
-          pushSentAt: admin.firestore.FieldValue.serverTimestamp(),
+          pushSentAt: FieldValue.serverTimestamp(),
         });
       });
 
@@ -713,7 +715,7 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
   try {
     await db.collection("users").doc(authInfo.uid).update({
       fcmToken,
-      fcmTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
     });
 
     return {success: true};
@@ -739,8 +741,8 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
 
   try {
     await db.collection("users").doc(authInfo.uid).update({
-      fcmToken: admin.firestore.FieldValue.delete(),
-      fcmTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fcmToken: FieldValue.delete(),
+      fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
     });
 
     return {success: true};
@@ -851,7 +853,7 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
 
         batch.update(doc.ref, {
           status: newStatus,
-          readAt: admin.firestore.FieldValue.serverTimestamp(),
+          readAt: FieldValue.serverTimestamp(),
         });
         count++;
       });
@@ -905,75 +907,69 @@ exports.canReceiveNotification = functions.https.onCall(
 
 /**
  * Cleanup expired notifications (scheduled function)
- * Runs daily at midnight
+ * Runs daily at midnight UTC
  */
-exports.cleanupExpiredNotifications = functions.pubsub
-  .schedule("0 0 * * *")
-  .timeZone("UTC")
-  .onRun(async (_context) => {
-    try {
-      const now = new Date();
-      const snapshot = await db
-        .collection("notifications")
-        .where("expiresAt", "<=", now)
-        .get();
+exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => {
+  try {
+    const now = new Date();
+    const snapshot = await db
+      .collection("notifications")
+      .where("expiresAt", "<=", now)
+      .get();
 
-      const batch = db.batch();
-      let count = 0;
+    const batch = db.batch();
+    let count = 0;
 
-      snapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-        count++;
-      });
+    snapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+      count++;
+    });
 
-      await batch.commit();
+    await batch.commit();
 
-      console.log(`Cleaned up ${count} expired notifications`);
-      return {success: true, count};
-    } catch (error) {
-      console.error("Error cleaning up expired notifications:", error);
-      throw error;
-    }
-  });
+    console.log(`Cleaned up ${count} expired notifications`);
+    return {success: true, count};
+  } catch (error) {
+    console.error("Error cleaning up expired notifications:", error);
+    throw error;
+  }
+});
 
 /**
  * Cleanup old notification frequency entries (scheduled function)
  * Runs every 6 hours
  */
-exports.cleanupNotificationFrequency = functions.pubsub
-  .schedule("0 */6 * * *")
-  .timeZone("UTC")
-  .onRun(async (_context) => {
-    try {
-      const now = Date.now();
-      const windowStart = now - SPAM_PREVENTION_WINDOW;
+exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) => {
+  try {
+    const now = Date.now();
+    const windowStart = now - SPAM_PREVENTION_WINDOW;
 
-      const snapshot = await db.collection("notificationFrequency").get();
+    const snapshot = await db.collection("notificationFrequency").get();
 
-      const batch = db.batch();
-      let count = 0;
+    const batch = db.batch();
+    let count = 0;
 
-      snapshot.forEach((doc) => {
-        const timestamps = doc.data().timestamps || [];
-        const recentTimestamps = timestamps.filter((t) => t > windowStart);
+    snapshot.forEach((doc) => {
+      const timestamps = doc.data().timestamps || [];
+      const recentTimestamps = timestamps.filter((t) => t > windowStart);
 
-        if (recentTimestamps.length === 0) {
-          batch.delete(doc.ref);
-          count++;
-        } else if (recentTimestamps.length < timestamps.length) {
-          batch.update(doc.ref, {
-            timestamps: recentTimestamps,
-            lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-      });
+      if (recentTimestamps.length === 0) {
+        batch.delete(doc.ref);
+        count++;
+      } else if (recentTimestamps.length < timestamps.length) {
+        batch.update(doc.ref, {
+          timestamps: recentTimestamps,
+          lastUpdated: FieldValue.serverTimestamp(),
+        });
+      }
+    });
 
-      await batch.commit();
+    await batch.commit();
 
-      console.log(`Cleaned up ${count} old notification frequency entries`);
-      return {success: true, count};
-    } catch (error) {
-      console.error("Error cleaning up notification frequency:", error);
-      throw error;
-    }
-  });
+    console.log(`Cleaned up ${count} old notification frequency entries`);
+    return {success: true, count};
+  } catch (error) {
+    console.error("Error cleaning up notification frequency:", error);
+    throw error;
+  }
+});

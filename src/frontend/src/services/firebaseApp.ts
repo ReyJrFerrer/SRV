@@ -12,6 +12,16 @@ import {
   Functions,
   connectFunctionsEmulator,
 } from "firebase/functions";
+import {
+  getStorage,
+  FirebaseStorage as FBStorage,
+  connectStorageEmulator,
+} from "firebase/storage";
+import {
+  getFirestore,
+  Firestore,
+  connectFirestoreEmulator,
+} from "firebase/firestore";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -25,6 +35,8 @@ interface FirebaseConfig {
 let firebaseApp: FirebaseApp | null = null;
 let firebaseAuth: Auth | null = null;
 let firebaseFunctions: Functions | null = null;
+let firebaseStorage: FBStorage | null = null;
+let firebaseFirestore: Firestore | null = null;
 let emulatorsConnected = false;
 
 /**
@@ -35,6 +47,8 @@ export function initializeFirebase(): {
   app: FirebaseApp;
   auth: Auth;
   functions: Functions;
+  storage: FBStorage;
+  firestore: Firestore;
 } {
   try {
     // Check if Firebase is already initialized
@@ -42,6 +56,8 @@ export function initializeFirebase(): {
       firebaseApp = getApps()[0];
       firebaseAuth = getAuth(firebaseApp);
       firebaseFunctions = getFunctions(firebaseApp);
+      firebaseStorage = getStorage(firebaseApp);
+      firebaseFirestore = getFirestore(firebaseApp);
 
       // Connect to emulators if in development and not already connected
       if (
@@ -53,8 +69,10 @@ export function initializeFirebase(): {
             disableWarnings: true,
           });
           connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
+          connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
+          connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
-          console.log("🔧 Connected to Firebase Emulators");
+          console.log("🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)");
         } catch (emulatorError) {
           console.warn(
             "Emulator connection skipped (may already be connected):",
@@ -68,6 +86,8 @@ export function initializeFirebase(): {
         app: firebaseApp,
         auth: firebaseAuth,
         functions: firebaseFunctions,
+        storage: firebaseStorage,
+        firestore: firebaseFirestore,
       };
     }
 
@@ -91,6 +111,8 @@ export function initializeFirebase(): {
     firebaseApp = initializeApp(firebaseConfig);
     firebaseAuth = getAuth(firebaseApp);
     firebaseFunctions = getFunctions(firebaseApp);
+    firebaseStorage = getStorage(firebaseApp);
+    firebaseFirestore = getFirestore(firebaseApp);
 
     // Connect to emulators in development
     if (import.meta.env.DEV || window.location.hostname === "localhost") {
@@ -99,8 +121,10 @@ export function initializeFirebase(): {
           disableWarnings: true,
         });
         connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
+        connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
+        connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         emulatorsConnected = true;
-        console.log("🔧 Connected to Firebase Emulators");
+        console.log("🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)");
       } catch (emulatorError) {
         console.warn("Could not connect to emulators:", emulatorError);
       }
@@ -114,6 +138,8 @@ export function initializeFirebase(): {
       app: firebaseApp,
       auth: firebaseAuth,
       functions: firebaseFunctions,
+      storage: firebaseStorage,
+      firestore: firebaseFirestore,
     };
   } catch (error) {
     console.error("❌ Failed to initialize Firebase:", error);
@@ -155,6 +181,30 @@ export function getFirebaseFunctions(): Functions {
     return functions;
   }
   return firebaseFunctions;
+}
+
+/**
+ * Get the Firebase Storage instance
+ * Initializes Firebase if not already initialized
+ */
+export function getFirebaseStorage(): FBStorage {
+  if (!firebaseStorage) {
+    const { storage } = initializeFirebase();
+    return storage;
+  }
+  return firebaseStorage;
+}
+
+/**
+ * Get the Firebase Firestore instance
+ * Initializes Firebase if not already initialized
+ */
+export function getFirebaseFirestore(): Firestore {
+  if (!firebaseFirestore) {
+    const { firestore } = initializeFirebase();
+    return firestore;
+  }
+  return firebaseFirestore;
 }
 
 /**

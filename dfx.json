@@ -12,22 +12,12 @@
       "type": "motoko",
       "main": "src/backend/function/reputation.mo"
     },
-    "media": {
-      "type": "motoko",
-      "main": "src/backend/function/media.mo"
-    },
     "admin": {
       "type": "motoko",
       "main": "src/backend/function/admin.mo"
     },
     "admin-frontend": {
-      "dependencies": [
-        "admin",
-        "llm",
-        "auth",
-        "reputation",
-        "media"
-      ],
+      "dependencies": ["admin", "llm", "auth", "reputation"],
       "type": "assets",
       "source": ["src/admin/dist/"]
     },

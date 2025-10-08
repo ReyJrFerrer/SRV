@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.isAdmin == true;
+    }
+    
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Helper function to validate file size
+    function isValidSize(maxSizeInMB) {
+      return request.resource.size <= maxSizeInMB * 1024 * 1024;
+    }
+    
+    // Helper function to validate image content type
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType == 'application/pdf';
+    }
+    
+    // User profile images - users/{userId}/{mediaId}_{filename}
+    match /users/{userId}/{allPaths=**} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+      
+      // Allow write only by owner or admin, with size limit (450KB)
+      allow write: if (isOwner(userId) || isAdmin()) && 
+                      isValidImageType() && 
+                      isValidSize(0.45);
+      
+      // Allow delete only by owner or admin
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // Service images - services/{providerId}/{mediaId}_{filename}
+    match /services/{providerId}/{allPaths=**} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+      
+      // Allow write only by owner or admin, with size limit (450KB)
+      allow write: if (isOwner(providerId) || isAdmin()) && 
+                      isValidImageType() && 
+                      isValidSize(0.45);
+      
+      // Allow delete only by owner or admin
+      allow delete: if isOwner(providerId) || isAdmin();
+    }
+    
+    // Service certificates - certificates/{providerId}/{mediaId}_{filename}
+    match /certificates/{providerId}/{allPaths=**} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+      
+      // Allow write only by owner or admin, with size limit (450KB)
+      allow write: if (isOwner(providerId) || isAdmin()) && 
+                      isValidImageType() && 
+                      isValidSize(0.45);
+      
+      // Allow delete only by owner or admin
+      allow delete: if isOwner(providerId) || isAdmin();
+    }
+    
+    // Remittance payment proofs - remittance/{userId}/{mediaId}_{filename}
+    match /remittance/{userId}/{allPaths=**} {
+      // Allow read by owner, admin, or system
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Allow write only by owner, with larger size limit (1MB for remittance)
+      allow write: if isOwner(userId) && 
+                      isValidImageType() && 
+                      isValidSize(1);
+      
+      // Allow delete only by owner or admin
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1202,6 +1202,145 @@ The migrated chat service enables:
 
 ---
 
+## Phase 3: Frontend Client Migration
+
+### Task 3.1: Migrate Media Canister to Firebase Cloud Storage ✅
+
+**Completed**: [Date]
+
+**Description**: Migrated the media canister from Internet Computer to Firebase Cloud Storage and Cloud Functions, maintaining full compatibility with existing frontend media services (`mediaService.ts` and `mediaServiceCanister.ts`).
+
+**Changes Made**:
+
+1. **Created `functions/src/media.js`**: Comprehensive Cloud Functions for media management
+   - `uploadMedia`: Upload files to Cloud Storage with metadata in Firestore
+   - `getMediaItem`: Retrieve media item metadata
+   - `getFileData`: Get public URL for file access
+   - `getMediaByOwner`: Get all media items for a user
+   - `getMediaByTypeAndOwner`: Filter media by type and owner
+   - `deleteMedia`: Delete file from Storage and metadata from Firestore
+   - `updateMediaMetadata`: Update file metadata (filename)
+   - `getStorageStats`: Get storage statistics (admin only)
+   - `validateMediaItems`: Validate media items for remittance system
+   - `getRemittanceMediaItems`: Get remittance payment proof media
+   - `updateCertificateValidationStatus`: Update certificate validation status (admin)
+   - `getCertificatesByValidationStatus`: Get certificates by validation status (admin)
+
+2. **Updated `functions/index.js`**: Exported all media functions
+
+3. **Updated `functions/package.json`**: Added `uuid` dependency for unique ID generation
+
+4. **Updated `firestore.rules`**: Added security rules for media collections
+   - `media/{mediaId}`: Media items can be read by authenticated users, only written/deleted by owner or admin
+   - `users/{userId}/media/{mediaId}`: User media index accessible only by owner or admin
+
+5. **Created `docs/firebase-storage-setup.md`**: Comprehensive setup guide including:
+   - Step-by-step Firebase Storage configuration
+   - Cloud Storage security rules
+   - CORS configuration for web access
+   - Storage structure and organization
+   - File size limits and supported types
+   - Testing and monitoring guidance
+   - Troubleshooting common issues
+
+**Technical Implementation**:
+
+- **Cloud Storage Structure**:
+  ```
+  users/{userId}/{mediaId}_{filename}          - Profile pictures
+  services/{providerId}/{mediaId}_{filename}   - Service images
+  certificates/{providerId}/{mediaId}_{filename} - Service certificates
+  remittance/{userId}/{mediaId}_{filename}     - Payment proofs
+  ```
+
+- **Firestore Collections**:
+  - `media`: Stores media metadata (id, url, contentType, mediaType, fileSize, etc.)
+  - `users/{userId}/media`: User's media index for quick lookups
+
+- **File Size Limits** (mirroring media.mo canister):
+  - User Profile Images: 450 KB
+  - Service Images: 450 KB
+  - Service Certificates: 450 KB
+  - Remittance Payment Proofs: 1 MB
+
+- **Supported File Types**:
+  - Images: JPEG, JPG, PNG, GIF, WebP, BMP, SVG
+  - Documents: PDF (for certificates and payment proofs)
+
+- **Media Types**:
+  - `UserProfile`: User profile pictures
+  - `ServiceImage`: Service listing images
+  - `ServiceCertificate`: Provider certificates (with validation workflow)
+  - `RemittancePaymentProof`: Payment proof documents
+
+- **Validation Status** (for certificates):
+  - `Pending`: Awaiting admin review
+  - `Validated`: Approved by admin
+  - `Rejected`: Rejected by admin
+
+**Function Signatures** (maintaining compatibility):
+
+```javascript
+// All functions follow the pattern: { success: true, data: result }
+uploadMedia({ fileName, contentType, mediaType, fileData })
+getMediaItem({ mediaId })
+getFileData({ mediaId })
+getMediaByOwner({ ownerId })
+getMediaByTypeAndOwner({ ownerId, mediaType })
+deleteMedia({ mediaId })
+updateMediaMetadata({ mediaId, fileName })
+getStorageStats() // Admin only
+validateMediaItems({ mediaIds })
+getRemittanceMediaItems({ mediaIds }) // Admin/system
+updateCertificateValidationStatus({ mediaId, newStatus }) // Admin only
+getCertificatesByValidationStatus({ status }) // Admin only
+```
+
+**Security & Authentication**:
+
+- All functions use `getAuthInfo` helper for consistent authentication
+- Owner-only operations verified before execution
+- Admin-only functions properly gated
+- Cloud Storage rules enforce file access control by folder structure
+
+**Frontend Compatibility**:
+
+The migration maintains full compatibility with existing frontend services:
+- `mediaService.ts`: File upload/processing logic unchanged
+- `mediaServiceCanister.ts`: Can be updated to call Cloud Functions instead of canisters
+- Same function signatures and response formats
+- URLs are now standard HTTPS URLs (e.g., `https://storage.googleapis.com/...`)
+
+**Configuration Required**:
+
+See `docs/firebase-storage-setup.md` for complete setup instructions:
+1. Enable Firebase Storage in Console
+2. Configure Storage security rules
+3. Set up CORS for web access
+4. Update frontend Firebase config with `storageBucket`
+5. Deploy Cloud Functions with `firebase deploy --only functions`
+6. Deploy Firestore rules with `firebase deploy --only firestore:rules`
+7. Deploy Storage rules with `firebase deploy --only storage`
+
+**Impact**:
+
+- Media storage moved from expensive IC cycles to cost-effective Cloud Storage
+- Public URLs for direct file access (no need for HTTP interface in canister)
+- Improved scalability with Firebase's global CDN
+- Better performance for file uploads/downloads
+- Maintained all existing features including certificate validation workflow
+- Ready for future enhancements (thumbnails, image optimization, CDN)
+
+**Migration Notes**:
+
+- The media canister (`media.mo`) can now be safely removed from `dfx.json` and deleted from `src/backend/function/`
+- Frontend services need minimal updates - just change from canister calls to Cloud Function calls
+- File data format changed: now base64 strings instead of Uint8Array blobs
+- URLs are now public HTTPS URLs instead of `/media/{id}` format
+- Consider implementing thumbnail generation for improved performance
+
+---
+````
 ```
 
 ```
