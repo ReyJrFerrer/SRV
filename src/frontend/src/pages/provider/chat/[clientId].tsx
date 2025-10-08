@@ -130,11 +130,18 @@ const ConversationPage: React.FC = () => {
   };
 
   // Format timestamp for display
-  const formatTimestamp = (date: Date): string => {
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTimestamp = (dateStr?: string | Date) => {
+    if (!dateStr) return "";
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
+    return date.toLocaleDateString();
   };
 
   // Determine if message is from current user

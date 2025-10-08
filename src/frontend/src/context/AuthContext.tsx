@@ -14,7 +14,7 @@ import {
 } from "firebase/auth";
 import { getFirebaseAuth } from "../services/firebaseApp";
 import { updateReputationActor } from "../services/reputationCanisterService";
-import { updateChatActor } from "../services/chatCanisterService";
+
 // import {
 //   initializeCanisterReferences,
 //   shouldInitializeCanisters,
@@ -72,25 +72,9 @@ const updateAllActors = (identity: Identity | null) => {
     console.warn("Failed to update reputation actor:", error);
   }
 
-  try {
-    updateChatActor(identity);
-  } catch (error) {
-    console.warn("Failed to update chat actor:", error);
-  }
+
 };
 
-// const initializeCanisters = async (
-//   isAuthenticated: boolean,
-//   identity: Identity | null,
-// ) => {
-//   if (shouldInitializeCanisters(isAuthenticated, identity)) {
-//     try {
-//       await initializeCanisterReferences();
-//     } catch (error) {
-//       // console.warn("Failed to initialize canister references:", error);
-//     }
-//   }
-// };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

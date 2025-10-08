@@ -163,6 +163,16 @@ const {
   getRecentReports,
 } = require("./src/feedback");
 
+// Import Chat Management functions
+const {
+  createConversation,
+  sendMessage,
+  getMyConversations,
+  getConversationMessages,
+  markMessagesAsRead,
+  getConversation,
+} = require("./src/chat");
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -276,4 +286,12 @@ exports.updateReportStatus = updateReportStatus;
 exports.getReportStats = getReportStats;
 exports.getReportById = getReportById;
 exports.getRecentReports = getRecentReports;
+
+// Export Chat Management Functions
+exports.createConversation = createConversation;
+exports.sendMessage = sendMessage;
+exports.getMyConversations = getMyConversations;
+exports.getConversationMessages = getConversationMessages;
+exports.markMessagesAsRead = markMessagesAsRead;
+exports.getConversation = getConversation;
 

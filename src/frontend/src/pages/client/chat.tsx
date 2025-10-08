@@ -100,15 +100,13 @@ const ClientChatPage: React.FC = () => {
                         ? conversationSummary.otherUserImageUrl
                         : "";
 
-                    // Get unread count for current user
-                    const unreadEntry = conversation.unreadCount.find(
-                      (entry) => entry.userId === currentUserId,
-                    );
-                    const unreadCount = unreadEntry?.count || 0;
+                    // Get unread count for current user (unreadCount is now an object)
+                    const unreadCount = conversation.unreadCount[currentUserId] || 0;
 
-                    // Format timestamp
-                    const formatTimestamp = (date?: Date) => {
-                      if (!date) return "";
+                    // Format timestamp (accepts string or Date)
+                    const formatTimestamp = (dateStr?: string | Date) => {
+                      if (!dateStr) return "";
+                      const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
                       const now = new Date();
                       const diffMs = now.getTime() - date.getTime();
                       const diffHours = diffMs / (1000 * 60 * 60);

@@ -10,5 +10,5 @@ export { default as UserServicesPage } from "../pages/userServices";
 export { ValidationInboxPage } from "../pages/validationInbox";
 export { TicketInboxPage } from "../pages/ticketInbox";
 export { TicketDetailsPage } from "../pages/ticketDetails";
-export { AdminChatPage } from "../pages/adminChat";
+// export { AdminChatPage } from "../pages/adminChat";
 export { default as ProviderStats } from "./ProviderStats";

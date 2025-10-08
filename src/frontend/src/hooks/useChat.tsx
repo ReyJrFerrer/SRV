@@ -370,11 +370,12 @@ export const useChat = () => {
   const getUnreadCount = useCallback((): number => {
     if (!identity) return 0;
 
+    const currentUserId = identity.getPrincipal().toString();
+    
     return conversations.reduce((total, convoSummary) => {
-      const userUnreadEntry = convoSummary.conversation.unreadCount.find(
-        (entry) => entry.userId === identity.getPrincipal().toString(),
-      );
-      return total + (userUnreadEntry?.count || 0);
+      // unreadCount is now an object: { [userId: string]: number }
+      const count = convoSummary.conversation.unreadCount[currentUserId] || 0;
+      return total + count;
     }, 0);
   }, [conversations, identity]);
 

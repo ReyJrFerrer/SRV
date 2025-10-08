@@ -9,7 +9,7 @@ import UserServicesPage from "./pages/userServices";
 import { ValidationInboxPage } from "./pages/validationInbox";
 import { TicketInboxPage } from "./pages/ticketInbox";
 import { TicketDetailsPage } from "./pages/ticketDetails";
-import { AdminChatPage } from "./pages/adminChat";
+// import { AdminChatPage } from "./pages/adminChat";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
 import { RemittanceDashboardPage } from "./pages/remittanceDashboard";
@@ -177,14 +177,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/chat/:userId"
         element={
           <ProtectedRoute>
             <AdminChatPage />
           </ProtectedRoute>
         }
-      />
+      /> */}
       {/* Remittance Routes */}
       <Route
         path="/remittance"

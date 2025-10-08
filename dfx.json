@@ -12,11 +12,6 @@
       "type": "motoko",
       "main": "src/backend/function/reputation.mo"
     },
-    "chat": {
-      "dependencies": [],
-      "type": "motoko",
-      "main": "src/backend/function/chat.mo"
-    },
     "media": {
       "type": "motoko",
       "main": "src/backend/function/media.mo"
@@ -35,7 +30,6 @@
         "llm",
         "auth",
         "reputation",
-        "chat",
         "media",
         "notification"
       ],
