@@ -13,6 +13,7 @@ import {
   ChartBarIcon,
   ArrowLeftIcon,
   XMarkIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
@@ -483,14 +484,27 @@ export const ProviderManagementPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Last Activity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    {/* Hide Actions column on mobile */}
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredProviders.map((provider) => (
-                    <tr key={provider.id} className="hover:bg-gray-50">
+                    <tr
+                      key={provider.id}
+                      className="cursor-pointer hover:bg-gray-50 sm:cursor-default"
+                      onClick={() => handleViewProvider(provider)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleViewProvider(provider);
+                        }
+                      }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
@@ -510,6 +524,8 @@ export const ProviderManagementPage: React.FC = () => {
                               ID: {provider.id.substring(0, 8)}...
                             </div>
                           </div>
+                          {/* Mobile chevron indicator */}
+                          <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -543,9 +559,13 @@ export const ProviderManagementPage: React.FC = () => {
                       <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         {formatRelativeTime(new Date(provider.lastActivity))}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                      {/* Hide Actions cell on mobile */}
+                      <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
                         <button
-                          onClick={() => handleViewProvider(provider)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewProvider(provider);
+                          }}
                           className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Details
@@ -563,13 +583,13 @@ export const ProviderManagementPage: React.FC = () => {
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
         <div
-          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:p-8"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-5xl rounded-xl border border-blue-100 bg-white shadow-xl">
+          <div className="mt-16 flex max-h-[85vh] w-full max-w-5xl flex-col rounded-xl border border-blue-100 bg-white shadow-xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-blue-100 px-5 py-4">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
                   <UserIcon className="h-5 w-5 text-blue-600" />
@@ -595,7 +615,7 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
 
             {/* Body */}
-            <div className="px-5 py-4">
+            <div className="flex-1 overflow-y-auto px-5 py-4">
               {/* Profile summary */}
               <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
                 <div className="flex items-center gap-4">
@@ -909,7 +929,7 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
               <button
                 onClick={() => {
                   setShowProviderDetails(false);
@@ -919,17 +939,6 @@ export const ProviderManagementPage: React.FC = () => {
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Close
-              </button>
-              <button
-                onClick={() => {
-                  setAnalyticsMode("analytics");
-                  if (selectedProvider) {
-                    loadInlineProviderAnalytics(selectedProvider.id);
-                  }
-                }}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
-              >
-                View Analytics
               </button>
             </div>
           </div>
