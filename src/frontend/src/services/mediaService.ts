@@ -109,9 +109,9 @@ export const getImageDataUrl = async (
       { mediaId: string },
       { success: boolean; data: string }
     >(functions, "getFileData");
-    
+
     const result = await getFileDataFn({ mediaId });
-    
+
     if (!result.data.success) {
       //console.warn("Failed to retrieve image data from Cloud Function");
       return opts.fallbackImageUrl;
@@ -1023,7 +1023,7 @@ export const mediaService = {
         { mediaId: string },
         { success: boolean; data: any }
       >(functions, "getMediaItem");
-      
+
       const result = await getMediaItemFn({ mediaId });
 
       if (result.data.success) {

@@ -5,6 +5,7 @@ This guide explains how to configure Firebase Cloud Storage for the media canist
 ## Overview
 
 The media canister has been migrated from Internet Computer to Firebase, using:
+
 - **Cloud Storage** for file storage (images, PDFs)
 - **Firestore** for metadata storage
 - **Cloud Functions** for upload/download/delete operations
@@ -41,12 +42,12 @@ service firebase.storage {
     function isAdmin() {
       return request.auth.token.isAdmin == true;
     }
-    
+
     // Helper function to check if user owns the file
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
+
     // User profile pictures
     match /users/{userId}/{fileName} {
       // Anyone authenticated can read
@@ -54,7 +55,7 @@ service firebase.storage {
       // Only owner or admin can write/delete
       allow write, delete: if isOwner(userId) || isAdmin();
     }
-    
+
     // Service images
     match /services/{providerId}/{fileName} {
       // Anyone authenticated can read
@@ -62,7 +63,7 @@ service firebase.storage {
       // Only provider or admin can write/delete
       allow write, delete: if isOwner(providerId) || isAdmin();
     }
-    
+
     // Service certificates
     match /certificates/{providerId}/{fileName} {
       // Anyone authenticated can read
@@ -70,7 +71,7 @@ service firebase.storage {
       // Only provider or admin can write/delete
       allow write, delete: if isOwner(providerId) || isAdmin();
     }
-    
+
     // Remittance payment proofs
     match /remittance/{userId}/{fileName} {
       // Only owner or admin can read
@@ -89,14 +90,16 @@ service firebase.storage {
 To allow your web app to access Storage files, you need to configure CORS:
 
 1. Install Google Cloud SDK if not already installed:
+
    ```bash
    # macOS
    brew install google-cloud-sdk
-   
+
    # Or download from: https://cloud.google.com/sdk/docs/install
    ```
 
 2. Create a CORS configuration file `storage-cors.json`:
+
    ```json
    [
      {
@@ -109,13 +112,14 @@ To allow your web app to access Storage files, you need to configure CORS:
    ```
 
 3. Apply CORS configuration:
+
    ```bash
    # Authenticate with Google Cloud
    gcloud auth login
-   
+
    # Set your project
    gcloud config set project YOUR_PROJECT_ID
-   
+
    # Apply CORS configuration
    gsutil cors set storage-cors.json gs://YOUR_PROJECT_ID.appspot.com
    ```
@@ -129,11 +133,11 @@ Ensure your frontend has the Firebase Storage SDK initialized:
 **Frontend (`src/frontend/src/firebase.ts` or similar):**
 
 ```typescript
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
@@ -141,7 +145,7 @@ const firebaseConfig = {
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_PROJECT_ID.appspot.com", // Important: Add this
   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  appId: "YOUR_APP_ID",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -202,6 +206,7 @@ gs://YOUR_PROJECT_ID.appspot.com/
 ## File Size Limits
 
 The following size limits are enforced:
+
 - **User Profile Images**: 450 KB
 - **Service Images**: 450 KB
 - **Service Certificates**: 450 KB
@@ -219,10 +224,10 @@ The following size limits are enforced:
 You can test the upload function using the Firebase Console or your frontend:
 
 ```javascript
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
-const uploadMedia = httpsCallable(functions, 'uploadMedia');
+const uploadMedia = httpsCallable(functions, "uploadMedia");
 
 // Convert file to base64
 const fileToBase64 = (file) => {
@@ -230,22 +235,22 @@ const fileToBase64 = (file) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 };
 
 // Upload a file
-const file = document.getElementById('fileInput').files[0];
+const file = document.getElementById("fileInput").files[0];
 const base64Data = await fileToBase64(file);
 
 const result = await uploadMedia({
   fileName: file.name,
   contentType: file.type,
-  mediaType: 'UserProfile', // or 'ServiceImage', 'ServiceCertificate', 'RemittancePaymentProof'
-  fileData: base64Data
+  mediaType: "UserProfile", // or 'ServiceImage', 'ServiceCertificate', 'RemittancePaymentProof'
+  fileData: base64Data,
 });
 
-console.log('Upload result:', result.data);
+console.log("Upload result:", result.data);
 ```
 
 ## Monitoring
@@ -269,10 +274,12 @@ console.log('Upload result:', result.data);
 ### Storage Pricing (As of 2024)
 
 **Free Tier (Spark Plan):**
+
 - 5 GB stored
 - 1 GB/day download bandwidth
 
 **Blaze Plan (Pay as you go):**
+
 - $0.026 per GB stored per month
 - $0.12 per GB downloaded
 
@@ -298,22 +305,27 @@ The Cloud Functions maintain compatibility with existing frontend services:
 Update your media service to call Cloud Functions instead of canisters:
 
 ```typescript
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
 
-export const uploadMedia = async (fileName, contentType, mediaType, fileData) => {
-  const uploadFn = httpsCallable(functions, 'uploadMedia');
+export const uploadMedia = async (
+  fileName,
+  contentType,
+  mediaType,
+  fileData,
+) => {
+  const uploadFn = httpsCallable(functions, "uploadMedia");
   return await uploadFn({
     fileName,
     contentType,
     mediaType,
-    fileData
+    fileData,
   });
 };
 
 export const getMediaItem = async (mediaId) => {
-  const getFn = httpsCallable(functions, 'getMediaItem');
+  const getFn = httpsCallable(functions, "getMediaItem");
   return await getFn({ mediaId });
 };
 
@@ -325,6 +337,7 @@ export const getMediaItem = async (mediaId) => {
 ### CORS Errors
 
 If you see CORS errors when accessing Storage files:
+
 1. Verify CORS configuration is applied (Step 3)
 2. Check that `storageBucket` is set in Firebase config
 3. Ensure Storage rules allow read access
@@ -332,6 +345,7 @@ If you see CORS errors when accessing Storage files:
 ### Upload Failures
 
 If uploads fail:
+
 1. Check file size limits
 2. Verify file type is supported
 3. Check Firebase Authentication is working
@@ -340,6 +354,7 @@ If uploads fail:
 ### Permission Denied
 
 If you get permission errors:
+
 1. Verify user is authenticated
 2. Check Firestore security rules for `media` collection
 3. Check Storage security rules
@@ -359,6 +374,7 @@ If you get permission errors:
 ## Support
 
 For issues or questions:
+
 1. Check Firebase Console logs: **Functions** → **Logs**
 2. Check Storage logs: **Storage** → **Usage** tab
 3. Review [Firebase Storage documentation](https://firebase.google.com/docs/storage)

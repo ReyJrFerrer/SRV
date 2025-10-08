@@ -7,12 +7,13 @@ The `service.js` Cloud Functions now integrate seamlessly with `media.js` for co
 ## What Changed
 
 ### Before (Direct Storage Uploads)
+
 ```javascript
 // Old approach - direct Storage uploads without metadata
 async function uploadImagesToStorage(serviceId, images, folder) {
   const bucket = admin.storage().bucket();
   const uploadedUrls = [];
-  
+
   for (const image of images) {
     const filePath = `services/${serviceId}/${folder}/${fileName}`;
     const file = bucket.file(filePath);
@@ -20,12 +21,13 @@ async function uploadImagesToStorage(serviceId, images, folder) {
     await file.makePublic();
     uploadedUrls.push(publicUrl);
   }
-  
+
   return uploadedUrls; // Only URLs, no metadata
 }
 ```
 
 **Problems:**
+
 - ❌ No metadata stored in Firestore
 - ❌ No media ID tracking
 - ❌ Inconsistent with media.js uploads
@@ -33,14 +35,15 @@ async function uploadImagesToStorage(serviceId, images, folder) {
 - ❌ No validation status for certificates
 
 ### After (Integrated with Media.js)
+
 ```javascript
 // New approach - uses media.js for consistent handling
 async function uploadImagesToStorage(ownerId, images, mediaType) {
   const uploadedMedia = [];
-  
+
   for (const image of images) {
-    const {fileName, contentType, fileData} = image;
-    
+    const { fileName, contentType, fileData } = image;
+
     // Call media.js internal function
     const mediaItem = await uploadMediaInternal({
       fileName,
@@ -49,15 +52,16 @@ async function uploadImagesToStorage(ownerId, images, mediaType) {
       fileData,
       ownerId,
     });
-    
+
     uploadedMedia.push(mediaItem);
   }
-  
+
   return uploadedMedia; // Full media objects with metadata
 }
 ```
 
 **Benefits:**
+
 - ✅ Metadata stored in Firestore `media` collection
 - ✅ Each upload gets unique media ID
 - ✅ Consistent with all other media uploads
@@ -71,23 +75,21 @@ async function uploadImagesToStorage(ownerId, images, mediaType) {
 
 ```javascript
 // At the top of service.js
-const {
-  uploadMediaInternal,
-  deleteMediaInternal,
-} = require("./media");
+const { uploadMediaInternal, deleteMediaInternal } = require("./media");
 ```
 
 ### 2. Upload Integration
 
 **Service Creation (createService):**
+
 ```javascript
 // Upload service images
 let imageMedia = [];
 if (serviceImages && serviceImages.length > 0) {
   imageMedia = await uploadImagesToStorage(
-    providerId,          // Owner ID
-    serviceImages,       // Image data
-    "ServiceImage"       // Media type
+    providerId, // Owner ID
+    serviceImages, // Image data
+    "ServiceImage", // Media type
   );
 }
 
@@ -97,7 +99,7 @@ if (serviceCertificates && serviceCertificates.length > 0) {
   certificateMedia = await uploadImagesToStorage(
     providerId,
     serviceCertificates,
-    "ServiceCertificate"
+    "ServiceCertificate",
   );
 }
 
@@ -112,12 +114,13 @@ const newService = {
 ```
 
 **Adding Images to Existing Service (uploadServiceImages):**
+
 ```javascript
 // Upload new images
 const newImageMedia = await uploadImagesToStorage(
   service.providerId,
   serviceImages,
-  "ServiceImage"
+  "ServiceImage",
 );
 
 // Merge with existing
@@ -136,6 +139,7 @@ await serviceRef.update({
 ### 3. Delete Integration
 
 **Removing Single Image (removeServiceImage):**
+
 ```javascript
 // Find the media item to delete
 const imageMedia = service.imageMedia || [];
@@ -155,6 +159,7 @@ await serviceRef.update({
 ```
 
 **Deleting Entire Service (deleteService):**
+
 ```javascript
 // Delete all media items with metadata cleanup
 if (service.imageMedia && service.imageMedia.length > 0) {
@@ -174,7 +179,7 @@ if (service.certificateMedia && service.certificateMedia.length > 0) {
 {
   id: "service-123",
   providerId: "user-456",
-  
+
   // Legacy URL arrays (kept for backward compatibility)
   imageUrls: [
     "https://storage.googleapis.com/.../uuid1_image1.jpg",
@@ -183,7 +188,7 @@ if (service.certificateMedia && service.certificateMedia.length > 0) {
   certificateUrls: [
     "https://storage.googleapis.com/.../uuid3_cert1.pdf"
   ],
-  
+
   // NEW: Full media metadata arrays
   imageMedia: [
     {
@@ -203,7 +208,7 @@ if (service.certificateMedia && service.certificateMedia.length > 0) {
       // ... more metadata
     }
   ],
-  
+
   certificateMedia: [
     {
       id: "uuid3",
@@ -218,7 +223,7 @@ if (service.certificateMedia && service.certificateMedia.length > 0) {
       updatedAt: "2025-10-08T12:00:00Z"
     }
   ],
-  
+
   // ... other service fields
 }
 ```
@@ -261,6 +266,7 @@ Each upload also creates an index entry:
 ### createService Response
 
 **Before:**
+
 ```json
 {
   "success": true,
@@ -273,6 +279,7 @@ Each upload also creates an index entry:
 ```
 
 **After:**
+
 ```json
 {
   "success": true,
@@ -305,36 +312,45 @@ Each upload also creates an index entry:
 ## Benefits of Integration
 
 ### 1. Consistent Media Management
+
 All media uploads go through the same validation, storage, and metadata tracking pipeline.
 
 ### 2. Better Querying
+
 ```javascript
 // Get all ServiceImages for a provider
-const images = await db.collection("media")
+const images = await db
+  .collection("media")
   .where("ownerId", "==", providerId)
   .where("mediaType", "==", "ServiceImage")
   .get();
 
 // Get all pending certificates
-const pendingCerts = await db.collection("media")
+const pendingCerts = await db
+  .collection("media")
   .where("mediaType", "==", "ServiceCertificate")
   .where("validationStatus", "==", "Pending")
   .get();
 ```
 
 ### 3. Certificate Validation Workflow
+
 ```javascript
 // Admins can now validate certificates using media.js functions
-const updateStatus = httpsCallable(functions, "updateCertificateValidationStatus");
+const updateStatus = httpsCallable(
+  functions,
+  "updateCertificateValidationStatus",
+);
 await updateStatus({
   mediaId: "uuid3",
-  status: "Validated"
+  status: "Validated",
 });
 
 // This automatically updates the certificate metadata
 ```
 
 ### 4. Storage Analytics
+
 ```javascript
 // Get storage statistics per user
 const stats = httpsCallable(functions, "getStorageStats");
@@ -352,9 +368,11 @@ console.log(result.data);
 ```
 
 ### 5. Cleanup and Maintenance
+
 ```javascript
 // Delete all media for a user (GDPR compliance)
-const userMedia = await db.collection("users")
+const userMedia = await db
+  .collection("users")
   .doc(userId)
   .collection("media")
   .get();
@@ -367,9 +385,11 @@ for (const doc of userMedia.docs) {
 ## Migration Notes
 
 ### Existing Services
+
 Existing service documents may only have `imageUrls` and `certificateUrls` arrays without the `imageMedia` and `certificateMedia` fields.
 
 **Handling in Code:**
+
 ```javascript
 // Always check for both old and new formats
 const imageMedia = service.imageMedia || [];
@@ -380,6 +400,7 @@ const imageUrls = service.imageUrls || [];
 ```
 
 ### Gradual Migration
+
 You can create a migration script to backfill `imageMedia` and `certificateMedia`:
 
 ```javascript
@@ -388,15 +409,15 @@ const services = await db.collection("services").get();
 
 for (const serviceDoc of services.docs) {
   const service = serviceDoc.data();
-  
+
   // For services with only URLs, create metadata
   if (service.imageUrls && !service.imageMedia) {
-    const imageMedia = service.imageUrls.map(url => ({
+    const imageMedia = service.imageUrls.map((url) => ({
       id: extractMediaIdFromUrl(url),
       url: url,
       // Other fields can be null or default values
     }));
-    
+
     await serviceDoc.ref.update({ imageMedia });
   }
 }
@@ -405,6 +426,7 @@ for (const serviceDoc of services.docs) {
 ## Testing
 
 ### Test Service Creation with Media
+
 ```javascript
 const createService = httpsCallable(functions, "createService");
 
@@ -418,16 +440,16 @@ const result = await createService({
     {
       fileName: "test.jpg",
       contentType: "image/jpeg",
-      fileData: base64ImageData
-    }
+      fileData: base64ImageData,
+    },
   ],
   serviceCertificates: [
     {
       fileName: "cert.pdf",
       contentType: "application/pdf",
-      fileData: base64PdfData
-    }
-  ]
+      fileData: base64PdfData,
+    },
+  ],
 });
 
 console.log("Created service:", result.data.service);
@@ -436,6 +458,7 @@ console.log("Certificate metadata:", result.data.service.certificateMedia);
 ```
 
 ### Verify Media Collection
+
 ```javascript
 // Check that media metadata was created
 const mediaId = result.data.service.imageMedia[0].id;
@@ -446,6 +469,7 @@ console.log("Media data:", mediaDoc.data());
 ```
 
 ### Test Certificate Validation
+
 ```javascript
 // Get pending certificates
 const getCerts = httpsCallable(functions, "getCertificatesByValidationStatus");
@@ -454,23 +478,30 @@ const pending = await getCerts({ status: "Pending" });
 console.log("Pending certificates:", pending.data.data);
 
 // Validate a certificate (admin only)
-const validateCert = httpsCallable(functions, "updateCertificateValidationStatus");
+const validateCert = httpsCallable(
+  functions,
+  "updateCertificateValidationStatus",
+);
 await validateCert({
   mediaId: certMediaId,
-  status: "Validated"
+  status: "Validated",
 });
 ```
 
 ## Troubleshooting
 
 ### Issue: "uploadMediaInternal is not a function"
+
 **Solution:** Make sure you're importing from the correct path:
+
 ```javascript
-const {uploadMediaInternal, deleteMediaInternal} = require("./media");
+const { uploadMediaInternal, deleteMediaInternal } = require("./media");
 ```
 
 ### Issue: Media metadata not appearing in service
+
 **Solution:** Check that you're storing the full media array:
+
 ```javascript
 await serviceRef.update({
   imageUrls: imageMedia.map((m) => m.url),
@@ -479,7 +510,9 @@ await serviceRef.update({
 ```
 
 ### Issue: Old services don't have imageMedia field
+
 **Solution:** Handle gracefully in your code:
+
 ```javascript
 const imageMedia = service.imageMedia || [];
 // Use imageUrls as fallback if needed

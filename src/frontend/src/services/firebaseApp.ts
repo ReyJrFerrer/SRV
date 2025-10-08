@@ -72,7 +72,9 @@ export function initializeFirebase(): {
           connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
-          console.log("🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)");
+          console.log(
+            "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
+          );
         } catch (emulatorError) {
           console.warn(
             "Emulator connection skipped (may already be connected):",
@@ -124,7 +126,9 @@ export function initializeFirebase(): {
         connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         emulatorsConnected = true;
-        console.log("🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)");
+        console.log(
+          "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
+        );
       } catch (emulatorError) {
         console.warn("Could not connect to emulators:", emulatorError);
       }

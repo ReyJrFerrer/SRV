@@ -56,7 +56,7 @@ class FCMService {
 
     // Start new initialization
     this.initializationPromise = this.performInitialization();
-    
+
     try {
       const token = await this.initializationPromise;
       return token;
@@ -70,7 +70,6 @@ class FCMService {
    * Perform actual FCM initialization
    */
   private async performInitialization(): Promise<string | null> {
-
     try {
       // Check if notifications are supported
       if (!("Notification" in window)) {
@@ -125,11 +124,17 @@ class FCMService {
       }
     } catch (error: any) {
       // Handle rate limiting specifically
-      if (error?.code === 'messaging/too-many-requests' || 
-          error?.message?.includes('429') || 
-          error?.message?.includes('Too Many Requests')) {
-        console.error("FCM: Rate limit exceeded. Please wait a few minutes before trying again.");
-        console.info("FCM: This usually happens during development with frequent refreshes.");
+      if (
+        error?.code === "messaging/too-many-requests" ||
+        error?.message?.includes("429") ||
+        error?.message?.includes("Too Many Requests")
+      ) {
+        console.error(
+          "FCM: Rate limit exceeded. Please wait a few minutes before trying again.",
+        );
+        console.info(
+          "FCM: This usually happens during development with frequent refreshes.",
+        );
       } else {
         console.error("FCM: Initialization failed", error);
       }

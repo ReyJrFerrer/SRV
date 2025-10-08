@@ -6,20 +6,20 @@
 
 Implemented 12 Cloud Functions that mirror all functionality from `media.mo` canister:
 
-| Function | Purpose | Auth Required |
-|----------|---------|---------------|
-| `uploadMedia` | Upload files to Cloud Storage | Yes |
-| `getMediaItem` | Get media metadata | No |
-| `getFileData` | Get file URL | No |
-| `getMediaByOwner` | Get user's media items | Yes (owner or admin) |
-| `getMediaByTypeAndOwner` | Get filtered media items | Yes (owner or admin) |
-| `deleteMedia` | Delete file and metadata | Yes (owner or admin) |
-| `updateMediaMetadata` | Update file metadata | Yes (owner) |
-| `getStorageStats` | Get storage statistics | Yes (admin only) |
-| `validateMediaItems` | Validate media for remittance | Yes |
-| `getRemittanceMediaItems` | Get remittance media | Yes |
-| `updateCertificateValidationStatus` | Update cert status | Yes (admin only) |
-| `getCertificatesByValidationStatus` | Get certs by status | Yes (admin only) |
+| Function                            | Purpose                       | Auth Required        |
+| ----------------------------------- | ----------------------------- | -------------------- |
+| `uploadMedia`                       | Upload files to Cloud Storage | Yes                  |
+| `getMediaItem`                      | Get media metadata            | No                   |
+| `getFileData`                       | Get file URL                  | No                   |
+| `getMediaByOwner`                   | Get user's media items        | Yes (owner or admin) |
+| `getMediaByTypeAndOwner`            | Get filtered media items      | Yes (owner or admin) |
+| `deleteMedia`                       | Delete file and metadata      | Yes (owner or admin) |
+| `updateMediaMetadata`               | Update file metadata          | Yes (owner)          |
+| `getStorageStats`                   | Get storage statistics        | Yes (admin only)     |
+| `validateMediaItems`                | Validate media for remittance | Yes                  |
+| `getRemittanceMediaItems`           | Get remittance media          | Yes                  |
+| `updateCertificateValidationStatus` | Update cert status            | Yes (admin only)     |
+| `getCertificatesByValidationStatus` | Get certs by status           | Yes (admin only)     |
 
 ### 2. Updated Project Files
 
@@ -61,26 +61,26 @@ service firebase.storage {
     function isAdmin() {
       return request.auth.token.isAdmin == true;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
+
     match /users/{userId}/{fileName} {
       allow read: if request.auth != null;
       allow write, delete: if isOwner(userId) || isAdmin();
     }
-    
+
     match /services/{providerId}/{fileName} {
       allow read: if request.auth != null;
       allow write, delete: if isOwner(providerId) || isAdmin();
     }
-    
+
     match /certificates/{providerId}/{fileName} {
       allow read: if request.auth != null;
       allow write, delete: if isOwner(providerId) || isAdmin();
     }
-    
+
     match /remittance/{userId}/{fileName} {
       allow read: if isOwner(userId) || isAdmin();
       allow write, delete: if isOwner(userId) || isAdmin();
@@ -131,7 +131,7 @@ const firebaseConfig = {
   projectId: "...",
   storageBucket: "YOUR_PROJECT_ID.appspot.com", // ⬅️ Add this
   messagingSenderId: "...",
-  appId: "..."
+  appId: "...",
 };
 ```
 
@@ -153,10 +153,10 @@ firebase deploy --only storage
 You can test using Firebase Console or this code:
 
 ```javascript
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
-const uploadMedia = httpsCallable(functions, 'uploadMedia');
+const uploadMedia = httpsCallable(functions, "uploadMedia");
 
 // Convert file to base64
 const fileToBase64 = (file) => {
@@ -164,69 +164,71 @@ const fileToBase64 = (file) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 };
 
 // Test upload
-const file = document.getElementById('fileInput').files[0];
+const file = document.getElementById("fileInput").files[0];
 const base64Data = await fileToBase64(file);
 
 try {
   const result = await uploadMedia({
     fileName: file.name,
     contentType: file.type,
-    mediaType: 'UserProfile', // or ServiceImage, ServiceCertificate, RemittancePaymentProof
-    fileData: base64Data
+    mediaType: "UserProfile", // or ServiceImage, ServiceCertificate, RemittancePaymentProof
+    fileData: base64Data,
   });
-  
-  console.log('✅ Upload successful:', result.data);
-  console.log('📸 File URL:', result.data.data.url);
+
+  console.log("✅ Upload successful:", result.data);
+  console.log("📸 File URL:", result.data.data.url);
 } catch (error) {
-  console.error('❌ Upload failed:', error);
+  console.error("❌ Upload failed:", error);
 }
 ```
 
 ## 📋 Key Differences from Canister
 
-| Aspect | Media Canister (IC) | Cloud Storage (Firebase) |
-|--------|---------------------|--------------------------|
-| **Storage** | Canister memory | Cloud Storage bucket |
-| **File URLs** | `/media/{id}` | `https://storage.googleapis.com/...` |
-| **File Access** | HTTP interface in canister | Direct public URLs |
-| **Data Format** | Uint8Array (blob) | Base64 string |
-| **Max File Size** | 450KB/1MB | Same limits enforced |
-| **Public Access** | Controlled via HTTP | Controlled via Storage rules |
-| **Cost** | IC cycles (~expensive) | Storage + bandwidth (~cheap) |
+| Aspect            | Media Canister (IC)        | Cloud Storage (Firebase)             |
+| ----------------- | -------------------------- | ------------------------------------ |
+| **Storage**       | Canister memory            | Cloud Storage bucket                 |
+| **File URLs**     | `/media/{id}`              | `https://storage.googleapis.com/...` |
+| **File Access**   | HTTP interface in canister | Direct public URLs                   |
+| **Data Format**   | Uint8Array (blob)          | Base64 string                        |
+| **Max File Size** | 450KB/1MB                  | Same limits enforced                 |
+| **Public Access** | Controlled via HTTP        | Controlled via Storage rules         |
+| **Cost**          | IC cycles (~expensive)     | Storage + bandwidth (~cheap)         |
 
 ## 🔄 Frontend Updates Needed
 
 Your existing `mediaService.ts` and `mediaServiceCanister.ts` need minimal changes:
 
 ### Before (Canister):
+
 ```typescript
-import { media } from '../../declarations/media';
+import { media } from "../../declarations/media";
 
 const result = await media.uploadMedia(
   fileName,
   contentType,
   mediaType,
-  Array.from(fileData)
+  Array.from(fileData),
 );
 ```
 
 ### After (Cloud Functions):
+
 ```typescript
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const functions = getFunctions();
-const uploadMediaFn = httpsCallable(functions, 'uploadMedia');
+const uploadMediaFn = httpsCallable(functions, "uploadMedia");
 
 const result = await uploadMediaFn({
   fileName,
   contentType,
   mediaType,
-  fileData: base64String // Changed from Uint8Array to base64
+  fileData: base64String, // Changed from Uint8Array to base64
 });
 ```
 
@@ -253,6 +255,7 @@ gs://your-project.appspot.com/
 ### Monitor Usage
 
 Firebase Console → **Storage** → **Usage**:
+
 - Total storage used
 - Download bandwidth
 - Upload bandwidth
@@ -261,6 +264,7 @@ Firebase Console → **Storage** → **Usage**:
 ### Expected Costs (Blaze Plan)
 
 Assuming 1,000 users with average usage:
+
 - **Storage**: ~5 GB = $0.13/month
 - **Downloads**: ~10 GB/month = $1.20/month
 - **Total**: ~$1.33/month
@@ -301,21 +305,25 @@ Compare to IC cycles for similar usage: ~$50-100/month 💰
 ## 🆘 Troubleshooting
 
 ### "Permission denied" errors
+
 - Check Firestore rules allow access to `media` collection
 - Check Storage rules allow access to folder
 - Verify user is authenticated
 
 ### CORS errors
+
 - Ensure CORS configuration is applied (Step 3)
 - Verify `storageBucket` is in Firebase config
 - Check Storage rules allow read access
 
 ### Upload fails
+
 - Check file size (max 450KB or 1MB)
 - Verify file type is supported
 - Check Cloud Function logs in Firebase Console
 
 ### Can't see uploaded files
+
 - Go to Firebase Console → Storage → Files tab
 - Files should be organized in folders by type
 - Click file to see public URL

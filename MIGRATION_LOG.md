@@ -1246,6 +1246,7 @@ The migrated chat service enables:
 **Technical Implementation**:
 
 - **Cloud Storage Structure**:
+
   ```
   users/{userId}/{mediaId}_{filename}          - Profile pictures
   services/{providerId}/{mediaId}_{filename}   - Service images
@@ -1282,18 +1283,18 @@ The migrated chat service enables:
 
 ```javascript
 // All functions follow the pattern: { success: true, data: result }
-uploadMedia({ fileName, contentType, mediaType, fileData })
-getMediaItem({ mediaId })
-getFileData({ mediaId })
-getMediaByOwner({ ownerId })
-getMediaByTypeAndOwner({ ownerId, mediaType })
-deleteMedia({ mediaId })
-updateMediaMetadata({ mediaId, fileName })
-getStorageStats() // Admin only
-validateMediaItems({ mediaIds })
-getRemittanceMediaItems({ mediaIds }) // Admin/system
-updateCertificateValidationStatus({ mediaId, newStatus }) // Admin only
-getCertificatesByValidationStatus({ status }) // Admin only
+uploadMedia({ fileName, contentType, mediaType, fileData });
+getMediaItem({ mediaId });
+getFileData({ mediaId });
+getMediaByOwner({ ownerId });
+getMediaByTypeAndOwner({ ownerId, mediaType });
+deleteMedia({ mediaId });
+updateMediaMetadata({ mediaId, fileName });
+getStorageStats(); // Admin only
+validateMediaItems({ mediaIds });
+getRemittanceMediaItems({ mediaIds }); // Admin/system
+updateCertificateValidationStatus({ mediaId, newStatus }); // Admin only
+getCertificatesByValidationStatus({ status }); // Admin only
 ```
 
 **Security & Authentication**:
@@ -1306,6 +1307,7 @@ getCertificatesByValidationStatus({ status }) // Admin only
 **Frontend Compatibility**:
 
 The migration maintains full compatibility with existing frontend services:
+
 - `mediaService.ts`: File upload/processing logic unchanged
 - `mediaServiceCanister.ts`: Can be updated to call Cloud Functions instead of canisters
 - Same function signatures and response formats
@@ -1314,6 +1316,7 @@ The migration maintains full compatibility with existing frontend services:
 **Configuration Required**:
 
 See `docs/firebase-storage-setup.md` for complete setup instructions:
+
 1. Enable Firebase Storage in Console
 2. Configure Storage security rules
 3. Set up CORS for web access
@@ -1340,7 +1343,9 @@ See `docs/firebase-storage-setup.md` for complete setup instructions:
 - Consider implementing thumbnail generation for improved performance
 
 ---
+
 ````
 ```
 
 ```
+````
