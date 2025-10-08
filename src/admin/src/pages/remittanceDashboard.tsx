@@ -9,6 +9,9 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
+  ArrowUpTrayIcon,
+  ArrowLeftIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 
 export const RemittanceDashboardPage: React.FC = () => {
@@ -23,6 +26,7 @@ export const RemittanceDashboardPage: React.FC = () => {
   } = useAdmin();
 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
     refreshRemittanceOrders();
@@ -33,6 +37,16 @@ export const RemittanceDashboardPage: React.FC = () => {
     refreshRemittanceProviders,
     refreshRemittanceStats,
   ]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      // Show the mobile actions bar when the header is scrolled out of view
+      setShowMobileBar(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     // Get recent orders (last 10)
@@ -80,7 +94,7 @@ export const RemittanceDashboardPage: React.FC = () => {
       case "AwaitingPayment":
         return <ClockIcon className="h-4 w-4" />;
       case "PaymentSubmitted":
-        return <ExclamationTriangleIcon className="h-4 w-4" />;
+        return <ArrowUpTrayIcon className="h-4 w-4" />;
       case "PaymentValidated":
         return <CheckCircleIcon className="h-4 w-4" />;
       case "Settled":
@@ -89,6 +103,23 @@ export const RemittanceDashboardPage: React.FC = () => {
         return <XCircleIcon className="h-4 w-4" />;
       default:
         return <ClockIcon className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "AwaitingPayment":
+        return "Awaiting Payment";
+      case "PaymentSubmitted":
+        return "Payment Submitted";
+      case "PaymentValidated":
+        return "Payment Validated";
+      case "Settled":
+        return "Settled";
+      case "Cancelled":
+        return "Cancelled";
+      default:
+        return status;
     }
   };
 
@@ -103,29 +134,25 @@ export const RemittanceDashboardPage: React.FC = () => {
       <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
                 <Link
                   to="/dashboard"
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="hidden items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none sm:inline-flex"
                 >
-                  ← Back to Dashboard
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
                 </Link>
-                <h1 className="mt-2 text-2xl font-bold text-gray-900">
-                  Remittance Dashboard
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">
-                  Overview of commission payments and remittance activity
-                </p>
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Remittance Dashboard
+                  </h1>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Overview of commission payments and remittance activity
+                  </p>
+                </div>
               </div>
-              <div className="flex space-x-4">
-                <Link
-                  to="/remittance/analytics"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                >
-                  <ChartBarIcon className="mr-2 h-4 w-4" />
-                  Analytics
-                </Link>
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={() => {
                     refreshRemittanceOrders(true);
@@ -133,29 +160,81 @@ export const RemittanceDashboardPage: React.FC = () => {
                     refreshRemittanceStats(true);
                   }}
                   disabled={isLoading}
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
+                <Link
+                  to="/remittance/analytics"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
+                  Analytics
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={() => {
+                refreshRemittanceOrders(true);
+                refreshRemittanceProviders(true);
+                refreshRemittanceStats(true);
+              }}
+              disabled={isLoading}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon className="mr-2 h-4 w-4" />
+              Refresh
+            </button>
+            <Link
+              to="/remittance/analytics"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
+              Analytics
+            </Link>
+            <Link
+              to="/dashboard"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         {/* Stats Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Orders */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
-                    <span className="text-sm font-medium text-white">O</span>
-                  </div>
+                  <ClipboardDocumentListIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -172,13 +251,11 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Settled Orders */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
-                    <CheckCircleIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <CheckCircleIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -197,13 +274,11 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Pending Orders */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-500">
-                    <ClockIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ClockIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -222,13 +297,11 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Overdue Orders */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-500">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -250,11 +323,11 @@ export const RemittanceDashboardPage: React.FC = () => {
         {/* Financial Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Total Commission Paid */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-500" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -275,11 +348,11 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Total Service Amount */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-blue-500" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -300,11 +373,11 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Average Commission Rate */}
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-8 w-8 text-purple-500" />
+                  <ChartBarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -326,15 +399,15 @@ export const RemittanceDashboardPage: React.FC = () => {
         {/* Recent Orders and Top Providers */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Recent Orders */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">
                   Recent Orders
                 </h2>
                 <Link
                   to="/remittance/orders"
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  className="text-sm font-medium text-blue-700 hover:text-blue-600"
                 >
                   View all
                 </Link>
@@ -361,36 +434,57 @@ export const RemittanceDashboardPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {recentOrders.map((order) => (
                     <div
                       key={order.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
+                      className="rounded-lg border border-blue-100 p-4 hover:bg-blue-50/40"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {order.id}
-                          </span>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
-                          >
-                            {getStatusIcon(order.status)}
-                            <span className="ml-1">{order.status}</span>
-                          </span>
+                      {/* Two-column layout: left (ID, status, provider, amount) | right (date/time, commission) */}
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {/* Left column */}
+                        <div>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span
+                              className="truncate text-sm font-semibold text-gray-900"
+                              title={order.id}
+                            >
+                              {order.id}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
+                            >
+                              {getStatusIcon(order.status)}
+                              <span className="ml-1">
+                                {getStatusLabel(order.status)}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500 sm:text-sm">
+                            {formatDate(order.createdAt)}
+                          </div>
+                          <div className="mt-2 text-sm text-gray-600">
+                            <span className="text-gray-500">Provider: </span>
+                            <span className="font-medium text-gray-800">
+                              {order.serviceProviderName ||
+                                order.serviceProviderId}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-sm text-gray-600">
+                            <span className="text-gray-500">Amount: </span>
+                            <span className="font-medium text-gray-800">
+                              {formatCurrency(order.amount)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-1 text-sm text-gray-500">
-                          Provider:{" "}
-                          {order.serviceProviderName || order.serviceProviderId}
-                        </div>
-                        <div className="mt-1 text-sm text-gray-500">
-                          Amount: {formatCurrency(order.amount)} | Commission:{" "}
-                          {formatCurrency(order.commissionAmount)}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500">
-                          {formatDate(order.createdAt)}
+                        {/* Right column */}
+                        <div className="sm:text-right">
+                          <div className="mt-1 text-sm text-gray-600">
+                            <span className="text-gray-500">Commission: </span>
+                            <span className="font-medium text-gray-800">
+                              {formatCurrency(order.commissionAmount)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -401,15 +495,15 @@ export const RemittanceDashboardPage: React.FC = () => {
           </div>
 
           {/* Top Providers */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">
                   Top Providers
                 </h2>
                 <Link
                   to="/remittance/providers"
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  className="text-sm font-medium text-blue-700 hover:text-blue-600"
                 >
                   View all
                 </Link>
@@ -437,31 +531,41 @@ export const RemittanceDashboardPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {remittanceProviders.slice(0, 5).map((provider) => (
                     <div
                       key={provider.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
+                      className="rounded-lg border border-blue-100 p-4 hover:bg-blue-50/40"
                     >
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">
-                          {provider.name}
+                      {/* Top row: Name left, earnings right */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div
+                            className="truncate text-sm font-semibold text-gray-900"
+                            title={provider.name}
+                          >
+                            {provider.name}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500 sm:text-sm">
+                            {provider.phone}
+                          </div>
                         </div>
-                        <div className="mt-1 text-sm text-gray-500">
-                          {provider.phone}
-                        </div>
-                        <div className="mt-1 text-sm text-gray-500">
-                          Outstanding:{" "}
-                          {formatCurrency(provider.outstandingBalance)}
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {formatCurrency(provider.totalEarnings)}
+                          </div>
+                          <div className="text-xs text-gray-500 sm:text-sm">
+                            Total Earnings
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(provider.totalEarnings)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Total Earnings
-                        </div>
+
+                      {/* Bottom row: Outstanding */}
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="text-gray-500">Outstanding: </span>
+                        <span className="font-medium text-gray-800">
+                          {formatCurrency(provider.outstandingBalance)}
+                        </span>
                       </div>
                     </div>
                   ))}

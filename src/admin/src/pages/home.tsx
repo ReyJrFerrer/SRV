@@ -289,7 +289,7 @@ export const AdminHomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Media View Modal */}
       <MediaViewModal
         isOpen={mediaModal.isOpen}
@@ -303,8 +303,8 @@ export const AdminHomePage: React.FC = () => {
       <header className="border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div className="w-full sm:w-auto">
                 <h1 className="text-2xl font-bold text-gray-900">
                   Admin Dashboard
                 </h1>
@@ -313,10 +313,10 @@ export const AdminHomePage: React.FC = () => {
                   system settings
                 </p>
               </div>
-              <div className="flex space-x-4">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:space-x-4">
                 <Link
                   to="/remittance"
-                  className="inline-flex items-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none sm:w-auto"
                 >
                   <svg
                     className="mr-2 h-4 w-4 text-white"
@@ -335,7 +335,7 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex items-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none sm:w-auto"
                 >
                   <svg
                     className="mr-2 h-4 w-4 text-blue-700"
@@ -360,8 +360,8 @@ export const AdminHomePage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="space-y-6">
           {/* Dashboard Stats */}
           <AdminDashboardStats
             stats={dashboardStats}
@@ -387,9 +387,9 @@ export const AdminHomePage: React.FC = () => {
 
           {/* Pending Validations Section */}
           <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
-            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div>
+            <div className="border-b border-blue-100 bg-white px-6 py-4">
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <div className="w-full sm:w-auto">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Pending Payment Validations
                   </h2>
@@ -399,7 +399,7 @@ export const AdminHomePage: React.FC = () => {
                   </p>
                 </div>
                 {pendingValidations.length > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                  <span className="mt-2 inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200 sm:mt-0">
                     {pendingValidations.length} pending
                   </span>
                 )}
