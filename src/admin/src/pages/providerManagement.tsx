@@ -317,7 +317,7 @@ export const ProviderManagementPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Overdue Orders
+                      Overdue Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceProviders
@@ -696,20 +696,20 @@ export const ProviderManagementPage: React.FC = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-500">
-                        Total Orders Completed:
+                        Total Bookings Completed:
                       </span>
                       <span className="font-medium text-gray-900">
                         {selectedProvider.totalOrdersCompleted}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Pending Orders:</span>
+                      <span className="text-gray-500">Pending Bookings:</span>
                       <span className="font-medium text-gray-900">
                         {selectedProvider.pendingOrders}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Overdue Orders:</span>
+                      <span className="text-gray-500">Overdue Bookings:</span>
                       <span
                         className={`font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
                       >
@@ -728,7 +728,7 @@ export const ProviderManagementPage: React.FC = () => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-500">
-                          Orders Awaiting Payment:
+                          Bookings Awaiting Payment:
                         </span>
                         <span className="font-medium text-gray-900">
                           {providerDashboard.ordersAwaitingPayment?.length || 0}
@@ -736,7 +736,7 @@ export const ProviderManagementPage: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">
-                          Orders Pending Validation:
+                          Bookings Pending Validation:
                         </span>
                         <span className="font-medium text-gray-900">
                           {providerDashboard.ordersPendingValidation?.length ||
