@@ -131,18 +131,11 @@ export const RemittanceDashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
+      <header className="sticky top-0 z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
-                <Link
-                  to="/dashboard"
-                  className="hidden items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none sm:inline-flex"
-                >
-                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
-                  Back
-                </Link>
                 <div className="flex flex-col">
                   <h1 className="text-2xl font-bold text-gray-900">
                     Remittance Dashboard
