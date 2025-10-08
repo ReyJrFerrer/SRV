@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import pwaService from "../services/pwaService";
-import pushNotificationService from "../services/pushNotificationService";
+import fcmService from "../services/fcmService";
 import browserDetectionService from "../services/browserDetectionService";
 
 export interface PWAState {
@@ -254,7 +254,7 @@ export const usePWA = () => {
    * Request push notification permission and subscribe
    */
   const enablePushNotifications = useCallback(
-    async (userId: string): Promise<boolean> => {
+    async (_userId: string): Promise<boolean> => {
       try {
         setError(null);
 
@@ -277,24 +277,8 @@ export const usePWA = () => {
           );
         }
 
-        if (!pushNotificationService.isReady()) {
-          // console.log("🔧 PWA Hook: Initializing push notification service");
-          // Initialize with Firebase config
-          await pushNotificationService.initialize({
-            apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "mock-api-key",
-            authDomain:
-              import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "mock-auth-domain",
-            projectId:
-              import.meta.env.VITE_FIREBASE_PROJECT_ID || "mock-project-id",
-            messagingSenderId:
-              import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-            appId: import.meta.env.VITE_FIREBASE_APP_ID || "mock-app-id",
-            vapidKey:
-              import.meta.env.VITE_FIREBASE_VAPID_KEY ||
-              import.meta.env.VITE_MOCK_VAPID_KEY,
-          });
-        }
-
+        // FCM handles initialization internally, no need for explicit init check
+        
         // Request permission with improved error handling
         // console.log("📋 PWA Hook: Requesting notification permission");
         const permission = await pwaService.requestNotificationPermission();
@@ -324,26 +308,17 @@ export const usePWA = () => {
           }
         }
 
-        // Subscribe to push notifications
+        // Subscribe to push notifications (FCM handles this internally)
         // console.log("🔐 PWA Hook: Subscribing to push notifications");
-        const vapidKey = pushNotificationService.getVapidPublicKey();
-        const subscription =
-          await pwaService.subscribeToPushNotifications(vapidKey);
+        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
+        await pwaService.subscribeToPushNotifications(vapidKey);
 
-        // Store subscription
-        // console.log("💾 PWA Hook: Storing push subscription");
-        const success = await pushNotificationService.storePushSubscription(
-          subscription,
-          userId,
-        );
-
-        if (success) {
-          setPwaState((prev) => ({ ...prev, pushSubscribed: true }));
-          // console.log("✅ PWA Hook: Push notifications enabled successfully");
-          return true;
-        } else {
-          throw new Error("Failed to store push subscription on server");
-        }
+        // Subscription is automatically stored by fcmService
+        // console.log("💾 PWA Hook: Push subscription created");
+        
+        setPwaState((prev) => ({ ...prev, pushSubscribed: true }));
+        // console.log("✅ PWA Hook: Push notifications enabled successfully");
+        return true;
       } catch (err) {
         // console.error("❌ PWA Hook: Error enabling push notifications:", err);
 
@@ -369,17 +344,15 @@ export const usePWA = () => {
    * Disable push notifications
    */
   const disablePushNotifications = useCallback(
-    async (userId: string): Promise<boolean> => {
+    async (_userId: string): Promise<boolean> => {
       try {
         setError(null);
 
-        // Unsubscribe from browser
+        // Unsubscribe from browser (FCM handles backend removal)
         const unsubscribed =
           await pwaService.unsubscribeFromPushNotifications();
 
         if (unsubscribed) {
-          // Remove from backend
-          await pushNotificationService.removePushSubscription(userId);
           setPwaState((prev) => ({ ...prev, pushSubscribed: false }));
           return true;
         }
@@ -412,7 +385,16 @@ export const usePWA = () => {
    */
   const sendTestNotification = useCallback(async (): Promise<boolean> => {
     try {
-      return await pushNotificationService.testPushNotification();
+      // Test notification via FCM - display a local notification
+      if (fcmService.isReady()) {
+        await pwaService.showLocalNotification("Test Notification", {
+          body: "Push notifications are working!",
+          icon: "/logo.svg",
+          badge: "/logo.svg",
+        });
+        return true;
+      }
+      return false;
     } catch (err) {
       // console.error("Error sending test notification:", err);
       setError("Failed to send test notification");

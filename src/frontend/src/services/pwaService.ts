@@ -1,5 +1,6 @@
 // PWA Service - Manages Service Worker registration and PWA functionality
 import browserDetectionService from "./browserDetectionService";
+import fcmService from "./fcmService";
 
 export interface PWAInstallPrompt {
   prompt: () => Promise<void>;
@@ -17,7 +18,6 @@ export interface PushSubscriptionData {
 class PWAService {
   private deferredPrompt: PWAInstallPrompt | null = null;
   private swRegistration: ServiceWorkerRegistration | null = null;
-  private pushSubscription: PushSubscription | null = null;
 
   constructor() {
     // Log browser capabilities for debugging
@@ -513,20 +513,12 @@ class PWAService {
   }
 
   /**
-   * Subscribe to push notifications
+   * Subscribe to push notifications (delegates to FCM)
    */
   async subscribeToPushNotifications(
-    vapidPublicKey: string,
+    _vapidPublicKey: string,
   ): Promise<PushSubscriptionData> {
-    const browserInfo = browserDetectionService.getBrowserInfo();
-    const capabilities = browserDetectionService.getPWACapabilities();
-
-    //console.log("🔔 PWA: Attempting push notification subscription", {
-    //   browser: `${browserInfo.name} ${browserInfo.version}`,
-    //   os: `${browserInfo.os} ${browserInfo.osVersion}`,
-    //   capabilities,
-    //   vapidKeyLength: vapidPublicKey.length,
-    // });
+    //console.log("🔔 PWA: Subscribing to push notifications (FCM)");
 
     if (!this.swRegistration) {
       //console.error("❌ PWA: Service Worker not registered");
@@ -538,119 +530,65 @@ class PWAService {
       throw new Error("Notification permission not granted");
     }
 
-    if (!capabilities.canReceivePushNotifications) {
-      //console.error(
-      //   "❌ PWA: Browser does not support push notifications",
-      //   capabilities.limitations,
-      // );
-      throw new Error(
-        `Push notifications not supported: ${capabilities.limitations.join(", ")}`,
-      );
-    }
-
     try {
-      // Convert VAPID key with Safari compatibility
-      const applicationServerKey = this.convertVAPIDKey(vapidPublicKey);
-      //console.log("🔑 PWA: VAPID key converted successfully", {
-      //   originalLength: vapidPublicKey.length,
-      //   convertedLength: applicationServerKey.byteLength,
-      // });
-
-      const subscriptionOptions: PushSubscriptionOptionsInit = {
-        userVisibleOnly: true,
-        applicationServerKey: applicationServerKey as BufferSource,
-      };
-
-      //console.log(
-      //   "📱 PWA: Subscribing to push notifications...",
-      //   subscriptionOptions,
-      // );
-      const subscription =
-        await this.swRegistration.pushManager.subscribe(subscriptionOptions);
-
-      this.pushSubscription = subscription;
-
-      const subscriptionData = {
-        endpoint: subscription.endpoint,
-        keys: {
-          p256dh: this.arrayBufferToBase64(subscription.getKey("p256dh")!),
-          auth: this.arrayBufferToBase64(subscription.getKey("auth")!),
-        },
-      };
-
-      //console.log("✅ PWA: Push notification subscription successful", {
-      //   endpoint: subscription.endpoint.substring(0, 50) + "...",
-      //   hasP256dh: !!subscriptionData.keys.p256dh,
-      //   hasAuth: !!subscriptionData.keys.auth,
-      // });
-
-      return subscriptionData;
-    } catch (error) {
-      //console.error("❌ PWA: Push notification subscription failed", {
-      //   error: error,
-      //   errorMessage: error instanceof Error ? error.message : "Unknown error",
-      //   browser: `${browserInfo.name} ${browserInfo.version}`,
-      //   vapidKeyValid: this.isValidVAPIDKey(vapidPublicKey),
-      // });
-
-      // Provide more specific error messages for common issues
-      if (error instanceof Error) {
-        if (error.message.includes("applicationServerKey")) {
-          throw new Error(
-            `VAPID key format error (${browserInfo.name}): ${error.message}`,
-          );
-        } else if (
-          error.message.includes("registration failed") ||
-          error.message.includes("push service")
-        ) {
-          throw new Error(
-            `Push service error (${browserInfo.name}): Check browser settings and network connection`,
-          );
-        }
+      // Initialize FCM and get token
+      const token = await fcmService.initialize();
+      
+      if (!token) {
+        throw new Error("Failed to get FCM token");
       }
 
+      // Register token with backend
+      const registered = await fcmService.registerToken(token);
+      
+      if (!registered) {
+        throw new Error("Failed to register FCM token with backend");
+      }
+
+      // Return subscription data in expected format (FCM uses token as endpoint)
+      return {
+        endpoint: token,
+        keys: {
+          p256dh: "", // Not used in FCM
+          auth: "", // Not used in FCM
+        },
+      };
+    } catch (error) {
+      //console.error("❌ PWA: FCM subscription failed", error);
       throw error;
     }
   }
 
   /**
-   * Unsubscribe from push notifications
+   * Unsubscribe from push notifications (delegates to FCM)
    */
   async unsubscribeFromPushNotifications(): Promise<boolean> {
-    if (this.pushSubscription) {
-      const success = await this.pushSubscription.unsubscribe();
-      if (success) {
-        this.pushSubscription = null;
-      }
-      return success;
+    try {
+      await fcmService.unregisterToken();
+      await fcmService.deleteToken();
+      return true;
+    } catch (error) {
+      console.error("Failed to unsubscribe from FCM:", error);
+      return false;
     }
-    return true;
   }
 
   /**
-   * Get current push subscription
+   * Get current push subscription (delegates to FCM)
    */
   async getCurrentPushSubscription(): Promise<PushSubscriptionData | null> {
-    if (!this.swRegistration) {
-      return null;
+    const token = fcmService.getToken();
+    
+    if (token) {
+      return {
+        endpoint: token,
+        keys: {
+          p256dh: "", // Not used in FCM
+          auth: "", // Not used in FCM
+        },
+      };
     }
-
-    try {
-      const subscription =
-        await this.swRegistration.pushManager.getSubscription();
-      if (subscription) {
-        return {
-          endpoint: subscription.endpoint,
-          keys: {
-            p256dh: this.arrayBufferToBase64(subscription.getKey("p256dh")!),
-            auth: this.arrayBufferToBase64(subscription.getKey("auth")!),
-          },
-        };
-      }
-    } catch (error) {
-      //console.error("Error getting push subscription:", error);
-    }
-
+    
     return null;
   }
 
@@ -691,23 +629,13 @@ class PWAService {
     // For PWAs, especially on mobile, permission status can change outside the app
     const permission = this.getNotificationPermission();
 
-    // If we have a service worker registration, check if we still have a valid subscription
+    // If we have a service worker registration, check FCM token status
     if (permission === "granted" && this.swRegistration) {
       try {
-        const subscription =
-          await this.swRegistration.pushManager.getSubscription();
-        //console.log(
-        //   "📊 PWA: Current push subscription status:",
-        //   !!subscription,
-        // );
-
-        if (!subscription && this.pushSubscription) {
-          // We thought we had a subscription but we don't - clear our reference
-          //console.warn("⚠️ PWA: Push subscription was cleared externally");
-          this.pushSubscription = null;
-        }
+        fcmService.getToken(); // Check if we have a valid FCM token
+        //console.log("📊 PWA: Checked FCM token status");
       } catch (error) {
-        //console.error("❌ PWA: Error checking push subscription:", error);
+        //console.error("❌ PWA: Error checking FCM token:", error);
       }
     }
 
@@ -760,112 +688,6 @@ class PWAService {
   //     return false;
   //   }
   // }
-
-  /**
-   * Convert VAPID key with improved Safari compatibility
-   */
-  private convertVAPIDKey(base64String: string): Uint8Array {
-    const browserInfo = browserDetectionService.getBrowserInfo();
-
-    try {
-      // Clean the base64 string
-      let cleanBase64 = base64String.trim();
-
-      // Handle different base64 formats (some keys come with or without padding)
-      // Convert base64url to base64 if needed
-      cleanBase64 = cleanBase64.replace(/-/g, "+").replace(/_/g, "/");
-
-      // Add padding if needed
-      const padding = "=".repeat((4 - (cleanBase64.length % 4)) % 4);
-      cleanBase64 = cleanBase64 + padding;
-
-      //console.log("🔑 PWA: Converting VAPID key", {
-      //   browser: browserInfo.name,
-      //   originalLength: base64String.length,
-      //   cleanedLength: cleanBase64.length,
-      //   hasPadding: padding.length > 0,
-      // });
-
-      // For Safari, we need to be extra careful with the conversion
-      let binaryString: string;
-
-      if (browserInfo.name.toLowerCase().includes("safari")) {
-        // Safari-specific conversion
-        try {
-          binaryString = window.atob(cleanBase64);
-        } catch (safariError) {
-          //console.warn(
-          //   "⚠️ PWA: Safari atob failed, trying alternative method",
-          //   safariError,
-          // );
-          // Alternative method for Safari
-          binaryString = this.atobPolyfill(cleanBase64);
-        }
-      } else {
-        binaryString = window.atob(cleanBase64);
-      }
-
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      //console.log("✅ PWA: VAPID key conversion successful", {
-      //   outputLength: bytes.length,
-      //   browser: browserInfo.name,
-      // });
-
-      return bytes;
-    } catch (error) {
-      // //console.error("❌ PWA: VAPID key conversion failed", {
-      //   error,
-      //   browser: browserInfo.name,
-      //   keyLength: base64String.length,
-      //   keyStart: base64String.substring(0, 10) + "...",
-      // });
-      throw new Error(
-        `VAPID key conversion failed for ${browserInfo.name}: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
-  }
-
-  /**
-   * Polyfill for atob that works better in some Safari versions
-   */
-  private atobPolyfill(base64: string): string {
-    const chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let result = "";
-    let i = 0;
-
-    base64 = base64.replace(/[^A-Za-z0-9+/]/g, "");
-
-    while (i < base64.length) {
-      const encoded1 = chars.indexOf(base64.charAt(i++));
-      const encoded2 = chars.indexOf(base64.charAt(i++));
-      const encoded3 = chars.indexOf(base64.charAt(i++));
-      const encoded4 = chars.indexOf(base64.charAt(i++));
-
-      const bitmap =
-        (encoded1 << 18) | (encoded2 << 12) | (encoded3 << 6) | encoded4;
-
-      result += String.fromCharCode((bitmap >> 16) & 255);
-      if (encoded3 !== 64) result += String.fromCharCode((bitmap >> 8) & 255);
-      if (encoded4 !== 64) result += String.fromCharCode(bitmap & 255);
-    }
-
-    return result;
-  }
-
-  /**
-   * Utility: Convert ArrayBuffer to Base64
-   */
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    bytes.forEach((b) => (binary += String.fromCharCode(b)));
-    return window.btoa(binary);
-  }
 }
 
 // Export singleton instance

@@ -20,18 +20,13 @@
       "type": "motoko",
       "main": "src/backend/function/admin.mo"
     },
-    "notification": {
-      "type": "motoko",
-      "main": "src/backend/function/notification.mo"
-    },
     "admin-frontend": {
       "dependencies": [
         "admin",
         "llm",
         "auth",
         "reputation",
-        "media",
-        "notification"
+        "media"
       ],
       "type": "assets",
       "source": ["src/admin/dist/"]

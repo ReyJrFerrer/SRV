@@ -1163,11 +1163,9 @@ The migrated chat service enables:
   - Error handling with `functions.https.HttpsError`
   - FCM integration using `admin.messaging().send()`
   - Automatic token cleanup on invalid/expired tokens
-  
 - **Firestore Collections**:
   - `notifications`: Stores all notification documents with metadata
   - `notificationFrequency`: Tracks spam prevention (5-minute window, max 10 notifications)
-  
 - **Rate Limiting & Spam Prevention**:
   - Preserved Motoko logic: 5-minute window, max 10 notifications per user/type
   - Automatic cleanup of old frequency tracking data
@@ -1185,7 +1183,8 @@ The migrated chat service enables:
   - Rich notifications with actions, badges, and custom data
   - Foreground message handling in frontend
 
-**Impact**: 
+**Impact**:
+
 - Real-time push notifications now powered by Firebase Cloud Messaging
 - Seamless integration with the hybrid architecture
 - Reduced Internet Computer storage costs (notifications now in Firestore)
@@ -1195,6 +1194,7 @@ The migrated chat service enables:
 - Server-side notification generation ensures delivery even when app is closed
 
 **Migration Notes**:
+
 - The notification canister (`notification.mo`) can now be safely removed from `dfx.json` and deleted from `src/backend/function/`
 - FCM requires VAPID key configuration in environment variables (`VITE_FIREBASE_VAPID_KEY`)
 - Existing notification hooks (`useNotifications`, `useProviderNotifications`) work without changes

@@ -184,10 +184,7 @@ export const notificationCanisterService = {
    */
   async markAsRead(notificationId: string): Promise<void> {
     try {
-      const markAsReadFunc = httpsCallable(
-        functions,
-        "markNotificationAsRead",
-      );
+      const markAsReadFunc = httpsCallable(functions, "markNotificationAsRead");
 
       const result = await markAsReadFunc({
         data: {
@@ -379,10 +376,7 @@ export const notificationCanisterService = {
     notificationType: string,
   ): Promise<boolean> {
     try {
-      const canReceiveFunc = httpsCallable(
-        functions,
-        "canReceiveNotification",
-      );
+      const canReceiveFunc = httpsCallable(functions, "canReceiveNotification");
 
       const result = await canReceiveFunc({
         data: {
