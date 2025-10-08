@@ -1,12 +1,13 @@
-import pushNotificationService, {
-  PushNotificationPayload,
-} from "./pushNotificationService";
-import { Notification } from "../hooks/useNotifications";
-import { ProviderNotification } from "../hooks/useProviderNotifications";
+import type { Notification } from "../hooks/useNotifications";
+import type { ProviderNotification } from "../hooks/useProviderNotifications";
 import notificationCanisterService from "./notificationCanisterService";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getFirebaseApp } from "./firebaseApp";
 
 /**
- * Service to integrate existing notification hooks with PWA push notifications
+ * Service to integrate notifications with Firebase Cloud Messaging
+ * Note: FCM push notifications are now handled automatically by Firebase Cloud Functions
+ * This service mainly tracks sent notifications and handles frontend-generated notifications
  */
 class NotificationIntegrationService {
   private static instance: NotificationIntegrationService;
@@ -14,6 +15,7 @@ class NotificationIntegrationService {
   private userId: string | null = null;
   private pushEnabled = false;
   private sentNotifications = new Set<string>(); // Track already sent notifications
+  private messaging: any = null;
 
   private constructor() {}
 
@@ -26,7 +28,7 @@ class NotificationIntegrationService {
   }
 
   /**
-   * Initialize the service with user context
+   * Initialize the service with user context and FCM
    */
   async initialize(userId: string, isPushEnabled: boolean) {
     this.userId = userId;
@@ -34,17 +36,66 @@ class NotificationIntegrationService {
     this.isInitialized = true;
     // Clear sent notifications when user changes
     this.sentNotifications.clear();
-    // //console.log("Notification Integration Service initialized:", {
-    //   userId,
-    //   isPushEnabled,
-    // });
+
+    // Initialize FCM messaging if push is enabled
+    if (isPushEnabled) {
+      try {
+        this.messaging = getMessaging(getFirebaseApp());
+
+        // Request permission and get FCM token
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const token = await getToken(this.messaging, {
+            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+          });
+
+          if (token) {
+            // Store FCM token in backend
+            await notificationCanisterService.storePushSubscription({
+              endpoint: token, // FCM uses token as endpoint
+              p256dh: "", // Not used in FCM
+              auth: "", // Not used in FCM
+            });
+
+            console.log("FCM token registered successfully");
+          }
+        }
+
+        // Listen for foreground messages
+        onMessage(this.messaging, (payload) => {
+          console.log("Received foreground message:", payload);
+          // Handle foreground notification display
+          if (payload.notification) {
+            new Notification(payload.notification.title || "SRV Notification", {
+              body: payload.notification.body,
+              icon: payload.notification.icon || "/logo.svg",
+              data: payload.data,
+            });
+          }
+        });
+      } catch (error) {
+        console.error("Failed to initialize FCM:", error);
+      }
+    }
   }
 
   /**
    * Update push notification status
    */
-  updatePushStatus(enabled: boolean) {
+  async updatePushStatus(enabled: boolean) {
     this.pushEnabled = enabled;
+
+    if (enabled && !this.messaging) {
+      // Initialize FCM if it wasn't initialized before
+      await this.initialize(this.userId!, enabled);
+    } else if (!enabled && this.messaging) {
+      // Remove FCM token when disabled
+      try {
+        await notificationCanisterService.removePushSubscription();
+      } catch (error) {
+        console.error("Failed to remove FCM token:", error);
+      }
+    }
   }
 
   /**
@@ -57,6 +108,8 @@ class NotificationIntegrationService {
 
   /**
    * Send push notification for a regular client notification
+   * Note: With Firebase, push notifications are sent automatically by Cloud Functions
+   * This method now only creates the notification in Firestore if needed
    */
   async sendClientNotification(notification: Notification): Promise<boolean> {
     if (!this.shouldSendPush()) {
@@ -70,8 +123,8 @@ class NotificationIntegrationService {
     }
 
     try {
-      // Only create notification in canister if it's a frontend-generated notification
-      // (notifications from canister already exist and shouldn't be recreated)
+      // Only create notification in Firestore if it's a frontend-generated notification
+      // (notifications from backend already exist and FCM is sent automatically)
       if (notification.id.startsWith("frontend-")) {
         try {
           const result = await notificationCanisterService.createNotification(
@@ -88,54 +141,47 @@ class NotificationIntegrationService {
             },
           );
 
-          // If rate limited, skip but don't fail the push notification
+          // If rate limited, skip but don't fail
           if (result === "rate-limited") {
             console.info(
-              "Notification creation rate limited, proceeding with push notification only",
+              "Notification creation rate limited, skipping",
             );
+            return false;
           }
+
+          // Track that we've created this notification
+          this.sentNotifications.add(notification.id);
+          return true;
         } catch (canisterError) {
           if (
             canisterError instanceof Error &&
             canisterError.message.includes("rate limit")
           ) {
             console.info(
-              "Rate limit reached, proceeding with push notification only",
+              "Rate limit reached, skipping notification creation",
             );
           } else {
             console.warn(
-              "Failed to create frontend notification in canister:",
+              "Failed to create frontend notification:",
               canisterError,
             );
           }
-          // Continue with push notification even if canister creation fails
+          return false;
+        }
+      } else {
+        // For backend notifications, just mark as push sent
+        try {
+          await notificationCanisterService.markAsPushSent(notification.id);
+          this.sentNotifications.add(notification.id);
+          return true;
+        } catch (markError) {
+          console.warn(
+            "Failed to mark notification as push sent:",
+            markError,
+          );
+          return false;
         }
       }
-
-      const payload = this.convertClientNotificationToPush(notification);
-      const success = await pushNotificationService.sendPushNotification(
-        this.userId!,
-        payload,
-      );
-
-      if (success) {
-        // Track that we've sent this notification
-        this.sentNotifications.add(notification.id);
-
-        // Mark as push sent in canister (only if it's not a frontend-only notification)
-        if (!notification.id.startsWith("frontend-")) {
-          try {
-            await notificationCanisterService.markAsPushSent(notification.id);
-          } catch (markError) {
-            console.warn(
-              "Failed to mark notification as push sent:",
-              markError,
-            );
-          }
-        }
-      }
-
-      return success;
     } catch (error) {
       console.error("Error sending client push notification:", error);
       return false;
@@ -144,6 +190,8 @@ class NotificationIntegrationService {
 
   /**
    * Send push notification for a provider notification
+   * Note: With Firebase, push notifications are sent automatically by Cloud Functions
+   * This method now only creates the notification in Firestore if needed
    */
   async sendProviderNotification(
     notification: ProviderNotification,
@@ -161,8 +209,7 @@ class NotificationIntegrationService {
     }
 
     try {
-      // Only create notification in canister if it's a frontend-generated notification
-      // (notifications from canister already exist and shouldn't be recreated)
+      // Only create notification in Firestore if it's a frontend-generated notification
       if (notification.id.startsWith("frontend-")) {
         try {
           const result = await notificationCanisterService.createNotification(
@@ -179,54 +226,47 @@ class NotificationIntegrationService {
             },
           );
 
-          // If rate limited, skip but don't fail the push notification
+          // If rate limited, skip but don't fail
           if (result === "rate-limited") {
             console.info(
-              "Provider notification creation rate limited, proceeding with push notification only",
+              "Provider notification creation rate limited, skipping",
             );
+            return false;
           }
+
+          // Track that we've created this notification
+          this.sentNotifications.add(notification.id);
+          return true;
         } catch (canisterError) {
           if (
             canisterError instanceof Error &&
             canisterError.message.includes("rate limit")
           ) {
             console.info(
-              "Rate limit reached, proceeding with push notification only",
+              "Rate limit reached, skipping notification creation",
             );
           } else {
             console.warn(
-              "Failed to create frontend provider notification in canister:",
+              "Failed to create frontend provider notification:",
               canisterError,
             );
           }
-          // Continue with push notification even if canister creation fails
+          return false;
+        }
+      } else {
+        // For backend notifications, just mark as push sent
+        try {
+          await notificationCanisterService.markAsPushSent(notification.id);
+          this.sentNotifications.add(notification.id);
+          return true;
+        } catch (markError) {
+          console.warn(
+            "Failed to mark provider notification as push sent:",
+            markError,
+          );
+          return false;
         }
       }
-
-      const payload = this.convertProviderNotificationToPush(notification);
-      const success = await pushNotificationService.sendPushNotification(
-        this.userId!,
-        payload,
-      );
-
-      if (success) {
-        // Track that we've sent this notification
-        this.sentNotifications.add(notification.id);
-
-        // Mark as push sent in canister (only if it's not a frontend-only notification)
-        if (!notification.id.startsWith("frontend-")) {
-          try {
-            await notificationCanisterService.markAsPushSent(notification.id);
-          } catch (markError) {
-            console.warn(
-              "Failed to mark provider notification as push sent:",
-              markError,
-            );
-          }
-        }
-      }
-
-      return success;
     } catch (error) {
       console.error("Error sending provider push notification:", error);
       return false;
@@ -251,7 +291,7 @@ class NotificationIntegrationService {
       if (success) {
         successCount++;
       }
-      // Small delay to avoid overwhelming the push service
+      // Small delay to avoid overwhelming the service
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
@@ -276,7 +316,7 @@ class NotificationIntegrationService {
       if (success) {
         successCount++;
       }
-      // Small delay to avoid overwhelming the push service
+      // Small delay to avoid overwhelming the service
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
@@ -284,166 +324,15 @@ class NotificationIntegrationService {
   }
 
   /**
-   * Convert client notification to push payload
-   */
-  private convertClientNotificationToPush(
-    notification: Notification,
-  ): PushNotificationPayload {
-    const basePayload: PushNotificationPayload = {
-      title: "SRV Update",
-      body:
-        notification.message +
-        (notification.providerName ? ` ${notification.providerName}` : ""),
-      icon: "/logo.svg",
-      badge: "/logo.svg",
-      tag: `client-${notification.type}`,
-      data: {
-        url: notification.href,
-        href: notification.href,
-        notificationId: notification.id,
-        type: notification.type,
-        bookingId: notification.bookingId,
-        userType: "client",
-      },
-    };
-
-    // Customize based on notification type
-    switch (notification.type) {
-      case "booking_accepted":
-        basePayload.title = "✅ Booking Accepted!";
-        basePayload.requireInteraction = true;
-        basePayload.actions = [
-          { action: "view", title: "View Booking" },
-          { action: "dismiss", title: "Dismiss" },
-        ];
-        break;
-
-      case "booking_declined":
-        basePayload.title = "❌ Booking Declined";
-        basePayload.requireInteraction = true;
-        break;
-
-      case "review_reminder":
-        basePayload.title = "⭐ Review Reminder";
-        basePayload.body = notification.message;
-        basePayload.actions = [
-          { action: "review", title: "Leave Review" },
-          { action: "dismiss", title: "Later" },
-        ];
-        break;
-
-      case "booking_completed":
-        basePayload.title = "✅ Service Completed";
-        basePayload.requireInteraction = true;
-        break;
-
-      case "provider_on_the_way":
-        basePayload.title = "🚗 Provider On The Way";
-        basePayload.requireInteraction = true;
-        basePayload.vibrate = [200, 100, 200];
-        break;
-
-      default:
-        basePayload.title = "SRV Notification";
-        break;
-    }
-
-    return basePayload;
-  }
-
-  /**
-   * Convert provider notification to push payload
-   */
-  private convertProviderNotificationToPush(
-    notification: ProviderNotification,
-  ): PushNotificationPayload {
-    const basePayload: PushNotificationPayload = {
-      title: "SRV Business Update",
-      body:
-        notification.message +
-        (notification.clientName ? ` ${notification.clientName}` : ""),
-      icon: "/logo.svg",
-      badge: "/logo.svg",
-      tag: `provider-${notification.type}`,
-      data: {
-        url: notification.href,
-        href: notification.href,
-        notificationId: notification.id,
-        type: notification.type,
-        bookingId: notification.bookingId,
-        userType: "provider",
-        amount: notification.amount,
-      },
-    };
-
-    // Customize based on notification type
-    switch (notification.type) {
-      case "new_booking_request":
-        basePayload.title = "🔔 New Booking Request!";
-        basePayload.requireInteraction = true;
-        basePayload.actions = [
-          { action: "view", title: "View Details" },
-          { action: "dismiss", title: "Later" },
-        ];
-        basePayload.vibrate = [200, 100, 200, 100, 200];
-        break;
-
-      case "booking_confirmation":
-        basePayload.title = "✅ Booking Confirmed";
-        basePayload.actions = [{ action: "view", title: "View Booking" }];
-        break;
-
-      case "payment_completed":
-        basePayload.title = "💰 Payment Received";
-        if (notification.amount) {
-          basePayload.body = `Payment of ₱${notification.amount.toFixed(2)} received!`;
-        }
-        basePayload.requireInteraction = true;
-        break;
-
-      case "service_completion_reminder":
-        basePayload.title = "⏰ Service Reminder";
-        basePayload.actions = [
-          { action: "complete", title: "Mark Complete" },
-          { action: "view", title: "View Details" },
-        ];
-        break;
-
-      case "chat_message":
-        basePayload.title = "💬 New Message";
-        basePayload.actions = [
-          { action: "reply", title: "Reply" },
-          { action: "view", title: "View Chat" },
-        ];
-        break;
-
-      case "booking_cancelled":
-        basePayload.title = "❌ Booking Cancelled";
-        basePayload.requireInteraction = true;
-        break;
-
-      case "client_no_show":
-        basePayload.title = "👻 Client No-Show";
-        basePayload.requireInteraction = true;
-        break;
-
-      default:
-        basePayload.title = "SRV Business Update";
-        break;
-    }
-
-    return basePayload;
-  }
-
-  /**
    * Check if we should send push notifications
+   * Note: With FCM integrated into Cloud Functions, this mainly controls
+   * whether frontend-generated notifications should be created
    */
   private shouldSendPush(): boolean {
     return (
       this.isInitialized &&
       this.userId !== null &&
-      this.pushEnabled &&
-      pushNotificationService.isReady()
+      this.pushEnabled
     );
   }
 }

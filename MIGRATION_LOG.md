@@ -1109,6 +1109,99 @@ The migrated chat service enables:
 
 ---
 
+### Task 3.1: Migrate Notification System to Firebase Cloud Messaging ✅
+
+**Completed**: October 8, 2025
+
+**Description**: Migrated the entire notification system from the Internet Computer notification canister to Firebase Cloud Messaging (FCM), enabling real-time push notifications with seamless integration into the hybrid architecture.
+
+**Changes Made**:
+
+1. **Created `functions/src/notification.js`** - Comprehensive Firebase Cloud Functions for notification management:
+   - `createNotification`: Create notifications with automatic FCM push sending
+   - `getUserNotifications`: Fetch user notifications with filtering support
+   - `markNotificationAsRead`: Update notification read status
+   - `markNotificationAsPushSent`: Track FCM delivery status
+   - `getNotificationsForPush`: Retrieve notifications pending push delivery
+   - `storeFCMToken`: Store user's FCM registration token
+   - `removeFCMToken`: Remove FCM token when push is disabled
+   - `getNotificationStats`: Get notification statistics (total, unread, push sent, read)
+   - `markAllNotificationsAsRead`: Bulk update all notifications
+   - `canReceiveNotification`: Rate limiting check before creating notifications
+   - `cleanupExpiredNotifications`: Scheduled function to remove old notifications (runs daily)
+   - `cleanupNotificationFrequency`: Scheduled function to clean spam prevention data (runs every 6 hours)
+
+2. **Updated `firestore.rules`** - Added security rules for notifications:
+   - Users can only read their own notifications or admins can read all
+   - Any authenticated user can create notifications
+   - Only notification owner or admin can update
+   - Only admins can delete notifications
+   - Internal `notificationFrequency` collection restricted to Cloud Functions only
+
+3. **Refactored `src/frontend/src/services/notificationCanisterService.ts`**:
+   - Replaced all canister actor calls with Firebase `httpsCallable` functions
+   - Added `subscribeToUserNotifications()` for real-time Firestore listeners
+   - Maintained same interface for backward compatibility
+   - Updated imports to use Firebase SDK (`getFirestore`, `getFirebaseFunctions`)
+   - Simplified FCM token storage (no longer using push subscription details)
+   - Deprecated `updateNotificationActor` with warning message
+
+4. **Refactored `src/frontend/src/services/notificationIntegrationService.ts`**:
+   - Integrated Firebase Cloud Messaging directly using `firebase/messaging`
+   - Removed dependency on custom `pushNotificationService`
+   - Added FCM initialization with VAPID key configuration
+   - Implemented foreground message handling with `onMessage`
+   - Simplified notification creation (FCM now handled by Cloud Functions)
+   - Maintained batch notification processing for frontend-generated notifications
+   - Removed complex payload conversion logic (now handled server-side)
+
+**Technical Implementation**:
+
+- **Firebase Cloud Functions**:
+  - All functions follow established coding patterns (payload extraction from `data.data`, `getAuthInfo` helper)
+  - Proper validation mirroring Motoko notification canister logic
+  - Error handling with `functions.https.HttpsError`
+  - FCM integration using `admin.messaging().send()`
+  - Automatic token cleanup on invalid/expired tokens
+  
+- **Firestore Collections**:
+  - `notifications`: Stores all notification documents with metadata
+  - `notificationFrequency`: Tracks spam prevention (5-minute window, max 10 notifications)
+  
+- **Rate Limiting & Spam Prevention**:
+  - Preserved Motoko logic: 5-minute window, max 10 notifications per user/type
+  - Automatic cleanup of old frequency tracking data
+  - Rate limit checks before notification creation
+
+- **Notification Types**: Maintained all 23 notification types from Motoko canister:
+  - Client types: `booking_accepted`, `booking_declined`, `review_reminder`, `booking_completed`, `provider_on_the_way`
+  - Provider types: `new_booking_request`, `booking_confirmation`, `payment_completed`, `service_completion_reminder`, `client_no_show`
+  - System types: `generic`, `chat_message`, `booking_cancelled`, `payment_received`, `payment_failed`, `provider_message`, `system_announcement`, `service_rescheduled`, `service_reminder`, `promo_offer`, `booking_rescheduled`, `payment_issue`
+
+- **FCM Features**:
+  - Automatic push notification sending on notification creation
+  - Platform-specific configurations (Android, iOS, Web)
+  - Notification priority and interaction settings
+  - Rich notifications with actions, badges, and custom data
+  - Foreground message handling in frontend
+
+**Impact**: 
+- Real-time push notifications now powered by Firebase Cloud Messaging
+- Seamless integration with the hybrid architecture
+- Reduced Internet Computer storage costs (notifications now in Firestore)
+- Improved scalability with Firebase's infrastructure
+- Maintained all existing notification features and types
+- Enhanced user experience with instant push delivery
+- Server-side notification generation ensures delivery even when app is closed
+
+**Migration Notes**:
+- The notification canister (`notification.mo`) can now be safely removed from `dfx.json` and deleted from `src/backend/function/`
+- FCM requires VAPID key configuration in environment variables (`VITE_FIREBASE_VAPID_KEY`)
+- Existing notification hooks (`useNotifications`, `useProviderNotifications`) work without changes
+- Frontend code using `notificationCanisterService` and `notificationIntegrationService` requires no modifications
+
+---
+
 ```
 
 ```

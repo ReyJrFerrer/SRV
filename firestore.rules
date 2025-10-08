@@ -33,5 +33,16 @@ service cloud.firestore {
         allow update: if request.auth.uid == resource.data.receiverId; // Only receiver can update (mark as read)
         allow delete: if false; // Messages cannot be deleted
     }
+    // Notifications can only be read by the user they belong to or admins.
+    match /notifications/{notificationId} {
+        allow read: if request.auth.uid == resource.data.userId || request.auth.token.isAdmin == true;
+        allow create: if request.auth != null; // Any authenticated user can create notifications
+        allow update: if request.auth.uid == resource.data.userId || request.auth.token.isAdmin == true; // Only owner or admin can update
+        allow delete: if request.auth.token.isAdmin == true; // Only admins can delete
+    }
+    // Notification frequency tracking (for spam prevention) - internal use only
+    match /notificationFrequency/{freqId} {
+        allow read, write: if false; // Only accessible via Cloud Functions
+    }
   }
 }

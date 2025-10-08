@@ -173,6 +173,22 @@ const {
   getConversation,
 } = require("./src/chat");
 
+// Import Notification Management functions
+const {
+  createNotification,
+  getUserNotifications,
+  markNotificationAsRead,
+  markNotificationAsPushSent,
+  getNotificationsForPush,
+  storeFCMToken,
+  removeFCMToken,
+  getNotificationStats,
+  markAllNotificationsAsRead,
+  canReceiveNotification,
+  cleanupNotificationFrequency,
+} = require("./src/notification");
+
+
 // Export all functions
 exports.onboardProvider = onboardProvider;
 exports.createDirectPayment = createDirectPayment;
@@ -294,4 +310,17 @@ exports.getMyConversations = getMyConversations;
 exports.getConversationMessages = getConversationMessages;
 exports.markMessagesAsRead = markMessagesAsRead;
 exports.getConversation = getConversation;
+
+// Export Notification Management Functions
+exports.createNotification = createNotification;
+exports.getUserNotifications = getUserNotifications;
+exports.markNotificationAsRead = markNotificationAsRead;
+exports.markNotificationAsPushSent = markNotificationAsPushSent;
+exports.getNotificationsForPush = getNotificationsForPush;
+exports.storeFCMToken = storeFCMToken;
+exports.removeFCMToken = removeFCMToken;
+exports.getNotificationStats = getNotificationStats;
+exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
+exports.canReceiveNotification = canReceiveNotification;
+exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
 
