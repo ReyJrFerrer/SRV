@@ -13,6 +13,7 @@ import {
   ChartBarIcon,
   ArrowLeftIcon,
   XMarkIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
@@ -21,6 +22,7 @@ export const ProviderManagementPage: React.FC = () => {
     loading,
     refreshRemittanceProviders,
     getProviderDashboard,
+    getProviderAnalytics,
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +32,11 @@ export const ProviderManagementPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerDashboard, setProviderDashboard] = useState<any | null>(null);
-  // Removed unused providerAnalytics state
+  const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
+  const [analyticsMode, setAnalyticsMode] = useState<"details" | "analytics">(
+    "details",
+  );
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
 
@@ -117,12 +123,36 @@ export const ProviderManagementPage: React.FC = () => {
   const handleViewProvider = async (provider: any) => {
     setSelectedProvider(provider);
     setShowProviderDetails(true);
+    setAnalyticsMode("details");
+    setProviderAnalytics(null);
 
     try {
       const dashboard = await getProviderDashboard(provider.id);
       setProviderDashboard(dashboard);
     } catch (error) {
       console.error("Failed to load provider details:", error);
+    }
+  };
+
+  // Inline analytics loading (stay on Provider Management page)
+  const getCurrentMonthStart = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  };
+
+  const loadInlineProviderAnalytics = async (providerId: string) => {
+    try {
+      setAnalyticsLoading(true);
+      const analytics = await getProviderAnalytics(
+        providerId,
+        getCurrentMonthStart(),
+        new Date(),
+      );
+      setProviderAnalytics(analytics);
+    } catch (error) {
+      console.error("Failed to load provider analytics:", error);
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
@@ -317,7 +347,7 @@ export const ProviderManagementPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Overdue Orders
+                      Overdue Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceProviders
@@ -454,14 +484,27 @@ export const ProviderManagementPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Last Activity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    {/* Hide Actions column on mobile */}
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredProviders.map((provider) => (
-                    <tr key={provider.id} className="hover:bg-gray-50">
+                    <tr
+                      key={provider.id}
+                      className="cursor-pointer hover:bg-gray-50 sm:cursor-default"
+                      onClick={() => handleViewProvider(provider)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleViewProvider(provider);
+                        }
+                      }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
@@ -481,6 +524,8 @@ export const ProviderManagementPage: React.FC = () => {
                               ID: {provider.id.substring(0, 8)}...
                             </div>
                           </div>
+                          {/* Mobile chevron indicator */}
+                          <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -514,9 +559,13 @@ export const ProviderManagementPage: React.FC = () => {
                       <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         {formatRelativeTime(new Date(provider.lastActivity))}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                      {/* Hide Actions cell on mobile */}
+                      <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
                         <button
-                          onClick={() => handleViewProvider(provider)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewProvider(provider);
+                          }}
                           className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Details
@@ -534,13 +583,13 @@ export const ProviderManagementPage: React.FC = () => {
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
         <div
-          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:p-8"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-5xl rounded-xl border border-blue-100 bg-white shadow-xl">
+          <div className="mt-16 flex max-h-[85vh] w-full max-w-5xl flex-col rounded-xl border border-blue-100 bg-white shadow-xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-blue-100 px-5 py-4">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
                   <UserIcon className="h-5 w-5 text-blue-600" />
@@ -566,7 +615,7 @@ export const ProviderManagementPage: React.FC = () => {
             </div>
 
             {/* Body */}
-            <div className="px-5 py-4">
+            <div className="flex-1 overflow-y-auto px-5 py-4">
               {/* Profile summary */}
               <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
                 <div className="flex items-center gap-4">
@@ -610,157 +659,277 @@ export const ProviderManagementPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Details grid */}
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {/* Provider Info */}
-                <div className="rounded-lg border border-blue-50 bg-white p-5">
-                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
-                    Provider Information
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Name:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedProvider.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Phone:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedProvider.phone}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Provider ID:</span>
-                      <span className="font-mono text-gray-900">
-                        {selectedProvider.id}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Last Activity:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatDate(new Date(selectedProvider.lastActivity))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+              {/* Mode switch */}
+              <div className="mb-4 flex items-center gap-2">
+                <button
+                  onClick={() => setAnalyticsMode("details")}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    analyticsMode === "details"
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-300 bg-white text-gray-700 hover:bg-yellow-50"
+                  }`}
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() => {
+                    setAnalyticsMode("analytics");
+                    if (selectedProvider && !providerAnalytics) {
+                      loadInlineProviderAnalytics(selectedProvider.id);
+                    }
+                  }}
+                  className={`rounded-md px-3 py-2 text-sm font-medium ${
+                    analyticsMode === "analytics"
+                      ? "bg-blue-600 text-white"
+                      : "border border-blue-600 bg-white text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  Analytics
+                </button>
+              </div>
 
-                {/* Financial Summary */}
-                <div className="rounded-lg border border-blue-50 bg-white p-5">
-                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
-                    Financial Summary
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total Earnings:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(selectedProvider.totalEarnings)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Settled Commission:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(selectedProvider.settledCommission)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        Outstanding Balance:
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(selectedProvider.outstandingBalance)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Pending Commission:</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(selectedProvider.pendingCommission)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        Average Order Value:
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(selectedProvider.averageOrderValue)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Order Statistics */}
-                <div className="rounded-lg border border-blue-50 bg-white p-5">
-                  <h4 className="mb-3 text-sm font-semibold text-gray-900">
-                    Order Statistics
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">
-                        Total Orders Completed:
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {selectedProvider.totalOrdersCompleted}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Pending Orders:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedProvider.pendingOrders}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Overdue Orders:</span>
-                      <span
-                        className={`font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
-                      >
-                        {selectedProvider.overdueOrders}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Activity */}
-                {providerDashboard && (
+              {/* Content */}
+              {analyticsMode === "details" ? (
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {/* Provider Info */}
                   <div className="rounded-lg border border-blue-50 bg-white p-5">
                     <h4 className="mb-3 text-sm font-semibold text-gray-900">
-                      Recent Activity
+                      Provider Information
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Name:</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedProvider.name}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Phone:</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedProvider.phone}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Provider ID:</span>
+                        <span className="font-mono text-gray-900">
+                          {selectedProvider.id}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Last Activity:</span>
+                        <span className="font-medium text-gray-900">
+                          {formatDate(new Date(selectedProvider.lastActivity))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Financial Summary */}
+                  <div className="rounded-lg border border-blue-50 bg-white p-5">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                      Financial Summary
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Total Earnings:</span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(selectedProvider.totalEarnings)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
+                          Settled Commission:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(selectedProvider.settledCommission)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
+                          Outstanding Balance:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(selectedProvider.outstandingBalance)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
+                          Pending Commission:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(selectedProvider.pendingCommission)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
+                          Average Order Value:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(selectedProvider.averageOrderValue)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Statistics */}
+                  <div className="rounded-lg border border-blue-50 bg-white p-5">
+                    <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                      Order Statistics
                     </h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-500">
-                          Orders Awaiting Payment:
+                          Total Bookings Completed:
                         </span>
                         <span className="font-medium text-gray-900">
-                          {providerDashboard.ordersAwaitingPayment?.length || 0}
+                          {selectedProvider.totalOrdersCompleted}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">
-                          Orders Pending Validation:
-                        </span>
+                        <span className="text-gray-500">Pending Bookings:</span>
                         <span className="font-medium text-gray-900">
-                          {providerDashboard.ordersPendingValidation?.length ||
-                            0}
+                          {selectedProvider.pendingOrders}
                         </span>
                       </div>
-                      {providerDashboard.nextDeadline && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Next Deadline:</span>
-                          <span className="font-medium text-gray-900">
-                            {formatDate(
-                              new Date(providerDashboard.nextDeadline),
-                            )}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Overdue Bookings:</span>
+                        <span
+                          className={`font-medium ${selectedProvider.overdueOrders > 0 ? "text-red-600" : "text-gray-900"}`}
+                        >
+                          {selectedProvider.overdueOrders}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Recent Activity */}
+                  {providerDashboard && (
+                    <div className="rounded-lg border border-blue-50 bg-white p-5">
+                      <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                        Recent Activity
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">
+                            Bookings Awaiting Payment:
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {providerDashboard.ordersAwaitingPayment?.length ||
+                              0}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">
+                            Bookings Pending Validation:
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {providerDashboard.ordersPendingValidation
+                              ?.length || 0}
+                          </span>
+                        </div>
+                        {providerDashboard.nextDeadline && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Next Deadline:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {formatDate(
+                                new Date(providerDashboard.nextDeadline),
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {analyticsLoading || !providerAnalytics ? (
+                    <div className="py-12 text-center">
+                      <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                      <p className="mt-4 text-sm text-gray-500">
+                        Loading provider analytics...
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div className="rounded-lg border border-blue-50 bg-white p-5">
+                        <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                          Booking Statistics
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Total Bookings:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {providerAnalytics.totalOrders}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Settled Bookings:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {providerAnalytics.settledOrders}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Pending Bookings:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {providerAnalytics.pendingOrders}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-blue-50 bg-white p-5">
+                        <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                          Financial Metrics
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Total Commission Paid:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {formatCurrency(
+                                providerAnalytics.totalCommissionPaid,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Total Service Amount:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {formatCurrency(
+                                providerAnalytics.totalServiceAmount,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Average Booking Value:
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {formatCurrency(
+                                providerAnalytics.averageOrderValue,
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
               <button
                 onClick={() => {
                   setShowProviderDetails(false);
@@ -771,12 +940,6 @@ export const ProviderManagementPage: React.FC = () => {
               >
                 Close
               </button>
-              <Link
-                to={`/remittance/analytics?provider=${selectedProvider.id}`}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
-              >
-                View Analytics
-              </Link>
             </div>
           </div>
         </div>

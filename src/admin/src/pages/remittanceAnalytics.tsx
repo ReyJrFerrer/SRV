@@ -8,6 +8,9 @@ import {
   CheckCircleIcon,
   ArrowPathIcon,
   UserIcon,
+  ArrowLeftIcon,
+  XMarkIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/outline";
 
 export const RemittanceAnalyticsPage: React.FC = () => {
@@ -29,6 +32,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
   const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
+  const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
     refreshRemittanceStats();
@@ -47,6 +51,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
       }
     }
   }, [selectedProviderId, remittanceProviders]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      // Show the mobile actions bar when the header is scrolled out of view
+      setShowMobileBar(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const loadProviderAnalytics = async (providerId: string) => {
     try {
@@ -85,8 +99,6 @@ export const RemittanceAnalyticsPage: React.FC = () => {
     }).format(amount);
   };
 
-  // Removed unused formatDate helper to satisfy noUnusedLocals
-
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
   };
@@ -106,25 +118,21 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Link
-                  to="/remittance"
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  ← Back to Remittance
-                </Link>
-                <h1 className="mt-2 text-2xl font-bold text-gray-900">
-                  Remittance Analytics
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">
-                  Commission payment analytics and performance insights
-                </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Remittance Analytics
+                  </h1>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Commission payment analytics and performance insights
+                  </p>
+                </div>
               </div>
-              <div className="flex space-x-4">
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={() => {
                     refreshRemittanceStats(true);
@@ -133,26 +141,63 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   disabled={
                     loading.remittanceStats || loading.remittanceProviders
                   }
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
+                <Link
+                  to="/remittance"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={() => {
+                refreshRemittanceStats(true);
+                refreshRemittanceProviders(true);
+              }}
+              disabled={loading.remittanceStats || loading.remittanceProviders}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon className="mr-2 h-4 w-4" />
+              Refresh
+            </button>
+            <Link
+              to="/remittance"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </Link>
+          </div>
+        </div>
+      </div>
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         {/* Date Range Selector */}
-        <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">
+        <div className="mb-8 rounded-xl border border-yellow-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-center text-lg font-medium text-gray-900 sm:text-left">
               Analytics Period
             </h2>
-            <div className="flex space-x-2">
+            <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:mt-0 sm:flex sm:w-auto sm:space-x-2">
               {[
                 { value: "week", label: "This Week" },
                 { value: "month", label: "This Month" },
@@ -162,10 +207,10 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 <button
                   key={option.value}
                   onClick={() => setDateRange(option.value as any)}
-                  className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  className={`w-full rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap sm:w-auto ${
                     dateRange === option.value
-                      ? "border border-indigo-200 bg-indigo-100 text-indigo-700"
-                      : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      ? "border border-blue-200 bg-blue-100 text-blue-700"
+                      : "border border-gray-300 bg-white text-gray-700 hover:bg-yellow-50"
                   }`}
                 >
                   {option.label}
@@ -177,18 +222,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
         {/* System Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-500">
-                    <ChartBarIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ChartBarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Orders
+                      Total Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceStats
@@ -201,18 +244,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500">
-                    <CheckCircleIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <CheckCircleIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Settled Orders
+                      Settled Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceStats
@@ -225,18 +266,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500">
-                    <CurrencyDollarIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Commission
+                      Total Commission Paid
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceStats
@@ -251,13 +290,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500">
-                    <ChartBarIcon className="h-5 w-5 text-white" />
-                  </div>
+                  <ChartBarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -280,11 +317,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
         {/* Financial Metrics */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-500" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -304,16 +341,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-blue-500" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Average Order Value
+                      Average Booking Value
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceStats
@@ -328,16 +365,16 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-8 w-8 text-red-500" />
+                  <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Overdue Orders
+                      Overdue Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {loading.remittanceStats
@@ -354,8 +391,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
         {/* Provider Analytics */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Top Providers */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <h2 className="text-lg font-medium text-gray-900">
                 Top Performing Providers
               </h2>
@@ -383,7 +420,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   {topProviders.map((provider, index) => (
                     <div
                       key={provider.id}
-                      className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-blue-100 p-4 hover:bg-blue-50/40"
                       onClick={() => {
                         setSelectedProvider(provider);
                         setShowProviderDetails(true);
@@ -392,8 +429,8 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                     >
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500">
-                            <span className="text-sm font-medium text-white">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
+                            <span className="text-sm font-semibold">
                               {index + 1}
                             </span>
                           </div>
@@ -412,7 +449,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                           {formatCurrency(provider.totalEarnings)}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {provider.totalOrdersCompleted} orders
+                          {provider.totalOrdersCompleted} bookings
                         </div>
                       </div>
                     </div>
@@ -423,10 +460,10 @@ export const RemittanceAnalyticsPage: React.FC = () => {
           </div>
 
           {/* Overdue Providers */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <h2 className="text-lg font-medium text-gray-900">
-                Providers with Overdue Orders
+                Providers with Overdue Bookings
               </h2>
             </div>
             <div className="p-6">
@@ -444,7 +481,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                     All Clear!
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    No providers have overdue orders.
+                    No providers have overdue bookings.
                   </p>
                 </div>
               ) : (
@@ -490,10 +527,10 @@ export const RemittanceAnalyticsPage: React.FC = () => {
         </div>
 
         {/* High Value Providers */}
-        <div className="mt-8 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 px-6 py-4">
+        <div className="mt-8 rounded-lg border border-blue-100 bg-white shadow-sm">
+          <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
             <h2 className="text-lg font-medium text-gray-900">
-              High Value Providers (Avg Order &gt; ₱1,000)
+              High Value Providers (Avg Booking &gt; ₱1,000)
             </h2>
           </div>
           <div className="p-6">
@@ -511,7 +548,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   No high value providers
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  No providers with average order value above ₱1,000.
+                  No providers with average booking value above ₱1,000.
                 </p>
               </div>
             ) : (
@@ -528,11 +565,11 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500">
-                          <span className="text-sm font-medium text-white">
-                            {provider.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        <img
+                          src="/images/srv characters (SVG)/plumber.svg"
+                          alt="provider avatar"
+                          className="h-10 w-10 rounded-full border border-blue-100 object-cover"
+                        />
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">
@@ -556,87 +593,118 @@ export const RemittanceAnalyticsPage: React.FC = () => {
 
       {/* Provider Details Modal */}
       {showProviderDetails && selectedProvider && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
-          <div className="relative top-20 mx-auto w-4/5 max-w-4xl rounded-md border bg-white p-5 shadow-lg">
-            <div className="mt-3">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Provider Analytics - {selectedProvider.name}
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8">
+          <div className="mt-16 w-full max-w-4xl overflow-hidden rounded-2xl border border-yellow-100 bg-white shadow-xl">
+            {/* Modal header */}
+            <div className="flex items-center justify-between border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
+              <div className="flex items-center gap-2">
+                <ChartBarIcon className="h-6 w-6 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Provider Analytics – {selectedProvider.name}
                 </h3>
-                <button
-                  onClick={() => {
-                    setShowProviderDetails(false);
-                    setSelectedProvider(null);
-                    setProviderAnalytics(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <ExclamationTriangleIcon className="h-6 w-6" />
-                </button>
               </div>
+              <button
+                onClick={() => {
+                  setShowProviderDetails(false);
+                  setSelectedProvider(null);
+                  setProviderAnalytics(null);
+                }}
+                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                aria-label="Close"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
 
+            {/* Modal body */}
+            <div className="px-6 py-6">
+              {/* Profile summary */}
+              <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={encodeURI("/images/srv characters (SVG)/plumber.svg")}
+                    alt="Provider"
+                    className="h-14 w-14 rounded-full border border-blue-100 bg-white object-contain p-1"
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-semibold text-gray-900">
+                      {selectedProvider.name}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                      <span className="inline-flex items-center">
+                        <PhoneIcon className="mr-1 h-4 w-4 text-gray-500" />
+                        {selectedProvider.phone}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <span className="font-mono text-gray-700">
+                        {selectedProvider.id}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
               {providerAnalytics ? (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="rounded-lg bg-gray-50 p-6">
-                    <h4 className="mb-4 text-lg font-medium text-gray-900">
-                      Order Statistics
+                  <div className="rounded-xl border border-blue-100 bg-white p-6">
+                    <h4 className="mb-4 text-base font-medium text-gray-900">
+                      Booking Statistics
                     </h4>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Total Orders:
+                        <span className="text-sm text-gray-600">
+                          Total Bookings
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {providerAnalytics.totalOrders}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Settled Orders:
+                        <span className="text-sm text-gray-600">
+                          Settled Bookings
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {providerAnalytics.settledOrders}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Pending Orders:
+                        <span className="text-sm text-gray-600">
+                          Pending Bookings
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {providerAnalytics.pendingOrders}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-lg bg-gray-50 p-6">
-                    <h4 className="mb-4 text-lg font-medium text-gray-900">
+                  <div className="rounded-xl border border-blue-100 bg-white p-6">
+                    <h4 className="mb-4 text-base font-medium text-gray-900">
                       Financial Metrics
                     </h4>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Total Commission Paid:
+                        <span className="text-sm text-gray-600">
+                          Total Commission Paid
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatCurrency(
                             providerAnalytics.totalCommissionPaid,
                           )}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Total Service Amount:
+                        <span className="text-sm text-gray-600">
+                          Total Service Amount
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatCurrency(providerAnalytics.totalServiceAmount)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Average Order Value:
+                        <span className="text-sm text-gray-600">
+                          Average Booking Value
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-semibold text-gray-900">
                           {formatCurrency(providerAnalytics.averageOrderValue)}
                         </span>
                       </div>
@@ -651,19 +719,20 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   </p>
                 </div>
               )}
+            </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowProviderDetails(false);
-                    setSelectedProvider(null);
-                    setProviderAnalytics(null);
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
+            {/* Modal footer */}
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-white px-6 py-4">
+              <button
+                onClick={() => {
+                  setShowProviderDetails(false);
+                  setSelectedProvider(null);
+                  setProviderAnalytics(null);
+                }}
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

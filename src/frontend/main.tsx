@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./src/App";
 import "./src/index.css";
+import ScrollToTop from "./src/components/ScrollToTop";
 
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";
@@ -101,6 +102,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <HashRouter>
+        <ScrollToTop />
         <AuthProvider>
           <Routes>
             {/* Public Routes */}
