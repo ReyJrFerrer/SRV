@@ -131,7 +131,7 @@ export const RemittanceDashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow">
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -232,7 +232,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Orders
+                      Total Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {isLoading ? "..." : remittanceStats?.totalOrders || 0}
@@ -253,7 +253,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Settled Orders
+                      Settled Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {isLoading
@@ -276,7 +276,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Pending Orders
+                      Pending Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {isLoading
@@ -299,7 +299,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Overdue Orders
+                      Overdue Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {isLoading
@@ -396,7 +396,7 @@ export const RemittanceDashboardPage: React.FC = () => {
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Recent Orders
+                  Recent Bookings
                 </h2>
                 <Link
                   to="/remittance/orders"
@@ -411,7 +411,7 @@ export const RemittanceDashboardPage: React.FC = () => {
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                   <p className="mt-4 text-sm text-gray-500">
-                    Loading recent orders...
+                    Loading recent bookings...
                   </p>
                 </div>
               ) : recentOrders.length === 0 ? (
@@ -420,10 +420,10 @@ export const RemittanceDashboardPage: React.FC = () => {
                     <ClockIcon className="h-12 w-12" />
                   </div>
                   <h3 className="mt-4 text-sm font-medium text-gray-900">
-                    No recent orders
+                    No recent bookings
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    Remittance orders will appear here once they are created.
+                    Remittance bookings will appear here once they are created.
                   </p>
                 </div>
               ) : (

@@ -320,7 +320,7 @@ export const AdminHomePage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow">
+      <header className="z-50 border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
