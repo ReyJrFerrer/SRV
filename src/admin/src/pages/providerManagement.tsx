@@ -176,6 +176,12 @@ export const ProviderManagementPage: React.FC = () => {
     return "All clear";
   };
 
+  // Determine if current viewport is mobile (< sm breakpoint)
+  const isMobileViewport =
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 639px)").matches
+      : true;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -494,11 +500,15 @@ export const ProviderManagementPage: React.FC = () => {
                   {filteredProviders.map((provider) => (
                     <tr
                       key={provider.id}
-                      className="cursor-pointer hover:bg-gray-50 sm:cursor-default"
-                      onClick={() => handleViewProvider(provider)}
-                      role="button"
-                      tabIndex={0}
+                      className="cursor-pointer hover:bg-gray-50 sm:cursor-default sm:hover:bg-transparent"
+                      onClick={() => {
+                        // On mobile, tapping the row opens details; on desktop, do nothing
+                        if (isMobileViewport) handleViewProvider(provider);
+                      }}
+                      role={isMobileViewport ? "button" : undefined}
+                      tabIndex={isMobileViewport ? 0 : -1}
                       onKeyDown={(e) => {
+                        if (!isMobileViewport) return;
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           handleViewProvider(provider);

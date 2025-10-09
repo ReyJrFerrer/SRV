@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AdminDashboardStats,
   ServiceProviderCommissionTable,
@@ -7,8 +7,23 @@ import {
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 
 // Types for media modal
 interface MediaViewModalProps {
@@ -174,6 +189,8 @@ export const AdminHomePage: React.FC = () => {
     systemStats,
     serviceProviders,
     pendingValidations,
+    remittanceOrders,
+    users,
 
     // Action functions
     refreshSystemStats,
@@ -219,6 +236,161 @@ export const AdminHomePage: React.FC = () => {
       0,
     ),
   };
+
+  // Charts: period filter
+  type Period = "7d" | "30d" | "90d" | "all";
+  const [period, setPeriod] = useState<Period>("30d");
+  const periodFromDate = (() => {
+    const now = new Date();
+    switch (period) {
+      case "7d":
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case "30d":
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case "90d":
+        return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      case "all":
+      default:
+        return undefined;
+    }
+  })();
+
+  // Charts: dataset builders
+  // Donut: Settled vs Pending Commission (current totals)
+  const donutData = [
+    {
+      name: "Settled",
+      value: serviceProviders.reduce((sum, p) => sum + p.settledCommission, 0),
+      color: "#2563eb", // blue-600
+    },
+    {
+      name: "Pending",
+      value: serviceProviders.reduce((sum, p) => sum + p.pendingCommission, 0),
+      color: "#f59e0b", // amber-500
+    },
+  ];
+
+  // Bar: Pending Validations by Payment Method (respects period if possible)
+  const pendingValidationsInPeriod = pendingValidations.filter((v) => {
+    if (!periodFromDate) return true;
+    const at = v.paymentSubmittedAt ?? v.createdAt;
+    return at >= periodFromDate;
+  });
+  const byMethodMap = pendingValidationsInPeriod.reduce<Record<string, number>>(
+    (acc, v) => {
+      const key = v.paymentMethod ?? "Unknown";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    },
+    {},
+  );
+  const barData = Object.entries(byMethodMap).map(([method, count]) => ({
+    method,
+    count,
+  }));
+
+  // Line: Bookings per Day (from remittanceOrders, respects period)
+  const ordersInPeriod = remittanceOrders.filter((o) => {
+    if (!periodFromDate) return true;
+    return o.createdAt >= periodFromDate;
+  });
+  // Build day buckets from period start to today
+  const buildDateKey = (d: Date) => d.toISOString().slice(0, 10); // YYYY-MM-DD
+  const dayCounts = new Map<string, number>();
+  if (periodFromDate) {
+    const cursor = new Date(periodFromDate);
+    const end = new Date();
+    cursor.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    while (cursor <= end) {
+      dayCounts.set(buildDateKey(cursor), 0);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+  for (const o of ordersInPeriod) {
+    const key = buildDateKey(o.createdAt);
+    dayCounts.set(key, (dayCounts.get(key) || 0) + 1);
+  }
+  const lineData = (
+    dayCounts.size
+      ? Array.from(dayCounts.entries())
+      : Array.from(
+          new Map<string, number>(
+            ordersInPeriod.map((o) => [buildDateKey(o.createdAt), 0]),
+          ).entries(),
+        )
+  )
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([date, count]) => ({ date, count }));
+
+  // Money visualizations helpers and datasets
+  const formatAxisDate = (dateStr: string) =>
+    new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const formatCurrencyLocal = (amount: number) =>
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
+
+  const formatShortNumber = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return `${n}`;
+  };
+
+  const amountsLineData = useMemo(() => {
+    const daySums = new Map<string, { service: number; commission: number }>();
+    const buildKey = (d: Date) => d.toISOString().slice(0, 10);
+    if (periodFromDate) {
+      const cursor = new Date(periodFromDate);
+      const end = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cursor <= end) {
+        daySums.set(buildKey(cursor), { service: 0, commission: 0 });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    for (const o of ordersInPeriod) {
+      const key = buildKey(o.createdAt);
+      const prev = daySums.get(key) || { service: 0, commission: 0 };
+      daySums.set(key, {
+        service: prev.service + (o.amount || 0),
+        commission: prev.commission + (o.commissionAmount || 0),
+      });
+    }
+    return (
+      daySums.size
+        ? Array.from(daySums.entries())
+        : Array.from(
+            new Map<string, { service: number; commission: number }>(
+              ordersInPeriod.map((o) => [
+                o.createdAt.toISOString().slice(0, 10),
+                { service: 0, commission: 0 },
+              ]),
+            ).entries(),
+          )
+    )
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([date, vals]) => ({ date, ...vals }));
+  }, [ordersInPeriod, periodFromDate]);
+
+  // Pie: Users by type (Providers vs Regular users)
+  const providerIds = new Set(serviceProviders.map((p) => p.id));
+  const totalUsers = users?.length ?? 0;
+  const totalProviders = providerIds.size;
+  const totalRegularUsers = Math.max(0, totalUsers - totalProviders);
+  const userPieData = [
+    { name: "Providers", value: totalProviders, color: "#10b981" }, // emerald-500
+    { name: "Regular Users", value: totalRegularUsers, color: "#6366f1" }, // indigo-500
+  ];
 
   // Load initial data on mount - streamlined to single toast notification
   useEffect(() => {
@@ -309,7 +481,7 @@ export const AdminHomePage: React.FC = () => {
     loading.pendingValidations;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen overflow-x-hidden bg-gray-50">
       {/* Media View Modal */}
       <MediaViewModal
         isOpen={mediaModal.isOpen}
@@ -320,7 +492,7 @@ export const AdminHomePage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="z-50 border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow sm:sticky sm:top-0">
+      <header className="z-50 overflow-x-hidden border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -342,10 +514,21 @@ export const AdminHomePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
+              <div className="ml-0 flex w-full min-w-0 flex-row flex-wrap gap-2 sm:ml-4 sm:w-auto sm:min-w-[unset] sm:flex-nowrap sm:space-x-4">
+                {/* Refresh button (header) */}
+                <button
+                  onClick={refreshAll}
+                  disabled={isRefreshing}
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
+                >
+                  <ArrowPathIcon
+                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </button>
                 <Link
                   to="/remittance"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
                 >
                   <svg
                     className="mr-2 h-4 w-4 text-white"
@@ -364,24 +547,12 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none sm:flex-none"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4 text-blue-700"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
+                  <UserIcon className="mr-2 h-4 w-4 shrink-0 text-blue-700" />
                   View Users
                 </Link>
-                {/* Refresh button removed as per design update */}
+                {/* Note: Header refresh added per request */}
               </div>
             </div>
           </div>
@@ -389,8 +560,244 @@ export const AdminHomePage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 sm:pb-8 lg:px-8">
+      <main className="mx-auto max-w-7xl overflow-x-hidden px-4 py-6 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         <div className="space-y-6">
+          {/* Charts Section (moved to top) */}
+          <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+              <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Quick Analytics
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    High-level insights for the selected period
+                  </p>
+                </div>
+                {/* Period filter */}
+                <div className="mt-2 inline-flex overflow-hidden rounded-md border border-blue-200 bg-white text-sm shadow-sm sm:mt-0">
+                  {(
+                    [
+                      { key: "7d", label: "7d" },
+                      { key: "30d", label: "30d" },
+                      { key: "90d", label: "90d" },
+                      { key: "all", label: "All" },
+                    ] as { key: Period; label: string }[]
+                  ).map((opt, idx, arr) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setPeriod(opt.key)}
+                      className={
+                        "px-3 py-1.5 hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none " +
+                        (period === opt.key
+                          ? "bg-blue-600 text-white hover:bg-blue-600"
+                          : "text-gray-700") +
+                        (idx !== arr.length - 1
+                          ? " border-r border-blue-200"
+                          : "")
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+              {/* Donut: Settled vs Pending Commission */}
+              <div className="rounded-lg border border-gray-100 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Commission: Settled vs Pending
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                    Providers: {serviceProviders.length}
+                  </span>
+                </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={donutData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        innerRadius={45}
+                        paddingAngle={2}
+                      >
+                        {donutData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Bar: Pending Validations by Payment Method */}
+              <div className="rounded-lg border border-gray-100 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Pending Validations by Method
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
+                    Pending: {pendingValidationsInPeriod.length}
+                  </span>
+                </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={barData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="method" tick={{ fontSize: 12 }} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Bar
+                        dataKey="count"
+                        fill="#2563eb"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Line: Bookings per Day */}
+              <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Bookings per Day
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                    Total: {ordersInPeriod.length}
+                  </span>
+                </div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={lineData}
+                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(d: string) => formatAxisDate(d)}
+                      />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip
+                        labelFormatter={(d: string) => formatAxisDate(d)}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        name="Bookings"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Money: Amounts per Day (PHP) */}
+              <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Amounts per Day (PHP)
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                    Days: {amountsLineData.length}
+                  </span>
+                </div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={amountsLineData}
+                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(d: string) => formatAxisDate(d)}
+                      />
+                      <YAxis
+                        tickFormatter={(v: number) => formatShortNumber(v)}
+                      />
+                      <Tooltip
+                        labelFormatter={(d: string) => formatAxisDate(d)}
+                        formatter={(v: number, name: string) => [
+                          formatCurrencyLocal(v),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="service"
+                        name="Service Amount"
+                        stroke="#2563eb"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="commission"
+                        name="Commission Paid"
+                        stroke="#16a34a"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Pie: Users by type */}
+              <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Users by Type
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+                    Users: {totalUsers}
+                  </span>
+                </div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={userPieData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={90}
+                        innerRadius={50}
+                        paddingAngle={2}
+                      >
+                        {userPieData.map((entry, index) => (
+                          <Cell key={`upie-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </section>
           {/* Dashboard Stats */}
           <AdminDashboardStats
             stats={dashboardStats}

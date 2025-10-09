@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
+import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon as ExclamationTriangleOutlineIcon,
+  WrenchScrewdriverIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
 
 // Function to parse structured report data
 const parseReportData = (description: string) => {
@@ -192,6 +200,17 @@ export const TicketInboxPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingReports, setLoadingReports] = useState(false);
 
+  // Mobile bottom action bar visibility
+  const [showMobileBar, setShowMobileBar] = useState(false);
+
+  // Toggle mobile bottom bar when header scrolls out of view
+  useEffect(() => {
+    const onScroll = () => setShowMobileBar(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   // Initialize canister references and refresh data
   useEffect(() => {
     const initializeData = async () => {
@@ -311,32 +330,13 @@ export const TicketInboxPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      {/* Header (styled like Provider Management) */}
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
-                  Back
-                </button>
-                <div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex flex-col">
                   <h1 className="text-2xl font-bold text-gray-900">
                     Ticket Inbox
                   </h1>
@@ -346,30 +346,23 @@ export const TicketInboxPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex space-x-4">
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={handleRefresh}
                   disabled={loading || loadingReports}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
-                  {loading || loadingReports ? (
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
-                  ) : (
-                    <svg
-                      className="mr-2 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                  )}
+                  <ArrowPathIcon
+                    className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
+                  />
                   {loadingReports ? "Loading Reports..." : "Refresh"}
+                </button>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
                 </button>
               </div>
             </div>
@@ -377,41 +370,135 @@ export const TicketInboxPage: React.FC = () => {
         </div>
       </header>
 
+      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={loading || loadingReports}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon
+                className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
+              />
+              {loadingReports ? "Loading Reports..." : "Refresh"}
+            </button>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* Stats Summary */}
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {stats.total}
+          {/* Stats Summary styled like Provider Management */}
+          <div className="mb-2 grid grid-cols-1 gap-5 sm:grid-cols-5">
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <DocumentTextIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Total Tickets
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.total}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Total Tickets</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {stats.open}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <ExclamationTriangleOutlineIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Open
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.open}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Open</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {stats.inProgress}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <WrenchScrewdriverIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        In Progress
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.inProgress}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">In Progress</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {stats.resolved}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CheckCircleIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Resolved
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.resolved}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Resolved</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-600">
-                  {stats.total - stats.resolved}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <DocumentTextIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Active
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.total - stats.resolved}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Active</div>
               </div>
             </div>
           </div>
@@ -485,8 +572,8 @@ export const TicketInboxPage: React.FC = () => {
           </div>
 
           {/* Tickets List */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -497,7 +584,7 @@ export const TicketInboxPage: React.FC = () => {
                   </p>
                 </div>
                 {stats.open > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                  <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 ring-1 ring-red-200">
                     {stats.open} open
                   </span>
                 )}
