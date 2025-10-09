@@ -7,7 +7,7 @@ import {
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 
 // Types for media modal
@@ -343,6 +343,15 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
+                {/* Refresh button (header) */}
+                <button
+                  onClick={refreshAll}
+                  disabled={isRefreshing}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
+                >
+                  <ArrowPathIcon className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
                 <Link
                   to="/remittance"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
@@ -364,24 +373,12 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center whitespace-nowrap sm:flex-none rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4 text-blue-700"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
+                  <UserIcon className="mr-2 h-4 w-4 text-blue-700" />
                   View Users
                 </Link>
-                {/* Refresh button removed as per design update */}
+                {/* Note: Header refresh added per request */}
               </div>
             </div>
           </div>
