@@ -89,8 +89,12 @@ export const getImageDataUrl = async (
       return imageCache.get(mediaUrl)!;
     }
 
-    // For Firebase Storage URLs, return directly (they're already public URLs)
-    if (mediaUrl.includes("storage.googleapis.com")) {
+    // For Firebase Storage URLs (both production and emulator), return directly
+    if (
+      mediaUrl.includes("storage.googleapis.com") ||
+      mediaUrl.includes("127.0.0.1:9199") ||
+      mediaUrl.includes("localhost:9199")
+    ) {
       if (opts.enableCache) {
         imageCache.set(mediaUrl, mediaUrl);
       }

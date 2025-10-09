@@ -8,6 +8,12 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
+// Import media upload functions for consistent media handling
+const {
+  uploadMediaInternal,
+  deleteMediaInternal,
+} = require("./media");
+
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
@@ -396,4 +402,152 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     success: true,
     users: users,
   };
+});
+
+// ============================================================================
+// PROFILE PICTURE MANAGEMENT FUNCTIONS
+// ============================================================================
+
+/**
+ * Upload profile picture
+ * HTTP onCall Cloud Function
+ */
+exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
+  // Check authentication
+  if (!auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to upload profile picture",
+    );
+  }
+
+  const principalId = auth.uid;
+  const payload = data.data || data;
+  const {fileName, contentType, fileData} = payload;
+
+  // Validate inputs
+  if (!fileName || !contentType || !fileData) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "File name, content type, and file data are required",
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(principalId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Profile not found",
+      );
+    }
+
+    const profile = userDoc.data();
+
+    // Delete old profile picture if it exists
+    if (profile.profilePicture && profile.profilePicture.mediaId) {
+      try {
+        await deleteMediaInternal(profile.profilePicture.mediaId);
+      } catch (error) {
+        console.error("Error deleting old profile picture:", error);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Upload new profile picture using media.js
+    const mediaItem = await uploadMediaInternal({
+      fileName,
+      contentType,
+      mediaType: "UserProfile",
+      fileData, // Already base64 encoded from frontend
+      ownerId: principalId,
+    });
+
+    // Update profile with new profile picture
+    await userRef.update({
+      profilePicture: {
+        mediaId: mediaItem.id,
+        imageUrl: mediaItem.url,
+        thumbnailUrl: mediaItem.url, // Use same URL for thumbnail (can be enhanced later)
+      },
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Get updated profile
+    const updatedDoc = await userRef.get();
+
+    return {
+      success: true,
+      profile: updatedDoc.data(),
+    };
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Remove profile picture
+ * HTTP onCall Cloud Function
+ */
+exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+
+  // Check authentication
+  if (!auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to remove profile picture",
+    );
+  }
+
+  const principalId = auth.uid;
+
+  try {
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(principalId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Profile not found",
+      );
+    }
+
+    const profile = userDoc.data();
+
+    // Check if profile picture exists
+    if (!profile.profilePicture || !profile.profilePicture.mediaId) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "No profile picture to remove",
+      );
+    }
+
+    // Delete profile picture media
+    await deleteMediaInternal(profile.profilePicture.mediaId);
+
+    // Update profile to remove profile picture
+    await userRef.update({
+      profilePicture: null,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Get updated profile
+    const updatedDoc = await userRef.get();
+
+    return {
+      success: true,
+      profile: updatedDoc.data(),
+    };
+  } catch (error) {
+    console.error("Error removing profile picture:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
 });

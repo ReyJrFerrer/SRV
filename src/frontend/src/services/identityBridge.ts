@@ -231,3 +231,45 @@ export async function getAllServiceProviders(): Promise<any> {
     throw error;
   }
 }
+
+/**
+ * Upload profile picture
+ */
+export async function uploadProfilePicture(
+  fileName: string,
+  contentType: string,
+  fileData: string, // base64 encoded
+): Promise<any> {
+  try {
+    const functions = getFirebaseFunctions();
+    const uploadPictureFn = httpsCallable(functions, "uploadProfilePicture");
+
+    const result = await uploadPictureFn({
+      fileName,
+      contentType,
+      fileData,
+    });
+
+    return result.data;
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remove profile picture
+ */
+export async function removeProfilePicture(): Promise<any> {
+  try {
+    const functions = getFirebaseFunctions();
+    const removePictureFn = httpsCallable(functions, "removeProfilePicture");
+
+    const result = await removePictureFn({});
+
+    return result.data;
+  } catch (error) {
+    console.error("Error removing profile picture:", error);
+    throw error;
+  }
+}

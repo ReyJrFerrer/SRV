@@ -64,6 +64,8 @@ const {
   switchUserRole,
   getAllServiceProviders,
   getAllUsers,
+  uploadProfilePicture,
+  removeProfilePicture,
 } = require("./src/account");
 
 // Import Service Management functions
@@ -230,6 +232,9 @@ exports.updateProfile = updateProfile;
 exports.switchUserRole = switchUserRole;
 exports.getAllServiceProviders = getAllServiceProviders;
 exports.getAllUsers = getAllUsers;
+exports.uploadProfilePicture = uploadProfilePicture;
+exports.removeProfilePicture = removeProfilePicture;
+
 
 // Export Service Management functions
 exports.createService = createService;

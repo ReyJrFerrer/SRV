@@ -193,29 +193,62 @@ export const authCanisterService = {
   },
 
   /**
-   * Upload a profile picture (DEPRECATED - Use Firebase Storage instead)
-   * Kept for backward compatibility but will need to be reimplemented with Firebase Storage
+   * Upload a profile picture
+   * @param fileName Name of the file
+   * @param contentType MIME type of the file
+   * @param fileData File data as Uint8Array
    */
   async uploadProfilePicture(
     fileName: string,
     contentType: string,
     fileData: Uint8Array,
   ): Promise<FrontendProfile | null> {
-    console.log(fileName, contentType, fileData);
+    try {
+      // Convert Uint8Array to base64
+      const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
+        let binary = "";
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      };
 
-    throw new Error(
-      "Profile picture upload needs to be reimplemented with Firebase Storage",
-    );
+      const base64Data = uint8ArrayToBase64(fileData);
+
+      const result = await identityBridge.uploadProfilePicture(
+        fileName,
+        contentType,
+        base64Data,
+      );
+
+      if (result.success && result.profile) {
+        return convertFirestoreProfile(result.profile);
+      }
+
+      throw new Error("Failed to upload profile picture");
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      throw error;
+    }
   },
 
   /**
-   * Remove the current profile picture (DEPRECATED - Use Firebase Storage instead)
-   * Kept for backward compatibility but will need to be reimplemented with Firebase Storage
+   * Remove the current profile picture
    */
   async removeProfilePicture(): Promise<FrontendProfile | null> {
-    throw new Error(
-      "Profile picture removal needs to be reimplemented with Firebase Storage",
-    );
+    try {
+      const result = await identityBridge.removeProfilePicture();
+
+      if (result.success && result.profile) {
+        return convertFirestoreProfile(result.profile);
+      }
+
+      throw new Error("Failed to remove profile picture");
+    } catch (error) {
+      console.error("Error removing profile picture:", error);
+      throw error;
+    }
   },
 };
 

@@ -31,8 +31,8 @@ service firebase.storage {
     
     // User profile images - users/{userId}/{mediaId}_{filename}
     match /users/{userId}/{allPaths=**} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
+      // Allow public read access (profile pictures should be publicly viewable)
+      allow read: if true;
       
       // Allow write only by owner or admin, with size limit (450KB)
       allow write: if (isOwner(userId) || isAdmin()) && 
@@ -45,8 +45,8 @@ service firebase.storage {
     
     // Service images - services/{providerId}/{mediaId}_{filename}
     match /services/{providerId}/{allPaths=**} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
+      // Allow public read access (service images should be publicly viewable)
+      allow read: if true;
       
       // Allow write only by owner or admin, with size limit (450KB)
       allow write: if (isOwner(providerId) || isAdmin()) && 
@@ -59,8 +59,8 @@ service firebase.storage {
     
     // Service certificates - certificates/{providerId}/{mediaId}_{filename}
     match /certificates/{providerId}/{allPaths=**} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
+      // Allow public read access (certificates should be publicly viewable)
+      allow read: if true;
       
       // Allow write only by owner or admin, with size limit (450KB)
       allow write: if (isOwner(providerId) || isAdmin()) && 
