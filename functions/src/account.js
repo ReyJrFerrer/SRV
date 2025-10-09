@@ -16,7 +16,7 @@ const {
 
 // Import reputation bridge for initializing user reputation
 const {
-  initializeReputation,
+  initializeReputationInternal,
 } = require("./reputation");
 
 // Initialize Firebase Admin if not already initialized
@@ -175,15 +175,9 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   await userRef.set(newProfile);
 
-  // Initialize reputation score for new user on Internet Computer
-  try {
-    await initializeReputation({userId: principalId, creationTime: now});
-    console.log(`✅ Reputation initialized for user: ${principalId}`);
-  } catch (error) {
-    // Log error but don't fail profile creation
-    // Reputation can be initialized later if needed
-    console.error(`⚠️ Failed to initialize reputation for ${principalId}:`, error);
-  }
+  // Initialize reputation score. If this fails, the entire function will fail.
+  await initializeReputationInternal(principalId, now);
+  console.log(`✅ Reputation initialized for user: ${principalId}`);
 
   return {
     success: true,

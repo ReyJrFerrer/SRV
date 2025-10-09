@@ -175,7 +175,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: process.env.CANISTER_ID_REPUTATION || "bkyz2-fmaaa-aaaaa-qaaaq-cai",
+    reputation: process.env.CANISTER_ID_REPUTATION || "br5f7-7uaaa-aaaaa-qaaca-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION_IC,
@@ -374,24 +374,17 @@ async function fetchProviderData(providerId) {
 }
 
 /**
- * Initialize reputation for a new user
- * Called by the Identity Bridge (auth.js) upon new user creation
+ * Internal function to initialize reputation
+ * Can be called directly from other cloud functions
+ * @param {string} userId - User principal as text
+ * @param {string} creationTime - ISO timestamp of user creation
+ * @return {Promise<Object>} Result object
  */
-exports.initializeReputation = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {userId, creationTime} = payload;
-
-  console.log("🔄 Initialize Reputation Payload:", {userId, creationTime});
-
-  // This function is called server-to-server by auth.js
-  // We don't check user auth here, relying on the calling function's security
+async function initializeReputationInternal(userId, creationTime) {
+  console.log("🔄 Initialize Reputation Internal:", {userId, creationTime});
 
   if (!userId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "User ID is required",
-    );
+    throw new Error("User ID is required");
   }
 
   try {
@@ -419,30 +412,55 @@ exports.initializeReputation = functions.https.onCall(async (data, _context) => 
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      throw new functions.https.HttpsError("internal", result.err);
+      throw new Error(result.err);
     }
   } catch (error) {
     console.error("Error initializing reputation:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw error;
   }
-});
+}
 
 /**
- * Update a user's (client's) reputation score
- * Called by other services after reputation-affecting events
+ * Initialize reputation for a new user
+ * HTTP Cloud Function - can be called from client or other services via HTTP
  */
-exports.updateUserReputation = functions.https.onCall(async (data, _context) => {
+exports.initializeReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {userId} = payload;
+  const {userId, creationTime} = payload;
 
-  console.log("🔄 Update User Reputation Payload:", {userId});
+  console.log("🔄 Initialize Reputation Payload:", {userId, creationTime});
 
   if (!userId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
       "User ID is required",
     );
+  }
+
+  try {
+    const result = await initializeReputationInternal(userId, creationTime);
+    return result;
+  } catch (error) {
+    console.error("Error initializing reputation:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// Export the internal function for use by other cloud functions
+exports.initializeReputationInternal = initializeReputationInternal;
+
+/**
+ * Internal function to update user reputation
+ * Can be called directly from other cloud functions
+ * @param {string} userId - User principal as text
+ * @return {Promise<Object>} Result object
+ */
+async function updateUserReputationInternal(userId) {
+  console.log("🔄 Update User Reputation Internal:", {userId});
+
+  if (!userId) {
+    throw new Error("User ID is required");
   }
 
   try {
@@ -476,30 +494,25 @@ exports.updateUserReputation = functions.https.onCall(async (data, _context) => 
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      throw new functions.https.HttpsError("internal", result.err);
+      throw new Error(result.err);
     }
   } catch (error) {
     console.error("Error updating user reputation:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw error;
   }
-});
+}
 
 /**
- * Update a service provider's reputation score
- * Called by other services after reputation-affecting events
+ * Internal function to update provider reputation
+ * Can be called directly from other cloud functions
+ * @param {string} providerId - Provider principal as text
+ * @return {Promise<Object>} Result object
  */
-exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {providerId} = payload;
-
-  console.log("🔄 Update Provider Reputation Payload:", {providerId});
+async function updateProviderReputationInternal(providerId) {
+  console.log("🔄 Update Provider Reputation Internal:", {providerId});
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    throw new Error("Provider ID is required");
   }
 
   try {
@@ -533,33 +546,29 @@ exports.updateProviderReputation = functions.https.onCall(async (data, _context)
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      throw new functions.https.HttpsError("internal", result.err);
+      throw new Error(result.err);
     }
   } catch (error) {
     console.error("Error updating provider reputation:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw error;
   }
-});
+}
 
 /**
- * Process a review and update reputations for both client and provider
- * Called by the Review service (review.js) after a review is submitted
+ * Internal function to process review for reputation
+ * Can be called directly from other cloud functions
+ * @param {Object} review - Review object
+ * @param {boolean} useLLM - Whether to use LLM for processing
+ * @return {Promise<Object>} Result object
  */
-exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {review, useLLM = false} = payload;
-
-  console.log("🔄 Process Review For Reputation Payload:", {
+async function processReviewForReputationInternal(review, useLLM = false) {
+  console.log("🔄 Process Review For Reputation Internal:", {
     reviewId: review?.id,
     useLLM,
   });
 
   if (!review || !review.id) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Review object is required",
-    );
+    throw new Error("Review object is required");
   }
 
   try {
@@ -632,13 +641,106 @@ exports.processReviewForReputation = functions.https.onCall(async (data, _contex
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      throw new functions.https.HttpsError("internal", result.err);
+      throw new Error(result.err);
     }
+  } catch (error) {
+    console.error("Error processing review for reputation:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update a user's (client's) reputation score
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.updateUserReputation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  console.log("🔄 Update User Reputation Payload:", {userId});
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    const result = await updateUserReputationInternal(userId);
+    return result;
+  } catch (error) {
+    console.error("Error updating user reputation:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// Export the internal function for use by other cloud functions
+exports.updateUserReputationInternal = updateUserReputationInternal;
+
+/**
+ * Update a service provider's reputation score
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {providerId} = payload;
+
+  console.log("🔄 Update Provider Reputation Payload:", {providerId});
+
+  if (!providerId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Provider ID is required",
+    );
+  }
+
+  try {
+    const result = await updateProviderReputationInternal(providerId);
+    return result;
+  } catch (error) {
+    console.error("Error updating provider reputation:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// Export the internal function for use by other cloud functions
+exports.updateProviderReputationInternal = updateProviderReputationInternal;
+
+/**
+ * Process a review and update reputations for both client and provider
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {review, useLLM = false} = payload;
+
+  console.log("🔄 Process Review For Reputation Payload:", {
+    reviewId: review?.id,
+    useLLM,
+  });
+
+  if (!review || !review.id) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Review object is required",
+    );
+  }
+
+  try {
+    const result = await processReviewForReputationInternal(review, useLLM);
+    return result;
   } catch (error) {
     console.error("Error processing review for reputation:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+// Export the internal function for use by other cloud functions
+exports.processReviewForReputationInternal = processReviewForReputationInternal;
 
 /**
  * Get reputation score for a user

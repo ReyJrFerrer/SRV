@@ -15,8 +15,8 @@ const {
 
 // Import reputation bridge for updating reputations after booking completion
 const {
-  updateUserReputationBridge,
-  updateProviderReputation,
+  updateUserReputationInternal,
+  updateProviderReputationInternal,
 } = require("./reputation");
 
 const db = admin.firestore();
@@ -916,26 +916,15 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       {serviceId: booking.serviceId, providerId: booking.providerId},
     );
 
-    // Update reputation scores for both client and provider
-    try {
-      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
-      await updateUserReputationBridge({userId: booking.clientId,
-      });
-      console.log(`✅ [completeBooking] Client reputation updated successfully`);
-    } catch (error) {
-      console.error(`⚠️ [completeBooking] Failed to update client reputation:`, error);
-      // Don't fail the booking completion if reputation update fails
-    }
+    // Update reputation scores. If any of these fail, the entire function will fail.
+    console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
+    await updateUserReputationInternal(booking.clientId);
+    console.log(`✅ [completeBooking] Client reputation updated successfully`);
 
-    try {
-      console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
-      await updateProviderReputation({providerId: booking.providerId,
-      });
-      console.log(`✅ [completeBooking] Provider reputation updated successfully`);
-    } catch (error) {
-      console.error(`⚠️ [completeBooking] Failed to update provider reputation:`, error);
-      // Don't fail the booking completion if reputation update fails
-    }
+    console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
+    await updateProviderReputationInternal(booking.providerId);
+    console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+
 
     console.log("✅ [completeBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};

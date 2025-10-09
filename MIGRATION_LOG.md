@@ -208,6 +208,7 @@ actor.updateUserReputation(
 - Added comprehensive logging for monitoring reputation initialization
 
 **Code Addition**:
+
 ```javascript
 // After creating user profile in Firestore
 await initializeReputation({
@@ -232,6 +233,7 @@ await initializeReputation({
 - Added detailed logging for monitoring reputation update success/failure
 
 **Code Addition**:
+
 ```javascript
 // After booking completion and notification
 // Update client (user) reputation
@@ -264,6 +266,7 @@ await updateProviderReputation({
 - Added comprehensive logging for monitoring AI processing
 
 **Code Addition**:
+
 ```javascript
 // After review is successfully saved to Firestore
 await processReviewForReputation({
@@ -275,6 +278,7 @@ await processReviewForReputation({
 ```
 
 **Impact**: Every submitted review is automatically processed by the IC reputation canister's AI sentiment analysis system. The canister:
+
 - Analyzes review text for sentiment (positive/negative/neutral)
 - Detects manipulation patterns (review bombing, competitive manipulation)
 - Updates both reviewer (client) and reviewed (provider) reputation scores
@@ -288,12 +292,14 @@ await processReviewForReputation({
 **Data Flow**:
 
 1. **New User Onboarding**:
+
    ```
    Frontend → createProfile (account.js) → Firestore (user profile)
    → initializeReputation → IC reputation.mo → Base reputation score created
    ```
 
 2. **Booking Completion**:
+
    ```
    Frontend → completeBooking (booking.js) → Firestore (booking status)
    → updateUserReputationBridge → IC reputation.mo → Client reputation updated
@@ -335,6 +341,7 @@ await processReviewForReputation({
 **Data Aggregation**:
 
 The reputation bridge functions automatically aggregate data from Firestore:
+
 - Completed bookings count (queries bookings collection)
 - Average rating (aggregates reviews collection)
 - Account age (from user profile createdAt)
@@ -355,6 +362,7 @@ This aggregation happens server-side in the reputation bridge, keeping the integ
    - This enables the canister to accept calls from Firebase functions
 
 2. **Deploy Updated Functions**:
+
    ```bash
    firebase deploy --only functions:createProfile,functions:completeBooking,functions:submitReview
    ```

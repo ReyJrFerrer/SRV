@@ -1,9 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/reputation";
-import { canisterId as authCanisterId } from "../../../declarations/auth";
-import { canisterId as bookingCanisterId } from "../../../declarations/booking";
-import { canisterId as reviewCanisterId } from "../../../declarations/review";
-import { canisterId as serviceCanisterId } from "../../../declarations/service";
 import { Identity } from "@dfinity/agent";
 import type { _SERVICE as ReputationService } from "../../../declarations/reputation/reputation.did";
 
@@ -63,31 +59,6 @@ const getReputationActor = (
 };
 
 class ReputationCanisterService {
-  // Set canister references - this is the main function needed
-  async setCanisterReferences(): Promise<void> {
-    try {
-      const actor = getReputationActor(true);
-      const result = await actor.setCanisterReferences(
-        Principal.fromText(authCanisterId),
-        Principal.fromText(bookingCanisterId),
-        Principal.fromText(reviewCanisterId),
-        Principal.fromText(serviceCanisterId),
-      );
-
-      if ("ok" in result) {
-      } else {
-        // //console.error(
-        //   "❌ Failed to set reputation canister references:",
-        //   result.err,
-        // );
-        throw new Error(`Failed to set canister references: ${result.err}`);
-      }
-    } catch (error) {
-      // //console.error("❌ Error setting reputation canister references:", error);
-      throw error;
-    }
-  }
-
   /**
    * Get the current user's reputation score
    * @returns Promise<ReputationScore> The user's reputation data
