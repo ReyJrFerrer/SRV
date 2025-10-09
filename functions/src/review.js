@@ -1,6 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
+// Import reputation bridge for processing reviews with AI sentiment analysis
+const {
+  processReviewForReputation,
+} = require("./reputation");
+
 const db = admin.firestore();
 
 /**
@@ -109,7 +114,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    return await db.runTransaction(async (transaction) => {
+    const result = await db.runTransaction(async (transaction) => {
       // ===== ALL READ OPERATIONS FIRST =====
 
       // Check if booking exists and user is the client
@@ -215,6 +220,20 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       return {success: true, data: newReview};
     });
+
+    // Process review for reputation with AI sentiment analysis
+    // This is done outside the transaction to avoid long-running operations
+    try {
+      console.log(`🌟 [submitReview] Processing review for reputation with AI`);
+      await processReviewForReputation({review: result.data, useLLM: true});
+      console.log(`✅ [submitReview] Review processed for reputation successfully`);
+    } catch (error) {
+      console.error(`⚠️ [submitReview] Failed to process review for reputation:`, error);
+      // Don't fail the review submission if reputation processing fails
+      // The review is already saved, reputation can be updated later
+    }
+
+    return result;
   } catch (error) {
     console.error("Error in submitReview:", error);
     if (error instanceof functions.https.HttpsError) {

@@ -14,6 +14,11 @@ const {
   deleteMediaInternal,
 } = require("./media");
 
+// Import reputation bridge for initializing user reputation
+const {
+  initializeReputation,
+} = require("./reputation");
+
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
@@ -169,6 +174,16 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   };
 
   await userRef.set(newProfile);
+
+  // Initialize reputation score for new user on Internet Computer
+  try {
+    await initializeReputation({userId: principalId, creationTime: now});
+    console.log(`✅ Reputation initialized for user: ${principalId}`);
+  } catch (error) {
+    // Log error but don't fail profile creation
+    // Reputation can be initialized later if needed
+    console.error(`⚠️ Failed to initialize reputation for ${principalId}:`, error);
+  }
 
   return {
     success: true,

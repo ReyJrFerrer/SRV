@@ -13,6 +13,12 @@ const {
   sendFCMNotification,
 } = require("./notification");
 
+// Import reputation bridge for updating reputations after booking completion
+const {
+  updateUserReputationBridge,
+  updateProviderReputation,
+} = require("./reputation");
+
 const db = admin.firestore();
 
 // Constants for notification system
@@ -909,6 +915,27 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       bookingId,
       {serviceId: booking.serviceId, providerId: booking.providerId},
     );
+
+    // Update reputation scores for both client and provider
+    try {
+      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
+      await updateUserReputationBridge({userId: booking.clientId,
+      });
+      console.log(`✅ [completeBooking] Client reputation updated successfully`);
+    } catch (error) {
+      console.error(`⚠️ [completeBooking] Failed to update client reputation:`, error);
+      // Don't fail the booking completion if reputation update fails
+    }
+
+    try {
+      console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
+      await updateProviderReputation({providerId: booking.providerId,
+      });
+      console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+    } catch (error) {
+      console.error(`⚠️ [completeBooking] Failed to update provider reputation:`, error);
+      // Don't fail the booking completion if reputation update fails
+    }
 
     console.log("✅ [completeBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
