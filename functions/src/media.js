@@ -839,11 +839,14 @@ async function uploadMediaInternal({
     fileSize: fileSize,
     mediaType: mediaType,
     ownerId: ownerId,
-    validationStatus:
-      mediaType === "ServiceCertificate" ? "Pending" : undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
+
+  // Add validationStatus only for ServiceCertificate to avoid undefined values
+  if (mediaType === "ServiceCertificate") {
+    mediaMetadata.validationStatus = "Pending";
+  }
 
   // Store metadata in Firestore
   await db.collection("media").doc(mediaId).set(mediaMetadata);

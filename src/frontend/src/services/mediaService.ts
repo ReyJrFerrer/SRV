@@ -406,7 +406,9 @@ export const processServiceImageFiles = async (
 export const processServiceCertificateFiles = async (
   files: File[],
   options: ImageUploadOptions = {},
-): Promise<{ fileName: string; contentType: string; fileData: string }[]> => {
+): Promise<
+  { fileName: string; contentType: string; fileData: Uint8Array }[]
+> => {
   try {
     if (files.length === 0) {
       return [];
@@ -420,7 +422,7 @@ export const processServiceCertificateFiles = async (
     const processedFiles: {
       fileName: string;
       contentType: string;
-      fileData: string;
+      fileData: Uint8Array;
     }[] = [];
 
     for (const file of files) {
@@ -478,14 +480,13 @@ export const processServiceCertificateFiles = async (
         }
       }
 
-      // Convert to Uint8Array then to base64
+      // Convert to Uint8Array (same as images)
       const fileData = await fileToUint8Array(processedFile);
-      const base64Data = uint8ArrayToBase64(fileData);
 
       processedFiles.push({
         fileName: processedFile.name,
         contentType: processedFile.type,
-        fileData: base64Data,
+        fileData,
       });
     }
 
@@ -858,10 +859,17 @@ export const uploadServiceCertificatesWithProcessing = async (
 
     const processedFiles = await processServiceCertificateFiles(files, options);
 
+    // Convert Uint8Array to base64 for Firebase upload
+    const base64Files = processedFiles.map((file) => ({
+      fileName: file.fileName,
+      contentType: file.contentType,
+      fileData: uint8ArrayToBase64(file.fileData),
+    }));
+
     // Upload via service canister
     const result = await serviceCanisterService.uploadServiceCertificates(
       serviceId,
-      processedFiles,
+      base64Files,
     );
 
     return result;
