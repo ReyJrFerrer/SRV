@@ -349,7 +349,9 @@ export const AdminHomePage: React.FC = () => {
                   disabled={isRefreshing}
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
                 >
-                  <ArrowPathIcon className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <ArrowPathIcon
+                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                   Refresh
                 </button>
                 <Link
@@ -373,7 +375,7 @@ export const AdminHomePage: React.FC = () => {
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex flex-1 items-center justify-center whitespace-nowrap sm:flex-none rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none sm:flex-none"
                 >
                   <UserIcon className="mr-2 h-4 w-4 text-blue-700" />
                   View Users
