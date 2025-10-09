@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
@@ -12,11 +12,27 @@ import {
   XMarkIcon,
   PhoneIcon,
 } from "@heroicons/react/24/outline";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 
 export const RemittanceAnalyticsPage: React.FC = () => {
   const {
     remittanceStats,
     remittanceProviders,
+    remittanceOrders,
     loading,
     refreshRemittanceStats,
     refreshRemittanceProviders,
@@ -102,6 +118,198 @@ export const RemittanceAnalyticsPage: React.FC = () => {
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`;
   };
+
+  // ===== Charts helpers and datasets =====
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "AwaitingPayment":
+        return "Awaiting Payment";
+      case "PaymentSubmitted":
+        return "Payment Submitted";
+      case "PaymentValidated":
+        return "Payment Validated";
+      case "Settled":
+        return "Settled";
+      case "Cancelled":
+        return "Cancelled";
+      default:
+        return status;
+    }
+  };
+
+  const statusPalette: Record<string, string> = {
+    AwaitingPayment: "#f59e0b", // amber
+    PaymentSubmitted: "#3b82f6", // blue
+    PaymentValidated: "#10b981", // emerald
+    Settled: "#22c55e", // green
+    Cancelled: "#ef4444", // red
+  };
+
+  const formatAxisDate = (dateStr: string) =>
+    new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const formatShortNumber = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return `${n}`;
+  };
+
+  const periodFromDate = useMemo(() => getDateRangeStart(), [dateRange]);
+
+  // Donut: Settled vs Pending Commission (providers aggregate)
+  const donutData = useMemo(
+    () => [
+      {
+        name: "Settled",
+        value: remittanceProviders.reduce(
+          (sum: number, p: any) => sum + (p.settledCommission || 0),
+          0,
+        ),
+        color: "#2563eb",
+      },
+      {
+        name: "Pending",
+        value: remittanceProviders.reduce(
+          (sum: number, p: any) => sum + (p.pendingCommission || 0),
+          0,
+        ),
+        color: "#f59e0b",
+      },
+    ],
+    [remittanceProviders],
+  );
+
+  // Filter orders by selected period
+  const ordersInPeriod = useMemo(
+    () =>
+      (remittanceOrders || []).filter((o: any) =>
+        periodFromDate ? o.createdAt >= periodFromDate : true,
+      ),
+    [remittanceOrders, periodFromDate],
+  );
+
+  // Bookings by Status (bar)
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const o of ordersInPeriod) {
+      counts[o.status] = (counts[o.status] || 0) + 1;
+    }
+    const order = [
+      "AwaitingPayment",
+      "PaymentSubmitted",
+      "PaymentValidated",
+      "Settled",
+      "Cancelled",
+    ];
+    const entries = Object.entries(counts).map(([status, count]) => ({
+      status,
+      label: getStatusLabel(status),
+      count,
+      color: statusPalette[status] || "#64748b",
+    }));
+    entries.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
+    return entries;
+  }, [ordersInPeriod]);
+
+  // Bookings per Day (line)
+  const lineData = useMemo(() => {
+    const dayCounts = new Map<string, number>();
+    const buildDateKey = (d: Date) => d.toISOString().slice(0, 10);
+    if (periodFromDate) {
+      const cursor = new Date(periodFromDate);
+      const end = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cursor <= end) {
+        dayCounts.set(buildDateKey(cursor), 0);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    for (const o of ordersInPeriod) {
+      const key = buildDateKey(o.createdAt);
+      dayCounts.set(key, (dayCounts.get(key) || 0) + 1);
+    }
+    return (
+      dayCounts.size
+        ? Array.from(dayCounts.entries())
+        : Array.from(
+            new Map<string, number>(
+              ordersInPeriod.map((o: any) => [
+                o.createdAt.toISOString().slice(0, 10),
+                0,
+              ]),
+            ).entries(),
+          )
+    )
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([date, count]) => ({ date, count }));
+  }, [ordersInPeriod, periodFromDate]);
+
+  // Amounts per Day (service vs commission)
+  const amountsLineData = useMemo(() => {
+    const daySums = new Map<string, { service: number; commission: number }>();
+    const buildDateKey = (d: Date) => d.toISOString().slice(0, 10);
+    if (periodFromDate) {
+      const cursor = new Date(periodFromDate);
+      const end = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cursor <= end) {
+        daySums.set(buildDateKey(cursor), { service: 0, commission: 0 });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    for (const o of ordersInPeriod) {
+      const key = buildDateKey(o.createdAt);
+      const prev = daySums.get(key) || { service: 0, commission: 0 };
+      daySums.set(key, {
+        service: prev.service + (o.amount || 0),
+        commission: prev.commission + (o.commissionAmount || 0),
+      });
+    }
+    return (
+      daySums.size
+        ? Array.from(daySums.entries())
+        : Array.from(
+            new Map<string, { service: number; commission: number }>(
+              ordersInPeriod.map((o: any) => [
+                o.createdAt.toISOString().slice(0, 10),
+                { service: 0, commission: 0 },
+              ]),
+            ).entries(),
+          )
+    )
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([date, vals]) => ({ date, ...vals }));
+  }, [ordersInPeriod, periodFromDate]);
+
+  // Payment Methods (pie)
+  const methodData = useMemo(() => {
+    const methodCounts: Record<string, number> = {};
+    for (const o of ordersInPeriod) {
+      const key = o.paymentMethod || "Unknown";
+      methodCounts[key] = (methodCounts[key] || 0) + 1;
+    }
+    const palette = [
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#06b6d4",
+    ];
+    return Object.entries(methodCounts).map(([name, value], idx) => ({
+      name,
+      value,
+      color: palette[idx % palette.length],
+    }));
+  }, [ordersInPeriod]);
 
   const topProviders = remittanceProviders
     .sort((a, b) => b.totalEarnings - a.totalEarnings)
@@ -219,6 +427,216 @@ export const RemittanceAnalyticsPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Statistical Visualizations */}
+        <section className="mb-8 rounded-lg border border-blue-100 bg-white shadow-sm">
+          <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+            <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Statistical Visualizations
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Quick insights for the selected analytics period
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+            {/* Donut: Settled vs Pending Commission */}
+            <div className="rounded-lg border border-gray-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-800">
+                  Commission: Settled vs Pending
+                </h3>
+                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                  Providers: {remittanceProviders.length}
+                </span>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      innerRadius={45}
+                      paddingAngle={2}
+                    >
+                      {donutData.map((entry, index) => (
+                        <Cell key={`dcell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Pie: Payment Methods */}
+            <div className="rounded-lg border border-gray-100 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-800">
+                  Payment Methods
+                </h3>
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
+                  Bookings: {ordersInPeriod.length}
+                </span>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={methodData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={90}
+                      innerRadius={50}
+                      paddingAngle={2}
+                    >
+                      {methodData.map((entry, index) => (
+                        <Cell key={`mcell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Bar: Bookings by Status */}
+            <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-800">
+                  Bookings by Status
+                </h3>
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                  Categories: {statusCounts.length}
+                </span>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={statusCounts}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" name="Bookings">
+                      {statusCounts.map((entry, index) => (
+                        <Cell key={`scell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Line: Bookings per Day */}
+            <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-800">
+                  Bookings per Day
+                </h3>
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                  Total: {ordersInPeriod.length}
+                </span>
+              </div>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={lineData}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(d: string) => formatAxisDate(d)}
+                    />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip
+                      labelFormatter={(d: string) => formatAxisDate(d)}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      name="Bookings"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Line: Amounts per Day (PHP) */}
+            <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-800">
+                  Amounts per Day (PHP)
+                </h3>
+                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                  Days: {amountsLineData.length}
+                </span>
+              </div>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={amountsLineData}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(d: string) => formatAxisDate(d)}
+                    />
+                    <YAxis
+                      tickFormatter={(v: number) => formatShortNumber(v)}
+                    />
+                    <Tooltip
+                      labelFormatter={(d: string) => formatAxisDate(d)}
+                      formatter={(v: number, name: string) => [
+                        formatCurrency(v),
+                        name,
+                      ]}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="service"
+                      name="Service Amount"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="commission"
+                      name="Commission Paid"
+                      stroke="#16a34a"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* System Overview */}
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
