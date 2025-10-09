@@ -47,7 +47,148 @@ This file tracks the progress of the strategic architectural migration from a pu
 
 **Impact**: Establishes the critical bridge between IC identity and Firebase session management, enabling users to authenticate with Internet Identity while accessing Firebase-based services seamlessly.
 
-## Phase 3: Frontend Client Migration
+### Task 1.3: Create the "Reputation Bridge" Cloud Function ✅
+
+**Completed**: October 10, 2025
+
+**Description**: Created the Reputation Bridge Cloud Function that serves as the sole bridge between Firebase backend and the Internet Computer reputation canister. This follows the same architectural pattern as the Identity Bridge and enables AI-powered reputation management in the hybrid ICP-Firebase architecture.
+
+**Changes Made**:
+
+#### 1. Created `functions/src/reputation.js`
+
+- **File**: `functions/src/reputation.js`
+- Implemented comprehensive Reputation Bridge with 5 main callable functions
+- Follows the same architectural patterns as `auth.js` (Identity Bridge)
+- Added environment detection and canister configuration (local, playground, IC)
+- Implemented manual IDL factory as fallback when declarations aren't available
+
+#### 2. Implemented Core Reputation Functions
+
+Successfully created 5 key reputation bridge functions that communicate with the `reputation.mo` canister:
+
+- ✅ **initializeReputation**: Called by Identity Bridge during new user creation
+  - Accepts `userId` and `creationTime` parameters
+  - Converts ISO timestamps to nanoseconds for IC compatibility
+  - Initializes base reputation score for new users
+  - Returns initialized ReputationScore object
+
+- ✅ **updateUserReputation**: Updates client reputation after events
+  - Fetches completed bookings count from Firestore
+  - Calculates average rating from reviews given
+  - Gets account creation date for age calculation
+  - Calls canister with complete data: `(userId, completedBookings, averageRating, accountAge)`
+  - Returns updated ReputationScore with new trust level
+
+- ✅ **updateProviderReputation**: Updates provider reputation after events
+  - Fetches completed bookings as provider from Firestore
+  - Calculates average rating from reviews received
+  - Gets account creation date for age calculation
+  - Calls canister with complete data matching new function signature
+  - Returns updated ReputationScore with provider-specific scoring
+
+- ✅ **processReviewForReputation**: Processes reviews with AI sentiment analysis
+  - Accepts review object and optional `useLLM` flag
+  - Fetches client data (bookings, ratings, account age) from Firestore
+  - Converts review object to IC-compatible format (Principal types, nanosecond timestamps)
+  - Calls `processReview` or `processReviewWithLLM` based on flag
+  - Updates both client (reviewer) and provider reputations
+  - Returns processed review with quality score and status flags
+
+- ✅ **getReputationScore**: Public query function for reputation retrieval
+  - Accepts `userId` parameter
+  - Queries canister for current reputation score
+  - Returns ReputationScore object with trust level and metrics
+
+#### 3. Data Fetching & Conversion Utilities
+
+- **fetchUserData**: Aggregates client data from Firestore
+  - Queries bookings collection for completed bookings count
+  - Aggregates reviews to calculate average rating given
+  - Retrieves account creation date from user profile
+  - Returns complete data package for reputation calculation
+
+- **fetchProviderData**: Aggregates provider data from Firestore
+  - Queries bookings where user is provider
+  - Aggregates reviews received to calculate average rating
+  - Retrieves account creation date
+  - Returns provider-specific data package
+
+- **isoToNanoseconds**: Converts ISO timestamps to IC Time format
+  - Handles JavaScript Date to nanoseconds conversion
+  - Ensures compatibility with Motoko Time.Time type
+
+#### 4. IC Canister Integration
+
+- **createReputationActor**: Creates actor for reputation canister communication
+  - Uses `@dfinity/agent` for HTTP communication
+  - Supports multiple environments (local, playground, IC)
+  - Fetches root key for local development
+  - Configurable canister IDs via environment variables
+
+- **Manual IDL Definition**: Comprehensive type definitions matching `reputation.mo`
+  - TrustLevel variant (New, Low, Medium, High, VeryHigh)
+  - DetectionFlag variant (ReviewBomb, CompetitiveManipulation, etc.)
+  - ReputationScore record with all fields
+  - Review record with status and quality score
+  - Result types for all function returns
+
+#### 5. Updated Function Signatures
+
+All functions now match the refactored `reputation.mo` canister signatures:
+
+```javascript
+// OLD (would fetch data from other canisters)
+actor.updateUserReputation(userId)
+
+// NEW (accepts all required data as parameters)
+actor.updateUserReputation(
+  principal,
+  completedBookingsCount,
+  averageRating (optional),
+  accountAge
+)
+```
+
+#### 6. Exported Functions in `functions/index.js`
+
+- Added imports for all reputation bridge functions
+- Renamed `updateUserReputation` to `updateUserReputationBridge` to avoid conflict with admin function
+- Exported all 5 reputation functions for deployment
+- Organized exports with clear comments
+
+**Technical Implementation**:
+
+- **Environment Support**: Automatic detection of local/playground/IC environments
+- **Error Handling**: Comprehensive try-catch with detailed logging
+- **Type Safety**: Manual IDL definitions ensure type compatibility with Motoko canister
+- **Data Aggregation**: Firestore queries aggregate all necessary data before canister calls
+- **Async/Await**: Clean async patterns throughout for readability
+- **Logging**: Detailed console logging for debugging and monitoring
+
+**Integration Points**:
+
+- **auth.js** (Identity Bridge): Will call `initializeReputation` on new user creation
+- **booking.js**: Will call `updateUserReputation` and `updateProviderReputation` after booking completion
+- **review.js**: Will call `processReviewForReputation` after review submission
+
+**Impact**:
+
+- **Hybrid Architecture**: Perfectly bridges Firebase operational backend with IC AI-powered reputation system
+- **Data Sovereignty**: Firestore manages operational data; IC canister performs AI analysis
+- **Cost Efficiency**: Only pays IC cycles for AI computation, not data storage
+- **Scalability**: Firebase handles high-frequency operations; IC handles compute-intensive AI tasks
+- **Security**: Server-to-server communication between Cloud Functions and IC canister
+- **Flexibility**: Optional LLM sentiment analysis for advanced review processing
+
+**Next Steps**:
+
+- Integrate reputation bridge calls into `auth.js`, `booking.js`, and `review.js`
+- Set trusted service agent Principal in reputation canister for authorization
+- Deploy functions and test end-to-end reputation flow
+- Monitor canister cycles consumption for AI operations
+
+---
 
 ### Task 3.1: Refactor Admin Service Canister Interface ✅
 

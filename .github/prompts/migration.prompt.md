@@ -181,35 +181,103 @@ exports.functionName = functions.https.onCall(async (data, context) => {
 
 **1.3. Create the "Reputation Bridge" Cloud Function**
 
-- **Action:** CREATE `functions/src/review.js`.
-- **Content:** Implement the `processReputation` function.
+- **Action:** CREATE `functions/src/reputation.js`.
+- **Content:** Implement `onCall` HTTPS functions that will serve as the sole bridge to the `reputation.mo` canister. This follows the same callable function pattern as the `Identity Bridge` (`auth.js`) and will be used by other Cloud Functions (`booking.js`, `review.js`, `auth.js`).
   - **MUST** follow the established coding patterns:
 
     ```javascript
-    exports.processReputation = functions.firestore
-      .document("reviews/{reviewId}")
-      .onCreate(async (snap, context) => {
-        const reviewData = snap.data();
+    // functions/src/reputation.js
+
+    /**
+     * Initializes a reputation score for a new user.
+     * Called by the Identity Bridge (auth.js) upon new user creation.
+     */
+    exports.initializeReputation = functions.https.onCall(async (data, context) => {
+        const payload = data.data || data;
+        const { userId, creationTime } = payload;
+
+        // This function is called server-to-server, so we don't check user auth.
+        // We rely on the calling function (Identity Bridge) to be secure.
 
         try {
-          // Mirror Motoko validation logic for review data
-          if (!reviewData.rating || !reviewData.reviewText) {
-            console.error("Invalid review data");
-            return;
-          }
-
-          // Authenticate as trusted service agent
-          // Call updateReputationFromReview on reputation.mo canister
-          // Follow same error handling patterns as Motoko
-          console.log(
-            "Reputation updated for review:",
-            context.params.reviewId,
-          );
+            // 1. Get the actor for the reputation canister.
+            // 2. Call actor.initializeReputation(userId, creationTime).
+            // 3. Return the result.
+            return { success: true, data: result };
         } catch (error) {
-          console.error("Error processing reputation:", error);
-          // Don't throw - this is a trigger function
+            console.error("Error initializing reputation:", error);
+            throw new functions.https.HttpsError("internal", error.message);
         }
-      });
+    });
+
+    /**
+     * Updates a user's (client's) reputation score.
+     * Called by the Booking service (booking.js) after a booking is completed.
+     */
+    exports.updateUserReputation = functions.https.onCall(async (data, context) => {
+        const payload = data.data || data;
+        const { userId } = payload;
+
+        try {
+            // 1. Fetch all necessary data for the user from Firestore:
+            //    - Total completed bookings count
+            //    - Average rating given
+            //    - User account creation date (accountAge)
+            // 2. Get the actor for the reputation canister.
+            // 3. Call actor.updateUserReputation(userId, completedBookingsCount, averageRating, accountAge).
+            // 4. Return the result.
+            return { success: true, data: result };
+        } catch (error) {
+            console.error("Error updating user reputation:", error);
+            throw new functions.https.HttpsError("internal", error.message);
+        }
+    });
+
+    /**
+     * Updates a service provider's reputation score.
+     * Called by the Booking service (booking.js) after a booking is completed.
+     */
+    exports.updateProviderReputation = functions.https.onCall(async (data, context) => {
+        const payload = data.data || data;
+        const { providerId } = payload;
+
+        try {
+            // 1. Fetch all necessary data for the provider from Firestore:
+            //    - Total completed bookings count
+            //    - Average rating received
+            //    - Provider account creation date (accountAge)
+            // 2. Get the actor for the reputation canister.
+            // 3. Call actor.updateProviderReputation(providerId, completedBookingsCount, averageRating, accountAge).
+            // 4. Return the result.
+            return { success: true, data: result };
+        } catch (error) {
+            console.error("Error updating provider reputation:", error);
+            throw new functions.https.HttpsError("internal", error.message);
+        }
+    });
+
+    /**
+     * Processes a review and updates reputations for both client and provider.
+     * Called by the Review service (review.js) after a review is submitted.
+     */
+    exports.processReviewForReputation = functions.https.onCall(async (data, context) => {
+        const payload = data.data || data;
+        const { review } = payload; // review object from Firestore
+
+        try {
+            // 1. Fetch all necessary data from Firestore for both client and provider:
+            //    - Total completed bookings
+            //    - Average rating
+            //    - Account creation date
+            // 2. Get the actor for the reputation canister.
+            // 3. Call actor.processReviewWithLLM(...) with all the required data.
+            // 4. Return the updated review from the canister.
+            return { success: true, data: updatedReview };
+        } catch (error) {
+            console.error("Error processing review for reputation:", error);
+            throw new functions.https.HttpsError("internal", error.message);
+        }
+    });
     ```
 
 **1.4. Port Wallet & Admin Logic**
@@ -326,7 +394,6 @@ exports.functionName = functions.https.onCall(async (data, context) => {
     ```
   - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). **IMPORTANT:** Ensure frontend expects the same data structure patterns established in the migrated functions.
   - **Authentication Headers:** All Cloud Function calls must include the Firebase ID token in headers for proper authentication via the `getAuthInfo` helper.
-
 
 **PAUSE FOR CONFIRMATION (End of Project)**
 

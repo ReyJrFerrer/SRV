@@ -49,6 +49,15 @@ const {releaseHeldPayment} = require("./releaseHeldPayment");
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 
+// Import Reputation Bridge functions
+const {
+  initializeReputation,
+  updateUserReputation: updateUserReputationBridge,
+  updateProviderReputation,
+  processReviewForReputation,
+  getReputationScore,
+} = require("./src/reputation");
+
 // Import Admin Management functions
 const {
   upsertCommissionRules,
@@ -244,6 +253,13 @@ exports.releaseHeldPayment = releaseHeldPayment;
 
 // Export Identity Bridge function
 exports.signInWithInternetIdentity = signInWithInternetIdentity;
+
+// Export Reputation Bridge functions
+exports.initializeReputation = initializeReputation;
+exports.updateUserReputationBridge = updateUserReputationBridge;
+exports.updateProviderReputation = updateProviderReputation;
+exports.processReviewForReputation = processReviewForReputation;
+exports.getReputationScore = getReputationScore;
 
 // Export Commission functions
 exports.calculateCommission = calculateCommission;
