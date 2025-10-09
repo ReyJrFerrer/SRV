@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
@@ -37,7 +37,6 @@ export const UserListPage: React.FC = () => {
     initializeCanisterReferences,
     getUserLockStatus,
   } = useAdmin();
-  const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,7 +223,9 @@ export const UserListPage: React.FC = () => {
   };
 
   const handleUserClick = (user: UserData) => {
-    navigate(`/provider/${user.id}`);
+    // Open details modal instead of navigating
+    setSelectedUser(user);
+    setShowUserModal(true);
   };
 
   // Determine if viewport is mobile (< sm)
@@ -232,6 +233,10 @@ export const UserListPage: React.FC = () => {
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 639px)").matches
       : true;
+
+  // User details modal state
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
   // Stats for header cards
   const stats = useMemo(() => {
@@ -665,7 +670,8 @@ export const UserListPage: React.FC = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUserClick(user);
+                              setSelectedUser(user);
+                              setShowUserModal(true);
                             }}
                             className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                           >
@@ -760,6 +766,141 @@ export const UserListPage: React.FC = () => {
           </div>
         </div>
       </main>
+      {/* User Details Modal */}
+      {showUserModal && selectedUser && (
+        <div
+          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-xl border border-blue-100 bg-white shadow-xl sm:max-w-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+                  <UserIcon className="h-6 w-6 text-blue-600" />
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    User Details
+                  </h3>
+                  <p className="text-xs text-gray-500">{selectedUser.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="max-h-[80vh] overflow-y-auto px-5 py-4">
+              {/* Summary band */}
+              <div className="mb-4 grid grid-cols-[auto,1fr] items-center gap-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
+                <div className="h-16 w-16">
+                  {selectedUser.profilePicture ? (
+                    <img
+                      className="h-16 w-16 rounded-full object-cover shadow-sm ring-2 ring-white"
+                      src={
+                        selectedUser.profilePicture.thumbnailUrl ||
+                        selectedUser.profilePicture.imageUrl
+                      }
+                      alt={selectedUser.name}
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
+                      <span className="text-lg font-semibold">
+                        {selectedUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {selectedUser.name}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {selectedUser.phone}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Member since {formatDate(selectedUser.createdAt)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Details sections */}
+              <div className="space-y-4">
+                <div className="rounded-lg border border-gray-100 p-4">
+                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                    Profile
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-gray-500">User ID</p>
+                      <p className="font-medium text-gray-900">
+                        {selectedUser.id}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Status</p>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${selectedUser.isLocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
+                      >
+                        {selectedUser.isLocked ? "Locked" : "Active"}
+                      </span>
+                    </div>
+                    {selectedUser.biography && (
+                      <div className="sm:col-span-2">
+                        <p className="text-gray-500">Bio</p>
+                        <p className="text-gray-900">
+                          {selectedUser.biography}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-100 p-4">
+                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                    Services
+                  </h4>
+                  <div className="text-sm text-gray-700">
+                    Total services posted:{" "}
+                    <span className="font-semibold text-blue-600">
+                      {selectedUser.servicesCount ?? 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import {
   ArrowUpTrayIcon,
   ArrowLeftIcon,
   XMarkIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 export const RemittanceOrdersPage: React.FC = () => {
@@ -37,6 +38,8 @@ export const RemittanceOrdersPage: React.FC = () => {
   const [validationReason, setValidationReason] = useState("");
   const [validationApproved, setValidationApproved] = useState(true);
   const [showMobileBar, setShowMobileBar] = useState(false);
+  // Mobile: show an actions modal when a row is tapped
+  const [showActionsModal, setShowActionsModal] = useState(false);
 
   const statusOptions = [
     { value: "", label: "All Status" },
@@ -78,7 +81,7 @@ export const RemittanceOrdersPage: React.FC = () => {
     try {
       await queryRemittanceOrders({}, { size: 1000 });
     } catch (error) {
-      console.error("Failed to load all orders:", error);
+      console.error("Failed to load all bookings:", error);
     }
   };
 
@@ -236,7 +239,7 @@ export const RemittanceOrdersPage: React.FC = () => {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    if (window.confirm("Are you sure you want to cancel this order?")) {
+    if (window.confirm("Are you sure you want to cancel this booking?")) {
       try {
         await cancelRemittanceOrder(orderId);
       } catch (error) {
@@ -355,7 +358,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                   type="text"
                   id="search"
                   className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
-                  placeholder="Search orders..."
+                  placeholder="Search bookings..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -484,7 +487,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                 <thead className="bg-blue-50/60">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Order ID
+                      Booking ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Provider
@@ -501,16 +504,62 @@ export const RemittanceOrdersPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {paginatedOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr
+                      key={order.id}
+                      className="cursor-pointer hover:bg-gray-50 sm:cursor-default sm:hover:bg-transparent"
+                      onClick={() => {
+                        // On mobile, toggle the inline actions row
+                        if (
+                          typeof window !== "undefined" &&
+                          window.matchMedia("(max-width: 639px)").matches
+                        ) {
+                          setSelectedOrder(order);
+                          setShowActionsModal(true);
+                        }
+                      }}
+                      role={
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(max-width: 639px)").matches
+                          ? "button"
+                          : undefined
+                      }
+                      tabIndex={
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(max-width: 639px)").matches
+                          ? 0
+                          : -1
+                      }
+                      onKeyDown={(e) => {
+                        if (
+                          !(
+                            typeof window !== "undefined" &&
+                            window.matchMedia("(max-width: 639px)").matches
+                          )
+                        )
+                          return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedOrder(order);
+                          setShowActionsModal(true);
+                        }
+                      }}
+                      aria-expanded={false}
+                    >
                       <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                        {order.id}
+                        <div className="flex items-center">
+                          <span>{order.id}</span>
+                          <span className="ml-2 hidden text-xs text-gray-400 sm:hidden">
+                            Tap for actions
+                          </span>
+                          <ChevronRightIcon className="ml-3 h-4 w-4 text-gray-300 sm:hidden" />
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         <div>
@@ -541,7 +590,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                       <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                         {formatDate(order.createdAt)}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                      <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
                         <div className="flex space-x-2">
                           {order.status === "AwaitingPayment" && (
                             <button
@@ -651,7 +700,7 @@ export const RemittanceOrdersPage: React.FC = () => {
               <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 px-4 py-3">
                 <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <p className="text-gray-500">Order ID</p>
+                    <p className="text-gray-500">Booking ID</p>
                     <p className="font-medium text-gray-900">
                       {selectedOrder.id}
                     </p>
@@ -754,6 +803,120 @@ export const RemittanceOrdersPage: React.FC = () => {
                 }`}
               >
                 {validationApproved ? "Approve" : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Actions Modal */}
+      {showActionsModal && selectedOrder && (
+        <div
+          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4 sm:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-xl border border-blue-100 bg-white shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
+                  <ChartBarIcon className="h-5 w-5 text-blue-600" />
+                </span>
+                <h3 className="text-base font-semibold text-gray-900">
+                  Booking Actions
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowActionsModal(false)}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4">
+              <div className="mb-4 rounded-lg border border-yellow-100 bg-yellow-50/30 px-4 py-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-500">Booking ID</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedOrder.id}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Created</p>
+                    <p className="font-medium text-gray-900">
+                      {formatDate(selectedOrder.createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Amount</p>
+                    <p className="font-medium text-gray-900">
+                      {formatCurrency(selectedOrder.amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Status</p>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
+                    >
+                      {getStatusIcon(selectedOrder.status)}
+                      <span className="ml-1">
+                        {getStatusLabel(selectedOrder.status)}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {selectedOrder.status === "AwaitingPayment" && (
+                  <button
+                    onClick={() => {
+                      handleCancelOrder(selectedOrder.id);
+                      setShowActionsModal(false);
+                    }}
+                    className="inline-flex items-center justify-center rounded-md border bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                  >
+                    Cancel Booking
+                  </button>
+                )}
+                {selectedOrder.status === "PaymentSubmitted" && (
+                  <>
+                    <button
+                      onClick={() => {
+                        // Keep behavior consistent with desktop
+                        setSelectedOrder(selectedOrder);
+                      }}
+                      className="inline-flex items-center justify-center rounded-md border bg-indigo-700 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                    >
+                      View Proof
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsModal(false);
+                        setShowValidationModal(true);
+                        setValidationApproved(true);
+                      }}
+                      className="inline-flex items-center justify-center rounded-md border bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                    >
+                      Validate
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={() => setShowActionsModal(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
               </button>
             </div>
           </div>
