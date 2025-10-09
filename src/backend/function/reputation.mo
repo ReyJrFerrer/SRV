@@ -6,7 +6,6 @@ import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Float "mo:base/Float";
-import Option "mo:base/Option";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
@@ -28,12 +27,8 @@ persistent actor ReputationCanister {
     private var reputationEntries : [(Principal, ReputationScore)] = [];
     private transient var reputations = HashMap.HashMap<Principal, ReputationScore>(10, Principal.equal, Principal.hash);
     
-    // Canister references
-    private transient var authCanisterId : ?Principal = null;
-    private transient var bookingCanisterId : ?Principal = null;
-    private transient var reviewCanisterId : ?Principal = null;
-    private transient var serviceCanisterId : ?Principal = null;
-    private transient var llmCanisterId : ?Principal = null;
+    // Trusted Firebase service agent for authorization
+    private var trustedServiceAgent : ?Principal = null;
 
     // Constants for reputation calculation
     private transient let BASE_SCORE : Float = 50.0;
@@ -68,6 +63,14 @@ persistent actor ReputationCanister {
     system func postupgrade() {
         reputations := HashMap.fromIter<Principal, ReputationScore>(reputationEntries.vals(), 10, Principal.equal, Principal.hash);
         reputationEntries := [];
+    };
+
+    // Authorization helper function
+    private func isAuthorized(caller : Principal) : Bool {
+        switch (trustedServiceAgent) {
+            case (null) { false };
+            case (?agent) { Principal.equal(caller, agent) };
+        };
     };
 
     // Helper functions
@@ -429,38 +432,26 @@ persistent actor ReputationCanister {
     };
 
     // Enhanced reputation update
-    public func updateUserReputation(userId : Principal) : async Result<ReputationScore> {
+    // Now accepts data as parameters instead of fetching from other canisters
+    // Secured for Firebase service agent only
+    public shared(msg) func updateUserReputation(
+        userId : Principal, 
+        completedBookingsCount : Nat,
+        averageRating : ?Float,
+        accountAge : Time.Time
+    ) : async Result<ReputationScore> {
+        // Check authorization
+        if (not isAuthorized(msg.caller)) {
+            return #err("Unauthorized: Only trusted service agent can call this function");
+        };
+
         switch (reputations.get(userId)) {
             case (null) {
                 return #err("User reputation not found");
             };
             case (?existingScore) {
-                // Get completed bookings from booking canister
-                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
-                    getProviderCompletedBookings : (Principal) -> async [Booking];
-                };
-                let completedBookings = await bookingCanister.getProviderCompletedBookings(userId);
-                
-                // Get ratings from review canister
-                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
-                    calculateUserAverageRating : (Principal) -> async Result<Float>;
-                };
-                let averageRating = switch (await reviewCanister.calculateUserAverageRating(userId)) {
-                    case (#ok(rating)) ?rating;
-                    case (#err(_)) null;
-                };
-                
-                // Get account age from auth canister
-                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
-                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
-                };
-                let accountAge = switch (await authCanister.getProfile(userId)) {
-                    case (#ok(profile)) profile.createdAt;
-                    case (#err(_)) existingScore.lastUpdated;
-                };
-                
                 let newTrustScore = calculateTrustScore(
-                    completedBookings.size(),
+                    completedBookingsCount,
                     averageRating,
                     accountAge,
                     existingScore.detectionFlags
@@ -472,7 +463,7 @@ persistent actor ReputationCanister {
                     userId = existingScore.userId;
                     trustScore = newTrustScore;
                     trustLevel = newTrustLevel;
-                    completedBookings = completedBookings.size();
+                    completedBookings = completedBookingsCount;
                     averageRating = averageRating;
                     detectionFlags = existingScore.detectionFlags;
                     lastUpdated = Time.now();
@@ -487,38 +478,26 @@ persistent actor ReputationCanister {
     };
 
     // Enhanced reputation update specifically for service providers
-    public func updateProviderReputation(providerId : Principal) : async Result<ReputationScore> {
+    // Now accepts data as parameters instead of fetching from other canisters
+    // Secured for Firebase service agent only
+    public shared(msg) func updateProviderReputation(
+        providerId : Principal,
+        completedBookingsCount : Nat,
+        averageRating : ?Float,
+        accountAge : Time.Time
+    ) : async Result<ReputationScore> {
+        // Check authorization
+        if (not isAuthorized(msg.caller)) {
+            return #err("Unauthorized: Only trusted service agent can call this function");
+        };
+
         switch (reputations.get(providerId)) {
             case (null) {
                 return #err("Provider reputation not found");
             };
             case (?existingScore) {
-                // Get completed bookings from booking canister
-                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
-                    getProviderCompletedBookings : (Principal) -> async [Booking];
-                };
-                let completedBookings = await bookingCanister.getProviderCompletedBookings(providerId);
-                
-                // Get ratings from review canister
-                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
-                    calculateUserAverageRating : (Principal) -> async Result<Float>;
-                };
-                let averageRating = switch (await reviewCanister.calculateUserAverageRating(providerId)) {
-                    case (#ok(rating)) ?rating;
-                    case (#err(_)) null;
-                };
-                
-                // Get account age from auth canister
-                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
-                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
-                };
-                let accountAge = switch (await authCanister.getProfile(providerId)) {
-                    case (#ok(profile)) profile.createdAt;
-                    case (#err(_)) existingScore.lastUpdated;
-                };
-                
                 let newTrustScore = calculateProviderTrustScore(
-                    completedBookings.size(),
+                    completedBookingsCount,
                     averageRating,
                     accountAge,
                     existingScore.detectionFlags
@@ -530,7 +509,7 @@ persistent actor ReputationCanister {
                     userId = existingScore.userId;
                     trustScore = newTrustScore;
                     trustLevel = newTrustLevel;
-                    completedBookings = completedBookings.size();
+                    completedBookings = completedBookingsCount;
                     averageRating = averageRating;
                     detectionFlags = existingScore.detectionFlags;
                     lastUpdated = Time.now();
@@ -650,7 +629,7 @@ persistent actor ReputationCanister {
     // Public functions
     
     // Initialize reputation for a new user
-    public func initializeReputation(userId : Principal, creationTime : Time.Time) : async Result<ReputationScore> {
+    public func initializeReputation(userId : Principal, _creationTime : Time.Time) : async Result<ReputationScore> {
         switch (reputations.get(userId)) {
             case (?_) {
                 return #err("Reputation already exists for this user");
@@ -698,7 +677,19 @@ persistent actor ReputationCanister {
     };
     
     // Process a new review and update reputations
-    public func processReview(review : Review) : async Result<Review> {
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(msg) func processReview(
+        review : Review,
+        clientCompletedBookings : Nat,
+        clientAverageRating : ?Float,
+        clientAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        if (not isAuthorized(msg.caller)) {
+            return #err("Unauthorized: Only trusted service agent can call this function");
+        };
+
         // 1. Analyze review for flags
         let flags = analyzeReview(review);
         
@@ -708,13 +699,15 @@ persistent actor ReputationCanister {
         // 3. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 4. Update provider reputation
-        // ignore await updateUserReputation(review.providerId);
+        // 4. Update client reputation (reviewer) with provided data
+        ignore await updateUserReputation(
+            review.clientId,
+            clientCompletedBookings,
+            clientAverageRating,
+            clientAccountAge
+        );
         
-        // 5. Update client reputation (reviewer)
-        ignore await updateUserReputation(review.clientId);
-        
-        // 6. Return updated review with status and quality score
+        // 5. Return updated review with status and quality score
         let updatedReview : Review = {
             id = review.id;
             bookingId = review.bookingId;
@@ -774,7 +767,19 @@ persistent actor ReputationCanister {
     };
 
     // Process a new review with LLM sentiment analysis
-    public func processReviewWithLLM(review : Review) : async Result<Review> {
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(msg) func processReviewWithLLM(
+        review : Review,
+        clientCompletedBookings : Nat,
+        clientAverageRating : ?Float,
+        clientAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        if (not isAuthorized(msg.caller)) {
+            return #err("Unauthorized: Only trusted service agent can call this function");
+        };
+
         // 1. Analyze sentiment with LLM
         let llmSentimentScore = await analyzeSentimentWithLLM(review);
         
@@ -787,13 +792,15 @@ persistent actor ReputationCanister {
         // 4. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 5. Update provider reputation
-        // ignore await updateUserReputation(review.providerId);
+        // 5. Update client reputation (reviewer) with provided data
+        ignore await updateUserReputation(
+            review.clientId,
+            clientCompletedBookings,
+            clientAverageRating,
+            clientAccountAge
+        );
         
-        // 6. Update client reputation (reviewer)
-        ignore await updateUserReputation(review.clientId);
-        
-        // 7. Return updated review with status and quality score
+        // 6. Return updated review with status and quality score
         let updatedReview : Review = {
             id = review.id;
             bookingId = review.bookingId;
@@ -862,22 +869,20 @@ persistent actor ReputationCanister {
         return Float.max(0.0, Float.min(1.0, qualityScore));
     };
     
-    // Set canister references including LLM (admin function)
-    public shared(_msg) func setCanisterReferences(
-        auth : Principal,
-        booking : Principal,
-        review : Principal,
-        service : Principal
-    ) : async Result<Text> {
-        // In real implementation, need to check if caller has admin rights
-        authCanisterId := ?auth;
-        bookingCanisterId := ?booking;
-        reviewCanisterId := ?review;
-        serviceCanisterId := ?service;
-        // Set LLM canister ID from dfx.json
-        llmCanisterId := ?Principal.fromText("w36hm-eqaaa-aaaal-qr76a-cai");
-        
-        return #ok("Canister references set successfully");
+    // Set trusted Firebase service agent (admin function)
+    // This should be called once during setup to authorize the Firebase Cloud Functions
+    public shared(_msg) func setTrustedServiceAgent(agent : Principal) : async Result<Text> {
+        // TODO: Add proper admin authorization check here
+        // For now, only allow setting if not already set (one-time setup)
+        switch (trustedServiceAgent) {
+            case (null) {
+                trustedServiceAgent := ?agent;
+                return #ok("Trusted service agent set successfully");
+            };
+            case (?_) {
+                return #err("Trusted service agent already set. Cannot override for security.");
+            };
+        };
     };
     
     // Get reputation statistics
@@ -925,9 +930,7 @@ persistent actor ReputationCanister {
     };
 
     // Manual reputation update for admin use
-    public shared(msg) func setUserReputation(userId: Principal, reputationScore: Nat) : async Result<Text> {
-        let caller = msg.caller;
-
+    public shared(_msg) func setUserReputation(userId: Principal, reputationScore: Nat) : async Result<Text> {
         Debug.print("Reputation canister: Setting reputation for user " # Principal.toText(userId) # " to " # Nat.toText(reputationScore));
 
         // Validate reputation score (0-100)

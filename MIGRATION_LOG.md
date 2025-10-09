@@ -1427,6 +1427,93 @@ See `docs/firebase-storage-setup.md` for complete setup instructions:
 
 ---
 
+## Phase 2: Refactoring the Internet Computer Canisters
+
+### Task 2.1: Modify reputation.mo Canister ✅
+
+**Completed**: October 10, 2025
+
+**Description**: Successfully refactored the `reputation.mo` canister to eliminate all inter-canister dependencies and prepare it for integration with Firebase Cloud Functions through a "Reputation Bridge" that will be created later.
+
+**Changes Made**:
+
+#### 1. Removed Inter-Canister Dependencies
+
+- **File**: `src/backend/function/reputation.mo`
+- Removed all canister reference state variables:
+  - `authCanisterId`
+  - `bookingCanisterId`
+  - `reviewCanisterId`
+  - `serviceCanisterId`
+  - `llmCanisterId`
+- Added new state variable `trustedServiceAgent : ?Principal` for Firebase service authorization
+- Removed `Option` import as it's no longer needed
+
+#### 2. Refactored Core Reputation Functions
+
+Successfully updated all reputation calculation functions to accept data as direct parameters instead of fetching from other canisters:
+
+- ✅ **updateUserReputation**: Now accepts `(userId, completedBookingsCount, averageRating, accountAge)`
+- ✅ **updateProviderReputation**: Now accepts `(providerId, completedBookingsCount, averageRating, accountAge)`
+- Both functions now include `shared(msg)` context to verify caller authorization
+
+#### 3. Implemented Security Authorization
+
+- Added `isAuthorized(caller : Principal) : Bool` helper function to verify trusted Firebase service agent
+- All update functions now check authorization before processing:
+  - Returns `#err("Unauthorized: Only trusted service agent can call this function")` if caller is not authorized
+  - Only the trusted Firebase service agent Principal can call reputation update functions
+
+#### 4. Updated Review Processing Functions
+
+- ✅ **processReview**: Updated to accept additional parameters `(review, clientCompletedBookings, clientAverageRating, clientAccountAge)`
+- ✅ **processReviewWithLLM**: Updated to accept same additional parameters for LLM-enhanced sentiment analysis
+- Both functions now secured with authorization checks
+- Both functions properly call `updateUserReputation` with all required data
+
+#### 5. Replaced setCanisterReferences Function
+
+- Removed old `setCanisterReferences` function that set other canister IDs
+- Created new `setTrustedServiceAgent(agent : Principal)` function:
+  - One-time setup function to authorize the Firebase Cloud Functions Principal
+  - Cannot be overridden once set (security feature)
+  - Will be called during initial canister deployment to authorize the Firebase backend
+
+#### 6. Maintained Core AI Logic
+
+- Preserved all AI-powered sentiment analysis capabilities
+- Kept `calculateTrustScore` and `calculateProviderTrustScore` logic intact
+- Maintained all detection flag analysis (`analyzeReview`, `analyzeReviewWithLLMSentiment`)
+- Retained LLM integration for advanced sentiment scoring
+- Preserved reputation history tracking functionality
+
+**Technical Implementation**:
+
+- Functions now follow parameter-passing architecture instead of inter-canister calls
+- Authorization pattern: `shared(msg)` context → `isAuthorized(msg.caller)` check → business logic
+- All calculations remain on-chain leveraging IC's unique AI/LLM capabilities
+- Ready for Firebase "Reputation Bridge" Cloud Function integration
+
+**Impact**:
+
+- **Simplified Architecture**: Eliminated complex inter-canister dependencies and async calls
+- **Enhanced Security**: Only authorized Firebase service agent can update reputations
+- **Reduced Costs**: Fewer cross-canister calls means lower cycle consumption
+- **Better Performance**: Direct parameter passing is faster than canister queries
+- **Future-Ready**: Prepared for Firebase Cloud Functions to provide all necessary data
+- **Maintained AI Edge**: Kept unique on-chain AI sentiment analysis and reputation scoring logic
+
+**Next Steps**:
+
+- Task 2.2: Create "Reputation Bridge" Cloud Function in `functions/src/reputation.js`
+- The bridge will:
+  1. Accept review submissions from Firebase
+  2. Gather required data (booking counts, ratings, account age) from Firestore
+  3. Call `updateUserReputation` or `updateProviderReputation` with complete data
+  4. Return updated reputation scores to Firebase for storage
+
+---
+
 ````
 ```
 

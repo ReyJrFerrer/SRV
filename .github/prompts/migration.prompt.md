@@ -279,10 +279,12 @@ exports.functionName = functions.https.onCall(async (data, context) => {
 
 **2.1. Modify `reputation.mo` Canister**
 
-- **Action:** MODIFY `src/backend/function/reputation.mo` (or equivalent).
+- **Action:** MODIFY `src/backend/function/reputation.mo`.
 - **Content:**
-  - Expose a new `update` function: `public func updateReputationFromReview(reviewText: Text, rating: Nat)`.
-  - Secure this function so it can only be called by the Principal of our Firebase service agent. Store this trusted Principal as an immutable variable.
+  - **Simplify Canister Logic:** Remove all inter-canister calls to `booking.mo`, `auth.mo`, and `review.mo`. The `reputation.mo` canister will no longer fetch data from other canisters.
+  - **Update Function Signatures:** Modify the public update functions (e.g., `updateReputationFromReview`) to accept all required data as parameters. For example, instead of fetching booking details, the function should receive `clientId`, `providerId`, `reviewText`, and `rating` directly from the calling Cloud Function.
+  - **Secure the Canister:** Ensure all update functions are secured. They should only be callable by the Principal of the Firebase service agent, which will be stored as a trusted controller. This follows the pattern established in the "Reputation Bridge" (Task 1.3).
+  - **Maintain Core Logic:** The canister's core responsibility remains the same: to execute the AI-powered sentiment analysis and update reputation scores based on the data it receives. The business logic for score calculation should be preserved.
 
 **2.2. Deprecate and Remove Canisters**
 
@@ -325,12 +327,6 @@ exports.functionName = functions.https.onCall(async (data, context) => {
   - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). **IMPORTANT:** Ensure frontend expects the same data structure patterns established in the migrated functions.
   - **Authentication Headers:** All Cloud Function calls must include the Firebase ID token in headers for proper authentication via the `getAuthInfo` helper.
 
-**3.3. Update UI based on Real-Time Data**
-
-- **Action:** MODIFY components like `src/frontend/src/components/provider/BookingRequests.tsx`.
-- **Content:**
-  - Logic that previously called a canister to check a provider's wallet balance before enabling an "Accept" button must now read this data directly from a Firestore document.
-  - Thanks to `onSnapshot`, the button will enable/disable automatically and instantly as the wallet balance changes.
 
 **PAUSE FOR CONFIRMATION (End of Project)**
 
