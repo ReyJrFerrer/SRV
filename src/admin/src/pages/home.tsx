@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AdminDashboardStats,
   ServiceProviderCommissionTable,
@@ -323,6 +323,65 @@ export const AdminHomePage: React.FC = () => {
     .sort((a, b) => (a[0] < b[0] ? -1 : 1))
     .map(([date, count]) => ({ date, count }));
 
+  // Money visualizations helpers and datasets
+  const formatAxisDate = (dateStr: string) =>
+    new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const formatCurrencyLocal = (amount: number) =>
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
+
+  const formatShortNumber = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return `${n}`;
+  };
+
+  const amountsLineData = useMemo(() => {
+    const daySums = new Map<string, { service: number; commission: number }>();
+    const buildKey = (d: Date) => d.toISOString().slice(0, 10);
+    if (periodFromDate) {
+      const cursor = new Date(periodFromDate);
+      const end = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cursor <= end) {
+        daySums.set(buildKey(cursor), { service: 0, commission: 0 });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+    for (const o of ordersInPeriod) {
+      const key = buildKey(o.createdAt);
+      const prev = daySums.get(key) || { service: 0, commission: 0 };
+      daySums.set(key, {
+        service: prev.service + (o.amount || 0),
+        commission: prev.commission + (o.commissionAmount || 0),
+      });
+    }
+    return (
+      daySums.size
+        ? Array.from(daySums.entries())
+        : Array.from(
+            new Map<string, { service: number; commission: number }>(
+              ordersInPeriod.map((o) => [
+                o.createdAt.toISOString().slice(0, 10),
+                { service: 0, commission: 0 },
+              ]),
+            ).entries(),
+          )
+    )
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([date, vals]) => ({ date, ...vals }));
+  }, [ordersInPeriod, periodFromDate]);
+
   // Pie: Users by type (Providers vs Regular users)
   const providerIds = new Set(serviceProviders.map((p) => p.id));
   const totalUsers = users?.length ?? 0;
@@ -627,15 +686,75 @@ export const AdminHomePage: React.FC = () => {
                       margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(d: string) => formatAxisDate(d)}
+                      />
                       <YAxis allowDecimals={false} />
-                      <Tooltip />
+                      <Tooltip
+                        labelFormatter={(d: string) => formatAxisDate(d)}
+                      />
                       <Legend />
                       <Line
                         type="monotone"
                         dataKey="count"
                         name="Bookings"
                         stroke="#f59e0b"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Money: Amounts per Day (PHP) */}
+              <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-800">
+                    Amounts per Day (PHP)
+                  </h3>
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                    Days: {amountsLineData.length}
+                  </span>
+                </div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={amountsLineData}
+                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(d: string) => formatAxisDate(d)}
+                      />
+                      <YAxis
+                        tickFormatter={(v: number) => formatShortNumber(v)}
+                      />
+                      <Tooltip
+                        labelFormatter={(d: string) => formatAxisDate(d)}
+                        formatter={(v: number, name: string) => [
+                          formatCurrencyLocal(v),
+                          name,
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="service"
+                        name="Service Amount"
+                        stroke="#2563eb"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="commission"
+                        name="Commission Paid"
+                        stroke="#16a34a"
                         strokeWidth={2}
                         dot={false}
                       />
