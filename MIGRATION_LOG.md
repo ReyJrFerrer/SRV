@@ -47,6 +47,84 @@ This file tracks the progress of the strategic architectural migration from a pu
 
 **Impact**: Establishes the critical bridge between IC identity and Firebase session management, enabling users to authenticate with Internet Identity while accessing Firebase-based services seamlessly.
 
+## Phase 3: Frontend Client Migration
+
+### Task 3.1: Refactor Admin Service Canister Interface ✅
+
+**Completed**: October 9, 2025
+
+**Description**: Successfully refactored the adminServiceCanister.ts to replace all Motoko actor calls with Firebase Cloud Functions calls, implementing the {payload} format as requested.
+
+**Changes Made**:
+
+#### 1. Updated Imports and Configuration
+- **File**: `src/admin/src/services/adminServiceCanister.ts`
+- Replaced Motoko-specific imports (`createActor`, `canisterId`, type definitions) with Firebase imports
+- Added Firebase imports: `initializeApp`, `getAuth`, `getFunctions`, `httpsCallable`
+- Configured Firebase app initialization with environment variables
+
+#### 2. Replaced Helper Functions
+- Replaced `createAdminActor` with `callFirebaseFunction` helper for consistent Firebase function calls
+- Updated `updateAdminActor` to be a compatibility function that tracks identity for Firebase
+- Added `requireAuth` function to verify Firebase authentication before function calls
+
+#### 3. Migrated Core Admin Functions
+Successfully migrated 12 key admin functions to use Firebase Cloud Functions:
+
+- ✅ **upsertCommissionRules**: Create/update commission rules with proper payload format
+- ✅ **listRules**: Get commission rules with optional filtering  
+- ✅ **getRule**: Get specific commission rule by ID
+- ✅ **activateRule**: Activate commission rule by ID and version
+- ✅ **deactivateRule**: Deactivate commission rule by ID
+- ✅ **assignRole**: Assign ADMIN role to users
+- ✅ **removeRole**: Remove user roles
+- ✅ **getUserRole**: Get user role assignments
+- ✅ **getSystemStats**: Get system statistics (rule counts, user counts)
+- ✅ **getAllUsers**: Get all users from system
+- ✅ **getUserServicesAndBookings**: Get combined user services and booking data
+- ✅ **lockUserAccount**: Lock or unlock user accounts
+
+#### 4. Implemented Correct Payload Format
+- Used `{payload}` format instead of `{data: {payload}}` as specifically requested
+- Example: `callFirebaseFunction("upsertCommissionRules", { rules: rulesPayload })`
+- Maintained consistent error handling with AdminServiceError class
+
+#### 5. Data Conversion Strategy
+- **Input**: Converted frontend types to simplified JavaScript objects for Firebase
+- **Output**: Maintained same frontend interface types for component compatibility
+- **Dates**: Proper conversion between ISO strings (Firebase) and Date objects (frontend)
+- **Authentication**: Integrated Firebase Auth checks with `requireAuth()` function
+
+**Technical Implementation Details**:
+
+```typescript
+// Pattern used for each migrated function:
+async functionName(params): Promise<ReturnType> {
+  try {
+    requireAuth(); // Firebase authentication check
+    
+    const result = await callFirebaseFunction("functionName", {
+      // Direct payload - no nested data object
+      param1,
+      param2
+    });
+    
+    // Convert Firebase response to frontend format
+    return convertToFrontendFormat(result);
+  } catch (error) {
+    throw new AdminServiceError({
+      message: `Failed to ${operation}: ${error}`,
+      code: "ERROR_CODE",
+      details: error,
+    });
+  }
+}
+```
+
+**Updated Exports**: All functions properly exported in `functions/index.js` following established patterns
+
+**Impact**: Core admin functionality is now fully integrated with Firebase backend, maintaining the same external API for frontend components while leveraging Firebase's scalability and real-time capabilities. The admin panel can now operate entirely through Firebase Cloud Functions instead of direct Motoko canister calls.
+
 ---
 
 ### Task: Account Management Migration to Firebase ✅

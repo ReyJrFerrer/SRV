@@ -1,0 +1,914 @@
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+
+const db = admin.firestore();
+
+/**
+ * Helper function to safely get user authentication info
+ * @param {object} context - Firebase Functions context
+ * @param {object} data - Request data
+ * @return {object} User authentication info
+ */
+function getAuthInfo(context, data) {
+  const auth = context.auth || data.auth;
+  return {
+    uid: auth?.uid || null,
+    isAdmin: auth?.token?.isAdmin || false,
+    hasAuth: !!auth,
+  };
+}
+
+// Constants
+const SETTINGS_KEY = "system_settings";
+const DEFAULT_SETTLEMENT_HOURS = 24;
+const DEFAULT_GCASH_ACCOUNT = "09694405454";
+const MAX_COMMISSION_BPS = 1500; // 15% max
+const MIN_ORDER_CENTAVOS = 100; // 1 PHP
+const MAX_ORDER_CENTAVOS = 100000000; // 1M PHP
+
+/**
+ * Generate a unique rule ID
+ * @return {String} returns a rule based on the date and a random number
+ */
+function generateRuleId() {
+  const now = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `rule-${now}-${random}`;
+}
+
+/**
+ * Validate commission rule data
+ * @param {Object} draft - The commission rule draft to validate
+ * @return {void}  Throws an HttpsError if validation failsct}
+ */
+function validateCommissionRule(draft) {
+  // Validate service types
+  if (!draft.serviceTypes || draft.serviceTypes.length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Service types cannot be empty",
+    );
+  }
+
+  // Validate payment methods
+  if (!draft.paymentMethods || draft.paymentMethods.length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Payment methods cannot be empty",
+    );
+  }
+
+  // Validate formula
+  if (!draft.formula || !draft.formula.type) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Commission formula is required",
+    );
+  }
+
+  // Validate commission caps
+  if (draft.minCommission && draft.maxCommission && draft.minCommission > draft.maxCommission) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Minimum commission cannot be greater than maximum commission",
+    );
+  }
+
+  // Validate effective dates
+  const now = new Date();
+  const effectiveFrom = new Date(draft.effectiveFrom);
+  const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+
+  if (effectiveFrom > oneYearFromNow) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Effective date cannot be more than one year in the future",
+    );
+  }
+
+  if (draft.effectiveTo) {
+    const effectiveTo = new Date(draft.effectiveTo);
+    if (effectiveTo <= effectiveFrom) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Effective to date must be after effective from date",
+      );
+    }
+  }
+}
+
+// ===== COMMISSION RULES MANAGEMENT =====
+
+/**
+ * Create or update commission rules
+ */
+exports.upsertCommissionRules = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {rules} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can manage commission rules",
+    );
+  }
+
+  if (!rules || rules.length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Rules array cannot be empty",
+    );
+  }
+
+  try {
+    const resultRules = [];
+    const batch = db.batch();
+
+    for (const draft of rules) {
+      validateCommissionRule(draft);
+
+      const now = new Date().toISOString();
+      const ruleId = draft.id || generateRuleId();
+
+      const rule = {
+        id: ruleId,
+        serviceTypes: draft.serviceTypes,
+        paymentMethods: draft.paymentMethods,
+        formula: draft.formula,
+        minCommission: draft.minCommission || null,
+        maxCommission: draft.maxCommission || null,
+        priority: draft.priority,
+        isActive: true,
+        effectiveFrom: draft.effectiveFrom,
+        effectiveTo: draft.effectiveTo || null,
+        createdAt: draft.id ? undefined : now, // Don't overwrite creation date for updates
+        updatedAt: now,
+        version: 1, // For now, simple versioning
+      };
+
+      // Remove undefined fields
+      Object.keys(rule).forEach((key) => {
+        if (rule[key] === undefined) {
+          delete rule[key];
+        }
+      });
+
+      const ruleRef = db.collection("commissionRules").doc(ruleId);
+      batch.set(ruleRef, rule, {merge: true});
+      resultRules.push(rule);
+    }
+
+    await batch.commit();
+    return {success: true, data: resultRules};
+  } catch (error) {
+    console.error("Error in upsertCommissionRules:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Activate a specific commission rule version
+ */
+exports.activateRule = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {ruleId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can activate commission rules",
+    );
+  }
+
+  try {
+    const ruleRef = db.collection("commissionRules").doc(ruleId);
+    const ruleDoc = await ruleRef.get();
+
+    if (!ruleDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Commission rule not found",
+      );
+    }
+
+    await ruleRef.update({
+      isActive: true,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {success: true, message: `Rule ${ruleId} activated successfully`};
+  } catch (error) {
+    console.error("Error in activateRule:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Deactivate a commission rule
+ */
+exports.deactivateRule = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {ruleId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can deactivate commission rules",
+    );
+  }
+
+  try {
+    const ruleRef = db.collection("commissionRules").doc(ruleId);
+    const ruleDoc = await ruleRef.get();
+
+    if (!ruleDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Commission rule not found",
+      );
+    }
+
+    await ruleRef.update({
+      isActive: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {success: true, message: `Rule ${ruleId} deactivated successfully`};
+  } catch (error) {
+    console.error("Error in deactivateRule:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * List commission rules with filtering
+ */
+exports.listRules = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {filter = {}} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can list commission rules",
+    );
+  }
+
+  try {
+    let query = db.collection("commissionRules");
+
+    // Apply filters
+    if (filter.serviceType) {
+      query = query.where("serviceTypes", "array-contains", filter.serviceType);
+    }
+    if (filter.activeOnly === true) {
+      query = query.where("isActive", "==", true);
+    }
+    if (filter.paymentMethod) {
+      query = query.where("paymentMethods", "array-contains", filter.paymentMethod);
+    }
+
+    const snapshot = await query.orderBy("priority").orderBy("createdAt", "desc").get();
+    const rules = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    return {success: true, data: rules};
+  } catch (error) {
+    console.error("Error in listRules:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get specific commission rule
+ */
+exports.getRule = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {ruleId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get commission rules",
+    );
+  }
+
+  try {
+    const ruleDoc = await db.collection("commissionRules").doc(ruleId).get();
+
+    if (!ruleDoc.exists) {
+      return {success: true, data: null};
+    }
+
+    return {success: true, data: {id: ruleDoc.id, ...ruleDoc.data()}};
+  } catch (error) {
+    console.error("Error in getRule:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== ROLE MANAGEMENT =====
+
+/**
+ * Assign role to user
+ */
+exports.assignRole = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, role = "ADMIN", scope} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can assign roles",
+    );
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const roleAssignment = {
+      userId: userId,
+      role: role,
+      scope: scope || null,
+      assignedBy: authInfo.uid,
+      assignedAt: now,
+    };
+
+    await db.collection("userRoles").doc(userId).set(roleAssignment);
+
+    // Set custom claims for Firebase Auth
+    await admin.auth().setCustomUserClaims(userId, {isAdmin: role === "ADMIN"});
+
+    return {success: true, message: `Role ${role} assigned to user ${userId}`};
+  } catch (error) {
+    console.error("Error in assignRole:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Remove user role
+ */
+exports.removeRole = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can remove roles",
+    );
+  }
+
+  try {
+    await db.collection("userRoles").doc(userId).delete();
+
+    // Remove custom claims
+    await admin.auth().setCustomUserClaims(userId, {isAdmin: false});
+
+    return {success: true, message: `Role removed from user ${userId}`};
+  } catch (error) {
+    console.error("Error in removeRole:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get user role
+ */
+exports.getUserRole = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get user roles",
+    );
+  }
+
+  try {
+    const roleDoc = await db.collection("userRoles").doc(userId).get();
+
+    if (!roleDoc.exists) {
+      return {success: true, data: null};
+    }
+
+    return {success: true, data: roleDoc.data()};
+  } catch (error) {
+    console.error("Error in getUserRole:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * List all user roles
+ */
+exports.listUserRoles = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can list user roles",
+    );
+  }
+
+  try {
+    const snapshot = await db.collection("userRoles").get();
+    const roles = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    return {success: true, data: roles};
+  } catch (error) {
+    console.error("Error in listUserRoles:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Check if user has specific role
+ */
+exports.hasRole = functions.https.onCall(async (data, _context) => {
+  const payload = data.data || data;
+  const {userId, role} = payload;
+
+  try {
+    const roleDoc = await db.collection("userRoles").doc(userId).get();
+
+    if (!roleDoc.exists) {
+      return {success: true, data: false};
+    }
+
+    const userRole = roleDoc.data();
+    return {success: true, data: userRole.role === role};
+  } catch (error) {
+    console.error("Error in hasRole:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== SETTINGS MANAGEMENT =====
+
+/**
+ * Update system settings
+ */
+exports.setSettings = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {
+    corporateGcashAccount,
+    settlementDeadlineHours,
+    maxCommissionRateBps,
+    minOrderAmount,
+    maxOrderAmount,
+  } = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update system settings",
+    );
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const settings = {
+      corporateGcashAccount: corporateGcashAccount || DEFAULT_GCASH_ACCOUNT,
+      settlementDeadlineHours: settlementDeadlineHours || DEFAULT_SETTLEMENT_HOURS,
+      maxCommissionRateBps: maxCommissionRateBps || MAX_COMMISSION_BPS,
+      minOrderAmount: minOrderAmount || MIN_ORDER_CENTAVOS,
+      maxOrderAmount: maxOrderAmount || MAX_ORDER_CENTAVOS,
+      updatedAt: now,
+      updatedBy: authInfo.uid,
+    };
+
+    await db.collection("systemSettings").doc(SETTINGS_KEY).set(settings, {merge: true});
+
+    return {success: true, message: "System settings updated successfully"};
+  } catch (error) {
+    console.error("Error in setSettings:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get current system settings
+ */
+exports.getSettings = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get system settings",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+
+    if (!settingsDoc.exists) {
+      // Return default settings
+      const defaultSettings = {
+        corporateGcashAccount: DEFAULT_GCASH_ACCOUNT,
+        settlementDeadlineHours: DEFAULT_SETTLEMENT_HOURS,
+        maxCommissionRateBps: MAX_COMMISSION_BPS,
+        minOrderAmount: MIN_ORDER_CENTAVOS,
+        maxOrderAmount: MAX_ORDER_CENTAVOS,
+        updatedAt: new Date().toISOString(),
+        updatedBy: "system",
+      };
+
+      await db.collection("systemSettings").doc(SETTINGS_KEY).set(defaultSettings);
+      return {success: true, data: defaultSettings};
+    }
+
+    return {success: true, data: settingsDoc.data()};
+  } catch (error) {
+    console.error("Error in getSettings:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== ANALYTICS AND REPORTING =====
+
+/**
+ * Get system statistics
+ */
+exports.getSystemStats = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get system statistics",
+    );
+  }
+
+  try {
+    // Get commission rules count
+    const rulesSnapshot = await db.collection("commissionRules").get();
+    const activeRulesSnapshot =
+    await db.collection("commissionRules").where("isActive", "==", true).get();
+
+    // Get user roles count
+    const rolesSnapshot = await db.collection("userRoles").get();
+    const adminRolesSnapshot = await db.collection("userRoles").where("role", "==", "ADMIN").get();
+
+    const stats = {
+      totalCommissionRules: rulesSnapshot.size,
+      activeCommissionRules: activeRulesSnapshot.size,
+      totalUsersWithRoles: rolesSnapshot.size,
+      adminUsers: adminRolesSnapshot.size,
+    };
+
+    return {success: true, data: stats};
+  } catch (error) {
+    console.error("Error in getSystemStats:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== USER MANAGEMENT =====
+
+/**
+ * Get all users
+ */
+exports.getAllUsers = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get all users",
+    );
+  }
+
+  try {
+    const usersSnapshot = await db.collection("users").get();
+    const users = usersSnapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    return {success: true, data: users};
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get user services and bookings combined
+ */
+exports.getUserServicesAndBookings = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get user services and bookings",
+    );
+  }
+
+  try {
+    // Get user's services as provider
+    const servicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .get();
+    const services = servicesSnapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    // Get user's bookings as client
+    const clientBookingsSnapshot = await db.collection("bookings")
+      .where("clientId", "==", userId)
+      .get();
+    const clientBookings = clientBookingsSnapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    // Get user's bookings as provider
+    const providerBookingsSnapshot = await db.collection("bookings")
+      .where("providerId", "==", userId)
+      .get();
+    const providerBookings =
+    providerBookingsSnapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+
+    return {
+      success: true,
+      data: {
+        services,
+        clientBookings,
+        providerBookings,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getUserServicesAndBookings:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get user service count
+ */
+exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get user service count",
+    );
+  }
+
+  try {
+    const servicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .get();
+
+    return {success: true, data: servicesSnapshot.size};
+  } catch (error) {
+    console.error("Error in getUserServiceCount:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Lock or unlock user account
+ */
+exports.lockUserAccount = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, locked} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can lock/unlock user accounts",
+    );
+  }
+
+  try {
+    // Update user's locked status in Firestore
+    await db.collection("users").doc(userId).update({
+      locked: locked,
+      updatedAt: new Date().toISOString(),
+      updatedBy: authInfo.uid,
+    });
+
+    // Disable/enable user in Firebase Auth
+    await admin.auth().updateUser(userId, {disabled: locked});
+
+    const action = locked ? "locked" : "unlocked";
+    return {success: true, message: `User account ${action} successfully`};
+  } catch (error) {
+    console.error("Error in lockUserAccount:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Delete user account
+ */
+exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can delete user accounts",
+    );
+  }
+
+  try {
+    const batch = db.batch();
+
+    // Delete user profile
+    batch.delete(db.collection("users").doc(userId));
+
+    // Delete user role if exists
+    batch.delete(db.collection("userRoles").doc(userId));
+
+    // Delete user's services
+    const servicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .get();
+    servicesSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    // Delete user's bookings
+    const bookingsSnapshot = await db.collection("bookings")
+      .where("clientId", "==", userId)
+      .get();
+    bookingsSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    // Delete from Firebase Auth
+    await admin.auth().deleteUser(userId);
+
+    return {success: true, message: "User account deleted successfully"};
+  } catch (error) {
+    console.error("Error in deleteUserAccount:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Update user reputation score
+ */
+exports.updateUserReputation = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, reputationScore} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update user reputation",
+    );
+  }
+
+  try {
+    await db.collection("users").doc(userId).update({
+      reputationScore: reputationScore,
+      updatedAt: new Date().toISOString(),
+      updatedBy: authInfo.uid,
+    });
+
+    return {success: true, message: "User reputation updated successfully"};
+  } catch (error) {
+    console.error("Error in updateUserReputation:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Update user commission amount
+ */
+exports.updateUserCommission = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, commissionAmount} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update user commission",
+    );
+  }
+
+  try {
+    await db.collection("users").doc(userId).update({
+      totalCommissionEarned: admin.firestore.FieldValue.increment(commissionAmount),
+      updatedAt: new Date().toISOString(),
+      updatedBy: authInfo.uid,
+    });
+
+    return {success: true, message: "User commission updated successfully"};
+  } catch (error) {
+    console.error("Error in updateUserCommission:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== CERTIFICATE VALIDATION =====
+
+/**
+ * Update certificate validation status
+ */
+exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {certificateId, status, reason} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can validate certificates",
+    );
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const validationData = {
+      status: status, // "Validated" or "Rejected"
+      validatedBy: authInfo.uid,
+      validatedAt: now,
+      reason: reason || null,
+      updatedAt: now,
+    };
+
+    await
+    db.collection("certificateValidations").doc(certificateId).set(validationData, {merge: true});
+
+    return {success: true, message: `Certificate ${status.toLowerCase()} successfully`};
+  } catch (error) {
+    console.error("Error in updateCertificateValidationStatus:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get validated certificates
+ */
+exports.getValidatedCertificates = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get validated certificates",
+    );
+  }
+
+  try {
+    const snapshot = await db.collection("certificateValidations")
+      .where("status", "==", "Validated")
+      .get();
+
+    const certificates = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    return {success: true, data: certificates};
+  } catch (error) {
+    console.error("Error in getValidatedCertificates:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get rejected certificates
+ */
+exports.getRejectedCertificates = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get rejected certificates",
+    );
+  }
+
+  try {
+    const snapshot = await db.collection("certificateValidations")
+      .where("status", "==", "Rejected")
+      .get();
+
+    const certificates = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    return {success: true, data: certificates};
+  } catch (error) {
+    console.error("Error in getRejectedCertificates:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});

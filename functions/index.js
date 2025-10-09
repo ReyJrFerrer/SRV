@@ -49,6 +49,31 @@ const {releaseHeldPayment} = require("./releaseHeldPayment");
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 
+// Import Admin Management functions
+const {
+  upsertCommissionRules,
+  activateRule,
+  deactivateRule,
+  listRules,
+  getRule,
+  assignRole,
+  removeRole,
+  getUserRole,
+  listUserRoles,
+  hasRole,
+  setSettings,
+  getSettings,
+  getSystemStats,
+  getUserServicesAndBookings,
+  getUserServiceCount,
+  lockUserAccount,
+  deleteUserAccount,
+  updateUserReputation,
+  updateUserCommission,
+  getValidatedCertificates,
+  getRejectedCertificates,
+} = require("./src/admin");
+
 // Import Commission functions
 const {
   calculateCommission,
@@ -358,4 +383,27 @@ exports.validateMediaItems = validateMediaItems;
 exports.getRemittanceMediaItems = getRemittanceMediaItems;
 exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
+
+// Export Admin Management Functions
+exports.upsertCommissionRules = upsertCommissionRules;
+exports.activateRule = activateRule;
+exports.deactivateRule = deactivateRule;
+exports.listRules = listRules;
+exports.getRule = getRule;
+exports.assignRole = assignRole;
+exports.removeRole = removeRole;
+exports.getUserRole = getUserRole;
+exports.listUserRoles = listUserRoles;
+exports.hasRole = hasRole;
+exports.setSettings = setSettings;
+exports.getSettings = getSettings;
+exports.getSystemStats = getSystemStats;
+exports.getUserServicesAndBookings = getUserServicesAndBookings;
+exports.getUserServiceCount = getUserServiceCount;
+exports.lockUserAccount = lockUserAccount;
+exports.deleteUserAccount = deleteUserAccount;
+exports.updateUserReputation = updateUserReputation;
+exports.updateUserCommission = updateUserCommission;
+exports.getValidatedCertificates = getValidatedCertificates;
+exports.getRejectedCertificates = getRejectedCertificates;
 

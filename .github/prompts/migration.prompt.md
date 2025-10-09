@@ -325,18 +325,6 @@ exports.functionName = functions.https.onCall(async (data, context) => {
   - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). **IMPORTANT:** Ensure frontend expects the same data structure patterns established in the migrated functions.
   - **Authentication Headers:** All Cloud Function calls must include the Firebase ID token in headers for proper authentication via the `getAuthInfo` helper.
 
-**3.2. Refactor Admin Panel**
-
-- **Action:** MODIFY all pages and components within the `src/admin/` directory.
-- **Content:**
-  - All data tables, like `ServiceProviderCommissionTable` and `transactionHistory`, must now fetch their data from Firestore.
-  - All admin actions (e.g., suspending a user) must now call the new, secure admin Cloud Functions:
-    ```javascript
-    // Ensure calls follow the established data pattern
-    const adminAction = httpsCallable(functions, "adminFunctionName");
-    await adminAction({ data: { userId, action: "suspend" } });
-    ```
-  - **Critical:** Admin functions will use the `getAuthInfo` helper to verify `authInfo.isAdmin` - ensure frontend passes proper Firebase ID tokens.
 
 **3.3. Update UI based on Real-Time Data**
 
