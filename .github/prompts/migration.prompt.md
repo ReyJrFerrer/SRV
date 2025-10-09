@@ -325,7 +325,6 @@ exports.functionName = functions.https.onCall(async (data, context) => {
   - **Data Fetching (Reads):** Replace canister queries with real-time Firestore listeners (`onSnapshot`). **IMPORTANT:** Ensure frontend expects the same data structure patterns established in the migrated functions.
   - **Authentication Headers:** All Cloud Function calls must include the Firebase ID token in headers for proper authentication via the `getAuthInfo` helper.
 
-
 **3.3. Update UI based on Real-Time Data**
 
 - **Action:** MODIFY components like `src/frontend/src/components/provider/BookingRequests.tsx`.

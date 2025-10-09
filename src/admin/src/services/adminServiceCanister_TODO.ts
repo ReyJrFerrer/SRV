@@ -362,7 +362,7 @@
 //   try {
 //     const callable = httpsCallable(functions, functionName);
 //     const result = await callable(payload);
-    
+
 //     if ((result.data as any).success) {
 //       return (result.data as any).data;
 //     } else {
@@ -757,10 +757,10 @@
 //     try {
 //       requireAuth();
 
-//       const result = await callFirebaseFunction("assignRole", { 
+//       const result = await callFirebaseFunction("assignRole", {
 //         userId,
 //         role: "ADMIN",
-//         scope 
+//         scope
 //       });
 //       return result.message || "Role assigned successfully";
 //     } catch (error) {

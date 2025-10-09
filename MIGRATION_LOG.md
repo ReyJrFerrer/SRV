@@ -58,21 +58,24 @@ This file tracks the progress of the strategic architectural migration from a pu
 **Changes Made**:
 
 #### 1. Updated Imports and Configuration
+
 - **File**: `src/admin/src/services/adminServiceCanister.ts`
 - Replaced Motoko-specific imports (`createActor`, `canisterId`, type definitions) with Firebase imports
 - Added Firebase imports: `initializeApp`, `getAuth`, `getFunctions`, `httpsCallable`
 - Configured Firebase app initialization with environment variables
 
 #### 2. Replaced Helper Functions
+
 - Replaced `createAdminActor` with `callFirebaseFunction` helper for consistent Firebase function calls
 - Updated `updateAdminActor` to be a compatibility function that tracks identity for Firebase
 - Added `requireAuth` function to verify Firebase authentication before function calls
 
 #### 3. Migrated Core Admin Functions
+
 Successfully migrated 12 key admin functions to use Firebase Cloud Functions:
 
 - ✅ **upsertCommissionRules**: Create/update commission rules with proper payload format
-- ✅ **listRules**: Get commission rules with optional filtering  
+- ✅ **listRules**: Get commission rules with optional filtering
 - ✅ **getRule**: Get specific commission rule by ID
 - ✅ **activateRule**: Activate commission rule by ID and version
 - ✅ **deactivateRule**: Deactivate commission rule by ID
@@ -85,11 +88,13 @@ Successfully migrated 12 key admin functions to use Firebase Cloud Functions:
 - ✅ **lockUserAccount**: Lock or unlock user accounts
 
 #### 4. Implemented Correct Payload Format
+
 - Used `{payload}` format instead of `{data: {payload}}` as specifically requested
 - Example: `callFirebaseFunction("upsertCommissionRules", { rules: rulesPayload })`
 - Maintained consistent error handling with AdminServiceError class
 
 #### 5. Data Conversion Strategy
+
 - **Input**: Converted frontend types to simplified JavaScript objects for Firebase
 - **Output**: Maintained same frontend interface types for component compatibility
 - **Dates**: Proper conversion between ISO strings (Firebase) and Date objects (frontend)
@@ -102,13 +107,13 @@ Successfully migrated 12 key admin functions to use Firebase Cloud Functions:
 async functionName(params): Promise<ReturnType> {
   try {
     requireAuth(); // Firebase authentication check
-    
+
     const result = await callFirebaseFunction("functionName", {
       // Direct payload - no nested data object
       param1,
       param2
     });
-    
+
     // Convert Firebase response to frontend format
     return convertToFrontendFormat(result);
   } catch (error) {
