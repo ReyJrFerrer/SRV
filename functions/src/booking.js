@@ -1,7 +1,22 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
+
+// Import notification system from notification.js
+const {
+  NOTIFICATION_TYPES,
+  USER_TYPES,
+  NOTIFICATION_STATUS,
+  generateNotificationHref,
+  isSpamming,
+  updateNotificationFrequency,
+  sendFCMNotification,
+} = require("./notification");
 
 const db = admin.firestore();
+
+// Constants for notification system
+const NOTIFICATION_EXPIRY_DAYS = 30;
 
 /**
  * Helper function to safely get user authentication info
@@ -142,7 +157,7 @@ function isServiceActive(service) {
 }
 
 /**
- * Create notification for users
+ * Create notification for users with advanced features
  * @param {string} targetUserId - Target user ID
  * @param {string} userType - User type (client/provider)
  * @param {string} notificationType - Notification type
@@ -161,17 +176,78 @@ async function createNotification(
   metadata = null,
 ) {
   try {
-    await db.collection("notifications").add({
-      targetUserId,
+    // Validation
+    if (!targetUserId || !userType || !notificationType || !title || !message) {
+      console.error("Error creating notification: Required parameters missing");
+      return;
+    }
+
+    if (!Object.values(USER_TYPES).includes(userType)) {
+      console.error(`Error creating notification: Invalid userType: ${userType}`);
+      return;
+    }
+
+    if (!Object.values(NOTIFICATION_TYPES).includes(notificationType)) {
+      console.error(`Error creating notification: Invalid notificationType: ${notificationType}`);
+      return;
+    }
+
+    // Check spam prevention
+    console.log(`🛡️ [createNotification] Checking spam prevention for user ${targetUserId}...`);
+    const spamming = await isSpamming(targetUserId, notificationType);
+    if (spamming) {
+      console.warn(`⚠️ [createNotification] Rate limit exceeded for user ${targetUserId}.`);
+      return;
+    }
+
+    // Generate notification ID and timestamps
+    const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() + NOTIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    // Generate href
+    const href = generateNotificationHref(
+      notificationType,
+      userType,
+      bookingId,
+    );
+
+    // Create notification document
+    const notificationRef = db.collection("notifications").doc();
+    const notification = {
+      id: notificationRef.id,
+      userId: targetUserId,
       userType,
       notificationType,
       title,
       message,
-      relatedEntityId: bookingId,
+      relatedEntityId: bookingId || null,
       metadata: metadata ? JSON.stringify(metadata) : null,
-      read: false,
-      createdAt: new Date().toISOString(),
+      href,
+      status: NOTIFICATION_STATUS.UNREAD,
+      createdAt: FieldValue.serverTimestamp(),
+      readAt: null,
+      pushSentAt: null,
+      expiresAt,
+    };
+
+    // Store in Firestore
+    console.log(`📝 [createNotification] Creating notification document ${notificationRef.id}...`);
+    await notificationRef.set(notification);
+
+    // Update notification frequency tracking
+    await updateNotificationFrequency(targetUserId, notificationType);
+
+    // Send FCM push notification asynchronously (don't wait for it)
+    sendFCMNotification(targetUserId, {
+      ...notification,
+      createdAt: now,
+    }).catch((error) => {
+      console.error("Failed to send FCM notification:", error);
     });
+
+    console.log(`✅ [createNotification] Successfully created notification for ${targetUserId}`);
   } catch (error) {
     console.error("Error creating notification:", error);
     // Don't throw - notifications are not critical
@@ -355,8 +431,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     // Create notification for the provider about new booking request
     await createNotification(
       providerId,
-      "provider",
-      "new_booking_request",
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.NEW_BOOKING_REQUEST,
       "New Booking Request",
       `You have received a new booking request for ${serviceId}`,
       bookingId,
@@ -481,8 +557,8 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     // Create notification for the client about booking acceptance
     await createNotification(
       booking.clientId,
-      "client",
-      "booking_accepted",
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.BOOKING_ACCEPTED,
       "Booking Accepted",
       "Your booking has been accepted by the provider",
       bookingId,
@@ -575,8 +651,8 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     // Create notification for the client about booking decline
     await createNotification(
       booking.clientId,
-      "client",
-      "booking_declined",
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.BOOKING_DECLINED,
       "Booking Declined",
       "Your booking request has been declined by the provider",
       bookingId,
@@ -671,8 +747,8 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     // Create notification for the client about service start
     await createNotification(
       booking.clientId,
-      "client",
-      "service_started",
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.GENERIC,
       "Service Started",
       "Your service has been started by the provider",
       bookingId,
@@ -826,8 +902,8 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     // Create notification for the client about booking completion
     await createNotification(
       booking.clientId,
-      "client",
-      "booking_completed",
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.BOOKING_COMPLETED,
       "Service Completed",
       "Your service has been completed by the provider",
       bookingId,
@@ -919,12 +995,13 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
     // Create notification for the other party about booking cancellation
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
-    const targetUserType = authInfo.uid === booking.clientId ? "provider" : "client";
+    const targetUserType = authInfo.uid === booking.clientId ?
+      USER_TYPES.PROVIDER : USER_TYPES.CLIENT;
 
     await createNotification(
       targetUserId,
       targetUserType,
-      "booking_cancelled",
+      NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
       "A booking has been cancelled",
       bookingId,
@@ -1223,12 +1300,13 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
 
     // Create notification for the other party about booking dispute
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
-    const targetUserType = authInfo.uid === booking.clientId ? "provider" : "client";
+    const targetUserType = authInfo.uid === booking.clientId ?
+      USER_TYPES.PROVIDER : USER_TYPES.CLIENT;
 
     await createNotification(
       targetUserId,
       targetUserType,
-      "booking_disputed",
+      NOTIFICATION_TYPES.GENERIC,
       "Booking Disputed",
       "A booking has been disputed and requires attention",
       bookingId,
@@ -1800,8 +1878,8 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
     // Create notification for the provider about payment release
     await createNotification(
       booking.providerId,
-      "provider",
-      "payment_released",
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.PAYMENT_RECEIVED,
       "Payment Released",
       `Payment for booking ${bookingId} has been released`,
       bookingId,

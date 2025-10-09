@@ -270,6 +270,18 @@ async function sendFCMNotification(userId, notification) {
  * HTTPS Callable Function
  */
 exports.createNotification = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [createNotification] called");
+  const safeDataForLog = {
+    targetUserId: data.data?.targetUserId,
+    userType: data.data?.userType,
+    notificationType: data.data?.notificationType,
+    title: data.data?.title,
+    message: data.data?.message,
+    relatedEntityId: data.data?.relatedEntityId,
+    metadata: data.data?.metadata ? "Present" : "Missing",
+  };
+  console.log("📦 [createNotification] Received payload:", JSON.stringify(safeDataForLog, null, 2));
+
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -284,6 +296,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   // Authentication (must be authenticated to create notifications)
   const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [createNotification] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -293,6 +306,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   // Validation (mirror Motoko logic)
   if (!targetUserId) {
+    console.error("❌ [createNotification] Validation failed: Missing targetUserId.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Target user ID is required",
@@ -300,6 +314,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!userType || !Object.values(USER_TYPES).includes(userType)) {
+    console.error(`❌ [createNotification] Validation failed: Invalid userType: ${userType}.`);
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Valid user type is required (client or provider)",
@@ -310,6 +325,8 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     !notificationType ||
     !Object.values(NOTIFICATION_TYPES).includes(notificationType)
   ) {
+    console.error(`❌ [createNotification] Validation failed: 
+      Invalid notificationType: ${notificationType}.`);
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Valid notification type is required",
@@ -317,6 +334,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!title || title.length === 0) {
+    console.error("❌ [createNotification] Validation failed: Missing title.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Title is required",
@@ -324,6 +342,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!message || message.length === 0) {
+    console.error("❌ [createNotification] Validation failed: Missing message.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Message is required",
@@ -332,8 +351,11 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   try {
     // Check spam prevention
+    console.log(`🛡️ [createNotification] Checking spam prevention for user ${targetUserId}...`);
     const spamming = await isSpamming(targetUserId, notificationType);
     if (spamming) {
+      console.warn(`⚠️ [createNotification] Notification rate 
+        limit exceeded for user ${targetUserId}.`);
       throw new functions.https.HttpsError(
         "resource-exhausted",
         "Notification rate limit exceeded",
@@ -373,6 +395,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     };
 
     // Store in Firestore
+    console.log(`📝 [createNotification] Creating notification document ${notificationRef.id}...`);
     await notificationRef.set(notification);
 
     // Update notification frequency tracking
@@ -386,9 +409,10 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
       console.error("Failed to send FCM notification:", error);
     });
 
+    console.log("✅ [createNotification] Function finished successfully.");
     return {success: true, notificationId: notificationRef.id};
   } catch (error) {
-    console.error("Error creating notification:", error);
+    console.error("Error in createNotification:", error);
 
     // Re-throw HttpsError
     if (error instanceof functions.https.HttpsError) {
@@ -404,12 +428,21 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
  * HTTPS Callable Function
  */
 exports.getUserNotifications = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [getUserNotifications] called");
+  const safeDataForLog = {
+    userId: data.data?.userId,
+    filter: data.data?.filter,
+  };
+  console.log("📦 [getUserNotifications] Received payload:"
+    , JSON.stringify(safeDataForLog, null, 2));
+
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId, filter} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [getUserNotifications] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -422,6 +455,8 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
     userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
+    console.log(`📝 [getUserNotifications] Fetching notifications for user ${targetUserId}...`);
+
     let query = db
       .collection("notifications")
       .where("userId", "==", targetUserId)
@@ -468,9 +503,10 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
       };
     });
 
+    console.log(`✅ [getUserNotifications] Found ${notifications.length} notifications.`);
     return {success: true, notifications};
   } catch (error) {
-    console.error("Error getting user notifications:", error);
+    console.error("Error in getUserNotifications:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -481,12 +517,19 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
  */
 exports.markNotificationAsRead = functions.https.onCall(
   async (data, context) => {
+    console.log("🚀 [markNotificationAsRead] called");
+    const safeDataForLog = {notificationId: data.data?.notificationId};
+    console.log("📦 [markNotificationAsRead] Received payload:"
+      , JSON.stringify(safeDataForLog, null, 2));
+
     // Extract payload from data.data
     const payload = data.data || data;
     const {notificationId} = payload;
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
+    console.log("🔐 [markNotificationAsRead] Auth info:", authInfo);
+
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -496,6 +539,7 @@ exports.markNotificationAsRead = functions.https.onCall(
 
     // Validation
     if (!notificationId) {
+      console.error("❌ [markNotificationAsRead] Validation failed: Missing notificationId.");
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Notification ID is required",
@@ -503,6 +547,7 @@ exports.markNotificationAsRead = functions.https.onCall(
     }
 
     try {
+      console.log(`📝 [markNotificationAsRead] Fetching notification ${notificationId}...`);
       const notificationRef = db.collection("notifications").doc(notificationId);
 
       await db.runTransaction(async (transaction) => {
@@ -519,6 +564,8 @@ exports.markNotificationAsRead = functions.https.onCall(
 
         // Verify ownership (unless admin)
         if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
+          console.error(`❌ [markNotificationAsRead] Permission denied. 
+            User ${authInfo.uid} cannot access notification for user ${notification.userId}.`);
           throw new functions.https.HttpsError(
             "permission-denied",
             "You can only mark your own notifications as read",
@@ -531,15 +578,18 @@ exports.markNotificationAsRead = functions.https.onCall(
           newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
         }
 
+        console.log(`📝 [markNotificationAsRead] Updating notification 
+          ${notificationId} to status ${newStatus}.`);
         transaction.update(notificationRef, {
           status: newStatus,
           readAt: FieldValue.serverTimestamp(),
         });
       });
 
+      console.log("✅ [markNotificationAsRead] Function finished successfully.");
       return {success: true};
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("Error in markNotificationAsRead:", error);
 
       // Re-throw HttpsError
       if (error instanceof functions.https.HttpsError) {
@@ -557,12 +607,19 @@ exports.markNotificationAsRead = functions.https.onCall(
  */
 exports.markNotificationAsPushSent = functions.https.onCall(
   async (data, context) => {
+    console.log("🚀 [markNotificationAsPushSent] called");
+    const safeDataForLog = {notificationId: data.data?.notificationId};
+    console.log("📦 [markNotificationAsPushSent] Received payload:"
+      , JSON.stringify(safeDataForLog, null, 2));
+
     // Extract payload from data.data
     const payload = data.data || data;
     const {notificationId} = payload;
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
+    console.log("🔐 [markNotificationAsPushSent] Auth info:", authInfo);
+
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -572,6 +629,7 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
     // Validation
     if (!notificationId) {
+      console.error("❌ [markNotificationAsPushSent] Validation failed: Missing notificationId.");
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Notification ID is required",
@@ -579,6 +637,7 @@ exports.markNotificationAsPushSent = functions.https.onCall(
     }
 
     try {
+      console.log(`📝 [markNotificationAsPushSent] Fetching notification ${notificationId}...`);
       const notificationRef = db.collection("notifications").doc(notificationId);
 
       await db.runTransaction(async (transaction) => {
@@ -595,6 +654,8 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
         // Verify ownership (unless admin)
         if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
+          console.error(`❌ [markNotificationAsPushSent] Permission denied. 
+            User ${authInfo.uid} cannot access notification for user ${notification.userId}.`);
           throw new functions.https.HttpsError(
             "permission-denied",
             "You can only update your own notifications",
@@ -607,15 +668,18 @@ exports.markNotificationAsPushSent = functions.https.onCall(
           newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
         }
 
+        console.log(`📝 [markNotificationAsPushSent] Updating notification 
+          ${notificationId} to status ${newStatus}.`);
         transaction.update(notificationRef, {
           status: newStatus,
           pushSentAt: FieldValue.serverTimestamp(),
         });
       });
 
+      console.log("✅ [markNotificationAsPushSent] Function finished successfully.");
       return {success: true};
     } catch (error) {
-      console.error("Error marking notification as push sent:", error);
+      console.error("Error in markNotificationAsPushSent:", error);
 
       // Re-throw HttpsError
       if (error instanceof functions.https.HttpsError) {
@@ -633,12 +697,19 @@ exports.markNotificationAsPushSent = functions.https.onCall(
  */
 exports.getNotificationsForPush = functions.https.onCall(
   async (data, context) => {
+    console.log("🚀 [getNotificationsForPush] called");
+    const safeDataForLog = {userId: data.data?.userId};
+    console.log("📦 [getNotificationsForPush] Received payload:"
+      , JSON.stringify(safeDataForLog, null, 2));
+
     // Extract payload from data.data
     const payload = data.data || data;
     const {userId} = payload;
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
+    console.log("🔐 [getNotificationsForPush] Auth info:", authInfo);
+
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -650,6 +721,8 @@ exports.getNotificationsForPush = functions.https.onCall(
     const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
     try {
+      console.log(`📝 [getNotificationsForPush] 
+        Fetching unread notifications for user ${targetUserId}...`);
       const snapshot = await db
         .collection("notifications")
         .where("userId", "==", targetUserId)
@@ -678,9 +751,11 @@ exports.getNotificationsForPush = functions.https.onCall(
         };
       });
 
+      console.log(`✅ [getNotificationsForPush] 
+        Found ${notifications.length} notifications to push.`);
       return {success: true, notifications};
     } catch (error) {
-      console.error("Error getting notifications for push:", error);
+      console.error("Error in getNotificationsForPush:", error);
       throw new functions.https.HttpsError("internal", error.message);
     }
   },
@@ -691,12 +766,18 @@ exports.getNotificationsForPush = functions.https.onCall(
  * HTTPS Callable Function
  */
 exports.storeFCMToken = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [storeFCMToken] called");
+  const safeDataForLog = {fcmToken: data.data?.fcmToken ? "Present" : "Missing"};
+  console.log("📦 [storeFCMToken] Received payload:", JSON.stringify(safeDataForLog, null, 2));
+
   // Extract payload from data.data
   const payload = data.data || data;
   const {fcmToken} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [storeFCMToken] Auth info:", authInfo);
+
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -706,6 +787,7 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!fcmToken) {
+    console.error("❌ [storeFCMToken] Validation failed: Missing fcmToken.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "FCM token is required",
@@ -713,14 +795,16 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    console.log(`📝 [storeFCMToken] Storing FCM token for user ${authInfo.uid}...`);
     await db.collection("users").doc(authInfo.uid).update({
       fcmToken,
       fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
     });
 
+    console.log("✅ [storeFCMToken] Function finished successfully.");
     return {success: true};
   } catch (error) {
-    console.error("Error storing FCM token:", error);
+    console.error("Error in storeFCMToken:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -730,8 +814,12 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
  * HTTPS Callable Function
  */
 exports.removeFCMToken = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [removeFCMToken] called");
+
   // Authentication
   const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [removeFCMToken] Auth info:", authInfo);
+
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -740,14 +828,16 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    console.log(`📝 [removeFCMToken] Removing FCM token for user ${authInfo.uid}...`);
     await db.collection("users").doc(authInfo.uid).update({
       fcmToken: FieldValue.delete(),
       fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
     });
 
+    console.log("✅ [removeFCMToken] Function finished successfully.");
     return {success: true};
   } catch (error) {
-    console.error("Error removing FCM token:", error);
+    console.error("Error in removeFCMToken:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -757,12 +847,19 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
  * HTTPS Callable Function
  */
 exports.getNotificationStats = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [getNotificationStats] called");
+  const safeDataForLog = {userId: data.data?.userId};
+  console.log("📦 [getNotificationStats] Received payload:"
+    , JSON.stringify(safeDataForLog, null, 2));
+
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [getNotificationStats] Auth info:", authInfo);
+
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -774,6 +871,7 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
   const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
+    console.log(`📝 [getNotificationStats] Fetching notification stats for user ${targetUserId}...`);
     const snapshot = await db
       .collection("notifications")
       .where("userId", "==", targetUserId)
@@ -806,12 +904,13 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
       }
     });
 
+    console.log(`✅ [getNotificationStats] Stats calculated:`, {total, unread, pushSent, read});
     return {
       success: true,
       stats: {total, unread, pushSent, read},
     };
   } catch (error) {
-    console.error("Error getting notification stats:", error);
+    console.error("Error in getNotificationStats:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -822,8 +921,12 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
  */
 exports.markAllNotificationsAsRead = functions.https.onCall(
   async (data, context) => {
+    console.log("🚀 [markAllNotificationsAsRead] called");
+
     // Authentication
     const authInfo = getAuthInfo(context, data);
+    console.log("🔐 [markAllNotificationsAsRead] Auth info:", authInfo);
+
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -832,6 +935,8 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
     }
 
     try {
+      console.log(`📝 [markAllNotificationsAsRead] 
+        Fetching unread notifications for user ${authInfo.uid}...`);
       const snapshot = await db
         .collection("notifications")
         .where("userId", "==", authInfo.uid)
@@ -859,10 +964,11 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
       });
 
       await batch.commit();
-
+      console.log(`✅ [markAllNotificationsAsRead] Marked ${count} notifications as read.`);
+      console.log("✅ [markAllNotificationsAsRead] Function finished successfully.");
       return {success: true, count};
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.error("Error in markAllNotificationsAsRead:", error);
       throw new functions.https.HttpsError("internal", error.message);
     }
   },
@@ -874,12 +980,20 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
  */
 exports.canReceiveNotification = functions.https.onCall(
   async (data, context) => {
+    console.log("🚀 [canReceiveNotification] called");
+    const safeDataForLog = {userId: data.data?.userId,
+      notificationType: data.data?.notificationType};
+    console.log("📦 [canReceiveNotification] Received payload:"
+      , JSON.stringify(safeDataForLog, null, 2));
+
     // Extract payload from data.data
     const payload = data.data || data;
     const {userId, notificationType} = payload;
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
+    console.log("🔐 [canReceiveNotification] Auth info:", authInfo);
+
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -889,6 +1003,8 @@ exports.canReceiveNotification = functions.https.onCall(
 
     // Validation
     if (!userId || !notificationType) {
+      console.error(`❌ [canReceiveNotification] Validation failed: 
+        Missing userId or notificationType.`);
       throw new functions.https.HttpsError(
         "invalid-argument",
         "User ID and notification type are required",
@@ -896,10 +1012,12 @@ exports.canReceiveNotification = functions.https.onCall(
     }
 
     try {
+      console.log(`🛡️ [canReceiveNotification] Checking rate limit for user ${userId}...`);
       const canReceive = !(await isSpamming(userId, notificationType));
+      console.log(`✅ [canReceiveNotification] Can receive: ${canReceive}`);
       return {success: true, canReceive};
     } catch (error) {
-      console.error("Error checking notification rate limit:", error);
+      console.error("Error in canReceiveNotification:", error);
       throw new functions.https.HttpsError("internal", error.message);
     }
   },
@@ -910,6 +1028,7 @@ exports.canReceiveNotification = functions.https.onCall(
  * Runs daily at midnight UTC
  */
 exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => {
+  console.log("🚀 [cleanupExpiredNotifications] scheduled function running...");
   try {
     const now = new Date();
     const snapshot = await db
@@ -927,7 +1046,7 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
 
     await batch.commit();
 
-    console.log(`Cleaned up ${count} expired notifications`);
+    console.log(`✅ [cleanupExpiredNotifications] Cleaned up ${count} expired notifications.`);
     return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up expired notifications:", error);
@@ -940,6 +1059,7 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
  * Runs every 6 hours
  */
 exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) => {
+  console.log("🚀 [cleanupNotificationFrequency] scheduled function running...");
   try {
     const now = Date.now();
     const windowStart = now - SPAM_PREVENTION_WINDOW;
@@ -966,10 +1086,21 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
 
     await batch.commit();
 
-    console.log(`Cleaned up ${count} old notification frequency entries`);
+    console.log(`✅ [cleanupNotificationFrequency] 
+      Cleaned up ${count} old notification frequency entries.`);
     return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up notification frequency:", error);
     throw error;
   }
 });
+
+// Export helper functions and constants for use in other modules
+// (Adding to existing exports object, not replacing it)
+exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;
+exports.USER_TYPES = USER_TYPES;
+exports.NOTIFICATION_STATUS = NOTIFICATION_STATUS;
+exports.generateNotificationHref = generateNotificationHref;
+exports.isSpamming = isSpamming;
+exports.updateNotificationFrequency = updateNotificationFrequency;
+exports.sendFCMNotification = sendFCMNotification;
