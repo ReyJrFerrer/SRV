@@ -315,7 +315,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       <div className="md:flex">
         {fallbackImage && (
           <div className="md:flex-shrink-0">
-            <div className="relative h-48 w-full object-cover md:w-48">
+            <div className="relative h-full w-full object-cover md:w-48">
               <img
                 src={fallbackImage}
                 alt={providerName || serviceTitle || "Provider"}
