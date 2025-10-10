@@ -62,8 +62,7 @@ export function initializeFirebase(): {
       // Connect to emulators if in development and not already connected
       if (
         !emulatorsConnected &&
-        (import.meta.env.DEV ||
-          window.location.hostname === "localhost")
+        (import.meta.env.DEV || window.location.hostname === "localhost")
       ) {
         try {
           connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
@@ -119,10 +118,7 @@ export function initializeFirebase(): {
     firebaseFirestore = getFirestore(firebaseApp);
 
     // Connect to emulators in development
-    if (
-      import.meta.env.DEV ||
-      window.location.hostname === "localhost"
-    ) {
+    if (import.meta.env.DEV || window.location.hostname === "localhost") {
       try {
         connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
           disableWarnings: true,

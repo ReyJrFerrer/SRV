@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setFirebaseUser(user);
       if (user) {
         console.log("[Admin] Firebase user authenticated:", user.uid);
-        
+
         // Check if user has admin custom claim
         try {
           const tokenResult = await user.getIdTokenResult();
@@ -163,22 +163,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   console.log(
                     "🔧 [Admin] Auto-creating admin profile and granting role...",
                   );
-                  
+
                   // Create admin profile with UID and principal
                   await createAdminProfile(
                     result.user.uid,
                     principal,
                     "Admin User",
-                    ""
+                    "",
                   );
-                  
+
                   console.log(
                     "✅ [Admin] Admin profile created successfully! Please sign out and sign in again to refresh your token.",
                   );
-                  
+
                   // Alert user to refresh
-                  alert("Admin profile created! Please sign out and sign in again to activate admin privileges.");
-                  
+                  alert(
+                    "Admin profile created! Please sign out and sign in again to activate admin privileges.",
+                  );
+
                   setIsAdmin(true);
                 } catch (adminError) {
                   console.warn(

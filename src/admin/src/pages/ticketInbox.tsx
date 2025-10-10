@@ -185,10 +185,7 @@ const TicketCard: React.FC<{
 
 export const TicketInboxPage: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    refreshUsers,
-    users: backendUsers,
-  } = useAdmin();
+  const { refreshUsers, users: backendUsers } = useAdmin();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);

@@ -71,22 +71,19 @@ export const useFeedback = () => {
     }
   }, []);
 
-  const fetchRecentFeedback = useCallback(
-    async (limit: number = 10) => {
-      setLoading(true);
-      setError(null);
+  const fetchRecentFeedback = useCallback(async (limit: number = 10) => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const feedback = await getRecentFeedback(limit);
-        setAllFeedback(feedback);
-      } catch (err) {
-        setError("Could not load recent feedback");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+    try {
+      const feedback = await getRecentFeedback(limit);
+      setAllFeedback(feedback);
+    } catch (err) {
+      setError("Could not load recent feedback");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Fetch feedback stats on mount (public data)
   useEffect(() => {

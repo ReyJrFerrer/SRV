@@ -25,10 +25,7 @@ interface UserData {
 const TransactionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    users: backendUsers,
-    refreshUsers,
-  } = useAdmin();
+  const { users: backendUsers, refreshUsers } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +79,7 @@ const TransactionHistoryPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers,]);
+  }, [id, backendUsers, navigate, refreshUsers]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

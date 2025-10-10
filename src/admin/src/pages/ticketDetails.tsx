@@ -116,10 +116,7 @@ const getCategoryColor = (category: string) => {
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    refreshUsers,
-    users: backendUsers,
-  } = useAdmin();
+  const { refreshUsers, users: backendUsers } = useAdmin();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);

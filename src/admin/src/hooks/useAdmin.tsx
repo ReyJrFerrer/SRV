@@ -184,7 +184,6 @@ interface UseAdminReturn {
 
   // Utility functions
   refreshAll: () => Promise<void>;
-
 }
 
 export const useAdmin = (): UseAdminReturn => {
@@ -1183,6 +1182,5 @@ export const useAdmin = (): UseAdminReturn => {
 
     // Utility functions
     refreshAll,
-    
   };
 };

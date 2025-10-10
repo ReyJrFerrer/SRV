@@ -47,7 +47,7 @@ const convertToDate = (timestamp: any): Date => {
 export const getAllFeedback = async (): Promise<AppFeedback[]> => {
   try {
     const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
-    const result = await getAllFeedbackFn({data:{}});
+    const result = await getAllFeedbackFn({ data: {} });
     console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
@@ -70,7 +70,7 @@ export const getAllFeedback = async (): Promise<AppFeedback[]> => {
 export const getMyFeedback = async (): Promise<AppFeedback[]> => {
   try {
     const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
-    const result = await getMyFeedbackFn({data:{}});
+    const result = await getMyFeedbackFn({ data: {} });
     console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
@@ -93,7 +93,7 @@ export const getMyFeedback = async (): Promise<AppFeedback[]> => {
 export const getFeedbackStats = async (): Promise<FeedbackStats> => {
   try {
     const getFeedbackStatsFn = httpsCallable(functions, "getFeedbackStats");
-    const result = await getFeedbackStatsFn({data:{}});
+    const result = await getFeedbackStatsFn({ data: {} });
     console.log(result);
 
     const data = result.data as { success: boolean; stats: FeedbackStats };
