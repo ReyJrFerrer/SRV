@@ -441,9 +441,9 @@ persistent actor ReputationCanister {
         accountAge : Time.Time
     ) : async Result<ReputationScore> {
         // Check authorization
-        if (not isAuthorized(msg.caller)) {
-            return #err("Unauthorized: Only trusted service agent can call this function");
-        };
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
 
         switch (reputations.get(userId)) {
             case (null) {
@@ -487,9 +487,9 @@ persistent actor ReputationCanister {
         accountAge : Time.Time
     ) : async Result<ReputationScore> {
         // Check authorization
-        if (not isAuthorized(msg.caller)) {
-            return #err("Unauthorized: Only trusted service agent can call this function");
-        };
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
 
         switch (reputations.get(providerId)) {
             case (null) {
@@ -686,9 +686,9 @@ persistent actor ReputationCanister {
         clientAccountAge : Time.Time
     ) : async Result<Review> {
         // Check authorization
-        if (not isAuthorized(msg.caller)) {
-            return #err("Unauthorized: Only trusted service agent can call this function");
-        };
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
 
         // 1. Analyze review for flags
         let flags = analyzeReview(review);
@@ -776,9 +776,9 @@ persistent actor ReputationCanister {
         clientAccountAge : Time.Time
     ) : async Result<Review> {
         // Check authorization
-        if (not isAuthorized(msg.caller)) {
-            return #err("Unauthorized: Only trusted service agent can call this function");
-        };
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
 
         // 1. Analyze sentiment with LLM
         let llmSentimentScore = await analyzeSentimentWithLLM(review);

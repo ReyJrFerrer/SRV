@@ -19,6 +19,11 @@ const {
   updateProviderReputationInternal,
 } = require("./reputation");
 
+// Import wallet internal function for commission deduction
+const {
+  debitBalanceInternal,
+} = require("./wallet");
+
 const db = admin.firestore();
 
 // Constants for notification system
@@ -111,7 +116,7 @@ async function checkBookingConflicts(
  * @return {Promise<boolean>} True if sufficient balance
  */
 async function validateCommissionBalance(booking) {
-  if (booking.paymentMethod !== "CASH_ON_HAND") {
+  if (booking.paymentMethod !== "CashOnHand") {
     return true; // No commission validation needed for digital payments
   }
 
@@ -128,7 +133,7 @@ async function validateCommissionBalance(booking) {
     // Calculate commission based on packages or service price
     if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
       for (const packageId of booking.servicePackageIds) {
-        const packageDoc = await db.collection("servicePackages").doc(packageId).get();
+        const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (packageDoc.exists) {
           commissionFee += packageDoc.data().commissionFee || 0;
         }
@@ -350,11 +355,11 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     if (servicePackageIds.length > 0) {
       for (const packageId of servicePackageIds) {
         console.log(`📦 [createBooking] Validating package ${packageId}...`);
-        // Corrected collection name from "servicePackages" to "service_packages"
+
         const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
           const errorMsg =
-          `Package with ID ${packageId} not found in 'servicePackages' collection.`;
+          `Package with ID ${packageId} not found in 'service_packages' collection.`;
           console.error(`❌ [createBooking] Package validation failed. ${errorMsg}`);
           throw new functions.https.HttpsError("not-found", errorMsg);
         }
@@ -841,69 +846,101 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     };
 
     console.log(`📝 [completeBooking] Updating booking ${bookingId} to Completed.`);
-    // Use Firestore transaction for atomic update
-    await db.runTransaction(async (transaction) => {
-      transaction.update(db.collection("bookings").doc(bookingId), {
-        status: "Completed",
-        completedDate,
-        amountPaid: amountPaid || booking.amountPaid,
-        updatedAt: completedDate,
-      });
 
-      // Handle commission deduction for cash jobs
-      if (booking.paymentMethod === "CASH_ON_HAND") {
-        console.log("💰 [completeBooking] Processing commission for cash job.");
-        // Get service details to calculate commission
-        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
-        if (serviceDoc.exists) {
-          const service = serviceDoc.data();
-          let commissionFee = 0;
+    // Update booking status
+    await db.collection("bookings").doc(bookingId).update({
+      status: "Completed",
+      completedDate,
+      amountPaid: amountPaid || booking.amountPaid,
+      updatedAt: completedDate,
+    });
+    console.log(`✅ [completeBooking] Successfully updated booking ${bookingId}.`);
 
-          // Calculate commission based on packages or service price
-          if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
-            for (const packageId of booking.servicePackageIds) {
-              const packageDoc = await db.collection("servicePackages").doc(packageId).get();
-              if (packageDoc.exists) {
-                commissionFee += packageDoc.data().commissionFee || 0;
-              }
-            }
-          } else {
-            commissionFee = service.commissionFee || 0;
-          }
+    // Handle commission deduction for cash jobs
+    if (booking.paymentMethod === "CashOnHand") {
+      console.log("💰 [completeBooking] Processing commission deduction for cash job.");
 
-          // Deduct commission from provider wallet
-          if (commissionFee > 0) {
-            console.log(`💰 [completeBooking] 
-              Deducting commission of ${commissionFee} from provider ${booking.providerId}.`);
-            const walletRef = db.collection("wallets").doc(booking.providerId);
-            const walletDoc = await walletRef.get();
-            const currentBalance = walletDoc.exists ? (walletDoc.data().balance || 0) : 0;
-
-            transaction.set(walletRef, {
-              balance: Math.max(0, currentBalance - commissionFee),
-              updatedAt: completedDate,
-            }, {merge: true});
-
-            // Record commission transaction
-            transaction.set(db.collection("transactions").doc(), {
-              userId: booking.providerId,
-              type: "DEBIT",
-              amount: commissionFee,
-              description: `Commission fee for booking ${bookingId}`,
-              paymentChannel: "SRV_COMMISSION",
-              bookingId,
-              createdAt: completedDate,
-            });
-          }
-        }
+      // Get service details to calculate commission
+      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+      if (!serviceDoc.exists) {
+        console.error(`❌ [completeBooking] Service ${booking.serviceId} not found.`);
+        throw new functions.https.HttpsError("not-found", "Service not found");
       }
 
-      // TODO: Handle digital payment release here
-      // This would integrate with the releaseHeldPayment Cloud Function
-      console.log("💳 [completeBooking] Digital payment release logic to be implemented.");
-    });
-    console.log(`✅ [completeBooking] 
-      Successfully updated booking ${bookingId} and processed transactions.`);
+      const service = serviceDoc.data();
+      let totalCommission = 0;
+      const serviceDescriptions = [];
+
+      // Calculate commission based on packages or service
+      if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
+        const packageCount = booking.servicePackageIds.length;
+        console.log(
+          `💰 [completeBooking] Calculating commission from ${packageCount} packages.`,
+        );
+        // Multiple package booking - get commission from all packages
+        for (const packageId of booking.servicePackageIds) {
+          console.log(`💰 [completeBooking] Fetching package ${packageId} from service_packages...`);
+          const packageDoc = await db.collection("service_packages").doc(packageId).get();
+          if (packageDoc.exists) {
+            const pkg = packageDoc.data();
+            console.log(
+              `💰 [completeBooking] Package ${packageId} commission: ${pkg.commissionFee}`,
+            );
+            totalCommission += pkg.commissionFee || 0; // Convert to cents
+            serviceDescriptions.push(pkg.title || packageId);
+          } else {
+            console.warn(`⚠️ [completeBooking] Package ${packageId} not found in Firestore`);
+          }
+        }
+      } else {
+        console.log(`💰 [completeBooking] Calculating commission from service.`);
+        // Regular service booking - get commission from service
+        totalCommission = (service.commissionFee || 0); // Convert to cents
+        serviceDescriptions.push(service.title || booking.serviceId);
+      }
+
+      // Deduct commission from provider wallet using wallet.js debitBalanceInternal
+      if (totalCommission > 0) {
+        console.log(
+          `💰 [completeBooking] Deducting commission of ${totalCommission} ` +
+          `cents from provider ${booking.providerId}.`,
+        );
+
+        const serviceDescriptionsText = serviceDescriptions.length > 0 ?
+          serviceDescriptions.join(", ") :
+          "Unknown Service";
+
+        const commissionDescription =
+          `Commission fee for booking #${bookingId} - ${serviceDescriptionsText}`;
+
+        try {
+          // Call debitBalanceInternal from wallet.js (internal function)
+          const debitResult = await debitBalanceInternal(
+            booking.providerId,
+            totalCommission,
+            commissionDescription,
+            "SRV_COMMISSION",
+          );
+
+          console.log(
+            `✅ [completeBooking] Commission deducted successfully. ` +
+            `Transaction ID: ${debitResult.transactionId}`,
+          );
+        } catch (debitError) {
+          console.error(`❌ [completeBooking] Failed to deduct commission: ${debitError.message}`);
+          throw new functions.https.HttpsError(
+            "internal",
+            `Failed to deduct commission: ${debitError.message}`,
+          );
+        }
+      } else {
+        console.log(`💰 [completeBooking] No commission to deduct (commission is 0).`);
+      }
+    }
+
+    // TODO: Handle digital payment release here
+    // This would integrate with the releaseHeldPayment Cloud Function
+    console.log("💳 [completeBooking] Digital payment release logic to be implemented.");
 
     // Create notification for the client about booking completion
     await createNotification(
@@ -1853,8 +1890,8 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
     }
 
     // Validate payment method - should only release digital payments
-    if (booking.paymentMethod === "CASH_ON_HAND") {
-      console.error("❌ [releasePayment] Cannot release payment for CASH_ON_HAND method.");
+    if (booking.paymentMethod === "CashOnHand") {
+      console.error("❌ [releasePayment] Cannot release payment for CashOnHand method.");
       throw new functions.https.HttpsError(
         "failed-precondition",
         "Cash payments do not require release",

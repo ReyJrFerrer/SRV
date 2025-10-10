@@ -195,8 +195,80 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Internal function to debit a user's balance
+ * Can be called directly from other cloud functions
+ * @param {string} userId - User ID
+ * @param {number} amount - Amount to debit
+ * @param {string} description - Transaction description
+ * @param {string} paymentChannel - Payment channel
+ * @return {Promise<Object>} Result object
+ */
+async function debitBalanceInternal(userId, amount, description, paymentChannel) {
+  console.log("� Debit Balance Internal:", {userId, amount, description, paymentChannel});
+
+  // Validation - mirror Motoko validation logic
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  if (!amount || amount <= 0) {
+    throw new Error("Invalid amount: Must be greater than 0");
+  }
+
+  try {
+    // Use Firestore transaction for atomic updates
+    return await db.runTransaction(async (transaction) => {
+      const walletRef = db.collection("wallets").doc(userId);
+      const walletDoc = await transaction.get(walletRef);
+
+      let currentBalance = 0;
+      if (walletDoc.exists) {
+        currentBalance = walletDoc.data().balance || 0;
+      }
+
+      // Mirror Motoko safeSub logic
+      const newBalance = safeSub(currentBalance, amount);
+      if (newBalance === null) {
+        throw new Error(
+          "Insufficient balance: Cannot debit more than available balance",
+        );
+      }
+
+      // Update wallet balance
+      transaction.set(walletRef, {
+        balance: newBalance,
+        updatedAt: new Date().toISOString(),
+      }, {merge: true});
+
+      // Record transaction - mirror Motoko transaction recording logic
+      const txId = generateTransactionId();
+      const transactionData = {
+        id: txId,
+        from: userId,
+        to: null,
+        amount: amount,
+        transaction_type: "Debit",
+        timestamp: new Date().toISOString(),
+        description: description || "Balance debited by system",
+        payment_channel: paymentChannel || null,
+        running_balance: newBalance,
+      };
+
+      const txRef = db.collection("transactions").doc(txId);
+      transaction.set(txRef, transactionData);
+
+      console.log(`✅ Debit successful for user ${userId}. New balance: ${newBalance}`);
+      return {success: true, newBalance: newBalance, transactionId: txId};
+    });
+  } catch (error) {
+    console.error("Error in debitBalanceInternal:", error);
+    throw error;
+  }
+}
+
+/**
  * Debit a user's balance
- * Cloud Function: debitBalance
+ * HTTP Cloud Function - can be called from client or other services via HTTP
  */
 exports.debitBalance = functions.https.onCall(async (data, context) => {
   console.log("🚀 [debitBalance] called");
@@ -225,72 +297,17 @@ exports.debitBalance = functions.https.onCall(async (data, context) => {
     );
   }
 
-
-  // Validation - mirror Motoko validation logic
-  if (!userId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "userId is required",
-    );
-  }
-
-  if (!amount || amount <= 0) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Invalid amount: Must be greater than 0",
-    );
-  }
-
   try {
-    // Use Firestore transaction for atomic updates
-    return await db.runTransaction(async (transaction) => {
-      const walletRef = db.collection("wallets").doc(userId);
-      const walletDoc = await transaction.get(walletRef);
-
-      let currentBalance = 0;
-      if (walletDoc.exists) {
-        currentBalance = walletDoc.data().balance || 0;
-      }
-
-      // Mirror Motoko safeSub logic
-      const newBalance = safeSub(currentBalance, amount);
-      if (newBalance === null) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Insufficient balance: Cannot debit more than available balance",
-        );
-      }
-
-      // Update wallet balance
-      transaction.set(walletRef, {
-        balance: newBalance,
-        updatedAt: new Date().toISOString(),
-      }, {merge: true});
-
-      // Record transaction - mirror Motoko transaction recording logic
-      const txId = generateTransactionId();
-      const transactionData = {
-        id: txId,
-        from: userId,
-        to: null,
-        amount: amount,
-        transaction_type: "Debit",
-        timestamp: new Date().toISOString(),
-        description: description || "Balance debited by system",
-        payment_channel: paymentChannel || null,
-        running_balance: newBalance,
-      };
-
-      const txRef = db.collection("transactions").doc(txId);
-      transaction.set(txRef, transactionData);
-
-      return {success: true, newBalance: newBalance, transactionId: txId};
-    });
+    const result = await debitBalanceInternal(userId, amount, description, paymentChannel);
+    return result;
   } catch (error) {
     console.error("Error in debitBalance:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+// Export the internal function for use by other cloud functions
+exports.debitBalanceInternal = debitBalanceInternal;
 
 /**
  * Transfer funds between users
