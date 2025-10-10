@@ -611,7 +611,7 @@ const RemittanceQuickAnalytics: React.FC<{
     pendingCommission: number;
     settledCommission: number;
   }>;
-}> = ({ remittanceOrders, remittanceProviders }) => {
+}> = ({ remittanceOrders }) => {
   type Period = "7d" | "30d" | "90d" | "all";
   const [period, setPeriod] = useState<Period>("30d");
 
@@ -677,28 +677,7 @@ const RemittanceQuickAnalytics: React.FC<{
     }
   }, [period]);
 
-  // Donut: Settled vs Pending Commission (providers aggregate)
-  const donutData = useMemo(
-    () => [
-      {
-        name: "Settled",
-        value: remittanceProviders.reduce(
-          (sum, p) => sum + (p.settledCommission || 0),
-          0,
-        ),
-        color: "#2563eb",
-      },
-      {
-        name: "Pending",
-        value: remittanceProviders.reduce(
-          (sum, p) => sum + (p.pendingCommission || 0),
-          0,
-        ),
-        color: "#f59e0b",
-      },
-    ],
-    [remittanceProviders],
-  );
+  // Removed commission donut per request
 
   // Filter orders by period
   const ordersInPeriod = useMemo(
@@ -862,36 +841,35 @@ const RemittanceQuickAnalytics: React.FC<{
       </div>
 
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-        {/* Donut: Settled vs Pending Commission */}
+        {/* Bar: Bookings by Status (moved up to replace donut) */}
         <div className="rounded-lg border border-gray-100 p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-800">
-              Commission: Settled vs Pending
+              Bookings by Status
             </h3>
-            <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
-              Providers: {remittanceProviders.length}
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
+              In period: {ordersInPeriod.length}
             </span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={donutData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  innerRadius={45}
-                  paddingAngle={2}
-                >
-                  {donutData.map((entry, index) => (
-                    <Cell key={`rdonut-${index}`} fill={entry.color} />
+              <BarChart
+                data={statusCounts}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip
+                  formatter={(value: number) => [value, "Bookings"]}
+                  labelFormatter={(label: string) => label}
+                />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                  {statusCounts.map((entry, index) => (
+                    <Cell key={`status-top-cell-${index}`} fill={entry.color} />
                   ))}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatCurrencyLocal(v)} />
-                <Legend />
-              </PieChart>
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -964,39 +942,6 @@ const RemittanceQuickAnalytics: React.FC<{
                   dot={false}
                 />
               </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Bar: Bookings by Status (moved down) */}
-        <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-800">
-              Bookings by Status
-            </h3>
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-              In period: {ordersInPeriod.length}
-            </span>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={statusCounts}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip
-                  formatter={(value: number) => [value, "Bookings"]}
-                  labelFormatter={(label: string) => label}
-                />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {statusCounts.map((entry, index) => (
-                    <Cell key={`status-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
