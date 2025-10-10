@@ -78,9 +78,11 @@ const {
   lockUserAccount,
   deleteUserAccount,
   updateUserReputation,
-  updateUserCommission,
   getValidatedCertificates,
   getRejectedCertificates,
+  getServicesWithCertificates,
+  getPendingCertificateValidations,
+  validateCertificate,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -149,6 +151,7 @@ const {
   getServiceAvailableSlots,
   checkServiceAvailability,
   getClientAnalytics,
+  getProviderAnalytics,
   releasePayment,
 } = require("./src/booking");
 
@@ -322,6 +325,7 @@ exports.disputeBooking = disputeBooking;
 exports.getServiceAvailableSlots = getServiceAvailableSlots;
 exports.checkServiceAvailability = checkServiceAvailability;
 exports.getClientAnalytics = getClientAnalytics;
+exports.getProviderAnalytics = getProviderAnalytics;
 exports.releasePayment = releasePayment;
 
 // Export Wallet Management Functions
@@ -419,7 +423,9 @@ exports.getUserServiceCount = getUserServiceCount;
 exports.lockUserAccount = lockUserAccount;
 exports.deleteUserAccount = deleteUserAccount;
 exports.updateUserReputation = updateUserReputation;
-exports.updateUserCommission = updateUserCommission;
 exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
+exports.getServicesWithCertificates = getServicesWithCertificates;
+exports.getPendingCertificateValidations = getPendingCertificateValidations;
+exports.validateCertificate = validateCertificate;
 

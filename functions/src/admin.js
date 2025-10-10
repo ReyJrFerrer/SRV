@@ -797,34 +797,6 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Update user commission amount
- */
-exports.updateUserCommission = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId, commissionAmount} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can update user commission",
-    );
-  }
-
-  try {
-    await db.collection("users").doc(userId).update({
-      totalCommissionEarned: admin.firestore.FieldValue.increment(commissionAmount),
-      updatedAt: new Date().toISOString(),
-      updatedBy: authInfo.uid,
-    });
-
-    return {success: true, message: "User commission updated successfully"};
-  } catch (error) {
-    console.error("Error in updateUserCommission:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
 
 // ===== CERTIFICATE VALIDATION =====
 
@@ -909,6 +881,182 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
     return {success: true, data: certificates};
   } catch (error) {
     console.error("Error in getRejectedCertificates:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ===== CERTIFICATE VALIDATION FUNCTIONS (NEW) =====
+
+/**
+ * Get all services with certificates for validation
+ * Matches getServicesWithCertificates from admin.mo
+ */
+exports.getServicesWithCertificates = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can view services with certificates",
+    );
+  }
+
+  try {
+    // Import internal functions
+    const {getAllServicesInternal} = require("./service");
+    const {getCertificatesByValidationStatusInternal} = require("./media");
+
+    // Get all services
+    const services = await getAllServicesInternal();
+    console.log(`Got ${services.length} services from service collection`);
+
+    // Get all pending certificates
+    const pendingCerts = await getCertificatesByValidationStatusInternal("Pending");
+    const pendingCertUrls = pendingCerts.map((cert) => cert.url);
+    console.log(`Got ${pendingCerts.length} pending certificates`);
+
+    const servicesWithCerts = [];
+
+    for (const service of services) {
+      if (service.certificateUrls && service.certificateUrls.length > 0) {
+        // Filter to only include pending certificate URLs
+        const servicePendingCerts = service.certificateUrls.filter((url) =>
+          pendingCertUrls.includes(url),
+        );
+
+        // Only add service if it has pending certificates
+        if (servicePendingCerts.length > 0) {
+          // Get provider name from auth
+          let providerName = "Unknown Provider";
+          try {
+            const userDoc = await db.collection("users").doc(service.providerId).get();
+            if (userDoc.exists) {
+              providerName = userDoc.data().name || "Unknown Provider";
+            } else {
+              providerName = `Provider ${service.providerId}`;
+            }
+          } catch (error) {
+            console.error("Error fetching provider name:", error);
+            providerName = `Provider ${service.providerId}`;
+          }
+
+          servicesWithCerts.push({
+            serviceId: service.id,
+            serviceTitle: service.title,
+            providerId: service.providerId,
+            providerName: providerName,
+            certificateUrls: servicePendingCerts,
+            createdAt: service.createdAt,
+          });
+        }
+      }
+    }
+
+    console.log(`Returning ${servicesWithCerts.length} services with pending certificates`);
+    return {success: true, data: servicesWithCerts};
+  } catch (error) {
+    console.error("Error in getServicesWithCertificates:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get pending certificate validations
+ * Matches getPendingCertificateValidations from admin.mo
+ */
+exports.getPendingCertificateValidations = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can view certificate validations",
+    );
+  }
+
+  try {
+    const snapshot = await db.collection("certificateValidations")
+      .where("status", "==", "Pending")
+      .get();
+
+    const pendingValidations = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return {success: true, data: pendingValidations};
+  } catch (error) {
+    console.error("Error in getPendingCertificateValidations:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Validate certificate (approve or reject)
+ * Matches validateCertificate from admin.mo
+ */
+exports.validateCertificate = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {certificateId, approved, reason} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can validate certificates",
+    );
+  }
+
+  if (!certificateId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Certificate ID is required",
+    );
+  }
+
+  if (approved === undefined || approved === null) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Approved status is required",
+    );
+  }
+
+  try {
+    const {updateCertificateValidationStatusInternal} = require("./media");
+
+    // Update certificate validation status in media collection
+    const newStatus = approved ? "Validated" : "Rejected";
+    await updateCertificateValidationStatusInternal(certificateId, newStatus);
+
+    // Also update or create validation record in certificateValidations collection
+    const validationRef = db.collection("certificateValidations").doc(certificateId);
+    const validationDoc = await validationRef.get();
+
+    const now = new Date().toISOString();
+    const validationData = {
+      status: newStatus,
+      reviewedAt: now,
+      reviewedBy: authInfo.uid,
+      reviewReason: reason || null,
+      updatedAt: now,
+    };
+
+    if (validationDoc.exists) {
+      // Update existing validation
+      await validationRef.update(validationData);
+    } else {
+      // Create new validation record
+      await validationRef.set({
+        id: certificateId,
+        ...validationData,
+        submittedAt: now,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Certificate ${approved ? "approved" : "rejected"} successfully`,
+    };
+  } catch (error) {
+    console.error("Error in validateCertificate:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

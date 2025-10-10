@@ -1,26 +1,19 @@
-// // Admin Service Firebase Interface
-// import { initializeApp } from "firebase/app";
-// import { getAuth } from "firebase/auth";
-// import { getFunctions, httpsCallable } from "firebase/functions";
-// // Keep some Motoko types for compatibility during migration
+// // Admin Service Canister Interface
 // import { Principal } from "@dfinity/principal";
+// import { canisterId, createActor } from "../../../declarations/admin";
+// import { canisterId as remittanceCanisterId } from "../../../declarations/remittance";
+// import { canisterId as mediaCanisterId } from "../../../declarations/media";
+// import type {
+//   _SERVICE as AdminService,
+//   CommissionRule,
+//   CommissionRuleDraft,
+//   CommissionRuleFilter,
+//   UserRoleAssignment,
+//   RemittanceOrder,
+//   MediaItem,
+// } from "../../../declarations/admin/admin.did";
+// import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 // import { Identity } from "@dfinity/agent";
-
-// // Firebase configuration - should match your app's config
-// const firebaseConfig = {
-//   // This should be loaded from environment variables or app config
-//   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-//   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-//   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-//   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-//   appId: process.env.REACT_APP_FIREBASE_APP_ID,
-// };
-
-// // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
-// const functions = getFunctions(app);
 
 // // Helper function to convert Motoko Time (BigInt nanoseconds) to ISO string
 // const convertMotokoTime = (timeValue: any): string | null => {
@@ -356,45 +349,48 @@
 // }
 
 // /**
-//  * Helper function to call Firebase Cloud Functions
+//  * Creates an admin actor with the provided identity
 //  */
-// const callFirebaseFunction = async (functionName: string, payload: any) => {
-//   try {
-//     const callable = httpsCallable(functions, functionName);
-//     const result = await callable(payload);
-
-//     if ((result.data as any).success) {
-//       return (result.data as any).data;
-//     } else {
-//       throw new Error((result.data as any).message || "Function call failed");
-//     }
-//   } catch (error: any) {
-//     console.error(`Error calling ${functionName}:`, error);
-//     throw error;
-//   }
+// const createAdminActor = (identity?: Identity | null): AdminService => {
+//   return createActor(canisterId, {
+//     agentOptions: {
+//       identity: identity || undefined,
+//       host:
+//         process.env.DFX_NETWORK !== "ic" &&
+//         process.env.DFX_NETWORK !== "playground"
+//           ? "http://localhost:4943"
+//           : "https://ic0.app",
+//     },
+//   }) as AdminService;
 // };
 
-// // Keep track of current identity for compatibility
+// // Singleton actor instance with identity tracking
+// let adminActor: AdminService | null = null;
 // let currentIdentity: Identity | null = null;
 
 // /**
-//  * Updates the current identity (compatibility function)
+//  * Updates the admin actor with a new identity
 //  */
 // export const updateAdminActor = (identity: Identity | null) => {
-//   currentIdentity = identity;
-//   return null; // Firebase doesn't use actors
+//   if (currentIdentity !== identity) {
+//     adminActor = createAdminActor(identity);
+//     currentIdentity = identity;
+//   }
+//   return adminActor;
 // };
 
 // /**
-//  * Check if user is authenticated
+//  * Gets the current admin actor
 //  */
-// const requireAuth = () => {
-//   if (!auth.currentUser) {
+// const getAdminActor = (requireAuth: boolean = false): AdminService => {
+//   if (requireAuth && !currentIdentity) {
 //     throw createAdminError(
 //       "Authentication required: Please log in as an admin to perform this action",
 //       "AUTH_REQUIRED",
 //     );
 //   }
+
+//   return createAdminActor(currentIdentity);
 // };
 
 // // Type conversion utilities
@@ -585,41 +581,30 @@
 //     rules: FrontendCommissionRuleDraft[],
 //   ): Promise<FrontendCommissionRule[]> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
 
-//       // Convert frontend rules to proper format for Firebase
-//       const rulesPayload = rules.map((rule) => ({
-//         id: rule.id,
-//         serviceTypes: rule.serviceTypes,
-//         paymentMethods: ["CashOnHand"], // Simplified for Firebase
-//         formula: rule.formula,
-//         minCommission: rule.minCommission,
-//         maxCommission: rule.maxCommission,
-//         priority: rule.priority,
-//         effectiveFrom: rule.effectiveFrom.toISOString(),
-//         effectiveTo: rule.effectiveTo?.toISOString(),
+//       // Convert frontend rules to backend format
+//       const backendRules: CommissionRuleDraft[] = rules.map((rule) => ({
+//         id: rule.id ? [rule.id] : [],
+//         service_types: rule.serviceTypes,
+//         payment_methods: [{ CashOnHand: null }], // Only CashOnHand for now
+//         formula: convertToBackendFormula(rule.formula),
+//         min_commission: rule.minCommission ? [BigInt(rule.minCommission)] : [],
+//         max_commission: rule.maxCommission ? [BigInt(rule.maxCommission)] : [],
+//         priority: BigInt(rule.priority),
+//         effective_from: convertDateToTime(rule.effectiveFrom),
+//         effective_to: rule.effectiveTo
+//           ? [convertDateToTime(rule.effectiveTo)]
+//           : [],
 //       }));
 
-//       const result = await callFirebaseFunction("upsertCommissionRules", {
-//         rules: rulesPayload,
-//       });
+//       const result = await actor.upsertCommissionRules(backendRules);
+//       const createdRules = handleResult<CommissionRule[]>(
+//         result,
+//         "Failed to create/update commission rules",
+//       );
 
-//       // Convert Firebase result to frontend format
-//       return result.map((rule: any) => ({
-//         id: rule.id,
-//         serviceTypes: rule.serviceTypes,
-//         paymentMethods: rule.paymentMethods,
-//         formula: rule.formula,
-//         minCommission: rule.minCommission,
-//         maxCommission: rule.maxCommission,
-//         priority: rule.priority,
-//         isActive: rule.isActive,
-//         effectiveFrom: new Date(rule.effectiveFrom),
-//         effectiveTo: rule.effectiveTo ? new Date(rule.effectiveTo) : undefined,
-//         createdAt: new Date(rule.createdAt),
-//         updatedAt: new Date(rule.updatedAt),
-//         version: rule.version,
-//       }));
+//       return createdRules.map(convertCommissionRule);
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
 //       throw new AdminServiceError({
@@ -639,32 +624,17 @@
 //     paymentMethod?: string;
 //   }): Promise<FrontendCommissionRule[]> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
 
-//       const result = await callFirebaseFunction("listRules", {
-//         filter: {
-//           serviceType: filter?.serviceType,
-//           activeOnly: filter?.activeOnly,
-//           paymentMethod: filter?.paymentMethod,
-//         },
-//       });
+//       const backendFilter: CommissionRuleFilter = {
+//         service_type: filter?.serviceType ? [filter.serviceType] : [],
+//         active_only:
+//           filter?.activeOnly !== undefined ? [filter.activeOnly] : [],
+//         payment_method: [], // Will implement when more payment methods are added
+//       };
 
-//       // Convert Firebase result to frontend format
-//       return result.map((rule: any) => ({
-//         id: rule.id,
-//         serviceTypes: rule.serviceTypes,
-//         paymentMethods: rule.paymentMethods,
-//         formula: rule.formula,
-//         minCommission: rule.minCommission,
-//         maxCommission: rule.maxCommission,
-//         priority: rule.priority,
-//         isActive: rule.isActive,
-//         effectiveFrom: new Date(rule.effectiveFrom),
-//         effectiveTo: rule.effectiveTo ? new Date(rule.effectiveTo) : undefined,
-//         createdAt: new Date(rule.createdAt),
-//         updatedAt: new Date(rule.updatedAt),
-//         version: rule.version,
-//       }));
+//       const rules = await actor.listRules(backendFilter);
+//       return rules.map(convertCommissionRule);
 //     } catch (error) {
 //       throw new AdminServiceError({
 //         message: `Failed to list commission rules: ${error}`,
@@ -679,28 +649,10 @@
 //    */
 //   async getRule(ruleId: string): Promise<FrontendCommissionRule | null> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const result = await actor.getRule(ruleId);
 
-//       const result = await callFirebaseFunction("getRule", { ruleId });
-
-//       if (!result) return null;
-
-//       // Convert Firebase result to frontend format
-//       return {
-//         id: result.id,
-//         serviceTypes: result.serviceTypes,
-//         paymentMethods: result.paymentMethods,
-//         formula: result.formula,
-//         minCommission: result.minCommission,
-//         maxCommission: result.maxCommission,
-//         priority: result.priority,
-//         isActive: result.isActive,
-//         effectiveFrom: new Date(result.effectiveFrom),
-//         effectiveTo: result.effectiveTo ? new Date(result.effectiveTo) : undefined,
-//         createdAt: new Date(result.createdAt),
-//         updatedAt: new Date(result.updatedAt),
-//         version: result.version,
-//       };
+//       return result[0] ? convertCommissionRule(result[0]) : null;
 //     } catch (error) {
 //       throw new AdminServiceError({
 //         message: `Failed to get commission rule: ${error}`,
@@ -715,10 +667,10 @@
 //    */
 //   async activateRule(ruleId: string, version: number): Promise<string> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const result = await actor.activateRule(ruleId, version);
 
-//       const result = await callFirebaseFunction("activateRule", { ruleId, version });
-//       return result.message || "Rule activated successfully";
+//       return handleResult<string>(result, "Failed to activate commission rule");
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
 //       throw new AdminServiceError({
@@ -734,10 +686,13 @@
 //    */
 //   async deactivateRule(ruleId: string): Promise<string> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const result = await actor.deactivateRule(ruleId);
 
-//       const result = await callFirebaseFunction("deactivateRule", { ruleId });
-//       return result.message || "Rule deactivated successfully";
+//       return handleResult<string>(
+//         result,
+//         "Failed to deactivate commission rule",
+//       );
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
 //       throw new AdminServiceError({
@@ -755,14 +710,15 @@
 //    */
 //   async assignRole(userId: string, scope?: string): Promise<string> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const principal = Principal.fromText(userId);
+//       const result = await actor.assignRole(
+//         principal,
+//         { ADMIN: null },
+//         scope ? [scope] : [],
+//       );
 
-//       const result = await callFirebaseFunction("assignRole", {
-//         userId,
-//         role: "ADMIN",
-//         scope
-//       });
-//       return result.message || "Role assigned successfully";
+//       return handleResult<string>(result, "Failed to assign admin role");
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
 //       throw new AdminServiceError({
@@ -778,10 +734,11 @@
 //    */
 //   async removeRole(userId: string): Promise<string> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const principal = Principal.fromText(userId);
+//       const result = await actor.removeRole(principal);
 
-//       const result = await callFirebaseFunction("removeRole", { userId });
-//       return result.message || "Role removed successfully";
+//       return handleResult<string>(result, "Failed to remove user role");
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
 //       throw new AdminServiceError({
@@ -799,18 +756,19 @@
 //     userId: string,
 //   ): Promise<FrontendUserRoleAssignment | null> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const principal = Principal.fromText(userId);
+//       const result = await actor.getUserRole(principal);
 
-//       const result = await callFirebaseFunction("getUserRole", { userId });
+//       if (!result[0]) return null;
 
-//       if (!result) return null;
-
+//       const assignment = result[0];
 //       return {
-//         userId: result.userId,
+//         userId: assignment.user_id.toString(),
 //         role: "ADMIN",
-//         scope: result.scope,
-//         assignedBy: result.assignedBy,
-//         assignedAt: new Date(result.assignedAt),
+//         scope: assignment.scope[0],
+//         assignedBy: assignment.assigned_by.toString(),
+//         assignedAt: convertTimeToDate(assignment.assigned_at),
 //       };
 //     } catch (error) {
 //       throw new AdminServiceError({
@@ -948,32 +906,32 @@
 
 //   // Payment Validation
 
-//   // /**
-//   //  * Validate a remittance payment
-//   //  */
-//   // async validatePayment(
-//   //   orderId: string,
-//   //   approved: boolean,
-//   //   reason?: string,
-//   // ): Promise<string> {
-//   //   try {
-//   //     const actor = getAdminActor();
-//   //     const result = await actor.validatePayment(
-//   //       orderId,
-//   //       approved,
-//   //       reason ? [reason] : [],
-//   //     );
+//   /**
+//    * Validate a remittance payment
+//    */
+//   async validatePayment(
+//     orderId: string,
+//     approved: boolean,
+//     reason?: string,
+//   ): Promise<string> {
+//     try {
+//       const actor = getAdminActor();
+//       const result = await actor.validatePayment(
+//         orderId,
+//         approved,
+//         reason ? [reason] : [],
+//       );
 
-//   //     return handleResult<string>(result, "Failed to validate payment");
-//   //   } catch (error) {
-//   //     if (error instanceof AdminServiceError) throw error;
-//   //     throw new AdminServiceError({
-//   //       message: `Failed to validate payment: ${error}`,
-//   //       code: "VALIDATE_PAYMENT_ERROR",
-//   //       details: error,
-//   //     } as AdminServiceError);
-//   //   }
-//   // },
+//       return handleResult<string>(result, "Failed to validate payment");
+//     } catch (error) {
+//       if (error instanceof AdminServiceError) throw error;
+//       throw new AdminServiceError({
+//         message: `Failed to validate payment: ${error}`,
+//         code: "VALIDATE_PAYMENT_ERROR",
+//         details: error,
+//       } as AdminServiceError);
+//     }
+//   },
 
 //   /**
 //    * Get pending payment validations
@@ -998,59 +956,59 @@
 //     }
 //   },
 
-//   // /**
-//   //  * Get remittance media items for validation
-//   //  */
-//   // async getRemittanceMediaItems(
-//   //   mediaIds: string[],
-//   // ): Promise<FrontendMediaItem[]> {
-//   //   try {
-//   //     const actor = getAdminActor();
-//   //     const result = await actor.getRemittanceMediaItems(mediaIds);
-//   //     const mediaItems = handleResult<MediaItem[]>(
-//   //       result,
-//   //       "Failed to get remittance media items",
-//   //     );
+//   /**
+//    * Get remittance media items for validation
+//    */
+//   async getRemittanceMediaItems(
+//     mediaIds: string[],
+//   ): Promise<FrontendMediaItem[]> {
+//     try {
+//       const actor = getAdminActor();
+//       const result = await actor.getRemittanceMediaItems(mediaIds);
+//       const mediaItems = handleResult<MediaItem[]>(
+//         result,
+//         "Failed to get remittance media items",
+//       );
 
-//   //     return mediaItems.map(convertMediaItem);
-//   //   } catch (error) {
-//   //     if (error instanceof AdminServiceError) throw error;
-//   //     throw new AdminServiceError({
-//   //       message: `Failed to get remittance media items: ${error}`,
-//   //       code: "GET_MEDIA_ITEMS_ERROR",
-//   //       details: error,
-//   //     } as AdminServiceError);
-//   //   }
-//   // },
+//       return mediaItems.map(convertMediaItem);
+//     } catch (error) {
+//       if (error instanceof AdminServiceError) throw error;
+//       throw new AdminServiceError({
+//         message: `Failed to get remittance media items: ${error}`,
+//         code: "GET_MEDIA_ITEMS_ERROR",
+//         details: error,
+//       } as AdminServiceError);
+//     }
+//   },
 
-//   // /**
-//   //  * Get remittance order with associated media items
-//   //  */
-//   // async getRemittanceOrderWithMedia(orderId: string): Promise<{
-//   //   order: FrontendRemittanceOrder;
-//   //   mediaItems: FrontendMediaItem[];
-//   // }> {
-//   //   try {
-//   //     const actor = getAdminActor();
-//   //     const result = await actor.getRemittanceOrderWithMedia(orderId);
-//   //     const data = handleResult<{
-//   //       order: RemittanceOrder;
-//   //       mediaItems: MediaItem[];
-//   //     }>(result, "Failed to get remittance order with media");
+//   /**
+//    * Get remittance order with associated media items
+//    */
+//   async getRemittanceOrderWithMedia(orderId: string): Promise<{
+//     order: FrontendRemittanceOrder;
+//     mediaItems: FrontendMediaItem[];
+//   }> {
+//     try {
+//       const actor = getAdminActor();
+//       const result = await actor.getRemittanceOrderWithMedia(orderId);
+//       const data = handleResult<{
+//         order: RemittanceOrder;
+//         mediaItems: MediaItem[];
+//       }>(result, "Failed to get remittance order with media");
 
-//   //     return {
-//   //       order: convertRemittanceOrder(data.order),
-//   //       mediaItems: data.mediaItems.map(convertMediaItem),
-//   //     };
-//   //   } catch (error) {
-//   //     if (error instanceof AdminServiceError) throw error;
-//   //     throw new AdminServiceError({
-//   //       message: `Failed to get remittance order with media: ${error}`,
-//   //       code: "GET_ORDER_WITH_MEDIA_ERROR",
-//   //       details: error,
-//   //     } as AdminServiceError);
-//   //   }
-//   // },
+//       return {
+//         order: convertRemittanceOrder(data.order),
+//         mediaItems: data.mediaItems.map(convertMediaItem),
+//       };
+//     } catch (error) {
+//       if (error instanceof AdminServiceError) throw error;
+//       throw new AdminServiceError({
+//         message: `Failed to get remittance order with media: ${error}`,
+//         code: "GET_ORDER_WITH_MEDIA_ERROR",
+//         details: error,
+//       } as AdminServiceError);
+//     }
+//   },
 
 //   // Analytics & Reporting
 
@@ -1059,15 +1017,20 @@
 //    */
 //   async getSystemStats(): Promise<FrontendSystemStats> {
 //     try {
-//       requireAuth();
-
-//       const result = await callFirebaseFunction("getSystemStats", {});
+//       const actor = getAdminActor();
+//       const result = await actor.getSystemStats();
+//       const stats = handleResult<{
+//         total_commission_rules: bigint;
+//         active_commission_rules: bigint;
+//         total_users_with_roles: bigint;
+//         admin_users: bigint;
+//       }>(result, "Failed to get system statistics");
 
 //       return {
-//         totalCommissionRules: result.totalCommissionRules,
-//         activeCommissionRules: result.activeCommissionRules,
-//         totalUsersWithRoles: result.totalUsersWithRoles,
-//         adminUsers: result.adminUsers,
+//         totalCommissionRules: Number(stats.total_commission_rules),
+//         activeCommissionRules: Number(stats.active_commission_rules),
+//         totalUsersWithRoles: Number(stats.total_users_with_roles),
+//         adminUsers: Number(stats.admin_users),
 //       };
 //     } catch (error) {
 //       if (error instanceof AdminServiceError) throw error;
@@ -1081,93 +1044,105 @@
 
 //   // Canister Management
 
-//   // /**
-//   //  * Set canister references for intercanister calls
-//   //  */
-//   // async setCanisterReferences(): Promise<string> {
-//   //   try {
-//   //     const actor = getAdminActor();
+//   /**
+//    * Set canister references for intercanister calls
+//    */
+//   async setCanisterReferences(): Promise<string> {
+//     try {
+//       const actor = getAdminActor();
 
-//   //     const remittancePrincipal: [] | [Principal] = remittanceCanisterId
-//   //       ? [Principal.fromText(remittanceCanisterId)]
-//   //       : [];
-//   //     const mediaPrincipal: [] | [Principal] = mediaCanisterId
-//   //       ? [Principal.fromText(mediaCanisterId)]
-//   //       : [];
-//   //     // Canister references for intercanister calls
-//   //     const { canisterId: authCanisterId } = await import(
-//   //       "../../../declarations/auth"
-//   //     );
-//   //     const { canisterId: serviceCanisterId } = await import(
-//   //       "../../../declarations/service"
-//   //     );
-//   //     const { canisterId: bookingCanisterId } = await import(
-//   //       "../../../declarations/booking"
-//   //     );
+//       const remittancePrincipal: [] | [Principal] = remittanceCanisterId
+//         ? [Principal.fromText(remittanceCanisterId)]
+//         : [];
+//       const mediaPrincipal: [] | [Principal] = mediaCanisterId
+//         ? [Principal.fromText(mediaCanisterId)]
+//         : [];
+//       // Canister references for intercanister calls
+//       const { canisterId: authCanisterId } = await import(
+//         "../../../declarations/auth"
+//       );
+//       const { canisterId: serviceCanisterId } = await import(
+//         "../../../declarations/service"
+//       );
+//       const { canisterId: bookingCanisterId } = await import(
+//         "../../../declarations/booking"
+//       );
 
-//   //     const authPrincipal: [] | [Principal] = authCanisterId
-//   //       ? [Principal.fromText(authCanisterId)]
-//   //       : [];
-//   //     const servicePrincipal: [] | [Principal] = serviceCanisterId
-//   //       ? [Principal.fromText(serviceCanisterId)]
-//   //       : [];
-//   //     const bookingPrincipal: [] | [Principal] = bookingCanisterId
-//   //       ? [Principal.fromText(bookingCanisterId)]
-//   //       : [];
+//       const authPrincipal: [] | [Principal] = authCanisterId
+//         ? [Principal.fromText(authCanisterId)]
+//         : [];
+//       const servicePrincipal: [] | [Principal] = serviceCanisterId
+//         ? [Principal.fromText(serviceCanisterId)]
+//         : [];
+//       const bookingPrincipal: [] | [Principal] = bookingCanisterId
+//         ? [Principal.fromText(bookingCanisterId)]
+//         : [];
 
-//   //     // Get review and reputation canister IDs
-//   //     const { canisterId: reviewCanisterId } = await import(
-//   //       "../../../declarations/review"
-//   //     );
-//   //     const { canisterId: reputationCanisterId } = await import(
-//   //       "../../../declarations/reputation"
-//   //     );
-//   //     const reviewPrincipal: [] | [Principal] = reviewCanisterId
-//   //       ? [Principal.fromText(reviewCanisterId)]
-//   //       : [];
-//   //     const reputationPrincipal: [] | [Principal] = reputationCanisterId
-//   //       ? [Principal.fromText(reputationCanisterId)]
-//   //       : [];
+//       // Get review and reputation canister IDs
+//       const { canisterId: reviewCanisterId } = await import(
+//         "../../../declarations/review"
+//       );
+//       const { canisterId: reputationCanisterId } = await import(
+//         "../../../declarations/reputation"
+//       );
+//       const reviewPrincipal: [] | [Principal] = reviewCanisterId
+//         ? [Principal.fromText(reviewCanisterId)]
+//         : [];
+//       const reputationPrincipal: [] | [Principal] = reputationCanisterId
+//         ? [Principal.fromText(reputationCanisterId)]
+//         : [];
 
-//   //     const result = await actor.setCanisterReferences(
-//   //       remittancePrincipal,
-//   //       mediaPrincipal,
-//   //       authPrincipal,
-//   //       servicePrincipal,
-//   //       bookingPrincipal,
-//   //       reviewPrincipal,
-//   //       reputationPrincipal,
-//   //     );
+//       const result = await actor.setCanisterReferences(
+//         remittancePrincipal,
+//         mediaPrincipal,
+//         authPrincipal,
+//         servicePrincipal,
+//         bookingPrincipal,
+//         reviewPrincipal,
+//         reputationPrincipal,
+//       );
 
-//   //     const resultText = handleResult<string>(
-//   //       result,
-//   //       "Failed to set canister references",
-//   //     );
-//   //     return resultText;
-//   //   } catch (error) {
-//   //     logError("Error setting canister references", error);
-//   //     if (error instanceof AdminServiceError) throw error;
-//   //     throw new AdminServiceError({
-//   //       message: `Failed to set canister references: ${error}`,
-//   //       code: "SET_CANISTER_REFS_ERROR",
-//   //       details: error,
-//   //     } as AdminServiceError);
-//   //   }
-//   // },
+//       const resultText = handleResult<string>(
+//         result,
+//         "Failed to set canister references",
+//       );
+//       return resultText;
+//     } catch (error) {
+//       logError("Error setting canister references", error);
+//       if (error instanceof AdminServiceError) throw error;
+//       throw new AdminServiceError({
+//         message: `Failed to set canister references: ${error}`,
+//         code: "SET_CANISTER_REFS_ERROR",
+//         details: error,
+//       } as AdminServiceError);
+//     }
+//   },
 
 //   /**
 //    * Get all users from the system
+//    * First tries admin canister, falls back to auth canister if admin canister doesn't have the function
 //    */
-//   async getAllUsers(): Promise<any[]> {
+//   async getAllUsers(): Promise<Profile[]> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
 
-//       const result = await callFirebaseFunction("getAllUsers", {});
-//       return result || [];
+//       // Check if getAllUsers function exists on the actor
+//       if (typeof (actor as any).getAllUsers === "function") {
+//         const result = await (actor as any).getAllUsers();
+//         const users = handleResult<Profile[]>(
+//           result,
+//           "Failed to get all users from admin canister",
+//         );
+//         return users;
+//       } else {
+//         const authActor = await createCanisterActor("auth");
+//         const users = await authActor.getAllServiceProviders();
+//         return users;
+//       }
 //     } catch (error) {
-//       console.error("Error getting all users:", error);
-//       return [];
+//       handleError(error, "get all users", "GET_ALL_USERS_ERROR");
 //     }
+//     return [];
 //   },
 
 //   /**
@@ -1311,25 +1286,46 @@
 //     providerBookings: any[];
 //   }> {
 //     try {
-//       requireAuth();
-
-//       const result = await callFirebaseFunction("getUserServicesAndBookings", {
-//         userId,
+//       // First ensure canister references are set
+//       await this.setCanisterReferences().catch(() => {
+//         // Continue anyway, might already be set
 //       });
 
-//       return {
-//         offeredServices: result.services || [],
-//         clientBookings: result.clientBookings || [],
-//         providerBookings: result.providerBookings || [],
-//       };
+//       const actor = getAdminActor();
+//       const principal = Principal.fromText(userId);
+
+//       // Check if the function exists on the admin canister
+//       if (typeof (actor as any).getUserServicesAndBookings === "function") {
+//         const result = await (actor as any).getUserServicesAndBookings(
+//           principal,
+//         );
+
+//         const data = handleResult<{
+//           offeredServices: any[];
+//           clientBookings: any[];
+//           providerBookings: any[];
+//         }>(result, "Failed to get user services and bookings");
+
+//         return data;
+//       } else {
+//         return {
+//           offeredServices: [],
+//           clientBookings: [],
+//           providerBookings: [],
+//         };
+//       }
 //     } catch (error) {
-//       console.error("Error getting user services and bookings:", error);
-//       return {
-//         offeredServices: [],
-//         clientBookings: [],
-//         providerBookings: [],
-//       };
+//       handleError(
+//         error,
+//         "get user services and bookings",
+//         "GET_USER_SERVICES_BOOKINGS_ERROR",
+//       );
 //     }
+//     return {
+//       offeredServices: [],
+//       clientBookings: [],
+//       providerBookings: [],
+//     };
 //   },
 
 //   /**
@@ -1379,21 +1375,35 @@
 //    */
 //   async lockUserAccount(userId: string, locked: boolean): Promise<string> {
 //     try {
-//       requireAuth();
+//       const actor = getAdminActor();
+//       const principal = Principal.fromText(userId);
 
-//       const result = await callFirebaseFunction("lockUserAccount", {
-//         userId,
-//         locked,
-//       });
-//       return result.message || "User account updated successfully";
+//       // Check if the function exists on the admin canister
+//       if (typeof (actor as any).lockUserAccount === "function") {
+//         const result = await (actor as any).lockUserAccount(principal, locked);
+//         return handleResult<string>(
+//           result,
+//           "Failed to lock/unlock user account",
+//         );
+//       } else {
+//         const authActor = await createCanisterActor("auth");
+//         if (typeof (authActor as any).lockUserAccount === "function") {
+//           const result = await (authActor as any).lockUserAccount(
+//             principal,
+//             locked,
+//           );
+//           return result;
+//         } else {
+//           throw createAdminError(
+//             "Auth canister doesn't have lockUserAccount function",
+//             "FUNCTION_NOT_FOUND",
+//           );
+//         }
+//       }
 //     } catch (error) {
-//       console.error("Error locking/unlocking user account:", error);
-//       throw new AdminServiceError({
-//         message: `Failed to lock/unlock user account: ${error}`,
-//         code: "LOCK_USER_ACCOUNT_ERROR",
-//         details: error,
-//       });
+//       handleError(error, "lock/unlock user account", "LOCK_USER_ACCOUNT_ERROR");
 //     }
+//     return "";
 //   },
 
 //   /**

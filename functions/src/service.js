@@ -2145,3 +2145,39 @@ exports.getAvailableTimeSlots = functions.https.onCall(
     }
   },
 );
+
+// ============================================================================
+// INTERNAL HELPER FUNCTIONS (for use by other Cloud Functions)
+// ============================================================================
+
+/**
+ * Internal function to get all services
+ * For use by other Cloud Functions (e.g., admin.js)
+ * @return {Promise<Array>} Array of all services
+ */
+async function getAllServicesInternal() {
+  const servicesSnapshot = await db.collection("services").get();
+  const services = [];
+  servicesSnapshot.forEach((doc) => {
+    services.push({id: doc.id, ...doc.data()});
+  });
+  return services;
+}
+
+/**
+ * Internal function to get service by ID
+ * For use by other Cloud Functions (e.g., admin.js)
+ * @param {string} serviceId - Service ID
+ * @return {Promise<object|null>} Service object or null if not found
+ */
+async function getServiceInternal(serviceId) {
+  const serviceDoc = await db.collection("services").doc(serviceId).get();
+  if (!serviceDoc.exists) {
+    return null;
+  }
+  return {id: serviceDoc.id, ...serviceDoc.data()};
+}
+
+// Export internal functions for use by other modules
+exports.getAllServicesInternal = getAllServicesInternal;
+exports.getServiceInternal = getServiceInternal;

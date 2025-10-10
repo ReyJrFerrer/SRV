@@ -921,7 +921,68 @@ async function deleteMediaInternal(mediaId) {
   await db.collection("media").doc(mediaId).delete();
 }
 
+/**
+ * Internal function to get certificates by validation status
+ * For use by other Cloud Functions (e.g., admin.js)
+ * @param {string|null} status - Validation status
+ *   ("Pending", "Validated", "Rejected", or null for all)
+ * @return {Promise<Array>} Array of certificate media items
+ */
+async function getCertificatesByValidationStatusInternal(status = null) {
+  let query = db
+    .collection("media")
+    .where("mediaType", "==", "ServiceCertificate");
+
+  if (status !== undefined && status !== null) {
+    query = query.where("validationStatus", "==", status);
+  }
+
+  const snapshot = await query.get();
+  const certificates = [];
+  snapshot.forEach((doc) => {
+    certificates.push(doc.data());
+  });
+
+  return certificates;
+}
+
+/**
+ * Internal function to update certificate validation status
+ * For use by other Cloud Functions (e.g., admin.js)
+ * @param {string} mediaId - Media ID
+ * @param {string} newStatus - New validation status
+ * @return {Promise<object>} Updated media item
+ */
+async function updateCertificateValidationStatusInternal(mediaId, newStatus) {
+  const mediaDoc = await db.collection("media").doc(mediaId).get();
+
+  if (!mediaDoc.exists) {
+    throw new Error(`Media item ${mediaId} not found`);
+  }
+
+  const mediaData = mediaDoc.data();
+
+  if (mediaData.mediaType !== "ServiceCertificate") {
+    throw new Error("Media item is not a service certificate");
+  }
+
+  const updatedMedia = {
+    ...mediaData,
+    validationStatus: newStatus,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await db.collection("media").doc(mediaId).update({
+    validationStatus: newStatus,
+    updatedAt: updatedMedia.updatedAt,
+  });
+
+  return updatedMedia;
+}
+
 // Export internal functions for use by other modules
 exports.uploadMediaInternal = uploadMediaInternal;
 exports.deleteMediaInternal = deleteMediaInternal;
+exports.getCertificatesByValidationStatusInternal = getCertificatesByValidationStatusInternal;
+exports.updateCertificateValidationStatusInternal = updateCertificateValidationStatusInternal;
 

@@ -1820,6 +1820,137 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Get provider analytics (admin function)
+ * Returns comprehensive analytics for a provider including earnings, jobs, completion rate
+ * Matches the logic from booking.mo getProviderAnalytics
+ */
+exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [getProviderAnalytics] called");
+  const payload = data.data || data;
+  const {providerId, startDate, endDate} = payload;
+
+  // Authentication - Admin only
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get provider analytics",
+    );
+  }
+
+  if (!providerId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Provider ID is required",
+    );
+  }
+
+  try {
+    // Parse date range
+    const now = new Date();
+    const actualStartDate = startDate ? new Date(startDate) : new Date(0); // Beginning of time
+    const actualEndDate = endDate ? new Date(endDate) : now; // Current time
+
+    // Get all bookings for this provider within the date range
+    let query = db.collection("bookings")
+      .where("providerId", "==", providerId);
+
+    // Apply date filtering
+    if (startDate) {
+      query = query.where("createdAt", ">=", actualStartDate.toISOString());
+    }
+    if (endDate) {
+      query = query.where("createdAt", "<=", actualEndDate.toISOString());
+    }
+
+    const providerBookingsSnapshot = await query.get();
+    const providerBookings = providerBookingsSnapshot.docs.map((doc) => doc.data());
+
+    // Count total bookings
+    const totalJobs = providerBookings.length;
+
+    if (totalJobs === 0) {
+      return {
+        success: true,
+        data: {
+          providerId,
+          completedJobs: 0,
+          cancelledJobs: 0,
+          totalJobs: 0,
+          completionRate: 0.0,
+          totalEarnings: 0,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          packageBreakdown: [],
+        },
+      };
+    }
+
+    // Count completed bookings
+    const completedBookings = providerBookings.filter((booking) =>
+      booking.status === "Completed",
+    );
+    const completedJobs = completedBookings.length;
+
+    // Count cancelled bookings (including declined)
+    const cancelledBookings = providerBookings.filter((booking) =>
+      booking.status === "Cancelled" || booking.status === "Declined",
+    );
+    const cancelledJobs = cancelledBookings.length;
+
+    // Count accepted bookings (used for completion rate calculation)
+    const acceptedBookings = providerBookings.filter((booking) =>
+      booking.status === "Accepted" ||
+      booking.status === "InProgress" ||
+      booking.status === "Completed",
+    );
+    const acceptedJobs = acceptedBookings.length;
+
+    // Calculate completion rate (completed / accepted * 100)
+    const completionRate = acceptedJobs === 0 ?
+      0.0 :
+      (completedJobs * 100) / acceptedJobs;
+
+    // Calculate total earnings from completed bookings
+    const totalEarnings = completedBookings.reduce((sum, booking) => {
+      return sum + (booking.price || 0);
+    }, 0);
+
+    // Create a breakdown of package bookings from completed bookings
+    const packageCounts = {};
+    for (const booking of completedBookings) {
+      if (booking.servicePackageIds && Array.isArray(booking.servicePackageIds)) {
+        for (const packageId of booking.servicePackageIds) {
+          packageCounts[packageId] = (packageCounts[packageId] || 0) + 1;
+        }
+      }
+    }
+
+    // Convert to array of tuples [packageId, count]
+    const packageBreakdown = Object.entries(packageCounts);
+
+    // Return the analytics data
+    return {
+      success: true,
+      data: {
+        providerId,
+        completedJobs,
+        cancelledJobs,
+        totalJobs,
+        completionRate: Number(completionRate.toFixed(2)),
+        totalEarnings,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        packageBreakdown,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getProviderAnalytics:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Release held payment when booking is completed
  * This function is called by authorized backend services to release payments
  */
