@@ -19,7 +19,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useLocationStore } from "../../store/locationStore";
 import LocationMapPicker from "../common/LocationMapPicker";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 // --- Payment Section Sub-Component ---
 
@@ -296,6 +296,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
   // Detected map readiness (avoid second loader conflict). Poll for global google maps (Header / other components load script)
   const [mapsReady, setMapsReady] = useState<boolean>(false);
+  // API key is provided by root APIProvider
   useEffect(() => {
     if ((window as any).google?.maps) {
       setMapsReady(true);
@@ -1616,25 +1617,24 @@ const ClientBookingPageComponent: React.FC = () => {
                     </div>
                     <div className="overflow-hidden rounded-xl border border-gray-200">
                       {mapsReady && geoLocation ? (
-                        <GoogleMap
-                          mapContainerStyle={{ width: "100%", height: 260 }}
-                          center={{
+                        <Map
+                          defaultCenter={{
                             lat: geoLocation.latitude,
                             lng: geoLocation.longitude,
                           }}
-                          zoom={16}
-                          options={{
-                            disableDefaultUI: true,
-                            zoomControl: true,
-                          }}
+                          defaultZoom={16}
+                          mapId="6922634ff75ae05ac38cc473"
+                          style={{ width: "100%", height: 260 }}
+                          disableDefaultUI={true}
+                          zoomControl={true}
                         >
-                          <Marker
+                          <AdvancedMarker
                             position={{
                               lat: geoLocation.latitude,
                               lng: geoLocation.longitude,
                             }}
                           />
-                        </GoogleMap>
+                        </Map>
                       ) : (
                         <div className="flex h-64 items-center justify-center text-sm text-gray-500">
                           {locationLoading || detectedStatus === "loading"

@@ -6,15 +6,14 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
-import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
 }
 
-// Google Maps config
-const gmapLibraries: "places"[] = ["places"]; // reserve for future autocomplete
+// Google Maps config (reserved for future autocomplete)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
@@ -98,18 +97,25 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // Load Google Maps script
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-  const { isLoaded: mapsReady } = useJsApiLoader({
-    id: "header-gmap-script",
-    googleMapsApiKey: mapsApiKey,
-    libraries: gmapLibraries,
-  });
+  // Maps API key and loaded flag (APIProvider injects script)
+  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+  useEffect(() => {
+    if ((window as any).google?.maps) {
+      setMapsApiLoaded(true);
+      return;
+    }
+    const iv = setInterval(() => {
+      if ((window as any).google?.maps) {
+        setMapsApiLoaded(true);
+        clearInterval(iv);
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, []);
 
   // Reverse geocode
   useEffect(() => {
-    if (!mapsReady) return;
+    if (!mapsApiLoaded) return;
     if (gmapsStatus !== "idle") return;
     if (!("geolocation" in navigator)) {
       setGmapsStatus("unsupported");
@@ -158,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [mapsReady, gmapsStatus]);
+  }, [mapsApiLoaded, gmapsStatus]);
 
   // Map Modal with Google Maps
   const MapModal: React.FC = () => {
@@ -185,15 +191,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             <span className="text-xl font-bold text-gray-700">&times;</span>
           </button>
           <div className="flex-1">
-            {mapsReady ? (
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "100%" }}
-                center={center}
-                zoom={16}
-                options={{ disableDefaultUI: false, mapTypeControl: false }}
+            {mapsApiLoaded ? (
+              <Map
+                defaultCenter={center}
+                defaultZoom={16}
+                mapId="6922634ff75ae05ac38cc473"
+                style={{ width: "100%", height: "100%" }}
+                disableDefaultUI={false}
+                mapTypeControl={false}
               >
-                <Marker position={center} />
-              </GoogleMap>
+                <AdvancedMarker position={center} />
+              </Map>
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-gray-500">
                 Loading map...
