@@ -7,18 +7,21 @@ import React, {
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
-import { updateAdminActor } from "../services/adminServiceCanister";
-import { updateRemittanceActor } from "../services/remittanceServiceCanister";
-import { updateMediaActor } from "../services/mediaServiceCanister";
 import {
-  initializeCanisterReferences,
-  shouldInitializeCanisters,
-} from "../services/canisterInitService";
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from "firebase/auth";
+import { getFirebaseAuth } from "../services/firebaseApp";
+import { signInWithInternetIdentity } from "../services/identityBridge";
+import { updateAdminActor } from "../services/adminServiceCanister";
+import { updateMediaActor } from "../services/mediaServiceCanister";
 
 interface AuthContextType {
   authClient: AuthClient | null;
   isAuthenticated: boolean;
   identity: Identity | null;
+  firebaseUser: FirebaseUser | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -30,21 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
-  updateRemittanceActor(identity);
-  updateMediaActor(identity);
-};
-
-const initializeCanisters = async (
-  isAuthenticated: boolean,
-  identity: Identity | null,
-) => {
-  if (shouldInitializeCanisters(isAuthenticated, identity)) {
-    try {
-      await initializeCanisterReferences();
-    } catch (error) {
-      // //console.warn("Failed to initialize canister references:", error);
-    }
-  }
+  updateMediaActor();
 };
 
 export const useAuth = () => {
@@ -63,9 +52,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Listen to Firebase auth state changes
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        console.log("[Admin] Firebase user authenticated:", user.uid);
+      } else {
+        console.log("[Admin] No Firebase user");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -79,20 +84,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = client.getIdentity();
           setIdentity(identity);
           updateAllAdminActors(identity);
-          await initializeCanisters(isAuth, identity);
-
-          // Check if user has admin privileges
-          // try {
-          //   // Import the admin service function to check admin role
-          //   const { checkAdminRole } = await import(
-          //     "../services/adminServiceCanister"
-          //   );
-          //   const hasAdminRole = await checkAdminRole(principalText);
-          //   setIsAdmin(hasAdminRole);
-          // } catch (adminError) {
-          //   //console.warn("Failed to check admin role:", adminError);
-          //   setIsAdmin(false);
-          // }
 
           // Temporarily set all authenticated users as admin for testing
           setIsAdmin(true);
@@ -129,44 +120,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIsAuthenticated(true);
             setIdentity(identity);
             updateAllAdminActors(identity);
-            await initializeCanisters(true, identity);
 
-            // Check admin privileges after login - COMMENTED OUT FOR NOW
-            // try {
-            //   const { checkAdminRole } = await import(
-            //     "../services/adminServiceCanister"
-            //   );
-            //   const hasAdminRole = await checkAdminRole(principalText);
-            //   setIsAdmin(hasAdminRole);
+            console.log("✅ [Admin] Successfully authenticated with Internet Identity");
+            console.log("[Admin] Principal:", identity.getPrincipal().toString());
 
-            //   if (!hasAdminRole) {
-            //     setError("Access denied: Admin privileges required");
-            //     await logout();
-            //     return;
-            //   }
-            // } catch (adminError) {
-            //   //console.error("Failed to verify admin privileges:", adminError);
-            //   setError("Failed to verify admin privileges");
-            //   await logout();
-            //   return;
-            // }
+            // Get the principal and exchange for Firebase token
+            try {
+              const principal = identity.getPrincipal().toString();
+              console.log("🔄 [Admin] Attempting to authenticate with Firebase...");
+
+              const result = await signInWithInternetIdentity(principal);
+              setFirebaseUser(result.user);
+
+              console.log("✅ [Admin] Successfully authenticated with Firebase!");
+              console.log("[Admin] Firebase UID:", result.user.uid);
+
+              // Notify user if they need to create a profile
+              if (result.needsProfile) {
+                console.log("📝 [Admin] New user detected - profile creation required");
+                console.log("[Admin] Message:", result.message);
+              } else {
+                console.log("👤 [Admin] User has existing profile");
+              }
+            } catch (fbError) {
+              console.error("❌ [Admin] Failed to authenticate with Firebase:", fbError);
+              // Don't fail the login if Firebase auth fails
+              // The user is still authenticated with IC
+            }
 
             // Temporarily set all authenticated users as admin for testing
             setIsAdmin(true);
 
             setIsLoading(false);
           } catch (onSuccessError) {
-            //console.error("Error in onSuccess callback:", onSuccessError);
+            console.error("[Admin] Error in onSuccess callback:", onSuccessError);
             setError("Authentication succeeded but failed to initialize");
             setIsLoading(false);
           }
         },
         onError: (err?: string) => {
+          console.error("❌ [Admin] Login error:", err);
           setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
+      console.error("❌ [Admin] Login exception:", e);
       setError(
         e instanceof Error
           ? e.message
@@ -179,9 +178,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     if (!authClient) return;
 
+    // Logout from Firebase
+    const auth = getFirebaseAuth();
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error("[Admin] Error signing out from Firebase:", error);
+    }
+
+    // Logout from Internet Identity
     await authClient.logout();
     setIsAuthenticated(false);
     setIdentity(null);
+    setFirebaseUser(null);
     setIsAdmin(false);
     updateAllAdminActors(null);
   };
@@ -190,6 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authClient,
     isAuthenticated,
     identity,
+    firebaseUser,
     login,
     logout,
     isLoading,

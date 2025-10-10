@@ -1,56 +1,9 @@
-import { Principal } from "@dfinity/principal";
-import { createActor, canisterId } from "../../../declarations/media";
-import { Identity } from "@dfinity/agent";
-import type {
-  _SERVICE as MediaService,
-  MediaItem as CanisterMediaItem,
-  MediaType as CanisterMediaType,
-  MediaValidationSummary as CanisterMediaValidationSummary,
-  Time,
-} from "../../../declarations/media/media.did";
+// Media Firebase Service
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-/**
- * Creates a media actor with the provided identity
- * @param identity The user's identity from AuthContext
- * @returns An authenticated MediaService actor
- */
-const createMediaActor = (identity?: Identity | null): MediaService => {
-  return createActor(canisterId, {
-    agentOptions: {
-      identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
-    },
-  }) as MediaService;
-};
-
-// Singleton actor instance with identity tracking
-let mediaActor: MediaService | null = null;
-let currentIdentity: Identity | null = null;
-
-export const updateMediaActor = (identity: Identity | null) => {
-  if (currentIdentity !== identity) {
-    mediaActor = createMediaActor(identity);
-    currentIdentity = identity;
-  }
-};
-
-const getMediaActor = (requireAuth: boolean = true): MediaService => {
-  if (requireAuth && !currentIdentity) {
-    throw new Error(
-      "Authentication required: Please log in to perform this action",
-    );
-  }
-
-  if (!mediaActor) {
-    mediaActor = createMediaActor(currentIdentity);
-  }
-
-  return mediaActor;
-};
+// Get Firebase Functions instance from singleton
+const functions = getFirebaseFunctions();
 
 // Frontend-adapted types
 export interface FrontendMediaItem {
@@ -107,78 +60,12 @@ export class MediaServiceError extends Error {
   }
 }
 
-// Conversion utilities
-const convertTimeToDate = (time: Time): Date =>
-  new Date(Number(time) / 1000000);
-
-const convertMediaType = (mediaType: CanisterMediaType): MediaType => {
-  if ("ServiceImage" in mediaType) return "ServiceImage";
-  if ("RemittancePaymentProof" in mediaType) return "RemittancePaymentProof";
-  if ("UserProfile" in mediaType) return "UserProfile";
-  if ("ServiceCertificate" in mediaType) return "ServiceCertificate";
-  throw new Error("Unknown media type");
-};
-
-const convertToCanisterMediaType = (
-  mediaType: MediaType,
-): CanisterMediaType => {
-  switch (mediaType) {
-    case "ServiceImage":
-      return { ServiceImage: null };
-    case "RemittancePaymentProof":
-      return { RemittancePaymentProof: null };
-    case "UserProfile":
-      return { UserProfile: null };
-    case "ServiceCertificate":
-      return { ServiceCertificate: null };
-    default:
-      throw new Error(`Unknown media type: ${mediaType}`);
-  }
-};
-
-const convertMediaItem = (item: CanisterMediaItem): FrontendMediaItem => ({
-  id: item.id,
-  url: item.url,
-  thumbnailUrl: item.thumbnailUrl[0],
-  contentType: item.contentType,
-  ownerId: item.ownerId.toString(),
-  createdAt: convertTimeToDate(item.createdAt),
-  fileName: item.fileName,
-  filePath: item.filePath,
-  fileSize: Number(item.fileSize),
-  updatedAt: convertTimeToDate(item.updatedAt),
-  mediaType: convertMediaType(item.mediaType),
-});
-
-const convertValidationSummary = (
-  summary: CanisterMediaValidationSummary,
-): FrontendMediaValidationSummary => ({
-  sha256: summary.sha256[0],
-  extractedTimestamp: summary.extracted_timestamp[0]
-    ? convertTimeToDate(summary.extracted_timestamp[0])
-    : undefined,
-  sizeBytes: Number(summary.size_bytes),
-  mimeType: summary.mime_type,
-  hasTextContent: summary.has_text_content[0],
-  mediaId: summary.media_id,
-  isValidType: summary.is_valid_type,
-  validationFlags: summary.validation_flags,
-  isWithinSizeLimit: summary.is_within_size_limit,
-  uploadedAt: convertTimeToDate(summary.uploaded_at),
-});
-
-// Helper function to handle canister results
-const handleResult = <T, R>(
-  result: { ok: T } | { err: string },
-  converter?: (data: T) => R,
-): R => {
-  if ("err" in result) {
-    throw new MediaServiceError({
-      message: result.err,
-      code: "CANISTER_ERROR",
-    });
-  }
-  return converter ? converter(result.ok) : (result.ok as unknown as R);
+// Helper function to convert timestamps to Date
+const convertToDate = (timestamp: any): Date => {
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'string') return new Date(timestamp);
+  if (typeof timestamp === 'number') return new Date(timestamp);
+  return new Date();
 };
 
 // Media Service Functions
@@ -192,9 +79,15 @@ export const getRemittanceMediaItems = async (
   mediaIds: string[],
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.getRemittanceMediaItems(mediaIds);
-    return handleResult(result, (items) => items.map(convertMediaItem));
+    const getRemittanceMediaItemsFn = httpsCallable(functions, "getRemittanceMediaItems");
+    const result = await getRemittanceMediaItemsFn({ mediaIds });
+
+    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
+    return data.success ? data.mediaItems.map(item => ({
+      ...item,
+      createdAt: convertToDate(item.createdAt),
+      updatedAt: convertToDate(item.updatedAt)
+    })) : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -213,9 +106,18 @@ export const getMediaItem = async (
   mediaId: string,
 ): Promise<FrontendMediaItem | null> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.getMediaItem(mediaId);
-    return handleResult(result, convertMediaItem);
+    const getMediaItemFn = httpsCallable(functions, "getMediaItem");
+    const result = await getMediaItemFn({ mediaId });
+
+    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    if (data.success && data.mediaItem) {
+      return {
+        ...data.mediaItem,
+        createdAt: convertToDate(data.mediaItem.createdAt),
+        updatedAt: convertToDate(data.mediaItem.updatedAt)
+      };
+    }
+    return null;
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -232,9 +134,14 @@ export const getMediaItem = async (
  */
 export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.getFileData(mediaId);
-    return handleResult(result, (data) => new Uint8Array(data));
+    const getFileDataFn = httpsCallable(functions, "getFileData");
+    const result = await getFileDataFn({ mediaId });
+
+    const data = result.data as { success: boolean; fileData: number[] };
+    if (data.success && data.fileData) {
+      return new Uint8Array(data.fileData);
+    }
+    throw new Error("Failed to get file data");
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -315,40 +222,31 @@ export const getImageDataUrl = async (
       return opts.fallbackImageUrl;
     }
 
-    // Get file data from media canister
-    console.log(
-      "getImageDataUrl - Getting media actor and calling getFileData",
-    );
-    const actor = getMediaActor();
-    const result = await actor.getFileData(mediaId);
-    console.log("getImageDataUrl - getFileData result:", result);
-
-    if ("err" in result) {
-      console.warn("Failed to retrieve image data:", result.err);
-      return opts.fallbackImageUrl;
-    }
+    // Get file data from Firebase
+    console.log("getImageDataUrl - Calling getFileData");
+    const fileData = await getFileData(mediaId);
+    console.log("getImageDataUrl - Got file data, length:", fileData.length);
 
     // Get media item for content type
     console.log("getImageDataUrl - Getting media item for content type");
-    const mediaItemResult = await actor.getMediaItem(mediaId);
-    console.log("getImageDataUrl - getMediaItem result:", mediaItemResult);
+    const mediaItem = await getMediaItem(mediaId);
+    console.log("getImageDataUrl - getMediaItem result:", mediaItem);
 
-    if ("err" in mediaItemResult) {
-      console.warn("Failed to retrieve media item:", mediaItemResult.err);
+    if (!mediaItem) {
+      console.warn("Failed to retrieve media item");
       return opts.fallbackImageUrl;
     }
 
     // Convert Uint8Array to data URL
     console.log("getImageDataUrl - Converting to data URL");
-    const uint8Array = new Uint8Array(result.ok);
-    const contentType = mediaItemResult.ok.contentType;
+    const contentType = mediaItem.contentType;
     console.log(
       "getImageDataUrl - Content type:",
       contentType,
       "Data length:",
-      uint8Array.length,
+      fileData.length,
     );
-    const dataUrl = await convertBlobToDataUrl(uint8Array, contentType);
+    const dataUrl = await convertBlobToDataUrl(fileData, contentType);
     console.log(
       "getImageDataUrl - Data URL generated, length:",
       dataUrl.length,
@@ -368,16 +266,22 @@ export const getImageDataUrl = async (
 
 /**
  * Gets all media items owned by a specific user
- * @param ownerId The owner's Principal
+ * @param ownerId The owner's Principal ID as string
  * @returns Array of media items
  */
 export const getMediaByOwner = async (
-  ownerId: Principal,
+  ownerId: string,
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const actor = getMediaActor();
-    const items = await actor.getMediaByOwner(ownerId);
-    return items.map(convertMediaItem);
+    const getMediaByOwnerFn = httpsCallable(functions, "getMediaByOwner");
+    const result = await getMediaByOwnerFn({ ownerId });
+
+    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
+    return data.success ? data.mediaItems.map(item => ({
+      ...item,
+      createdAt: convertToDate(item.createdAt),
+      updatedAt: convertToDate(item.updatedAt)
+    })) : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -389,22 +293,24 @@ export const getMediaByOwner = async (
 
 /**
  * Gets media items by type and owner
- * @param ownerId The owner's Principal
+ * @param ownerId The owner's user ID as string
  * @param mediaType The media type to filter by
  * @returns Array of media items
  */
 export const getMediaByTypeAndOwner = async (
-  ownerId: Principal,
+  ownerId: string,
   mediaType: MediaType,
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const actor = getMediaActor();
-    const canisterMediaType = convertToCanisterMediaType(mediaType);
-    const items = await actor.getMediaByTypeAndOwner(
-      ownerId,
-      canisterMediaType,
-    );
-    return items.map(convertMediaItem);
+    const getMediaByTypeAndOwnerFn = httpsCallable(functions, "getMediaByTypeAndOwner");
+    const result = await getMediaByTypeAndOwnerFn({ ownerId, mediaType });
+
+    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
+    return data.success ? data.mediaItems.map(item => ({
+      ...item,
+      createdAt: convertToDate(item.createdAt),
+      updatedAt: convertToDate(item.updatedAt)
+    })) : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -423,11 +329,15 @@ export const validateMediaItems = async (
   mediaIds: string[],
 ): Promise<FrontendMediaValidationSummary[]> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.validateMediaItems(mediaIds);
-    return handleResult(result, (summaries) =>
-      summaries.map(convertValidationSummary),
-    );
+    const validateMediaItemsFn = httpsCallable(functions, "validateMediaItems");
+    const result = await validateMediaItemsFn({ mediaIds });
+
+    const data = result.data as { success: boolean; validationSummaries: FrontendMediaValidationSummary[] };
+    return data.success ? data.validationSummaries.map(summary => ({
+      ...summary,
+      extractedTimestamp: summary.extractedTimestamp ? convertToDate(summary.extractedTimestamp) : undefined,
+      uploadedAt: convertToDate(summary.uploadedAt)
+    })) : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -452,15 +362,23 @@ export const uploadMedia = async (
   fileData: Uint8Array,
 ): Promise<FrontendMediaItem> => {
   try {
-    const actor = getMediaActor();
-    const canisterMediaType = convertToCanisterMediaType(mediaType);
-    const result = await actor.uploadMedia(
+    const uploadMediaFn = httpsCallable(functions, "uploadMedia");
+    const result = await uploadMediaFn({
       fileName,
       contentType,
-      canisterMediaType,
-      Array.from(fileData),
-    );
-    return handleResult(result, convertMediaItem);
+      mediaType,
+      fileData: Array.from(fileData)
+    });
+
+    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    if (data.success && data.mediaItem) {
+      return {
+        ...data.mediaItem,
+        createdAt: convertToDate(data.mediaItem.createdAt),
+        updatedAt: convertToDate(data.mediaItem.updatedAt)
+      };
+    }
+    throw new Error("Failed to upload media");
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -481,12 +399,21 @@ export const updateMediaMetadata = async (
   newFileName?: string,
 ): Promise<FrontendMediaItem> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.updateMediaMetadata(
+    const updateMediaMetadataFn = httpsCallable(functions, "updateMediaMetadata");
+    const result = await updateMediaMetadataFn({
       mediaId,
-      newFileName ? [newFileName] : [],
-    );
-    return handleResult(result, convertMediaItem);
+      newFileName: newFileName || null
+    });
+
+    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    if (data.success && data.mediaItem) {
+      return {
+        ...data.mediaItem,
+        createdAt: convertToDate(data.mediaItem.createdAt),
+        updatedAt: convertToDate(data.mediaItem.updatedAt)
+      };
+    }
+    throw new Error("Failed to update media metadata");
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -503,11 +430,12 @@ export const updateMediaMetadata = async (
  */
 export const deleteMedia = async (mediaId: string): Promise<string> => {
   try {
-    const actor = getMediaActor();
-    const result = await actor.deleteMedia(mediaId);
-    return handleResult(result);
+    const deleteMediaFn = httpsCallable(functions, "deleteMedia");
+    const result = await deleteMediaFn({ mediaId });
+
+    const data = result.data as { success: boolean; message: string };
+    return data.success ? data.message : "Failed to delete media";
   } catch (error) {
-    //console.error("Failed to delete media:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to delete media: ${error}`,
@@ -517,28 +445,22 @@ export const deleteMedia = async (mediaId: string): Promise<string> => {
 };
 
 /**
- * Gets storage statistics for the media canister
+ * Gets storage statistics for the media service
  * @returns Storage statistics
  */
 export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
   try {
-    const actor = getMediaActor();
-    const stats = await actor.getStorageStats();
+    const getStorageStatsFn = httpsCallable(functions, "getStorageStats");
+    const result = await getStorageStatsFn({});
 
-    const typeBreakdown: { [key: string]: number } = {};
-    stats.typeBreakdown.forEach(([mediaType, count]) => {
-      const key = convertMediaType(mediaType);
-      typeBreakdown[key] = Number(count);
-    });
-
-    return {
-      totalSize: Number(stats.totalSize),
-      totalItems: Number(stats.totalItems),
-      typeBreakdown,
-      userCount: Number(stats.userCount),
+    const data = result.data as { success: boolean; stats: FrontendMediaStorageStats };
+    return data.success ? data.stats : {
+      totalSize: 0,
+      totalItems: 0,
+      typeBreakdown: {},
+      userCount: 0
     };
   } catch (error) {
-    //console.error("Failed to get storage stats:", error);
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
       message: `Failed to get storage stats: ${error}`,
@@ -547,15 +469,17 @@ export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
   }
 };
 
-// Reset functions for authentication state changes
+// Reset functions for compatibility (no longer needed but kept for interface)
 export const resetMediaActor = () => {
-  mediaActor = null;
-  currentIdentity = null;
+  // No-op: Firebase doesn't need actor reset
 };
 
 export const refreshMediaActor = async () => {
-  resetMediaActor();
-  return getMediaActor();
+  // No-op: Firebase doesn't need actor refresh
+};
+
+export const updateMediaActor = () => {
+  // No-op: Firebase doesn't need actor updates
 };
 
 // Default export of all service functions

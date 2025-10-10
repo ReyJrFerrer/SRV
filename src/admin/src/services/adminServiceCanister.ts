@@ -1,26 +1,13 @@
 // Admin Service Firebase Interface
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 // Keep some Motoko types for compatibility during migration
 import { Principal } from "@dfinity/principal";
 import { Identity } from "@dfinity/agent";
 
-// Firebase configuration - should match your app's config
-const firebaseConfig = {
-  // This should be loaded from environment variables or app config
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const functions = getFunctions(app);
+// Get Firebase instances from singleton
+const auth = getFirebaseAuth();
+const functions = getFirebaseFunctions();
 
 // ===== HELPER FUNCTIONS =====
 
@@ -96,7 +83,6 @@ export interface ServiceData {
     duration?: number;
   }>;
 }
-
 
 // Frontend-adapted types for better usability
 export interface FrontendCommissionRule {
@@ -226,7 +212,7 @@ const callFirebaseFunction = async (functionName: string, payload: any) => {
   try {
     requireAuth(); // Ensure user is authenticated
     const callable = httpsCallable(functions, functionName);
-    
+
     // Call the function with data wrapped in data object (following admin.js pattern)
     const result = await callable({ payload });
 
@@ -239,7 +225,7 @@ const callFirebaseFunction = async (functionName: string, payload: any) => {
     console.error(`Error calling ${functionName}:`, error);
     throw new AdminServiceError({
       message: error.message || `Failed to call ${functionName}`,
-      code: error.code || 'FIREBASE_FUNCTION_ERROR',
+      code: error.code || "FIREBASE_FUNCTION_ERROR",
       details: error,
     } as AdminServiceError);
   }
@@ -390,7 +376,9 @@ export const adminServiceCanister = {
         priority: result.priority,
         isActive: result.isActive,
         effectiveFrom: new Date(result.effectiveFrom),
-        effectiveTo: result.effectiveTo ? new Date(result.effectiveTo) : undefined,
+        effectiveTo: result.effectiveTo
+          ? new Date(result.effectiveTo)
+          : undefined,
         createdAt: new Date(result.createdAt),
         updatedAt: new Date(result.updatedAt),
         version: result.version,
@@ -411,7 +399,10 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("activateRule", { ruleId, version });
+      const result = await callFirebaseFunction("activateRule", {
+        ruleId,
+        version,
+      });
       return result.message || "Rule activated successfully";
     } catch (error) {
       if (error instanceof AdminServiceError) throw error;
@@ -454,7 +445,7 @@ export const adminServiceCanister = {
       const result = await callFirebaseFunction("assignRole", {
         userId,
         role: "ADMIN",
-        scope
+        scope,
       });
       return result.message || "Role assigned successfully";
     } catch (error) {
@@ -562,9 +553,9 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("hasRole", { 
-        userId, 
-        role: "ADMIN" 
+      const result = await callFirebaseFunction("hasRole", {
+        userId,
+        role: "ADMIN",
       });
       return result === true;
     } catch (error) {
@@ -626,7 +617,6 @@ export const adminServiceCanister = {
     }
   },
 
-
   // Analytics & Reporting
 
   /**
@@ -653,7 +643,6 @@ export const adminServiceCanister = {
       } as AdminServiceError);
     }
   },
-
 
   /**
    * Get all users from the system
@@ -699,7 +688,9 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("getServicePackages", { serviceId });
+      const result = await callFirebaseFunction("getServicePackages", {
+        serviceId,
+      });
       return result || [];
     } catch (error) {
       logError("Error getting service packages", error);
@@ -730,7 +721,9 @@ export const adminServiceCanister = {
         location: service.location,
         scheduledDate: undefined,
         completedDate: undefined,
-        createdDate: service.createdAt ? new Date(service.createdAt) : new Date(),
+        createdDate: service.createdAt
+          ? new Date(service.createdAt)
+          : new Date(),
         clientId: undefined,
         clientName: undefined,
         providerId: service.providerId,
@@ -805,7 +798,7 @@ export const adminServiceCanister = {
       const result = await callFirebaseFunction("getUserServiceCount", {
         userId,
       });
-      return typeof result === 'number' ? result : Number(result || 0);
+      return typeof result === "number" ? result : Number(result || 0);
     } catch (error) {
       console.error("Error getting user service count:", error);
       return 0;
@@ -895,12 +888,12 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("getProviderAnalytics", { 
+      const result = await callFirebaseFunction("getProviderAnalytics", {
         providerId: userId,
         startDate: null,
         endDate: null,
       });
-      
+
       return {
         totalEarnings: result.totalEarnings || 0,
         completedJobs: result.completedJobs || 0,
@@ -1038,7 +1031,7 @@ export const adminServiceCanister = {
 
       const clientBookings = clientBookingsResult || [];
       const providerBookings = providerBookingsResult || [];
-      
+
       // Combine both arrays
       const allBookings = [...clientBookings, ...providerBookings];
 
@@ -1085,7 +1078,10 @@ export const adminServiceCanister = {
             status: booking.status || "Unknown",
             price: Number(booking.price || 0),
             createdAt: booking.createdAt || new Date().toISOString(),
-            scheduledDate: booking.scheduledDate || booking.createdAt || new Date().toISOString(),
+            scheduledDate:
+              booking.scheduledDate ||
+              booking.createdAt ||
+              new Date().toISOString(),
             completedAt: booking.completedDate || undefined,
             rating: booking.rating ? Number(booking.rating) : undefined,
             review: booking.review || undefined,
@@ -1108,8 +1104,11 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("getServicesWithCertificates", {});
-      
+      const result = await callFirebaseFunction(
+        "getServicesWithCertificates",
+        {},
+      );
+
       return result || [];
     } catch (error) {
       logError("Error fetching services with certificates", error);
@@ -1122,8 +1121,11 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("getPendingCertificateValidations", {});
-      
+      const result = await callFirebaseFunction(
+        "getPendingCertificateValidations",
+        {},
+      );
+
       return result || [];
     } catch (error) {
       logError("Error fetching certificate validations", error);
@@ -1161,11 +1163,14 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("updateCertificateValidationStatus", {
-        certificateId,
-        status,
-        reason,
-      });
+      const result = await callFirebaseFunction(
+        "updateCertificateValidationStatus",
+        {
+          certificateId,
+          status,
+          reason,
+        },
+      );
       return result || `Certificate ${status.toLowerCase()} successfully`;
     } catch (error) {
       logError("Error updating certificate validation status", error);
@@ -1232,58 +1237,45 @@ export const {
 // Report/Feedback integration - separate export
 export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
   try {
-    const { createActor } = await import("../../../declarations/feedback");
-    const { canisterId: feedbackCanisterId } = await import(
-      "../../../declarations/feedback"
-    );
+    requireAuth();
 
-    const feedbackActor = createActor(feedbackCanisterId, {
-      agentOptions: currentIdentity ? { identity: currentIdentity } : undefined,
-    });
+    const result = await callFirebaseFunction("getAllReports", {});
 
-    // Get all reports from feedback canister
-    const reports = await (feedbackActor as any).getAllReports();
+    if (!result || !Array.isArray(result)) return [];
 
-    return reports.map((report: any) => ({
+    return result.map((report: any) => ({
       id: report.id,
-      userId: report.userId.toString(),
-      userName: report.userName,
-      userPhone: report.userPhone,
+      userId: report.userId,
+      userName: report.userName || "Unknown User",
+      userPhone: report.userPhone || "",
       description: report.description,
-      status: report.status?.[0] || "open", // Extract status from optional array, default to "open"
-      createdAt: new Date(Number(report.createdAt) / 1_000_000).toISOString(), // Convert from nanoseconds
+      status: report.status || "open",
+      createdAt: report.createdAt || new Date().toISOString(),
     }));
   } catch (error) {
-    logError("Error fetching reports from feedback canister", error);
+    logError("Error fetching reports from Firebase", error);
     return [];
   }
 };
 
-// Update report status in feedback canister
+// Update report status in Firebase
 export const updateReportStatus = async (
   reportId: string,
   newStatus: string,
 ): Promise<boolean> => {
   try {
-    const { createActor } = await import("../../../declarations/feedback");
-    const { canisterId: feedbackCanisterId } = await import(
-      "../../../declarations/feedback"
-    );
+    requireAuth();
 
-    const feedbackActor = createActor(feedbackCanisterId, {
-      agentOptions: currentIdentity ? { identity: currentIdentity } : undefined,
+    const result = await callFirebaseFunction("updateReportStatus", {
+      reportId,
+      status: newStatus,
     });
 
-    const result = await (feedbackActor as any).updateReportStatus(
-      reportId,
-      newStatus,
-    );
-
-    if (result.ok) {
+    if (result) {
       logSuccess(`Report ${reportId} status updated to: ${newStatus}`);
       return true;
     } else {
-      logError(`Failed to update report status: ${result.err}`);
+      logError(`Failed to update report status`);
       return false;
     }
   } catch (error) {
