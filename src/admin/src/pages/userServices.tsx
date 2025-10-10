@@ -38,7 +38,6 @@ const UserServicesPage: React.FC = () => {
   const {
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
   } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
   const [services, setServices] = useState<ServiceData[]>([]);
@@ -147,7 +146,6 @@ const UserServicesPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -186,7 +184,7 @@ const UserServicesPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, navigate, refreshUsers,]);
 
   const handleRefresh = async () => {
     setLoading(true);

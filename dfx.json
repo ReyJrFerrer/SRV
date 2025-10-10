@@ -12,15 +12,6 @@
       "type": "motoko",
       "main": "src/backend/function/reputation.mo"
     },
-    "admin": {
-      "type": "motoko",
-      "main": "src/backend/function/admin.mo"
-    },
-    "admin-frontend": {
-      "dependencies": ["admin", "llm", "auth", "reputation"],
-      "type": "assets",
-      "source": ["src/admin/dist/"]
-    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",

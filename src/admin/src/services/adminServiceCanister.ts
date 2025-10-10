@@ -214,7 +214,8 @@ const callFirebaseFunction = async (functionName: string, payload: any) => {
     const callable = httpsCallable(functions, functionName);
 
     // Call the function with data wrapped in data object (following admin.js pattern)
-    const result = await callable({ payload });
+    // admin.js expects: data.data || data, so we wrap it as { data: payload }
+    const result = await callable({ data: payload });
 
     if ((result.data as any).success) {
       return (result.data as any).data || (result.data as any).message;

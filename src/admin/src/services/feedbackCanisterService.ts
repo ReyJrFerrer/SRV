@@ -1,6 +1,7 @@
 // Feedback Firebase Service
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
+import { resourceLimits } from "worker_threads";
 
 // Get Firebase Functions instance from singleton
 const functions = getFirebaseFunctions();
@@ -46,7 +47,8 @@ const convertToDate = (timestamp: any): Date => {
 export const getAllFeedback = async (): Promise<AppFeedback[]> => {
   try {
     const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
-    const result = await getAllFeedbackFn({});
+    const result = await getAllFeedbackFn({data:{}});
+    console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
     return data.success
@@ -68,7 +70,8 @@ export const getAllFeedback = async (): Promise<AppFeedback[]> => {
 export const getMyFeedback = async (): Promise<AppFeedback[]> => {
   try {
     const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
-    const result = await getMyFeedbackFn({});
+    const result = await getMyFeedbackFn({data:{}});
+    console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
     return data.success
@@ -90,7 +93,8 @@ export const getMyFeedback = async (): Promise<AppFeedback[]> => {
 export const getFeedbackStats = async (): Promise<FeedbackStats> => {
   try {
     const getFeedbackStatsFn = httpsCallable(functions, "getFeedbackStats");
-    const result = await getFeedbackStatsFn({});
+    const result = await getFeedbackStatsFn({data:{}});
+    console.log(result);
 
     const data = result.data as { success: boolean; stats: FeedbackStats };
     if (data.success && data.stats) {
@@ -122,6 +126,7 @@ export const getRecentFeedback = async (
   try {
     const getRecentFeedbackFn = httpsCallable(functions, "getRecentFeedback");
     const result = await getRecentFeedbackFn({ limit });
+    console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
     return data.success
@@ -147,6 +152,7 @@ export const getFeedbackById = async (
   try {
     const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
     const result = await getFeedbackByIdFn({ feedbackId });
+    console.log(result);
 
     const data = result.data as { success: boolean; feedback: AppFeedback };
     if (data.success && data.feedback) {

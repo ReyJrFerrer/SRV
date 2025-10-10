@@ -330,6 +330,7 @@ exports.assignRole = functions.https.onCall(async (data, context) => {
   const {userId, role = "ADMIN", scope} = payload;
 
   const authInfo = getAuthInfo(context, data);
+  console.log("In assign role", payload);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",

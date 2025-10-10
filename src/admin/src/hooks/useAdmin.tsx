@@ -184,7 +184,7 @@ interface UseAdminReturn {
 
   // Utility functions
   refreshAll: () => Promise<void>;
-  initializeCanisterReferences: () => Promise<void>;
+
 }
 
 export const useAdmin = (): UseAdminReturn => {
@@ -683,11 +683,6 @@ export const useAdmin = (): UseAdminReturn => {
   );
 
   // Initialize canister references
-  const initializeCanisterReferences = useCallback(async () => {
-    try {
-      await adminServiceCanister.setCanisterReferences();
-    } catch (error) {}
-  }, []);
 
   // Remittance Management Functions
   const refreshRemittanceOrders = useCallback(
@@ -1188,6 +1183,6 @@ export const useAdmin = (): UseAdminReturn => {
 
     // Utility functions
     refreshAll,
-    initializeCanisterReferences,
+    
   };
 };

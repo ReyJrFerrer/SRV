@@ -429,3 +429,6 @@ exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
 
+// Export Admin Authentication Helper
+const {createAdminProfile} = require("./src/adminAuth");
+exports.createAdminProfile = createAdminProfile;

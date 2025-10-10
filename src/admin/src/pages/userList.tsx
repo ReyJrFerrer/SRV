@@ -34,7 +34,6 @@ export const UserListPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
     getUserLockStatus,
   } = useAdmin();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -96,14 +95,13 @@ export const UserListPage: React.FC = () => {
   useEffect(() => {
     const initializeAndLoadUsers = async () => {
       try {
-        await initializeCanisterReferences();
         await refreshUsers();
       } catch (error) {
         console.error("Error during initialization:", error);
       }
     };
     initializeAndLoadUsers();
-  }, [initializeCanisterReferences, refreshUsers]);
+  }, [, refreshUsers]);
 
   // Show mobile bottom action bar when header scrolls out
   useEffect(() => {

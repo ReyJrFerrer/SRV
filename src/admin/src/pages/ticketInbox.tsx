@@ -186,7 +186,6 @@ const TicketCard: React.FC<{
 export const TicketInboxPage: React.FC = () => {
   const navigate = useNavigate();
   const {
-    initializeCanisterReferences,
     refreshUsers,
     users: backendUsers,
   } = useAdmin();
@@ -215,7 +214,6 @@ export const TicketInboxPage: React.FC = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await initializeCanisterReferences();
         await refreshUsers();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -223,7 +221,7 @@ export const TicketInboxPage: React.FC = () => {
     };
 
     initializeData();
-  }, [initializeCanisterReferences, refreshUsers]);
+  }, [, refreshUsers]);
 
   // Load reports from feedback canister
   const loadReportsAsTickets = async () => {

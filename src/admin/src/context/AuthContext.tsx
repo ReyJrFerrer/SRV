@@ -16,6 +16,7 @@ import { getFirebaseAuth } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { updateMediaActor } from "../services/mediaServiceCanister";
+import { createAdminProfile } from "../services/adminAuthHelper";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -60,12 +61,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Listen to Firebase auth state changes
   useEffect(() => {
     const auth = getFirebaseAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
         console.log("[Admin] Firebase user authenticated:", user.uid);
+        
+        // Check if user has admin custom claim
+        try {
+          const tokenResult = await user.getIdTokenResult();
+          const isAdminUser = tokenResult.claims.isAdmin === true;
+          setIsAdmin(isAdminUser);
+          console.log("[Admin] Admin status from token:", isAdminUser);
+        } catch (error) {
+          console.error("[Admin] Error checking admin status:", error);
+          setIsAdmin(false);
+        }
       } else {
         console.log("[Admin] No Firebase user");
+        setIsAdmin(false);
       }
     });
 
@@ -85,8 +98,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIdentity(identity);
           updateAllAdminActors(identity);
 
-          // Temporarily set all authenticated users as admin for testing
-          setIsAdmin(true);
+          // Check if user has admin role from Firebase custom claims
+          // The assignRole function will be called during login
         } else {
           updateAllAdminActors(null);
         }
@@ -144,6 +157,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               );
               console.log("[Admin] Firebase UID:", result.user.uid);
 
+              // Auto-grant admin role for testing (development only)
+              if (import.meta.env.DEV) {
+                try {
+                  console.log(
+                    "🔧 [Admin] Auto-creating admin profile and granting role...",
+                  );
+                  
+                  // Create admin profile with UID and principal
+                  await createAdminProfile(
+                    result.user.uid,
+                    principal,
+                    "Admin User",
+                    ""
+                  );
+                  
+                  console.log(
+                    "✅ [Admin] Admin profile created successfully! Please sign out and sign in again to refresh your token.",
+                  );
+                  
+                  // Alert user to refresh
+                  alert("Admin profile created! Please sign out and sign in again to activate admin privileges.");
+                  
+                  setIsAdmin(true);
+                } catch (adminError) {
+                  console.warn(
+                    "⚠️ [Admin] Could not auto-create admin profile:",
+                    adminError,
+                  );
+                  // Still set admin locally for testing
+                  setIsAdmin(true);
+                }
+              }
+
               // Notify user if they need to create a profile
               if (result.needsProfile) {
                 console.log(
@@ -161,9 +207,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Don't fail the login if Firebase auth fails
               // The user is still authenticated with IC
             }
-
-            // Temporarily set all authenticated users as admin for testing
-            setIsAdmin(true);
 
             setIsLoading(false);
           } catch (onSuccessError) {
