@@ -63,8 +63,8 @@ export class MediaServiceError extends Error {
 // Helper function to convert timestamps to Date
 const convertToDate = (timestamp: any): Date => {
   if (timestamp instanceof Date) return timestamp;
-  if (typeof timestamp === 'string') return new Date(timestamp);
-  if (typeof timestamp === 'number') return new Date(timestamp);
+  if (typeof timestamp === "string") return new Date(timestamp);
+  if (typeof timestamp === "number") return new Date(timestamp);
   return new Date();
 };
 
@@ -79,15 +79,23 @@ export const getRemittanceMediaItems = async (
   mediaIds: string[],
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const getRemittanceMediaItemsFn = httpsCallable(functions, "getRemittanceMediaItems");
+    const getRemittanceMediaItemsFn = httpsCallable(
+      functions,
+      "getRemittanceMediaItems",
+    );
     const result = await getRemittanceMediaItemsFn({ mediaIds });
 
-    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
-    return data.success ? data.mediaItems.map(item => ({
-      ...item,
-      createdAt: convertToDate(item.createdAt),
-      updatedAt: convertToDate(item.updatedAt)
-    })) : [];
+    const data = result.data as {
+      success: boolean;
+      mediaItems: FrontendMediaItem[];
+    };
+    return data.success
+      ? data.mediaItems.map((item) => ({
+          ...item,
+          createdAt: convertToDate(item.createdAt),
+          updatedAt: convertToDate(item.updatedAt),
+        }))
+      : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -109,12 +117,15 @@ export const getMediaItem = async (
     const getMediaItemFn = httpsCallable(functions, "getMediaItem");
     const result = await getMediaItemFn({ mediaId });
 
-    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    const data = result.data as {
+      success: boolean;
+      mediaItem: FrontendMediaItem;
+    };
     if (data.success && data.mediaItem) {
       return {
         ...data.mediaItem,
         createdAt: convertToDate(data.mediaItem.createdAt),
-        updatedAt: convertToDate(data.mediaItem.updatedAt)
+        updatedAt: convertToDate(data.mediaItem.updatedAt),
       };
     }
     return null;
@@ -276,12 +287,17 @@ export const getMediaByOwner = async (
     const getMediaByOwnerFn = httpsCallable(functions, "getMediaByOwner");
     const result = await getMediaByOwnerFn({ ownerId });
 
-    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
-    return data.success ? data.mediaItems.map(item => ({
-      ...item,
-      createdAt: convertToDate(item.createdAt),
-      updatedAt: convertToDate(item.updatedAt)
-    })) : [];
+    const data = result.data as {
+      success: boolean;
+      mediaItems: FrontendMediaItem[];
+    };
+    return data.success
+      ? data.mediaItems.map((item) => ({
+          ...item,
+          createdAt: convertToDate(item.createdAt),
+          updatedAt: convertToDate(item.updatedAt),
+        }))
+      : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -302,15 +318,23 @@ export const getMediaByTypeAndOwner = async (
   mediaType: MediaType,
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const getMediaByTypeAndOwnerFn = httpsCallable(functions, "getMediaByTypeAndOwner");
+    const getMediaByTypeAndOwnerFn = httpsCallable(
+      functions,
+      "getMediaByTypeAndOwner",
+    );
     const result = await getMediaByTypeAndOwnerFn({ ownerId, mediaType });
 
-    const data = result.data as { success: boolean; mediaItems: FrontendMediaItem[] };
-    return data.success ? data.mediaItems.map(item => ({
-      ...item,
-      createdAt: convertToDate(item.createdAt),
-      updatedAt: convertToDate(item.updatedAt)
-    })) : [];
+    const data = result.data as {
+      success: boolean;
+      mediaItems: FrontendMediaItem[];
+    };
+    return data.success
+      ? data.mediaItems.map((item) => ({
+          ...item,
+          createdAt: convertToDate(item.createdAt),
+          updatedAt: convertToDate(item.updatedAt),
+        }))
+      : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -332,12 +356,19 @@ export const validateMediaItems = async (
     const validateMediaItemsFn = httpsCallable(functions, "validateMediaItems");
     const result = await validateMediaItemsFn({ mediaIds });
 
-    const data = result.data as { success: boolean; validationSummaries: FrontendMediaValidationSummary[] };
-    return data.success ? data.validationSummaries.map(summary => ({
-      ...summary,
-      extractedTimestamp: summary.extractedTimestamp ? convertToDate(summary.extractedTimestamp) : undefined,
-      uploadedAt: convertToDate(summary.uploadedAt)
-    })) : [];
+    const data = result.data as {
+      success: boolean;
+      validationSummaries: FrontendMediaValidationSummary[];
+    };
+    return data.success
+      ? data.validationSummaries.map((summary) => ({
+          ...summary,
+          extractedTimestamp: summary.extractedTimestamp
+            ? convertToDate(summary.extractedTimestamp)
+            : undefined,
+          uploadedAt: convertToDate(summary.uploadedAt),
+        }))
+      : [];
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({
@@ -367,15 +398,18 @@ export const uploadMedia = async (
       fileName,
       contentType,
       mediaType,
-      fileData: Array.from(fileData)
+      fileData: Array.from(fileData),
     });
 
-    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    const data = result.data as {
+      success: boolean;
+      mediaItem: FrontendMediaItem;
+    };
     if (data.success && data.mediaItem) {
       return {
         ...data.mediaItem,
         createdAt: convertToDate(data.mediaItem.createdAt),
-        updatedAt: convertToDate(data.mediaItem.updatedAt)
+        updatedAt: convertToDate(data.mediaItem.updatedAt),
       };
     }
     throw new Error("Failed to upload media");
@@ -399,18 +433,24 @@ export const updateMediaMetadata = async (
   newFileName?: string,
 ): Promise<FrontendMediaItem> => {
   try {
-    const updateMediaMetadataFn = httpsCallable(functions, "updateMediaMetadata");
+    const updateMediaMetadataFn = httpsCallable(
+      functions,
+      "updateMediaMetadata",
+    );
     const result = await updateMediaMetadataFn({
       mediaId,
-      newFileName: newFileName || null
+      newFileName: newFileName || null,
     });
 
-    const data = result.data as { success: boolean; mediaItem: FrontendMediaItem };
+    const data = result.data as {
+      success: boolean;
+      mediaItem: FrontendMediaItem;
+    };
     if (data.success && data.mediaItem) {
       return {
         ...data.mediaItem,
         createdAt: convertToDate(data.mediaItem.createdAt),
-        updatedAt: convertToDate(data.mediaItem.updatedAt)
+        updatedAt: convertToDate(data.mediaItem.updatedAt),
       };
     }
     throw new Error("Failed to update media metadata");
@@ -453,13 +493,18 @@ export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
     const getStorageStatsFn = httpsCallable(functions, "getStorageStats");
     const result = await getStorageStatsFn({});
 
-    const data = result.data as { success: boolean; stats: FrontendMediaStorageStats };
-    return data.success ? data.stats : {
-      totalSize: 0,
-      totalItems: 0,
-      typeBreakdown: {},
-      userCount: 0
+    const data = result.data as {
+      success: boolean;
+      stats: FrontendMediaStorageStats;
     };
+    return data.success
+      ? data.stats
+      : {
+          totalSize: 0,
+          totalItems: 0,
+          typeBreakdown: {},
+          userCount: 0,
+        };
   } catch (error) {
     if (error instanceof MediaServiceError) throw error;
     throw new MediaServiceError({

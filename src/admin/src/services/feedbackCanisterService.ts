@@ -32,8 +32,8 @@ export interface SubmitFeedbackRequest {
 // Helper function to convert Firebase timestamps to Date
 const convertToDate = (timestamp: any): Date => {
   if (timestamp instanceof Date) return timestamp;
-  if (typeof timestamp === 'string') return new Date(timestamp);
-  if (typeof timestamp === 'number') return new Date(timestamp);
+  if (typeof timestamp === "string") return new Date(timestamp);
+  if (typeof timestamp === "number") return new Date(timestamp);
   return new Date();
 };
 
@@ -49,10 +49,12 @@ export const getAllFeedback = async (): Promise<AppFeedback[]> => {
     const result = await getAllFeedbackFn({});
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
-    return data.success ? data.feedback.map(f => ({
-      ...f,
-      createdAt: convertToDate(f.createdAt)
-    })) : [];
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
     console.error("Failed to get all feedback:", error);
     throw error;
@@ -69,10 +71,12 @@ export const getMyFeedback = async (): Promise<AppFeedback[]> => {
     const result = await getMyFeedbackFn({});
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
-    return data.success ? data.feedback.map(f => ({
-      ...f,
-      createdAt: convertToDate(f.createdAt)
-    })) : [];
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
     console.error("Failed to get user feedback:", error);
     throw error;
@@ -92,10 +96,12 @@ export const getFeedbackStats = async (): Promise<FeedbackStats> => {
     if (data.success && data.stats) {
       return {
         ...data.stats,
-        latestFeedback: data.stats.latestFeedback ? {
-          ...data.stats.latestFeedback,
-          createdAt: convertToDate(data.stats.latestFeedback.createdAt)
-        } : undefined
+        latestFeedback: data.stats.latestFeedback
+          ? {
+              ...data.stats.latestFeedback,
+              createdAt: convertToDate(data.stats.latestFeedback.createdAt),
+            }
+          : undefined,
       };
     }
     throw new Error("Failed to get feedback stats");
@@ -110,16 +116,20 @@ export const getFeedbackStats = async (): Promise<FeedbackStats> => {
  * @param limit Maximum number of feedback items to return
  * @returns Array of recent feedback
  */
-export const getRecentFeedback = async (limit: number): Promise<AppFeedback[]> => {
+export const getRecentFeedback = async (
+  limit: number,
+): Promise<AppFeedback[]> => {
   try {
     const getRecentFeedbackFn = httpsCallable(functions, "getRecentFeedback");
     const result = await getRecentFeedbackFn({ limit });
 
     const data = result.data as { success: boolean; feedback: AppFeedback[] };
-    return data.success ? data.feedback.map(f => ({
-      ...f,
-      createdAt: convertToDate(f.createdAt)
-    })) : [];
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
     console.error("Failed to get recent feedback:", error);
     throw error;
@@ -131,7 +141,9 @@ export const getRecentFeedback = async (limit: number): Promise<AppFeedback[]> =
  * @param feedbackId The feedback ID
  * @returns The feedback item
  */
-export const getFeedbackById = async (feedbackId: string): Promise<AppFeedback> => {
+export const getFeedbackById = async (
+  feedbackId: string,
+): Promise<AppFeedback> => {
   try {
     const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
     const result = await getFeedbackByIdFn({ feedbackId });
@@ -140,7 +152,7 @@ export const getFeedbackById = async (feedbackId: string): Promise<AppFeedback> 
     if (data.success && data.feedback) {
       return {
         ...data.feedback,
-        createdAt: convertToDate(data.feedback.createdAt)
+        createdAt: convertToDate(data.feedback.createdAt),
       };
     }
     throw new Error("Feedback not found");

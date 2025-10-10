@@ -1157,7 +1157,7 @@ export const adminServiceCanister = {
   // Update certificate validation status
   async updateCertificateValidationStatus(
     certificateId: string,
-    status: "Validated" | "Rejected",
+    status: "Validated" | "Rejected" | "Pending" ,
     reason?: string,
   ): Promise<any> {
     try {

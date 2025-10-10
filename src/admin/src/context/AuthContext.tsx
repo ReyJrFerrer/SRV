@@ -121,29 +121,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIdentity(identity);
             updateAllAdminActors(identity);
 
-            console.log("✅ [Admin] Successfully authenticated with Internet Identity");
-            console.log("[Admin] Principal:", identity.getPrincipal().toString());
+            console.log(
+              "✅ [Admin] Successfully authenticated with Internet Identity",
+            );
+            console.log(
+              "[Admin] Principal:",
+              identity.getPrincipal().toString(),
+            );
 
             // Get the principal and exchange for Firebase token
             try {
               const principal = identity.getPrincipal().toString();
-              console.log("🔄 [Admin] Attempting to authenticate with Firebase...");
+              console.log(
+                "🔄 [Admin] Attempting to authenticate with Firebase...",
+              );
 
               const result = await signInWithInternetIdentity(principal);
               setFirebaseUser(result.user);
 
-              console.log("✅ [Admin] Successfully authenticated with Firebase!");
+              console.log(
+                "✅ [Admin] Successfully authenticated with Firebase!",
+              );
               console.log("[Admin] Firebase UID:", result.user.uid);
 
               // Notify user if they need to create a profile
               if (result.needsProfile) {
-                console.log("📝 [Admin] New user detected - profile creation required");
+                console.log(
+                  "📝 [Admin] New user detected - profile creation required",
+                );
                 console.log("[Admin] Message:", result.message);
               } else {
                 console.log("👤 [Admin] User has existing profile");
               }
             } catch (fbError) {
-              console.error("❌ [Admin] Failed to authenticate with Firebase:", fbError);
+              console.error(
+                "❌ [Admin] Failed to authenticate with Firebase:",
+                fbError,
+              );
               // Don't fail the login if Firebase auth fails
               // The user is still authenticated with IC
             }
@@ -153,7 +167,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             setIsLoading(false);
           } catch (onSuccessError) {
-            console.error("[Admin] Error in onSuccess callback:", onSuccessError);
+            console.error(
+              "[Admin] Error in onSuccess callback:",
+              onSuccessError,
+            );
             setError("Authentication succeeded but failed to initialize");
             setIsLoading(false);
           }
