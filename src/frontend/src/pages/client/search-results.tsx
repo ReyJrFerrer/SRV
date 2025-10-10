@@ -273,7 +273,7 @@ const SearchResultsPage: React.FC = () => {
               <ServiceListItem
                 key={service.id}
                 service={service}
-                isGridItem={true}
+                //isGridItem={true}
                 retainMobileLayout={true}
               />
             ))}

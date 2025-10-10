@@ -243,12 +243,12 @@ const MyBookingsPage: React.FC = () => {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full appearance-none rounded-lg border border-gray-300 py-2 pr-10 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="all">All Types</option>
-                  <option value="sameDay">Same Day</option>
-                  <option value="scheduled">Scheduled</option>
                   <optgroup label="Categories">
+                    <option value="all">All Types</option>
+                    <option value="sameDay">Same Day</option>
+                    <option value="scheduled">Scheduled</option>
                     {bookingCategories.slice(1).map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}

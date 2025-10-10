@@ -292,7 +292,6 @@ const CategoryPage: React.FC = () => {
               <ServiceListItem
                 key={service.id}
                 service={service}
-                isGridItem={true}
                 retainMobileLayout={true}
               />
             ))}
