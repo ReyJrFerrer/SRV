@@ -241,7 +241,7 @@ export const UserDetailsPage: React.FC = () => {
 
     try {
       // Fetch real analytics data
-      const [analytics, reviews, reputation, ] = await Promise.all([
+      const [analytics, reviews, reputation] = await Promise.all([
         adminServiceCanister.getUserAnalytics(profile.id.toString()),
         adminServiceCanister.getUserReviews(profile.id.toString()),
         adminServiceCanister.getUserReputation(profile.id.toString()),
