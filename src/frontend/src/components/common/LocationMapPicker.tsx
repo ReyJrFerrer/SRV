@@ -1,10 +1,5 @@
-import React, { useState, useCallback, useRef } from "react";
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Marker,
-  Autocomplete,
-} from "@react-google-maps/api";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 const containerStyle: React.CSSProperties = {
   width: "100%",
@@ -28,38 +23,27 @@ interface StructuredLocation {
 interface LocationMapPickerProps {
   value?: StructuredLocation | null;
   onChange: (loc: StructuredLocation) => void;
-  apiKey?: string; // optional override
   label?: string;
   highlight?: boolean; // highlight if validation failed
   persistKey?: string; // localStorage key to persist last selection
 }
 
-const libraries: "places"[] = ["places"];
+// removed explicit libraries; APIProvider handles script loading
 
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
   onChange,
-  apiKey,
   label = "Map Location",
   highlight = false,
   persistKey,
 }) => {
-  // Attempt to load via shared loader; if already present we'll rely on global
-  let loaderKey = apiKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-  const { isLoaded } = useJsApiLoader({
-    id: "header-gmap-script",
-    googleMapsApiKey: loaderKey,
-    libraries,
-  });
-
-  const effectiveLoaded = isLoaded || !!(window as any).google?.maps;
-
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
   }>(value ? { lat: value.lat, lng: value.lng } : defaultCenter);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null); // Use a ref for the map instance
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const placeListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -169,25 +153,25 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   );
 
   const onMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      setInternalPosition(pos);
-      reverseGeocodeAndUpdate(pos);
+    (e: any) => {
+      // @vis.gl/react-google-maps wraps the native event; latLng is under e.detail
+      const lat = e?.detail?.latLng?.lat?.();
+      const lng = e?.detail?.latLng?.lng?.();
+      if (typeof lat === "number" && typeof lng === "number") {
+        const pos = { lat, lng };
+        setInternalPosition(pos);
+        reverseGeocodeAndUpdate(pos);
+      }
     },
     [reverseGeocodeAndUpdate],
   );
 
-  const onLoad = useCallback(
-    (m: google.maps.Map) => {
-      setMap(m);
-      if (value?.lat && value?.lng) {
-        m.panTo({ lat: value.lat, lng: value.lng });
-        m.setZoom(15);
-      }
-    },
-    [value],
-  );
+  useEffect(() => {
+    if (mapRef.current && value?.lat && value?.lng) {
+      mapRef.current.panTo({ lat: value.lat, lng: value.lng });
+      mapRef.current.setZoom(15);
+    }
+  }, [value, mapRef]);
 
   const onPlaceChanged = () => {
     if (autocompleteRef.current) {
@@ -235,11 +219,63 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         if (inputRef.current) inputRef.current.value = structured.address;
         onChange(structured);
         persistLocation(structured);
-        map?.panTo({ lat: structured.lat, lng: structured.lng });
-        map?.setZoom(17);
+        mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
+        mapRef.current?.setZoom(17);
       }
     }
   };
+
+  // Initialize native Places Autocomplete on the input (no @react-google-maps/api wrapper)
+  useEffect(() => {
+    let intervalId: number | null = null;
+    const init = () => {
+      if (autocompleteRef.current || !inputRef.current) return false;
+      const g = (window as any).google;
+      if (!g?.maps?.places) return false;
+      try {
+        autocompleteRef.current = new g.maps.places.Autocomplete(
+          inputRef.current,
+          {
+            fields: [
+              "geometry",
+              "name",
+              "formatted_address",
+              "address_components",
+            ],
+            types: ["geocode"],
+            // You can add componentRestrictions here if needed
+          },
+        );
+        // Listen for selection changes
+        if (autocompleteRef.current) {
+          placeListenerRef.current = autocompleteRef.current.addListener(
+            "place_changed",
+            onPlaceChanged,
+          );
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    // Try to initialize immediately; if API not yet ready, poll briefly
+    if (!init()) {
+      intervalId = window.setInterval(() => {
+        if (init()) {
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
+      }, 200);
+    }
+    return () => {
+      if (placeListenerRef.current) {
+        placeListenerRef.current.remove();
+        placeListenerRef.current = null;
+      }
+    };
+  }, [onPlaceChanged]);
 
   // Load persisted location if available and no value provided
   React.useEffect(() => {
@@ -257,42 +293,36 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   }, [value, persistKey, onChange]);
 
-  if (!effectiveLoaded)
-    return <div className="text-sm text-gray-500">Loading map...</div>;
-
   return (
     <div className="space-y-2">
       <label className="text-xs font-medium text-gray-600">{label}</label>
-      <Autocomplete
-        onLoad={(ac) => (autocompleteRef.current = ac)}
-        onPlaceChanged={onPlaceChanged}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="Search location or drag the pin"
-          className={`w-full rounded-lg border p-2 text-sm focus:border-blue-500 focus:outline-none ${highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"}`}
-        />
-      </Autocomplete>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Search location or drag the pin"
+        className={`w-full rounded-lg border p-2 text-sm focus:border-blue-500 focus:outline-none ${highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"}`}
+      />
       <div
         className={`rounded-xl ${highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border border-gray-200"}`}
         style={{ overflow: "hidden" }}
       >
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          /* center will follow internalPosition state */
+        <Map
+          style={containerStyle}
+          defaultCenter={defaultCenter}
+          defaultZoom={12}
           center={internalPosition}
-          zoom={12}
-          onLoad={onLoad}
+          onCameraChanged={(ev) => (mapRef.current = ev.map)}
           onClick={onMapClick}
-          options={{ disableDefaultUI: true, zoomControl: true }}
+          disableDefaultUI={true}
+          zoomControl={true}
+          mapId={"6922634ff75ae05ac38cc473"}
         >
-          <Marker
+          <AdvancedMarker
             position={internalPosition}
-            draggable
+            draggable={true}
             onDragEnd={(e) => {
-              const lat = e.latLng?.lat();
-              const lng = e.latLng?.lng();
+              const lat = (e as any)?.detail?.latLng?.lat?.();
+              const lng = (e as any)?.detail?.latLng?.lng?.();
               if (lat && lng) {
                 const pos = { lat, lng };
                 setInternalPosition(pos);
@@ -300,7 +330,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               }
             }}
           />
-        </GoogleMap>
+        </Map>
       </div>
 
       <p className="text-[10px] text-gray-400">
