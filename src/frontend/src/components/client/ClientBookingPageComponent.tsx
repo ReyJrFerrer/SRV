@@ -389,7 +389,7 @@ const ClientBookingPageComponent: React.FC = () => {
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
     const provinceNorm = (displayProvince || "").trim().toLowerCase();
 
-  // Special case: Baguio City in Benguet or CAR
+    // Special case: Baguio City in Benguet or CAR
     if (
       (cityNorm === "baguio" || cityNorm === "baguio city") &&
       ["benguet", "cordillera administrative region", "car", "region"].includes(
@@ -406,7 +406,7 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = baguio.barangays;
       }
     }
-  // Special case: La Trinidad in Benguet
+    // Special case: La Trinidad in Benguet
     else if (
       (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
       provinceNorm === "benguet"
@@ -421,7 +421,7 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = laTrinidad.barangays;
       }
     }
-  // Special case: Itogon in Benguet
+    // Special case: Itogon in Benguet
     else if (cityNorm === "itogon" && provinceNorm === "benguet") {
       const benguet = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "benguet",
@@ -433,7 +433,7 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = itogon.barangays;
       }
     }
-  // Special case: Tuba in Benguet
+    // Special case: Tuba in Benguet
     else if (cityNorm === "tuba" && provinceNorm === "benguet") {
       const benguet = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "benguet",
@@ -445,7 +445,7 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = tuba.barangays;
       }
     }
-  // Special case: Pangasinan municipalities
+    // Special case: Pangasinan municipalities
     else if (
       (provinceNorm === "pangasinan" &&
         [
@@ -470,7 +470,7 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = muni.barangays;
       }
     }
-  // General lookup for other cities/municipalities
+    // General lookup for other cities/municipalities
     else if (cityNorm) {
       let matched = false;
       for (const province of phLocations.provinces) {
@@ -557,7 +557,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
       const today = new Date();
 
-  // Determine the date to check
+      // Determine the date to check
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
@@ -576,7 +576,7 @@ const ClientBookingPageComponent: React.FC = () => {
         return;
       }
 
-  // Helper: check if a time slot has passed (same-day only)
+      // Helper: check if a time slot has passed (same-day only)
       const isTimeSlotPassed = (
         _startTime: string,
         endTime: string,
@@ -592,7 +592,7 @@ const ClientBookingPageComponent: React.FC = () => {
         return now >= slotEndTime;
       };
 
-  // Check availability for each slot
+      // Check availability for each slot
       for (const slot of availableSlots) {
         const timeSlotKey = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
 
