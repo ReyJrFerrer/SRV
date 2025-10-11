@@ -1,3 +1,6 @@
+// Component: Provider Header (SP)
+// Purpose: Shows welcome, notifications badge, and location preview with map modal.
+// Dependencies: Zustand location store, provider notifications hook, @vis.gl/react-google-maps for modal map.
 // --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
@@ -19,14 +22,14 @@ const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
-  // --- Service Management Hook ---
+  // --- Navigation & Auth ---
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // Notification count from custom hook
   const { unreadCount } = useProviderNotifications();
 
-  // --- Use Zustand location store ---
+  // --- Location store ---
   const {
     location: geoLocation,
     userAddress,
@@ -40,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
 
-  // --- State: Show/hide map modal ---
+  // --- UI state ---
   const [showMap, setShowMap] = useState(false);
 
   // --- Display name for welcome message ---
@@ -97,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // Maps API key and loaded flag (APIProvider injects script)
+  // Maps API loaded flag (APIProvider injects script)
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
   useEffect(() => {
     if ((window as any).google?.maps) {
@@ -218,7 +221,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     );
   };
 
-  // --- Notification button handler ---
+  // --- Handlers ---
+  // Notification button
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
   };
