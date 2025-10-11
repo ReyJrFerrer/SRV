@@ -20,11 +20,45 @@ class PWAService {
   private pushSubscription: PushSubscription | null = null;
 
   constructor() {
+    // In development, disable service worker to avoid caching and HMR issues
+    if (
+      import.meta &&
+      (import.meta as any).env &&
+      (import.meta as any).env.DEV
+    ) {
+      this.disableServiceWorkerForDev();
+      return;
+    }
+
     // Log browser capabilities for debugging
     browserDetectionService.logBrowserCapabilities();
 
     this.initializeServiceWorker();
     this.setupInstallPrompt();
+  }
+
+  /**
+   * Disable service worker during development to ensure HMR works reliably.
+   * Unregisters existing registrations and skips any further SW setup.
+   */
+  private async disableServiceWorkerForDev() {
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((reg) => reg.unregister()));
+      }
+      // Optional: clear common runtime caches created by SWs (only once per session)
+      if (
+        "caches" in window &&
+        sessionStorage.getItem("swDevCachesCleared") !== "1"
+      ) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+        sessionStorage.setItem("swDevCachesCleared", "1");
+      }
+    } catch {
+      // Best effort cleanup; ignore errors in dev
+    }
   }
 
   /**

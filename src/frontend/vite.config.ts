@@ -68,6 +68,7 @@ export default defineConfig({
     // 9/5/2025
     watch: {
       usePolling: true,
+      ignored: ["**/node_modules/**", "**/.git/**"],
       interval: 300,
     },
   },
