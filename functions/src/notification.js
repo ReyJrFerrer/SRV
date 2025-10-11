@@ -96,7 +96,7 @@ function generateNotificationHref(notificationType, userType, bookingId) {
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
     // Redirect to services page to find new bookings
-    return isProvider ? `/provider/bookings` : `/client/services`;
+    return isProvider ? `/provider/bookings` : `/client/home`;
 
   default:
     return isProvider ?

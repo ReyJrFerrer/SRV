@@ -539,7 +539,7 @@ export const UserDetailsPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, refreshUsers,]);
+  }, [id, backendUsers, refreshUsers]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {

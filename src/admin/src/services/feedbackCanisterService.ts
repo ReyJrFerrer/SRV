@@ -2,7 +2,6 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
 
-
 // Get Firebase Functions instance from singleton
 const functions = getFirebaseFunctions();
 
