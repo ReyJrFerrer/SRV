@@ -50,6 +50,8 @@ const NOTIFICATION_TYPES = {
   BOOKING_RESCHEDULED: "booking_rescheduled",
   CLIENT_NO_SHOW: "client_no_show",
   PAYMENT_ISSUE: "payment_issue",
+  BOOKING_AUTO_CANCELLED_NOT_CHOSEN: "booking_auto_cancelled_not_chosen",
+  BOOKING_AUTO_CANCELLED_MISSED_SLOT: "booking_auto_cancelled_missed_slot",
 };
 
 // User types
@@ -90,6 +92,11 @@ function generateNotificationHref(notificationType, userType, bookingId) {
 
   case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
     return `/provider/active-service/${bookingId}`;
+
+  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
+  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
+    // Redirect to services page to find new bookings
+    return isProvider ? `/provider/bookings` : `/client/services`;
 
   default:
     return isProvider ?

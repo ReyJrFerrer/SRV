@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 
@@ -262,6 +263,89 @@ async function createNotification(
   } catch (error) {
     console.error("Error creating notification:", error);
     // Don't throw - notifications are not critical
+  }
+}
+
+/**
+ * Cancel conflicting bookings when a booking is accepted
+ * @param {string} acceptedBookingId - The booking ID that was accepted
+ * @param {string} providerId - Provider ID
+ * @param {string} scheduledDate - Scheduled date/time ISO string
+ * @param {string} serviceId - Service ID
+ */
+async function cancelConflictingBookings(
+  acceptedBookingId,
+  providerId,
+  scheduledDate,
+  serviceId,
+) {
+  try {
+    console.log(`🔄 [cancelConflictingBookings] Checking for conflicting bookings...`);
+    const requestedTime = new Date(scheduledDate);
+    const startTime = new Date(requestedTime.getTime() - 60 * 60 * 1000); // 1 hour buffer
+    const endTime = new Date(requestedTime.getTime() + 60 * 60 * 1000); // 1 hour buffer
+
+    // Find all "Requested" bookings for this provider that overlap with the accepted booking
+    const conflictingBookingsQuery = await db.collection("bookings")
+      .where("providerId", "==", providerId)
+      .where("status", "==", "Requested")
+      .where("requestedDate", ">=", startTime.toISOString())
+      .where("requestedDate", "<=", endTime.toISOString())
+      .get();
+
+    const batch = db.batch();
+    const notificationPromises = [];
+    let cancelledCount = 0;
+
+    conflictingBookingsQuery.forEach((doc) => {
+      const conflictingBooking = doc.data();
+
+      // Don't cancel the booking that was just accepted
+      if (conflictingBooking.id === acceptedBookingId) {
+        return;
+      }
+
+      console.log(`📝 [cancelConflictingBookings] Cancelling conflicting booking 
+        ${conflictingBooking.id}...`);
+
+      // Update booking status to Cancelled
+      batch.update(doc.ref, {
+        status: "Cancelled",
+        updatedAt: new Date().toISOString(),
+        cancellationReason: "auto_cancelled_not_chosen",
+      });
+
+      // Send notification to the client
+      const notificationMessage = "We're sorry, but the provider chose another " +
+        "booking for this time slot. Your booking has been automatically cancelled. " +
+        "Would you like to book another time?";
+
+      notificationPromises.push(
+        createNotification(
+          conflictingBooking.clientId,
+          USER_TYPES.CLIENT,
+          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN,
+          "Booking Not Selected",
+          notificationMessage,
+          conflictingBooking.id,
+          {serviceId, providerId, requestedDate: conflictingBooking.requestedDate},
+        ),
+      );
+
+      cancelledCount++;
+    });
+
+    if (cancelledCount > 0) {
+      await batch.commit();
+      await Promise.allSettled(notificationPromises);
+      console.log(`✅ [cancelConflictingBookings] Cancelled ${cancelledCount} 
+        conflicting bookings.`);
+    } else {
+      console.log(`✅ [cancelConflictingBookings] No conflicting bookings found.`);
+    }
+  } catch (error) {
+    console.error("Error cancelling conflicting bookings:", error);
+    // Don't throw - this is a background operation
   }
 }
 
@@ -564,6 +648,14 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       });
     });
     console.log(`✅ [acceptBooking] Successfully updated booking ${bookingId}.`);
+
+    // Cancel any conflicting bookings that weren't chosen
+    await cancelConflictingBookings(
+      bookingId,
+      booking.providerId,
+      scheduledDate,
+      booking.serviceId,
+    );
 
     // Create notification for the client about booking acceptance
     await createNotification(
@@ -2089,5 +2181,77 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
       throw error;
     }
     throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Cancel bookings that have missed their time slot
+ * Scheduled function that runs every hour
+ */
+exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
+  console.log("🚀 [cancelMissedBookings] scheduled function running...");
+  try {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    // Find all "Accepted" bookings whose scheduled date has passed
+    const missedBookingsQuery = await db.collection("bookings")
+      .where("status", "==", "Accepted")
+      .where("scheduledDate", "<=", oneHourAgo.toISOString())
+      .get();
+
+    if (missedBookingsQuery.empty) {
+      console.log("✅ [cancelMissedBookings] No missed bookings found.");
+      return {success: true, count: 0};
+    }
+
+    const batch = db.batch();
+    const notificationPromises = [];
+    let cancelledCount = 0;
+
+    missedBookingsQuery.forEach((doc) => {
+      const booking = doc.data();
+
+      console.log(`📝 [cancelMissedBookings] Cancelling missed booking ${booking.id}...`);
+
+      // Update booking status to Cancelled
+      batch.update(doc.ref, {
+        status: "Cancelled",
+        updatedAt: now.toISOString(),
+        cancellationReason: "auto_cancelled_missed_slot",
+      });
+
+      // Send notification to the client
+      const notificationMessage = "We're sorry, but the service provider did not show up " +
+        "for your scheduled booking. The time slot has passed and the booking has been " +
+        "automatically cancelled. Would you like to look for another service provider?";
+
+      notificationPromises.push(
+        createNotification(
+          booking.clientId,
+          USER_TYPES.CLIENT,
+          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT,
+          "Booking Cancelled - Missed Time Slot",
+          notificationMessage,
+          booking.id,
+          {
+            serviceId: booking.serviceId,
+            providerId: booking.providerId,
+            scheduledDate: booking.scheduledDate,
+          },
+        ),
+      );
+
+      cancelledCount++;
+    });
+
+    await batch.commit();
+    await Promise.allSettled(notificationPromises);
+
+    console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
+    return {success: true, count: cancelledCount};
+  } catch (error) {
+    console.error("Error cancelling missed bookings:", error);
+    throw error;
   }
 });
