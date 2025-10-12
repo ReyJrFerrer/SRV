@@ -527,7 +527,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
     // Use scheduledDate if available, otherwise fall back to requestedDate
     const serviceDateTime =
-      specificBooking.scheduledDate || specificBooking.requestedDate;
+      specificBooking.requestedDate;
     if (!serviceDateTime) return false;
 
     try {

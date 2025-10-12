@@ -1675,7 +1675,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
         });
 
         if (!isWithinTimeSlot) {
-          console.warn(`⚠️ [checkServiceAvailability] 
+          console.warn(`⚠️ [checkServiceAvailability]
             Requested time is outside service's available hours.`);
           return {
             success: true,
@@ -2344,8 +2344,8 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
     // Find all "Accepted" bookings within the 30-minute window that haven't had reminders sent
     const upcomingBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
-      .where("scheduledDate", ">=", reminderWindowStart.toISOString())
-      .where("scheduledDate", "<=", reminderWindowEnd.toISOString())
+      .where("requestedDate", ">=", reminderWindowStart.toISOString())
+      .where("requestedDate", "<=", reminderWindowEnd.toISOString())
       .get();
 
     if (upcomingBookingsQuery.empty) {

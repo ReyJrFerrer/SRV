@@ -545,14 +545,14 @@ export const useProviderBookingManagement =
           }
 
           const formattedLocation = formatLocationString(booking.location);
-          const timeUntilService = booking.scheduledDate
-            ? calculateTimeUntilService(booking.scheduledDate)
+          const timeUntilService = booking.requestedDate
+            ? calculateTimeUntilService(booking.requestedDate)
             : undefined;
 
           // Calculate booking properties
           const now = new Date();
-          const scheduledDate = booking.scheduledDate
-            ? new Date(booking.scheduledDate)
+          const scheduledDate = booking.requestedDate
+            ? new Date(booking.requestedDate)
             : null;
           const isOverdue = scheduledDate
             ? scheduledDate < now && booking.status === "Accepted"
