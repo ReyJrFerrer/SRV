@@ -209,14 +209,14 @@ export const ProviderManagementPage: React.FC = () => {
                   Refresh
                 </button>
                 <Link
-                  to="/remittance/analytics"
+                  to="/analytics"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
                   Analytics
                 </Link>
                 <Link
-                  to="/remittance"
+                  to="/dashboard"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
@@ -247,14 +247,14 @@ export const ProviderManagementPage: React.FC = () => {
               Refresh
             </button>
             <Link
-              to="/remittance/analytics"
+              to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
               Analytics
             </Link>
             <Link
-              to="/remittance"
+              to="/dashboard"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
@@ -417,7 +417,7 @@ export const ProviderManagementPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Sort Order */}
+            {/* Sort Booking */}
             <div>
               <label
                 htmlFor="sortOrder"
@@ -772,7 +772,7 @@ export const ProviderManagementPage: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">
-                          Average Order Value:
+                          Average Booking Value:
                         </span>
                         <span className="font-medium text-gray-900">
                           {formatCurrency(selectedProvider.averageOrderValue)}
@@ -781,10 +781,10 @@ export const ProviderManagementPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Order Statistics */}
+                  {/* Booking Statistics */}
                   <div className="rounded-lg border border-blue-50 bg-white p-5">
                     <h4 className="mb-3 text-sm font-semibold text-gray-900">
-                      Order Statistics
+                      Booking Statistics
                     </h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">

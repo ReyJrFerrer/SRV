@@ -5,7 +5,6 @@ import {
   ClipboardDocumentListIcon,
   TicketIcon,
   ShieldCheckIcon,
-  CurrencyDollarIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/solid";
 
@@ -15,7 +14,6 @@ interface AdminDashboardStatsProps {
     totalPendingValidations: number;
     totalPendingTickets: number;
     totalAdminUsers: number;
-    totalPendingCommission: number;
     totalSettledCommission: number;
   };
   loading?: boolean;
@@ -87,12 +85,6 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       value: formatNumber(stats.totalAdminUsers),
       subtitle: "System administrators",
       icon: ShieldCheckIcon,
-    },
-    {
-      title: "Pending Commission",
-      value: formatCurrency(stats.totalPendingCommission),
-      subtitle: "Awaiting settlement",
-      icon: CurrencyDollarIcon,
     },
     {
       title: "Settled Commission",
