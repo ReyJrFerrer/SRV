@@ -691,7 +691,8 @@ export const useAdmin = (): UseAdminReturn => {
     async (showSuccessToast = false) => {
       updateLoadingState("serviceCategories", true);
       try {
-        const allCategories = await adminServiceCanister.getAllServiceCategories();
+        const allCategories =
+          await adminServiceCanister.getAllServiceCategories();
         setServiceCategories(allCategories);
         if (showSuccessToast) {
           toast.success("Service categories refreshed successfully");

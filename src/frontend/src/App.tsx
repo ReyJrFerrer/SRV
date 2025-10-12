@@ -14,7 +14,7 @@ const LandingPage = () => {
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
   const [showAccountLockedModal, setShowAccountLockedModal] = useState(false);
-  
+
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
       if (isAuthenticated && identity) {
@@ -51,7 +51,7 @@ const LandingPage = () => {
   if (isCheckingProfile) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-        <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-blue-600"></div>
+        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-blue-600"></div>
         <p className="mt-4 text-lg text-gray-700">Loading...</p>
       </div>
     );
@@ -85,9 +85,7 @@ const LandingPage = () => {
 
       {/* Account Locked Modal */}
       {showAccountLockedModal && (
-        <AccountLockedModal
-          onClose={() => setShowAccountLockedModal(false)}
-        />
+        <AccountLockedModal onClose={() => setShowAccountLockedModal(false)} />
       )}
     </main>
   );

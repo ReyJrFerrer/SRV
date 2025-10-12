@@ -325,7 +325,7 @@ export const TicketDetailsPage: React.FC = () => {
               <div className="flex space-x-4">
                 <button
                   onClick={() => navigate("/ticket-inbox")}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   <svg
                     className="mr-2 h-4 w-4"
@@ -425,7 +425,7 @@ export const TicketDetailsPage: React.FC = () => {
                             {formatDate(comment.timestamp)}
                           </span>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap text-gray-700">
+                        <p className="whitespace-pre-wrap text-sm text-gray-700">
                           {comment.content}
                         </p>
                       </div>
@@ -446,7 +446,7 @@ export const TicketDetailsPage: React.FC = () => {
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         rows={3}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                         placeholder="Add a comment..."
                       />
                     </div>
@@ -467,7 +467,7 @@ export const TicketDetailsPage: React.FC = () => {
                       <button
                         onClick={handleAddComment}
                         disabled={!newComment.trim()}
-                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Add Comment
                       </button>
@@ -495,7 +495,7 @@ export const TicketDetailsPage: React.FC = () => {
                     value={ticket.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
                     disabled={updatingStatus}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none disabled:opacity-50"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>

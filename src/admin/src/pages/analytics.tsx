@@ -62,7 +62,13 @@ export const AnalyticsPage: React.FC = () => {
     refreshRemittanceOrders();
     refreshServices();
     refreshServiceCategories();
-  }, [refreshRemittanceStats, refreshRemittanceProviders, refreshRemittanceOrders, refreshServices, refreshServiceCategories]);
+  }, [
+    refreshRemittanceStats,
+    refreshRemittanceProviders,
+    refreshRemittanceOrders,
+    refreshServices,
+    refreshServiceCategories,
+  ]);
 
   useEffect(() => {
     if (selectedProviderId) {
@@ -124,17 +130,17 @@ export const AnalyticsPage: React.FC = () => {
     console.log("Services:", services);
     console.log("Services Length:", services.length);
     console.log("Service Categories:", serviceCategories);
-    
+
     const categoryCounts: Record<string, number> = {};
-    
+
     // Create a map of category IDs to names from serviceCategories
     const categoryNameMap: Record<string, string> = {};
     serviceCategories.forEach((category: any) => {
       categoryNameMap[category.id] = category.name;
     });
-    
+
     console.log("Category Name Map:", categoryNameMap);
-    
+
     // Count services by category from actual services
     services.forEach((service: any) => {
       const categoryId = service.category?.id || service.category || "Unknown";
@@ -162,12 +168,12 @@ export const AnalyticsPage: React.FC = () => {
 
     const result = Object.entries(categoryCounts)
       .map(([name, value], index) => ({
-      name,
-      value,
+        name,
+        value,
         color: categoryColors[index % categoryColors.length],
       }))
       .sort((a, b) => b.value - a.value); // Sort by count descending
-    
+
     console.log("Service Category Data:", result);
     return result;
   }, [services, serviceCategories]);
@@ -193,14 +199,16 @@ export const AnalyticsPage: React.FC = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
-                  <ArrowPathIcon className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <ArrowPathIcon
+                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                   {isRefreshing ? "Refreshing..." : "Refresh"}
                 </button>
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -224,14 +232,16 @@ export const AnalyticsPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              <ArrowPathIcon className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              <ArrowPathIcon
+                className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -503,63 +513,73 @@ export const AnalyticsPage: React.FC = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
+                        <Tooltip
                           formatter={(value: number, name: string) => [
                             `${value} services`,
-                            name
+                            name,
                           ]}
                           contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                            fontSize: '14px',
+                            backgroundColor: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                            fontSize: "14px",
                           }}
                           labelStyle={{
-                            fontWeight: '600',
-                            color: '#374151',
+                            fontWeight: "600",
+                            color: "#374151",
                           }}
                         />
-                        <Legend 
-                          verticalAlign="bottom" 
+                        <Legend
+                          verticalAlign="bottom"
                           height={36}
                           iconType="circle"
                           wrapperStyle={{
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            paddingTop: '20px',
+                            fontSize: "13px",
+                            fontWeight: "500",
+                            paddingTop: "20px",
                           }}
                           iconSize={12}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  
+
                   {/* Chart Summary */}
                   <div className="mt-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
                     <div className="flex items-center space-x-6">
                       <div className="text-center">
-                        <p className="text-sm font-medium text-gray-500">Total Services</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Total Services
+                        </p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {serviceCategoryData.reduce((sum, item) => sum + item.value, 0)}
+                          {serviceCategoryData.reduce(
+                            (sum, item) => sum + item.value,
+                            0,
+                          )}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-medium text-gray-500">Categories</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Categories
+                        </p>
                         <p className="text-lg font-semibold text-gray-900">
                           {serviceCategoryData.length}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-gray-500">Top Category</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Top Category
+                      </p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {serviceCategoryData.length > 0 ? serviceCategoryData[0].name : "N/A"}
+                        {serviceCategoryData.length > 0
+                          ? serviceCategoryData[0].name
+                          : "N/A"}
                       </p>
                     </div>
                   </div>
                 </>
-              
               )}
             </div>
           </div>
@@ -648,7 +668,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close"
               >
                 <XMarkIcon className="h-5 w-5" />
@@ -768,7 +788,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
               >
                 Close
               </button>

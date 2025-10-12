@@ -207,7 +207,7 @@ const ServiceReviewsPage: React.FC = () => {
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
         <p className="ml-4 text-lg text-blue-700">Loading reviews...</p>
       </div>
     );
@@ -405,7 +405,7 @@ const ServiceReviewsPage: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="rounded-md border border-blue-200 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md border border-blue-200 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
@@ -424,7 +424,7 @@ const ServiceReviewsPage: React.FC = () => {
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
-                className="rounded-md border border-blue-200 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md border border-blue-200 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Ratings</option>
                 <option value="5">5 Stars</option>

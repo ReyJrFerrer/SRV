@@ -2197,7 +2197,7 @@ export const adminServiceCanister = {
 
       // Use createCanisterActor helper for consistency with other methods
       const serviceActor = await createCanisterActor("service");
-      
+
       const services = await serviceActor.getAllServices();
       return services.map(convertCanisterService);
     } catch (error) {
@@ -2221,7 +2221,7 @@ export const adminServiceCanister = {
 
       // Use createCanisterActor helper for consistency with other methods
       const serviceActor = await createCanisterActor("service");
-      
+
       return await serviceActor.getAllCategories();
     } catch (error) {
       // Silent error handling - just log and return empty array
