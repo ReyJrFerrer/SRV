@@ -369,6 +369,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     price: data.data?.price,
     location: data.data?.location ? "Present" : "Missing",
     requestedDate: data.data?.requestedDate,
+    scheduledDate: data.data?.scheduledDate,
     paymentMethod: data.data?.paymentMethod,
     servicePackageIds: data.data?.servicePackageIds,
     notes: data.data?.notes,
@@ -383,6 +384,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     price,
     location,
     requestedDate,
+    scheduledDate,
     servicePackageIds = [],
     notes,
     amountToPay,
@@ -401,7 +403,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
   }
 
   // Validation (mirror Motoko validation logic)
-  if (!serviceId || !providerId || !price || !location || !requestedDate || !paymentMethod) {
+  if (!serviceId || !providerId || !price || !location || !requestedDate ||
+    !paymentMethod || !scheduledDate) {
     console.error("❌ [createBooking] Validation failed: Missing required parameters.");
     throw new functions.https.HttpsError(
       "invalid-argument",
@@ -501,7 +504,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       servicePackageIds,
       status: "Requested",
       requestedDate,
-      scheduledDate: null,
+      scheduledDate,
       startedDate: null,
       completedDate: null,
       price: finalPrice,

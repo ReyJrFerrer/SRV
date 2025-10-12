@@ -147,6 +147,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const status = booking.status;
   const notes = booking.notes;
 
+  console.log("From Provider Booking Item Card", booking);
+
   // --- Date formatting helper ---
   const formatDate = (date: Date | string | number) => {
     try {
@@ -208,8 +210,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       }
     }
 
-    const requestedDate = new Date(booking.requestedDate);
-    const success = await acceptBookingById(booking.id, requestedDate);
+    const scheduledDate = new Date(booking.scheduledDate);
+    const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
       navigate(`../../provider/booking/${booking.id}`);
     }
@@ -402,6 +404,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     {formatDate(booking.requestedDate)}
+                    and 
+                    {formatDate(booking.scheduledDate || "hello")}
                   </p>
 
                   <p className="flex items-center">
@@ -601,6 +605,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     {formatDate(booking.requestedDate)}
+                                        and 
+                   {formatDate(booking.scheduledDate || "hello")}
                   </p>
 
                   <p className="flex items-center">

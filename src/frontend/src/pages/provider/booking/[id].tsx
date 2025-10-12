@@ -387,8 +387,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
     }
-    const requestedDate = new Date(specificBooking.requestedDate);
-    const success = await acceptBookingById(specificBooking.id,requestedDate);
+    const scheduledDate = new Date(specificBooking.scheduledDate);
+    const success = await acceptBookingById(specificBooking.id, scheduledDate);
     if (success) {
       await refreshBookings();
       const updatedBooking = bookings.find(
@@ -992,7 +992,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   {formatDate(
                     specificBooking?.requestedDate ||
                       specificBooking?.createdAt,
-                  )}
+                  )} 
+
+                  and {formatDate(
+                    specificBooking?.scheduledDate)}
                 </span>
               </span>
             </div>
