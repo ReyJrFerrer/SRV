@@ -2255,3 +2255,120 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
     throw error;
   }
 });
+
+/**
+ * Send service reminders for bookings that are due in 30 minutes
+ * Scheduled function that runs every 10 minutes
+ */
+exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
+  console.log("🚀 [sendServiceReminders] scheduled function running...");
+  try {
+    const now = new Date();
+    // Look for bookings that are 25-35 minutes away (to catch the 30-minute window)
+    const reminderWindowStart = new Date(now.getTime() + 25 * 60 * 1000);
+    const reminderWindowEnd = new Date(now.getTime() + 35 * 60 * 1000);
+
+    console.log(`📝 [sendServiceReminders] Looking for bookings between ` +
+      `${reminderWindowStart.toISOString()} and ${reminderWindowEnd.toISOString()}...`);
+
+    // Find all "Accepted" bookings within the 30-minute window that haven't had reminders sent
+    const upcomingBookingsQuery = await db.collection("bookings")
+      .where("status", "==", "Accepted")
+      .where("scheduledDate", ">=", reminderWindowStart.toISOString())
+      .where("scheduledDate", "<=", reminderWindowEnd.toISOString())
+      .get();
+
+    if (upcomingBookingsQuery.empty) {
+      console.log("✅ [sendServiceReminders] No upcoming bookings found in reminder window.");
+      return {success: true, count: 0};
+    }
+
+    const batch = db.batch();
+    const notificationPromises = [];
+    let reminderCount = 0;
+
+    for (const doc of upcomingBookingsQuery.docs) {
+      const booking = doc.data();
+
+      // Skip if reminder already sent
+      if (booking.reminderSent === true) {
+        console.log(`⏭️ [sendServiceReminders] Reminder already sent for booking ${booking.id}`);
+        continue;
+      }
+
+      console.log(`📝 [sendServiceReminders] Sending reminder for booking ${booking.id}...`);
+
+      // Get service name for better notification message
+      let serviceName = "your service";
+      try {
+        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+        if (serviceDoc.exists) {
+          serviceName = serviceDoc.data().name || serviceDoc.data().serviceName || serviceName;
+        }
+      } catch (error) {
+        console.error(`Error fetching service name for ${booking.serviceId}:`, error);
+      }
+
+      // Mark booking as reminder sent
+      batch.update(doc.ref, {
+        reminderSent: true,
+        reminderSentAt: now.toISOString(),
+      });
+
+      // Calculate exact minutes until booking
+      const scheduledTime = new Date(booking.scheduledDate);
+      const minutesUntil = Math.round((scheduledTime.getTime() - now.getTime()) / (60 * 1000));
+
+      // Send reminder to the client
+      const clientMessage = `Reminder: Your ${serviceName} booking is scheduled to start ` +
+        `in approximately ${minutesUntil} minutes. Please be ready!`;
+      notificationPromises.push(
+        createNotification(
+          booking.clientId,
+          USER_TYPES.CLIENT,
+          NOTIFICATION_TYPES.SERVICE_REMINDER,
+          "Service Reminder",
+          clientMessage,
+          booking.id,
+          {
+            serviceId: booking.serviceId,
+            providerId: booking.providerId,
+            scheduledDate: booking.scheduledDate,
+            minutesUntil,
+          },
+        ),
+      );
+
+      // Send reminder to the provider
+      const providerMessage = `Reminder: You have a ${serviceName} booking scheduled to ` +
+        `start in approximately ${minutesUntil} minutes. Please prepare to start the service!`;
+      notificationPromises.push(
+        createNotification(
+          booking.providerId,
+          USER_TYPES.PROVIDER,
+          NOTIFICATION_TYPES.SERVICE_REMINDER,
+          "Service Reminder",
+          providerMessage,
+          booking.id,
+          {
+            serviceId: booking.serviceId,
+            clientId: booking.clientId,
+            scheduledDate: booking.scheduledDate,
+            minutesUntil,
+          },
+        ),
+      );
+
+      reminderCount++;
+    }
+
+    await batch.commit();
+    await Promise.allSettled(notificationPromises);
+
+    console.log(`✅ [sendServiceReminders] Sent reminders for ${reminderCount} bookings.`);
+    return {success: true, count: reminderCount};
+  } catch (error) {
+    console.error("Error sending service reminders:", error);
+    throw error;
+  }
+});

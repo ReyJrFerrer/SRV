@@ -98,6 +98,12 @@ function generateNotificationHref(notificationType, userType, bookingId) {
     // Redirect to services page to find new bookings
     return isProvider ? `/provider/bookings` : `/client/home`;
 
+  case NOTIFICATION_TYPES.SERVICE_REMINDER:
+    // Redirect to active service or booking details
+    return isProvider ?
+      `/provider/active-service/${bookingId}` :
+      `/client/booking/${bookingId}`;
+
   default:
     return isProvider ?
       `/provider/booking/${bookingId}` :
