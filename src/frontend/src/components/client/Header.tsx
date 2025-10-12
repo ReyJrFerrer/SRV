@@ -1,12 +1,11 @@
 // --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
-import { useJsApiLoader } from "@react-google-maps/api"; // Google Maps loader for reverse geocoding
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useLocationStore } from "../../store/locationStore";
 
 // --- Props ---
@@ -14,10 +13,6 @@ export interface HeaderProps {
   className?: string;
 }
 
-// (Leaflet removed in favor of Google Maps for consistency)
-
-// Define Google Maps libraries (places for potential future autocomplete)
-const gmapLibraries: "places"[] = ["places"];
 // Cooldown config: skip geolocation attempts if user denied within this window (ms)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
@@ -71,6 +66,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
   >("idle");
 
+  // --- New: State to track if Google Maps API script has loaded ---
+  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+
   // Pre-check: if user previously denied recently, set status immediately
   useEffect(() => {
     try {
@@ -90,18 +88,20 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // Load Google Maps script (will use env key if provided)
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-  const { isLoaded: mapsReady } = useJsApiLoader({
-    id: "header-gmap-script",
-    googleMapsApiKey: mapsApiKey,
-    libraries: gmapLibraries,
-  });
+  // --- API Key Definition ---
+  // Root APIProvider supplies the key; keep placeholder only if needed elsewhere
 
   // Reverse geocode via Google on mount (independent from internal store)
   useEffect(() => {
-    if (!mapsReady) return; // wait for script
+    // The new library loads the script via APIProvider, so we check for the google object
+    const isApiReady = !!(window as any).google?.maps;
+    if (!isApiReady) {
+      // If the API isn't ready, the APIProvider will handle loading it.
+      // We can add a listener or simply rely on re-renders.
+      // For simplicity, this effect will re-run when other dependencies change.
+      return;
+    }
+    setMapsApiLoaded(true); // Mark API as loaded
     if (gmapsStatus !== "idle") return; // skip if preset (e.g., denied cooldown)
     if (!("geolocation" in navigator)) {
       setGmapsStatus("unsupported");
@@ -152,7 +152,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [mapsReady, gmapsStatus]);
+  }, [gmapsStatus]); // Removed mapsReady dependency
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -257,15 +257,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             <span className="text-xl font-bold text-gray-700">&times;</span>
           </button>
           <div className="flex-1">
-            {mapsReady ? (
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "100%" }}
-                center={center}
-                zoom={16}
-                options={{ disableDefaultUI: false, mapTypeControl: false }}
+            {mapsApiLoaded ? (
+              <Map
+                defaultCenter={center}
+                defaultZoom={16}
+                mapId="6922634ff75ae05ac38cc473" // IMPORTANT: Add your Map ID here
+                style={{ width: "100%", height: "100%" }}
+                disableDefaultUI={false}
+                mapTypeControl={false}
               >
-                <Marker position={center} />
-              </GoogleMap>
+                <AdvancedMarker position={center} />
+              </Map>
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-gray-500">
                 Loading map...

@@ -1,10 +1,5 @@
-import React, { useState, useCallback, useRef } from "react";
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Marker,
-  Autocomplete,
-} from "@react-google-maps/api";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 const containerStyle: React.CSSProperties = {
   width: "100%",
@@ -28,38 +23,35 @@ interface StructuredLocation {
 interface LocationMapPickerProps {
   value?: StructuredLocation | null;
   onChange: (loc: StructuredLocation) => void;
-  apiKey?: string; // optional override
   label?: string;
   highlight?: boolean; // highlight if validation failed
   persistKey?: string; // localStorage key to persist last selection
 }
 
-const libraries: "places"[] = ["places"];
+// removed explicit libraries; APIProvider handles script loading
 
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
   onChange,
-  apiKey,
   label = "Map Location",
   highlight = false,
   persistKey,
 }) => {
-  // Attempt to load via shared loader; if already present we'll rely on global
-  let loaderKey = apiKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-  const { isLoaded } = useJsApiLoader({
-    id: "header-gmap-script",
-    googleMapsApiKey: loaderKey,
-    libraries,
-  });
-
-  const effectiveLoaded = isLoaded || !!(window as any).google?.maps;
-
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
   }>(value ? { lat: value.lat, lng: value.lng } : defaultCenter);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null); // Use a ref for the map instance
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const placeListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  // New Autocomplete Element (2025) support
+  const placeElRef = useRef<any>(null);
+  const placeElContainerRef = useRef<HTMLDivElement | null>(null);
+  const placeElHandlerRef = useRef<((e: any) => void) | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(
+    null,
+  );
+  const [useNewAutocomplete, setUseNewAutocomplete] = useState<boolean>(false);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -169,25 +161,25 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   );
 
   const onMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      setInternalPosition(pos);
-      reverseGeocodeAndUpdate(pos);
+    (e: any) => {
+      // @vis.gl/react-google-maps wraps the native event; latLng is under e.detail
+      const lat = e?.detail?.latLng?.lat?.();
+      const lng = e?.detail?.latLng?.lng?.();
+      if (typeof lat === "number" && typeof lng === "number") {
+        const pos = { lat, lng };
+        setInternalPosition(pos);
+        reverseGeocodeAndUpdate(pos);
+      }
     },
     [reverseGeocodeAndUpdate],
   );
 
-  const onLoad = useCallback(
-    (m: google.maps.Map) => {
-      setMap(m);
-      if (value?.lat && value?.lng) {
-        m.panTo({ lat: value.lat, lng: value.lng });
-        m.setZoom(15);
-      }
-    },
-    [value],
-  );
+  useEffect(() => {
+    if (mapRef.current && value?.lat && value?.lng) {
+      mapRef.current.panTo({ lat: value.lat, lng: value.lng });
+      mapRef.current.setZoom(15);
+    }
+  }, [value, mapRef]);
 
   const onPlaceChanged = () => {
     if (autocompleteRef.current) {
@@ -235,11 +227,258 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         if (inputRef.current) inputRef.current.value = structured.address;
         onChange(structured);
         persistLocation(structured);
-        map?.panTo({ lat: structured.lat, lng: structured.lng });
-        map?.setZoom(17);
+        mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
+        mapRef.current?.setZoom(17);
       }
     }
   };
+
+  // Handler for new PlaceAutocompleteElement selections
+  const onPlaceElementChanged = useCallback(() => {
+    const g: any = (window as any).google;
+    const el = placeElRef.current;
+    if (!g?.maps?.places || !el) return;
+    // Try to get place directly; fallback to value.place/placeId
+    let place: any = null;
+    try {
+      if (typeof el.getPlace === "function") {
+        place = el.getPlace();
+      }
+      if (!place && el.value) {
+        place = el.value?.place || el.value;
+      }
+    } catch {}
+
+    const processPlace = (p: any) => {
+      if (!p || !p.geometry || !p.geometry.location) return;
+      const rawName = p.name || "";
+      const getAddressComponent = (type: string): string => {
+        if (!p.address_components) return "";
+        const comp = p.address_components.find((c: any) =>
+          c.types.includes(type),
+        );
+        return comp ? comp.long_name : "";
+      };
+      const route = getAddressComponent("route");
+      const barangay =
+        getAddressComponent("sublocality_level_1") ||
+        getAddressComponent("sublocality") ||
+        getAddressComponent("neighborhood");
+      const city =
+        getAddressComponent("locality") ||
+        getAddressComponent("administrative_area_level_2");
+      const province = getAddressComponent("administrative_area_level_1");
+
+      let displayAddress = composeFormattedWithPlace(
+        rawName,
+        p.formatted_address,
+      );
+      if (!displayAddress) {
+        displayAddress = `${p.geometry.location.lat().toFixed(5)}, ${p.geometry.location
+          .lng()
+          .toFixed(5)}`;
+      }
+      const structured: StructuredLocation = {
+        lat: p.geometry.location.lat(),
+        lng: p.geometry.location.lng(),
+        address: displayAddress,
+        rawName: rawName || undefined,
+        route: route || undefined,
+        barangay: barangay || undefined,
+        city: city || undefined,
+        province: province || undefined,
+      };
+      setInternalPosition({ lat: structured.lat, lng: structured.lng });
+      if (inputRef.current && !useNewAutocomplete)
+        inputRef.current.value = structured.address;
+      onChange(structured);
+      persistLocation(structured);
+      mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
+      mapRef.current?.setZoom(17);
+    };
+
+    if (place && place.geometry && place.geometry.location) {
+      processPlace(place);
+      return;
+    }
+    // If we only have a place_id (common with prediction), fetch details
+    const placeId =
+      place?.place_id || el.placeId || el.value?.placeId || el.value?.place_id;
+    if (placeId) {
+      try {
+        if (!placesServiceRef.current) {
+          placesServiceRef.current = new g.maps.places.PlacesService(
+            document.createElement("div"),
+          );
+        }
+        if (!placesServiceRef.current) return;
+        placesServiceRef.current.getDetails(
+          {
+            placeId,
+            fields: [
+              "geometry",
+              "name",
+              "formatted_address",
+              "address_components",
+            ],
+          },
+          (res: any, status: any) => {
+            if (status === g.maps.places.PlacesServiceStatus.OK && res) {
+              processPlace(res);
+            }
+          },
+        );
+      } catch {}
+    }
+  }, [onChange, persistLocation, useNewAutocomplete]);
+
+  // Initialize Places Autocomplete, preferring the new PlaceAutocompleteElement when available
+  useEffect(() => {
+    let intervalId: number | null = null;
+    const init = () => {
+      const g = (window as any).google;
+      if (!g?.maps?.places) return false;
+      // Try new element first
+      try {
+        if (
+          g.maps.places.PlaceAutocompleteElement &&
+          placeElContainerRef.current
+        ) {
+          // Create and attach the new element
+          const el = new g.maps.places.PlaceAutocompleteElement();
+          placeElRef.current = el;
+          // Optional: bias types to geocode-like results
+          try {
+            el.types = ["geocode"]; // best-effort; ignored if not supported
+          } catch {}
+          // Region restriction (Philippines) and initial bias around current position
+          try {
+            // New element uses 'countries' for restriction
+            (el as any).countries = ["ph"]; // ISO 3166-1 alpha-2
+          } catch {}
+          try {
+            // Bias searches around the current internalPosition (~80km radius)
+            (el as any).locationBias = {
+              center: { lat: internalPosition.lat, lng: internalPosition.lng },
+              radius: 5500,
+            } as any;
+          } catch {}
+          // Wire selection listener
+          const handler = () => onPlaceElementChanged();
+          placeElHandlerRef.current = handler;
+          // Some builds dispatch 'place_changed', others 'gmpxplacechanged'; listen to both
+          el.addEventListener?.("place_changed", handler);
+          el.addEventListener?.("gmpxplacechanged", handler);
+          // Mount element into container
+          placeElContainerRef.current.innerHTML = "";
+          placeElContainerRef.current.appendChild(el);
+          setUseNewAutocomplete(true);
+          return true;
+        }
+      } catch {}
+
+      // Fallback: legacy Autocomplete bound to our input
+      if (autocompleteRef.current || !inputRef.current) return false;
+      try {
+        autocompleteRef.current = new g.maps.places.Autocomplete(
+          inputRef.current,
+          {
+            fields: [
+              "geometry",
+              "name",
+              "formatted_address",
+              "address_components",
+            ],
+            types: ["geocode"],
+            componentRestrictions: { country: ["ph"] },
+            // You can add componentRestrictions here if needed
+          },
+        );
+        // Listen for selection changes
+        if (autocompleteRef.current) {
+          placeListenerRef.current = autocompleteRef.current.addListener(
+            "place_changed",
+            onPlaceChanged,
+          );
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    // Try to initialize immediately; if API not yet ready, poll briefly
+    if (!init()) {
+      intervalId = window.setInterval(() => {
+        if (init()) {
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
+      }, 200);
+    }
+    return () => {
+      // Cleanup legacy autocomplete listener
+      if (placeListenerRef.current) {
+        placeListenerRef.current.remove();
+        placeListenerRef.current = null;
+      }
+      // Cleanup new element listeners and DOM
+      if (placeElRef.current && placeElHandlerRef.current) {
+        try {
+          placeElRef.current.removeEventListener?.(
+            "place_changed",
+            placeElHandlerRef.current,
+          );
+          placeElRef.current.removeEventListener?.(
+            "gmpxplacechanged",
+            placeElHandlerRef.current,
+          );
+        } catch {}
+      }
+      if (placeElContainerRef.current) {
+        try {
+          placeElContainerRef.current.innerHTML = "";
+        } catch {}
+      }
+    };
+  }, [onPlaceChanged, onPlaceElementChanged]);
+
+  // Update bias/restrictions when the internal position changes
+  useEffect(() => {
+    const g: any = (window as any).google;
+    if (!g?.maps?.places) return;
+    try {
+      if (useNewAutocomplete && placeElRef.current) {
+        // Bias around current internalPosition
+        (placeElRef.current as any).locationBias = {
+          center: { lat: internalPosition.lat, lng: internalPosition.lng },
+          radius: 80000,
+        } as any;
+        // Ensure country restriction remains applied
+        try {
+          (placeElRef.current as any).countries = ["ph"];
+        } catch {}
+      } else if (autocompleteRef.current) {
+        // Legacy: bias via bounds (not strict)
+        const delta = 0.4; // ~44km latitude; longitude varies with lat
+        const sw = new g.maps.LatLng(
+          internalPosition.lat - delta,
+          internalPosition.lng - delta,
+        );
+        const ne = new g.maps.LatLng(
+          internalPosition.lat + delta,
+          internalPosition.lng + delta,
+        );
+        const bounds = new g.maps.LatLngBounds(sw, ne);
+        autocompleteRef.current.setBounds(bounds);
+        autocompleteRef.current.setOptions({
+          strictBounds: false,
+          componentRestrictions: { country: ["ph"] },
+        } as any);
+      }
+    } catch {}
+  }, [internalPosition, useNewAutocomplete]);
 
   // Load persisted location if available and no value provided
   React.useEffect(() => {
@@ -257,42 +496,48 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   }, [value, persistKey, onChange]);
 
-  if (!effectiveLoaded)
-    return <div className="text-sm text-gray-500">Loading map...</div>;
-
   return (
     <div className="space-y-2">
       <label className="text-xs font-medium text-gray-600">{label}</label>
-      <Autocomplete
-        onLoad={(ac) => (autocompleteRef.current = ac)}
-        onPlaceChanged={onPlaceChanged}
-      >
+      {useNewAutocomplete ? (
+        <div
+          ref={placeElContainerRef}
+          className={`w-full rounded-lg border p-2 text-sm ${
+            highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"
+          }`}
+          // The new element will be injected here
+        />
+      ) : (
         <input
           ref={inputRef}
           type="text"
           placeholder="Search location or drag the pin"
-          className={`w-full rounded-lg border p-2 text-sm focus:border-blue-500 focus:outline-none ${highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"}`}
+          className={`w-full rounded-lg border p-2 text-sm focus:border-blue-500 focus:outline-none ${
+            highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"
+          }`}
         />
-      </Autocomplete>
+      )}
       <div
         className={`rounded-xl ${highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border border-gray-200"}`}
         style={{ overflow: "hidden" }}
       >
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          /* center will follow internalPosition state */
+        <Map
+          style={containerStyle}
+          defaultCenter={defaultCenter}
+          defaultZoom={12}
           center={internalPosition}
-          zoom={12}
-          onLoad={onLoad}
+          onCameraChanged={(ev) => (mapRef.current = ev.map)}
           onClick={onMapClick}
-          options={{ disableDefaultUI: true, zoomControl: true }}
+          disableDefaultUI={true}
+          zoomControl={true}
+          mapId={"6922634ff75ae05ac38cc473"}
         >
-          <Marker
+          <AdvancedMarker
             position={internalPosition}
-            draggable
+            draggable={true}
             onDragEnd={(e) => {
-              const lat = e.latLng?.lat();
-              const lng = e.latLng?.lng();
+              const lat = (e as any)?.detail?.latLng?.lat?.();
+              const lng = (e as any)?.detail?.latLng?.lng?.();
               if (lat && lng) {
                 const pos = { lat, lng };
                 setInternalPosition(pos);
@@ -300,7 +545,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               }
             }}
           />
-        </GoogleMap>
+        </Map>
       </div>
 
       <p className="text-[10px] text-gray-400">
