@@ -1269,7 +1269,7 @@ const ClientBookingPageComponent: React.FC = () => {
                 className={`glass-card rounded-2xl border bg-white p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
-                  <span className="bg-blue -400 mr-2 inline-block h-6 w-2 rounded-full"></span>
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
                 {/* Toggle buttons */}

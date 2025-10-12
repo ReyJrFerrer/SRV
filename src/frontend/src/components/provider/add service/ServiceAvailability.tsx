@@ -40,7 +40,10 @@ const allDays: DayOfWeek[] = [
 const hourOptions = Array.from({ length: 12 }, (_, i) =>
   String(i + 1).padStart(2, "0"),
 );
-const minuteOptions = ["00", "15", "30", "45"];
+
+const minuteOptions = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
 const periodOptions: ("AM" | "PM")[] = ["AM", "PM"];
 
 const toDate = (hour: string, minute: string, period: "AM" | "PM"): Date => {
@@ -192,7 +195,7 @@ const TimeSlotInput: React.FC<{
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="mt-3 self-center self-end rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:mt-0 lg:ml-auto"
+        className="mt-3 self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:mt-0 lg:ml-auto"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />

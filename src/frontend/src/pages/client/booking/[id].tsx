@@ -512,125 +512,129 @@ const BookingDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-6">
+      <header className="sticky top-0 z-10 bg-white shadow-sm">
+        <div className="mr-6 flex max-w-4xl flex-row items-center justify-start gap-2 px-4 py-3">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="truncate text-lg font-semibold text-slate-800">
+          <h1 className="truncate text-2xl font-extrabold tracking-tight text-black">
             Booking Details
           </h1>
         </div>
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-5">
-          {/* Section 1: Provider Details */}
-          <div className="h-fit rounded-3xl border border-blue-100 bg-white p-7 shadow-2xl backdrop-blur-md lg:col-span-2">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-              <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
-            </h3>
-            <div className="flex items-center gap-5">
-              <div className="flex-shrink-0">
-                <img
-                  src={userImageUrl || "/default-provider.svg"}
-                  alt={providerProfile?.name || "Provider"}
-                  className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-lg font-bold text-gray-900">
-                  {providerProfile?.name || "N/A"}
-                </p>
-                <ReputationScore providerId={providerProfile?.id || ""} />
-                <p className="mt-1 flex items-center text-sm text-gray-500">
-                  <PhoneIcon className="mr-1.5 h-4 w-4" />
-                  {providerProfile?.phone || "No contact number"}
-                </p>
-                <div className="mt-2 flex flex-col items-start gap-1">
-                  <div className="flex items-center gap-2">
-                    {loadingStats ? (
-                      <p className="text-sm text-gray-400">
-                        Loading reviews...
-                      </p>
-                    ) : averageRating != null && reviewCount != null ? (
-                      <>
-                        <div className="flex items-center text-sm font-bold text-yellow-500">
-                          <StarIcon className="mr-1 h-4 w-4" />
-                          <span>{averageRating.toFixed(1)}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          ({reviewCount}{" "}
-                          {reviewCount === 1 ? "review" : "reviews"})
-                        </span>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-400">No reviews yet</p>
-                    )}
+        {/* Combined Provider and Service Details Card */}
+        <div className="relative mt-6 rounded-3xl border border-blue-100 bg-white/90 p-8 pt-4 shadow-2xl backdrop-blur-md">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {/* Left Column: Provider Details */}
+            <div className="border-r-0 border-gray-200 pr-0 lg:border-r lg:pr-8">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+                <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
+              </h3>
+              <div className="flex items-center gap-5">
+                <div className="flex-shrink-0">
+                  <img
+                    src={userImageUrl || "/default-provider.svg"}
+                    alt={providerProfile?.name || "Provider"}
+                    className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-gray-900">
+                    {providerProfile?.name || "N/A"}
+                  </p>
+                  <ReputationScore providerId={providerProfile?.id || ""} />
+                  <p className="mt-1 flex items-center text-sm text-gray-500">
+                    <PhoneIcon className="mr-1.5 h-4 w-4" />
+                    {providerProfile?.phone || "No contact number"}
+                  </p>
+                  <div className="mt-2 flex flex-col items-start gap-1">
+                    <div className="flex items-center gap-2">
+                      {loadingStats ? (
+                        <p className="text-sm text-gray-400">
+                          Loading reviews...
+                        </p>
+                      ) : averageRating != null && reviewCount != null ? (
+                        <>
+                          <div className="flex items-center text-sm font-bold text-yellow-500">
+                            <StarIcon className="mr-1 h-4 w-4" />
+                            <span>{averageRating.toFixed(1)}</span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            ({reviewCount}{" "}
+                            {reviewCount === 1 ? "review" : "reviews"})
+                          </span>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-400">No reviews yet</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Section 2: Service Details */}
-          <div className="h-fit rounded-3xl border border-yellow-200 bg-white p-7 shadow-2xl lg:col-span-3">
-            <div className="flex items-start justify-between">
+            {/* Right Column: Service Details */}
+            <div>
               <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
                 <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
                 Details
               </h3>
-              <span
-                className={`rounded-full px-4 py-2 text-base font-bold shadow-lg ${getStatusPillStyle(status || "")}`}
-              >
-                {status?.replace("_", " ") || "Unknown"}
-              </span>
-            </div>
-            <div className="space-y-3 text-base">
-              <div className="flex items-start">
-                <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Package:</strong> {packageName}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Scheduled:</strong>{" "}
-                  {formatDate(requestedDate || createdAt)}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Location:</strong>{" "}
-                  {(formattedLocation || "Not specified")
-                    .split(" ")
-                    .map(
-                      (word) =>
-                        word.charAt(0).toUpperCase() +
-                        word.slice(1).toLowerCase(),
-                    )
-                    .join(" ")}
-                </span>
-              </div>
-              {price != null && (
-                <div className="flex items-start">
-                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
+              <div className="space-y-3 text-base">
+                <div className="align-items-center flex items-start">
+                  <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                   <span>
-                    <strong>Payment:</strong> ₱
-                    {(price + commissionValidation.estimatedCommission).toFixed(
-                      2,
-                    )}{" "}
-                    (Cash)
+                    <strong>Package:</strong> {packageName}
                   </span>
                 </div>
-              )}
+                <div className="align-items-center flex items-start">
+                  <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                  <span>
+                    <strong>Scheduled:</strong>{" "}
+                    {formatDate(requestedDate || createdAt)}
+                  </span>
+                </div>
+                <div className="align-items-center flex items-start">
+                  <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                  <span>
+                    <strong>Location:</strong>{" "}
+                    {(formattedLocation || "Not specified")
+                      .split(" ")
+                      .map(
+                        (word) =>
+                          word.charAt(0).toUpperCase() +
+                          word.slice(1).toLowerCase(),
+                      )
+                      .join(" ")}
+                  </span>
+                </div>
+                {price != null && (
+                  <div className="align-items-center flex items-start">
+                    <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                    <span>
+                      <strong>Payment:</strong> ₱
+                      {(
+                        price + commissionValidation.estimatedCommission
+                      ).toFixed(2)}{" "}
+                      (Cash)
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Status pill positioned at top-right of the card */}
+          <span
+            className={`absolute top-4 right-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
+            aria-label="Booking status"
+          >
+            {status?.replace("_", " ") || "Unknown"}
+          </span>
         </div>
 
         {/* Section 3: Progress Tracker */}
