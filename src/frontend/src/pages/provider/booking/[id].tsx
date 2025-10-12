@@ -992,10 +992,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   {formatDate(
                     specificBooking?.requestedDate ||
                       specificBooking?.createdAt,
-                  )} 
-
-                  and {formatDate(
-                    specificBooking?.scheduledDate)}
+                  )}
+                  and {formatDate(specificBooking?.scheduledDate)}
                 </span>
               </span>
             </div>

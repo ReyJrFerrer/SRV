@@ -916,7 +916,7 @@ const ClientBookingPageComponent: React.FC = () => {
         setIsSubmitting(false);
         return;
       }
-      
+
       const [endHour, endMinute] = endTimeStr.split(":").map(Number);
       if (isNaN(endHour) || isNaN(endMinute)) {
         setFormError("Invalid time slot format.");
@@ -934,7 +934,7 @@ const ClientBookingPageComponent: React.FC = () => {
           endHour,
           endMinute,
           0,
-          0
+          0,
         );
       } else if (bookingOption === "scheduled" && selectedDate) {
         finalScheduledDate = new Date(
@@ -944,7 +944,7 @@ const ClientBookingPageComponent: React.FC = () => {
           endHour,
           endMinute,
           0,
-          0
+          0,
         );
       } else {
         setFormError("Please select a date for scheduled booking.");

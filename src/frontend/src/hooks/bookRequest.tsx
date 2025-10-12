@@ -333,8 +333,10 @@ export const useBookRequest = (): UseBookRequestReturn => {
         const [endHour, endMinute] = endTimeStr.split(":").map(Number);
 
         if (
-          isNaN(startHour) || isNaN(startMinute) || 
-          isNaN(endHour) || isNaN(endMinute)
+          isNaN(startHour) ||
+          isNaN(startMinute) ||
+          isNaN(endHour) ||
+          isNaN(endMinute)
         ) {
           throw new Error("Invalid time format");
         }
@@ -347,14 +349,20 @@ export const useBookRequest = (): UseBookRequestReturn => {
             today.getFullYear(),
             today.getMonth(),
             today.getDate(),
-            0, 0, 0, 0
+            0,
+            0,
+            0,
+            0,
           );
         } else {
           baseDate = new Date(
             bookingData.scheduledDate.getFullYear(),
             bookingData.scheduledDate.getMonth(),
             bookingData.scheduledDate.getDate(),
-            0, 0, 0, 0
+            0,
+            0,
+            0,
+            0,
           );
         }
 
@@ -443,7 +451,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
     if (!bookingData.scheduledDate) {
       errors.push("Scheduled date is required");
     }
-    
+
     if (!bookingData.scheduledTime) {
       errors.push("Scheduled time is required");
     }

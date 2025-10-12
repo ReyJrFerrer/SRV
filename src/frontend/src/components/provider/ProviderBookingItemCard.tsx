@@ -404,7 +404,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     {formatDate(booking.requestedDate)}
-                    and 
+                    and
                     {formatDate(booking.scheduledDate || "hello")}
                   </p>
 
@@ -605,8 +605,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     {formatDate(booking.requestedDate)}
-                                        and 
-                   {formatDate(booking.scheduledDate || "hello")}
+                    and
+                    {formatDate(booking.scheduledDate || "hello")}
                   </p>
 
                   <p className="flex items-center">
