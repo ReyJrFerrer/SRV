@@ -293,6 +293,10 @@ async function cancelConflictingBookings(
       .where("requestedDate", "<=", endTime.toISOString())
       .get();
 
+    // Fetch service details once for all notifications
+    const serviceDoc = await db.collection("services").doc(serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "this service";
+
     const batch = db.batch();
     const notificationPromises = [];
     let cancelledCount = 0;
@@ -316,9 +320,9 @@ async function cancelConflictingBookings(
       });
 
       // Send notification to the client
-      const notificationMessage = "We're sorry, but the provider chose another " +
-        "booking for this time slot. Your booking has been automatically cancelled. " +
-        "Would you like to book another time?";
+      const notificationMessage = `We're sorry, but the provider chose another ` +
+        `booking for "${serviceName}". Your booking has been automatically cancelled. ` +
+        `Would you like to book another time?`;
 
       notificationPromises.push(
         createNotification(
@@ -328,7 +332,12 @@ async function cancelConflictingBookings(
           "Booking Not Selected",
           notificationMessage,
           conflictingBooking.id,
-          {serviceId, providerId, requestedDate: conflictingBooking.requestedDate},
+          {
+            serviceId,
+            serviceName,
+            providerId,
+            requestedDate: conflictingBooking.requestedDate,
+          },
         ),
       );
 
@@ -523,15 +532,22 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     });
     console.log(`✅ [createBooking] Successfully created booking ${bookingId} in Firestore.`);
 
+    // Fetch client details for notification (service details already fetched)
+    const serviceName = service.title || "a service";
+
+    const clientDoc = await db.collection("users").doc(authInfo.uid).get();
+    const clientName = clientDoc.exists ?
+      clientDoc.data().displayName || clientDoc.data().fullName || "A client" : "A client";
+
     // Create notification for the provider about new booking request
     await createNotification(
       providerId,
       USER_TYPES.PROVIDER,
       NOTIFICATION_TYPES.NEW_BOOKING_REQUEST,
       "New Booking Request",
-      `You have received a new booking request for ${serviceId}`,
+      `${clientName} has requested to book "${serviceName}"`,
       bookingId,
-      {serviceId, clientId: authInfo.uid},
+      {serviceId, serviceName, clientId: authInfo.uid, clientName},
     );
 
     console.log("✅ [createBooking] Function finished successfully.");
@@ -657,15 +673,24 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       booking.serviceId,
     );
 
+    // Fetch service and provider details for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+
+    const providerDoc = await db.collection("users").doc(booking.providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+      "the provider";
+
     // Create notification for the client about booking acceptance
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
       NOTIFICATION_TYPES.BOOKING_ACCEPTED,
       "Booking Accepted",
-      "Your booking has been accepted by the provider",
+      `${providerName} has accepted your booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, providerId: booking.providerId},
+      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
     );
 
     console.log("✅ [acceptBooking] Function finished successfully.");
@@ -751,15 +776,24 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     });
     console.log(`✅ [declineBooking] Successfully updated booking ${bookingId}.`);
 
+    // Fetch service and provider details for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+
+    const providerDoc = await db.collection("users").doc(booking.providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+      "the provider";
+
     // Create notification for the client about booking decline
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
       NOTIFICATION_TYPES.BOOKING_DECLINED,
       "Booking Declined",
-      "Your booking request has been declined by the provider",
+      `${providerName} has declined your booking request for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, providerId: booking.providerId},
+      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
     );
 
     console.log("✅ [declineBooking] Function finished successfully.");
@@ -847,15 +881,24 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     });
     console.log(`✅ [startBooking] Successfully updated booking ${bookingId}.`);
 
+    // Fetch service and provider details for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+
+    const providerDoc = await db.collection("users").doc(booking.providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+      "the provider";
+
     // Create notification for the client about service start
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
       NOTIFICATION_TYPES.GENERIC,
       "Service Started",
-      "Your service has been started by the provider",
+      `${providerName} has started working on "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, providerId: booking.providerId},
+      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
     );
 
     console.log("✅ [startBooking] Function finished successfully.");
@@ -1034,15 +1077,24 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     // This would integrate with the releaseHeldPayment Cloud Function
     console.log("💳 [completeBooking] Digital payment release logic to be implemented.");
 
+    // Fetch service and provider details for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+
+    const providerDoc = await db.collection("users").doc(booking.providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+      "the provider";
+
     // Create notification for the client about booking completion
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
       NOTIFICATION_TYPES.BOOKING_COMPLETED,
       "Service Completed",
-      "Your service has been completed by the provider",
+      `${providerName} has completed "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, providerId: booking.providerId},
+      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
     );
 
     // Update reputation scores. If any of these fail, the entire function will fail.
@@ -1138,6 +1190,14 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     });
     console.log(`✅ [cancelBooking] Successfully updated booking ${bookingId}.`);
 
+    // Fetch service details and user names for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
+
+    const cancellerDoc = await db.collection("users").doc(authInfo.uid).get();
+    const cancellerName = cancellerDoc.exists ?
+      cancellerDoc.data().displayName || cancellerDoc.data().fullName || "A user" : "A user";
+
     // Create notification for the other party about booking cancellation
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
     const targetUserType = authInfo.uid === booking.clientId ?
@@ -1148,9 +1208,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      "A booking has been cancelled",
+      `${cancellerName} has cancelled the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, cancelledBy: authInfo.uid},
+      {serviceId: booking.serviceId, serviceName, cancelledBy: authInfo.uid, cancellerName},
     );
 
     console.log("✅ [cancelBooking] Function finished successfully.");
@@ -1443,6 +1503,14 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
     });
     console.log(`✅ [disputeBooking] Successfully updated booking ${bookingId}.`);
 
+    // Fetch service details and user names for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
+
+    const disputerDoc = await db.collection("users").doc(authInfo.uid).get();
+    const disputerName = disputerDoc.exists ?
+      disputerDoc.data().displayName || disputerDoc.data().fullName || "A user" : "A user";
+
     // Create notification for the other party about booking dispute
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
     const targetUserType = authInfo.uid === booking.clientId ?
@@ -1453,9 +1521,9 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
       targetUserType,
       NOTIFICATION_TYPES.GENERIC,
       "Booking Disputed",
-      "A booking has been disputed and requires attention",
+      `${disputerName} has disputed the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, disputedBy: authInfo.uid},
+      {serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName},
     );
 
     console.log("✅ [disputeBooking] Function finished successfully.");
@@ -2209,10 +2277,15 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
     const notificationPromises = [];
     let cancelledCount = 0;
 
-    missedBookingsQuery.forEach((doc) => {
+    // Process each missed booking
+    for (const doc of missedBookingsQuery.docs) {
       const booking = doc.data();
 
       console.log(`📝 [cancelMissedBookings] Cancelling missed booking ${booking.id}...`);
+
+      // Fetch service details for notification
+      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+      const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
       // Update booking status to Cancelled
       batch.update(doc.ref, {
@@ -2222,9 +2295,9 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
       });
 
       // Send notification to the client
-      const notificationMessage = "We're sorry, but the service provider did not show up " +
-        "for your scheduled booking. The time slot has passed and the booking has been " +
-        "automatically cancelled. Would you like to look for another service provider?";
+      const notificationMessage = `We're sorry, but the service provider did not show up ` +
+        `for your scheduled booking "${serviceName}". The time slot has passed and the booking ` +
+        `has been automatically cancelled. Would you like to look for another service provider?`;
 
       notificationPromises.push(
         createNotification(
@@ -2236,6 +2309,7 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
           booking.id,
           {
             serviceId: booking.serviceId,
+            serviceName,
             providerId: booking.providerId,
             scheduledDate: booking.scheduledDate,
           },
@@ -2243,7 +2317,7 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
       );
 
       cancelledCount++;
-    });
+    }
 
     await batch.commit();
     await Promise.allSettled(notificationPromises);
@@ -2303,7 +2377,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       try {
         const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
         if (serviceDoc.exists) {
-          serviceName = serviceDoc.data().name || serviceDoc.data().serviceName || serviceName;
+          serviceName = serviceDoc.data().title || serviceDoc.data().name || serviceName;
         }
       } catch (error) {
         console.error(`Error fetching service name for ${booking.serviceId}:`, error);
@@ -2320,7 +2394,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       const minutesUntil = Math.round((scheduledTime.getTime() - now.getTime()) / (60 * 1000));
 
       // Send reminder to the client
-      const clientMessage = `Reminder: Your ${serviceName} booking is scheduled to start ` +
+      const clientMessage = `Reminder: Your "${serviceName}" booking is scheduled to start ` +
         `in approximately ${minutesUntil} minutes. Please be ready!`;
       notificationPromises.push(
         createNotification(
@@ -2332,6 +2406,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
           booking.id,
           {
             serviceId: booking.serviceId,
+            serviceName,
             providerId: booking.providerId,
             scheduledDate: booking.scheduledDate,
             minutesUntil,
@@ -2340,7 +2415,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       );
 
       // Send reminder to the provider
-      const providerMessage = `Reminder: You have a ${serviceName} booking scheduled to ` +
+      const providerMessage = `Reminder: You have a "${serviceName}" booking scheduled to ` +
         `start in approximately ${minutesUntil} minutes. Please prepare to start the service!`;
       notificationPromises.push(
         createNotification(
@@ -2352,6 +2427,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
           booking.id,
           {
             serviceId: booking.serviceId,
+            serviceName,
             clientId: booking.clientId,
             scheduledDate: booking.scheduledDate,
             minutesUntil,
