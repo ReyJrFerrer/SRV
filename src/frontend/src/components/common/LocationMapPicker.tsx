@@ -1,3 +1,9 @@
+// Component: LocationMapPicker
+// Purpose: Pin/search control for selecting a precise map location with reverse geocoding.
+// Inputs: props.value (StructuredLocation | null), props.highlight, props.label, props.persistKey
+// Outputs: onChange(StructuredLocation) with lat/lng and a user-friendly address
+// Side effects: persists to localStorage when persistKey is provided
+// Dependencies: @vis.gl/react-google-maps Map/AdvancedMarker; Google Maps JS (Places + Geocoder)
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
@@ -7,7 +13,7 @@ const containerStyle: React.CSSProperties = {
   borderRadius: "0.75rem",
 };
 
-const defaultCenter = { lat: 16.413, lng: 120.5914 }; // Manila fallback
+const defaultCenter = { lat: 16.413, lng: 120.5914 }; // Fallback center
 
 interface StructuredLocation {
   lat: number;
@@ -28,7 +34,7 @@ interface LocationMapPickerProps {
   persistKey?: string; // localStorage key to persist last selection
 }
 
-// removed explicit libraries; APIProvider handles script loading
+// SECTION: Component
 
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
@@ -37,11 +43,12 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   highlight = false,
   persistKey,
 }) => {
+  // SECTION: State/Refs
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
   }>(value ? { lat: value.lat, lng: value.lng } : defaultCenter);
-  const mapRef = useRef<google.maps.Map | null>(null); // Use a ref for the map instance
+  const mapRef = useRef<google.maps.Map | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const placeListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   // New Autocomplete Element (2025) support
@@ -55,6 +62,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  // SECTION: Helpers
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
@@ -82,6 +90,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   };
 
+  // SECTION: Reverse Geocoding flow
   const reverseGeocodeAndUpdate = useCallback(
     (pos: { lat: number; lng: number }) => {
       if (!geocoderRef.current && (window as any).google) {
@@ -185,7 +194,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.geometry && place.geometry.location) {
-        // Build user-friendly address from components (avoid raw formatted address / plus codes)
+        // Build user-friendly address from components
         const rawName = place.name || "";
         const getAddressComponent = (type: string): string => {
           if (!place.address_components) return "";
@@ -233,7 +242,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   };
 
-  // Handler for new PlaceAutocompleteElement selections
+  // SECTION: Handler for new PlaceAutocompleteElement selections
   const onPlaceElementChanged = useCallback(() => {
     const g: any = (window as any).google;
     const el = placeElRef.current;
@@ -301,7 +310,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       processPlace(place);
       return;
     }
-    // If we only have a place_id (common with prediction), fetch details
+    // If we only have a place_id (from prediction), fetch details
     const placeId =
       place?.place_id || el.placeId || el.value?.placeId || el.value?.place_id;
     if (placeId) {
@@ -332,7 +341,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     }
   }, [onChange, persistLocation, useNewAutocomplete]);
 
-  // Initialize Places Autocomplete, preferring the new PlaceAutocompleteElement when available
+  // SECTION: Initialize Places Autocomplete (prefer new PlaceAutocompleteElement)
   useEffect(() => {
     let intervalId: number | null = null;
     const init = () => {
@@ -347,17 +356,16 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           // Create and attach the new element
           const el = new g.maps.places.PlaceAutocompleteElement();
           placeElRef.current = el;
-          // Optional: bias types to geocode-like results
+          // Bias types to geocode-like results (best-effort)
           try {
             el.types = ["geocode"]; // best-effort; ignored if not supported
           } catch {}
           // Region restriction (Philippines) and initial bias around current position
           try {
-            // New element uses 'countries' for restriction
             (el as any).countries = ["ph"]; // ISO 3166-1 alpha-2
           } catch {}
           try {
-            // Bias searches around the current internalPosition (~80km radius)
+            // Bias around the current internalPosition (approx ~5.5km)
             (el as any).locationBias = {
               center: { lat: internalPosition.lat, lng: internalPosition.lng },
               radius: 5500,
@@ -366,7 +374,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           // Wire selection listener
           const handler = () => onPlaceElementChanged();
           placeElHandlerRef.current = handler;
-          // Some builds dispatch 'place_changed', others 'gmpxplacechanged'; listen to both
+          // Listen to both event names across versions
           el.addEventListener?.("place_changed", handler);
           el.addEventListener?.("gmpxplacechanged", handler);
           // Mount element into container
@@ -377,7 +385,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         }
       } catch {}
 
-      // Fallback: legacy Autocomplete bound to our input
+      // Fallback: legacy Autocomplete bound to input
       if (autocompleteRef.current || !inputRef.current) return false;
       try {
         autocompleteRef.current = new g.maps.places.Autocomplete(
@@ -406,7 +414,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         return false;
       }
     };
-    // Try to initialize immediately; if API not yet ready, poll briefly
+    // Try immediately; if API not yet ready, poll briefly
     if (!init()) {
       intervalId = window.setInterval(() => {
         if (init()) {
@@ -444,7 +452,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     };
   }, [onPlaceChanged, onPlaceElementChanged]);
 
-  // Update bias/restrictions when the internal position changes
+  // SECTION: Keep bias/restrictions in sync with current position
   useEffect(() => {
     const g: any = (window as any).google;
     if (!g?.maps?.places) return;
@@ -505,7 +513,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           className={`w-full rounded-lg border p-2 text-sm ${
             highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"
           }`}
-          // The new element will be injected here
+          // New PlaceAutocompleteElement will be injected here
         />
       ) : (
         <input

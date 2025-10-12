@@ -1,3 +1,7 @@
+// Page: Client Booking
+// Purpose: Booking flow with packages, schedule selection, location via map or manual form, and payment.
+// Inputs: serviceId via route, Zustand location context.
+// Outputs: Creates booking request; optionally initiates digital payment.
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -294,7 +298,7 @@ const ClientBookingPageComponent: React.FC = () => {
     "idle" | "loading" | "ok" | "failed" | "denied" | "na"
   >("idle");
 
-  // Detected map readiness (avoid second loader conflict). Poll for global google maps (Header / other components load script)
+  // Detected map readiness (avoid second loader conflict). Poll for global google maps.
   const [mapsReady, setMapsReady] = useState<boolean>(false);
   // API key is provided by root APIProvider
   useEffect(() => {
@@ -315,7 +319,7 @@ const ClientBookingPageComponent: React.FC = () => {
     return () => clearInterval(iv);
   }, []);
 
-  // Reverse geocode detected coordinates (borrow logic concept from Header)
+  // Reverse geocode detected coordinates
   useEffect(() => {
     if (mapMode !== "detected") return;
     if (detectedStatus === "loading" || detectedStatus === "ok") return;
@@ -385,7 +389,7 @@ const ClientBookingPageComponent: React.FC = () => {
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
     const provinceNorm = (displayProvince || "").trim().toLowerCase();
 
-    // Special case: Baguio City in Benguet or Cordillera region
+    // Special case: Baguio City in Benguet or CAR
     if (
       (cityNorm === "baguio" || cityNorm === "baguio city") &&
       ["benguet", "cordillera administrative region", "car", "region"].includes(
@@ -499,7 +503,7 @@ const ClientBookingPageComponent: React.FC = () => {
       setBarangayOptions([]);
     }
     setSelectedBarangay("");
-    // --- Notes change handler ---
+    // (end barangay options refresh)
   }, [displayMunicipality, displayProvince]);
   // --- Load service and packages on mount ---
   useEffect(() => {
@@ -530,7 +534,7 @@ const ClientBookingPageComponent: React.FC = () => {
       setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
     }
   }, [hookPackages]);
-  // --- Load available slots when date changes or booking option changes ---
+  // --- Load available slots on date/option change ---
   useEffect(() => {
     if (service) {
       if (bookingOption === "scheduled" && selectedDate) {
@@ -553,7 +557,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
       const today = new Date();
 
-      // Determine the date to check (either selected date for scheduled or today for same-day)
+      // Determine the date to check
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
@@ -572,7 +576,7 @@ const ClientBookingPageComponent: React.FC = () => {
         return;
       }
 
-      // Helper function to check if a time slot has passed (for same-day booking only)
+      // Helper: check if a time slot has passed (same-day only)
       const isTimeSlotPassed = (
         _startTime: string,
         endTime: string,
@@ -699,7 +703,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   };
 
-  // Helper function to find the next available business day
+  // Helper: find the next available business day
   const findNextAvailableBusinessDay = (): Date | null => {
     if (!service?.weeklySchedule) return null;
 

@@ -1,3 +1,7 @@
+// Component: Client Header
+// Purpose: Shows welcome, location preview with reverse geocode, profile access, and search.
+// Dependencies: Zustand location store, @vis.gl/react-google-maps for modal map.
+// Notes: Google Maps API is provided by a single root APIProvider.
 // --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
@@ -19,12 +23,12 @@ const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
-  // --- Service Management Hook ---
+  // --- Service & Auth ---
   const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
-  // --- Use Zustand location store ---
+  // --- Location store ---
   const {
     location: geoLocation,
     userAddress,
@@ -88,8 +92,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // --- API Key Definition ---
-  // Root APIProvider supplies the key; keep placeholder only if needed elsewhere
+  // Root API key comes from APIProvider
 
   // Reverse geocode via Google on mount (independent from internal store)
   useEffect(() => {
@@ -215,7 +218,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, [locationLoading, isAuthLoading]);
 
-  // --- Handler: go to profile page ---
+  // --- Handlers ---
+  // Go to profile page
   const handleProfileClick = () => {
     navigate("/client/profile");
   };
@@ -229,7 +233,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  // --- Map Modal: Shows user's detected location on a map ---
+  // --- Map Modal: shows user's detected location on a map ---
   const MapModal: React.FC = () => {
     if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
       return null;
@@ -284,8 +288,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     );
   };
 
-  // --- Handler: search input change ---
-  // Only one handler should exist. The correct handler is defined above with dynamicSuggestions.
+  // Note: Search change handler defined above.
 
   // --- Render: Header layout ---
   return (

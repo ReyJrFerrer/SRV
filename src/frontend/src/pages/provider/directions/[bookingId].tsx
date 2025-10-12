@@ -1,9 +1,13 @@
+// Page: Provider Directions
+// Purpose: Live navigation from provider to booking destination with alternate routes and ETA.
+// Inputs: bookingId route param, booking data via useProviderBookingManagement.
+// Behavior: Watches GPS, computes directions, renders native polylines, supports alternate selection.
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
-// Simple inline fallback loader (avoid cross-component dependency)
+// SECTION: Inline loader
 const InlineLoader: React.FC<{ message?: string }> = ({ message }) => (
   <div className="flex min-h-screen items-center justify-center bg-gray-50">
     <div className="text-center">
@@ -13,7 +17,7 @@ const InlineLoader: React.FC<{ message?: string }> = ({ message }) => (
   </div>
 );
 
-// Style object for the map container (not MapOptions to satisfy @react-google-maps/api types)
+// SECTION: Map container style
 const containerStyle: React.CSSProperties = {
   width: "100vw",
   height: "100vh",
@@ -21,7 +25,7 @@ const containerStyle: React.CSSProperties = {
   inset: 0,
 };
 
-// Math helpers (Haversine + bearing) to avoid geometry library
+// SECTION: Math helpers (Haversine)
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 const EARTH_RADIUS_M = 6371000; // meters
 
@@ -40,7 +44,7 @@ function haversineDistanceMeters(
   return EARTH_RADIUS_M * c;
 }
 
-// toDeg/bearing/offsetPoint removed as heading/forward-view are not used
+// Note: heading/forward-view helpers not used in current UI
 
 const ProviderDirectionsPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -66,17 +70,16 @@ const ProviderDirectionsPage: React.FC = () => {
     "idle" | "pending" | "ok" | "failed"
   >("idle");
 
-  // Enhancements state removed (speed, heading, trail)
+  // Timing and reroute thresholds
   const lastRouteTimeRef = useRef<number>(0);
   const lastOriginRef = useRef<google.maps.LatLngLiteral | null>(null);
   const recomputeCooldownMs = 90_000; // 90s
   const driftThresholdMeters = 120; // 120m drift threshold
   const etaIntervalRef = useRef<number | null>(null);
   const etaRefreshIntervalMs = 180_000; // default 3 minutes
-  // New: Route deviation threshold (distance to current route polyline)
+  // Route deviation threshold
   const routeDeviationMeters = 60; // reroute when > 60m from current route
-  // Low-power mode, speed, heading, and trail removed
-  // Native polyline for rendering route on vis.gl map
+  // Native polylines for rendering
   const routePolylineRef = useRef<google.maps.Polyline | null>(null);
   const altRoutePolylinesRef = useRef<google.maps.Polyline[]>([]);
   const altRouteListenersRef = useRef<google.maps.MapsEventListener[]>([]);
@@ -147,7 +150,7 @@ const ProviderDirectionsPage: React.FC = () => {
     return coordinates;
   };
 
-  // Flatten route into a sequence of points for deviation checks
+  // Flatten selected route into a sequence of points for deviation checks
   const getRoutePath = useCallback((): google.maps.LatLngLiteral[] => {
     const path: google.maps.LatLngLiteral[] = [];
     if (!directionsResponse) return path;
@@ -218,7 +221,7 @@ const ProviderDirectionsPage: React.FC = () => {
   const mapApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
-  // Track provider's moving location via watchPosition
+  // SECTION: Geolocation watch
   useEffect(() => {
     if (!navigator.geolocation) return;
     // prevPos removed as speed/heading computation is no longer used
@@ -306,7 +309,7 @@ const ProviderDirectionsPage: React.FC = () => {
     computeDirections();
   }, [computeDirections]);
 
-  // Periodic ETA refresh
+  // SECTION: Periodic ETA refresh
   useEffect(() => {
     if (!(window as any).google?.maps || !destinationCoords) return;
     if (etaIntervalRef.current) clearInterval(etaIntervalRef.current);
@@ -332,14 +335,14 @@ const ProviderDirectionsPage: React.FC = () => {
     baseOrigin,
   ]);
 
-  // Auto-pan: center on provider's current location
+  // SECTION: Auto-pan on provider updates
   const mapRef = useRef<google.maps.Map | null>(null);
   useEffect(() => {
     if (!mapRef.current || !providerLocation) return;
     mapRef.current.panTo(providerLocation);
   }, [providerLocation]);
 
-  // Draw or update the route polylines on the underlying native map
+  // SECTION: Draw/update route polylines on native map
   useEffect(() => {
     const map = mapRef.current;
     if (!(window as any).google?.maps || !map) return;
@@ -466,7 +469,7 @@ const ProviderDirectionsPage: React.FC = () => {
     }
   }, [directionsResponse, selectedRouteIndex]);
 
-  // Fit bounds to selected route
+  // SECTION: Fit bounds to selected route
   useEffect(() => {
     const map = mapRef.current;
     if (!(window as any).google?.maps || !map || !directionsResponse) return;
@@ -479,7 +482,7 @@ const ProviderDirectionsPage: React.FC = () => {
     } catch {}
   }, [directionsResponse, selectedRouteIndex, getRoutePath]);
 
-  // Cleanup polyline on unmount
+  // SECTION: Cleanup on unmount
   useEffect(() => {
     return () => {
       if (routePolylineRef.current) {
@@ -491,7 +494,7 @@ const ProviderDirectionsPage: React.FC = () => {
     };
   }, []);
 
-  // -------- Destination coordinate resolution (fallback geocode) ---------
+  // SECTION: Destination coordinate resolution (fallback geocode)
   useEffect(() => {
     if (!booking) return;
     // If explicit coords exist, use them directly.
