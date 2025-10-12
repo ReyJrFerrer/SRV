@@ -387,8 +387,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
     }
-
-    const success = await acceptBookingById(specificBooking.id);
+    const requestedDate = new Date(specificBooking.requestedDate);
+    const success = await acceptBookingById(specificBooking.id,requestedDate);
     if (success) {
       await refreshBookings();
       const updatedBooking = bookings.find(

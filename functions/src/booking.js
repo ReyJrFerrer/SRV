@@ -536,8 +536,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     const serviceName = service.title || "a service";
 
     const clientDoc = await db.collection("users").doc(authInfo.uid).get();
-    const clientName = clientDoc.exists ?
-      clientDoc.data().displayName || clientDoc.data().fullName || "A client" : "A client";
+    const clientName = clientDoc.exists ? clientDoc.data().name || "A client" : "A client";
 
     // Create notification for the provider about new booking request
     await createNotification(
@@ -678,8 +677,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ?
-      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
       "the provider";
 
     // Create notification for the client about booking acceptance
@@ -781,8 +779,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ?
-      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
       "the provider";
 
     // Create notification for the client about booking decline
@@ -886,8 +883,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ?
-      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
       "the provider";
 
     // Create notification for the client about service start
@@ -1082,8 +1078,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ?
-      providerDoc.data().displayName || providerDoc.data().fullName || "the provider" :
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
       "the provider";
 
     // Create notification for the client about booking completion
@@ -1195,8 +1190,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
 
     const cancellerDoc = await db.collection("users").doc(authInfo.uid).get();
-    const cancellerName = cancellerDoc.exists ?
-      cancellerDoc.data().displayName || cancellerDoc.data().fullName || "A user" : "A user";
+    const cancellerName = cancellerDoc.exists ? cancellerDoc.data().name || "A user" : "A user";
 
     // Create notification for the other party about booking cancellation
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
@@ -1508,8 +1502,7 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
 
     const disputerDoc = await db.collection("users").doc(authInfo.uid).get();
-    const disputerName = disputerDoc.exists ?
-      disputerDoc.data().displayName || disputerDoc.data().fullName || "A user" : "A user";
+    const disputerName = disputerDoc.exists ? disputerDoc.data().name || "A user" : "A user";
 
     // Create notification for the other party about booking dispute
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
