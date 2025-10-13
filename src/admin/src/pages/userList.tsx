@@ -1,8 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
+import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  ChevronRightIcon,
+  CurrencyDollarIcon,
+  UserIcon,
+  LockClosedIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline";
 
 // User data interface based on Profile type from backend
 interface UserData {
@@ -28,7 +37,6 @@ export const UserListPage: React.FC = () => {
     initializeCanisterReferences,
     getUserLockStatus,
   } = useAdmin();
-  const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,6 +46,7 @@ export const UserListPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [showMobileBar, setShowMobileBar] = useState(false);
 
   // Convert Profile to UserData format
   const convertProfileToUserData = async (
@@ -95,6 +104,14 @@ export const UserListPage: React.FC = () => {
     };
     initializeAndLoadUsers();
   }, [initializeCanisterReferences, refreshUsers]);
+
+  // Show mobile bottom action bar when header scrolls out
+  useEffect(() => {
+    const onScroll = () => setShowMobileBar(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const convertUsers = async () => {
@@ -206,55 +223,186 @@ export const UserListPage: React.FC = () => {
   };
 
   const handleUserClick = (user: UserData) => {
-    navigate(`/provider/${user.id}`);
+    // Open details modal instead of navigating
+    setSelectedUser(user);
+    setShowUserModal(true);
   };
+
+  // Determine if viewport is mobile (< sm)
+  const isMobileViewport =
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 639px)").matches
+      : true;
+
+  // User details modal state
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+
+  // Stats for header cards
+  const stats = useMemo(() => {
+    const total = users.length;
+    const locked = users.filter((u) => u.isLocked).length;
+    const totalServices = users.reduce(
+      (sum, u) => sum + (u.servicesCount || 0),
+      0,
+    );
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const newThisMonth = users.filter((u) => u.createdAt >= monthStart).length;
+    return { total, locked, totalServices, newThisMonth };
+  }, [users]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      {/* Header (sticky on desktop) */}
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center">
-                  <Link
-                    to="/dashboard"
-                    className="mr-4 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      className="mr-1 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    Back to Dashboard
-                  </Link>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    User Management
+                  </h1>
+                  <p className="mt-2 text-sm text-gray-600">
+                    View and manage all registered users
+                  </p>
                 </div>
-                <h1 className="mt-2 text-2xl font-bold text-gray-900">
-                  User Management
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">
-                  View and manage all registered users
-                </p>
+              </div>
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
+                <button
+                  onClick={handleRefresh}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                >
+                  <ArrowPathIcon className="mr-2 h-4 w-4" />
+                  Refresh
+                </button>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Mobile bottom actions bar */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={handleRefresh}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+            >
+              <ArrowPathIcon className="mr-2 h-4 w-4" />
+              Refresh
+            </button>
+            <Link
+              to="/dashboard"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
+        {/* Stats Overview */}
+        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-4">
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <UserIcon className="h-8 w-8 text-yellow-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-gray-500">
+                      Total Users
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {loading.users ? "..." : stats.total}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-gray-500">
+                      Total Services
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {loading.users ? "..." : stats.totalServices}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <LockClosedIcon className="h-8 w-8 text-yellow-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-gray-500">
+                      Locked Users
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {loading.users ? "..." : stats.locked}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CalendarDaysIcon className="h-8 w-8 text-yellow-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-gray-500">
+                      New This Month
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {loading.users ? "..." : stats.newThisMonth}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-6">
           {/* Filters and Search */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-yellow-100 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {/* Search */}
               <div className="flex-1">
@@ -284,86 +432,71 @@ export const UserListPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={handleRefresh}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              {/* Sort Controls (moved next to search) */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <label className="sr-only" htmlFor="sortBy">
+                  Sort by
+                </label>
+                <select
+                  id="sortBy"
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value as "name" | "createdAt" | "services",
+                    )
+                  }
+                  className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:w-48"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  Refresh
+                  <option value="createdAt">Registration Date</option>
+                  <option value="name">Name</option>
+                  <option value="services">Services</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                  }
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                  aria-label="Toggle sort order"
+                >
+                  {sortOrder === "asc" ? (
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                      />
+                    </svg>
+                  )}
                 </button>
               </div>
-            </div>
-
-            {/* Sort Options */}
-            <div className="mt-4 flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as "name" | "createdAt" | "services")
-                }
-                className="block rounded-md border border-gray-300 px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
-              >
-                <option value="createdAt">Registration Date</option>
-                <option value="name">Name</option>
-                <option value="services">Services</option>
-              </select>
-              <button
-                onClick={() =>
-                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                }
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-              >
-                {sortOrder === "asc" ? (
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
-                    />
-                  </svg>
-                )}
-              </button>
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center">
                 <h2 className="text-lg font-semibold text-gray-900">
                   Users ({filteredUsers.length})
@@ -373,29 +506,12 @@ export const UserListPage: React.FC = () => {
                   <span className="text-sm text-gray-500">All Active</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none">
-                  <svg
-                    className="mr-1 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Export
-                </button>
-              </div>
+              <div className="flex items-center space-x-2"></div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-blue-50/60">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       User
@@ -415,6 +531,10 @@ export const UserListPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Status
                     </th>
+                    {/* Actions header hidden on mobile */}
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -432,7 +552,7 @@ export const UserListPage: React.FC = () => {
                   ) : filteredUsers.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-6 py-12 text-center text-sm text-gray-500"
                       >
                         <div className="flex flex-col items-center space-y-2">
@@ -456,8 +576,19 @@ export const UserListPage: React.FC = () => {
                     currentUsers.map((user) => (
                       <tr
                         key={user.id}
-                        className="cursor-pointer transition-colors duration-150 hover:bg-blue-50"
-                        onClick={() => handleUserClick(user)}
+                        className="cursor-pointer hover:bg-gray-50 sm:cursor-default sm:hover:bg-transparent"
+                        onClick={() => {
+                          if (isMobileViewport) handleUserClick(user);
+                        }}
+                        role={isMobileViewport ? "button" : undefined}
+                        tabIndex={isMobileViewport ? 0 : -1}
+                        onKeyDown={(e) => {
+                          if (!isMobileViewport) return;
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleUserClick(user);
+                          }
+                        }}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -509,6 +640,8 @@ export const UserListPage: React.FC = () => {
                                 </div>
                               )}
                             </div>
+                            {/* Mobile chevron */}
+                            <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
@@ -531,6 +664,19 @@ export const UserListPage: React.FC = () => {
                           <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                             Active
                           </span>
+                        </td>
+                        {/* Actions cell (desktop only) */}
+                        <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedUser(user);
+                              setShowUserModal(true);
+                            }}
+                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                          >
+                            View Details
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -620,6 +766,141 @@ export const UserListPage: React.FC = () => {
           </div>
         </div>
       </main>
+      {/* User Details Modal */}
+      {showUserModal && selectedUser && (
+        <div
+          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-xl border border-blue-100 bg-white shadow-xl sm:max-w-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+                  <UserIcon className="h-6 w-6 text-blue-600" />
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    User Details
+                  </h3>
+                  <p className="text-xs text-gray-500">{selectedUser.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="max-h-[80vh] overflow-y-auto px-5 py-4">
+              {/* Summary band */}
+              <div className="mb-4 grid grid-cols-[auto,1fr] items-center gap-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
+                <div className="h-16 w-16">
+                  {selectedUser.profilePicture ? (
+                    <img
+                      className="h-16 w-16 rounded-full object-cover shadow-sm ring-2 ring-white"
+                      src={
+                        selectedUser.profilePicture.thumbnailUrl ||
+                        selectedUser.profilePicture.imageUrl
+                      }
+                      alt={selectedUser.name}
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
+                      <span className="text-lg font-semibold">
+                        {selectedUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {selectedUser.name}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {selectedUser.phone}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Member since {formatDate(selectedUser.createdAt)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Details sections */}
+              <div className="space-y-4">
+                <div className="rounded-lg border border-gray-100 p-4">
+                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                    Profile
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-gray-500">User ID</p>
+                      <p className="font-medium text-gray-900">
+                        {selectedUser.id}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Status</p>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${selectedUser.isLocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
+                      >
+                        {selectedUser.isLocked ? "Locked" : "Active"}
+                      </span>
+                    </div>
+                    {selectedUser.biography && (
+                      <div className="sm:col-span-2">
+                        <p className="text-gray-500">Bio</p>
+                        <p className="text-gray-900">
+                          {selectedUser.biography}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-100 p-4">
+                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                    Services
+                  </h4>
+                  <div className="text-sm text-gray-700">
+                    Total services posted:{" "}
+                    <span className="font-semibold text-blue-600">
+                      {selectedUser.servicesCount ?? 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

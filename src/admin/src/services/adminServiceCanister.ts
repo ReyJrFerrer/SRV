@@ -372,10 +372,11 @@ let currentIdentity: Identity | null = null;
  * Updates the admin actor with a new identity
  */
 export const updateAdminActor = (identity: Identity | null) => {
-  currentIdentity = identity;
-  return createActor(canisterId, {
-    agentOptions: identity ? { identity } : undefined,
-  });
+  if (currentIdentity !== identity) {
+    adminActor = createAdminActor(identity);
+    currentIdentity = identity;
+  }
+  return adminActor;
 };
 
 /**
@@ -389,11 +390,7 @@ const getAdminActor = (requireAuth: boolean = false): AdminService => {
     );
   }
 
-  if (!adminActor) {
-    adminActor = createAdminActor(currentIdentity);
-  }
-
-  return adminActor;
+  return createAdminActor(currentIdentity);
 };
 
 // Type conversion utilities
@@ -1088,6 +1085,9 @@ export const adminServiceCanister = {
       const { canisterId: reputationCanisterId } = await import(
         "../../../declarations/reputation"
       );
+      await import("../../../declarations/commission");
+      await import("../../../declarations/wallet");
+      await import("../../../declarations/notification");
 
       const reviewPrincipal: [] | [Principal] = reviewCanisterId
         ? [Principal.fromText(reviewCanisterId)]
@@ -1836,7 +1836,11 @@ export const adminServiceCanister = {
           totalBookings: Number(analyticsData.totalBookings || 0),
           servicesCompleted: Number(analyticsData.servicesCompleted || 0),
           totalSpent: Number(analyticsData.totalSpent || 0),
-          memberSince: analyticsData.memberSince || "Unknown",
+          memberSince: analyticsData.memberSince
+            ? convertTimeToDate(
+                BigInt(analyticsData.memberSince),
+              ).toLocaleDateString()
+            : "Unknown",
         };
       }
 

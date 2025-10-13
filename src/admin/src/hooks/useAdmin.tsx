@@ -15,6 +15,12 @@ import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import {
   remittanceServiceCanister,
   RemittanceServiceError,
+  ServiceProviderData as RemittanceServiceProviderData,
+  FrontendRemittanceOrder as RemittanceOrder,
+  FrontendProviderDashboard,
+  FrontendProviderAnalytics,
+  FrontendSettlementInstruction,
+  RemittanceOrdersPage,
 } from "../services/remittanceServiceCanister";
 import {
   mediaServiceCanister,
@@ -49,6 +55,9 @@ interface AdminLoadingStates {
   paymentValidation: boolean;
   mediaItems: boolean;
   users: boolean;
+  remittanceOrders: boolean;
+  remittanceProviders: boolean;
+  remittanceStats: boolean;
 }
 
 // Admin hook return type
@@ -64,6 +73,20 @@ interface UseAdminReturn {
   userRoles: FrontendUserRoleAssignment[];
   systemSettings: FrontendSystemSettings | null;
   users: Profile[];
+
+  // Remittance data states
+  remittanceOrders: RemittanceOrder[];
+  remittanceProviders: RemittanceServiceProviderData[];
+  remittanceStats: {
+    totalOrders: number;
+    totalSettledOrders: number;
+    totalPendingOrders: number;
+    totalCommissionPaid: number;
+    totalServiceAmount: number;
+    totalOverdueOrders: number;
+    averageOrderValue: number;
+    averageCommissionRate: number;
+  } | null;
 
   // System Statistics
   refreshSystemStats: (showSuccessToast?: boolean) => Promise<void>;
@@ -118,6 +141,47 @@ interface UseAdminReturn {
     maxOrderAmount?: number;
   }) => Promise<void>;
 
+  // Remittance Management
+  refreshRemittanceOrders: (showSuccessToast?: boolean) => Promise<void>;
+  refreshRemittanceProviders: (showSuccessToast?: boolean) => Promise<void>;
+  refreshRemittanceStats: (showSuccessToast?: boolean) => Promise<void>;
+  queryRemittanceOrders: (
+    filter?: {
+      status?: (
+        | "AwaitingPayment"
+        | "PaymentSubmitted"
+        | "PaymentValidated"
+        | "Cancelled"
+        | "Settled"
+      )[];
+      serviceProviderId?: string;
+      fromDate?: Date;
+      toDate?: Date;
+    },
+    page?: {
+      cursor?: string;
+      size?: number;
+    },
+  ) => Promise<RemittanceOrdersPage>;
+  getRemittanceOrder: (orderId: string) => Promise<RemittanceOrder | null>;
+  validateRemittancePayment: (
+    orderId: string,
+    approved: boolean,
+    reason?: string,
+  ) => Promise<void>;
+  cancelRemittanceOrder: (orderId: string) => Promise<void>;
+  getProviderDashboard: (
+    providerId: string,
+  ) => Promise<FrontendProviderDashboard>;
+  getProviderAnalytics: (
+    providerId: string,
+    fromDate?: Date,
+    toDate?: Date,
+  ) => Promise<FrontendProviderAnalytics>;
+  generateSettlementInstruction: (
+    orderId: string,
+  ) => Promise<FrontendSettlementInstruction>;
+
   // Utility functions
   refreshAll: () => Promise<void>;
   initializeCanisterReferences: () => Promise<void>;
@@ -135,6 +199,9 @@ export const useAdmin = (): UseAdminReturn => {
     paymentValidation: false,
     mediaItems: false,
     users: false,
+    remittanceOrders: false,
+    remittanceProviders: false,
+    remittanceStats: false,
   });
 
   // Initialize data states
@@ -154,6 +221,24 @@ export const useAdmin = (): UseAdminReturn => {
   const [systemSettings, setSystemSettings] =
     useState<FrontendSystemSettings | null>(null);
   const [users, setUsers] = useState<Profile[]>([]);
+
+  // Remittance data states
+  const [remittanceOrders, setRemittanceOrders] = useState<RemittanceOrder[]>(
+    [],
+  );
+  const [remittanceProviders, setRemittanceProviders] = useState<
+    RemittanceServiceProviderData[]
+  >([]);
+  const [remittanceStats, setRemittanceStats] = useState<{
+    totalOrders: number;
+    totalSettledOrders: number;
+    totalPendingOrders: number;
+    totalCommissionPaid: number;
+    totalServiceAmount: number;
+    totalOverdueOrders: number;
+    averageOrderValue: number;
+    averageCommissionRate: number;
+  } | null>(null);
 
   // Initialize userLockStatus from localStorage
   const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(
@@ -604,6 +689,402 @@ export const useAdmin = (): UseAdminReturn => {
     } catch (error) {}
   }, []);
 
+  // Remittance Management Functions
+  const refreshRemittanceOrders = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("remittanceOrders", true);
+      try {
+        // Mock data for remittance orders
+        const mockOrders: RemittanceOrder[] = [
+          {
+            id: "order-001",
+            serviceProviderId: "provider-001",
+            serviceType: "cat-001",
+            amount: 250000, // ₱2,500
+            commissionAmount: 7500, // ₱75
+            paymentMethod: "CashOnHand",
+            status: "AwaitingPayment",
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+            paymentSubmittedAt: undefined,
+            paymentProofMediaIds: [],
+            commissionRuleId: "rule-default-commission",
+            commissionVersion: 1,
+            updatedAt: new Date(),
+          },
+          {
+            id: "order-002",
+            serviceProviderId: "provider-002",
+            serviceType: "cat-002",
+            amount: 150000, // ₱1,500
+            commissionAmount: 4500, // ₱45
+            paymentMethod: "CashOnHand",
+            status: "PaymentSubmitted",
+            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+            paymentSubmittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+            paymentProofMediaIds: ["media-001", "media-002"],
+            commissionRuleId: "rule-default-commission",
+            commissionVersion: 1,
+            updatedAt: new Date(),
+          },
+          {
+            id: "order-003",
+            serviceProviderId: "provider-003",
+            serviceType: "cat-003",
+            amount: 500000, // ₱5,000
+            commissionAmount: 15000, // ₱150
+            paymentMethod: "CashOnHand",
+            status: "PaymentValidated",
+            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+            paymentSubmittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+            paymentProofMediaIds: ["media-003"],
+            commissionRuleId: "rule-premium-services",
+            commissionVersion: 1,
+            updatedAt: new Date(),
+          },
+          {
+            id: "order-004",
+            serviceProviderId: "provider-001",
+            serviceType: "cat-004",
+            amount: 80000, // ₱800
+            commissionAmount: 2400, // ₱24
+            paymentMethod: "CashOnHand",
+            status: "AwaitingPayment",
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+            paymentSubmittedAt: undefined,
+            paymentProofMediaIds: [],
+            commissionRuleId: "rule-default-commission",
+            commissionVersion: 1,
+            updatedAt: new Date(),
+          },
+          {
+            id: "order-005",
+            serviceProviderId: "provider-004",
+            serviceType: "cat-005",
+            amount: 1200000, // ₱12,000
+            commissionAmount: 36000, // ₱360
+            paymentMethod: "CashOnHand",
+            status: "PaymentSubmitted",
+            createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+            paymentSubmittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+            paymentProofMediaIds: ["media-004", "media-005", "media-006"],
+            commissionRuleId: "rule-premium-services",
+            commissionVersion: 1,
+            updatedAt: new Date(),
+          },
+        ];
+
+        setRemittanceOrders(mockOrders);
+        if (showSuccessToast) {
+          toast.success("Remittance orders refreshed successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh remittance orders");
+      } finally {
+        updateLoadingState("remittanceOrders", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
+
+  const refreshRemittanceProviders = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("remittanceProviders", true);
+      try {
+        // Mock data for remittance providers
+        const mockProviders: RemittanceServiceProviderData[] = [
+          {
+            id: "provider-001",
+            name: "Juan Dela Cruz",
+            phone: "+63 912 345 6789",
+            totalEarnings: 125000, // ₱1,250
+            pendingCommission: 7500, // ₱75
+            settledCommission: 117500, // ₱1,175
+            lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+            outstandingBalance: 7500, // ₱75
+            pendingOrders: 1,
+            overdueOrders: 1,
+            totalOrdersCompleted: 15,
+            averageOrderValue: 8333, // ₱83.33
+            nextDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+          },
+          {
+            id: "provider-002",
+            name: "Maria Santos",
+            phone: "+63 917 234 5678",
+            totalEarnings: 85000, // ₱850
+            pendingCommission: 4500, // ₱45
+            settledCommission: 80500, // ₱805
+            lastActivity: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+            outstandingBalance: 4500, // ₱45
+            pendingOrders: 1,
+            overdueOrders: 0,
+            totalOrdersCompleted: 8,
+            averageOrderValue: 10625, // ₱106.25
+            nextDeadline: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), // 6 days from now
+          },
+          {
+            id: "provider-003",
+            name: "Pedro Rodriguez",
+            phone: "+63 918 345 6789",
+            totalEarnings: 250000, // ₱2,500
+            pendingCommission: 0, // ₱0
+            settledCommission: 250000, // ₱2,500
+            lastActivity: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+            outstandingBalance: 0, // ₱0
+            pendingOrders: 0,
+            overdueOrders: 0,
+            totalOrdersCompleted: 20,
+            averageOrderValue: 12500, // ₱125
+            nextDeadline: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
+          },
+          {
+            id: "provider-004",
+            name: "Ana Garcia",
+            phone: "+63 919 456 7890",
+            totalEarnings: 180000, // ₱1,800
+            pendingCommission: 36000, // ₱360
+            settledCommission: 144000, // ₱1,440
+            lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+            outstandingBalance: 36000, // ₱360
+            pendingOrders: 1,
+            overdueOrders: 0,
+            totalOrdersCompleted: 12,
+            averageOrderValue: 15000, // ₱150
+            nextDeadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+          },
+          {
+            id: "provider-005",
+            name: "Carlos Lopez",
+            phone: "+63 920 567 8901",
+            totalEarnings: 95000, // ₱950
+            pendingCommission: 0, // ₱0
+            settledCommission: 95000, // ₱950
+            lastActivity: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+            outstandingBalance: 0, // ₱0
+            pendingOrders: 0,
+            overdueOrders: 0,
+            totalOrdersCompleted: 6,
+            averageOrderValue: 15833, // ₱158.33
+            nextDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          },
+        ];
+
+        setRemittanceProviders(mockProviders);
+        if (showSuccessToast) {
+          toast.success("Remittance providers refreshed successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh remittance providers");
+      } finally {
+        updateLoadingState("remittanceProviders", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
+
+  const refreshRemittanceStats = useCallback(
+    async (showSuccessToast = false) => {
+      updateLoadingState("remittanceStats", true);
+      try {
+        // Mock data for remittance statistics
+        const mockStats = {
+          totalOrders: 25,
+          totalSettledOrders: 18,
+          totalPendingOrders: 7,
+          totalOverdueOrders: 1,
+          totalCommissionPaid: 425000, // ₱4,250
+          totalServiceAmount: 14150000, // ₱141,500
+          averageOrderValue: 566000, // ₱5,660
+          averageCommissionRate: 3.0, // 3%
+          totalProviders: 5,
+          activeProviders: 4,
+          averageSettlementTime: 2.5, // 2.5 days
+          commissionRulesCount: 2,
+          lastUpdated: new Date(),
+        };
+
+        setRemittanceStats(mockStats);
+        if (showSuccessToast) {
+          toast.success("Remittance statistics refreshed successfully");
+        }
+      } catch (error) {
+        handleError(error, "Failed to refresh remittance statistics");
+      } finally {
+        updateLoadingState("remittanceStats", false);
+      }
+    },
+    [updateLoadingState, handleError],
+  );
+
+  const queryRemittanceOrders = useCallback(
+    async (
+      filter?: {
+        status?: (
+          | "AwaitingPayment"
+          | "PaymentSubmitted"
+          | "PaymentValidated"
+          | "Cancelled"
+          | "Settled"
+        )[];
+        serviceProviderId?: string;
+        fromDate?: Date;
+        toDate?: Date;
+      },
+      page?: {
+        cursor?: string;
+        size?: number;
+      },
+    ) => {
+      try {
+        return await remittanceServiceCanister.queryOrders(filter as any, page);
+      } catch (error) {
+        handleError(error, "Failed to query remittance orders");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
+  const getRemittanceOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        return await remittanceServiceCanister.getOrder(orderId);
+      } catch (error) {
+        handleError(error, "Failed to get remittance order");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
+  const validateRemittancePayment = useCallback(
+    async (orderId: string, approved: boolean, reason?: string) => {
+      updateLoadingState("paymentValidation", true);
+      try {
+        await remittanceServiceCanister.validatePaymentByAdmin(
+          orderId,
+          approved,
+          reason,
+        );
+        await refreshRemittanceOrders();
+        toast.success(
+          `Payment ${approved ? "approved" : "rejected"} successfully`,
+        );
+      } catch (error) {
+        handleError(
+          error,
+          `Failed to ${approved ? "approve" : "reject"} payment`,
+        );
+      } finally {
+        updateLoadingState("paymentValidation", false);
+      }
+    },
+    [updateLoadingState, handleError, refreshRemittanceOrders],
+  );
+
+  const cancelRemittanceOrder = useCallback(
+    async (orderId: string) => {
+      try {
+        await remittanceServiceCanister.cancelOrder(orderId);
+        await refreshRemittanceOrders();
+        toast.success("Order cancelled successfully");
+      } catch (error) {
+        handleError(error, "Failed to cancel order");
+      }
+    },
+    [handleError, refreshRemittanceOrders],
+  );
+
+  const getProviderDashboard = useCallback(
+    async (providerId: string) => {
+      try {
+        // Mock data for provider dashboard
+        const mockDashboard: FrontendProviderDashboard = {
+          providerId: providerId,
+          outstandingBalance: 7500, // ₱75
+          pendingOrders: 1,
+          overdueOrders: 1,
+          nextDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+          ordersAwaitingPayment: [
+            {
+              id: "order-001",
+              serviceProviderId: "provider-001",
+              serviceType: "cat-001",
+              amount: 250000, // ₱2,500
+              commissionAmount: 7500, // ₱75
+              paymentMethod: "CashOnHand",
+              status: "AwaitingPayment",
+              createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+              paymentSubmittedAt: undefined,
+              paymentProofMediaIds: [],
+              commissionRuleId: "rule-default-commission",
+              commissionVersion: 1,
+              updatedAt: new Date(),
+            },
+          ],
+          ordersPendingValidation: [],
+          totalCommissionPaid: 117500, // ₱1,175
+          totalOrdersCompleted: 15,
+        };
+
+        return mockDashboard;
+      } catch (error) {
+        handleError(error, "Failed to get provider dashboard");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
+  const getProviderAnalytics = useCallback(
+    async (providerId: string, _fromDate?: Date, _toDate?: Date) => {
+      try {
+        // Mock data for provider analytics
+        const mockAnalytics: FrontendProviderAnalytics = {
+          providerId: providerId,
+          totalOrders: 15,
+          settledOrders: 12,
+          pendingOrders: 3,
+          totalCommissionPaid: 125000, // ₱1,250
+          totalServiceAmount: 4166667, // ₱41,666.67
+          averageOrderValue: 277778, // ₱2,777.78
+          dateRange: {
+            from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+            to: new Date(), // now
+          },
+        };
+
+        return mockAnalytics;
+      } catch (error) {
+        handleError(error, "Failed to get provider analytics");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
+  const generateSettlementInstruction = useCallback(
+    async (orderId: string) => {
+      try {
+        // Mock data for settlement instruction
+        const mockSettlement: FrontendSettlementInstruction = {
+          corporateGcashAccount: "09123456789",
+          commissionAmount: 7500, // ₱75
+          referenceNumber: `REF-${orderId}`,
+          instructions:
+            "Please deposit the commission amount to the specified GCash account. Include the reference number in the transaction. Send proof of payment via the app.",
+          expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+        };
+
+        return mockSettlement;
+      } catch (error) {
+        handleError(error, "Failed to generate settlement instruction");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
   // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
     const refreshPromises = [
@@ -614,6 +1095,9 @@ export const useAdmin = (): UseAdminReturn => {
       refreshCommissionRules(),
       refreshUserRoles(),
       refreshSystemSettings(),
+      refreshRemittanceOrders(),
+      refreshRemittanceProviders(),
+      refreshRemittanceStats(),
     ];
 
     try {
@@ -630,6 +1114,9 @@ export const useAdmin = (): UseAdminReturn => {
     refreshCommissionRules,
     refreshUserRoles,
     refreshSystemSettings,
+    refreshRemittanceOrders,
+    refreshRemittanceProviders,
+    refreshRemittanceStats,
     handleError,
   ]);
 
@@ -645,6 +1132,11 @@ export const useAdmin = (): UseAdminReturn => {
     userRoles,
     systemSettings,
     users,
+
+    // Remittance data states
+    remittanceOrders,
+    remittanceProviders,
+    remittanceStats,
 
     // System Statistics
     refreshSystemStats,
@@ -681,6 +1173,18 @@ export const useAdmin = (): UseAdminReturn => {
     // System Settings Management
     refreshSystemSettings,
     updateSystemSettings,
+
+    // Remittance Management
+    refreshRemittanceOrders,
+    refreshRemittanceProviders,
+    refreshRemittanceStats,
+    queryRemittanceOrders,
+    getRemittanceOrder,
+    validateRemittancePayment,
+    cancelRemittanceOrder,
+    getProviderDashboard,
+    getProviderAnalytics,
+    generateSettlementInstruction,
 
     // Utility functions
     refreshAll,

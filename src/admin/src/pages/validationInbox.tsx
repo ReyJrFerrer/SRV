@@ -8,6 +8,15 @@ import {
   DocumentIcon,
   ArrowUturnLeftIcon,
 } from "@heroicons/react/24/solid";
+import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  DocumentTextIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline";
 import { useServiceCertificates } from "../../../frontend/src/hooks/useMediaLoader";
 
 // Types for media modal
@@ -195,26 +204,6 @@ interface CertificateCardProps {
   ) => void;
 }
 
-// Processed Certificate Card Component (for approved/rejected sections)
-interface ProcessedCertificateCardProps {
-  certificate: {
-    service: any;
-    certificateIndex: number;
-    certificateUrl: string;
-    approvedAt?: string;
-    rejectedAt?: string;
-    id: string;
-  };
-  onViewCertificate: (url: string) => void;
-  onUndo: (certificate: any) => void;
-  isApproved?: boolean;
-  onCardClick?: (
-    service: any,
-    certificateIndex: number,
-    certificateUrl: string,
-  ) => void;
-}
-
 const CertificateCard: React.FC<CertificateCardProps> = ({
   service,
   certificateUrl,
@@ -224,21 +213,19 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
   onReject,
   onCardClick,
 }) => {
-  // Use the useServiceCertificates hook to properly load certificate images
   const {
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
     error: _certificateError,
   } = useServiceCertificates(service.serviceId, service.certificateUrls || []);
 
-  // Find the corresponding processed certificate
   const processedCert = serviceCertificates?.[certificateIndex];
   const displayUrl =
     processedCert?.dataUrl || processedCert?.url || certificateUrl;
 
   return (
     <div
-      className="flex cursor-pointer flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+      className="relative flex cursor-pointer flex-col gap-2 rounded-lg border border-gray-200 p-3 shadow-sm transition-all hover:shadow-md"
       onClick={() => onCardClick?.(service, certificateIndex, certificateUrl)}
     >
       {/* Service info header */}
@@ -315,6 +302,18 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
     </div>
   );
 };
+
+interface ProcessedCertificateCardProps {
+  certificate: any;
+  onViewCertificate: (url: string) => void;
+  onUndo: (certificate: any) => void;
+  isApproved?: boolean;
+  onCardClick?: (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => void;
+}
 
 const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
   certificate,
@@ -479,6 +478,9 @@ export const ValidationInboxPage: React.FC = () => {
     error: null,
   });
 
+  // Mobile bottom action bar visibility
+  const [showMobileBar, setShowMobileBar] = useState(false);
+
   // Calculate statistics
   const calculateStats = () => {
     const certificatesPending = servicesWithCertificates.reduce(
@@ -555,6 +557,14 @@ export const ValidationInboxPage: React.FC = () => {
     loadRejectedCertificates();
   }, [refreshPendingValidations]);
 
+  // Show mobile bottom action bar when header scrolls out
+  useEffect(() => {
+    const onScroll = () => setShowMobileBar(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   // Calculate stats when any certificate data changes
   useEffect(() => {
     calculateStats();
@@ -589,7 +599,6 @@ export const ValidationInboxPage: React.FC = () => {
         id: uniqueId,
       };
       setApprovedCertificates((prev) => [...prev, certificateData]);
-
       console.log("Certificate approved:", certificateData);
 
       // Refresh data from backend
@@ -609,7 +618,6 @@ export const ValidationInboxPage: React.FC = () => {
       const mediaId = certificateUrl.split("/media/")[1];
 
       if (mediaId) {
-        // Update validation status in media canister
         const { adminServiceCanister } = await import(
           "../services/adminServiceCanister"
         );
@@ -619,7 +627,6 @@ export const ValidationInboxPage: React.FC = () => {
         );
       }
 
-      // Add to rejected certificates for UI display
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;
       const certificateData = {
         service,
@@ -629,17 +636,13 @@ export const ValidationInboxPage: React.FC = () => {
         id: uniqueId,
       };
       setRejectedCertificates((prev) => [...prev, certificateData]);
-
       console.log("Certificate rejected:", certificateData);
 
-      // Refresh data from backend
       await loadServicesWithCertificates();
     } catch (error) {
       console.error("Error rejecting certificate:", error);
     }
   };
-
-  // Handle undoing certificate approval/rejection
   const handleUndoCertificate = async (certificate: any) => {
     try {
       const mediaId = certificate.certificateUrl.split("/media/")[1];
@@ -712,32 +715,13 @@ export const ValidationInboxPage: React.FC = () => {
         error={mediaModal.error}
       />
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+      {/* Header (sticky on desktop) */}
+      <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Back
-                </button>
-                <div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex flex-col">
                   <h1 className="text-2xl font-bold text-gray-900">
                     Validation Inbox
                   </h1>
@@ -747,75 +731,166 @@ export const ValidationInboxPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleRefresh}
-                disabled={loading.pendingValidations}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <svg
-                  className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading.pendingValidations}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  <ArrowPathIcon
+                    className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
                   />
-                </svg>
-                Refresh
-              </button>
+                  Refresh
+                </button>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                >
+                  <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+                  Back
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Mobile bottom actions bar */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
+          showMobileBar
+            ? "translate-y-0 bg-white/95 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-row items-stretch gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={loading.pendingValidations}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <ArrowPathIcon
+                className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </button>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+            >
+              <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* Stats Summary */}
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {stats.totalCertificates}
+          {/* Stats Overview (styled like Provider Management) */}
+          <div className="mb-2 grid grid-cols-1 gap-5 sm:grid-cols-5">
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <DocumentTextIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Total Certificates
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.totalCertificates}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Total Certificates</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {stats.certificatesPending}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Certificates Pending
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <ClockIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Certificates Pending
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.certificatesPending}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {stats.completedToday}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CalendarDaysIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Completed Today
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.completedToday}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Completed Today</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {stats.completedTotal}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CheckCircleIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Completed Total
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.completedTotal}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Completed Total</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {stats.rejectedTotal}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-yellow-100 bg-white shadow-sm">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <XCircleIcon className="h-8 w-8 text-yellow-600" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-gray-500">
+                        Rejected Total
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.rejectedTotal}
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500">Rejected Total</div>
               </div>
             </div>
           </div>
 
           {/* Pending Validations List */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -828,12 +903,12 @@ export const ValidationInboxPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   {pendingValidations.length > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
                       {pendingValidations.length} pending
                     </span>
                   )}
                   {stats.certificatesPending > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
                       {stats.certificatesPending} certificates
                     </span>
                   )}
@@ -898,8 +973,8 @@ export const ValidationInboxPage: React.FC = () => {
           </div>
 
           {/* Completed Certificate Validations */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -909,7 +984,7 @@ export const ValidationInboxPage: React.FC = () => {
                     Successfully approved certificate validations
                   </p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 ring-1 ring-green-200">
                   {approvedCertificates.length} completed
                 </span>
               </div>
@@ -956,8 +1031,8 @@ export const ValidationInboxPage: React.FC = () => {
           </div>
 
           {/* Rejected Certificate Validations */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -967,7 +1042,7 @@ export const ValidationInboxPage: React.FC = () => {
                     Certificate validations that were rejected
                   </p>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 ring-1 ring-red-200">
                   {rejectedCertificates.length} rejected
                 </span>
               </div>

@@ -724,11 +724,11 @@ persistent actor AdminCanister {
         switch (booking) {
             case (?bookingId) {
                 let bookingActor = actor(Principal.toText(bookingId)) : actor {
-                    setCanisterReferences: (?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal) -> async Result<Text>;
+                    setCanisterReferences: (?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal, ?Principal) -> async Result<Text>;
                 };
                 
                 try {
-                    let result = await bookingActor.setCanisterReferences(auth, service, review, reputation, remittance, ?msg.caller);
+                    let result = await bookingActor.setCanisterReferences(auth, service, review, reputation, null, null, null, ?msg.caller);
                     switch (result) {
                         case (#ok(_)) {};
                         case (#err(msg)) {

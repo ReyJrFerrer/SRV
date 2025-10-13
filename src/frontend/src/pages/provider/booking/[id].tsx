@@ -22,7 +22,9 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+
+// (Places library reserved for future use with Autocomplete if needed)
 import { useReputation } from "../../../hooks/useReputation";
 
 // --- Client Reputation Score Section (patterned after ServiceDetailPageComponent) ---
@@ -562,16 +564,22 @@ const ProviderBookingDetailsPage: React.FC = () => {
   >("idle");
   const [, setGeocodeSource] = useState<string>("");
 
-  const mapApiKey =
+  const mapsApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-  // Use the same loader id & libraries as headers / other map components to avoid
-  // the "Loader must not be called again with different options" runtime error.
-  // All Google Maps consumers must share identical options (id, libraries, language, region, etc.).
-  const { isLoaded: mapReady } = useJsApiLoader({
-    id: "header-gmap-script", // unified script id used across the app
-    googleMapsApiKey: mapApiKey,
-    libraries: ["places"], // match existing loader elsewhere (superset of plain maps needs)
-  });
+  const [mapsReady, setMapsReady] = useState(false);
+  useEffect(() => {
+    if ((window as any).google?.maps) {
+      setMapsReady(true);
+      return;
+    }
+    const iv = setInterval(() => {
+      if ((window as any).google?.maps) {
+        setMapsReady(true);
+        clearInterval(iv);
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, []);
 
   const clientLocation = useMemo(() => {
     try {
@@ -686,7 +694,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     if (resolvedCoords || geocodeStatus === "pending") return;
     const hasCoordsAlready = hasExplicitCoords;
     if (hasCoordsAlready) return;
-    if (!mapReady) return; // wait until maps script loaded
+    if (!mapsReady) return; // wait until maps script loaded
     const addrCandidates: { label: string; value?: string }[] = [];
     if (
       bookingLocation &&
@@ -709,7 +717,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
       });
     }
     if (addrCandidates.length === 0) return;
-    const apiKeyMissing = mapApiKey === "REPLACE_WITH_KEY";
+    const apiKeyMissing = mapsApiKey === "REPLACE_WITH_KEY";
     if (apiKeyMissing) return; // can't geocode without real key
 
     // First attempt cache lookups
@@ -765,10 +773,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     resolvedCoords,
     geocodeStatus,
     hasExplicitCoords,
-    mapReady,
+    mapsReady,
     bookingLocation,
     specificBooking?.serviceDetails?.location,
-    mapApiKey,
+    mapsApiKey,
   ]);
 
   // Determine loading state
@@ -1162,13 +1170,13 @@ const ProviderBookingDetailsPage: React.FC = () => {
             navigation button to open directions in Google Maps.
           </p>
           {/* Static preview while loading interactive map */}
-          {!mapReady && (
+          {!mapsReady && (
             <div className="relative mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
               {(() => {
                 const coord =
                   resolvedCoords || (hasExplicitCoords ? clientLocation : null);
                 const staticKey =
-                  mapApiKey === "REPLACE_WITH_KEY" ? null : mapApiKey;
+                  mapsApiKey === "REPLACE_WITH_KEY" ? null : mapsApiKey;
                 const staticUrl =
                   coord && staticKey
                     ? `https://maps.googleapis.com/maps/api/staticmap?center=${coord.lat},${coord.lng}&zoom=15&size=640x300&maptype=roadmap&markers=color:red%7C${coord.lat},${coord.lng}&key=${staticKey}`
@@ -1193,20 +1201,23 @@ const ProviderBookingDetailsPage: React.FC = () => {
               </div>
             </div>
           )}
-          {mapReady ? (
+          {mapsReady ? (
             <div>
-              <GoogleMap
-                mapContainerStyle={{
+              <Map
+                defaultCenter={resolvedCoords || clientLocation}
+                defaultZoom={16}
+                mapId="6922634ff75ae05ac38cc473"
+                style={{
                   width: "100%",
                   height: "260px",
                   borderRadius: "12px",
                 }}
-                center={resolvedCoords || clientLocation}
-                zoom={16}
-                options={{ disableDefaultUI: true, zoomControl: true }}
+                disableDefaultUI={true}
+                zoomControl={true}
               >
-                <Marker position={resolvedCoords || clientLocation} />
-              </GoogleMap>
+                <AdvancedMarker position={resolvedCoords || clientLocation} />
+              </Map>
+
               {/* Address overlay on interactive map */}
               <div className="mt-2 rounded bg-gray-900/70 px-3 py-1 text-[11px] leading-snug text-gray-100">
                 {bookingLocation !== "Location not specified"
@@ -1227,7 +1238,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 </p>
               )}
 
-              {mapApiKey === "REPLACE_WITH_KEY" && (
+              {mapsApiKey === "REPLACE_WITH_KEY" && (
                 <p className="mt-2 text-xs text-orange-600">
                   Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for
                   full accuracy.

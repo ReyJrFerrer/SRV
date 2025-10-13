@@ -8,6 +8,7 @@ import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Result "mo:base/Result";
+import Debug "mo:base/Debug";
 
 import Types "../types/shared";
 
@@ -1956,7 +1957,7 @@ persistent actor BookingCanister {
                 };
             };
             case (null) {
-                return #err("Admin canister not configured");
+                Debug.print("Admin canister not configured");
             };
         };
 
