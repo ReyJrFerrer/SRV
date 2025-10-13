@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
-import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useLocationStore } from "../../store/locationStore";
 
 // --- Props ---
@@ -13,9 +13,101 @@ export interface HeaderProps {
   className?: string;
 }
 
+interface MapModalProps {
+  show: boolean;
+  onClose: () => void;
+  center: { lat: number; lng: number };
+  address: string;
+  status: string;
+  mapsApiLoaded: boolean;
+}
+
 // Cooldown config: skip geolocation attempts if user denied within this window (ms)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+
+// --- Map Modal Component (moved outside) ---
+const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, status, mapsApiLoaded }) => {
+  if (!show) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  // Controlled camera state: preserve user zoom and panning
+  const [zoom, setZoom] = useState<number>(16);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(center);
+
+  useEffect(() => {
+    if (show) {
+      setMapCenter(center);
+      // keep existing zoom to avoid jarring resets
+    }
+  }, [show, center.lat, center.lng]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+        <button
+          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+          onClick={onClose}
+          aria-label="Close map"
+          tabIndex={0}
+        >
+          <span className="text-xl font-bold text-gray-700">&times;</span>
+        </button>
+        <div className="relative flex-1">
+          {/* Recenter button */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute right-3 top-3 z-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
+            onClick={() => {
+              setMapCenter(center);
+              setZoom((z) => (typeof z === 'number' ? Math.max(z, 16) : 16));
+            }}
+            aria-label="Recenter map"
+          >
+            Recenter
+          </button>
+          {mapsApiLoaded ? (
+            <Map
+              center={mapCenter}
+              zoom={zoom}
+              mapId="6922634ff75ae05ac38cc473"
+              style={{ width: "100%", height: "100%" }}
+              disableDefaultUI={false}
+              mapTypeControl={false}
+              zoomControl={true}
+              gestureHandling={"greedy"}
+              onCameraChanged={(ev: any) => {
+                try {
+                  const next = ev?.detail;
+                  if (next?.center) setMapCenter(next.center);
+                  if (typeof next?.zoom === "number") setZoom(next.zoom);
+                } catch {}
+              }}
+            >
+              {/* Keep marker at the provided center (fixed location), not at camera center */}
+              <AdvancedMarker position={center} />
+            </Map>
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-gray-500">Loading map...</div>
+          )}
+        </div>
+        <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
+          {status === "ok" && address !== "Detecting location..."
+            ? address
+            : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
@@ -68,6 +160,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- New: State to track if Google Maps API script has loaded ---
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+
+  // API key for client maps
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
   // Pre-check: if user previously denied recently, set status immediately
   useEffect(() => {
@@ -229,67 +324,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  // --- Map Modal: Shows user's detected location on a map ---
-  const MapModal: React.FC = () => {
-    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
-      return null;
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) setShowMap(false);
-    };
-    const center = {
-      lat: geoLocation.latitude,
-      lng: geoLocation.longitude,
-    };
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-        onClick={handleBackdropClick}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
-          <button
-            className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-            onClick={() => setShowMap(false)}
-            aria-label="Close map"
-            tabIndex={0}
-          >
-            <span className="text-xl font-bold text-gray-700">&times;</span>
-          </button>
-          <div className="flex-1">
-            {mapsApiLoaded ? (
-              <Map
-                defaultCenter={center}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473" // IMPORTANT: Add your Map ID here
-                style={{ width: "100%", height: "100%" }}
-                disableDefaultUI={false}
-                mapTypeControl={false}
-              >
-                <AdvancedMarker position={center} />
-              </Map>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                Loading map...
-              </div>
-            )}
-          </div>
-          <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
-            {gmapsStatus === "ok" && gmapsAddress !== "Detecting location..."
-              ? gmapsAddress
-              : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // MapModal moved outside the component to avoid re-creation on each render
 
   // --- Handler: search input change ---
   // Only one handler should exist. The correct handler is defined above with dynamicSuggestions.
 
   // --- Render: Header layout ---
   return (
-    <header
+    <APIProvider apiKey={mapsApiKey}>
+      <header
       className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
       {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
@@ -433,9 +476,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         </form>
       </div>
 
+      </header>
       {/* --- Map Modal for Location Display --- */}
-      {showMap && <MapModal />}
-    </header>
+      {showMap && geoLocation && (
+        <MapModal
+          show={showMap}
+          onClose={() => setShowMap(false)}
+          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+          address={gmapsAddress}
+          status={gmapsStatus}
+          mapsApiLoaded={mapsApiLoaded}
+        />
+      )}
+    </APIProvider>
   );
 };
 
