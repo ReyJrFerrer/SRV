@@ -927,6 +927,42 @@ persistent actor ServiceCanister {
         };
     };
 
+    // Delete all services by a user (for account deletion)
+    public shared(msg) func deleteUserServices(userId : Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // In production, verify caller is admin or the user themselves
+        var deletedCount : Nat = 0;
+        
+        // Get all services for this user
+        let allServices = Iter.toArray(services.entries());
+        for ((serviceId, service) in allServices.vals()) {
+            if (service.providerId == userId) {
+                // Delete the service
+                services.delete(serviceId);
+                
+                // Delete associated availability
+                serviceAvailabilities.delete(serviceId);
+                
+                // Delete associated packages
+                let allPackages = Iter.toArray(servicePackages.entries());
+                for ((packageId, package) in allPackages.vals()) {
+                    if (package.serviceId == serviceId) {
+                        servicePackages.delete(packageId);
+                    };
+                };
+                
+                deletedCount += 1;
+            };
+        };
+        
+        return #ok("Deleted " # Nat.toText(deletedCount) # " services");
+    };
+
     // SERVICE IMAGE MANAGEMENT FUNCTIONS
 
     // Upload additional images to existing service

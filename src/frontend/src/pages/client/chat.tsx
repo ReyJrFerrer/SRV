@@ -141,7 +141,7 @@ const ClientChatPage: React.FC = () => {
                             className=""
                           />
                           {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
                               {unreadCount}
                             </span>
                           )}
@@ -152,7 +152,7 @@ const ClientChatPage: React.FC = () => {
                               {otherUserName}
                             </p>
                             <p
-                              className={`ml-2 text-xs whitespace-nowrap ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                              className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                             >
                               {formatTimestamp(lastMessage?.createdAt)}
                             </p>
@@ -160,7 +160,7 @@ const ClientChatPage: React.FC = () => {
                           <div className="mt-1 flex items-start justify-between">
                             <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
                               {lastMessage?.content || (
-                                <span className="text-gray-400 italic">
+                                <span className="italic text-gray-400">
                                   No messages yet
                                 </span>
                               )}

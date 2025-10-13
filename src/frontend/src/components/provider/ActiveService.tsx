@@ -105,7 +105,7 @@ const ActiveService: React.FC<ActiveServiceProps> = ({ className = "" }) => {
             <div className="ml-4 flex-shrink-0">
               <button
                 onClick={handleViewService}
-                className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none"
+                className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               >
                 <EyeIcon className="h-4 w-4" />
                 View Service

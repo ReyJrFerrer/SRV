@@ -163,6 +163,7 @@ persistent actor AuthCanister {
                     updatedAt = Time.now();
                     profilePicture = null;
                     biography = null;
+                    isLocked = null; // Not locked by default
                 };
                 
                 profiles.put(caller, newProfile);
@@ -208,10 +209,39 @@ persistent actor AuthCanister {
         
         switch (profiles.get(caller)) {
             case (?profile) {
-                return #ok(profile);
+                // Check if account is locked
+                switch (profile.isLocked) {
+                    case (?true) {
+                        return #err("ACCOUNT_LOCKED");
+                    };
+                    case (_) {
+                        return #ok(profile);
+                    };
+                };
             };
             case (null) {
                 return #err("Profile not found");
+            };
+        };
+    };
+    
+    // Check if account is locked (for auth checks)
+    public shared query(msg) func isAccountLocked() : async Bool {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return false;
+        };
+        
+        switch (profiles.get(caller)) {
+            case (?profile) {
+                switch (profile.isLocked) {
+                    case (?true) { return true };
+                    case (_) { return false };
+                };
+            };
+            case (null) {
+                return false;
             };
         };
     };
@@ -261,6 +291,7 @@ persistent actor AuthCanister {
                     updatedAt = Time.now();
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
+                    isLocked = existingProfile.isLocked; // Preserve lock status
                 };
                 switch(phone) {
                     case(?p) {
@@ -305,6 +336,7 @@ persistent actor AuthCanister {
                     updatedAt = Time.now();
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
+                    isLocked = existingProfile.isLocked; // Preserve lock status
                 };
                 
                 profiles.put(caller, updatedProfile);
@@ -380,6 +412,7 @@ persistent actor AuthCanister {
                                 thumbnailUrl = mediaItem.url; // For now, use same URL
                             };
                             biography = existingProfile.biography;
+                            isLocked = existingProfile.isLocked; // Preserve lock status
                         };                                profiles.put(caller, updatedProfile);
                                 return #ok(updatedProfile);
                             };
@@ -419,6 +452,7 @@ persistent actor AuthCanister {
                 updatedAt = Time.now();
                 profilePicture = null;
                 biography = existingProfile.biography;
+                isLocked = existingProfile.isLocked; // Preserve lock status
             };                profiles.put(caller, updatedProfile);
                 return #ok(updatedProfile);
             };
@@ -443,8 +477,21 @@ persistent actor AuthCanister {
 
         switch (profiles.get(userId)) {
             case (?profile) {
-                // In a real implementation, you would store the lock status
-                // For now, we'll just return success
+                // Update profile with new lock status
+                let updatedProfile : Profile = {
+                    id = profile.id;
+                    name = profile.name;
+                    phone = profile.phone;
+                    role = profile.role;
+                    activeRole = profile.activeRole;
+                    createdAt = profile.createdAt;
+                    updatedAt = Time.now();
+                    profilePicture = profile.profilePicture;
+                    biography = profile.biography;
+                    isLocked = if (locked) ?true else null; // Store lock status
+                };
+                profiles.put(userId, updatedProfile);
+                
                 let status = if (locked) "locked" else "unlocked";
                 #ok("User account " # status # " successfully")
             };
@@ -454,7 +501,7 @@ persistent actor AuthCanister {
         }
     };
 
-    // Delete a user account
+    // Delete a user account and all associated records
     public shared(msg) func deleteUserAccount(userId: Principal) : async Result<Text> {
         let caller = msg.caller;
         
@@ -467,6 +514,19 @@ persistent actor AuthCanister {
 
         switch (profiles.get(userId)) {
             case (?profile) {
+                // Note: In a complete implementation, we would call other canisters here
+                // to delete associated data:
+                // - Services (from service canister)
+                // - Bookings (from booking canister)
+                // - Reviews (from review canister)
+                // - Reputation (from reputation canister)
+                // - Chat messages (from chat canister)
+                // - Notifications (from notification canister)
+                // - Media (from media canister)
+                // 
+                // For now, we just delete the profile from the auth canister.
+                // The admin panel will handle coordination of deletions across canisters.
+                
                 // Remove from profiles
                 profiles.delete(userId);
                 // Remove from phone mapping

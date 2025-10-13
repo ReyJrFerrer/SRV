@@ -177,7 +177,7 @@ const ReportIssuePage: React.FC = () => {
                       disabled={submitting}
                     />
                     <div className="flex items-start">
-                      <IconComponent className="mt-0.5 mr-3 h-5 w-5 text-yellow-600" />
+                      <IconComponent className="mr-3 mt-0.5 h-5 w-5 text-yellow-600" />
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {cat.name}

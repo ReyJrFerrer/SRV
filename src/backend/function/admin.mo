@@ -80,6 +80,7 @@ persistent actor AdminCanister {
     private var bookingCanisterId : ?Principal = null;
     private var reviewCanisterId : ?Principal = null;
     private var reputationCanisterId : ?Principal = null;
+    private var chatCanisterId : ?Principal = null;
 
     // Constants
     private transient let SETTINGS_KEY : Text = "system_settings";
@@ -675,7 +676,8 @@ persistent actor AdminCanister {
         service: ?Principal,
         booking: ?Principal,
         review: ?Principal,
-        reputation: ?Principal
+        reputation: ?Principal,
+        chat: ?Principal
     ) : async Result<Text> {
         let caller = msg.caller;
 
@@ -694,6 +696,7 @@ persistent actor AdminCanister {
         bookingCanisterId := booking;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
+        chatCanisterId := chat;
 
         // Set admin canister reference in service canister
         switch (service) {
@@ -1088,19 +1091,127 @@ persistent actor AdminCanister {
         //     return #err("Only ADMIN users can delete accounts");
         // };
 
+        // Delete data from all canisters in proper order
+        var deletionLog : Text = "";
+
+        // 1. Delete services
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                try {
+                    let serviceActor = actor(Principal.toText(serviceId)) : actor {
+                        deleteUserServices: (Principal) -> async Result<Text>;
+                    };
+                    let result = await serviceActor.deleteUserServices(userId);
+                    switch (result) {
+                        case (#ok(msg)) { deletionLog #= "Services: " # msg # "; " };
+                        case (#err(msg)) { deletionLog #= "Services Error: " # msg # "; " };
+                    };
+                } catch (e) {
+                    deletionLog #= "Services Error: " # Error.message(e) # "; ";
+                };
+            };
+            case (null) { deletionLog #= "Service canister not configured; " };
+        };
+
+        // 2. Delete bookings
+        switch (bookingCanisterId) {
+            case (?bookingId) {
+                try {
+                    let bookingActor = actor(Principal.toText(bookingId)) : actor {
+                        deleteUserBookings: (Principal) -> async Result<Text>;
+                    };
+                    let result = await bookingActor.deleteUserBookings(userId);
+                    switch (result) {
+                        case (#ok(msg)) { deletionLog #= "Bookings: " # msg # "; " };
+                        case (#err(msg)) { deletionLog #= "Bookings Error: " # msg # "; " };
+                    };
+                } catch (e) {
+                    deletionLog #= "Bookings Error: " # Error.message(e) # "; ";
+                };
+            };
+            case (null) { deletionLog #= "Booking canister not configured; " };
+        };
+
+        // 3. Delete reviews
+        switch (reviewCanisterId) {
+            case (?reviewId) {
+                try {
+                    let reviewActor = actor(Principal.toText(reviewId)) : actor {
+                        deleteUserReviews: (Principal) -> async Result<Text>;
+                    };
+                    let result = await reviewActor.deleteUserReviews(userId);
+                    switch (result) {
+                        case (#ok(msg)) { deletionLog #= "Reviews: " # msg # "; " };
+                        case (#err(msg)) { deletionLog #= "Reviews Error: " # msg # "; " };
+                    };
+                } catch (e) {
+                    deletionLog #= "Reviews Error: " # Error.message(e) # "; ";
+                };
+            };
+            case (null) { deletionLog #= "Review canister not configured; " };
+        };
+
+        // 4. Delete chats
+        switch (chatCanisterId) {
+            case (?chatId) {
+                try {
+                    let chatActor = actor(Principal.toText(chatId)) : actor {
+                        deleteUserChats: (Principal) -> async Result<Text>;
+                    };
+                    let result = await chatActor.deleteUserChats(userId);
+                    switch (result) {
+                        case (#ok(msg)) { deletionLog #= "Chats: " # msg # "; " };
+                        case (#err(msg)) { deletionLog #= "Chats Error: " # msg # "; " };
+                    };
+                } catch (e) {
+                    deletionLog #= "Chats Error: " # Error.message(e) # "; ";
+                };
+            };
+            case (null) { deletionLog #= "Chat canister not configured; " };
+        };
+
+        // 5. Delete reputation
+        switch (reputationCanisterId) {
+            case (?reputationId) {
+                try {
+                    let reputationActor = actor(Principal.toText(reputationId)) : actor {
+                        deleteUserReputation: (Principal) -> async Result<Text>;
+                    };
+                    let result = await reputationActor.deleteUserReputation(userId);
+                    switch (result) {
+                        case (#ok(msg)) { deletionLog #= "Reputation: " # msg # "; " };
+                        case (#err(msg)) { deletionLog #= "Reputation Error: " # msg # "; " };
+                    };
+                } catch (e) {
+                    deletionLog #= "Reputation Error: " # Error.message(e) # "; ";
+                };
+            };
+            case (null) { deletionLog #= "Reputation canister not configured; " };
+        };
+
+        // 6. Finally, delete user profile from auth canister
         switch (authCanisterId) {
             case (?authId) {
                 try {
                     let authActor = actor(Principal.toText(authId)) : actor {
                         deleteUserAccount: (Principal) -> async Result<Text>;
                     };
-                    await authActor.deleteUserAccount(userId)
-                } catch (msg) {
-                    #err("Failed to delete user account: " # Error.message(msg))
+                    let result = await authActor.deleteUserAccount(userId);
+                    switch (result) {
+                        case (#ok(msg)) { 
+                            deletionLog #= "Profile: " # msg;
+                            #ok("User account and all associated data deleted successfully. " # deletionLog)
+                        };
+                        case (#err(msg)) { 
+                            #err("Failed to delete user profile: " # msg # " (Some data may have been deleted: " # deletionLog # ")")
+                        };
+                    };
+                } catch (e) {
+                    #err("Failed to delete user account: " # Error.message(e) # " (Some data may have been deleted: " # deletionLog # ")")
                 }
             };
-            case null {
-                #err("Auth canister not configured")
+            case (null) {
+                #err("Auth canister not configured (Some data may have been deleted: " # deletionLog # ")")
             };
         }
     };

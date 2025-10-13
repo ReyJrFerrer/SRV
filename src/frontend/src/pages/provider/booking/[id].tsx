@@ -136,7 +136,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
   if (currentStep === -1) {
     return (
       <section className="my-4 flex flex-col rounded-2xl bg-white p-4 shadow">
-        <h3 className="mr-10 mb-3 w-full text-left text-lg font-bold text-blue-700">
+        <h3 className="mb-3 mr-10 w-full text-left text-lg font-bold text-blue-700">
           Progress Tracker
         </h3>
         <div className="flex items-center justify-center rounded-lg bg-red-50 px-4 py-3 font-semibold text-red-700">
@@ -210,7 +210,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
 
   return (
     <section className="my-4 flex flex-col items-center rounded-2xl bg-white p-4 shadow">
-      <h3 className="mt-1 mb-3 ml-5 w-full text-left text-lg font-bold text-blue-700">
+      <h3 className="mb-3 ml-5 mt-1 w-full text-left text-lg font-bold text-blue-700">
         Progress Tracker
       </h3>
       <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">
@@ -788,7 +788,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
           <p className="text-gray-600">Loading booking details...</p>
         </div>
       </div>
@@ -924,7 +924,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {/* Side by side layout for provider and service details */}
         <div className="mt-4 flex flex-col gap-6 md:flex-row">
           {/* Provider (client) info card - left */}
-          <div className="relative max-w-md min-w-[320px] flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 px-6 py-8">
               {/* Client image */}
               <img
@@ -1001,7 +1001,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
               <MapPinIcon className="mt-0.5 h-5 w-5 text-blue-500" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-700">Location:</span>
-                <span className="text-sm leading-snug font-normal text-gray-700">
+                <span className="text-sm font-normal leading-snug text-gray-700">
                   {bookingLocation}
                 </span>
                 {(displayAddress || preciseAddress || geocodedAddress) && (
@@ -1194,7 +1194,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   </div>
                 );
               })()}
-              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] leading-tight font-medium text-white">
+              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] font-medium leading-tight text-white">
                 {bookingLocation !== "Location not specified"
                   ? bookingLocation
                   : displayAddress || preciseAddress || "Location pending"}
