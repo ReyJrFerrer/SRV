@@ -79,7 +79,8 @@ function isValidStatusTransition(currentStatus, newStatus) {
  * Check for booking conflicts at the requested time
  * @param {string} serviceId - Service ID
  * @param {string} providerId - Provider ID
- * @param {string} requestedDateTime - Requested date/time ISO string
+ * @param {string} requestedDateTime - Requested date/time ISO string (start time)
+ * @param {string} scheduledDateTime - Scheduled date/time ISO string (end time)
  * @param {string} excludeBookingId - Booking ID to exclude from conflict check
  * @return {Promise<boolean>} True if conflict exists
  */
@@ -87,23 +88,46 @@ async function checkBookingConflicts(
   serviceId,
   providerId,
   requestedDateTime,
+  scheduledDateTime = null,
   excludeBookingId = null,
 ) {
   try {
-    const requestedTime = new Date(requestedDateTime);
-    const startTime = new Date(requestedTime.getTime() - 60 * 60 * 1000); // 1 hour buffer
-    const endTime = new Date(requestedTime.getTime() + 60 * 60 * 1000); // 1 hour buffer
+    // If scheduledDateTime is not provided, assume 1-hour slot for backward compatibility
+    const newBookingStart = new Date(requestedDateTime);
+    const newBookingEnd = scheduledDateTime ?
+      new Date(scheduledDateTime) :
+      new Date(newBookingStart.getTime() + 60 * 60 * 1000);
+
+    // Query for bookings on the same date to check for time range overlaps
+    // We check requestedDate to get bookings on the same day
+    const dayStart = new Date(newBookingStart);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(newBookingStart);
+    dayEnd.setHours(23, 59, 59, 999);
 
     const query = db.collection("bookings")
       .where("providerId", "==", providerId)
       .where("status", "in", ["Accepted", "InProgress"])
-      .where("scheduledDate", ">=", startTime.toISOString())
-      .where("scheduledDate", "<=", endTime.toISOString());
+      .where("requestedDate", ">=", dayStart.toISOString())
+      .where("requestedDate", "<=", dayEnd.toISOString());
 
-    const conflictingBookings = await query.get();
+    const existingBookings = await query.get();
 
-    return conflictingBookings.docs.some((doc) => {
-      return excludeBookingId ? doc.id !== excludeBookingId : true;
+    // Check for time range overlap
+    return existingBookings.docs.some((doc) => {
+      if (excludeBookingId && doc.id === excludeBookingId) {
+        return false;
+      }
+
+      const booking = doc.data();
+      const existingStart = new Date(booking.requestedDate);
+      const existingEnd = new Date(booking.scheduledDate);
+
+      // Two bookings overlap if:
+      // new start < existing end AND new end > existing start
+      const hasOverlap = newBookingStart < existingEnd && newBookingEnd > existingStart;
+
+      return hasOverlap;
     });
   } catch (error) {
     console.error("Error checking booking conflicts:", error);
@@ -270,27 +294,35 @@ async function createNotification(
  * Cancel conflicting bookings when a booking is accepted
  * @param {string} acceptedBookingId - The booking ID that was accepted
  * @param {string} providerId - Provider ID
- * @param {string} scheduledDate - Scheduled date/time ISO string
+ * @param {string} requestedDate - Requested date/time ISO string (start time)
+ * @param {string} scheduledDate - Scheduled date/time ISO string (end time)
  * @param {string} serviceId - Service ID
  */
 async function cancelConflictingBookings(
   acceptedBookingId,
   providerId,
+  requestedDate,
   scheduledDate,
   serviceId,
 ) {
   try {
     console.log(`🔄 [cancelConflictingBookings] Checking for conflicting bookings...`);
-    const requestedTime = new Date(scheduledDate);
-    const startTime = new Date(requestedTime.getTime() - 60 * 60 * 1000); // 1 hour buffer
-    const endTime = new Date(requestedTime.getTime() + 60 * 60 * 1000); // 1 hour buffer
 
-    // Find all "Requested" bookings for this provider that overlap with the accepted booking
+    const acceptedStart = new Date(requestedDate);
+    const acceptedEnd = new Date(scheduledDate);
+
+    // Query for bookings on the same date
+    const dayStart = new Date(acceptedStart);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(acceptedStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    // Find all "Requested" bookings for this provider on the same day
     const conflictingBookingsQuery = await db.collection("bookings")
       .where("providerId", "==", providerId)
       .where("status", "==", "Requested")
-      .where("requestedDate", ">=", startTime.toISOString())
-      .where("requestedDate", "<=", endTime.toISOString())
+      .where("requestedDate", ">=", dayStart.toISOString())
+      .where("requestedDate", "<=", dayEnd.toISOString())
       .get();
 
     // Fetch service details once for all notifications
@@ -306,6 +338,19 @@ async function cancelConflictingBookings(
 
       // Don't cancel the booking that was just accepted
       if (conflictingBooking.id === acceptedBookingId) {
+        return;
+      }
+
+      // Check for time range overlap
+      const conflictStart = new Date(conflictingBooking.requestedDate);
+      const conflictEnd = new Date(conflictingBooking.scheduledDate);
+
+      // Two bookings overlap if:
+      // accepted start < conflict end AND accepted end > conflict start
+      const hasOverlap = acceptedStart < conflictEnd && acceptedEnd > conflictStart;
+
+      if (!hasOverlap) {
+        // No overlap, don't cancel this booking
         return;
       }
 
@@ -482,7 +527,12 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
     // Check for booking conflicts
     console.log("🔄 [createBooking] Checking for booking conflicts...");
-    const hasConflict = await checkBookingConflicts(serviceId, providerId, requestedDate);
+    const hasConflict = await checkBookingConflicts(
+      serviceId,
+      providerId,
+      requestedDate,
+      scheduledDate,
+    );
     if (hasConflict) {
       const errorMsg = "The requested time conflicts with an existing booking.";
       console.warn(`⚠️ [createBooking] Booking conflict detected. ${errorMsg}`);
@@ -624,9 +674,11 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 
     // Check for scheduling conflicts
     console.log("🔄 [acceptBooking] Checking for scheduling conflicts...");
+    // Use the original requestedDate (start time) and new scheduledDate (end time)
     const hasConflict = await checkBookingConflicts(
       booking.serviceId,
       booking.providerId,
+      booking.requestedDate,
       scheduledDate,
       bookingId,
     );
@@ -671,6 +723,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     await cancelConflictingBookings(
       bookingId,
       booking.providerId,
+      booking.requestedDate,
       scheduledDate,
       booking.serviceId,
     );
@@ -1674,17 +1727,17 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
           return isInSlotRange;
         });
 
-        if (!isWithinTimeSlot) {
-          console.warn(`⚠️ [checkServiceAvailability]
-            Requested time is outside service's available hours.`);
-          return {
-            success: true,
-            data: {
-              available: false,
-              reason: "Requested time is outside service's available hours",
-            },
-          };
-        }
+        // if (!isWithinTimeSlot) {
+        //   console.warn(`⚠️ [checkServiceAvailability]
+        //     Requested time is outside service's available hours.`);
+        //   return {
+        //     success: true,
+        //     data: {
+        //       available: false,
+        //       reason: "Requested time is outside service's available hours",
+        //     },
+        //   };
+        // }
       }
     }
 
@@ -1807,8 +1860,8 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     const bookingsQuery = await db.collection("bookings")
       .where("serviceId", "==", serviceId)
       .where("status", "in", ["Accepted", "InProgress"])
-      .where("scheduledDate", ">=", startOfDay.toISOString())
-      .where("scheduledDate", "<=", endOfDay.toISOString())
+      .where("requestedDate", ">=", startOfDay.toISOString())
+      .where("requestedDate", "<=", endOfDay.toISOString())
       .get();
 
     const existingBookings = bookingsQuery.docs.map((doc) => doc.data());
@@ -1821,18 +1874,29 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     });
 
     const availableSlots = daySchedule.availability.slots.map((slot) => {
-      const slotStart = parseInt(slot.startTime.split(":")[0]);
-      const slotEnd = parseInt(slot.endTime.split(":")[0]);
+      // Parse slot times
+      const [slotStartHour, slotStartMinute] = slot.startTime.split(":").map(Number);
+      const [slotEndHour, slotEndMinute] = slot.endTime.split(":").map(Number);
 
-      // Check for conflicts with existing bookings
+      // Create Date objects for slot start and end times
+      const slotStartTime = new Date(requestedDate);
+      slotStartTime.setHours(slotStartHour, slotStartMinute, 0, 0);
+
+      const slotEndTime = new Date(requestedDate);
+      slotEndTime.setHours(slotEndHour, slotEndMinute, 0, 0);
+
+      // Check for conflicts with existing bookings using proper time range overlap
       const hasBookingConflict = existingBookings.some((booking) => {
-        if (!booking.scheduledDate) return false;
+        if (!booking.requestedDate || !booking.scheduledDate) return false;
 
-        const bookingDate = new Date(booking.scheduledDate);
-        const bookingHour = bookingDate.getHours();
+        const bookingStart = new Date(booking.requestedDate);
+        const bookingEnd = new Date(booking.scheduledDate);
 
-        // Assume 1-hour booking duration for conflict checking
-        return bookingHour >= slotStart && bookingHour < slotEnd;
+        // Two time ranges overlap if:
+        // slot start < booking end AND slot end > booking start
+        const hasOverlap = slotStartTime < bookingEnd && slotEndTime > bookingStart;
+
+        return hasOverlap;
       });
 
       // Slot is available if no booking conflicts exist
