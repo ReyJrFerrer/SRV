@@ -11,6 +11,7 @@ This document describes the implementation of a balance holding mechanism to fix
 In the original `acceptBooking` function for CashOnHand payments, the system only validated that the provider had sufficient wallet balance to cover the commission fee. However, it did NOT hold or debit that amount upon acceptance.
 
 **Exploitation Scenario:**
+
 1. Provider tops up wallet with enough balance for 1 commission (e.g., 100 PHP)
 2. Provider accepts multiple booking requests (e.g., 10 bookings, each requiring 100 PHP commission)
 3. All 10 bookings pass the balance check since balance is still 100 PHP
@@ -64,12 +65,14 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 **Purpose**: Hold funds without creating a transaction
 
 **Process**:
+
 - Validates available balance (balance - heldBalance)
 - Creates a hold record with reference (bookingId)
 - Increments heldBalance
 - Does NOT create transaction log entry
 
 **Returns**:
+
 ```javascript
 {
   success: true,
@@ -84,17 +87,20 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 **Purpose**: Release a held amount back to available balance
 
 **Process**:
+
 - Finds hold by reference
 - Removes hold from holds array
 - Decrements heldBalance
 - Does NOT create transaction log entry
 
 **Use Cases**:
+
 - Booking is cancelled
 - Booking is declined
 - Admin manually releases hold for dispute resolution
 
 **Returns**:
+
 ```javascript
 {
   success: true,
@@ -109,6 +115,7 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 **Purpose**: Convert held amount to actual debit with transaction record
 
 **Process**:
+
 - Finds hold by reference
 - Removes hold from holds array
 - Debits the balance
@@ -116,9 +123,11 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 - **Creates transaction log entry** (commission payment)
 
 **Use Cases**:
+
 - Booking is completed (commission is finalized)
 
 **Returns**:
+
 ```javascript
 {
   success: true,
@@ -133,6 +142,7 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 **Purpose**: Admin function for manual hold release
 
 **Use Cases**:
+
 - Dispute resolution
 - System error recovery
 - Manual intervention
@@ -142,6 +152,7 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 **Purpose**: Get comprehensive wallet information including holds
 
 **Returns**:
+
 ```javascript
 {
   success: true,
@@ -164,12 +175,14 @@ Available balance for new bookings: `1000 - 300 = 700 PHP`
 #### `validateCommissionBalance(booking)`
 
 **Before**:
+
 ```javascript
 const walletBalance = walletData.balance || 0;
 return walletBalance >= commissionFee;
 ```
 
 **After**:
+
 ```javascript
 const walletBalance = walletData.balance || 0;
 const heldBalance = walletData.heldBalance || 0;
@@ -180,6 +193,7 @@ return availableBalance >= commissionFee;
 #### `acceptBooking(bookingId, scheduledDate)`
 
 **New Logic**:
+
 1. Validate commission balance (checks available balance)
 2. Calculate commission amount
 3. **Hold the commission** using `holdBalanceInternal()`
@@ -188,16 +202,17 @@ return availableBalance >= commissionFee;
 6. Send notifications
 
 **Code Addition**:
+
 ```javascript
 // Hold commission for cash jobs to prevent over-acceptance
 if (booking.paymentMethod === "CashOnHand") {
   // Calculate commission...
-  
+
   await holdBalanceInternal(
     booking.providerId,
     totalCommission,
     bookingId,
-    `Commission hold for booking #${bookingId}`
+    `Commission hold for booking #${bookingId}`,
   );
 }
 ```
@@ -205,13 +220,16 @@ if (booking.paymentMethod === "CashOnHand") {
 #### `completeBooking(bookingId, amountPaid)`
 
 **Before**:
+
 - Directly debited commission using `debitBalanceInternal()`
 
 **After**:
+
 - **Converts hold to debit** using `convertHoldToDebitInternal()`
 - If conversion fails, releases the hold to avoid stuck funds
 
 **Code Change**:
+
 ```javascript
 // Convert held commission to debit (creates transaction record)
 try {
@@ -219,7 +237,7 @@ try {
     booking.providerId,
     bookingId,
     commissionDescription,
-    "SRV_COMMISSION"
+    "SRV_COMMISSION",
   );
 } catch (debitError) {
   // If conversion fails, release the hold
@@ -231,11 +249,13 @@ try {
 #### `cancelBooking(bookingId)`
 
 **New Logic**:
+
 - Release held commission if booking was "Accepted"
 - Only releases for CashOnHand payments
 - Continues even if release fails (logs error)
 
 **Code Addition**:
+
 ```javascript
 // Release held commission for cash jobs (if booking was accepted)
 if (booking.paymentMethod === "CashOnHand" && booking.status === "Accepted") {
@@ -279,6 +299,7 @@ if (booking.paymentMethod === "CashOnHand" && booking.status === "Accepted") {
 ### Multiple Booking Scenario (Fixed)
 
 **Before Fix**:
+
 ```
 Balance: 100 PHP (commission = 100 PHP each)
 Accept Booking #1 → ✓ (balance check passes)
@@ -287,6 +308,7 @@ Accept Booking #3 → ✓ (still passes! BUG)
 ```
 
 **After Fix**:
+
 ```
 Balance: 100 PHP, Held: 0, Available: 100
 Accept Booking #1 → ✓ (holds 100, Available: 0)
@@ -307,13 +329,14 @@ Accept Booking #2 → ✗ (insufficient available balance)
 ### New Exported Functions (index.js)
 
 ```javascript
-exports.releaseHold = releaseHold;           // Admin function
-exports.getWalletDetails = getWalletDetails;  // User/Admin function
+exports.releaseHold = releaseHold; // Admin function
+exports.getWalletDetails = getWalletDetails; // User/Admin function
 ```
 
 ### Updated Function Response (getBalance)
 
 **Before**:
+
 ```javascript
 {
   success: true,
@@ -322,6 +345,7 @@ exports.getWalletDetails = getWalletDetails;  // User/Admin function
 ```
 
 **After**:
+
 ```javascript
 {
   success: true,
@@ -334,6 +358,7 @@ exports.getWalletDetails = getWalletDetails;  // User/Admin function
 ## Testing Scenarios
 
 ### Test 1: Multiple Booking Prevention
+
 ```javascript
 // Provider has 100 PHP
 // Each booking requires 100 PHP commission
@@ -347,6 +372,7 @@ await acceptBooking("booking-2", scheduledDate);
 ```
 
 ### Test 2: Cancellation Releases Hold
+
 ```javascript
 await acceptBooking("booking-1", scheduledDate);
 // balance=100, held=100, available=0
@@ -359,6 +385,7 @@ await acceptBooking("booking-2", scheduledDate);
 ```
 
 ### Test 3: Completion Debits Correctly
+
 ```javascript
 await acceptBooking("booking-1", scheduledDate);
 // balance=1000, held=100, available=900
@@ -373,6 +400,7 @@ await completeBooking("booking-1");
 ### Existing Bookings
 
 For bookings created before this update:
+
 - No holds exist in wallet
 - `completeBooking` will fail if trying to convert non-existent hold
 - **Workaround**: Falls back to direct debit if hold not found
@@ -380,6 +408,7 @@ For bookings created before this update:
 ### Wallet Data Migration
 
 No database migration required. The system gracefully handles:
+
 - Wallets without `heldBalance` field (defaults to 0)
 - Wallets without `holds` array (defaults to empty array)
 
@@ -410,8 +439,10 @@ No database migration required. The system gracefully handles:
 ## [Unreleased]
 
 ### Added
+
 - Add wallet hold mechanic for commission reservation in CashOnHand bookings
 
 ### Fixed
+
 - Fix logic flaw allowing providers to accept unlimited bookings with minimal wallet balance
 ```

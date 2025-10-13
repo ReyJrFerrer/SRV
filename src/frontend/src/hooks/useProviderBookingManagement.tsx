@@ -1332,8 +1332,7 @@ export const useProviderBookingManagement =
 
             // If we don't have all package details loaded, use primary package details as fallback
             if (estimatedCommission === 0 && booking.packageDetails) {
-              estimatedCommission =
-                booking.packageDetails.commissionFee || 0;
+              estimatedCommission = booking.packageDetails.commissionFee || 0;
             }
           } else if (booking.serviceDetails) {
             // Regular service booking - use commission from service
@@ -1379,7 +1378,8 @@ export const useProviderBookingManagement =
         walletHeldBalance,
         walletAvailableBalance,
       ],
-    );    const canAcceptCashBooking = useCallback(
+    );
+    const canAcceptCashBooking = useCallback(
       async (booking: ProviderEnhancedBooking): Promise<boolean> => {
         if (booking.paymentMethod !== "CashOnHand") {
           return true; // No wallet restrictions for digital payments

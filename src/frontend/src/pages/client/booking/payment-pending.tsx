@@ -153,7 +153,9 @@ const PaymentPendingPage: React.FC = () => {
         scheduledDate: bookingData.scheduledDate
           ? new Date(bookingData.scheduledDate)
           : new Date(), // Default to current date if no scheduled date
-        scheduledTime: bookingData.scheduledTime ? bookingData.scheduledTime : "",
+        scheduledTime: bookingData.scheduledTime
+          ? bookingData.scheduledTime
+          : "",
         location: bookingData.location,
         notes: bookingData.notes,
         amountToPay: bookingData.amountToPay,
