@@ -20,9 +20,11 @@ const {
   updateProviderReputationInternal,
 } = require("./reputation");
 
-// Import wallet internal function for commission deduction
+// Import wallet internal functions for commission handling
 const {
-  debitBalanceInternal,
+  holdBalanceInternal,
+  releaseHoldInternal,
+  convertHoldToDebitInternal,
 } = require("./wallet");
 
 const db = admin.firestore();
@@ -137,8 +139,9 @@ async function checkBookingConflicts(
 
 /**
  * Validate provider wallet balance for commission (cash jobs only)
+ * Now accounts for held balance to prevent over-acceptance of bookings
  * @param {object} booking - Booking object
- * @return {Promise<boolean>} True if sufficient balance
+ * @return {Promise<boolean>} True if sufficient available balance
  */
 async function validateCommissionBalance(booking) {
   if (booking.paymentMethod !== "CashOnHand") {
@@ -167,11 +170,26 @@ async function validateCommissionBalance(booking) {
       commissionFee = service.commissionFee || 0;
     }
 
-    // Check provider wallet balance
+    // Check provider wallet balance - now accounting for held amounts
     const walletDoc = await db.collection("wallets").doc(booking.providerId).get();
-    const walletBalance = walletDoc.exists ? (walletDoc.data().balance || 0) : 0;
+    if (!walletDoc.exists) {
+      return false;
+    }
 
-    return walletBalance >= commissionFee;
+    const walletData = walletDoc.data();
+    const walletBalance = walletData.balance || 0;
+    const heldBalance = walletData.heldBalance || 0;
+
+    // Calculate available balance = total balance - held balance
+    const availableBalance = walletBalance - heldBalance;
+
+    console.log(
+      `💰 [validateCommissionBalance] Provider ${booking.providerId}: ` +
+      `Balance: ${walletBalance}, Held: ${heldBalance}, ` +
+      `Available: ${availableBalance}, Required: ${commissionFee}`,
+    );
+
+    return availableBalance >= commissionFee;
   } catch (error) {
     console.error("Error validating commission balance:", error);
     return false;
@@ -701,6 +719,50 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       );
     }
 
+    // Hold commission for cash jobs to prevent over-acceptance
+    if (booking.paymentMethod === "CashOnHand") {
+      console.log("🔒 [acceptBooking] Holding commission for cash job...");
+
+      // Calculate commission amount
+      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+      if (!serviceDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Service not found");
+      }
+
+      const service = serviceDoc.data();
+      let totalCommission = 0;
+
+      if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
+        for (const packageId of booking.servicePackageIds) {
+          const packageDoc = await db.collection("service_packages").doc(packageId).get();
+          if (packageDoc.exists) {
+            totalCommission += packageDoc.data().commissionFee || 0;
+          }
+        }
+      } else {
+        totalCommission = service.commissionFee || 0;
+      }
+
+      // Hold the commission amount
+      try {
+        await holdBalanceInternal(
+          booking.providerId,
+          totalCommission,
+          bookingId,
+          `Commission hold for booking #${bookingId}`,
+        );
+        console.log(
+          `✅ [acceptBooking] Held ${totalCommission} cents for booking ${bookingId}`,
+        );
+      } catch (holdError) {
+        console.error(`❌ [acceptBooking] Failed to hold commission: ${holdError.message}`);
+        throw new functions.https.HttpsError(
+          "internal",
+          `Failed to hold commission: ${holdError.message}`,
+        );
+      }
+    }
+
     const updatedBooking = {
       ...booking,
       status: "Accepted",
@@ -1086,11 +1148,11 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
         serviceDescriptions.push(service.title || booking.serviceId);
       }
 
-      // Deduct commission from provider wallet using wallet.js debitBalanceInternal
+      // Convert held commission to debit (creates transaction record)
       if (totalCommission > 0) {
         console.log(
-          `💰 [completeBooking] Deducting commission of ${totalCommission} ` +
-          `cents from provider ${booking.providerId}.`,
+          `💰 [completeBooking] Converting held commission of ${totalCommission} ` +
+          `cents to debit for provider ${booking.providerId}.`,
         );
 
         const serviceDescriptionsText = serviceDescriptions.length > 0 ?
@@ -1101,10 +1163,10 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
           `Commission fee for booking #${bookingId} - ${serviceDescriptionsText}`;
 
         try {
-          // Call debitBalanceInternal from wallet.js (internal function)
-          const debitResult = await debitBalanceInternal(
+          // Convert hold to debit - this releases the hold and creates transaction
+          const debitResult = await convertHoldToDebitInternal(
             booking.providerId,
-            totalCommission,
+            bookingId,
             commissionDescription,
             "SRV_COMMISSION",
           );
@@ -1115,6 +1177,15 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
           );
         } catch (debitError) {
           console.error(`❌ [completeBooking] Failed to deduct commission: ${debitError.message}`);
+          // If conversion fails, try to release the hold
+          try {
+            await releaseHoldInternal(booking.providerId, bookingId);
+            console.log(`✅ [completeBooking] Released held commission after debit failure.`);
+          } catch (releaseError) {
+            console.error(
+              `❌ [completeBooking] Failed to release hold: ${releaseError.message}`,
+            );
+          }
           throw new functions.https.HttpsError(
             "internal",
             `Failed to deduct commission: ${debitError.message}`,
@@ -1240,6 +1311,21 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       });
     });
     console.log(`✅ [cancelBooking] Successfully updated booking ${bookingId}.`);
+
+    // Release held commission for cash jobs (if booking was accepted)
+    if (booking.paymentMethod === "CashOnHand" && booking.status === "Accepted") {
+      console.log("🔓 [cancelBooking] Releasing held commission for cancelled cash job...");
+      try {
+        await releaseHoldInternal(booking.providerId, bookingId);
+        console.log(`✅ [cancelBooking] Released held commission for booking ${bookingId}`);
+      } catch (releaseError) {
+        console.error(
+          `⚠️ [cancelBooking] Failed to release held commission: ${releaseError.message}`,
+        );
+        // Don't throw error here - cancellation should still succeed
+        // But log it for manual review
+      }
+    }
 
     // Fetch service details and user names for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
@@ -2318,15 +2404,22 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
  */
 exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
   console.log("🚀 [cancelMissedBookings] scheduled function running...");
+  console.log(`📅 [cancelMissedBookings] Current time: ${new Date().toISOString()}`);
+
   try {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    // Find all "Accepted" bookings whose scheduled date has passed
+    console.log(`📝 [cancelMissedBookings] Looking for bookings with scheduledDate ` +
+      `(end time) before ${oneHourAgo.toISOString()}...`);
+
+    // Find all "Accepted" bookings whose scheduled date (end time) has passed by more than 1 hour
     const missedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("scheduledDate", "<=", oneHourAgo.toISOString())
       .get();
+
+    console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size} missed bookings.`);
 
     if (missedBookingsQuery.empty) {
       console.log("✅ [cancelMissedBookings] No missed bookings found.");
@@ -2342,10 +2435,19 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
       const booking = doc.data();
 
       console.log(`📝 [cancelMissedBookings] Cancelling missed booking ${booking.id}...`);
+      console.log(`   Booking details: requestedDate=${booking.requestedDate}, ` +
+        `scheduledDate=${booking.scheduledDate}, status=${booking.status}`);
 
       // Fetch service details for notification
-      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
-      const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+      let serviceName = "your service";
+      try {
+        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+        if (serviceDoc.exists) {
+          serviceName = serviceDoc.data().title || "your service";
+        }
+      } catch (error) {
+        console.error(`Error fetching service for booking ${booking.id}:`, error);
+      }
 
       // Update booking status to Cancelled
       batch.update(doc.ref, {
@@ -2371,6 +2473,7 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
             serviceId: booking.serviceId,
             serviceName,
             providerId: booking.providerId,
+            requestedDate: booking.requestedDate,
             scheduledDate: booking.scheduledDate,
           },
         ),
@@ -2379,13 +2482,16 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
       cancelledCount++;
     }
 
-    await batch.commit();
-    await Promise.allSettled(notificationPromises);
+    if (cancelledCount > 0) {
+      await batch.commit();
+      await Promise.allSettled(notificationPromises);
+      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
+    }
 
-    console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
     return {success: true, count: cancelledCount};
   } catch (error) {
-    console.error("Error cancelling missed bookings:", error);
+    console.error("❌ [cancelMissedBookings] Error cancelling missed bookings:", error);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 });
@@ -2396,6 +2502,8 @@ exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
  */
 exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
   console.log("🚀 [sendServiceReminders] scheduled function running...");
+  console.log(`📅 [sendServiceReminders] Current time: ${new Date().toISOString()}`);
+
   try {
     const now = new Date();
     // Look for bookings that are 25-35 minutes away (to catch the 30-minute window)
@@ -2406,11 +2514,14 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       `${reminderWindowStart.toISOString()} and ${reminderWindowEnd.toISOString()}...`);
 
     // Find all "Accepted" bookings within the 30-minute window that haven't had reminders sent
+    // Using requestedDate (start time) for the 30-minute reminder
     const upcomingBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("requestedDate", ">=", reminderWindowStart.toISOString())
       .where("requestedDate", "<=", reminderWindowEnd.toISOString())
       .get();
+
+    console.log(`📊 [sendServiceReminders] Found ${upcomingBookingsQuery.size} bookings in query.`);
 
     if (upcomingBookingsQuery.empty) {
       console.log("✅ [sendServiceReminders] No upcoming bookings found in reminder window.");
@@ -2431,6 +2542,8 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       }
 
       console.log(`📝 [sendServiceReminders] Sending reminder for booking ${booking.id}...`);
+      console.log(`   Booking details: requestedDate=${booking.requestedDate}, ` +
+        `scheduledDate=${booking.scheduledDate}`);
 
       // Get service name for better notification message
       let serviceName = "your service";
@@ -2449,9 +2562,11 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
         reminderSentAt: now.toISOString(),
       });
 
-      // Calculate exact minutes until booking
-      const scheduledTime = new Date(booking.scheduledDate);
-      const minutesUntil = Math.round((scheduledTime.getTime() - now.getTime()) / (60 * 1000));
+      // Calculate exact minutes until booking starts (using requestedDate)
+      const startTime = new Date(booking.requestedDate);
+      const minutesUntil = Math.round((startTime.getTime() - now.getTime()) / (60 * 1000));
+
+      console.log(`   ⏰ Reminder: ${minutesUntil} minutes until start`);
 
       // Send reminder to the client
       const clientMessage = `Reminder: Your "${serviceName}" booking is scheduled to start ` +
@@ -2468,6 +2583,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
             serviceId: booking.serviceId,
             serviceName,
             providerId: booking.providerId,
+            requestedDate: booking.requestedDate,
             scheduledDate: booking.scheduledDate,
             minutesUntil,
           },
@@ -2489,6 +2605,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
             serviceId: booking.serviceId,
             serviceName,
             clientId: booking.clientId,
+            requestedDate: booking.requestedDate,
             scheduledDate: booking.scheduledDate,
             minutesUntil,
           },
@@ -2498,13 +2615,19 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       reminderCount++;
     }
 
-    await batch.commit();
-    await Promise.allSettled(notificationPromises);
+    if (reminderCount > 0) {
+      await batch.commit();
+      await Promise.allSettled(notificationPromises);
+      console.log(`✅ [sendServiceReminders] Sent reminders for ${reminderCount} bookings.`);
+    } else {
+      console.log(`✅ [sendServiceReminders] No new reminders to send ` +
+        `(all found bookings already had reminders sent).`);
+    }
 
-    console.log(`✅ [sendServiceReminders] Sent reminders for ${reminderCount} bookings.`);
     return {success: true, count: reminderCount};
   } catch (error) {
-    console.error("Error sending service reminders:", error);
+    console.error("❌ [sendServiceReminders] Error sending service reminders:", error);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 });

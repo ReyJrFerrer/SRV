@@ -42,7 +42,12 @@ export const walletCanisterService = {
       });
 
       console.log("✅ [walletCanisterService] getBalance raw result:", result);
-      const responseData = result.data as { success: boolean; balance: number };
+      const responseData = result.data as {
+        success: boolean;
+        balance: number;
+        heldBalance?: number;
+        availableBalance?: number;
+      };
       console.log(
         "✅ [walletCanisterService] getBalance extracted data:",
         responseData,
@@ -54,6 +59,53 @@ export const walletCanisterService = {
         error,
       );
       throw new Error(`Failed to fetch balance: ${error}`);
+    }
+  },
+
+  /**
+   * Get detailed wallet information including held balance
+   */
+  async getWalletDetails(userId: string): Promise<{
+    balance: number;
+    heldBalance: number;
+    availableBalance: number;
+  }> {
+    console.log("🚀 [walletCanisterService] getWalletDetails called with:", {
+      userId,
+    });
+    try {
+      const getBalanceFn = httpsCallable(functions, "getBalance");
+
+      const result = await getBalanceFn({
+        data: { userId },
+      });
+
+      console.log(
+        "✅ [walletCanisterService] getWalletDetails raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        balance: number;
+        heldBalance: number;
+        availableBalance: number;
+      };
+      console.log(
+        "✅ [walletCanisterService] getWalletDetails extracted data:",
+        responseData,
+      );
+
+      return {
+        balance: responseData.balance || 0,
+        heldBalance: responseData.heldBalance || 0,
+        availableBalance: responseData.availableBalance || 0,
+      };
+    } catch (error) {
+      console.error(
+        "❌ [walletCanisterService] Error fetching wallet details:",
+        error,
+      );
+      throw new Error(`Failed to fetch wallet details: ${error}`);
     }
   },
 
