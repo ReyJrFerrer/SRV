@@ -179,7 +179,7 @@ export default function ProviderReviewView() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
           <p className="text-gray-600">Loading review details...</p>
         </div>
       </div>
@@ -345,7 +345,7 @@ export default function ProviderReviewView() {
                     </span>
                   </div>
                   <div className="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-4">
-                    <p className="text-gray-800 italic">
+                    <p className="italic text-gray-800">
                       "{clientReview.comment}"
                     </p>
                   </div>

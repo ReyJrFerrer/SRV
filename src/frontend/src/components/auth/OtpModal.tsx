@@ -170,7 +170,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
                   {!isVerified && (
                     <button
                       type="button"
-                      className="absolute top-4 right-4 rounded-lg p-1.5 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       onClick={handleClose}
                       disabled={isLoading}
                     >

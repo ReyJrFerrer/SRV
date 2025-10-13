@@ -111,7 +111,7 @@ const ReceiptPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -129,13 +129,13 @@ const ReceiptPage: React.FC = () => {
     : new Date(booking.updatedAt);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 sm:py-12 print:bg-white">
-      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 sm:p-10 md:p-12 print:border print:border-gray-300 print:shadow-none">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 print:bg-white sm:py-12">
+      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 print:border print:border-gray-300 print:shadow-none sm:p-10 md:p-12">
         <div className="mb-8 flex flex-col items-center">
           <img
             src="/images/srv characters (SVG)/girl.svg"
             alt="Service Completed"
-            className="mb-3 h-25 w-25 drop-shadow-lg"
+            className="h-25 w-25 mb-3 drop-shadow-lg"
             draggable={false}
           />
           <h1 className="text-3xl font-extrabold text-blue-900 sm:text-4xl">
@@ -166,7 +166,7 @@ const ReceiptPage: React.FC = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Service:</span>
-            <span className="max-w-[60%] text-right font-semibold break-words text-blue-900">
+            <span className="max-w-[60%] break-words text-right font-semibold text-blue-900">
               {booking.packageName}
             </span>
           </div>
@@ -243,7 +243,7 @@ const ReceiptPage: React.FC = () => {
           your transaction history.
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row print:hidden">
+        <div className="flex flex-col gap-3 print:hidden sm:flex-row">
           <button
             onClick={handlePrint}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -259,7 +259,7 @@ const ReceiptPage: React.FC = () => {
         </div>
         <button
           onClick={handleDone}
-          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none print:hidden"
+          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
         >
           Done
         </button>

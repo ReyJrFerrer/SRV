@@ -60,7 +60,7 @@ const ViewAllServicesPage: React.FC = () => {
 
         {loading ? (
           <div className="flex justify-center py-8">
-            <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-green-500"></div>
+            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-green-500"></div>
           </div>
         ) : services.length === 0 && !error ? (
           <div className="py-10 text-center">
