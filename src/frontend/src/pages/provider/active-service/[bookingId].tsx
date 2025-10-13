@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  ClockIcon,
   UserIcon,
   MapPinIcon,
   CalendarIcon,
@@ -17,20 +16,9 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 
-const formatDuration = (seconds: number): string => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-};
-
 const ActiveServicePage: React.FC = () => {
   const navigate = useNavigate();
   const { bookingId } = useParams<{ bookingId: string }>();
-  const [searchParams] = useSearchParams();
-  const startTimeParam = searchParams.get("startTime");
-  const [actualStartTime, setActualStartTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(
     null,
   );
@@ -66,32 +54,6 @@ const ActiveServicePage: React.FC = () => {
       document.title = "Active Service | SRV Provider";
     }
   }, [booking]);
-
-  useEffect(() => {
-    if (booking) {
-      if (typeof startTimeParam === "string") {
-        setActualStartTime(new Date(startTimeParam));
-      } else if (booking.scheduledDate) {
-        setActualStartTime(new Date(booking.scheduledDate));
-      } else {
-        setActualStartTime(new Date());
-      }
-    }
-  }, [booking, startTimeParam]);
-
-  useEffect(() => {
-    let timerInterval: NodeJS.Timeout;
-    if (actualStartTime) {
-      timerInterval = setInterval(() => {
-        const now = new Date();
-        const diffSeconds = Math.floor(
-          (now.getTime() - actualStartTime.getTime()) / 1000,
-        );
-        setElapsedTime(diffSeconds > 0 ? diffSeconds : 0);
-      }, 1000);
-    }
-    return () => clearInterval(timerInterval);
-  }, [actualStartTime]);
 
   // Check commission validation for cash bookings
   useEffect(() => {
@@ -253,26 +215,10 @@ const ActiveServicePage: React.FC = () => {
       </header>
 
       <main className="container mx-auto flex-grow space-y-8 p-4 pb-24 sm:p-8">
-        {/* Timer Section */}
-        <section className="mt-6 flex flex-col items-center justify-center rounded-2xl bg-white p-8 shadow-lg">
-          <ClockIcon className="mb-3 h-16 w-16 text-blue-500 sm:h-20 sm:w-20" />
-          <p className="text-base font-medium text-gray-500">Elapsed Time</p>
-          <p className="text-4xl font-extrabold tabular-nums text-blue-900 sm:text-5xl">
-            {formatDuration(elapsedTime)}
-          </p>
-          {actualStartTime && (
-            <p className="mt-2 text-xs text-gray-400">
-              Started:{" "}
-              {actualStartTime.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          )}
-        </section>
+        {/* Timer removed */}
 
-        {/* Details and Actions Section */}
-        <div className="md:flex md:gap-8 lg:gap-12">
+  {/* Details and Actions Section */}
+  <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
           {/* Left Column: Booking Details */}
           <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
             <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
