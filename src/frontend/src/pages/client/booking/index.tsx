@@ -134,6 +134,40 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
+     // Custom sort for ALL tab: inprogress > confirmed > pending > completed > cancelled
+    if (activeTab === "ALL") {
+      const inProgress = processedBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "inprogress" ||
+          b.status?.toLowerCase() === "in_progress",
+      );
+      const confirmed = processedBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "confirmed" ||
+          b.status?.toLowerCase() === "accepted",
+      );
+      const pending = processedBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "pending" ||
+          b.status?.toLowerCase() === "requested",
+      );
+      const completed = processedBookings.filter(
+        (b) => b.status?.toLowerCase() === "completed",
+      );
+      const cancelled = processedBookings.filter(
+        (b) =>
+          b.status?.toLowerCase() === "cancelled" ||
+          b.status?.toLowerCase() === "declined",
+      );
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+      ];
+    }
+    
     return processedBookings;
   }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
 

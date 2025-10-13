@@ -200,7 +200,7 @@ const PayoutSettingsPage: React.FC = () => {
             </p>
             <div className="space-y-3">
               <button
-                onClick={() => navigate("/provider/dashboard")}
+                onClick={() => navigate("/provider/home")}
                 className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
               >
                 Go to Dashboard
