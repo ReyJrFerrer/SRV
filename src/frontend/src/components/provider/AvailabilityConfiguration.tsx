@@ -251,7 +251,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                 {commonTimeSlots.map((slot, index) => (
                   <div
                     key={slot.id}
-                    className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2"
+                    className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
                   >
                     {/* Start Time */}
                     <div className="flex flex-shrink-0 items-center space-x-1">
@@ -406,7 +406,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                     {(perDayTimeSlots[day] || []).map((slot, index) => (
                       <div
                         key={slot.id}
-                        className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2"
+                        className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
                       >
                         {/* Start Time */}
                         <div className="flex flex-shrink-0 items-center space-x-1">

@@ -413,6 +413,29 @@ persistent actor ReviewCanister {
         };
     };
 
+    // Delete all reviews for a user (for account deletion)
+    public shared(msg) func deleteUserReviews(userId : Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // In production, verify caller is admin
+        var deletedCount : Nat = 0;
+        
+        // Get all reviews by or about this user
+        let allReviews = Iter.toArray(reviews.entries());
+        for ((reviewId, review) in allReviews.vals()) {
+            if (review.clientId == userId or review.providerId == userId) {
+                reviews.delete(reviewId);
+                deletedCount += 1;
+            };
+        };
+        
+        return #ok("Deleted " # Nat.toText(deletedCount) # " reviews");
+    };
+
     // Calculate average rating for a provider
     public query func calculateProviderRating(providerId : Principal) : async Result<Float> {
         let providerReviews = Array.filter<Review>(

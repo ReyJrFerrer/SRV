@@ -198,7 +198,7 @@ const PhoneVerification: React.FC<PhoneVerificationProps> = ({
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="09xx xxx xxxx"
                 disabled={disabled || isLoading}
-                className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100"
+                className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
                 maxLength={11}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -217,7 +217,7 @@ const PhoneVerification: React.FC<PhoneVerificationProps> = ({
             type="button"
             onClick={handlePhoneSubmit}
             disabled={disabled || isLoading || !phoneNumber.trim()}
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">

@@ -314,7 +314,7 @@ export const BookingReviewPage: React.FC = () => {
         </div>
         <textarea
           placeholder="Write your feedback... (optional, up to 500 characters)"
-          className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-gray-100 sm:min-h-[80px]"
+          className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 sm:min-h-[80px]"
           rows={4}
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}

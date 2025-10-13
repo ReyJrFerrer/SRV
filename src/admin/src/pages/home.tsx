@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   AdminDashboardStats,
   ServiceProviderCommissionTable,
-  PendingValidationCard,
   AdminFeedback,
 } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
@@ -11,11 +10,6 @@ import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
   LineChart,
   Line,
   XAxis,
@@ -23,6 +17,9 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 // Types for media modal
@@ -196,8 +193,6 @@ export const AdminHomePage: React.FC = () => {
     refreshSystemStats,
     refreshServiceProviders,
     refreshAll,
-    validatePayment,
-    viewMediaItems,
   } = useAdmin();
 
   // Mobile bottom action bar visibility
@@ -221,16 +216,18 @@ export const AdminHomePage: React.FC = () => {
     error: null,
   });
 
-  // Calculate dashboard stats from current data
-  const dashboardStats = {
+  // Calculate dashboard stats from current data (removed totalPendingCommission)
+  const dashboardStats: {
+    totalServiceProviders: number;
+    totalPendingValidations: number;
+    totalPendingTickets: number;
+    totalAdminUsers: number;
+    totalSettledCommission: number;
+  } = {
     totalServiceProviders: serviceProviders.length,
     totalPendingValidations: pendingValidations.length,
     totalPendingTickets: systemStats?.totalCommissionRules || 0,
     totalAdminUsers: systemStats?.adminUsers || 0,
-    totalPendingCommission: serviceProviders.reduce(
-      (sum, p) => sum + p.pendingCommission,
-      0,
-    ),
     totalSettledCommission: serviceProviders.reduce(
       (sum, p) => sum + p.settledCommission,
       0,
@@ -256,38 +253,6 @@ export const AdminHomePage: React.FC = () => {
   })();
 
   // Charts: dataset builders
-  // Donut: Settled vs Pending Commission (current totals)
-  const donutData = [
-    {
-      name: "Settled",
-      value: serviceProviders.reduce((sum, p) => sum + p.settledCommission, 0),
-      color: "#2563eb", // blue-600
-    },
-    {
-      name: "Pending",
-      value: serviceProviders.reduce((sum, p) => sum + p.pendingCommission, 0),
-      color: "#f59e0b", // amber-500
-    },
-  ];
-
-  // Bar: Pending Validations by Payment Method (respects period if possible)
-  const pendingValidationsInPeriod = pendingValidations.filter((v) => {
-    if (!periodFromDate) return true;
-    const at = v.paymentSubmittedAt ?? v.createdAt;
-    return at >= periodFromDate;
-  });
-  const byMethodMap = pendingValidationsInPeriod.reduce<Record<string, number>>(
-    (acc, v) => {
-      const key = v.paymentMethod ?? "Unknown";
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    },
-    {},
-  );
-  const barData = Object.entries(byMethodMap).map(([method, count]) => ({
-    method,
-    count,
-  }));
 
   // Line: Bookings per Day (from remittanceOrders, respects period)
   const ordersInPeriod = remittanceOrders.filter((o) => {
@@ -407,63 +372,6 @@ export const AdminHomePage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Handlers for actions
-  const handleApprovePayment = async (orderId: string, reason?: string) => {
-    await validatePayment(orderId, true, reason);
-  };
-
-  const handleRejectPayment = async (orderId: string, reason: string) => {
-    await validatePayment(orderId, false, reason);
-  };
-
-  const handleViewMedia = async (mediaIds: string[]) => {
-    // Since we only expect one media item, get the first one
-    const mediaId = mediaIds[0];
-    if (!mediaId) return;
-
-    // Show modal with loading state
-    setMediaModal({
-      isOpen: true,
-      mediaItem: null,
-      loading: true,
-      error: null,
-    });
-
-    try {
-      const mediaItems = await viewMediaItems([mediaId]);
-      const mediaItem = mediaItems[0];
-
-      if (mediaItem) {
-        setMediaModal({
-          isOpen: true,
-          mediaItem: {
-            id: mediaItem.id,
-            url: mediaItem.url,
-            fileName: mediaItem.fileName,
-            contentType: mediaItem.contentType,
-          },
-          loading: false,
-          error: null,
-        });
-      } else {
-        setMediaModal({
-          isOpen: true,
-          mediaItem: null,
-          loading: false,
-          error: "Media item not found",
-        });
-      }
-    } catch (error) {
-      //console.error("Error viewing media:", error);
-      setMediaModal({
-        isOpen: true,
-        mediaItem: null,
-        loading: false,
-        error: error instanceof Error ? error.message : "Failed to load media",
-      });
-    }
-  };
-
   // Handle modal close
   const handleCloseMediaModal = () => {
     setMediaModal({
@@ -519,7 +427,7 @@ export const AdminHomePage: React.FC = () => {
                 <button
                   onClick={refreshAll}
                   disabled={isRefreshing}
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
                 >
                   <ArrowPathIcon
                     className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -527,8 +435,8 @@ export const AdminHomePage: React.FC = () => {
                   Refresh
                 </button>
                 <Link
-                  to="/remittance"
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+                  to="/analytics"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
                 >
                   <svg
                     className="mr-2 h-4 w-4 text-white"
@@ -540,14 +448,14 @@ export const AdminHomePage: React.FC = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                     />
                   </svg>
-                  Remittance
+                  Analytics
                 </Link>
                 <Link
                   to="/users"
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none sm:flex-none"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 sm:flex-none"
                 >
                   <UserIcon className="mr-2 h-4 w-4 shrink-0 text-blue-700" />
                   View Users
@@ -588,7 +496,7 @@ export const AdminHomePage: React.FC = () => {
                       key={opt.key}
                       onClick={() => setPeriod(opt.key)}
                       className={
-                        "px-3 py-1.5 hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none " +
+                        "px-3 py-1.5 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 " +
                         (period === opt.key
                           ? "bg-blue-600 text-white hover:bg-blue-600"
                           : "text-gray-700") +
@@ -604,73 +512,9 @@ export const AdminHomePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-              {/* Donut: Settled vs Pending Commission */}
-              <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-800">
-                    Commission: Settled vs Pending
-                  </h3>
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
-                    Providers: {serviceProviders.length}
-                  </span>
-                </div>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={donutData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        innerRadius={45}
-                        paddingAngle={2}
-                      >
-                        {donutData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => v.toLocaleString()} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Bar: Pending Validations by Payment Method */}
-              <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-800">
-                    Pending Validations by Method
-                  </h3>
-                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-                    Pending: {pendingValidationsInPeriod.length}
-                  </span>
-                </div>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={barData}
-                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="method" tick={{ fontSize: 12 }} />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip />
-                      <Bar
-                        dataKey="count"
-                        fill="#2563eb"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 gap-6 p-6">
               {/* Line: Bookings per Day */}
-              <div className="rounded-lg border border-gray-100 p-4 md:col-span-2">
+              <div className="rounded-lg border border-gray-100 p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-medium text-gray-800">
                     Bookings per Day
@@ -820,92 +664,6 @@ export const AdminHomePage: React.FC = () => {
             onRefresh={() => refreshSystemStats(true)}
             showRefresh={false}
           />
-
-          {/* Pending Validations Section */}
-          <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
-            <div className="border-b border-blue-100 bg-white px-6 py-4">
-              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                <div className="w-full sm:w-auto">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Pending Payment Validations
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Review and approve payment submissions from service
-                    providers
-                  </p>
-                </div>
-                {pendingValidations.length > 0 && (
-                  <span className="mt-2 inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200 sm:mt-0">
-                    {pendingValidations.length} pending
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="p-6">
-              {loading.pendingValidations ? (
-                <div className="py-12 text-center">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="mt-4 text-sm text-gray-500">
-                    Loading pending validations...
-                  </p>
-                </div>
-              ) : pendingValidations.length === 0 ? (
-                <div className="py-12 text-center">
-                  <div className="mx-auto h-12 w-12 text-blue-300">
-                    <svg
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      className="h-12 w-12"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="mt-4 text-sm font-medium text-gray-900">
-                    All caught up!
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    No pending payment validations at the moment.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {pendingValidations.map((validation) => {
-                    // Convert FrontendRemittanceOrder to the format expected by PendingValidationCard
-                    const validationForCard = {
-                      id: validation.id,
-                      orderId: validation.id,
-                      serviceProviderName: `Provider ${validation.serviceProviderId}`, // TODO: Get actual name
-                      serviceType: validation.serviceType,
-                      amount: validation.amount,
-                      commissionAmount: validation.commissionAmount,
-                      paymentMethod: validation.paymentMethod,
-                      paymentProofMediaIds: validation.paymentProofMediaIds,
-                      submittedAt:
-                        validation.paymentSubmittedAt || validation.createdAt,
-                    };
-
-                    return (
-                      <PendingValidationCard
-                        key={validation.id}
-                        validation={validationForCard}
-                        onApprove={handleApprovePayment}
-                        onReject={handleRejectPayment}
-                        onViewMedia={handleViewMedia}
-                        loading={loading.paymentValidation}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </main>
       {/* Mobile bottom actions bar (appears when header is scrolled out) */}
@@ -921,14 +679,14 @@ export const AdminHomePage: React.FC = () => {
             <button
               onClick={refreshAll}
               disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
-              to="/remittance"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+              to="/analytics"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
             >
               <svg
                 className="mr-2 h-4 w-4 text-white"
@@ -940,14 +698,14 @@ export const AdminHomePage: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              Remittance
+              Analytics
             </Link>
             <Link
               to="/users"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <svg
                 className="mr-2 h-4 w-4 text-blue-700"

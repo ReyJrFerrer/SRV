@@ -253,7 +253,7 @@ const PayoutSettingsPage: React.FC = () => {
 
             {error && (
               <div className="mb-4 flex items-start rounded-lg border border-red-200 bg-red-50 p-3">
-                <ExclamationTriangleIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-red-500" />
+                <ExclamationTriangleIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
                 <span className="text-sm text-red-700">{error}</span>
               </div>
             )}
@@ -274,7 +274,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formatGCashNumber(formData.gcashNumber)}
                   onChange={handleInputChange}
                   placeholder="0917 123 4567"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -297,7 +297,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.gcashName}
                   onChange={handleInputChange}
                   placeholder="Juan Dela Cruz"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -320,7 +320,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.businessName}
                   onChange={handleInputChange}
                   placeholder="Your Service Business Name"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
@@ -337,7 +337,7 @@ const PayoutSettingsPage: React.FC = () => {
                   name="businessType"
                   value={formData.businessType}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="INDIVIDUAL">Individual</option>
                   <option value="CORPORATION">Corporation</option>
@@ -360,7 +360,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="your.email@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -380,7 +380,7 @@ const PayoutSettingsPage: React.FC = () => {
                   value={formatPhoneNumber(formData.phoneNumber)}
                   onChange={handleInputChange}
                   placeholder="+63 917 123 4567"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Philippines mobile number with +63 prefix
@@ -391,7 +391,7 @@ const PayoutSettingsPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Completing Onboarding..." : "Complete Onboarding"}
               </button>

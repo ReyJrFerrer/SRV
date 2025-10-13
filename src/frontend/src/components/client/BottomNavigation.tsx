@@ -162,7 +162,7 @@ const BottomNavigation: React.FC = () => {
                     {item.label}
                   </span>
                   {item.count > 0 && (
-                    <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 sm:top-2 sm:right-2"></span>
+                    <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                   )}
                 </Link>
               );
@@ -195,7 +195,7 @@ const BottomNavigation: React.FC = () => {
                   {item.label}
                 </span>
                 {item.count > 0 && (
-                  <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 sm:top-2 sm:right-2"></span>
+                  <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                 )}
               </Link>
             );

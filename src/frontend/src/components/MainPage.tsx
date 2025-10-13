@@ -372,7 +372,7 @@ export default function MainPage({
                     <img
                       src="/hero/message-load.svg"
                       alt="message-load"
-                      className="message-load-image h-9 w-9 drop-shadow md:h-13 md:w-13"
+                      className="message-load-image md:h-13 md:w-13 h-9 w-9 drop-shadow"
                     />
                   </span>
                 </div>

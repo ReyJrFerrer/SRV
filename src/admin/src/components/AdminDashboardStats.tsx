@@ -5,7 +5,6 @@ import {
   ClipboardDocumentListIcon,
   TicketIcon,
   ShieldCheckIcon,
-  CurrencyDollarIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/solid";
 
@@ -15,7 +14,6 @@ interface AdminDashboardStatsProps {
     totalPendingValidations: number;
     totalPendingTickets: number;
     totalAdminUsers: number;
-    totalPendingCommission: number;
     totalSettledCommission: number;
   };
   loading?: boolean;
@@ -89,12 +87,6 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       icon: ShieldCheckIcon,
     },
     {
-      title: "Pending Commission",
-      value: formatCurrency(stats.totalPendingCommission),
-      subtitle: "Awaiting settlement",
-      icon: CurrencyDollarIcon,
-    },
-    {
       title: "Settled Commission",
       value: formatCurrency(stats.totalSettledCommission),
       subtitle: "Total processed",
@@ -121,7 +113,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
               }`}
             >
               {card.isAlert && (
-                <div className="absolute top-2 right-2">
+                <div className="absolute right-2 top-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></div>
                 </div>
               )}

@@ -398,7 +398,7 @@ const ActivityHistoryPage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate(`/user/${user.id}`)}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <svg
                 className="mr-2 h-4 w-4"
@@ -427,7 +427,7 @@ const ActivityHistoryPage: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -463,7 +463,7 @@ const ActivityHistoryPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search activities..."
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -478,7 +478,7 @@ const ActivityHistoryPage: React.FC = () => {
               id="type"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Types</option>
               <option value="login">Login</option>
@@ -505,7 +505,7 @@ const ActivityHistoryPage: React.FC = () => {
               id="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Time</option>
               <option value="today">Today</option>
@@ -522,7 +522,7 @@ const ActivityHistoryPage: React.FC = () => {
                 setDateFilter("all");
                 setCurrentPage(1);
               }}
-              className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Clear Filters
             </button>
