@@ -26,9 +26,9 @@ const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div className="group relative">
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         {content}
-        <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+        <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
       </div>
     </div>
   );
@@ -144,12 +144,12 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   if (loading) {
     return (
       <>
-        <h2 className="not-last:mb-6 mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900">
+        <h2 className="mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900 not-last:mb-6">
           My Services
         </h2>
         <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
             <p className="mt-4 text-gray-500">Loading your services...</p>
           </div>
         </div>
@@ -160,7 +160,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   if (error) {
     return (
       <>
-        <h2 className="mb-6 mt-5 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
+        <h2 className="mt-5 mb-6 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
           My Services
         </h2>
         <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
@@ -219,7 +219,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-2 pt-5">
+      <div className="flex items-center justify-between pt-5 pb-2">
         <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>
@@ -251,7 +251,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   {/* Make the entire card a button */}
                   <button
                     type="button"
-                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     style={{
                       background: "transparent",
                       border: "none",
@@ -278,7 +278,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   {/* Active badge in top right if active */}
                   {isActive && (
                     <span
-                      className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+                      className="pointer-events-none absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
                       title="Active"
                     >
                       Active
@@ -286,7 +286,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   )}
                   {!isActive && (
                     <span
-                      className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
+                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
                     >
                       {getStatusDisplay(service.status).text}
                     </span>

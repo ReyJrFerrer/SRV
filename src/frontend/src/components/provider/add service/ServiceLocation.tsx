@@ -176,7 +176,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 <span className="mb-1 text-xs font-medium text-blue-500">
                   Using Your Current Location
                 </span>
-                <span className="break-words text-lg font-semibold text-blue-900">
+                <span className="text-lg font-semibold break-words text-blue-900">
                   {getDisplayAddress()}
                 </span>
               </div>

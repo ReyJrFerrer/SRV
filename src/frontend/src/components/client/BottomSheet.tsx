@@ -101,7 +101,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
     >
       <div
         ref={backdropRef}
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
+        className="bg-opacity-50 fixed inset-0 bg-black transition-opacity duration-300"
         onClick={handleBackdropClick}
       />
 
@@ -110,7 +110,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         className={`bottom-sheet fixed inset-x-0 bottom-0 ${getHeight()} transform rounded-t-3xl bg-white shadow-xl transition-transform duration-300 ease-in-out`}
       >
         <div
-          className="absolute left-0 right-0 top-0 h-10 cursor-grab"
+          className="absolute top-0 right-0 left-0 h-10 cursor-grab"
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
         >
@@ -118,7 +118,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         </div>
 
         {title && (
-          <h3 className="px-6 pb-4 pt-6 text-lg font-semibold">{title}</h3>
+          <h3 className="px-6 pt-6 pb-4 text-lg font-semibold">{title}</h3>
         )}
 
         <div className="h-full overflow-y-auto px-6 pb-6">{children}</div>

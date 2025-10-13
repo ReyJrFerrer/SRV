@@ -12,12 +12,7 @@ import { TicketDetailsPage } from "./pages/ticketDetails";
 // import { AdminChatPage } from "./pages/adminChat";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
-import { RemittanceDashboardPage } from "./pages/remittanceDashboard";
-import { RemittanceOrdersPage } from "./pages/remittanceOrders";
-import { PaymentValidationPage } from "./pages/paymentValidation";
-import { ProviderManagementPage } from "./pages/providerManagement";
-import { SettlementInstructionsPage } from "./pages/settlementInstructions";
-import { RemittanceAnalyticsPage } from "./pages/remittanceAnalytics";
+import { AnalyticsPage } from "./pages/analytics";
 
 // Login component
 const LoginPage = () => {
@@ -184,53 +179,13 @@ const AppRoutes = () => {
             <AdminChatPage />
           </ProtectedRoute>
         }
-      /> */}
+      />
       {/* Remittance Routes */}
       <Route
-        path="/remittance"
+        path="/analytics"
         element={
           <ProtectedRoute>
-            <RemittanceDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/orders"
-        element={
-          <ProtectedRoute>
-            <RemittanceOrdersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/validation"
-        element={
-          <ProtectedRoute>
-            <PaymentValidationPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/providers"
-        element={
-          <ProtectedRoute>
-            <ProviderManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/settlements"
-        element={
-          <ProtectedRoute>
-            <SettlementInstructionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/analytics"
-        element={
-          <ProtectedRoute>
-            <RemittanceAnalyticsPage />
+            <AnalyticsPage />
           </ProtectedRoute>
         }
       />

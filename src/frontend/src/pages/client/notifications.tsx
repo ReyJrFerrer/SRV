@@ -164,7 +164,7 @@ const NotificationItem: React.FC<{
           notification.type !== "system_announcement" &&
           notification.type !== "promo_offer" &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
+            <p className="mt-1 text-xs text-gray-600 italic">
               {notification.message}
             </p>
           )}

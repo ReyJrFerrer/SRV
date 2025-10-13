@@ -310,7 +310,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
     >
       <div className="md:flex">
         {fallbackImage && (
@@ -331,7 +331,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+              <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
                 {serviceTitle}
               </p>
               <span
@@ -380,7 +380,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
+          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
             {canCancel && (
               <button
                 onClick={handleCancelClick}
