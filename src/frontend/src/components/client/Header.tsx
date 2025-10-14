@@ -79,17 +79,29 @@ const MapModal: React.FC<MapModalProps> = ({
           <span className="text-xl font-bold text-gray-700">&times;</span>
         </button>
         <div className="relative flex-1">
-          {/* Recenter button */}
+          {/* Recenter button (icon-only, positioned above native zoom +/-) */}
           <button
             type="button"
-            className="pointer-events-auto absolute top-3 right-3 z-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
+            className="pointer-events-auto absolute right-3 bottom-24 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
             onClick={() => {
               setMapCenter(center);
               setZoom((z) => (typeof z === "number" ? Math.max(z, 16) : 16));
             }}
             aria-label="Recenter map"
+            title="Re-center map"
           >
-            Recenter
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-5 w-5"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
+              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
+            </svg>
           </button>
           {mapsApiLoaded ? (
             <Map
@@ -97,9 +109,10 @@ const MapModal: React.FC<MapModalProps> = ({
               zoom={zoom}
               mapId="6922634ff75ae05ac38cc473"
               style={{ width: "100%", height: "100%" }}
-              disableDefaultUI={false}
+              disableDefaultUI={true}
               mapTypeControl={false}
               zoomControl={true}
+              streetViewControl={false}
               gestureHandling={"greedy"}
               onCameraChanged={(ev: any) => {
                 try {
