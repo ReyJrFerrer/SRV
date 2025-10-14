@@ -877,33 +877,6 @@ const ClientBookingPageComponent: React.FC = () => {
         }
       }
 
-      // Validate at least one package is selected
-      if (!packages.some((pkg) => pkg.checked)) {
-        setFormError("Please select at least one package before proceeding.");
-        highlightField = "package";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-      if (!bookingOption) {
-        setFormError("Please select a booking type (Same Day or Scheduled).");
-        highlightField = "bookingOption";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-
-      // Validate time selection for both same-day and scheduled bookings
-      if (!selectedTime) {
-        const timeLabel =
-          bookingOption === "sameday" ? "time for today" : "time slot";
-        setFormError(`Please select a ${timeLabel} before proceeding.`);
-        highlightField = "selectedTime";
-        setIsSubmitting(false);
-        setHighlightInput(highlightField);
-        return;
-      }
-
       let finalScheduledDate: Date | undefined = undefined;
       if (bookingOption === "sameday") {
         finalScheduledDate = new Date();
@@ -2081,7 +2054,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   </span>
                 </h3>
                 <textarea
-                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 50 characters)"
                   value={notes}
                   onChange={handleNotesChange}
                   rows={4}
