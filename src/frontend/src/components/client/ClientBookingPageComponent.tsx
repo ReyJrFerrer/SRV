@@ -2,7 +2,13 @@
 // Purpose: Booking flow with packages, schedule selection, location via map or manual form, and payment.
 // Inputs: serviceId via route, Zustand location context.
 // Outputs: Creates booking request; optionally initiates digital payment.
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -1510,7 +1516,10 @@ const ClientBookingPageComponent: React.FC = () => {
                                 today.getMonth(),
                                 today.getDate(),
                               );
-                              const isUserBooked = hasUserBookedTimeSlot(time, todayDate);
+                              const isUserBooked = hasUserBookedTimeSlot(
+                                time,
+                                todayDate,
+                              );
 
                               // Check if the time slot has passed (for same-day booking)
                               const isTimeSlotPassed = (): boolean => {
@@ -1534,7 +1543,9 @@ const ClientBookingPageComponent: React.FC = () => {
                                 <button
                                   key={index}
                                   onClick={() =>
-                                    isSlotAvailable && !isUserBooked && setSelectedTime(time)
+                                    isSlotAvailable &&
+                                    !isUserBooked &&
+                                    setSelectedTime(time)
                                   }
                                   disabled={!isSlotAvailable || isUserBooked}
                                   className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
@@ -1547,7 +1558,9 @@ const ClientBookingPageComponent: React.FC = () => {
                                         : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                   }`}
                                   title={
-                                    !isSlotAvailable || isUserBooked ? unavailableReason : ""
+                                    !isSlotAvailable || isUserBooked
+                                      ? unavailableReason
+                                      : ""
                                   }
                                 >
                                   {formatted}
@@ -1706,7 +1719,10 @@ const ClientBookingPageComponent: React.FC = () => {
                                   slotAvailability[time] !== false;
 
                                 // Check if user already booked this time slot
-                                const isUserBooked = hasUserBookedTimeSlot(time, selectedDate!);
+                                const isUserBooked = hasUserBookedTimeSlot(
+                                  time,
+                                  selectedDate!,
+                                );
 
                                 const unavailableReason = isUserBooked
                                   ? "You already have a booking for this time slot"
@@ -1716,7 +1732,9 @@ const ClientBookingPageComponent: React.FC = () => {
                                   <button
                                     key={index}
                                     onClick={() =>
-                                      isSlotAvailable && !isUserBooked && setSelectedTime(time)
+                                      isSlotAvailable &&
+                                      !isUserBooked &&
+                                      setSelectedTime(time)
                                     }
                                     disabled={!isSlotAvailable || isUserBooked}
                                     className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
