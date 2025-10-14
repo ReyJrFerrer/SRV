@@ -99,7 +99,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             service.category?.slug || service.category?.name,
           )}
           alt="Category"
-          className="absolute top-2 left-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
+          className="absolute left-2 top-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/images/categories/others.svg";
@@ -108,7 +108,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Status badge at top right of service image */}
         <span
-          className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
+          className={`absolute right-2 top-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
         >
           {statusDisplay.text}
         </span>
@@ -224,9 +224,9 @@ const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div className="group relative">
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         {content}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+        <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
       </div>
     </div>
   );
@@ -412,7 +412,7 @@ const MyServicesPage: React.FC = () => {
         <div className="mt-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
               <p className="mt-4 text-gray-500">Loading your services...</p>
             </div>
           ) : error ? (

@@ -1032,6 +1032,29 @@ persistent actor BookingCanister {
             };
         };
     };
+
+    // Delete all bookings for a user (for account deletion)
+    public shared(msg) func deleteUserBookings(userId : Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // In production, verify caller is admin
+        var deletedCount : Nat = 0;
+        
+        // Get all bookings for this user (as client or provider)
+        let allBookings = Iter.toArray(bookings.entries());
+        for ((bookingId, booking) in allBookings.vals()) {
+            if (booking.clientId == userId or booking.providerId == userId) {
+                bookings.delete(bookingId);
+                deletedCount += 1;
+            };
+        };
+        
+        return #ok("Deleted " # Nat.toText(deletedCount) # " bookings");
+    };
     
     // Submit evidence for a booking
     public shared(msg) func submitEvidence(

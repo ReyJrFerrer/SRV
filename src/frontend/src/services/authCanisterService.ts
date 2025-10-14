@@ -24,6 +24,7 @@ export interface FrontendProfile {
   biography?: string;
   createdAt: Date;
   updatedAt: Date;
+  isLocked?: boolean; // Account lock status
 }
 
 /**
@@ -130,10 +131,18 @@ export const authCanisterService = {
       if ("ok" in result) {
         return adaptBackendProfile(result.ok);
       } else {
+        // Check if account is locked
+        if (result.err === "ACCOUNT_LOCKED") {
+          throw new Error("ACCOUNT_LOCKED");
+        }
         //console.error("Error fetching my profile:", result.err);
         return null;
       }
     } catch (error) {
+      // Re-throw account locked errors
+      if (error instanceof Error && error.message === "ACCOUNT_LOCKED") {
+        throw error;
+      }
       //console.error("Error fetching my profile:", error);
       throw new Error(`Failed to fetch my profile: ${error}`);
     }

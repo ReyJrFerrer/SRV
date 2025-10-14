@@ -279,7 +279,7 @@ const ProviderBookingsPage: React.FC = () => {
           </div>
         </header>
 
-        <div className="sticky top-[64px] z-10 bg-white px-4 pt-4 pb-2">
+        <div className="sticky top-[64px] z-10 bg-white px-4 pb-2 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -288,7 +288,7 @@ const ProviderBookingsPage: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search bookings..."
-                className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -296,7 +296,7 @@ const ProviderBookingsPage: React.FC = () => {
             {/* Timing Filter Dropdown */}
             <div className="relative" ref={timingDropdownRef}>
               <button
-                className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
               >
                 <FunnelIcon className="mr-1 h-5 w-5" />
@@ -308,7 +308,7 @@ const ProviderBookingsPage: React.FC = () => {
                 />
               </button>
               {isTimingDropdownOpen && (
-                <div className="ring-opacity-5 absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black focus:outline-none">
+                <div className="absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div
                     className="py-1"
                     role="menu"
@@ -346,7 +346,7 @@ const ProviderBookingsPage: React.FC = () => {
                     onClick={() => {
                       setActiveTab(tab);
                     }}
-                    className={`min-w-fit flex-1 rounded-full px-4 py-2 text-center font-medium whitespace-nowrap transition-colors ${
+                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
                       activeTab === tab
                         ? "bg-blue-600 text-white"
                         : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"

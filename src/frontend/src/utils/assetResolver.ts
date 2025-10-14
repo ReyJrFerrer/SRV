@@ -65,6 +65,7 @@ export function adaptBackendProfile(backendProfile: any): any {
     biography: backendProfile.biography?.[0] || undefined, // Optional fields come as arrays
     createdAt: convertTime(backendProfile.createdAt),
     updatedAt: convertTime(backendProfile.updatedAt),
+    isLocked: backendProfile.isLocked?.[0] || false, // Optional isLocked field
   };
 
   // Resolve profile picture paths

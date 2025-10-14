@@ -6,50 +6,130 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
-import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
 }
 
+interface MapModalProps {
+  show: boolean;
+  onClose: () => void;
+  center: { lat: number; lng: number };
+  address: string;
+  status: string;
+  mapsApiLoaded: boolean;
+}
+
 // Google Maps config (reserved for future autocomplete)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
+// --- Map Modal Component (outside) ---
+const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, status, mapsApiLoaded }) => {
+  if (!show) return null;
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+  // Controlled camera state to preserve zoom/position across re-renders
+  const [zoom, setZoom] = useState<number>(16);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(center);
+
+  useEffect(() => {
+    // When modal opens or the provided center changes, sync the controlled state
+    if (show) {
+      setMapCenter(center);
+      // don't forcibly reset zoom if user already changed it in-session
+    }
+  }, [show, center.lat, center.lng]);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+        <button
+          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+          onClick={onClose}
+          aria-label="Close map"
+          tabIndex={0}
+        >
+          <span className="text-xl font-bold text-gray-700">&times;</span>
+        </button>
+        <div className="relative flex-1">
+          {/* Recenter button */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute right-3 top-3 z-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
+            onClick={() => {
+              setMapCenter(center);
+              setZoom((z) => (typeof z === 'number' ? Math.max(z, 16) : 16));
+            }}
+            aria-label="Recenter map"
+          >
+            Recenter
+          </button>
+          {mapsApiLoaded ? (
+            <Map
+              center={mapCenter}
+              zoom={zoom}
+              mapId="6922634ff75ae05ac38cc473"
+              style={{ width: "100%", height: "100%" }}
+              disableDefaultUI={false}
+              mapTypeControl={false}
+              zoomControl={true}
+              gestureHandling={"greedy"}
+              onCameraChanged={(ev: any) => {
+                try {
+                  const next = ev?.detail;
+                  if (next?.center) setMapCenter(next.center);
+                  if (typeof next?.zoom === "number") setZoom(next.zoom);
+                } catch {}
+              }}
+            >
+              {/* Keep marker at the provided center (fixed location), not at camera center */}
+              <AdvancedMarker position={center} />
+            </Map>
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-gray-500">Loading map...</div>
+          )}
+        </div>
+        <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
+          {status === "ok" && address !== "Detecting location..."
+            ? address
+            : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
-  // --- Service Management Hook ---
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-
-  // Notification count from custom hook
   const { unreadCount } = useProviderNotifications();
-
-  // --- Use Zustand location store ---
   const {
     location: geoLocation,
     userAddress,
     userProvince,
     locationLoading,
+    requestLocation,
   } = useLocationStore();
-
-  // Get locationStore separately to avoid dependency issues
-  const locationStore = useLocationStore();
-
-  // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
-
-  // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
-
-  // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
+  const [gmapsAddress, setGmapsAddress] = useState<string>("Detecting location...");
+  const [gmapsStatus, setGmapsStatus] = useState<"idle" | "loading" | "ok" | "denied" | "unsupported" | "failed">("idle");
+  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
 
-  // --- Effect: Fetch user profile and initialize location ---
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+
   useEffect(() => {
     const loadInitialData = async () => {
-      // Fetch user profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
@@ -58,33 +138,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-
-      // Initialize location through Zustand store (will check cache first)
       if (!isAuthLoading) {
-        locationStore.requestLocation();
+        requestLocation();
       }
     };
-
     if (!isAuthLoading) {
       loadInitialData();
     }
-  }, [isAuthenticated, isAuthLoading, locationStore]);
+  }, [isAuthenticated, isAuthLoading, requestLocation]);
 
-  // Reverse geocode status
-  const [gmapsAddress, setGmapsAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [gmapsStatus, setGmapsStatus] = useState<
-    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
-  >("idle");
-
-  // Pre-check denial cooldown
   useEffect(() => {
     try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem(GEO_DENIAL_KEY)
-          : null;
+      const raw = typeof window !== "undefined" ? localStorage.getItem(GEO_DENIAL_KEY) : null;
       if (raw) {
         const ts = Number(raw);
         if (!isNaN(ts) && Date.now() - ts < GEO_DENIAL_COOLDOWN_MS) {
@@ -97,141 +162,51 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // Maps API key and loaded flag (APIProvider injects script)
-  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+  // Mark API loaded once Google script is present
   useEffect(() => {
     if ((window as any).google?.maps) {
       setMapsApiLoaded(true);
-      return;
     }
-    const iv = setInterval(() => {
-      if ((window as any).google?.maps) {
-        setMapsApiLoaded(true);
-        clearInterval(iv);
-      }
-    }, 200);
-    return () => clearInterval(iv);
   }, []);
 
-  // Reverse geocode
+  // Reverse geocode using detected location
   useEffect(() => {
-    if (!mapsApiLoaded) return;
-    if (gmapsStatus !== "idle") return;
+    if (!mapsApiLoaded || !geoLocation || gmapsStatus !== "idle") return;
     if (!("geolocation" in navigator)) {
       setGmapsStatus("unsupported");
       setGmapsAddress("Geolocation not supported");
       return;
     }
     setGmapsStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          if (!(window as any).google?.maps) {
-            setGmapsStatus("failed");
-            setGmapsAddress("Maps not available");
-            return;
-          }
-          const geocoder = new (window as any).google.maps.Geocoder();
-          geocoder.geocode(
-            { location: { lat: latitude, lng: longitude } },
-            (results: any, status: string) => {
-              if (status === "OK" && results && results[0]) {
-                setGmapsAddress(results[0].formatted_address);
-                setGmapsStatus("ok");
-              } else {
-                setGmapsStatus("failed");
-                setGmapsAddress("Unable to resolve address");
-              }
-            },
-          );
-        } catch {
-          setGmapsStatus("failed");
-          setGmapsAddress("Reverse geocode failed");
-        }
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setGmapsStatus("denied");
-          setGmapsAddress("Location access denied");
-          try {
-            localStorage.setItem(GEO_DENIAL_KEY, Date.now().toString());
-          } catch {}
+    const geocoder = new (window as any).google.maps.Geocoder();
+    geocoder.geocode(
+      { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
+      (results: any, status: string) => {
+        if (status === "OK" && results && results[0]) {
+          setGmapsAddress(results[0].formatted_address);
+          setGmapsStatus("ok");
         } else {
           setGmapsStatus("failed");
-          setGmapsAddress("Failed to get location");
+          setGmapsAddress("Unable to resolve address");
         }
       },
-      { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [mapsApiLoaded, gmapsStatus]);
+  }, [mapsApiLoaded, gmapsStatus, geoLocation]);
 
-  // Map Modal with Google Maps
-  const MapModal: React.FC = () => {
-    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
-      return null;
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) setShowMap(false);
-    };
-    const center = { lat: geoLocation.latitude, lng: geoLocation.longitude };
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-        onClick={handleBackdropClick}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
-          <button
-            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-            onClick={() => setShowMap(false)}
-            aria-label="Close map"
-            tabIndex={0}
-          >
-            <span className="text-xl font-bold text-gray-700">&times;</span>
-          </button>
-          <div className="flex-1">
-            {mapsApiLoaded ? (
-              <Map
-                defaultCenter={center}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473"
-                style={{ width: "100%", height: "100%" }}
-                disableDefaultUI={false}
-                mapTypeControl={false}
-              >
-                <AdvancedMarker position={center} />
-              </Map>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                Loading map...
-              </div>
-            )}
-          </div>
-          <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
-            {gmapsStatus === "ok" && gmapsAddress !== "Detecting location..."
-              ? gmapsAddress
-              : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // --- Notification button handler ---
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
   };
 
   // --- Render: Header layout ---
   return (
-    <header
-      className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
-    >
+    <APIProvider apiKey={mapsApiKey}>
+      <header
+        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+      >
       {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-6">
-          <Link to="/client/home">
+          <Link to="/provider/home">
             <img
               src="/logo.svg"
               alt="SRV Logo"
@@ -257,7 +232,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           >
             <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                 {unreadCount}
               </span>
             )}
@@ -283,7 +258,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             >
               <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
                   {unreadCount}
                 </span>
               )}
@@ -344,9 +319,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         </div>
       </div>
 
+      </header>
       {/* --- Map Modal for Location Display --- */}
-      {showMap && <MapModal />}
-    </header>
+      {mapsApiLoaded && geoLocation && (
+        <MapModal
+          show={showMap}
+          onClose={() => setShowMap(false)}
+          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+          address={gmapsAddress}
+          status={gmapsStatus}
+          mapsApiLoaded={mapsApiLoaded}
+        />
+      )}
+    </APIProvider>
   );
 };
 

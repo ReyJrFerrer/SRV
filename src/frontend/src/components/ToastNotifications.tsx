@@ -24,7 +24,7 @@ const Toast: React.FC<ToastProps> = ({
 
   return (
     <div
-      className={`fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded px-4 py-2 text-sm font-medium text-white shadow-lg transition-all ${type === "success" ? "bg-green-600" : "bg-red-600"}`}
+      className={`fixed left-1/2 top-6 z-[9999] -translate-x-1/2 rounded px-4 py-2 text-sm font-medium text-white shadow-lg transition-all ${type === "success" ? "bg-green-600" : "bg-red-600"}`}
       role="alert"
     >
       {message}

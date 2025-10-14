@@ -1078,12 +1078,15 @@ export const adminServiceCanister = {
         ? [Principal.fromText(bookingCanisterId)]
         : [];
 
-      // Get review and reputation canister IDs
+      // Get review, reputation, and chat canister IDs
       const { canisterId: reviewCanisterId } = await import(
         "../../../declarations/review"
       );
       const { canisterId: reputationCanisterId } = await import(
         "../../../declarations/reputation"
+      );
+      const { canisterId: chatCanisterId } = await import(
+        "../../../declarations/chat"
       );
       await import("../../../declarations/commission");
       await import("../../../declarations/wallet");
@@ -1095,6 +1098,9 @@ export const adminServiceCanister = {
       const reputationPrincipal: [] | [Principal] = reputationCanisterId
         ? [Principal.fromText(reputationCanisterId)]
         : [];
+      const chatPrincipal: [] | [Principal] = chatCanisterId
+        ? [Principal.fromText(chatCanisterId)]
+        : [];
 
       const result = await actor.setCanisterReferences(
         remittancePrincipal,
@@ -1104,6 +1110,7 @@ export const adminServiceCanister = {
         bookingPrincipal,
         reviewPrincipal,
         reputationPrincipal,
+        chatPrincipal,
       );
 
       const resultText = handleResult<string>(
@@ -2172,6 +2179,69 @@ export const adminServiceCanister = {
       logError("Error fetching rejected certificates", error);
       return [];
     }
+  },
+
+  // Service Management
+
+  /**
+   * Get all services from the service canister
+   */
+  async getAllServices(): Promise<ServiceData[]> {
+    try {
+      if (!currentIdentity) {
+        throw new AdminServiceError({
+          message: "Authentication required to get services",
+          code: "AUTH_REQUIRED",
+        } as AdminServiceError);
+      }
+
+      // Use createCanisterActor helper for consistency with other methods
+      const serviceActor = await createCanisterActor("service");
+
+      const services = await serviceActor.getAllServices();
+      return services.map(convertCanisterService);
+    } catch (error) {
+      // Silent error handling - just log and return empty array
+      console.warn("Error getting all services:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get all service categories from the service canister
+   */
+  async getAllServiceCategories(): Promise<any[]> {
+    try {
+      if (!currentIdentity) {
+        throw new AdminServiceError({
+          message: "Authentication required to get categories",
+          code: "AUTH_REQUIRED",
+        } as AdminServiceError);
+      }
+
+      // Use createCanisterActor helper for consistency with other methods
+      const serviceActor = await createCanisterActor("service");
+
+      return await serviceActor.getAllCategories();
+    } catch (error) {
+      // Silent error handling - just log and return empty array
+      console.warn("Error getting all service categories:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Toggle user lock status - wrapper for lockUserAccount
+   */
+  async toggleUserLock(userId: string, locked: boolean): Promise<void> {
+    await this.lockUserAccount(userId, locked);
+  },
+
+  /**
+   * Delete user account - wrapper for deleteUserAccount
+   */
+  async deleteUser(userId: string): Promise<void> {
+    await this.deleteUserAccount(userId);
   },
 };
 
