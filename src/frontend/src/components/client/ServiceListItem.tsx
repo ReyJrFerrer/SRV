@@ -168,7 +168,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             />
           </div>
           {/* Category icon and availability badge row */}
-          <div className="pointer-events-none absolute left-2 right-2 top-2 flex items-center justify-between">
+          <div className="pointer-events-none absolute top-2 right-2 left-2 flex items-center justify-between">
             {/* Category icon (if available) */}
             {service.category?.slug && (
               <img
@@ -194,7 +194,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         <div className="service-content relative flex flex-grow flex-col p-4">
           <div className="flex-grow">
             {/* Service title at the top */}
-            <p className="mb-1 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+            <p className="mb-1 truncate text-lg leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
               {service.title}
             </p>
             {/* Provider name below service title, with blue check if verified */}
@@ -263,7 +263,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
         </div>
         {/* 'Check service' banner: overlaps the bottom of the card on hover, no extra space when not hovered */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10 flex h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <span className="text-base font-bold tracking-wide text-blue-800">
             Check service
           </span>

@@ -771,7 +771,7 @@ export default function CreateProfilePage() {
                             value={formData.name}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pl-12 pr-3 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                           />
                         </div>
 
@@ -786,7 +786,7 @@ export default function CreateProfilePage() {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pl-12 pr-3 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none"
                           />
                         </div>
                       </div>

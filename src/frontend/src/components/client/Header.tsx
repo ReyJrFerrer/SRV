@@ -253,7 +253,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       >
         <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
           <button
-            className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
             onClick={() => setShowMap(false)}
             aria-label="Close map"
             tabIndex={0}
@@ -412,7 +412,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
             <input
               type="text"
-              className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+              className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
               placeholder={placeholder}
               value={searchQuery}
               onChange={handleSearchInputChange}
@@ -420,7 +420,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
             />
             {showSuggestions && filteredSuggestions.length > 0 && (
-              <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+              <ul className="absolute top-full left-0 z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                 {filteredSuggestions.map((suggestion, idx) => (
                   <li
                     key={idx}

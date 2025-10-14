@@ -100,7 +100,7 @@ const HelpSupportPage: React.FC = () => {
               </a>
             </div>
           </div>
-          <p className="text-base italic text-gray-600">
+          <p className="text-base text-gray-600 italic">
             We aim to respond to all inquiries within 24 hours. Thank you for
             using SRV!
           </p>

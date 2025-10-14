@@ -186,7 +186,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       >
         <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
           <button
-            className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
             onClick={() => setShowMap(false)}
             aria-label="Close map"
             tabIndex={0}
@@ -261,7 +261,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           >
             <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                 {unreadCount}
               </span>
             )}
@@ -287,7 +287,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             >
               <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
                   {unreadCount}
                 </span>
               )}

@@ -124,7 +124,7 @@ export const PaymentValidationPage: React.FC = () => {
                 <button
                   onClick={() => refreshPendingValidations(true)}
                   disabled={loading.pendingValidations}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
@@ -243,7 +243,7 @@ export const PaymentValidationPage: React.FC = () => {
               <input
                 type="text"
                 id="search"
-                className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                 placeholder="Search by order ID or provider..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -357,13 +357,13 @@ export const PaymentValidationPage: React.FC = () => {
                       <div className="ml-4 flex space-x-2">
                         <button
                           onClick={() => handleViewOrder(order)}
-                          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                           View Proof
                         </button>
                         <button
                           onClick={() => openValidationModal(order)}
-                          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium leading-4 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm leading-4 font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                         >
                           Validate
                         </button>
@@ -379,7 +379,7 @@ export const PaymentValidationPage: React.FC = () => {
 
       {/* Media Modal */}
       {showMediaModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600 bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-4/5 max-w-4xl rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">
@@ -512,7 +512,7 @@ export const PaymentValidationPage: React.FC = () => {
 
       {/* Validation Modal */}
       {showValidationModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600 bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <h3 className="mb-4 text-lg font-medium text-gray-900">
@@ -565,7 +565,7 @@ export const PaymentValidationPage: React.FC = () => {
                 <textarea
                   value={validationReason}
                   onChange={(e) => setValidationReason(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                   rows={3}
                   placeholder="Enter reason for approval/rejection..."
                 />

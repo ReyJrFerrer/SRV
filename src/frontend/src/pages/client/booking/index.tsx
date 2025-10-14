@@ -208,7 +208,7 @@ const MyBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
         {/* Search/Filter Bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-          <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
+          <div className="hide-scrollbar flex justify-start overflow-x-auto p-2 whitespace-nowrap sm:justify-center">
             <nav className="flex space-x-1 rounded-full p-1">
               {TAB_ITEMS.map((tab) => (
                 <button
@@ -226,24 +226,24 @@ const MyBookingsPage: React.FC = () => {
             </nav>
           </div>
 
-          <div className="container mx-auto px-4 pb-3 pt-2">
+          <div className="container mx-auto px-4 pt-2 pb-3">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row">
               <div className="relative w-full sm:flex-grow">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search bookings..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div className="relative w-full sm:w-auto">
-                <FunnelIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <FunnelIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="all">All Types</option>
                   <option value="sameDay">Same Day</option>

@@ -84,7 +84,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-2">
+        <div className="pt-2 pl-4">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -1843,7 +1843,7 @@ const ClientBookingPageComponent: React.FC = () => {
                                   : displayMunicipality || ""
                             }
                             readOnly
-                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                             placeholder="Municipality/City"
                           />
                         </div>
@@ -1862,7 +1862,7 @@ const ClientBookingPageComponent: React.FC = () => {
                                   : displayProvince || ""
                             }
                             readOnly
-                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                             placeholder="Province"
                           />
                         </div>
@@ -1903,7 +1903,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
@@ -2049,7 +2049,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
