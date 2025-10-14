@@ -55,7 +55,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   // isProviderOnboarded = false,
 }) => (
   <div
-    className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-xl ${
+    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
       highlight
         ? "border-2 border-red-500 ring-2 ring-red-200"
         : "border border-gray-200"
@@ -83,7 +83,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pt-2 pl-4">
+        <div className="pt-0 pl-4">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -1293,8 +1293,8 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
                 {mapMode === "detected" && !showFallbackForms && (
-                  <div className="mb-6">
-                    <div className="mb-2 text-[11px] font-medium text-gray-600">
+                  <div className="mb-2.5">
+                    <div className="mb-3 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
                       custom pin if this is inaccurate.
                     </div>
@@ -1340,7 +1340,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
                 {mapMode === "custom" && !showFallbackForms && (
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <LocationMapPicker
                       value={
                         mapLocation
@@ -1419,7 +1419,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       setShowFallbackForms(true);
                       setLocationInputMode("detected");
                     }}
-                    className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Use Manual Address Form
                   </button>

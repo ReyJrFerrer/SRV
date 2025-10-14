@@ -224,12 +224,11 @@ const PayoutSettingsPage: React.FC = () => {
         <div className="flex items-center justify-between px-4">
           <button
             onClick={() => navigate("/provider/settings")}
-            className="flex items-center text-blue-600 hover:text-blue-700"
+            className="z-10 -ml-2 flex items-center p-2 text-blue-600 hover:text-blue-700"
           >
             <ArrowLeftIcon className="mr-2 h-5 w-5" />
-            Back
           </button>
-          <h1 className="text-xl font-extrabold text-black">
+          <h1 className="absolute inset-x-0 text-center text-xl font-extrabold text-black">
             Complete Onboarding
           </h1>
           <div className="w-16" /> {/* Spacer */}
