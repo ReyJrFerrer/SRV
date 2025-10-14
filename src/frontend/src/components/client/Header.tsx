@@ -25,6 +25,14 @@ interface MapModalProps {
 // Cooldown config: skip geolocation attempts if user denied within this window (ms)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+// Cache for last resolved address to avoid flicker/changes between loads
+// Client uses its own cache key and a 5-hour TTL
+const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_CLIENT_V1";
+const ADDR_CACHE_TTL_MS = 5 * 60 * 60 * 1000; // 5h
+interface AddrCache {
+  address: string;
+  ts: number;
+}
 
 // --- Map Modal Component (moved outside) ---
 const MapModal: React.FC<MapModalProps> = ({
@@ -197,69 +205,59 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- API Key Definition ---
   // Root APIProvider supplies the key; keep placeholder only if needed elsewhere
-
-  // Reverse geocode via Google on mount (independent from internal store)
+  // Seed from cache first to stabilize display across reloads
   useEffect(() => {
-    // The new library loads the script via APIProvider, so we check for the google object
+    try {
+      const raw = localStorage.getItem(ADDR_CACHE_KEY);
+      if (raw) {
+        const cached: AddrCache = JSON.parse(raw);
+        if (cached?.address && typeof cached.ts === "number") {
+          const fresh = Date.now() - cached.ts < ADDR_CACHE_TTL_MS;
+          if (fresh) {
+            setGmapsAddress(cached.address);
+            setGmapsStatus("ok");
+          }
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Reverse geocode via Google when API is ready and we have a store location
+  useEffect(() => {
     const isApiReady = !!(window as any).google?.maps;
-    if (!isApiReady) {
-      // If the API isn't ready, the APIProvider will handle loading it.
-      // We can add a listener or simply rely on re-renders.
-      // For simplicity, this effect will re-run when other dependencies change.
-      return;
-    }
-    setMapsApiLoaded(true); // Mark API as loaded
-    if (gmapsStatus !== "idle") return; // skip if preset (e.g., denied cooldown)
-    if (!("geolocation" in navigator)) {
-      setGmapsStatus("unsupported");
-      setGmapsAddress("Geolocation not supported");
-      return;
-    }
-    setGmapsStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          if (!(window as any).google || !(window as any).google.maps) {
+    if (isApiReady && !mapsApiLoaded) setMapsApiLoaded(true);
+    if (!mapsApiLoaded || !geoLocation) return;
+    if (gmapsStatus !== "idle") return; // cache or prior status already set
+    try {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      setGmapsStatus("loading");
+      geocoder.geocode(
+        {
+          location: {
+            lat: geoLocation.latitude,
+            lng: geoLocation.longitude,
+          },
+        },
+        (results: any, status: string) => {
+          if (status === "OK" && results && results[0]) {
+            const address = results[0].formatted_address as string;
+            setGmapsAddress(address);
+            setGmapsStatus("ok");
+            try {
+              const payload: AddrCache = { address, ts: Date.now() };
+              localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
+            } catch {}
+          } else {
             setGmapsStatus("failed");
-            setGmapsAddress("Maps not available");
-            return;
+            setGmapsAddress("Unable to resolve address");
           }
-          const geocoder = new (window as any).google.maps.Geocoder();
-          geocoder.geocode(
-            { location: { lat: latitude, lng: longitude } },
-            (results: any, status: string) => {
-              if (status === "OK" && results && results[0]) {
-                setGmapsAddress(results[0].formatted_address);
-                setGmapsStatus("ok");
-              } else {
-                setGmapsStatus("failed");
-                setGmapsAddress("Unable to resolve address");
-              }
-            },
-          );
-        } catch (e) {
-          setGmapsStatus("failed");
-          setGmapsAddress("Reverse geocode failed");
-        }
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setGmapsStatus("denied");
-          setGmapsAddress("Location access denied");
-          try {
-            localStorage.setItem(GEO_DENIAL_KEY, Date.now().toString());
-          } catch {
-            /* ignore */
-          }
-        } else {
-          setGmapsStatus("failed");
-          setGmapsAddress("Failed to get location");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, [gmapsStatus]); // Removed mapsReady dependency
+        },
+      );
+    } catch {
+      setGmapsStatus("failed");
+      setGmapsAddress("Reverse geocode failed");
+    }
+  }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
