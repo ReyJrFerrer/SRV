@@ -12,6 +12,8 @@ export const useWallet = () => {
   const { isAuthenticated, identity } = useAuth();
 
   const [balance, setBalance] = useState<number>(0);
+  const [heldBalance, setHeldBalance] = useState<number>(0);
+  const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
@@ -33,21 +35,27 @@ export const useWallet = () => {
   const fetchBalance = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
       setLoading(false);
       return;
     }
 
     try {
       setError(null);
-      const currentBalance = await walletCanisterService.getBalanceOf(
+      const walletDetails = await walletCanisterService.getWalletDetails(
         identity.getPrincipal().toString(),
       );
 
-      setBalance(currentBalance);
+      setBalance(walletDetails.balance);
+      setHeldBalance(walletDetails.heldBalance);
+      setAvailableBalance(walletDetails.availableBalance);
     } catch (err) {
       console.error("Failed to fetch wallet balance:", err);
       setError("Could not load wallet balance.");
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
     } finally {
       setLoading(false);
     }
@@ -292,9 +300,9 @@ export const useWallet = () => {
    */
   const hasSufficientBalance = useCallback(
     (amount: number): boolean => {
-      return balance >= amount;
+      return availableBalance >= amount;
     },
-    [balance],
+    [availableBalance],
   );
 
   // Initial data fetch
@@ -303,6 +311,8 @@ export const useWallet = () => {
       refreshWalletData();
     } else {
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
       setAllTransactions([]);
       setDisplayedTransactions([]);
       setLoading(false);
@@ -312,6 +322,8 @@ export const useWallet = () => {
   return {
     // State
     balance,
+    heldBalance,
+    availableBalance,
     transactions: displayedTransactions,
     loading,
     error,

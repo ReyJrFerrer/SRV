@@ -256,7 +256,12 @@ export const useProviderBookingManagement =
     );
 
     // Wallet management for commission validation
-    const { balance: walletBalance, fetchBalance } = useWallet();
+    const {
+      balance: walletBalance,
+      heldBalance: walletHeldBalance,
+      availableBalance: walletAvailableBalance,
+      fetchBalance,
+    } = useWallet();
 
     // Utility functions for state management
     const setLoadingState = useCallback(
@@ -545,14 +550,14 @@ export const useProviderBookingManagement =
           }
 
           const formattedLocation = formatLocationString(booking.location);
-          const timeUntilService = booking.scheduledDate
-            ? calculateTimeUntilService(booking.scheduledDate)
+          const timeUntilService = booking.requestedDate
+            ? calculateTimeUntilService(booking.requestedDate)
             : undefined;
 
           // Calculate booking properties
           const now = new Date();
-          const scheduledDate = booking.scheduledDate
-            ? new Date(booking.scheduledDate)
+          const scheduledDate = booking.requestedDate
+            ? new Date(booking.requestedDate)
             : null;
           const isOverdue = scheduledDate
             ? scheduledDate < now && booking.status === "Accepted"
@@ -1307,6 +1312,9 @@ export const useProviderBookingManagement =
               hasInsufficientBalance: false,
               commissionValidationMessage:
                 "No commission validation needed for digital payments",
+              totalBalance: walletBalance,
+              heldBalance: walletHeldBalance,
+              availableBalance: walletAvailableBalance,
             };
           }
 
@@ -1316,36 +1324,39 @@ export const useProviderBookingManagement =
           if (booking.servicePackageId && booking.servicePackageId.length > 0) {
             // Multiple package booking - sum commissions from all packages
             for (const packageId of booking.servicePackageId) {
-              const packageDetail = packageDetails.get(packageId);
-              if (packageDetail) {
-                estimatedCommission += packageDetail.commissionFee;
+              const pkg = packageDetails.get(packageId);
+              if (pkg) {
+                estimatedCommission += pkg.commissionFee || 0;
               }
             }
 
             // If we don't have all package details loaded, use primary package details as fallback
             if (estimatedCommission === 0 && booking.packageDetails) {
-              estimatedCommission =
-                booking.packageDetails.commissionFee *
-                booking.servicePackageId.length;
+              estimatedCommission = booking.packageDetails.commissionFee || 0;
             }
           } else if (booking.serviceDetails) {
-            // Regular service booking - use commission from service (convert from centavos to pesos)
+            // Regular service booking - use commission from service
             estimatedCommission = booking.serviceDetails.commissionFee;
           }
 
-          const hasInsufficientBalance = walletBalance < estimatedCommission;
+          // Check against available balance (not total balance)
+          const hasInsufficientBalance =
+            walletAvailableBalance < estimatedCommission;
 
           let commissionValidationMessage = "";
           if (hasInsufficientBalance) {
-            commissionValidationMessage = `Insufficient wallet balance. Need ₱${estimatedCommission.toFixed(2)} commission fee, but only have ₱${walletBalance.toFixed(2)}.`;
+            commissionValidationMessage = `Insufficient available balance. Need ₱${estimatedCommission.toFixed(2)} commission, but only ₱${walletAvailableBalance.toFixed(2)} available (₱${walletHeldBalance.toFixed(2)} held).`;
           } else {
-            commissionValidationMessage = `${walletBalance.toFixed(2)}`;
+            commissionValidationMessage = `Available: ₱${walletAvailableBalance.toFixed(2)} (${walletHeldBalance.toFixed(2)} held)`;
           }
 
           return {
             estimatedCommission,
             hasInsufficientBalance,
             commissionValidationMessage,
+            totalBalance: walletBalance,
+            heldBalance: walletHeldBalance,
+            availableBalance: walletAvailableBalance,
           };
         } catch (error) {
           //console.error("Commission validation error:", error);
@@ -1354,12 +1365,20 @@ export const useProviderBookingManagement =
             hasInsufficientBalance: true,
             commissionValidationMessage:
               "Error checking commission requirements",
+            totalBalance: walletBalance,
+            heldBalance: walletHeldBalance,
+            availableBalance: walletAvailableBalance,
           };
         }
       },
-      [serviceDetails, packageDetails, walletBalance],
+      [
+        serviceDetails,
+        packageDetails,
+        walletBalance,
+        walletHeldBalance,
+        walletAvailableBalance,
+      ],
     );
-
     const canAcceptCashBooking = useCallback(
       async (booking: ProviderEnhancedBooking): Promise<boolean> => {
         if (booking.paymentMethod !== "CashOnHand") {

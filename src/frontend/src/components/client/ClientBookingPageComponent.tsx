@@ -908,11 +908,48 @@ const ClientBookingPageComponent: React.FC = () => {
         return;
       }
 
-      let finalScheduledDate: Date | undefined = undefined;
+      // Calculate scheduledDate (end time of the booking slot)
+      // selectedTime format: "HH:MM-HH:MM"
+      const [, endTimeStr] = selectedTime.split("-");
+      if (!endTimeStr) {
+        setFormError("Invalid time slot format. Expected format: HH:MM-HH:MM");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const [endHour, endMinute] = endTimeStr.split(":").map(Number);
+      if (isNaN(endHour) || isNaN(endMinute)) {
+        setFormError("Invalid time slot format.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      let finalScheduledDate: Date;
       if (bookingOption === "sameday") {
-        finalScheduledDate = new Date();
+        const today = new Date();
+        finalScheduledDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          endHour,
+          endMinute,
+          0,
+          0,
+        );
       } else if (bookingOption === "scheduled" && selectedDate) {
-        finalScheduledDate = selectedDate;
+        finalScheduledDate = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          endHour,
+          endMinute,
+          0,
+          0,
+        );
+      } else {
+        setFormError("Please select a date for scheduled booking.");
+        setIsSubmitting(false);
+        return;
       }
       // Build address string from manual entry and header context
       const barangayValue =

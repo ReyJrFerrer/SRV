@@ -118,7 +118,7 @@ export interface Booking {
   servicePackageIds?: string[]; // Backend field name (optional for compatibility)
   status: BookingStatus;
   requestedDate: string;
-  scheduledDate?: string;
+  scheduledDate: string;
   startedDate?: string; // When service status changed to InProgress
   completedDate?: string;
   price: number;
@@ -161,6 +161,7 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
+    scheduledDate: Date, // End time of the booking slot
     servicePackageId: string,
     notes?: string,
     amountToPay?: number,
@@ -173,6 +174,7 @@ export const bookingCanisterService = {
       price,
       location,
       requestedDate,
+      scheduledDate, // Pass the end time
       [servicePackageId], // Convert single package to array
       notes,
       amountToPay,
@@ -190,6 +192,7 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
+    scheduledDate: Date, // End time of the booking slot
     servicePackageIds: string[] = [], // Array of package IDs for multiple package bookings
     notes?: string,
     amountToPay?: number,
@@ -201,6 +204,8 @@ export const bookingCanisterService = {
       providerId: providerId.toString(),
       price,
       servicePackageIds,
+      requestedDate: requestedDate.toISOString(),
+      scheduledDate: scheduledDate.toISOString(),
     });
     try {
       const createBookingFn = httpsCallable(functions, "createBooking");
@@ -211,6 +216,7 @@ export const bookingCanisterService = {
         price,
         location,
         requestedDate: requestedDate.toISOString(),
+        scheduledDate: scheduledDate.toISOString(), // Send the end time to backend
         servicePackageIds,
         notes,
         amountToPay,
