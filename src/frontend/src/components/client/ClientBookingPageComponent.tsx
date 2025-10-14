@@ -1274,23 +1274,25 @@ const ClientBookingPageComponent: React.FC = () => {
                   Service Location <span className="text-red-500">*</span>
                 </h3>
                 {/* Toggle buttons */}
-                <div className="mb-4 flex gap-3 text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("detected")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Use Detected Location
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("custom")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Pin / Search Location
-                  </button>
-                </div>
-                {mapMode === "detected" && (
+                {!showFallbackForms && (
+                  <div className="mb-4 flex gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("detected")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Use Detected Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("custom")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Pin / Search Location
+                    </button>
+                  </div>
+                )}
+                {mapMode === "detected" && !showFallbackForms && (
                   <div className="mb-6">
                     <div className="mb-2 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
@@ -1337,7 +1339,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {mapMode === "custom" && (
+                {mapMode === "custom" && !showFallbackForms && (
                   <div className="mb-4">
                     <LocationMapPicker
                       value={
