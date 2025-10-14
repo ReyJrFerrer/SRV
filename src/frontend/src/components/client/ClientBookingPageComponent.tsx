@@ -806,11 +806,11 @@ const ClientBookingPageComponent: React.FC = () => {
 
       // 3. Service Location validation
       // If a map pin has been chosen, skip granular address validation (treat form as fallback)
-      const isUsingMapPin = !!(
-        mapLocation &&
-        mapLocation.lat &&
-        mapLocation.lng
-      );
+      const isUsingMapPin =
+        !showFallbackForms &&
+        !!(mapLocation && mapLocation.lat && mapLocation.lng);
+
+      // If we are NOT using a map pin (i.e., manual form is active or no pin is set)
       if (!isUsingMapPin) {
         if (!selectedBarangay.trim()) {
           setFormError(
