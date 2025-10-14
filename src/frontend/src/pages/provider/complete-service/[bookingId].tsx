@@ -255,7 +255,7 @@ const CompleteServicePage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -352,13 +352,13 @@ const CompleteServicePage: React.FC = () => {
                         name="cashReceived"
                         value={cashReceived}
                         onChange={handleCashReceivedChange}
-                        className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         placeholder="0.00"
                         inputMode="decimal"
                         required
                         maxLength={10}
                       />
-                      <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                         Max: ₱{MAX_CASH_RECEIVED.toLocaleString()}
                       </span>
                     </div>
@@ -405,11 +405,11 @@ const CompleteServicePage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:bg-gray-400"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
                     Processing...
                   </>
                 ) : (

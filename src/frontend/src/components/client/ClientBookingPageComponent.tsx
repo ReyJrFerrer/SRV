@@ -84,7 +84,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pt-2 pl-4">
+        <div className="pl-4 pt-2">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -1634,23 +1634,25 @@ const ClientBookingPageComponent: React.FC = () => {
                   Service Location <span className="text-red-500">*</span>
                 </h3>
                 {/* Toggle buttons */}
-                <div className="mb-4 flex gap-3 text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("detected")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Use Detected Location
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("custom")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Pin / Search Location
-                  </button>
-                </div>
-                {mapMode === "detected" && (
+                {!showFallbackForms && (
+                  <div className="mb-4 flex gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("detected")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Use Detected Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("custom")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Pin / Search Location
+                    </button>
+                  </div>
+                )}
+                {mapMode === "detected" && !showFallbackForms && (
                   <div className="mb-6">
                     <div className="mb-2 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
@@ -1697,7 +1699,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {mapMode === "custom" && (
+                {mapMode === "custom" && !showFallbackForms && (
                   <div className="mb-4">
                     <LocationMapPicker
                       value={
@@ -1841,7 +1843,7 @@ const ClientBookingPageComponent: React.FC = () => {
                                   : displayMunicipality || ""
                             }
                             readOnly
-                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
                             placeholder="Municipality/City"
                           />
                         </div>
@@ -1860,7 +1862,7 @@ const ClientBookingPageComponent: React.FC = () => {
                                   : displayProvince || ""
                             }
                             readOnly
-                            className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
                             placeholder="Province"
                           />
                         </div>
@@ -1901,7 +1903,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
@@ -2047,7 +2049,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||

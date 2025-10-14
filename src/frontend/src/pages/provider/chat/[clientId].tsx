@@ -278,7 +278,7 @@ const ConversationPage: React.FC = () => {
             placeholder="Type a message..."
             maxLength={500}
             disabled={sendingMessage || !currentConversation}
-            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
           <button
             type="submit"
