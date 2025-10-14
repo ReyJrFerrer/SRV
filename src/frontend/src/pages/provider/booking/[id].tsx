@@ -1206,7 +1206,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
             <div>
               <div
                 className="relative"
-                style={{ width: "100%", height: "260px", borderRadius: "12px", overflow: "hidden" }}
+                style={{
+                  width: "100%",
+                  height: "260px",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                }}
               >
                 <Map
                   center={resolvedCoords || clientLocation}
@@ -1221,7 +1226,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
                 {/* Street View quick access (bottom-left, parallel to +/- on right) */}
                 <div className="pointer-events-none absolute inset-0">
-                  <div className="pointer-events-auto absolute left-2 bottom-2">
+                  <div className="pointer-events-auto absolute bottom-2 left-2">
                     <button
                       type="button"
                       onClick={() => setShowStreetView(true)}
@@ -1230,7 +1235,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
                       aria-label="Open Street View"
                     >
                       {/* Eye icon for Street View */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-4 w-4"
+                      >
                         <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -1267,21 +1279,31 @@ const ProviderBookingDetailsPage: React.FC = () => {
               )}
               {/* Street View modal */}
               {showStreetView && (resolvedCoords || clientLocation) && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70" role="dialog" aria-modal="true">
+                <div
+                  className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+                  role="dialog"
+                  aria-modal="true"
+                >
                   <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
                     <button
-                      className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+                      className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
                       onClick={() => setShowStreetView(false)}
                       aria-label="Close Street View"
                     >
-                      <span className="text-xl font-bold text-gray-700">&times;</span>
+                      <span className="text-xl font-bold text-gray-700">
+                        &times;
+                      </span>
                     </button>
                     {/* Render Google Street View Panorama */}
                     <div className="h-full w-full">
                       <GStreetView
                         position={resolvedCoords || clientLocation}
                         pov={{ heading: 0, pitch: 0 }}
-                        options={{ addressControl: true, linksControl: true, panControl: true }}
+                        options={{
+                          addressControl: true,
+                          linksControl: true,
+                          panControl: true,
+                        }}
                         style={{ width: "100%", height: "100%" }}
                       />
                     </div>
