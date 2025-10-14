@@ -128,7 +128,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    auth: process.env.CANISTER_ID_AUTH || "be2us-64aaa-aaaaa-qaabq-cai",
+    auth: process.env.CANISTER_ID_AUTH || "bkyz2-fmaaa-aaaaa-qaaaq-cai",
   },
   ic: {
     auth: process.env.CANISTER_ID_AUTH_IC,
