@@ -30,7 +30,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
       <div className="relative w-full max-w-lg rounded-lg bg-white p-8 shadow-xl">
         {/* Close Button */}
         <button
-          className="absolute right-4 top-4 text-2xl font-bold text-gray-500 hover:text-gray-700"
+          className="absolute top-4 right-4 text-2xl font-bold text-gray-500 hover:text-gray-700"
           onClick={onClose}
           aria-label="Close"
         >

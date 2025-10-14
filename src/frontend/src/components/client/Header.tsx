@@ -27,7 +27,14 @@ const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 
 // --- Map Modal Component (moved outside) ---
-const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, status, mapsApiLoaded }) => {
+const MapModal: React.FC<MapModalProps> = ({
+  show,
+  onClose,
+  center,
+  address,
+  status,
+  mapsApiLoaded,
+}) => {
   if (!show) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -36,7 +43,9 @@ const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, sta
 
   // Controlled camera state: preserve user zoom and panning
   const [zoom, setZoom] = useState<number>(16);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(center);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
+    center,
+  );
 
   useEffect(() => {
     if (show) {
@@ -54,7 +63,7 @@ const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, sta
     >
       <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
         <button
-          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+          className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
           onClick={onClose}
           aria-label="Close map"
           tabIndex={0}
@@ -65,10 +74,10 @@ const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, sta
           {/* Recenter button */}
           <button
             type="button"
-            className="pointer-events-auto absolute right-3 top-3 z-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
+            className="pointer-events-auto absolute top-3 right-3 z-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow hover:bg-gray-100"
             onClick={() => {
               setMapCenter(center);
-              setZoom((z) => (typeof z === 'number' ? Math.max(z, 16) : 16));
+              setZoom((z) => (typeof z === "number" ? Math.max(z, 16) : 16));
             }}
             aria-label="Recenter map"
           >
@@ -96,7 +105,9 @@ const MapModal: React.FC<MapModalProps> = ({ show, onClose, center, address, sta
               <AdvancedMarker position={center} />
             </Map>
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-gray-500">Loading map...</div>
+            <div className="flex h-full items-center justify-center text-sm text-gray-500">
+              Loading map...
+            </div>
           )}
         </div>
         <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
@@ -162,7 +173,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
 
   // API key for client maps
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
   // Pre-check: if user previously denied recently, set status immediately
   useEffect(() => {
@@ -333,149 +345,152 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
-      className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
-    >
-      {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
-      <div className="hidden items-center justify-between md:flex">
-        <div className="flex items-center space-x-6">
-          <Link to="/client/home">
-            <img
-              src="/logo.svg"
-              alt="SRV Logo"
-              className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-            />
-          </Link>
-          <div className="h-10 border-l-2 border-blue-100"></div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-semibold tracking-wide text-blue-700">
-              Welcome,{" "}
-              <span className="text-2xl font-bold text-gray-800">
-                {displayName}
+        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+      >
+        {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
+        <div className="hidden items-center justify-between md:flex">
+          <div className="flex items-center space-x-6">
+            <Link to="/client/home">
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+              />
+            </Link>
+            <div className="h-10 border-l-2 border-blue-100"></div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                Welcome,{" "}
+                <span className="text-2xl font-bold text-gray-800">
+                  {displayName}
+                </span>
               </span>
-            </span>
+            </div>
           </div>
-        </div>
-        {isAuthenticated && (
-          <button
-            onClick={handleProfileClick}
-            className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-          >
-            <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-          </button>
-        )}
-      </div>
-
-      {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
-      <div className="md:hidden">
-        <div className="flex items-center justify-between">
-          <Link to="/client/home">
-            <img
-              src="/logo.svg"
-              alt="SRV Logo"
-              className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-            />
-          </Link>
           {isAuthenticated && (
             <button
               onClick={handleProfileClick}
               className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
             >
-              <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
             </button>
           )}
         </div>
-        <hr className="my-4 border-blue-100" />
-        <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-          <span className="text-xl font-semibold tracking-wide text-blue-700">
-            Welcome,
-          </span>
-          <span className="text-xl font-bold text-gray-800">{displayName}</span>
-        </div>
-      </div>
 
-      {/* --- Location & Search Section --- */}
-      <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <MapPinIcon className="h-6 w-6 text-blue-600" />
-            <span className="text-base font-bold text-gray-800">
-              My Location
+        {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between">
+            <Link to="/client/home">
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+              />
+            </Link>
+            {isAuthenticated && (
+              <button
+                onClick={handleProfileClick}
+                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+              >
+                <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              </button>
+            )}
+          </div>
+          <hr className="my-4 border-blue-100" />
+          <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+            <span className="text-xl font-semibold tracking-wide text-blue-700">
+              Welcome,
+            </span>
+            <span className="text-xl font-bold text-gray-800">
+              {displayName}
             </span>
           </div>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex w-full items-center justify-start">
-            {/* Priority order: Google reverse geocode -> stored userAddress/province -> status messages */}
-            {gmapsStatus === "ok" ? (
-              <button
-                type="button"
-                className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                onClick={() => setShowMap(true)}
-                title={gmapsAddress}
-              >
-                {gmapsAddress}
-              </button>
-            ) : locationLoading ||
-              isAuthLoading ||
-              gmapsStatus === "loading" ? (
-              <span className="animate-pulse text-sm text-gray-500">
-                Detecting location...
-              </span>
-            ) : userAddress && userProvince ? (
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                onClick={() => setShowMap(true)}
-                title={`${userAddress}, ${userProvince}`}
-              >
-                {userAddress}, {userProvince}
-              </button>
-            ) : (
-              <span className="text-left text-sm text-gray-500">
-                {gmapsAddress}
-              </span>
-            )}
-          </div>
-        </div>
-        {/* --- Search Bar for Service Queries --- */}
-        <form
-          className="mt-4 w-full"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (searchQuery.trim()) {
-              navigate(
-                `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
-              );
-            }
-          }}
-        >
-          <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
-            <input
-              type="text"
-              className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
-              placeholder={placeholder}
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-            />
-            {showSuggestions && filteredSuggestions.length > 0 && (
-              <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
-                {filteredSuggestions.map((suggestion, idx) => (
-                  <li
-                    key={idx}
-                    className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
-                    onMouseDown={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </form>
-      </div>
 
+        {/* --- Location & Search Section --- */}
+        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <MapPinIcon className="h-6 w-6 text-blue-600" />
+              <span className="text-base font-bold text-gray-800">
+                My Location
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex w-full items-center justify-start">
+              {/* Priority order: Google reverse geocode -> stored userAddress/province -> status messages */}
+              {gmapsStatus === "ok" ? (
+                <button
+                  type="button"
+                  className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+                  onClick={() => setShowMap(true)}
+                  title={gmapsAddress}
+                >
+                  {gmapsAddress}
+                </button>
+              ) : locationLoading ||
+                isAuthLoading ||
+                gmapsStatus === "loading" ? (
+                <span className="animate-pulse text-sm text-gray-500">
+                  Detecting location...
+                </span>
+              ) : userAddress && userProvince ? (
+                <button
+                  type="button"
+                  className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+                  onClick={() => setShowMap(true)}
+                  title={`${userAddress}, ${userProvince}`}
+                >
+                  {userAddress}, {userProvince}
+                </button>
+              ) : (
+                <span className="text-left text-sm text-gray-500">
+                  {gmapsAddress}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* --- Search Bar for Service Queries --- */}
+          <form
+            className="mt-4 w-full"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                navigate(
+                  `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                );
+              }
+            }}
+          >
+            <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
+              <input
+                type="text"
+                className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onFocus={() =>
+                  setShowSuggestions(filteredSuggestions.length > 0)
+                }
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+              />
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <ul className="absolute top-full left-0 z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  {filteredSuggestions.map((suggestion, idx) => (
+                    <li
+                      key={idx}
+                      className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
+                      onMouseDown={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </form>
+        </div>
       </header>
       {/* --- Map Modal for Location Display --- */}
       {showMap && geoLocation && (

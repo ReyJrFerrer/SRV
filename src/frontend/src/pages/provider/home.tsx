@@ -122,7 +122,7 @@ const ProviderHomePage: React.FC = () => {
   if (pageLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="ml-3 text-gray-700">
           {initializationAttempts > 0
             ? `Establishing connection... (${initializationAttempts}/3)`
@@ -165,7 +165,7 @@ const ProviderHomePage: React.FC = () => {
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
         <div className="relative max-w-lg rounded-2xl bg-white p-8 shadow-xl">
           {/* Computer guy character at the top */}
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <img
               src="/images/srv characters (SVG)/tech guy.svg"
               alt="SRV Computer Guy Character"

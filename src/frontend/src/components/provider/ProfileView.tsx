@@ -54,11 +54,11 @@ const ServiceCard: React.FC<{ service: Service }> = ({ service }) => (
     <h3 className="mb-1 text-lg font-bold">{service.title}</h3>
     <span className="text-lg font-semibold text-blue-500">{service.price}</span>
     <p className="mt-2 text-sm text-gray-600">{service.details[0]}</p>
-    <h4 className="mb-1 mt-3 text-sm font-semibold">Includes:</h4>
+    <h4 className="mt-3 mb-1 text-sm font-semibold">Includes:</h4>
     <ul className="space-y-1 text-sm">
       {service.details.map((detail, index) => (
         <li key={index} className="flex items-start">
-          <CheckCircleIcon className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+          <CheckCircleIcon className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-blue-500" />
           <span>{detail}</span>
         </li>
       ))}
@@ -91,7 +91,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({
               height={300}
               className="h-auto w-full rounded-t-lg object-cover"
             />
-            <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
+            <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
               <div className="flex items-center space-x-2 rounded-full bg-white/70 px-3 py-1 backdrop-blur-sm">
                 <h1 className="text-xl font-bold">{data.name}</h1>
                 {data.isVerified && (
@@ -99,7 +99,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({
                 )}
               </div>
             </div>
-            <div className="absolute bottom-4 right-4 flex space-x-2">
+            <div className="absolute right-4 bottom-4 flex space-x-2">
               <button className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md">
                 Message
               </button>

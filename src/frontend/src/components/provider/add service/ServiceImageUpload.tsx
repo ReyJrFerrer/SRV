@@ -124,7 +124,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(index)}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
+                    className="absolute top-2 right-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
                     aria-label={`Remove service image ${index + 1}`}
                   >
                     <TrashIcon className="h-5 w-5" />
@@ -212,7 +212,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
                       handleRemoveCertification &&
                       handleRemoveCertification(index)
                     }
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
+                    className="absolute top-2 right-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
                     aria-label={`Remove certification ${index + 1}`}
                   >
                     <TrashIcon className="h-5 w-5" />

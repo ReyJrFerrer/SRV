@@ -64,7 +64,7 @@ export default function MainPage({
             }
           >
             <button
-              className="absolute right-3 top-3 rounded-full border border-gray-300 bg-gray-100 p-2 hover:bg-gray-200"
+              className="absolute top-3 right-3 rounded-full border border-gray-300 bg-gray-100 p-2 hover:bg-gray-200"
               onClick={() => setShowIdentityInfoModal(false)}
               aria-label="Close"
               tabIndex={0}
@@ -266,10 +266,10 @@ export default function MainPage({
         <div className="container mx-auto px-4 py-12 md:py-20">
           <div className="hero-content relative flex flex-col items-center rounded-3xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-8 shadow-xl md:p-16">
             {/* Decorative background shapes */}
-            <div className="absolute left-0 top-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
-            <div className="absolute bottom-0 right-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
+            <div className="absolute top-0 left-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
+            <div className="absolute right-0 bottom-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
             <div className="hero-text-container mb-8">
-              <h1 className="hero-text text-center text-3xl font-extrabold leading-tight text-blue-800 drop-shadow-lg md:text-5xl">
+              <h1 className="hero-text text-center text-3xl leading-tight font-extrabold text-blue-800 drop-shadow-lg md:text-5xl">
                 <div className="text-line mb-2 flex items-center justify-center gap-2">
                   <span className="text-segment">
                     Ang <span className="text-yellow-400">S</span>erbisyo
@@ -301,7 +301,7 @@ export default function MainPage({
                     <img
                       src="/hero/message-load.svg"
                       alt="message-load"
-                      className="message-load-image md:h-13 md:w-13 h-9 w-9 drop-shadow"
+                      className="message-load-image h-9 w-9 drop-shadow md:h-13 md:w-13"
                     />
                   </span>
                 </div>
