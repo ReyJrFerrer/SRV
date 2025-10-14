@@ -202,9 +202,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authClient.login({
         identityProvider:
-        process.env.DFX_NETWORK === "ic" ||
-        process.env.DFX_NETWORK === "playground"
-            ?  `https://id.ai `
+          process.env.DFX_NETWORK === "ic" ||
+          process.env.DFX_NETWORK === "playground"
+            ? `https://id.ai `
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
 
         onSuccess: async () => {
