@@ -1465,7 +1465,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     <p className="text-xs text-gray-600">
                       Your location is automatically detected.
                     </p>
-                    <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                    <div className="w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <label className="mb-1 block text-xs text-blue-700">
@@ -1543,7 +1543,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                        className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
@@ -1584,7 +1584,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
                         !street
                           ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                           : "border-gray-300 bg-white text-gray-700"
@@ -1604,7 +1604,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Building / Subdivision / Sitio / etc. (optional)"
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
-                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                     />
                   </div>
                 ) : showFallbackForms && locationInputMode === "manual" ? (
@@ -1689,7 +1689,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
+                        className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                           highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
@@ -1730,7 +1730,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
                         !street
                           ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                           : "border-gray-300 bg-white text-gray-700"
@@ -1750,7 +1750,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Building / Subdivision / Sitio / etc. (optional)"
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
-                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                     />
                   </div>
                 ) : null}
