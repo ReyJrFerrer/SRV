@@ -150,7 +150,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       </div>
       <button
         onClick={handleOpenModal}
-        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
           <path
@@ -257,7 +257,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
       {/* Update Commission Modal */}
       {showCommissionModal && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -278,7 +278,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
                       type="number"
                       value={newCommissionAmount}
                       onChange={(e) => setNewCommissionAmount(e.target.value)}
-                      className="block w-full rounded-md border border-gray-300 py-2 pr-3 pl-7 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                      className="block w-full rounded-md border border-gray-300 py-2 pl-7 pr-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -293,7 +293,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={handleCloseModal}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>
@@ -304,7 +304,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
                   isNaN(parseFloat(newCommissionAmount)) ||
                   parseFloat(newCommissionAmount) < 0
                 }
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Update Commission
               </button>
