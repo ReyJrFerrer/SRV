@@ -611,7 +611,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         }
       }
     } catch {}
-    return { lat: 16.4130, lng: 120.5914 }; // fallback
+    return { lat: 16.413, lng: 120.5914 }; // fallback
   }, [specificBooking]);
 
   const hasExplicitCoords = useMemo(() => {
