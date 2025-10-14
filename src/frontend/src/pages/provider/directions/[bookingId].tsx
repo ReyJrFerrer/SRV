@@ -83,6 +83,8 @@ const ProviderDirectionsPage: React.FC = () => {
   const altRoutePolylinesRef = useRef<google.maps.Polyline[]>([]);
   const altRouteListenersRef = useRef<google.maps.MapsEventListener[]>([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
+  // Allow user to toggle auto-centering on their current location
+  const [followMe, setFollowMe] = useState<boolean>(false);
   // Dynamic colors from Tailwind
   const mainStrokeColorRef = useRef<string>("#2563eb");
   const altStrokeColorRef = useRef<string>("#93c5fd");
@@ -362,12 +364,36 @@ const ProviderDirectionsPage: React.FC = () => {
     baseOrigin,
   ]);
 
-  // Auto-pan: center on provider's current location
+  // Map ref updated in onCameraChanged
   const mapRef = useRef<google.maps.Map | null>(null);
+  // When following is enabled, keep centering on provider's location
   useEffect(() => {
-    if (!mapRef.current || !providerLocation) return;
+    if (!mapRef.current || !providerLocation || !followMe) return;
     mapRef.current.panTo(providerLocation);
-  }, [providerLocation]);
+  }, [providerLocation, followMe]);
+
+  // Disable follow when user starts dragging the map
+  const dragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!(window as any).google?.maps || !map) return;
+    // Clean existing
+    if (dragListenerRef.current) {
+      dragListenerRef.current.remove();
+      dragListenerRef.current = null;
+    }
+    dragListenerRef.current = google.maps.event.addListener(
+      map,
+      "dragstart",
+      () => setFollowMe(false),
+    );
+    return () => {
+      if (dragListenerRef.current) {
+        dragListenerRef.current.remove();
+        dragListenerRef.current = null;
+      }
+    };
+  }, [mapRef.current]);
 
   // Draw or update the route polylines on the underlying native map
   useEffect(() => {
@@ -645,8 +671,8 @@ const ProviderDirectionsPage: React.FC = () => {
         <Map
           style={containerStyle}
           defaultZoom={15}
-          center={providerLocation}
           onCameraChanged={(ev) => (mapRef.current = ev.map)}
+          gestureHandling="greedy"
           disableDefaultUI={true}
           zoomControl={true}
           mapId={"6922634ff75ae05ac38cc473"}
@@ -671,16 +697,22 @@ const ProviderDirectionsPage: React.FC = () => {
       )}
       {/* Overlay controls */}
       <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-        {/* Re-center button above the card, right-aligned */}
-        <div className="flex justify-end pr-1">
+        {/* Follow toggle and Re-center controls */}
+        <div className="flex items-center justify-between px-1">
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={followMe}
+              onChange={(e) => setFollowMe(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            Follow me
+          </label>
           <button
             type="button"
             onClick={() => {
               if (mapRef.current && providerLocation) {
                 mapRef.current.panTo(providerLocation);
-                const currentZoom = mapRef.current.getZoom();
-                if (!currentZoom || currentZoom < 15)
-                  mapRef.current.setZoom(15);
               }
             }}
             className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
