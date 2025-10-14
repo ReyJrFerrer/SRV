@@ -58,8 +58,6 @@ interface AdminLoadingStates {
   remittanceOrders: boolean;
   remittanceProviders: boolean;
   remittanceStats: boolean;
-  services: boolean;
-  serviceCategories: boolean;
 }
 
 // Admin hook return type
@@ -75,8 +73,6 @@ interface UseAdminReturn {
   userRoles: FrontendUserRoleAssignment[];
   systemSettings: FrontendSystemSettings | null;
   users: Profile[];
-  services: any[];
-  serviceCategories: any[];
 
   // Remittance data states
   remittanceOrders: RemittanceOrder[];
@@ -145,10 +141,6 @@ interface UseAdminReturn {
     maxOrderAmount?: number;
   }) => Promise<void>;
 
-  // Service Management
-  refreshServices: (showSuccessToast?: boolean) => Promise<void>;
-  refreshServiceCategories: (showSuccessToast?: boolean) => Promise<void>;
-
   // Remittance Management
   refreshRemittanceOrders: (showSuccessToast?: boolean) => Promise<void>;
   refreshRemittanceProviders: (showSuccessToast?: boolean) => Promise<void>;
@@ -209,8 +201,6 @@ export const useAdmin = (): UseAdminReturn => {
     remittanceOrders: false,
     remittanceProviders: false,
     remittanceStats: false,
-    services: false,
-    serviceCategories: false,
   });
 
   // Initialize data states
@@ -230,8 +220,6 @@ export const useAdmin = (): UseAdminReturn => {
   const [systemSettings, setSystemSettings] =
     useState<FrontendSystemSettings | null>(null);
   const [users, setUsers] = useState<Profile[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [serviceCategories, setServiceCategories] = useState<any[]>([]);
 
   // Remittance data states
   const [remittanceOrders, setRemittanceOrders] = useState<RemittanceOrder[]>(
@@ -662,47 +650,6 @@ export const useAdmin = (): UseAdminReturn => {
       }
     },
     [updateLoadingState, handleError, refreshSystemSettings],
-  );
-
-  // Service Management Functions
-
-  // Refresh all services
-  const refreshServices = useCallback(
-    async (showSuccessToast = false) => {
-      updateLoadingState("services", true);
-      try {
-        const allServices = await adminServiceCanister.getAllServices();
-        setServices(allServices);
-        if (showSuccessToast) {
-          toast.success("Services refreshed successfully");
-        }
-      } catch (error) {
-        handleError(error, "Failed to refresh services");
-      } finally {
-        updateLoadingState("services", false);
-      }
-    },
-    [updateLoadingState, handleError],
-  );
-
-  // Refresh all service categories
-  const refreshServiceCategories = useCallback(
-    async (showSuccessToast = false) => {
-      updateLoadingState("serviceCategories", true);
-      try {
-        const allCategories =
-          await adminServiceCanister.getAllServiceCategories();
-        setServiceCategories(allCategories);
-        if (showSuccessToast) {
-          toast.success("Service categories refreshed successfully");
-        }
-      } catch (error) {
-        handleError(error, "Failed to refresh service categories");
-      } finally {
-        updateLoadingState("serviceCategories", false);
-      }
-    },
-    [updateLoadingState, handleError],
   );
 
   // Update user lock status in local state and localStorage
@@ -1142,8 +1089,6 @@ export const useAdmin = (): UseAdminReturn => {
       refreshCommissionRules(),
       refreshUserRoles(),
       refreshSystemSettings(),
-      refreshServices(),
-      refreshServiceCategories(),
       refreshRemittanceOrders(),
       refreshRemittanceProviders(),
       refreshRemittanceStats(),
@@ -1163,8 +1108,6 @@ export const useAdmin = (): UseAdminReturn => {
     refreshCommissionRules,
     refreshUserRoles,
     refreshSystemSettings,
-    refreshServices,
-    refreshServiceCategories,
     refreshRemittanceOrders,
     refreshRemittanceProviders,
     refreshRemittanceStats,
@@ -1183,8 +1126,6 @@ export const useAdmin = (): UseAdminReturn => {
     userRoles,
     systemSettings,
     users,
-    services,
-    serviceCategories,
 
     // Remittance data states
     remittanceOrders,
@@ -1226,10 +1167,6 @@ export const useAdmin = (): UseAdminReturn => {
     // System Settings Management
     refreshSystemSettings,
     updateSystemSettings,
-
-    // Service Management
-    refreshServices,
-    refreshServiceCategories,
 
     // Remittance Management
     refreshRemittanceOrders,
