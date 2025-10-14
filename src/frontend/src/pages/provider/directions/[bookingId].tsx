@@ -319,33 +319,42 @@ const ProviderDirectionsPage: React.FC = () => {
       if (!providerLocation || !destinationCoords) return;
       const dist = haversineDistanceMeters(providerLocation, destinationCoords);
 
-  // Auto-start service when arriving near destination (within 50 meters)
-  useEffect(() => {
-    if (!bookingId || !destinationCoords || !providerLocation) return;
-    if (hasAutoStartedRef.current) return;
-    const dist = haversineDistanceMeters(providerLocation, destinationCoords);
-    const ARRIVE_THRESHOLD_M = 50; // meters
-    if (dist <= ARRIVE_THRESHOLD_M) {
-      hasAutoStartedRef.current = true;
-      (async () => {
-        const success = await startBookingById(bookingId);
-        if (success) {
-          const startTime = new Date().toISOString();
-          localStorage.setItem(
-            `activeServiceStartTime:${bookingId}`,
-            startTime,
-          );
-          navigate(
-            `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
-            { replace: true },
-          );
-        } else {
-          // Allow retrigger if starting failed
-          setTimeout(() => (hasAutoStartedRef.current = false), 5000);
+      // Auto-start service when arriving near destination (within 50 meters)
+      useEffect(() => {
+        if (!bookingId || !destinationCoords || !providerLocation) return;
+        if (hasAutoStartedRef.current) return;
+        const dist = haversineDistanceMeters(
+          providerLocation,
+          destinationCoords,
+        );
+        const ARRIVE_THRESHOLD_M = 50; // meters
+        if (dist <= ARRIVE_THRESHOLD_M) {
+          hasAutoStartedRef.current = true;
+          (async () => {
+            const success = await startBookingById(bookingId);
+            if (success) {
+              const startTime = new Date().toISOString();
+              localStorage.setItem(
+                `activeServiceStartTime:${bookingId}`,
+                startTime,
+              );
+              navigate(
+                `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+                { replace: true },
+              );
+            } else {
+              // Allow retrigger if starting failed
+              setTimeout(() => (hasAutoStartedRef.current = false), 5000);
+            }
+          })();
         }
-      })();
-    }
-  }, [bookingId, destinationCoords, providerLocation, startBookingById, navigate]);
+      }, [
+        bookingId,
+        destinationCoords,
+        providerLocation,
+        startBookingById,
+        navigate,
+      ]);
       if (dist < 50) return; // close to destination
       const sinceLast = Date.now() - lastRouteTimeRef.current;
       if (sinceLast > 60_000 && directionsStatus !== "pending") {

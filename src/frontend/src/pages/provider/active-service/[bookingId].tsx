@@ -217,8 +217,8 @@ const ActiveServicePage: React.FC = () => {
       <main className="container mx-auto flex-grow space-y-8 p-4 pb-24 sm:p-8">
         {/* Timer removed */}
 
-  {/* Details and Actions Section */}
-  <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+        {/* Details and Actions Section */}
+        <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
           {/* Left Column: Booking Details */}
           <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
             <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
