@@ -153,6 +153,8 @@ const {
   getClientAnalytics,
   getProviderAnalytics,
   releasePayment,
+  cancelMissedBookings,
+  sendServiceReminders,
 } = require("./src/booking");
 
 // Import Wallet Management functions
@@ -165,6 +167,8 @@ const {
   addAuthorizedController,
   removeAuthorizedController,
   getAuthorizedControllers,
+  releaseHold,
+  getWalletDetails,
 } = require("./src/wallet");
 
 // Import Review Management functions
@@ -328,6 +332,10 @@ exports.getClientAnalytics = getClientAnalytics;
 exports.getProviderAnalytics = getProviderAnalytics;
 exports.releasePayment = releasePayment;
 
+// Export Scheduled Booking Functions (cron jobs)
+exports.cancelMissedBookings = cancelMissedBookings;
+exports.sendServiceReminders = sendServiceReminders;
+
 // Export Wallet Management Functions
 exports.getBalance = getBalance;
 exports.creditBalance = creditBalance;
@@ -337,6 +345,8 @@ exports.getTransactionHistory = getTransactionHistory;
 exports.addAuthorizedController = addAuthorizedController;
 exports.removeAuthorizedController = removeAuthorizedController;
 exports.getAuthorizedControllers = getAuthorizedControllers;
+exports.releaseHold = releaseHold;
+exports.getWalletDetails = getWalletDetails;
 
 // Export Review Management Functions
 exports.submitReview = submitReview;

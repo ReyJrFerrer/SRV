@@ -1,7 +1,6 @@
 // Feedback Firebase Service
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
-import { resourceLimits } from "worker_threads";
 
 // Get Firebase Functions instance from singleton
 const functions = getFirebaseFunctions();

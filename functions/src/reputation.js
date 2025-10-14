@@ -188,8 +188,8 @@ const CANISTER_IDS = {
 // Host URLs for different environments
 const HOSTS = {
   local: "http://127.0.0.1:4943",
-  ic: "https://ic0.app",
-  playground: "https://ic0.app",
+  ic: `https://id.ai`,
+  playground: `https://id.ai`,
 };
 
 /**

@@ -212,7 +212,6 @@ export const UserDetailsPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
     updateUserLockStatus,
     getUserLockStatus,
   } = useAdmin();
@@ -476,7 +475,6 @@ export const UserDetailsPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -541,7 +539,7 @@ export const UserDetailsPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, refreshUsers]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {

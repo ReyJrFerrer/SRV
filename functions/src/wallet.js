@@ -27,16 +27,6 @@ function generateTransactionId() {
 }
 
 /**
- * Helper function to record transaction in Firestore
- * @param {string} txId - Transaction ID
- * @param {object} transaction - Transaction data
- * @return {Promise} Firestore write promise
- */
-async function recordTransaction(txId, transaction) {
-  return await db.collection("transactions").doc(txId).set(transaction);
-}
-
-/**
  * Helper function for safe subtraction
  * @param {number} a - Minuend
  * @param {number} b - Subtrahend
@@ -91,11 +81,20 @@ exports.getBalance = functions.https.onCall(async (data, context) => {
     const walletDoc = await db.collection("wallets").doc(userId).get();
 
     if (!walletDoc.exists) {
-      return {success: true, balance: 0};
+      return {success: true, balance: 0, heldBalance: 0, availableBalance: 0};
     }
 
     const walletData = walletDoc.data();
-    return {success: true, balance: walletData.balance || 0};
+    const balance = walletData.balance || 0;
+    const heldBalance = walletData.heldBalance || 0;
+    const availableBalance = balance - heldBalance;
+
+    return {
+      success: true,
+      balance: balance,
+      heldBalance: heldBalance,
+      availableBalance: availableBalance,
+    };
   } catch (error) {
     console.error("Error in getBalance:", error);
     throw new functions.https.HttpsError("internal", error.message);
@@ -195,6 +194,264 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Internal function to hold a user's balance
+ * Holds funds without creating a transaction (used for commission reservation)
+ * @param {string} userId - User ID
+ * @param {number} amount - Amount to hold
+ * @param {string} holdReference - Reference for the hold (e.g., bookingId)
+ * @param {string} reason - Reason for the hold
+ * @return {Promise<Object>} Result object
+ */
+async function holdBalanceInternal(userId, amount, holdReference, reason) {
+  console.log("🔒 Hold Balance Internal:", {userId, amount, holdReference, reason});
+
+  // Validation
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  if (!amount || amount <= 0) {
+    throw new Error("Invalid amount: Must be greater than 0");
+  }
+
+  if (!holdReference) {
+    throw new Error("Hold reference is required");
+  }
+
+  try {
+    // Use Firestore transaction for atomic updates
+    return await db.runTransaction(async (transaction) => {
+      const walletRef = db.collection("wallets").doc(userId);
+      const walletDoc = await transaction.get(walletRef);
+
+      let currentBalance = 0;
+      let currentHeldBalance = 0;
+      let holds = [];
+
+      if (walletDoc.exists) {
+        const walletData = walletDoc.data();
+        currentBalance = walletData.balance || 0;
+        currentHeldBalance = walletData.heldBalance || 0;
+        holds = walletData.holds || [];
+      }
+
+      // Calculate available balance (balance - already held amounts)
+      const availableBalance = safeSub(currentBalance, currentHeldBalance);
+      if (availableBalance === null || availableBalance < amount) {
+        throw new Error(
+          "Insufficient available balance: Cannot hold more than available balance",
+        );
+      }
+
+      // Add new hold
+      const newHold = {
+        holdReference,
+        amount,
+        reason,
+        createdAt: new Date().toISOString(),
+      };
+
+      holds.push(newHold);
+      const newHeldBalance = currentHeldBalance + amount;
+
+      // Update wallet with held balance
+      transaction.set(walletRef, {
+        balance: currentBalance, // Balance stays the same
+        heldBalance: newHeldBalance,
+        holds: holds,
+        updatedAt: new Date().toISOString(),
+      }, {merge: true});
+
+      console.log(
+        `✅ Hold successful for user ${userId}. ` +
+        `Held: ${amount}, Total held: ${newHeldBalance}`,
+      );
+      return {
+        success: true,
+        heldAmount: amount,
+        totalHeldBalance: newHeldBalance,
+        availableBalance: currentBalance - newHeldBalance,
+      };
+    });
+  } catch (error) {
+    console.error("Error in holdBalanceInternal:", error);
+    throw error;
+  }
+}
+
+/**
+ * Internal function to release a held balance
+ * Releases held funds back to available balance without creating a transaction
+ * @param {string} userId - User ID
+ * @param {string} holdReference - Reference for the hold to release (e.g., bookingId)
+ * @return {Promise<Object>} Result object
+ */
+async function releaseHoldInternal(userId, holdReference) {
+  console.log("🔓 Release Hold Internal:", {userId, holdReference});
+
+  // Validation
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  if (!holdReference) {
+    throw new Error("Hold reference is required");
+  }
+
+  try {
+    // Use Firestore transaction for atomic updates
+    return await db.runTransaction(async (transaction) => {
+      const walletRef = db.collection("wallets").doc(userId);
+      const walletDoc = await transaction.get(walletRef);
+
+      if (!walletDoc.exists) {
+        throw new Error("Wallet not found");
+      }
+
+      const walletData = walletDoc.data();
+      const currentBalance = walletData.balance || 0;
+      const currentHeldBalance = walletData.heldBalance || 0;
+      const holds = walletData.holds || [];
+
+      // Find and remove the hold
+      const holdIndex = holds.findIndex((h) => h.holdReference === holdReference);
+      if (holdIndex === -1) {
+        throw new Error(`Hold not found for reference: ${holdReference}`);
+      }
+
+      const releasedHold = holds[holdIndex];
+      holds.splice(holdIndex, 1);
+
+      const newHeldBalance = Math.max(0, currentHeldBalance - releasedHold.amount);
+
+      // Update wallet
+      transaction.set(walletRef, {
+        balance: currentBalance, // Balance stays the same
+        heldBalance: newHeldBalance,
+        holds: holds,
+        updatedAt: new Date().toISOString(),
+      }, {merge: true});
+
+      console.log(
+        `✅ Hold released for user ${userId}. ` +
+        `Released: ${releasedHold.amount}, Total held: ${newHeldBalance}`,
+      );
+      return {
+        success: true,
+        releasedAmount: releasedHold.amount,
+        totalHeldBalance: newHeldBalance,
+        availableBalance: currentBalance - newHeldBalance,
+      };
+    });
+  } catch (error) {
+    console.error("Error in releaseHoldInternal:", error);
+    throw error;
+  }
+}
+
+/**
+ * Internal function to convert a held balance to a debit
+ * Converts held amount to actual debit with transaction record
+ * @param {string} userId - User ID
+ * @param {string} holdReference - Reference for the hold to convert (e.g., bookingId)
+ * @param {string} description - Transaction description
+ * @param {string} paymentChannel - Payment channel
+ * @return {Promise<Object>} Result object
+ */
+async function convertHoldToDebitInternal(userId, holdReference, description, paymentChannel) {
+  console.log(
+    "💳 Convert Hold to Debit Internal:",
+    {userId, holdReference, description, paymentChannel},
+  );
+
+  // Validation
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  if (!holdReference) {
+    throw new Error("Hold reference is required");
+  }
+
+  try {
+    // Use Firestore transaction for atomic updates
+    return await db.runTransaction(async (transaction) => {
+      const walletRef = db.collection("wallets").doc(userId);
+      const walletDoc = await transaction.get(walletRef);
+
+      if (!walletDoc.exists) {
+        throw new Error("Wallet not found");
+      }
+
+      const walletData = walletDoc.data();
+      const currentBalance = walletData.balance || 0;
+      const currentHeldBalance = walletData.heldBalance || 0;
+      const holds = walletData.holds || [];
+
+      // Find and remove the hold
+      const holdIndex = holds.findIndex((h) => h.holdReference === holdReference);
+      if (holdIndex === -1) {
+        throw new Error(`Hold not found for reference: ${holdReference}`);
+      }
+
+      const holdToConvert = holds[holdIndex];
+      const amount = holdToConvert.amount;
+      holds.splice(holdIndex, 1);
+
+      // Debit the balance
+      const newBalance = safeSub(currentBalance, amount);
+      if (newBalance === null) {
+        throw new Error(
+          "Insufficient balance: Cannot debit held amount",
+        );
+      }
+
+      const newHeldBalance = Math.max(0, currentHeldBalance - amount);
+
+      // Update wallet
+      transaction.set(walletRef, {
+        balance: newBalance,
+        heldBalance: newHeldBalance,
+        holds: holds,
+        updatedAt: new Date().toISOString(),
+      }, {merge: true});
+
+      // Record transaction - now we create the transaction log
+      const txId = generateTransactionId();
+      const transactionData = {
+        id: txId,
+        from: userId,
+        to: null,
+        amount: amount,
+        transaction_type: "Debit",
+        timestamp: new Date().toISOString(),
+        description: description || "Balance debited from held amount",
+        payment_channel: paymentChannel || null,
+        running_balance: newBalance,
+        holdReference: holdReference,
+      };
+
+      const txRef = db.collection("transactions").doc(txId);
+      transaction.set(txRef, transactionData);
+
+      console.log(
+        `✅ Hold converted to debit for user ${userId}. ` +
+        `Amount: ${amount}, New balance: ${newBalance}`,
+      );
+      return {
+        success: true,
+        newBalance: newBalance,
+        transactionId: txId,
+        debitedAmount: amount,
+      };
+    });
+  } catch (error) {
+    console.error("Error in convertHoldToDebitInternal:", error);
+    throw error;
+  }
+}
+
+/**
  * Internal function to debit a user's balance
  * Can be called directly from other cloud functions
  * @param {string} userId - User ID
@@ -204,7 +461,7 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
  * @return {Promise<Object>} Result object
  */
 async function debitBalanceInternal(userId, amount, description, paymentChannel) {
-  console.log("� Debit Balance Internal:", {userId, amount, description, paymentChannel});
+  console.log("💸 Debit Balance Internal:", {userId, amount, description, paymentChannel});
 
   // Validation - mirror Motoko validation logic
   if (!userId) {
@@ -308,6 +565,9 @@ exports.debitBalance = functions.https.onCall(async (data, context) => {
 
 // Export the internal function for use by other cloud functions
 exports.debitBalanceInternal = debitBalanceInternal;
+exports.holdBalanceInternal = holdBalanceInternal;
+exports.releaseHoldInternal = releaseHoldInternal;
+exports.convertHoldToDebitInternal = convertHoldToDebitInternal;
 
 /**
  * Transfer funds between users
@@ -654,6 +914,128 @@ exports.getAuthorizedControllers = functions.https.onCall(async (data, context) 
     return {success: true, controllers: controllers};
   } catch (error) {
     console.error("Error in getAuthorizedControllers:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Release a held balance manually (Admin function)
+ * Cloud Function: releaseHold
+ * Used for dispute resolution or manual intervention
+ */
+exports.releaseHold = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [releaseHold] called");
+  const safeDataForLog = {
+    userId: data.data?.userId,
+    holdReference: data.data?.holdReference,
+    auth: data.auth ? "Present" : "Missing",
+  };
+  console.log(
+    "📦 [releaseHold] Received payload:",
+    JSON.stringify(safeDataForLog, null, 2),
+  );
+  // Extract payload from data.data first
+  const payload = data.data.data || data;
+  const {userId, holdReference} = payload;
+
+  // Authentication - Admin only
+  const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [releaseHold] Auth info:", authInfo);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only admins can manually release holds",
+    );
+  }
+
+  // Validation
+  if (!userId || !holdReference) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "userId and holdReference are required",
+    );
+  }
+
+  try {
+    const result = await releaseHoldInternal(userId, holdReference);
+    return result;
+  } catch (error) {
+    console.error("Error in releaseHold:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get wallet details including holds (Admin function)
+ * Cloud Function: getWalletDetails
+ */
+exports.getWalletDetails = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [getWalletDetails] called");
+  const safeDataForLog = {
+    userId: data.data?.userId,
+    auth: data.auth ? "Present" : "Missing",
+  };
+  console.log(
+    "📦 [getWalletDetails] Received payload:",
+    JSON.stringify(safeDataForLog, null, 2),
+  );
+  // Extract payload from data.data first
+  const payload = data.data.data || data;
+  const {userId} = payload;
+
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [getWalletDetails] Auth info:", authInfo);
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  // Authorization - only the user or admin can view wallet details
+  if (userId !== authInfo.uid && !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Not authorized to view this wallet",
+    );
+  }
+
+  // Validation
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "userId is required",
+    );
+  }
+
+  try {
+    const walletDoc = await db.collection("wallets").doc(userId).get();
+
+    if (!walletDoc.exists) {
+      return {
+        success: true,
+        balance: 0,
+        heldBalance: 0,
+        availableBalance: 0,
+        holds: [],
+      };
+    }
+
+    const walletData = walletDoc.data();
+    const balance = walletData.balance || 0;
+    const heldBalance = walletData.heldBalance || 0;
+    const holds = walletData.holds || [];
+
+    return {
+      success: true,
+      balance: balance,
+      heldBalance: heldBalance,
+      availableBalance: balance - heldBalance,
+      holds: holds,
+    };
+  } catch (error) {
+    console.error("Error in getWalletDetails:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
