@@ -50,12 +50,12 @@ const Contact = ({
     e.preventDefault();
     setIsSubmitting(true);
     setFormMessage("");
-    
+
     try {
       // Get Firebase Functions instance using centralized service
       const functions = getFirebaseFunctions();
       const sendContactEmail = httpsCallable(functions, "sendContactEmail");
-      
+
       // Call the Cloud Function
       const result = await sendContactEmail({
         name: formData.name,
@@ -63,9 +63,9 @@ const Contact = ({
         subject: formData.subject,
         message: formData.message,
       });
-      
+
       const data = result.data as { status: string; message: string };
-      
+
       if (data.status === "success") {
         setMessageType("success");
         setFormMessage(data.message || "Message sent successfully.");
