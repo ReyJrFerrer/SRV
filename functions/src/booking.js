@@ -2400,23 +2400,22 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
 
 /**
  * Cancel bookings that have missed their time slot
- * Scheduled function that runs every hour
+ * Scheduled function that runs every minute (for debugging)
  */
-exports.cancelMissedBookings = onSchedule("0 * * * *", async (_event) => {
+exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
   console.log("🚀 [cancelMissedBookings] scheduled function running...");
   console.log(`📅 [cancelMissedBookings] Current time: ${new Date().toISOString()}`);
 
   try {
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    console.log(`📝 [cancelMissedBookings] Looking for bookings with scheduledDate ` +
-      `(end time) before ${oneHourAgo.toISOString()}...`);
+    console.log(`📝 [cancelMissedBookings] Looking for bookings with a scheduledDate ` +
+      `(end time) before the current time: ${now.toISOString()}...`);
 
     // Find all "Accepted" bookings whose scheduled date (end time) has passed by more than 1 hour
     const missedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
-      .where("scheduledDate", "<=", oneHourAgo.toISOString())
+      .where("scheduledDate", "<=", now.toISOString())
       .get();
 
     console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size} missed bookings.`);
