@@ -887,7 +887,7 @@ const AddServicePage: React.FC = () => {
                       Service Title
                     </h3>
                   </div>
-                  <p className="text-lg font-semibold break-words text-blue-800">
+                  <p className="break-words text-lg font-semibold text-blue-800">
                     {formData.serviceOfferingTitle}
                   </p>
                 </div>
@@ -905,7 +905,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Category</h3>
                   </div>
-                  <p className="text-lg font-semibold break-words text-blue-800">
+                  <p className="break-words text-lg font-semibold text-blue-800">
                     {categories.find((cat) => cat.id === formData.categoryId)
                       ?.name || "Unknown"}
                   </p>
@@ -937,13 +937,13 @@ const AddServicePage: React.FC = () => {
                         return (
                           <div
                             key={pkg.id}
-                            className="flex flex-col rounded border bg-gray-50 p-3 break-words md:flex-row md:items-start md:justify-between"
+                            className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
                           >
                             <div className="flex-1">
                               <p className="font-medium text-blue-900">
                                 {pkg.name}
                               </p>
-                              <p className="text-sm break-words text-gray-600">
+                              <p className="break-words text-sm text-gray-600">
                                 {pkg.description}
                               </p>
                             </div>
@@ -1020,7 +1020,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Location</h3>
                   </div>
-                  <div className="font-medium break-words text-blue-900">
+                  <div className="break-words font-medium text-blue-900">
                     {[
                       formData.locationMunicipalityCity,
                       formData.locationProvince,
@@ -1204,7 +1204,7 @@ const AddServicePage: React.FC = () => {
           {renderStep()}
         </div>
         {/* Navigation Buttons */}
-        <div className="mt-6 mb-8 flex justify-between">
+        <div className="mb-8 mt-6 flex justify-between">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -1230,7 +1230,7 @@ const AddServicePage: React.FC = () => {
             >
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
                   Creating Service...
                 </>
               ) : isProcessingImages ? (

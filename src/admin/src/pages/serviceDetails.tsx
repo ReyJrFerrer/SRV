@@ -97,7 +97,7 @@ const ReputationScore: React.FC<{ reputationScore: number }> = ({
 
   return (
     <span
-      className={`mt-2 mb-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
+      className={`mb-2 mt-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
       style={{ minWidth: 0 }}
     >
       <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
@@ -406,7 +406,7 @@ const ServiceDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
       </div>
     );
@@ -531,7 +531,7 @@ const ServiceDetailsPage: React.FC = () => {
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
+                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >
@@ -804,14 +804,14 @@ const ServiceDetailsPage: React.FC = () => {
                     >
                       <div>
                         <div className="flex items-center justify-between">
-                          <h4 className="text-lg font-semibold break-words text-blue-900">
+                          <h4 className="break-words text-lg font-semibold text-blue-900">
                             {pkg.title}
                           </h4>
                           <span className="text-lg font-bold text-green-600">
                             ₱{pkg.price.toFixed(2)}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm break-words text-blue-700">
+                        <p className="mt-1 break-words text-sm text-blue-700">
                           {pkg.description}
                         </p>
                       </div>
@@ -991,7 +991,7 @@ const ServiceDetailsPage: React.FC = () => {
           <button
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-400 hover:text-white focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60"
           >
             <TrashIcon className="h-6 w-6" />
             {isDeleting ? "Deleting..." : "Delete Service"}
@@ -1014,7 +1014,7 @@ const ServiceDetailsPage: React.FC = () => {
         />
         <div className="relative z-10 flex flex-col items-center justify-center">
           <button
-            className="absolute top-2 right-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
+            className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
             onClick={() => setPreviewUrl(null)}
             aria-label="Close preview"
           >

@@ -214,7 +214,7 @@ const ServiceReviewsPage: React.FC = () => {
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
         <p className="ml-4 text-gray-700">Loading reviews...</p>
       </div>
     );
@@ -265,7 +265,7 @@ const ServiceReviewsPage: React.FC = () => {
           <div className="flex items-center">
             <button
               onClick={() => navigate(-1)}
-              className="mr-3 rounded-full p-2 transition-colors hover:bg-blue-100 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              className="mr-3 rounded-full p-2 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
               aria-label="Go back"
             >
               <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
@@ -276,7 +276,7 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
           <button
             onClick={refreshReviews}
-            className="group relative flex items-center justify-center rounded-full p-2 transition-colors hover:bg-yellow-100 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+            className="group relative flex items-center justify-center rounded-full p-2 transition-colors hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             aria-label="Refresh reviews"
             title="Refresh reviews"
           >
@@ -384,7 +384,7 @@ const ServiceReviewsPage: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
@@ -403,7 +403,7 @@ const ServiceReviewsPage: React.FC = () => {
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
-                className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Ratings</option>
                 <option value="5">5 Stars</option>
