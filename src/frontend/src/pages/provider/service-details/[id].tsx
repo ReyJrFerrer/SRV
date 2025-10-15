@@ -64,9 +64,9 @@ const Tooltip: React.FC<TooltipProps> = ({
     return (
       <div className="group relative">
         {children}
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           {content}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+          <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
         </div>
       </div>
     );
@@ -1443,7 +1443,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
@@ -1547,7 +1547,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         />
         <div className="relative z-10 flex flex-col items-center justify-center">
           <button
-            className="absolute top-2 right-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
+            className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
             onClick={() => setPreviewUrl(null)}
             aria-label="Close preview"
           >
@@ -1687,7 +1687,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
+                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >
@@ -2255,19 +2255,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
                             </div>
                           )}
                           <button
                             onClick={() => handleRemoveCertificate(index)}
-                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                             aria-label="Remove certificate"
                             type="button"
                           >
                             <XMarkIcon className="h-4 w-4" />
                           </button>
                           {certificate.isNew && (
-                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                            <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
                               NEW
                             </div>
                           )}
@@ -2421,19 +2421,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
                             </div>
                           )}
                           <button
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                             aria-label="Remove image"
                             type="button"
                           >
                             <XMarkIcon className="h-4 w-4" />
                           </button>
                           {image.isNew && (
-                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                            <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
                               NEW
                             </div>
                           )}
@@ -2547,7 +2547,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 : handleStatusToggle
             }
             disabled={isUpdatingStatus || hasActiveBookings}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
               service.status === "Available"
                 ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
                 : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
@@ -2575,7 +2575,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
               }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-red-400 hover:text-white"
