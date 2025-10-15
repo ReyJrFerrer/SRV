@@ -192,7 +192,7 @@ const TimeSlotInput: React.FC<{
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="mt-3 self-center self-end rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:mt-0 lg:ml-auto"
+        className="mt-3 self-end rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:ml-auto lg:mt-0"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />
@@ -257,17 +257,69 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   // Helper function to check for time validation errors
   const getTimeValidationErrors = (timeSlots: TimeSlotUIData[]) => {
     const errors: string[] = [];
-    timeSlots.forEach((slot) => {
+
+    // Sort time slots by start time for proper validation
+    const sortedSlots = [...timeSlots].sort((a, b) => {
+      const aStart = toDate(a.startHour, a.startMinute, a.startPeriod);
+      const bStart = toDate(b.startHour, b.startMinute, b.startPeriod);
+      return aStart.getTime() - bStart.getTime();
+    });
+
+    sortedSlots.forEach((slot, index) => {
       const startTime = toDate(
         slot.startHour,
         slot.startMinute,
         slot.startPeriod,
       );
       const endTime = toDate(slot.endHour, slot.endMinute, slot.endPeriod);
+
+      // Check if start and end times are the same
       if (startTime.getTime() === endTime.getTime()) {
         errors.push("Start and end times cannot be the same");
       }
+
+      // Check if start time is after end time
+      if (startTime.getTime() > endTime.getTime()) {
+        errors.push("Start time cannot be after end time");
+      }
+
+      // Check for minimum 1-hour gap between consecutive time slots
+      if (index > 0) {
+        const prevSlot = sortedSlots[index - 1];
+        const prevEndTime = toDate(
+          prevSlot.endHour,
+          prevSlot.endMinute,
+          prevSlot.endPeriod,
+        );
+
+        // Calculate the time difference in milliseconds
+        const timeDiff = startTime.getTime() - prevEndTime.getTime();
+        const oneHourInMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+        if (timeDiff < oneHourInMs) {
+          const prevEndTimeStr = `${prevSlot.endHour}:${prevSlot.endMinute} ${prevSlot.endPeriod}`;
+          const currentStartTimeStr = `${slot.startHour}:${slot.startMinute} ${slot.startPeriod}`;
+          errors.push(
+            `Time slots must have at least 1 hour gap. Previous slot ends at ${prevEndTimeStr}, current slot starts at ${currentStartTimeStr}`,
+          );
+        }
+      }
+
+      // Check for overlapping time slots
+      if (index > 0) {
+        const prevSlot = sortedSlots[index - 1];
+        const prevEndTime = toDate(
+          prevSlot.endHour,
+          prevSlot.endMinute,
+          prevSlot.endPeriod,
+        );
+
+        if (startTime.getTime() < prevEndTime.getTime()) {
+          errors.push("Time slots cannot overlap");
+        }
+      }
     });
+
     return [...new Set(errors)]; // Remove duplicates
   };
 
@@ -556,7 +608,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -580,7 +632,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -595,7 +647,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     onChange={(e) =>
                       handlePresetChange(allDays, e.target.checked)
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -633,7 +685,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                           type="checkbox"
                           checked={formData.availabilitySchedule.includes(day)}
                           onChange={() => handleDayToggle(day)}
-                          className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                          className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                           style={{ width: "1.2em", height: "1.2em" }}
                         />
                         <span className="px-2 text-base font-medium text-gray-700">
@@ -674,7 +726,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             />
             <label
               htmlFor="useSameTimeForAllDays"
-              className="ml-2 text-sm leading-relaxed font-medium text-gray-700 sm:text-base"
+              className="ml-2 text-sm font-medium leading-relaxed text-gray-700 sm:text-base"
             >
               Use the same working hours for all selected days
             </label>
@@ -700,6 +752,17 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 <PlusCircleIcon className="h-5 w-5" />
                 Add Time Slot
               </button>
+              {/* Error messages for common time slots */}
+              {getTimeValidationErrors(formData.commonTimeSlots).map(
+                (error, index) => (
+                  <div
+                    key={index}
+                    className="mt-2 flex items-center gap-2 text-sm text-red-600"
+                  >
+                    <span>⚠️ {error}</span>
+                  </div>
+                ),
+              )}
             </div>
           ) : (
             <div className="space-y-6">

@@ -51,18 +51,25 @@ export const UserListPage: React.FC = () => {
   const convertProfileToUserData = async (
     profile: Profile,
   ): Promise<UserData> => {
-    // Get lock status from the shared lock status store
-    const lockStatus = getUserLockStatus(profile.id.toString());
+    // Check if profile has required id field
+    const userId = profile.id;
+    if (!userId) {
+      console.warn("Profile missing id/uid, skipping:", profile);
+      throw new Error("Profile missing required id or uid field");
+    }
+
+    // Get lock status from local store (Profile doesn't have locked property)
+    const lockStatus = getUserLockStatus(userId.toString());
 
     // Fetch service count from backend
     let servicesCount = 0;
     try {
       servicesCount = await adminServiceCanister.getUserServiceCount(
-        profile.id.toString(),
+        userId.toString(),
       );
     } catch (error) {
       console.error(
-        `Failed to get service count for user ${profile.id.toString()}:`,
+        `Failed to get service count for user ${userId.toString()}:`,
         error,
       );
       console.log("Fallback 0 applied");
@@ -70,7 +77,7 @@ export const UserListPage: React.FC = () => {
     }
 
     return {
-      id: profile.id.toString(),
+      id: userId.toString(),
       name: profile.name,
       phone: profile.phone,
       createdAt: new Date(Number(profile.createdAt) / 1000000),
@@ -115,8 +122,19 @@ export const UserListPage: React.FC = () => {
     const convertUsers = async () => {
       if (backendUsers.length > 0) {
         try {
+          // Filter out profiles without id/uid and exclude admin users
+          const validProfiles = backendUsers.filter(
+            (profile) =>
+              profile.id &&
+              !("Admin" in profile.role) &&
+              !("Admin" in profile.activeRole),
+          );
+          console.log(
+            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
+          );
+
           const convertedUsers = await Promise.all(
-            backendUsers.map(convertProfileToUserData),
+            validProfiles.map(convertProfileToUserData),
           );
           setUsers(convertedUsers);
           setFilteredUsers(convertedUsers);
@@ -133,8 +151,19 @@ export const UserListPage: React.FC = () => {
     const convertUsers = async () => {
       if (backendUsers.length > 0) {
         try {
+          // Filter out profiles without id/uid and exclude admin users
+          const validProfiles = backendUsers.filter(
+            (profile) =>
+              profile.id &&
+              !("Admin" in profile.role) &&
+              !("Admin" in profile.activeRole),
+          );
+          console.log(
+            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
+          );
+
           const convertedUsers = await Promise.all(
-            backendUsers.map(convertProfileToUserData),
+            validProfiles.map(convertProfileToUserData),
           );
           setUsers(convertedUsers);
           setFilteredUsers(convertedUsers);
@@ -226,6 +255,116 @@ export const UserListPage: React.FC = () => {
     setShowUserModal(true);
   };
 
+  // Account management functions
+  const handleLockConfirmation = () => {
+    setShowLockConfirmation(true);
+  };
+
+  const handleDeleteConfirmation = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleActivateAccount = async () => {
+    if (!selectedUser) return;
+
+    try {
+      // Call Firebase function to unlock the account
+      await adminServiceCanister.lockUserAccount(selectedUser.id, false);
+
+      // Update local state
+      setSelectedUser((prev) => (prev ? { ...prev, isLocked: false } : null));
+
+      // Update the users list
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
+        ),
+      );
+      setFilteredUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
+        ),
+      );
+
+      console.log("Account activated successfully");
+    } catch (error) {
+      console.error("Failed to activate account:", error);
+      alert("Failed to activate account. Please try again.");
+    }
+  };
+
+  const confirmLockAccount = async () => {
+    if (!selectedUser) return;
+
+    console.log("Attempting to lock account for user:", selectedUser.id);
+    console.log("Selected user object:", selectedUser);
+
+    try {
+      // Call Firebase function to lock the account
+      await adminServiceCanister.lockUserAccount(selectedUser.id, true);
+
+      // Update local state
+      setSelectedUser((prev) => (prev ? { ...prev, isLocked: true } : null));
+
+      // Update the users list
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
+        ),
+      );
+      setFilteredUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
+        ),
+      );
+
+      console.log("Account locked successfully");
+    } catch (error) {
+      console.error("Failed to lock account:", error);
+      alert("Failed to lock account. Please try again.");
+    }
+
+    setShowLockConfirmation(false);
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!selectedUser) {
+      console.error("No selected user for deletion");
+      return;
+    }
+
+    console.log("Attempting to delete account for user:", selectedUser.id);
+    console.log("Selected user object:", selectedUser);
+
+    try {
+      // Call Firebase function to delete the account
+      const result = await adminServiceCanister.deleteUserAccount(
+        selectedUser.id,
+      );
+      console.log("Delete result:", result);
+
+      console.log("Account deleted successfully");
+      alert("Account deleted successfully");
+
+      // Remove user from local state
+      setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
+      setFilteredUsers((prev) =>
+        prev.filter((user) => user.id !== selectedUser.id),
+      );
+
+      // Close modals
+      setShowUserModal(false);
+      setSelectedUser(null);
+      setShowDeleteConfirmation(false);
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      console.error("Error details:", error);
+      alert(
+        `Failed to delete account: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  };
+
   // Determine if viewport is mobile (< sm)
   const isMobileViewport =
     typeof window !== "undefined"
@@ -235,6 +374,8 @@ export const UserListPage: React.FC = () => {
   // User details modal state
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [showLockConfirmation, setShowLockConfirmation] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Stats for header cards
   const stats = useMemo(() => {
@@ -270,14 +411,14 @@ export const UserListPage: React.FC = () => {
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={handleRefresh}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -300,14 +441,14 @@ export const UserListPage: React.FC = () => {
           <div className="flex flex-row items-stretch gap-2">
             <button
               onClick={handleRefresh}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -425,7 +566,7 @@ export const UserListPage: React.FC = () => {
                     placeholder="Search users by name or phone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                    className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -443,7 +584,7 @@ export const UserListPage: React.FC = () => {
                       e.target.value as "name" | "createdAt" | "services",
                     )
                   }
-                  className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:w-48"
+                  className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
                 >
                   <option value="createdAt">Registration Date</option>
                   <option value="name">Name</option>
@@ -454,7 +595,7 @@ export const UserListPage: React.FC = () => {
                   onClick={() =>
                     setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                   }
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   title={sortOrder === "asc" ? "Ascending" : "Descending"}
                   aria-label="Toggle sort order"
                 >
@@ -511,26 +652,26 @@ export const UserListPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-50/60">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Phone
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Services
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Member Since
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Last Updated
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Status
                     </th>
                     {/* Actions header hidden on mobile */}
-                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell">
                       Actions
                     </th>
                   </tr>
@@ -588,7 +729,7 @@ export const UserListPage: React.FC = () => {
                           }
                         }}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-12 w-12 flex-shrink-0">
                               {user.profilePicture ? (
@@ -642,36 +783,42 @@ export const UserListPage: React.FC = () => {
                             <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                           {user.phone}
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                           <div className="flex items-center">
                             <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                               {user.servicesCount || 0}
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                           {formatDate(user.createdAt)}
                         </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                           {formatDate(user.updatedAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-                            Active
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                              user.isLocked
+                                ? "bg-red-100 text-red-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {user.isLocked ? "Suspended" : "Active"}
                           </span>
                         </td>
                         {/* Actions cell (desktop only) */}
-                        <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
+                        <td className="hidden whitespace-nowrap px-6 py-4 text-sm font-medium sm:table-cell">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedUser(user);
                               setShowUserModal(true);
                             }}
-                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           >
                             View Details
                           </button>
@@ -888,12 +1035,166 @@ export const UserListPage: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
+              {/* Account Management Buttons */}
+              <div className="flex items-center gap-2">
+                {!selectedUser.isLocked ? (
+                  <button
+                    onClick={handleLockConfirmation}
+                    className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-1 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                    Lock Account
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleActivateAccount}
+                    className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-1 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Activate Account
+                  </button>
+                )}
+                <button
+                  onClick={handleDeleteConfirmation}
+                  className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                >
+                  <svg
+                    className="mr-1 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete Account
+                </button>
+              </div>
+
+              {/* Close Button */}
               <button
                 onClick={() => setShowUserModal(false)}
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lock Account Confirmation Modal */}
+      {showLockConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Lock Account
+              </h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to lock this account? The user will not be
+                able to access their account until it's unlocked.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => setShowLockConfirmation(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLockAccount}
+                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              >
+                Lock Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirmation && selectedUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <svg
+                  className="h-6 w-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Delete Account
+                </h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  Are you sure you want to permanently delete{" "}
+                  <span className="font-semibold">{selectedUser.name}'s</span>{" "}
+                  account? This action cannot be undone and will delete:
+                </p>
+                <ul className="mt-2 list-inside list-disc text-sm text-gray-600">
+                  <li>User profile and personal information</li>
+                  <li>All services posted by this user</li>
+                  <li>All bookings (as client and provider)</li>
+                  <li>All reviews and feedback</li>
+                  <li>All associated records</li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirmation(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAccount}
+                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Delete Account
               </button>
             </div>
           </div>

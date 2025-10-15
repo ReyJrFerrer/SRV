@@ -5,6 +5,7 @@ import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
 import Contact from "./components/Contact";
+import SuspensionModal from "./components/SuspensionModal";
 import { initializeFirebase } from "./services/firebaseApp";
 
 // Initialize Firebase as early as possible
@@ -22,6 +23,7 @@ const LandingPage = () => {
     useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
@@ -31,6 +33,14 @@ const LandingPage = () => {
 
         try {
           const profile = await authCanisterService.getMyProfile();
+
+          // Check if account is suspended
+          if (profile && profile.locked) {
+            console.log("Account is suspended, showing suspension modal");
+            setShowSuspensionModal(true);
+            setIsCheckingProfile(false);
+            return;
+          }
 
           // If profile exists, redirect based on role
           if (profile && profile.name && profile.phone) {
@@ -75,7 +85,7 @@ const LandingPage = () => {
   if (isCheckingProfile) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-        <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-blue-600"></div>
+        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-blue-600"></div>
         <p className="mt-4 text-lg text-gray-700">Loading...</p>
       </div>
     );
@@ -120,6 +130,12 @@ const LandingPage = () => {
           onNavigateToAbout={handleNavigateToAbout}
         />
       )}
+
+      {/* Suspension Modal */}
+      <SuspensionModal
+        isOpen={showSuspensionModal}
+        onClose={() => setShowSuspensionModal(false)}
+      />
     </main>
   );
 };

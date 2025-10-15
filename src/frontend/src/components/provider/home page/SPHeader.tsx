@@ -1,6 +1,3 @@
-// Component: Provider Header (SP)
-// Purpose: Shows welcome, notifications badge, and location preview with map modal.
-// Dependencies: Zustand location store, provider notifications hook, @vis.gl/react-google-maps for modal map.
 // --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
@@ -9,50 +6,165 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
-import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
 }
 
+interface MapModalProps {
+  show: boolean;
+  onClose: () => void;
+  center: { lat: number; lng: number };
+  address: string;
+  status: string;
+  mapsApiLoaded: boolean;
+}
+
 // Google Maps config (reserved for future autocomplete)
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
+const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_PROVIDER_V1";
+const ADDR_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
+interface AddrCache {
+  address: string;
+  ts: number;
+}
+
+// --- Map Modal Component (outside) ---
+const MapModal: React.FC<MapModalProps> = ({
+  show,
+  onClose,
+  center,
+  address,
+  status,
+  mapsApiLoaded,
+}) => {
+  if (!show) return null;
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+  // Controlled camera state to preserve zoom/position across re-renders
+  const [zoom, setZoom] = useState<number>(16);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
+    center,
+  );
+
+  useEffect(() => {
+    // When modal opens or the provided center changes, sync the controlled state
+    if (show) {
+      setMapCenter(center);
+      // don't forcibly reset zoom if user already changed it in-session
+    }
+  }, [show, center.lat, center.lng]);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+        <button
+          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+          onClick={onClose}
+          aria-label="Close map"
+          tabIndex={0}
+        >
+          <span className="text-xl font-bold text-gray-700">&times;</span>
+        </button>
+        <div className="relative flex-1">
+          {/* Recenter button (icon-only, positioned above native zoom +/-) */}
+          <button
+            type="button"
+            className="pointer-events-auto absolute bottom-24 right-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
+            onClick={() => {
+              setMapCenter(center);
+              setZoom((z) => (typeof z === "number" ? Math.max(z, 16) : 16));
+            }}
+            aria-label="Recenter map"
+            title="Re-center map"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-5 w-5"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
+              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
+            </svg>
+          </button>
+          {mapsApiLoaded ? (
+            <Map
+              center={mapCenter}
+              zoom={zoom}
+              mapId="6922634ff75ae05ac38cc473"
+              style={{ width: "100%", height: "100%" }}
+              disableDefaultUI={true}
+              mapTypeControl={false}
+              zoomControl={true}
+              streetViewControl={false}
+              gestureHandling={"greedy"}
+              onCameraChanged={(ev: any) => {
+                try {
+                  const next = ev?.detail;
+                  if (next?.center) setMapCenter(next.center);
+                  if (typeof next?.zoom === "number") setZoom(next.zoom);
+                } catch {}
+              }}
+            >
+              {/* Keep marker at the provided center (fixed location), not at camera center */}
+              <AdvancedMarker position={center} />
+            </Map>
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-gray-500">
+              Loading map...
+            </div>
+          )}
+        </div>
+        <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
+          {status === "ok" && address !== "Detecting location..."
+            ? address
+            : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
-  // --- Navigation & Auth ---
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-
-  // Notification count from custom hook
   const { unreadCount } = useProviderNotifications();
-
-  // --- Location store ---
   const {
     location: geoLocation,
     userAddress,
     userProvince,
     locationLoading,
+    requestLocation,
   } = useLocationStore();
-
-  // Get locationStore separately to avoid dependency issues
-  const locationStore = useLocationStore();
-
-  // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
-
-  // --- UI state ---
   const [showMap, setShowMap] = useState(false);
-
-  // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
+  const [gmapsAddress, setGmapsAddress] = useState<string>(
+    "Detecting location...",
+  );
+  const [gmapsStatus, setGmapsStatus] = useState<
+    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
+  >("idle");
+  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
 
-  // --- Effect: Fetch user profile and initialize location ---
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+
   useEffect(() => {
     const loadInitialData = async () => {
-      // Fetch user profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
@@ -61,27 +173,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-
-      // Initialize location through Zustand store (will check cache first)
       if (!isAuthLoading) {
-        locationStore.requestLocation();
+        requestLocation();
       }
     };
-
     if (!isAuthLoading) {
       loadInitialData();
     }
-  }, [isAuthenticated, isAuthLoading, locationStore]);
+  }, [isAuthenticated, isAuthLoading, requestLocation]);
 
-  // Reverse geocode status
-  const [gmapsAddress, setGmapsAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [gmapsStatus, setGmapsStatus] = useState<
-    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
-  >("idle");
-
-  // Pre-check denial cooldown
   useEffect(() => {
     try {
       const raw =
@@ -100,257 +200,193 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, []);
 
-  // Maps API loaded flag (APIProvider injects script)
-  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+  // Seed from cache and mark API loaded
   useEffect(() => {
-    if ((window as any).google?.maps) {
-      setMapsApiLoaded(true);
-      return;
-    }
-    const iv = setInterval(() => {
-      if ((window as any).google?.maps) {
-        setMapsApiLoaded(true);
-        clearInterval(iv);
+    try {
+      const raw = localStorage.getItem(ADDR_CACHE_KEY);
+      if (raw) {
+        const cached: AddrCache = JSON.parse(raw);
+        if (cached?.address && typeof cached.ts === "number") {
+          const fresh = Date.now() - cached.ts < ADDR_CACHE_TTL_MS;
+          if (fresh) {
+            setGmapsAddress(cached.address);
+            setGmapsStatus("ok");
+          }
+        }
       }
-    }, 200);
-    return () => clearInterval(iv);
+    } catch {}
+    if ((window as any).google?.maps) setMapsApiLoaded(true);
   }, []);
 
-  // Reverse geocode
+  // Reverse geocode using detected store location (no direct geolocation call)
   useEffect(() => {
-    if (!mapsApiLoaded) return;
-    if (gmapsStatus !== "idle") return;
-    if (!("geolocation" in navigator)) {
-      setGmapsStatus("unsupported");
-      setGmapsAddress("Geolocation not supported");
-      return;
-    }
-    setGmapsStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          if (!(window as any).google?.maps) {
+    if (!mapsApiLoaded || !geoLocation || gmapsStatus !== "idle") return;
+    try {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      setGmapsStatus("loading");
+      geocoder.geocode(
+        { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
+        (results: any, status: string) => {
+          if (status === "OK" && results && results[0]) {
+            const address = results[0].formatted_address as string;
+            setGmapsAddress(address);
+            setGmapsStatus("ok");
+            try {
+              const payload: AddrCache = { address, ts: Date.now() };
+              localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
+            } catch {}
+          } else {
             setGmapsStatus("failed");
-            setGmapsAddress("Maps not available");
-            return;
+            setGmapsAddress("Unable to resolve address");
           }
-          const geocoder = new (window as any).google.maps.Geocoder();
-          geocoder.geocode(
-            { location: { lat: latitude, lng: longitude } },
-            (results: any, status: string) => {
-              if (status === "OK" && results && results[0]) {
-                setGmapsAddress(results[0].formatted_address);
-                setGmapsStatus("ok");
-              } else {
-                setGmapsStatus("failed");
-                setGmapsAddress("Unable to resolve address");
-              }
-            },
-          );
-        } catch {
-          setGmapsStatus("failed");
-          setGmapsAddress("Reverse geocode failed");
-        }
-      },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setGmapsStatus("denied");
-          setGmapsAddress("Location access denied");
-          try {
-            localStorage.setItem(GEO_DENIAL_KEY, Date.now().toString());
-          } catch {}
-        } else {
-          setGmapsStatus("failed");
-          setGmapsAddress("Failed to get location");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, [mapsApiLoaded, gmapsStatus]);
+        },
+      );
+    } catch {
+      setGmapsStatus("failed");
+      setGmapsAddress("Reverse geocode failed");
+    }
+  }, [mapsApiLoaded, gmapsStatus, geoLocation]);
 
-  // Map Modal with Google Maps
-  const MapModal: React.FC = () => {
-    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
-      return null;
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) setShowMap(false);
-    };
-    const center = { lat: geoLocation.latitude, lng: geoLocation.longitude };
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-        onClick={handleBackdropClick}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
-          <button
-            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-            onClick={() => setShowMap(false)}
-            aria-label="Close map"
-            tabIndex={0}
-          >
-            <span className="text-xl font-bold text-gray-700">&times;</span>
-          </button>
-          <div className="flex-1">
-            {mapsApiLoaded ? (
-              <Map
-                defaultCenter={center}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473"
-                style={{ width: "100%", height: "100%" }}
-                disableDefaultUI={false}
-                mapTypeControl={false}
-              >
-                <AdvancedMarker position={center} />
-              </Map>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                Loading map...
-              </div>
-            )}
-          </div>
-          <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
-            {gmapsStatus === "ok" && gmapsAddress !== "Detecting location..."
-              ? gmapsAddress
-              : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // --- Handlers ---
-  // Notification button
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
   };
 
   // --- Render: Header layout ---
   return (
-    <header
-      className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
-    >
-      {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
-      <div className="hidden items-center justify-between md:flex">
-        <div className="flex items-center space-x-6">
-          <Link to="/client/home">
-            <img
-              src="/logo.svg"
-              alt="SRV Logo"
-              className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-            />
-          </Link>
-          <div className="h-10 border-l-2 border-blue-100"></div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-semibold tracking-wide text-blue-700">
-              Welcome,{" "}
-              <span className="text-2xl font-bold text-gray-800">
-                {displayName}
+    <APIProvider apiKey={mapsApiKey}>
+      <header
+        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+      >
+        {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
+        <div className="hidden items-center justify-between md:flex">
+          <div className="flex items-center space-x-6">
+            <Link to="/provider/home">
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+              />
+            </Link>
+            <div className="h-10 border-l-2 border-blue-100"></div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                Welcome,{" "}
+                <span className="text-2xl font-bold text-gray-800">
+                  {displayName}
+                </span>
               </span>
-            </span>
+            </div>
           </div>
-        </div>
-        {/* Notification Button with badge */}
-        {isAuthenticated && (
-          <button
-            onClick={handleNotificationsClick}
-            className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-            aria-label="Notifications"
-          >
-            <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
-      <div className="md:hidden">
-        <div className="flex items-center justify-between">
-          <Link to="/client/home">
-            <img
-              src="/logo.svg"
-              alt="SRV Logo"
-              className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-            />
-          </Link>
+          {/* Notification Button with badge */}
           {isAuthenticated && (
             <button
               onClick={handleNotificationsClick}
               className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
               aria-label="Notifications"
             >
-              <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                   {unreadCount}
                 </span>
               )}
             </button>
           )}
         </div>
-        <hr className="my-4 border-blue-100" />
-        <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-          <span className="text-xl font-semibold tracking-wide text-blue-700">
-            Welcome Back,
-          </span>
-          <span className="text-xl font-bold text-gray-800">{displayName}</span>
-        </div>
-      </div>
 
-      {/* --- Location Section (search bar removed, location detection restored) --- */}
-      <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <MapPinIcon className="h-6 w-6 text-blue-600" />
-            <span className="text-base font-bold text-gray-800">
-              My Location
+        {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between">
+            <Link to="/client/home">
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+              />
+            </Link>
+            {isAuthenticated && (
+              <button
+                onClick={handleNotificationsClick}
+                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                aria-label="Notifications"
+              >
+                <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+          <hr className="my-4 border-blue-100" />
+          <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+            <span className="text-xl font-semibold tracking-wide text-blue-700">
+              Welcome Back,
+            </span>
+            <span className="text-xl font-bold text-gray-800">
+              {displayName}
             </span>
           </div>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex w-full items-center justify-start">
-            {gmapsStatus === "ok" ? (
-              <button
-                type="button"
-                className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                onClick={() => setShowMap(true)}
-                title={gmapsAddress}
-              >
-                {gmapsAddress}
-              </button>
-            ) : locationLoading ||
-              isAuthLoading ||
-              gmapsStatus === "loading" ? (
-              <span className="animate-pulse text-sm text-gray-500">
-                Detecting location...
+
+        {/* --- Location Section (search bar removed, location detection restored) --- */}
+        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <MapPinIcon className="h-6 w-6 text-blue-600" />
+              <span className="text-base font-bold text-gray-800">
+                My Location
               </span>
-            ) : userAddress && userProvince ? (
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                onClick={() => setShowMap(true)}
-                title={`${userAddress}, ${userProvince}`}
-              >
-                {userAddress}, {userProvince}
-              </button>
-            ) : (
-              <span className="text-left text-sm text-gray-500">
-                {gmapsAddress}
-              </span>
-            )}
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex w-full items-center justify-start">
+              {gmapsStatus === "ok" ? (
+                <button
+                  type="button"
+                  className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+                  onClick={() => setShowMap(true)}
+                  title={gmapsAddress}
+                >
+                  {gmapsAddress}
+                </button>
+              ) : locationLoading ||
+                isAuthLoading ||
+                gmapsStatus === "loading" ? (
+                <span className="animate-pulse text-sm text-gray-500">
+                  Detecting location...
+                </span>
+              ) : userAddress && userProvince ? (
+                <button
+                  type="button"
+                  className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+                  onClick={() => setShowMap(true)}
+                  title={`${userAddress}, ${userProvince}`}
+                >
+                  {userAddress}, {userProvince}
+                </button>
+              ) : (
+                <span className="text-left text-sm text-gray-500">
+                  {gmapsAddress}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-
+      </header>
       {/* --- Map Modal for Location Display --- */}
-      {showMap && <MapModal />}
-    </header>
+      {mapsApiLoaded && geoLocation && (
+        <MapModal
+          show={showMap}
+          onClose={() => setShowMap(false)}
+          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+          address={gmapsAddress}
+          status={gmapsStatus}
+          mapsApiLoaded={mapsApiLoaded}
+        />
+      )}
+    </APIProvider>
   );
 };
 

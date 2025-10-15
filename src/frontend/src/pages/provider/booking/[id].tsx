@@ -23,6 +23,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import GStreetView from "../../../components/common/GStreetView";
 
 // (Places library reserved for future use with Autocomplete if needed)
 import { useReputation } from "../../../hooks/useReputation";
@@ -136,7 +137,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
   if (currentStep === -1) {
     return (
       <section className="my-4 flex flex-col rounded-2xl bg-white p-4 shadow">
-        <h3 className="mr-10 mb-3 w-full text-left text-lg font-bold text-blue-700">
+        <h3 className="mb-3 mr-10 w-full text-left text-lg font-bold text-blue-700">
           Progress Tracker
         </h3>
         <div className="flex items-center justify-center rounded-lg bg-red-50 px-4 py-3 font-semibold text-red-700">
@@ -210,7 +211,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
 
   return (
     <section className="my-4 flex flex-col items-center rounded-2xl bg-white p-4 shadow">
-      <h3 className="mt-1 mb-3 ml-5 w-full text-left text-lg font-bold text-blue-700">
+      <h3 className="mb-3 ml-5 mt-1 w-full text-left text-lg font-bold text-blue-700">
         Progress Tracker
       </h3>
       <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">
@@ -251,6 +252,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showStreetView, setShowStreetView] = useState<boolean>(false);
 
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
@@ -799,7 +801,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
           <p className="text-gray-600">Loading booking details...</p>
         </div>
       </div>
@@ -935,7 +937,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {/* Side by side layout for provider and service details */}
         <div className="mt-4 flex flex-col gap-6 md:flex-row">
           {/* Provider (client) info card - left */}
-          <div className="relative max-w-md min-w-[320px] flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 px-6 py-8">
               {/* Client image */}
               <img
@@ -1013,7 +1015,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
               <MapPinIcon className="mt-0.5 h-5 w-5 text-blue-500" />
               <div className="flex flex-col">
                 <span className="font-medium text-gray-700">Location:</span>
-                <span className="text-sm leading-snug font-normal text-gray-700">
+                <span className="text-sm font-normal leading-snug text-gray-700">
                   {bookingLocation}
                 </span>
                 {(displayAddress || preciseAddress || geocodedAddress) && (
@@ -1257,7 +1259,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   </div>
                 );
               })()}
-              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] leading-tight font-medium text-white">
+              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] font-medium leading-tight text-white">
                 {bookingLocation !== "Location not specified"
                   ? bookingLocation
                   : displayAddress || preciseAddress || "Location pending"}
@@ -1266,20 +1268,52 @@ const ProviderBookingDetailsPage: React.FC = () => {
           )}
           {mapsReady ? (
             <div>
-              <Map
-                center={resolvedCoords || clientLocation}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473"
+              <div
+                className="relative"
                 style={{
                   width: "100%",
                   height: "260px",
                   borderRadius: "12px",
+                  overflow: "hidden",
                 }}
-                disableDefaultUI={true}
-                zoomControl={true}
               >
-                <AdvancedMarker position={resolvedCoords || clientLocation} />
-              </Map>
+                <Map
+                  center={resolvedCoords || clientLocation}
+                  defaultZoom={16}
+                  mapId="6922634ff75ae05ac38cc473"
+                  style={{ width: "100%", height: "100%" }}
+                  disableDefaultUI={true}
+                  zoomControl={true}
+                >
+                  <AdvancedMarker position={resolvedCoords || clientLocation} />
+                </Map>
+
+                {/* Street View quick access (bottom-left, parallel to +/- on right) */}
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="pointer-events-auto absolute bottom-2 left-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowStreetView(true)}
+                      className="grid h-9 w-9 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
+                      title="Open Street View"
+                      aria-label="Open Street View"
+                    >
+                      {/* Eye icon for Street View */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-4 w-4"
+                      >
+                        <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* Address overlay on interactive map */}
               <div className="mt-2 rounded bg-gray-900/70 px-3 py-1 text-[11px] leading-snug text-gray-100">
@@ -1306,6 +1340,39 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for
                   full accuracy.
                 </p>
+              )}
+              {/* Street View modal */}
+              {showStreetView && (resolvedCoords || clientLocation) && (
+                <div
+                  className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
+                    <button
+                      className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+                      onClick={() => setShowStreetView(false)}
+                      aria-label="Close Street View"
+                    >
+                      <span className="text-xl font-bold text-gray-700">
+                        &times;
+                      </span>
+                    </button>
+                    {/* Render Google Street View Panorama */}
+                    <div className="h-full w-full">
+                      <GStreetView
+                        position={resolvedCoords || clientLocation}
+                        pov={{ heading: 0, pitch: 0 }}
+                        options={{
+                          addressControl: true,
+                          linksControl: true,
+                          panControl: true,
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <a

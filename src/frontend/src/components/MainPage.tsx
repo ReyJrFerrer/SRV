@@ -336,12 +336,12 @@ export default function MainPage({
 
       {/* HERO (hero-anim classes added) */}
       <section className="hero-section home-hero">
-        <div className="container mx-auto px-4 pt-1 pb-4 md:pt-2 md:pb-5">
+        <div className="container mx-auto px-4 pb-4 pt-1 md:pb-5 md:pt-2">
           <div className="hero-content hero-pop relative flex flex-col items-center p-2 md:p-3">
-            <div className="absolute top-0 left-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
-            <div className="absolute right-0 bottom-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
+            <div className="absolute left-0 top-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
             <div className="hero-text-container mb-2">
-              <h1 className="hero-text text-center text-3xl leading-tight font-extrabold text-blue-800 drop-shadow-lg md:text-5xl">
+              <h1 className="hero-text text-center text-3xl font-extrabold leading-tight text-blue-800 drop-shadow-lg md:text-5xl">
                 <div className="text-line hero-anim mb-2 flex items-center justify-center gap-2">
                   <span className="text-segment">
                     Ang <span className="text-yellow-400">S</span>erbisyo
@@ -372,7 +372,7 @@ export default function MainPage({
                     <img
                       src="/hero/message-load.svg"
                       alt="message-load"
-                      className="message-load-image h-9 w-9 drop-shadow md:h-13 md:w-13"
+                      className="message-load-image md:h-13 md:w-13 h-9 w-9 drop-shadow"
                     />
                   </span>
                 </div>

@@ -94,11 +94,7 @@ const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
       try {
         setLoading(true);
         setError(null);
-
-        // Try to get real data from admin canister
         try {
-          // const analyticsData =
-          //   await adminServiceCanister.getUserClientAnalytics(userId);
           setAnalytics({
             totalBookings: 0,
             servicesCompleted: 0,
@@ -244,7 +240,6 @@ export const UserDetailsPage: React.FC = () => {
         adminServiceCanister.getUserAnalytics(profile.id.toString()),
         adminServiceCanister.getUserReviews(profile.id.toString()),
         adminServiceCanister.getUserReputation(profile.id.toString()),
-        // adminServiceCanister.getUserCommissionData(profile.id.toString()),
       ]);
 
       return {
@@ -274,7 +269,6 @@ export const UserDetailsPage: React.FC = () => {
         totalReviews: reviews.totalReviews,
         completionRate: analytics.completionRate,
         lastActivity: new Date(Number(profile.updatedAt) / 1000000),
-        // Real reputation data from backend
         reputationScore: reputation.reputationScore,
         reputationLevel: reputation.trustLevel,
         reputationRing: Math.min(
@@ -445,25 +439,6 @@ export const UserDetailsPage: React.FC = () => {
     setShowReputationConfirmation(false);
   };
 
-  // const confirmCommissionUpdate = async () => {
-  //   if (!user) return;
-
-  //   try {
-  //     // Call backend to update commission
-  //     await adminServiceCanister.updateUserCommission(
-  //       user.id,
-  //       outstandingCommission,
-  //     );
-
-  //     console.log("Commission updated successfully to:", outstandingCommission);
-  //   } catch (error) {
-  //     console.error("Failed to update commission:", error);
-  //     alert("Failed to update commission. Please try again.");
-  //   }
-
-  //   setShowCommissionConfirmation(false);
-  // };
-
   // Load user data on component mount
   useEffect(() => {
     const loadUser = async () => {
@@ -471,8 +446,6 @@ export const UserDetailsPage: React.FC = () => {
         setLoadingUser(false);
         return;
       }
-
-      // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
           await refreshUsers();
@@ -591,14 +564,14 @@ export const UserDetailsPage: React.FC = () => {
               {fromTicket && ticketId ? (
                 <Link
                   to={`/ticket/${ticketId}`}
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   Back to Ticket
                 </Link>
               ) : (
                 <Link
                   to="/users"
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   Back to Users
                 </Link>
@@ -730,7 +703,7 @@ export const UserDetailsPage: React.FC = () => {
                 <div className="mt-4">
                   <Link
                     to={`/user/${user.id}/services`}
-                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <svg
                       className="mr-2 h-4 w-4"
@@ -778,27 +751,6 @@ export const UserDetailsPage: React.FC = () => {
                 totalRevenue: user.totalEarnings,
               }}
             />
-            <div className="mt-6 flex justify-end">
-              <Link
-                to={`/user/${user.id}/transactions`}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                  />
-                </svg>
-                View Transaction History
-              </Link>
-            </div>
           </div>
 
           {/* Provider Details */}
@@ -848,7 +800,7 @@ export const UserDetailsPage: React.FC = () => {
                 </h3>
                 <button
                   onClick={handleSaveReputation}
-                  className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   <svg
                     className="mr-2 h-4 w-4"
@@ -878,7 +830,7 @@ export const UserDetailsPage: React.FC = () => {
                         Math.max(0, pendingReputationScore - 10),
                       )
                     }
-                    className="inline-flex items-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm transition-colors hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                    className="inline-flex items-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                     <svg
                       className="mr-1 h-4 w-4"
@@ -898,7 +850,7 @@ export const UserDetailsPage: React.FC = () => {
 
                   <button
                     onClick={() => handleReputationChange(50)}
-                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                   >
                     <svg
                       className="mr-1 h-4 w-4"
@@ -922,7 +874,7 @@ export const UserDetailsPage: React.FC = () => {
                         Math.min(100, pendingReputationScore + 10),
                       )
                     }
-                    className="inline-flex items-center rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                    className="inline-flex items-center rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   >
                     <svg
                       className="mr-1 h-4 w-4"
@@ -946,29 +898,10 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Performance Metrics */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Performance Metrics
               </h3>
-              <Link
-                to={`/user/${user.id}/activities`}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                View Activity History
-              </Link>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <div className="text-center">
@@ -1006,7 +939,7 @@ export const UserDetailsPage: React.FC = () => {
               </h3>
               <button
                 onClick={() => navigate(`/user/${user.id}/bookings`)}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 <svg
                   className="mr-1.5 h-4 w-4"
@@ -1031,7 +964,7 @@ export const UserDetailsPage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={handleChat}
-              className="inline-flex items-center rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex items-center rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <svg
                 className="mr-2 h-4 w-4"
@@ -1051,7 +984,7 @@ export const UserDetailsPage: React.FC = () => {
             {!user.isLocked ? (
               <button
                 onClick={handleLockConfirmation}
-                className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
               >
                 <svg
                   className="mr-2 h-4 w-4"
@@ -1071,7 +1004,7 @@ export const UserDetailsPage: React.FC = () => {
             ) : (
               <button
                 onClick={handleActivateAccount}
-                className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 <svg
                   className="mr-2 h-4 w-4"
@@ -1091,7 +1024,7 @@ export const UserDetailsPage: React.FC = () => {
             )}
             <button
               onClick={handleDeleteConfirmation}
-              className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               <svg
                 className="mr-2 h-4 w-4"
@@ -1114,7 +1047,7 @@ export const UserDetailsPage: React.FC = () => {
 
       {/* Lock Account Confirmation Modal */}
       {showLockConfirmation && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1130,13 +1063,13 @@ export const UserDetailsPage: React.FC = () => {
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowLockConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLockAccount}
-                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
               >
                 Lock Account
               </button>
@@ -1147,7 +1080,7 @@ export const UserDetailsPage: React.FC = () => {
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirmation && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1163,13 +1096,13 @@ export const UserDetailsPage: React.FC = () => {
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowDeleteConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteAccount}
-                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 Delete Account
               </button>
@@ -1180,7 +1113,7 @@ export const UserDetailsPage: React.FC = () => {
 
       {/* Reputation Update Confirmation Modal */}
       {showReputationConfirmation && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1196,13 +1129,13 @@ export const UserDetailsPage: React.FC = () => {
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowReputationConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReputationUpdate}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Update Reputation
               </button>
@@ -1213,7 +1146,7 @@ export const UserDetailsPage: React.FC = () => {
 
       {/* Commission Update Confirmation Modal */}
       {showCommissionConfirmation && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1229,7 +1162,7 @@ export const UserDetailsPage: React.FC = () => {
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowCommissionConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Cancel
               </button>

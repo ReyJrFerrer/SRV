@@ -54,7 +54,7 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
           />
         )}
         <span
-          className={`absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white ${service.isActive ? "bg-green-500" : "bg-gray-500"}`}
+          className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white ${service.isActive ? "bg-green-500" : "bg-gray-500"}`}
         >
           {service.isActive ? "Active" : "Inactive"}
         </span>
@@ -62,7 +62,7 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
 
       <div className="flex flex-1 flex-col justify-between p-4 md:p-5">
         <div>
-          <p className="mb-1 text-xs tracking-wider text-gray-500 uppercase">
+          <p className="mb-1 text-xs uppercase tracking-wider text-gray-500">
             {service.category.name}
           </p>
           {/* MODIFICATION: Make title a link */}

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdmin } from "../hooks/useAdmin";
-// import { PendingValidationCard } from "../components/PendingValidationCard";
 import {
   XMarkIcon,
   ArrowDownTrayIcon,
@@ -244,7 +242,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
           e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
@@ -285,7 +283,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onApprove(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
+          className="flex-1 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           Approve
         </button>
@@ -294,7 +292,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onReject(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
+          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
         >
           Reject
         </button>
@@ -367,7 +365,7 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
           e.stopPropagation();
           onUndo(certificate);
         }}
-        className="absolute top-2 right-2 z-10 rounded-full bg-gray-100 p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+        className="absolute right-2 top-2 z-10 rounded-full bg-gray-100 p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
         title={`Undo ${statusText.toLowerCase()}`}
       >
         <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -392,7 +390,7 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
           e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className={`group relative h-32 w-full overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:ring-2 focus:outline-none ${buttonFocusColor} flex items-center justify-center`}
+        className={`group relative h-32 w-full overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:outline-none focus:ring-2 ${buttonFocusColor} flex items-center justify-center`}
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
@@ -433,13 +431,7 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
 
 export const ValidationInboxPage: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    loading,
-    pendingValidations,
-    refreshPendingValidations,
-    validatePayment: _validatePayment,
-    viewMediaItems: _viewMediaItems,
-  } = useAdmin();
+  // Certificate validation page - no need for useAdmin loading states
 
   // Certificate validation state
   const [servicesWithCertificates, setServicesWithCertificates] = useState<
@@ -551,11 +543,10 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Load initial data on mount
   useEffect(() => {
-    refreshPendingValidations();
     loadServicesWithCertificates();
     loadValidatedCertificates();
     loadRejectedCertificates();
-  }, [refreshPendingValidations]);
+  }, []);
 
   // Show mobile bottom action bar when header scrolls out
   useEffect(() => {
@@ -590,6 +581,24 @@ export const ValidationInboxPage: React.FC = () => {
         );
       }
 
+      // Remove the certificate from the pending list immediately
+      setServicesWithCertificates(
+        (prev) =>
+          prev
+            .map((s) => {
+              if (s.serviceId === service.serviceId) {
+                return {
+                  ...s,
+                  certificateUrls: s.certificateUrls.filter(
+                    (_, index) => index !== certificateIndex,
+                  ),
+                };
+              }
+              return s;
+            })
+            .filter((s) => s.certificateUrls.length > 0), // Remove services with no certificates left
+      );
+
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;
       const certificateData = {
         service,
@@ -601,8 +610,8 @@ export const ValidationInboxPage: React.FC = () => {
       setApprovedCertificates((prev) => [...prev, certificateData]);
       console.log("Certificate approved:", certificateData);
 
-      // Refresh data from backend
-      await loadServicesWithCertificates();
+      // Note: Backend refresh removed to prevent duplication
+      // The local state update above is sufficient for immediate UI feedback
     } catch (error) {
       console.error("Error approving certificate:", error);
     }
@@ -627,6 +636,24 @@ export const ValidationInboxPage: React.FC = () => {
         );
       }
 
+      // Remove the certificate from the pending list immediately
+      setServicesWithCertificates(
+        (prev) =>
+          prev
+            .map((s) => {
+              if (s.serviceId === service.serviceId) {
+                return {
+                  ...s,
+                  certificateUrls: s.certificateUrls.filter(
+                    (_, index) => index !== certificateIndex,
+                  ),
+                };
+              }
+              return s;
+            })
+            .filter((s) => s.certificateUrls.length > 0), // Remove services with no certificates left
+      );
+
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;
       const certificateData = {
         service,
@@ -638,7 +665,8 @@ export const ValidationInboxPage: React.FC = () => {
       setRejectedCertificates((prev) => [...prev, certificateData]);
       console.log("Certificate rejected:", certificateData);
 
-      await loadServicesWithCertificates();
+      // Note: Backend refresh removed to prevent duplication
+      // The local state update above is sufficient for immediate UI feedback
     } catch (error) {
       console.error("Error rejecting certificate:", error);
     }
@@ -701,7 +729,9 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Handle refresh
   const handleRefresh = async () => {
-    await refreshPendingValidations();
+    await loadServicesWithCertificates();
+    await loadValidatedCertificates();
+    await loadRejectedCertificates();
   };
 
   return (
@@ -734,17 +764,17 @@ export const ValidationInboxPage: React.FC = () => {
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={handleRefresh}
-                  disabled={loading.pendingValidations}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  disabled={certificateLoading}
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
+                    className={`mr-2 h-4 w-4 ${certificateLoading ? "animate-spin" : ""}`}
                   />
                   Refresh
                 </button>
                 <button
                   onClick={() => navigate("/dashboard")}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -767,17 +797,17 @@ export const ValidationInboxPage: React.FC = () => {
           <div className="flex flex-row items-stretch gap-2">
             <button
               onClick={handleRefresh}
-              disabled={loading.pendingValidations}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+              disabled={certificateLoading}
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <ArrowPathIcon
-                className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
+                className={`mr-2 h-4 w-4 ${certificateLoading ? "animate-spin" : ""}`}
               />
               Refresh
             </button>
             <button
               onClick={() => navigate("/dashboard")}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -902,14 +932,9 @@ export const ValidationInboxPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {pendingValidations.length > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
-                      {pendingValidations.length} pending
-                    </span>
-                  )}
                   {stats.certificatesPending > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-                      {stats.certificatesPending} certificates
+                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-200">
+                      {stats.certificatesPending} pending
                     </span>
                   )}
                 </div>

@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
+import SuspensionModal from "../SuspensionModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { isAuthenticated, identity, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
 
   useEffect(() => {
     const checkAuthAndRole = async () => {
@@ -30,6 +32,13 @@ export default function ProtectedRoute({
           const profile = await authCanisterService.getMyProfile();
           if (!profile) {
             navigate("/create-profile");
+            return;
+          }
+
+          // Check if account is suspended
+          if (profile.locked) {
+            console.log("Account is suspended, showing suspension modal");
+            setShowSuspensionModal(true);
             return;
           }
 
@@ -56,7 +65,7 @@ export default function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-        <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-blue-600"></div>
+        <div className="h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-blue-600"></div>
         <p className="mt-4 text-lg text-gray-700">Loading...</p>
       </div>
     );
@@ -67,5 +76,13 @@ export default function ProtectedRoute({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <SuspensionModal
+        isOpen={showSuspensionModal}
+        onClose={() => setShowSuspensionModal(false)}
+      />
+    </>
+  );
 }

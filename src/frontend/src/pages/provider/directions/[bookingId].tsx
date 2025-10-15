@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import GStreetView from "../../../components/common/GStreetView";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
 // Simple inline fallback loader (avoid cross-component dependency)
@@ -65,6 +66,7 @@ const ProviderDirectionsPage: React.FC = () => {
   const [destResolveStatus, setDestResolveStatus] = useState<
     "idle" | "pending" | "ok" | "failed"
   >("idle");
+  const [showStreetView, setShowStreetView] = useState<boolean>(false);
   // Prevent multiple auto-start triggers
   const hasAutoStartedRef = useRef<boolean>(false);
 
@@ -654,7 +656,7 @@ const ProviderDirectionsPage: React.FC = () => {
         <Map
           style={containerStyle}
           defaultZoom={15}
-          center={providerLocation}
+          defaultCenter={providerLocation}
           onCameraChanged={(ev) => (mapRef.current = ev.map)}
           disableDefaultUI={true}
           zoomControl={true}
@@ -680,8 +682,42 @@ const ProviderDirectionsPage: React.FC = () => {
       )}
       {/* Overlay controls */}
       <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-        {/* Re-center button above the card, right-aligned */}
-        <div className="flex justify-end pr-1">
+        {/* Street View button above Follow me */}
+        {destinationHasCoords && destinationCoords && (
+          <div className="flex w-full justify-end px-1">
+            <button
+              type="button"
+              onClick={() => setShowStreetView(true)}
+              className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
+              title="Open Street View"
+              aria-label="Open Street View"
+            >
+              {/* Eye icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-5 w-5"
+              >
+                <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+        )}
+        {/* Follow toggle and Re-center controls */}
+        <div className="flex items-center justify-between px-1">
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={followMe}
+              onChange={(e) => setFollowMe(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            Follow me
+          </label>
           <button
             type="button"
             onClick={() => {
@@ -763,9 +799,39 @@ const ProviderDirectionsPage: React.FC = () => {
           Back
         </button>
       </div>
+      {/* Street View modal */}
+      {showStreetView && destinationHasCoords && destinationCoords && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
+            <button
+              className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+              onClick={() => setShowStreetView(false)}
+              aria-label="Close Street View"
+            >
+              <span className="text-xl font-bold text-gray-700">&times;</span>
+            </button>
+            <div className="h-full w-full">
+              <GStreetView
+                position={destinationCoords}
+                pov={{ heading: 0, pitch: 0 }}
+                options={{
+                  addressControl: true,
+                  linksControl: true,
+                  panControl: true,
+                }}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {/* Floating button removed; recenter is in overlay */}
       {mapApiKey === "REPLACE_WITH_KEY" && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
+        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
           Missing Google Maps API key
         </div>
       )}
