@@ -1,6 +1,7 @@
 # Notification and Chat Integration
 
 ## Overview
+
 This document describes the integration of the notification system with the chat functionality, and the migration from polling-based to real-time Firebase notifications in the frontend.
 
 ## Backend Changes
@@ -10,6 +11,7 @@ This document describes the integration of the notification system with the chat
 **File**: `functions/src/chat.js`
 
 **Changes Made**:
+
 - Imported notification helper functions from `notification.js`:
   - `NOTIFICATION_TYPES`
   - `USER_TYPES`
@@ -22,44 +24,63 @@ This document describes the integration of the notification system with the chat
      - Determines user types (client/provider) based on conversation roles
      - Creates a notification document in Firestore
      - Sends an FCM push notification to the receiver
-  
   2. Notification details include:
      - Notification type: `CHAT_MESSAGE`
      - Title: "New message from [Sender Name]"
      - Message preview: First 50 characters of the message
-     - Direct link to the conversation
+     - **Direct link to the conversation**: 
+       - Client: `/client/chat/{conversationId}`
+       - Provider: `/provider/chat/{conversationId}`
      - Metadata: sender ID, sender name, conversation ID, message ID
 
+### 2. Notification.js - Updated URL Generation
+
+**File**: `functions/src/notification.js`
+
+**Changes Made**:
+
+- Updated `generateNotificationHref` function to handle `CHAT_MESSAGE` notifications
+- Added special case for chat messages to redirect to conversation pages:
+  - For clients: `/client/chat/{conversationId}`
+  - For providers: `/provider/chat/{conversationId}`
+- Renamed parameter from `bookingId` to `entityId` for better semantic clarity
+- The `entityId` can now be either a booking ID or a conversation ID depending on notification type
+
 **Benefits**:
+
 - Users are immediately notified when they receive a new chat message
 - Notifications include message preview for quick context
-- Deep linking allows users to jump directly to the conversation
+- Deep linking allows users to jump directly to the conversation page
+- Clicking the notification opens the exact chat with the other user
 - Non-blocking: If notification creation fails, the message is still sent successfully
 
 ## Frontend Changes
 
-### 2. notificationCanisterService.ts - Firebase Integration
+### 3. notificationCanisterService.ts - Firebase Integration
 
 **File**: `src/frontend/src/services/notificationCanisterService.ts`
 
 **Existing Functionality** (No changes needed):
+
 - Already supports real-time Firebase Firestore listeners via `subscribeToUserNotifications`
 - Converts Firestore notifications to frontend-compatible format
 - Handles FCM token management
 - Provides notification statistics and filtering
 
 **Key Methods**:
+
 - `subscribeToUserNotifications()` - Sets up real-time listener for notifications
 - `getUserNotifications()` - One-time fetch of notifications
 - `markAsRead()` - Mark single notification as read
 - `markAllAsRead()` - Mark all notifications as read
 - `storeFCMToken()` / `removeFCMToken()` - FCM token management
 
-### 3. useNotificationsWithPush.ts - Client Notifications Hook
+### 4. useNotificationsWithPush.ts - Client Notifications Hook
 
 **File**: `src/frontend/src/hooks/useNotificationsWithPush.ts`
 
 **Changes Made**:
+
 1. **Replaced polling with real-time subscriptions**:
    - Removed `fetchNotifications` callback function
    - Added `subscribeToUserNotifications` useEffect hook
@@ -75,6 +96,7 @@ This document describes the integration of the notification system with the chat
    - Unread count updates automatically
 
 **How it works**:
+
 ```typescript
 // Set up real-time listener
 const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
@@ -84,21 +106,23 @@ const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
     setNotifications(allNotifications);
     notificationStore.setCount(newUnreadCount);
   },
-  { userType: "client" }
+  { userType: "client" },
 );
 ```
 
-### 4. useProviderNotificationsWithPush.ts - Provider Notifications Hook
+### 5. useProviderNotificationsWithPush.ts - Provider Notifications Hook
 
 **File**: `src/frontend/src/hooks/useProviderNotificationsWithPush.ts`
 
 **Changes Made**:
 Same pattern as client notifications:
+
 1. Replaced `fetchProviderNotifications` with real-time subscription
 2. Removed unused state variables
 3. Added automatic cleanup on unmount
 
 **Provider-specific features**:
+
 - Filters for `userType: "provider"` notifications
 - Includes service completion reminders
 - Shows client names and booking details

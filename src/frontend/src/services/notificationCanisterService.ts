@@ -74,8 +74,8 @@ const convertToFrontendNotification = (
       notificationData.status === "push_sent_and_read",
     href: notificationData.href || "/",
     userType: notificationData.userType as "client" | "provider",
-    providerName: notificationData.metadata?.providerName,
-    clientName: notificationData.metadata?.clientName,
+    providerName: notificationData.metadata?.senderName,
+    clientName: notificationData.metadata?.senderName,
     bookingId: notificationData.relatedEntityId,
     metadata: notificationData.metadata,
   };

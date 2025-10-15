@@ -278,7 +278,7 @@ async function createNotification(
       title,
       message,
       relatedEntityId: bookingId || null,
-      metadata: metadata ? JSON.stringify(metadata) : null,
+      metadata: metadata,
       href,
       status: NOTIFICATION_STATUS.UNREAD,
       createdAt: FieldValue.serverTimestamp(),
@@ -349,6 +349,12 @@ async function cancelConflictingBookings(
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "this service";
 
+    // Fetch provider details for notification
+    const providerDoc = await db.collection("users").doc(providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "The provider" :
+      "The provider";
+
     const batch = db.batch();
     const notificationPromises = [];
     let cancelledCount = 0;
@@ -401,6 +407,7 @@ async function cancelConflictingBookings(
             serviceId,
             serviceName,
             providerId,
+            senderName: providerName,
             requestedDate: conflictingBooking.requestedDate,
           },
         ),
@@ -619,7 +626,12 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       "New Booking Request",
       `${clientName} has requested to book "${serviceName}"`,
       bookingId,
-      {serviceId, serviceName, clientId: authInfo.uid, clientName},
+      {
+        serviceId,
+        serviceName,
+        clientId: authInfo.uid,
+        senderName: clientName,
+      },
     );
 
     console.log("✅ [createBooking] Function finished successfully.");
@@ -808,7 +820,12 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       "Booking Accepted",
       `${providerName} has accepted your booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [acceptBooking] Function finished successfully.");
@@ -910,7 +927,12 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
       "Booking Declined",
       `${providerName} has declined your booking request for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [declineBooking] Function finished successfully.");
@@ -1014,7 +1036,12 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       "Service Started",
       `${providerName} has started working on "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [startBooking] Function finished successfully.");
@@ -1218,7 +1245,12 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       "Service Completed",
       `${providerName} has completed "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     // Update reputation scores. If any of these fail, the entire function will fail.
@@ -1348,7 +1380,12 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       "Booking Cancelled",
       `${cancellerName} has cancelled the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, cancelledBy: authInfo.uid, cancellerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        cancelledBy: authInfo.uid,
+        senderName: cancellerName,
+      },
     );
 
     console.log("✅ [cancelBooking] Function finished successfully.");

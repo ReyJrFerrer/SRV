@@ -18,34 +18,67 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 
-// Helper to get the right icon for each notification type
+// Helper to get the right icon for each notification type, with colored backgrounds
 const NotificationIcon: React.FC<{ type: ProviderNotification["type"] }> = ({
   type,
 }) => {
+  let icon, bg;
   switch (type) {
     case "new_booking_request":
-      return <UserIcon className="h-8 w-8 text-blue-500" />;
+      icon = <UserIcon className="h-6 w-6 text-blue-600" />;
+      bg = "bg-blue-100";
+      break;
     case "booking_confirmation":
-      return <CheckCircleIcon className="h-8 w-8 text-green-500" />;
+      icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
+      bg = "bg-green-100";
+      break;
     case "payment_completed":
-      return <CurrencyDollarIcon className="h-8 w-8 text-green-600" />;
+      icon = <CurrencyDollarIcon className="h-6 w-6 text-green-700" />;
+      bg = "bg-green-200";
+      break;
     case "service_completion_reminder":
-      return <ClockIcon className="h-8 w-8 text-orange-500" />;
+      icon = <ClockIcon className="h-6 w-6 text-orange-600" />;
+      bg = "bg-orange-100";
+      break;
     case "review_request":
-      return <StarIcon className="h-8 w-8 text-purple-500" />;
+      icon = <StarIcon className="h-6 w-6 text-purple-600" />;
+      bg = "bg-purple-100";
+      break;
     case "chat_message":
-      return <ChatBubbleLeftRightIcon className="h-8 w-8 text-blue-600" />;
+      icon = <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />;
+      bg = "bg-blue-100";
+      break;
     case "booking_cancelled":
-      return <XCircleIcon className="h-8 w-8 text-red-500" />;
+      icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
+      bg = "bg-red-100";
+      break;
     case "booking_rescheduled":
-      return <ClockIcon className="h-8 w-8 text-yellow-500" />;
+      icon = <ClockIcon className="h-6 w-6 text-yellow-600" />;
+      bg = "bg-yellow-100";
+      break;
     case "client_no_show":
-      return <UserIcon className="h-8 w-8 text-red-400" />;
+      icon = <UserIcon className="h-6 w-6 text-red-500" />;
+      bg = "bg-red-100";
+      break;
     case "payment_issue":
-      return <CurrencyDollarIcon className="h-8 w-8 text-red-600" />;
+      icon = <CurrencyDollarIcon className="h-6 w-6 text-red-700" />;
+      bg = "bg-red-200";
+      break;
+    case "service_reminder":
+      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
+      bg = "bg-blue-100";
+      break;
     default:
-      return <BellAlertIcon className="h-8 w-8 text-blue-500" />;
+      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
+      bg = "bg-blue-100";
   }
+  return (
+    <span
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
+    >
+      {icon}
+    </span>
+  );
 };
 
 // Reusable component for a single notification item
@@ -104,7 +137,7 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex cursor-pointer items-start space-x-4 p-4 transition-colors duration-200 ${
+      className={`flex cursor-pointer items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 hover:border-blue-200 ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
@@ -113,8 +146,10 @@ const NotificationItem: React.FC<{
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
       </div>
-      <div className="flex-1">
-        <p className="text-sm text-gray-800">{getEnhancedMessage()}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-blue-900">
+          {getEnhancedMessage()}
+        </p>
         {notification.message &&
           notification.message !== getEnhancedMessage() && (
             <p className="mt-1 text-xs italic text-gray-600">
@@ -154,37 +189,7 @@ const NotificationsPageSP = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-
-    // Navigate based on notification type
-    switch (notification.type) {
-      case "new_booking_request":
-      case "booking_confirmation":
-      case "service_completion_reminder":
-      case "review_request":
-      case "booking_cancelled":
-      case "booking_rescheduled":
-        navigate(
-          notification.href || `/provider/booking/${notification.bookingId}`,
-        );
-        break;
-      case "payment_completed":
-        navigate(
-          notification.href || `/provider/receipt/${notification.bookingId}`,
-        );
-        break;
-      case "chat_message":
-        navigate(`/provider/chat/${notification.clientName}`);
-        break;
-      case "client_no_show":
-      case "payment_issue":
-        navigate(
-          notification.href || `/provider/booking/${notification.bookingId}`,
-        );
-        break;
-      default:
-        navigate(notification.href || "/provider/bookings");
-        break;
-    }
+    navigate(notification.href || "/provider/bookings");
   };
 
   const { unread, read } = useMemo(() => {
@@ -205,25 +210,23 @@ const NotificationsPageSP = () => {
   }, [notifications]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <div className="flex-1"></div>
-          <h1 className="flex-1 text-center text-xl font-bold text-gray-900 sm:text-2xl md:text-2xl">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div
+          className={`mx-auto flex max-w-3xl items-center px-4 py-4 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+        >
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Notifications
           </h1>
-          <div className="flex flex-1 justify-end">
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-                aria-label="Mark all as read"
-              >
-                <EnvelopeOpenIcon className="h-5 w-5" />
-                <span className="ml-1 hidden sm:inline">Mark all as read</span>
-              </button>
-            )}
-          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+            >
+              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+              Mark all as read
+            </button>
+          )}
         </div>
       </header>
 
@@ -241,14 +244,14 @@ const NotificationsPageSP = () => {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-4 max-w-4xl">
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+          <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="border-b bg-blue-500 px-4 py-2 text-sm font-semibold text-white">
+                  <h2 className="border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
                     New
                   </h2>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-blue-100">
                     {unread.map((notif) => (
                       <NotificationItem
                         key={notif.id}
@@ -262,10 +265,10 @@ const NotificationsPageSP = () => {
               {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
-                  <h2 className="bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-800">
+                  <h2 className="bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 text-sm font-semibold tracking-wide text-gray-700 shadow-sm">
                     Earlier
                   </h2>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-gray-100">
                     {read.map((notif) => (
                       <NotificationItem
                         key={notif.id}

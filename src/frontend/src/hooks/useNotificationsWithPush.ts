@@ -190,73 +190,75 @@ export const useNotificationsWithPush = () => {
     }
 
     // Set up real-time listener for notifications
-    const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
-      userId,
-      (canisterNotifications) => {
-        // Convert canister notifications to frontend format
-        const notificationsFromCanister: Notification[] =
-          canisterNotifications.map((notif) => ({
-            id: notif.id,
-            message: notif.message,
-            type: notif.type as any,
-            timestamp: notif.timestamp,
-            read: notif.read,
-            href: notif.href,
-            providerName: notif.providerName,
-            clientName: notif.clientName,
-            bookingId: notif.bookingId,
-          }));
-
-        // For backward compatibility, combine with booking-based notifications
-        // But only generate for bookings without canister notifications
-        const existingNotificationBookingIds = new Set(
-          canisterNotifications
-            .filter((n) => n.bookingId)
-            .map((n) => n.bookingId!),
-        );
-
-        // Generate additional notifications only for uncovered bookings
-        const additionalNotifications: Notification[] = [];
-        const uncoveredBookings = bookings.filter(
-          (b) => !existingNotificationBookingIds.has(b.id),
-        );
-
-        if (uncoveredBookings.length > 0) {
-          // Generate review reminders for completed but unreviewed bookings
-          const reviewReminderNotifications: Notification[] = uncoveredBookings
-            .filter((b) => b.status === "Completed")
-            .map((booking) => ({
-              id: `frontend-review-${booking.id}-${Date.now()}`,
-              message: `Please review your recent "${booking.serviceName}" service`,
-              type: "review_reminder",
-              timestamp: new Date(
-                booking.completedDate || Date.now(),
-              ).toISOString(),
-              read: false,
-              href: `/client/review/${booking.id}`,
-              providerName: booking.providerProfile?.name,
-              bookingId: booking.id,
+    const unsubscribe =
+      notificationCanisterService.subscribeToUserNotifications(
+        userId,
+        (canisterNotifications) => {
+          // Convert canister notifications to frontend format
+          const notificationsFromCanister: Notification[] =
+            canisterNotifications.map((notif) => ({
+              id: notif.id,
+              message: notif.message,
+              type: notif.type as any,
+              timestamp: notif.timestamp,
+              read: notif.read,
+              href: notif.href,
+              providerName: notif.providerName,
+              clientName: notif.clientName,
+              bookingId: notif.bookingId,
             }));
 
-          additionalNotifications.push(...reviewReminderNotifications);
-        }
+          // For backward compatibility, combine with booking-based notifications
+          // But only generate for bookings without canister notifications
+          const existingNotificationBookingIds = new Set(
+            canisterNotifications
+              .filter((n) => n.bookingId)
+              .map((n) => n.bookingId!),
+          );
 
-        // Combine and sort all notifications
-        const allNotifications = [
-          ...notificationsFromCanister,
-          ...additionalNotifications,
-        ].sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-        );
+          // Generate additional notifications only for uncovered bookings
+          const additionalNotifications: Notification[] = [];
+          const uncoveredBookings = bookings.filter(
+            (b) => !existingNotificationBookingIds.has(b.id),
+          );
 
-        setNotifications(allNotifications);
-        const newUnreadCount = allNotifications.filter((n) => !n.read).length;
-        notificationStore.setCount(newUnreadCount);
-        setLoading(false);
-      },
-      { userType: "client" },
-    );
+          if (uncoveredBookings.length > 0) {
+            // Generate review reminders for completed but unreviewed bookings
+            const reviewReminderNotifications: Notification[] =
+              uncoveredBookings
+                .filter((b) => b.status === "Completed")
+                .map((booking) => ({
+                  id: `frontend-review-${booking.id}-${Date.now()}`,
+                  message: `Please review your recent "${booking.serviceName}" service`,
+                  type: "review_reminder",
+                  timestamp: new Date(
+                    booking.completedDate || Date.now(),
+                  ).toISOString(),
+                  read: false,
+                  href: `/client/review/${booking.id}`,
+                  providerName: booking.providerProfile?.name,
+                  bookingId: booking.id,
+                }));
+
+            additionalNotifications.push(...reviewReminderNotifications);
+          }
+
+          // Combine and sort all notifications
+          const allNotifications = [
+            ...notificationsFromCanister,
+            ...additionalNotifications,
+          ].sort(
+            (a, b) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+          );
+
+          setNotifications(allNotifications);
+          const newUnreadCount = allNotifications.filter((n) => !n.read).length;
+          notificationStore.setCount(newUnreadCount);
+          setLoading(false);
+        },
+        { userType: "client" },
+      );
 
     // Store the unsubscribe function
     unsubscribeRef.current = unsubscribe;
