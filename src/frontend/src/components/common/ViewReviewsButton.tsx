@@ -32,19 +32,7 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <div className="flex space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <StarIcon
-                    key={star}
-                    className={`h-5 w-5 transition-colors ${
-                      averageRating >= star
-                        ? "text-yellow-400"
-                        : "text-gray-200"
-                    }`}
-                    fill={averageRating >= star ? "currentColor" : "none"}
-                  />
-                ))}
-              </div>
+              <StarIcon className="h-5 w-5 fill-current text-yellow-400" />
               <span className="font-semibold text-gray-800">
                 {averageRating.toFixed(1)}
               </span>

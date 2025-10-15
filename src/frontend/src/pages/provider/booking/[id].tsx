@@ -1227,7 +1227,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         <section className="rounded-2xl bg-white p-4 shadow-lg">
           <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
             <MapPinIcon className="h-5 w-5 text-blue-500" /> Service Location
-            Map
           </h3>
           <p className="mb-2 text-xs text-gray-500">
             Interactive map centered on the client's provided location. Use the
@@ -1268,7 +1267,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {mapsReady ? (
             <div>
               <Map
-                defaultCenter={resolvedCoords || clientLocation}
+                center={resolvedCoords || clientLocation}
                 defaultZoom={16}
                 mapId="6922634ff75ae05ac38cc473"
                 style={{

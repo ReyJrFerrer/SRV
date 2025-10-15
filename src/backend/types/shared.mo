@@ -80,6 +80,7 @@ module {
         updatedAt: Time.Time;
         profilePicture: ?ProfileImage;
         biography: ?Text;
+        isLocked: ?Bool; // Account lock status
     };
 
     // Service types

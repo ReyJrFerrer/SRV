@@ -412,4 +412,37 @@ persistent actor ChatCanister {
             };
         };
     };
+
+    // Delete all chats for a user (for account deletion)
+    public shared(msg) func deleteUserChats(userId : Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // In production, verify caller is admin
+        var deletedConversations : Nat = 0;
+        var deletedMessages : Nat = 0;
+        
+        // Delete all conversations involving this user
+        let allConversations = Iter.toArray(conversations.entries());
+        for ((conversationId, conversation) in allConversations.vals()) {
+            if (conversation.clientId == userId or conversation.providerId == userId) {
+                conversations.delete(conversationId);
+                deletedConversations += 1;
+                
+                // Delete messages in this conversation
+                let allMessages = Iter.toArray(messages.entries());
+                for ((messageId, message) in allMessages.vals()) {
+                    if (message.conversationId == conversationId) {
+                        messages.delete(messageId);
+                        deletedMessages += 1;
+                    };
+                };
+            };
+        };
+        
+        return #ok("Deleted " # Nat.toText(deletedConversations) # " conversations and " # Nat.toText(deletedMessages) # " messages");
+    };
 }

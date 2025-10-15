@@ -53,7 +53,15 @@ persistent actor AuthCanister {
     public query func getProfile(userId : Principal) : async Result<Profile> {
         switch (profiles.get(userId)) {
             case (?profile) {
-                return #ok(profile);
+                // Check if account is locked
+                switch (profile.isLocked) {
+                    case (?true) {
+                        return #err("ACCOUNT_LOCKED");
+                    };
+                    case (_) {
+                        return #ok(profile);
+                    };
+                };
             };
             case (null) {
                 return #err("Principal not found or invalid");

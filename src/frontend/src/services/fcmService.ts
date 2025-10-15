@@ -25,6 +25,7 @@ class FCMService {
   private currentToken: string | null = null;
   private isInitialized = false;
   private initializationPromise: Promise<string | null> | null = null;
+  private rateLimitBackoffUntil: number | null = null;
 
   private constructor() {}
 
@@ -42,6 +43,14 @@ class FCMService {
    * @returns FCM token if successful, null otherwise
    */
   async initialize(): Promise<string | null> {
+    // Check if we are in a rate-limit backoff period
+    if (this.rateLimitBackoffUntil && Date.now() < this.rateLimitBackoffUntil) {
+      console.warn(
+        "FCM: In rate-limit backoff period. Initialization blocked.",
+      );
+      return null;
+    }
+
     // Return existing token if already initialized
     if (this.isInitialized && this.currentToken) {
       console.log("FCM: Already initialized, returning cached token");
@@ -135,6 +144,8 @@ class FCMService {
         console.info(
           "FCM: This usually happens during development with frequent refreshes.",
         );
+        // Set a 1-minute backoff period to prevent further immediate requests
+        this.rateLimitBackoffUntil = Date.now() + 60 * 1000;
       } else {
         console.error("FCM: Initialization failed", error);
       }

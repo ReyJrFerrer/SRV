@@ -207,10 +207,6 @@ const BookingDetailsPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  // Cancel confirmation dialog state
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-
   const {
     bookings,
     updateBookingStatus: updateBookingStatusHook,
@@ -337,20 +333,9 @@ const BookingDetailsPage: React.FC = () => {
   };
 
   const handleCancelBooking = async () => {
-    setShowCancelConfirm(true);
-  };
-
-  const handleConfirmCancel = async () => {
     if (!specificBooking) return;
-    setIsCancelling(true);
-    try {
-      await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
-      setShowCancelConfirm(false);
-    } catch (error) {
-      console.error("Error cancelling booking:", error);
-    } finally {
-      setIsCancelling(false);
-    }
+    await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
+    alert(`Booking has been cancelled.`);
   };
 
   const handleChatWithProvider = async () => {
@@ -526,243 +511,210 @@ const BookingDetailsPage: React.FC = () => {
   const reviewButtonContent = getReviewButtonContent();
 
   return (
-    <>
-      {/* Cancel Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Cancel Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={isCancelling}
-              >
-                No, Keep It
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmCancel}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
+      <header className="sticky top-0 z-30 bg-white shadow-sm">
+        <div className="container mx-auto flex items-center px-4 py-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="truncate text-lg font-semibold text-slate-800">
+            Booking Details
+          </h1>
         </div>
-      )}
+      </header>
 
-      <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-        <header className="sticky top-0 z-30 bg-white shadow-sm">
-          <div className="container mx-auto flex items-center px-4 py-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="mr-2 rounded-full p-2 hover:bg-gray-100"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="truncate text-lg font-semibold text-slate-800">
-              Booking Details
-            </h1>
-          </div>
-        </header>
-
-        <main className="container mx-auto space-y-6 p-4 sm:p-6">
-          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-5">
-            {/* Section 1: Provider Details */}
-            <div className="h-fit rounded-3xl border border-blue-100 bg-white p-7 shadow-2xl backdrop-blur-md lg:col-span-2">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-                <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
-              </h3>
-              <div className="flex items-center gap-5">
-                <div className="flex-shrink-0">
-                  <img
-                    src={userImageUrl || "/default-provider.svg"}
-                    alt={providerProfile?.name || "Provider"}
-                    className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-gray-900">
-                    {providerProfile?.name || "N/A"}
-                  </p>
-                  <ReputationScore providerId={providerProfile?.id || ""} />
-                  <p className="mt-1 flex items-center text-sm text-gray-500">
-                    <PhoneIcon className="mr-1.5 h-4 w-4" />
-                    {providerProfile?.phone || "No contact number"}
-                  </p>
-                  <div className="mt-2 flex flex-col items-start gap-1">
-                    <div className="flex items-center gap-2">
-                      {loadingStats ? (
-                        <p className="text-sm text-gray-400">
-                          Loading reviews...
-                        </p>
-                      ) : averageRating != null && reviewCount != null ? (
-                        <>
-                          <div className="flex items-center text-sm font-bold text-yellow-500">
-                            <StarIcon className="mr-1 h-4 w-4" />
-                            <span>{averageRating.toFixed(1)}</span>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            ({reviewCount}{" "}
-                            {reviewCount === 1 ? "review" : "reviews"})
-                          </span>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-400">No reviews yet</p>
-                      )}
-                    </div>
+      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-5">
+          {/* Section 1: Provider Details */}
+          <div className="h-fit rounded-3xl border border-blue-100 bg-white p-7 shadow-2xl backdrop-blur-md lg:col-span-2">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+              <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
+            </h3>
+            <div className="flex items-center gap-5">
+              <div className="flex-shrink-0">
+                <img
+                  src={userImageUrl || "/default-provider.svg"}
+                  alt={providerProfile?.name || "Provider"}
+                  className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-bold text-gray-900">
+                  {providerProfile?.name || "N/A"}
+                </p>
+                <ReputationScore providerId={providerProfile?.id || ""} />
+                <p className="mt-1 flex items-center text-sm text-gray-500">
+                  <PhoneIcon className="mr-1.5 h-4 w-4" />
+                  {providerProfile?.phone || "No contact number"}
+                </p>
+                <div className="mt-2 flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-2">
+                    {loadingStats ? (
+                      <p className="text-sm text-gray-400">
+                        Loading reviews...
+                      </p>
+                    ) : averageRating != null && reviewCount != null ? (
+                      <>
+                        <div className="flex items-center text-sm font-bold text-yellow-500">
+                          <StarIcon className="mr-1 h-4 w-4" />
+                          <span>{averageRating.toFixed(1)}</span>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          ({reviewCount}{" "}
+                          {reviewCount === 1 ? "review" : "reviews"})
+                        </span>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-400">No reviews yet</p>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Section 2: Service Details */}
-            <div className="h-fit rounded-3xl border border-yellow-200 bg-white p-7 shadow-2xl lg:col-span-3">
-              <div className="flex items-start justify-between">
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
-                  <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
-                  Details
-                </h3>
-                <span
-                  className={`rounded-full px-4 py-2 text-base font-bold shadow-lg ${getStatusPillStyle(status || "")}`}
-                >
-                  {status?.replace("_", " ") || "Unknown"}
+          {/* Section 2: Service Details */}
+          <div className="h-fit rounded-3xl border border-yellow-200 bg-white p-7 shadow-2xl lg:col-span-3">
+            <div className="flex items-start justify-between">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
+                <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
+                Details
+              </h3>
+              <span
+                className={`rounded-full px-4 py-2 text-base font-bold shadow-lg ${getStatusPillStyle(status || "")}`}
+              >
+                {status?.replace("_", " ") || "Unknown"}
+              </span>
+            </div>
+            <div className="space-y-3 text-base">
+              <div className="flex items-start">
+                <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
+                <span>
+                  <strong>Package:</strong> {packageName}
                 </span>
               </div>
-              <div className="space-y-3 text-base">
-                <div className="flex items-start">
-                  <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                  <span>
-                    <strong>Package:</strong> {packageName}
-                  </span>
-                </div>
-                <div className="flex items-start">
-                  <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                  <span>
-                    <strong>Scheduled:</strong>{" "}
-                    {formatDate(requestedDate || createdAt)}
-                  </span>
-                </div>
-                <div className="flex items-start">
-                  <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                  <span>
-                    <strong>Location:</strong>{" "}
-                    {(formattedLocation || "Not specified")
-                      .split(" ")
-                      .map(
-                        (word) =>
-                          word.charAt(0).toUpperCase() +
-                          word.slice(1).toLowerCase(),
-                      )
-                      .join(" ")}
-                  </span>
-                </div>
-                {price != null && (
-                  <div className="flex items-start">
-                    <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                    <span>
-                      <strong>Payment:</strong> ₱
-                      {(
-                        price + commissionValidation.estimatedCommission
-                      ).toFixed(2)}{" "}
-                      (Cash)
-                    </span>
-                  </div>
-                )}
+              <div className="flex items-start">
+                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
+                <span>
+                  <strong>Scheduled:</strong>{" "}
+                  {formatDate(requestedDate || createdAt)}
+                </span>
               </div>
+              <div className="flex items-start">
+                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
+                <span>
+                  <strong>Location:</strong>{" "}
+                  {(formattedLocation || "Not specified")
+                    .split(" ")
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                    )
+                    .join(" ")}
+                </span>
+              </div>
+              {price != null && (
+                <div className="flex items-start">
+                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
+                  <span>
+                    <strong>Payment:</strong> ₱
+                    {(price + commissionValidation.estimatedCommission).toFixed(
+                      2,
+                    )}{" "}
+                    (Cash)
+                  </span>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Section 3: Progress Tracker */}
-          <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
-            <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
-              Progress
-            </h3>
-            <div className="px-2 sm:px-8">
-              <BookingProgressTracker currentStatus={status as BookingStatus} />
-            </div>
+        {/* Section 3: Progress Tracker */}
+        <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
+          <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+            <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
+            Progress
+          </h3>
+          <div className="px-2 sm:px-8">
+            <BookingProgressTracker currentStatus={status as BookingStatus} />
           </div>
+        </div>
 
-          {/* Chat Error Message */}
-          {chatErrorMessage && (
-            <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-              <span className="block sm:inline">{chatErrorMessage}</span>
-              <button
-                onClick={() => setChatErrorMessage(null)}
-                className="ml-2 text-red-900 hover:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
+        {/* Chat Error Message */}
+        {chatErrorMessage && (
+          <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <span className="block sm:inline">{chatErrorMessage}</span>
+            <button
+              onClick={() => setChatErrorMessage(null)}
+              className="ml-2 text-red-900 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
+          <button
+            onClick={handleChatWithProvider}
+            disabled={chatLoading}
+            className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+          >
+            {chatLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                Creating Chat...
+              </>
+            ) : (
+              <>
+                <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
+                Provider
+              </>
+            )}
+          </button>
+
+          {canCancel && (
+            <button
+              onClick={handleCancelBooking}
+              disabled={isOperationInProgress(`update-${id}`)}
+              className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              <XCircleIcon className="mr-2 h-5 w-5" />
+              {isOperationInProgress(`update-${id}`)
+                ? "Cancelling..."
+                : "Cancel"}
+            </button>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
-            <button
-              onClick={handleChatWithProvider}
-              disabled={chatLoading}
-              className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {chatLoading ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                  Creating Chat...
-                </>
-              ) : (
-                <>
-                  <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
-                  Provider
-                </>
-              )}
-            </button>
-
-            {canCancel && (
-              <button
-                onClick={handleCancelBooking}
-                disabled={isOperationInProgress(`update-${id}`)}
-                className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+          {reviewButtonContent &&
+            (reviewButtonContent.to ? (
+              <Link
+                to={reviewButtonContent.to}
+                state={reviewButtonContent.state}
+                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className}`}
               >
-                <XCircleIcon className="mr-2 h-5 w-5" />
-                {isOperationInProgress(`update-${id}`)
-                  ? "Cancelling..."
-                  : "Cancel"}
+                {reviewButtonContent.icon} {reviewButtonContent.text}
+              </Link>
+            ) : (
+              <button
+                onClick={reviewButtonContent.onClick}
+                disabled={reviewButtonContent.disabled}
+                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
+              >
+                {reviewButtonContent.icon} {reviewButtonContent.text}
               </button>
-            )}
-
-            {reviewButtonContent &&
-              (reviewButtonContent.to ? (
-                <Link
-                  to={reviewButtonContent.to}
-                  state={reviewButtonContent.state}
-                  className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className}`}
-                >
-                  {reviewButtonContent.icon} {reviewButtonContent.text}
-                </Link>
-              ) : (
-                <button
-                  onClick={reviewButtonContent.onClick}
-                  disabled={reviewButtonContent.disabled}
-                  className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
-                >
-                  {reviewButtonContent.icon} {reviewButtonContent.text}
-                </button>
-              ))}
-          </div>
-        </main>
-
-        <div>
-          <BottomNavigation />
+            ))}
         </div>
+      </main>
+
+      <div>
+        <BottomNavigation />
       </div>
-    </>
+    </div>
   );
 };
 

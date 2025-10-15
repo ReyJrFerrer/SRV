@@ -442,3 +442,7 @@ exports.validateCertificate = validateCertificate;
 // Export Admin Authentication Helper
 const {createAdminProfile} = require("./src/adminAuth");
 exports.createAdminProfile = createAdminProfile;
+
+// Export Contact Form Handler
+const {sendContactEmail} = require("./sendContactEmail");
+exports.sendContactEmail = sendContactEmail;

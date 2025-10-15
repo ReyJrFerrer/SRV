@@ -3,6 +3,8 @@ import { SiteHeader } from "./layout/SiteHeader";
 import { SiteFooter } from "./layout/SiteFooter";
 import { MobileSiteHeader } from "./layout/MobileSiteHeader";
 import { useState } from "react";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "../services/firebaseApp";
 
 interface ContactProps {
   onLoginClick: () => void;
@@ -48,19 +50,22 @@ const Contact = ({
     e.preventDefault();
     setIsSubmitting(true);
     setFormMessage("");
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("subject", formData.subject);
-      formDataToSend.append("message", formData.message);
 
-      const response = await fetch("/contact-submit.php", {
-        method: "POST",
-        body: formDataToSend,
+    try {
+      // Get Firebase Functions instance using centralized service
+      const functions = getFirebaseFunctions();
+      const sendContactEmail = httpsCallable(functions, "sendContactEmail");
+
+      // Call the Cloud Function
+      const result = await sendContactEmail({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
       });
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
+
+      const data = result.data as { status: string; message: string };
+
       if (data.status === "success") {
         setMessageType("success");
         setFormMessage(data.message || "Message sent successfully.");
@@ -69,11 +74,17 @@ const Contact = ({
         setMessageType("error");
         setFormMessage(data.message || "Submission failed.");
       }
-    } catch (err) {
+    } catch (err: any) {
       setMessageType("error");
-      setFormMessage(
-        "Sorry, there was an error sending your message. Please try again or contact us directly.",
-      );
+      // Check if it's a Firebase Functions error
+      if (err.code && err.message) {
+        setFormMessage(err.message);
+      } else {
+        setFormMessage(
+          "Sorry, there was an error sending your message. Please try again or contact us directly.",
+        );
+      }
+      console.error("Contact form error:", err);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setFormMessage(""), 5000);

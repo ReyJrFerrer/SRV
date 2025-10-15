@@ -1784,7 +1784,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
           availableSlots: daySchedule.availability.slots.length,
         });
 
-        const isWithinTimeSlot = daySchedule.availability.slots.some((slot) => {
+        daySchedule.availability.slots.some((slot) => {
           const startHour = parseInt(slot.startTime.split(":")[0]);
           const startMinute = parseInt(slot.startTime.split(":")[1] || "0");
           const endHour = parseInt(slot.endTime.split(":")[0]);
@@ -1812,18 +1812,6 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
           console.log(`🔍 [checkServiceAvailability] Slot check result: ${isInSlotRange}`);
           return isInSlotRange;
         });
-
-        // if (!isWithinTimeSlot) {
-        //   console.warn(`⚠️ [checkServiceAvailability]
-        //     Requested time is outside service's available hours.`);
-        //   return {
-        //     success: true,
-        //     data: {
-        //       available: false,
-        //       reason: "Requested time is outside service's available hours",
-        //     },
-        //   };
-        // }
       }
     }
 

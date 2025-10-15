@@ -65,6 +65,8 @@ const ProviderDirectionsPage: React.FC = () => {
   const [destResolveStatus, setDestResolveStatus] = useState<
     "idle" | "pending" | "ok" | "failed"
   >("idle");
+  // Prevent multiple auto-start triggers
+  const hasAutoStartedRef = useRef<boolean>(false);
 
   // Enhancements state removed (speed, heading, trail)
   const lastRouteTimeRef = useRef<number>(0);
@@ -313,7 +315,44 @@ const ProviderDirectionsPage: React.FC = () => {
     etaIntervalRef.current = window.setInterval(() => {
       if (!providerLocation || !destinationCoords) return;
       const dist = haversineDistanceMeters(providerLocation, destinationCoords);
-      if (dist < 100) return; // close to destination
+
+      // Auto-start service when arriving near destination (within 50 meters)
+      useEffect(() => {
+        if (!bookingId || !destinationCoords || !providerLocation) return;
+        if (hasAutoStartedRef.current) return;
+        const dist = haversineDistanceMeters(
+          providerLocation,
+          destinationCoords,
+        );
+        const ARRIVE_THRESHOLD_M = 50; // meters
+        if (dist <= ARRIVE_THRESHOLD_M) {
+          hasAutoStartedRef.current = true;
+          (async () => {
+            const success = await startBookingById(bookingId);
+            if (success) {
+              const startTime = new Date().toISOString();
+              localStorage.setItem(
+                `activeServiceStartTime:${bookingId}`,
+                startTime,
+              );
+              navigate(
+                `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+                { replace: true },
+              );
+            } else {
+              // Allow retrigger if starting failed
+              setTimeout(() => (hasAutoStartedRef.current = false), 5000);
+            }
+          })();
+        }
+      }, [
+        bookingId,
+        destinationCoords,
+        providerLocation,
+        startBookingById,
+        navigate,
+      ]);
+      if (dist < 50) return; // close to destination
       const sinceLast = Date.now() - lastRouteTimeRef.current;
       if (sinceLast > 60_000 && directionsStatus !== "pending") {
         computeDirections(
@@ -578,17 +617,7 @@ const ProviderDirectionsPage: React.FC = () => {
     tryNext();
   }, [booking, mapApiKey, destResolveStatus]);
 
-  const handleStartService = async () => {
-    if (!bookingId) return;
-    const success = await startBookingById(bookingId);
-    if (success) {
-      const startTime = new Date().toISOString();
-      localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
-      navigate(
-        `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
-      );
-    }
-  };
+  // Removed manual start handler; auto-start is handled by proximity effect above
 
   if (loading || !providerLocation) {
     return (
@@ -726,13 +755,7 @@ const ProviderDirectionsPage: React.FC = () => {
             </p>
           )}
         </div>
-        <button
-          onClick={handleStartService}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
-          disabled={!destinationHasCoords}
-        >
-          I've Arrived – Start Service
-        </button>
+        {/* Start Service button removed; service auto-starts within 50 meters */}
         <button
           onClick={() => navigate(-1)}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"

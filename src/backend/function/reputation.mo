@@ -981,4 +981,33 @@ persistent actor ReputationCanister {
         
         return #ok("User reputation updated to " # Nat.toText(reputationScore) # " successfully");
     };
+
+    // Delete user reputation (for account deletion)
+    public shared(msg) func deleteUserReputation(userId : Principal) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // In production, verify caller is admin
+        switch (reputations.get(userId)) {
+            case (?_) {
+                reputations.delete(userId);
+                
+                // Also delete reputation history
+                switch (reputationHistory.get(userId)) {
+                    case (?_) {
+                        reputationHistory.delete(userId);
+                    };
+                    case (null) {};
+                };
+                
+                return #ok("User reputation deleted successfully");
+            };
+            case (null) {
+                return #ok("No reputation found for user");
+            };
+        };
+    };
 }

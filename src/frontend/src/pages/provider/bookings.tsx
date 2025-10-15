@@ -258,7 +258,7 @@ const ProviderBookingsPage: React.FC = () => {
           <p className="mb-4 text-gray-600">{error}</p>
           <div className="space-x-3">
             <button
-              onClick={() => navigate("/provider/home")}
+              onClick={() => navigate("/provider/dashboard")}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
             >
               Back to Dashboard

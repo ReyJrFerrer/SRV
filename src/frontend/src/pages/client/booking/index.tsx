@@ -39,11 +39,6 @@ const MyBookingsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  // State for cancel confirmation dialog
-  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
-  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
-  const [isCancelling, setIsCancelling] = useState<boolean>(false);
-
   // Effect to sync the active tab with the URL query parameter
   useEffect(() => {
     const queryTab = searchParams.get("tab");
@@ -139,40 +134,6 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
-    // Custom sort for ALL tab: inprogress > confirmed > pending > completed > cancelled
-    if (activeTab === "ALL") {
-      const inProgress = processedBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "inprogress" ||
-          b.status?.toLowerCase() === "in_progress",
-      );
-      const confirmed = processedBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "confirmed" ||
-          b.status?.toLowerCase() === "accepted",
-      );
-      const pending = processedBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "pending" ||
-          b.status?.toLowerCase() === "requested",
-      );
-      const completed = processedBookings.filter(
-        (b) => b.status?.toLowerCase() === "completed",
-      );
-      const cancelled = processedBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "cancelled" ||
-          b.status?.toLowerCase() === "declined",
-      );
-      return [
-        ...inProgress,
-        ...confirmed,
-        ...pending,
-        ...completed,
-        ...cancelled,
-      ];
-    }
-
     return processedBookings;
   }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
 
@@ -222,67 +183,20 @@ const MyBookingsPage: React.FC = () => {
   };
 
   const handleCancelBookingOnListPage = async (bookingId: string) => {
-    // Show confirmation dialog instead of window.confirm
-    setBookingToCancel(bookingId);
-    setShowCancelConfirm(true);
-  };
-
-  // New function to handle the actual cancellation after confirmation
-  const handleConfirmCancel = async () => {
-    if (!bookingToCancel) return;
-
-    setIsCancelling(true);
+    // NOTE: window.confirm is blocking and not ideal for modern UX.
+    // Consider replacing this with a custom modal component.
     try {
-      await bookingManagement.updateBookingStatus(bookingToCancel, "Cancelled");
-      // Close the confirmation dialog
-      setShowCancelConfirm(false);
-      setBookingToCancel(null);
-      // Show success feedback - you might want to replace this with a toast notification
+      await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
+      // NOTE: window.alert is also blocking. Use a toast notification instead.
       alert(`Booking has been cancelled successfully.`);
     } catch (error) {
       //console.error("Error cancelling booking:", error);
       alert("Failed to cancel booking. Please try again.");
-    } finally {
-      setIsCancelling(false);
     }
   };
 
   return (
     <>
-      {/* Cancel Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Cancel Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => {
-                  setShowCancelConfirm(false);
-                  setBookingToCancel(null);
-                }}
-                disabled={isCancelling}
-              >
-                No, Keep It
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmCancel}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
