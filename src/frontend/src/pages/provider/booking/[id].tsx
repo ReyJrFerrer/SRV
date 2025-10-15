@@ -23,6 +23,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import GStreetView from "../../../components/common/GStreetView";
 
 // (Places library reserved for future use with Autocomplete if needed)
 import { useReputation } from "../../../hooks/useReputation";
@@ -251,6 +252,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showStreetView, setShowStreetView] = useState<boolean>(false);
 
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
@@ -1266,20 +1268,52 @@ const ProviderBookingDetailsPage: React.FC = () => {
           )}
           {mapsReady ? (
             <div>
-              <Map
-                center={resolvedCoords || clientLocation}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473"
+              <div
+                className="relative"
                 style={{
                   width: "100%",
                   height: "260px",
                   borderRadius: "12px",
+                  overflow: "hidden",
                 }}
-                disableDefaultUI={true}
-                zoomControl={true}
               >
-                <AdvancedMarker position={resolvedCoords || clientLocation} />
-              </Map>
+                <Map
+                  center={resolvedCoords || clientLocation}
+                  defaultZoom={16}
+                  mapId="6922634ff75ae05ac38cc473"
+                  style={{ width: "100%", height: "100%" }}
+                  disableDefaultUI={true}
+                  zoomControl={true}
+                >
+                  <AdvancedMarker position={resolvedCoords || clientLocation} />
+                </Map>
+
+                {/* Street View quick access (bottom-left, parallel to +/- on right) */}
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="pointer-events-auto absolute bottom-2 left-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowStreetView(true)}
+                      className="grid h-9 w-9 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
+                      title="Open Street View"
+                      aria-label="Open Street View"
+                    >
+                      {/* Eye icon for Street View */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-4 w-4"
+                      >
+                        <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* Address overlay on interactive map */}
               <div className="mt-2 rounded bg-gray-900/70 px-3 py-1 text-[11px] leading-snug text-gray-100">
@@ -1306,6 +1340,39 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for
                   full accuracy.
                 </p>
+              )}
+              {/* Street View modal */}
+              {showStreetView && (resolvedCoords || clientLocation) && (
+                <div
+                  className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
+                    <button
+                      className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+                      onClick={() => setShowStreetView(false)}
+                      aria-label="Close Street View"
+                    >
+                      <span className="text-xl font-bold text-gray-700">
+                        &times;
+                      </span>
+                    </button>
+                    {/* Render Google Street View Panorama */}
+                    <div className="h-full w-full">
+                      <GStreetView
+                        position={resolvedCoords || clientLocation}
+                        pov={{ heading: 0, pitch: 0 }}
+                        options={{
+                          addressControl: true,
+                          linksControl: true,
+                          panControl: true,
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <a
