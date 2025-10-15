@@ -168,21 +168,21 @@ export const RemittanceDashboardPage: React.FC = () => {
                     refreshRemittanceStats(true);
                   }}
                   disabled={isLoading}
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
                   to="/remittance/analytics"
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ChartBarIcon className="mr-2 h-4 w-4 shrink-0 text-blue-600" />
                   Analytics
                 </Link>
                 <Link
                   to="/dashboard"
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 shrink-0 text-black" />
                   Back
@@ -210,21 +210,21 @@ export const RemittanceDashboardPage: React.FC = () => {
                 refreshRemittanceStats(true);
               }}
               disabled={isLoading}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
               to="/remittance/analytics"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
               Analytics
             </Link>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -826,7 +826,7 @@ const RemittanceQuickAnalytics: React.FC<{
                 key={opt.key}
                 onClick={() => setPeriod(opt.key)}
                 className={
-                  "px-3 py-1.5 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 " +
+                  "px-3 py-1.5 hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none " +
                   (period === opt.key
                     ? "bg-blue-600 text-white hover:bg-blue-600"
                     : "text-gray-700") +

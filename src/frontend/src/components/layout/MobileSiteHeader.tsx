@@ -87,9 +87,9 @@ export function MobileSiteHeader({
       <nav
         id="mobile-nav"
         aria-label="Mobile Primary"
-        className={`fixed right-0 top-0 z-50 flex h-screen w-72 max-w-[80%] transform flex-col bg-white/95 shadow-xl backdrop-blur-lg transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 z-50 flex h-screen w-72 max-w-[80%] transform flex-col bg-white/95 shadow-xl backdrop-blur-lg transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="flex min-h-full flex-col px-6 pb-4 pt-24">
+        <div className="flex min-h-full flex-col px-6 pt-24 pb-4">
           <ul className="nav-list flex flex-col gap-2">
             <li>
               <a
