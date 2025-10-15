@@ -109,6 +109,7 @@ async function checkBookingConflicts(
 
     const query = db.collection("bookings")
       .where("providerId", "==", providerId)
+      .where("serviceId", "==", serviceId)
       .where("status", "in", ["Accepted", "InProgress"])
       .where("requestedDate", ">=", dayStart.toISOString())
       .where("requestedDate", "<=", dayEnd.toISOString());
@@ -335,9 +336,10 @@ async function cancelConflictingBookings(
     const dayEnd = new Date(acceptedStart);
     dayEnd.setHours(23, 59, 59, 999);
 
-    // Find all "Requested" bookings for this provider on the same day
+    // Find  "Requested" bookings for the service for this provider on the same day
     const conflictingBookingsQuery = await db.collection("bookings")
       .where("providerId", "==", providerId)
+      .where("serviceId", "==", serviceId)
       .where("status", "==", "Requested")
       .where("requestedDate", ">=", dayStart.toISOString())
       .where("requestedDate", "<=", dayEnd.toISOString())

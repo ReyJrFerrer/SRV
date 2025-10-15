@@ -668,8 +668,10 @@ const ClientBookingPageComponent: React.FC = () => {
 
         // Check if it's the same service
         if (booking.serviceId !== service.id) {
+      
           return false;
         }
+        console.log("Client Booking Page, same service check failed")
 
         // Parse booking's scheduled date
         const bookingDate = new Date(booking.scheduledDate);
