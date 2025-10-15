@@ -40,7 +40,7 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
 
     for (const userDoc of usersSnapshot.docs) {
       const userData = userDoc.data();
-      
+
       // Get user's bookings to calculate analytics
       const bookingsSnapshot = await db.collection("bookings")
         .where("providerId", "==", userDoc.id)
@@ -58,11 +58,11 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
           totalOrdersCompleted++;
           const amount = booking.amountPaid || 0;
           totalServiceAmount += amount;
-          
+
           // Calculate commission (assuming 10% for now)
           const commission = Math.round(amount * 0.1);
           totalEarnings += commission;
-          
+
           if (booking.paymentReleased) {
             settledCommission += commission;
           } else {
@@ -71,9 +71,9 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
         }
       });
 
-      const averageOrderValue = totalOrdersCompleted > 0 
-        ? Math.round(totalServiceAmount / totalOrdersCompleted) 
-        : 0;
+      const averageOrderValue = totalOrdersCompleted > 0 ?
+        Math.round(totalServiceAmount / totalOrdersCompleted) :
+        0;
 
       providers.push({
         id: userDoc.id,
@@ -119,7 +119,7 @@ exports.getSystemRemittanceStats = functions.https.onCall(async (data, context) 
 
     // Build query for bookings
     let bookingsQuery = db.collection("bookings");
-    
+
     if (fromDate) {
       bookingsQuery = bookingsQuery.where("createdAt", ">=", new Date(fromDate));
     }
@@ -134,21 +134,21 @@ exports.getSystemRemittanceStats = functions.https.onCall(async (data, context) 
     let totalPendingOrders = 0;
     let totalCommissionPaid = 0;
     let totalServiceAmount = 0;
-    let totalOverdueOrders = 0;
+    const totalOverdueOrders = 0;
     let totalCommissionAmount = 0;
 
     bookingsSnapshot.forEach((bookingDoc) => {
       const booking = bookingDoc.data();
-      
+
       if (booking.status === "Completed") {
         totalOrders++;
         const amount = booking.amountPaid || 0;
         totalServiceAmount += amount;
-        
+
         // Calculate commission (assuming 10% for now)
         const commission = Math.round(amount * 0.1);
         totalCommissionAmount += commission;
-        
+
         if (booking.paymentReleased) {
           totalSettledOrders++;
           totalCommissionPaid += commission;
@@ -158,13 +158,13 @@ exports.getSystemRemittanceStats = functions.https.onCall(async (data, context) 
       }
     });
 
-    const averageOrderValue = totalOrders > 0 
-      ? Math.round(totalServiceAmount / totalOrders) 
-      : 0;
+    const averageOrderValue = totalOrders > 0 ?
+      Math.round(totalServiceAmount / totalOrders) :
+      0;
 
-    const averageCommissionRate = totalServiceAmount > 0 
-      ? (totalCommissionAmount / totalServiceAmount) * 100 
-      : 0;
+    const averageCommissionRate = totalServiceAmount > 0 ?
+      (totalCommissionAmount / totalServiceAmount) * 100 :
+      0;
 
     const stats = {
       totalOrders: totalOrders,
@@ -216,8 +216,8 @@ exports.queryRemittanceOrders = functions.https.onCall(async (data, context) => 
         "Settled": "Completed",
         "Cancelled": "Cancelled",
       };
-      
-      const bookingStatuses = status.map(s => statusMap[s] || s).filter(Boolean);
+
+      const bookingStatuses = status.map((s) => statusMap[s] || s).filter(Boolean);
       if (bookingStatuses.length > 0) {
         bookingsQuery = bookingsQuery.where("status", "in", bookingStatuses);
       }
@@ -251,11 +251,11 @@ exports.queryRemittanceOrders = functions.https.onCall(async (data, context) => 
     bookingsSnapshot.forEach((bookingDoc, index) => {
       if (index < size) {
         const booking = bookingDoc.data();
-        
+
         // Map booking to remittance order format
         const amount = booking.amountPaid || 0;
         const commission = Math.round(amount * 0.1); // Assuming 10% commission
-        
+
         // Map booking status to remittance status
         let remittanceStatus = "AwaitingPayment";
         if (booking.status === "Completed") {
@@ -283,7 +283,8 @@ exports.queryRemittanceOrders = functions.https.onCall(async (data, context) => 
           validatedBy: booking.paymentReleased ? "system" : undefined,
           validatedAt: booking.paymentReleased ? booking.updatedAt?.toDate() : undefined,
           createdAt: booking.createdAt?.toDate() || new Date(),
-          paymentSubmittedAt: booking.status === "InProgress" ? booking.updatedAt?.toDate() : undefined,
+          paymentSubmittedAt: booking.status ===
+          "InProgress" ? booking.updatedAt?.toDate() : undefined,
           settledAt: booking.paymentReleased ? booking.updatedAt?.toDate() : undefined,
           updatedAt: booking.updatedAt?.toDate() || new Date(),
         });

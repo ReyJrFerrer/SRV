@@ -571,38 +571,45 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     // Get booking counts and revenue data
     const bookingsSnapshot = await db.collection("bookings").get();
     const totalBookings = bookingsSnapshot.size;
-    
+
     // Debug: Log all booking statuses to see what we're working with
     console.log("Debug - All booking statuses:");
     bookingsSnapshot.docs.forEach((doc, index) => {
       const data = doc.data();
-      console.log(`Booking ${index + 1}: status="${data.status}", price=${data.price}, servicePrice=${data.servicePrice}, amount=${data.amount}`);
+      console.log(`Booking ${index + 1}: status="${data.status}", price=${data.price}, 
+        servicePrice=${data.servicePrice}, amount=${data.amount}`);
     });
-    
-    const settledBookings = bookingsSnapshot.docs.filter(doc => {
+
+    const settledBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
-      return status === 'Completed' || status === 'Settled' || status === 'completed' || status === 'settled' ||
-             status === 'Confirmed' || status === 'confirmed' || status === 'Accepted' || status === 'accepted';
+      return status === "Completed" || status === "Settled" ||
+      status === "completed" || status === "settled" ||
+      status === "Confirmed" ||
+      status === "confirmed" || status === "Accepted" || status === "accepted";
     }).length;
 
     // Calculate total revenue from completed bookings
     console.log("Debug - Total bookings found:", bookingsSnapshot.size);
-    const completedBookings = bookingsSnapshot.docs.filter(doc => {
+    const completedBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
       const price = doc.data().price || 0;
       console.log("Debug - Booking status:", status, "price:", price);
-      return status === 'Completed' || status === 'Settled' || status === 'completed' || status === 'settled' ||
-             status === 'Confirmed' || status === 'confirmed' || status === 'Accepted' || status === 'accepted';
+      return status === "Completed" || status === "Settled" ||
+      status === "completed" || status === "settled" ||
+             status === "Confirmed" || status === "confirmed"||
+             status === "Accepted" || status === "accepted";
     });
     console.log("Debug - Completed bookings count:", completedBookings.length);
-    
+
     const totalRevenue = completedBookings.reduce((sum, doc) => {
       const data = doc.data();
-      const price = parseFloat(data.price) || parseFloat(data.servicePrice) || parseFloat(data.amount) || 0;
-      console.log("Debug - Adding price to revenue:", price, "from fields:", {price: data.price, servicePrice: data.servicePrice, amount: data.amount});
+      const price = parseFloat(data.price) ||
+      parseFloat(data.servicePrice) || parseFloat(data.amount) || 0;
+      console.log("Debug - Adding price to revenue:", price,
+        "from fields:", {price: data.price, servicePrice: data.servicePrice, amount: data.amount});
       return sum + price;
     }, 0);
-    
+
     console.log("Debug - Total revenue calculated:", totalRevenue);
 
     // Calculate total commission from actual wallet deductions
@@ -610,14 +617,14 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       .where("transaction_type", "==", "Debit")
       .where("payment_channel", "==", "SRV_COMMISSION")
       .get();
-    
+
     console.log("Debug - Commission transactions found:", commissionTransactionsSnapshot.size);
     const totalCommission = commissionTransactionsSnapshot.docs.reduce((sum, doc) => {
       const amount = doc.data().amount || 0;
       console.log("Debug - Commission transaction amount:", amount);
       return sum + amount;
     }, 0);
-    
+
     console.log("Debug - Total commission calculated:", totalCommission);
 
     const stats = {
@@ -1134,14 +1141,14 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
     console.log("🔍 [getBookingsData] Starting to fetch bookings...");
     const bookingsSnapshot = await db.collection("bookings").get();
     console.log(`🔍 [getBookingsData] Found ${bookingsSnapshot.size} bookings`);
-    
-    const bookings = bookingsSnapshot.docs.map(doc => {
+
+    const bookings = bookingsSnapshot.docs.map((doc) => {
       const data = doc.data();
       console.log(`🔍 [getBookingsData] Booking ${doc.id}:`, {
         id: doc.id,
         status: data.status,
         createdAt: data.createdAt,
-        price: data.price
+        price: data.price,
       });
       return {
         id: doc.id,
@@ -1157,19 +1164,20 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
       .where("transaction_type", "==", "Debit")
       .where("payment_channel", "==", "SRV_COMMISSION")
       .get();
-    
-    const commissionTransactions = commissionTransactionsSnapshot.docs.map(doc => ({
+
+    const commissionTransactions = commissionTransactionsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       timestamp: new Date(doc.data().timestamp),
     }));
 
-    console.log(`🔍 [getBookingsData] Returning ${bookings.length} bookings and ${commissionTransactions.length} commission transactions`);
+    console.log(`🔍 [getBookingsData] Returning ${bookings.length} 
+      bookings and ${commissionTransactions.length} commission transactions`);
 
     return {
       success: true,
       bookings: bookings,
-      commissionTransactions: commissionTransactions
+      commissionTransactions: commissionTransactions,
     };
   } catch (error) {
     console.error("Error in getBookingsData:", error);
