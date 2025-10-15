@@ -164,11 +164,10 @@ export const useProviderNotificationsWithPush = () => {
     [],
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(
     providerNotificationStore.count,
   );
-  const previousNotificationIdsRef = useRef<Set<string>>(new Set());
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // Get user ID
   const getUserId = (): string => {
@@ -193,6 +192,95 @@ export const useProviderNotificationsWithPush = () => {
     initializeIntegration();
   }, [identity, pwaState.pushSubscribed]);
 
+  // Subscribe to real-time notifications from Firebase
+  useEffect(() => {
+    const userId = getUserId();
+    if (userId === "anonymous") {
+      setLoading(false);
+      return;
+    }
+
+    // Set up real-time listener for provider notifications
+    const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
+      userId,
+      (canisterNotifications) => {
+        // Convert canister notifications to provider notification format
+        const notificationsFromCanister: ProviderNotification[] =
+          canisterNotifications.map((notif) => ({
+            id: notif.id,
+            message: notif.message,
+            type: notif.type as any,
+            timestamp: notif.timestamp,
+            read: notif.read,
+            href: notif.href,
+            clientName: notif.clientName,
+            bookingId: notif.bookingId,
+            amount: notif.metadata?.amount || undefined,
+          }));
+
+        // For backward compatibility, still generate some notifications from booking data
+        // But only if they don't already exist in the canister
+        const existingNotificationBookingIds = new Set(
+          canisterNotifications
+            .filter((n) => n.bookingId)
+            .map((n) => n.bookingId!),
+        );
+
+        // Generate additional notifications for bookings not covered by canister
+        const additionalNotifications: ProviderNotification[] = [];
+
+        // Only generate for bookings that don't have canister notifications
+        const uncoveredBookings = bookings.filter(
+          (b) => !existingNotificationBookingIds.has(b.id),
+        );
+
+        if (uncoveredBookings.length > 0) {
+          // Service completion reminders (for InProgress bookings)
+          const serviceReminders = uncoveredBookings
+            .filter((booking) => booking.status === "InProgress")
+            .map((booking) => ({
+              id: `frontend-reminder-${booking.id}-${Date.now()}`,
+              message: `Don't forget to complete the service for`,
+              type: "service_completion_reminder" as const,
+              timestamp: new Date().toISOString(),
+              read: false,
+              href: `/provider/active-service/${booking.id}`,
+              clientName: booking.clientName,
+              bookingId: booking.id,
+            }));
+
+          additionalNotifications.push(...serviceReminders);
+        }
+
+        // Combine canister notifications with additional frontend-generated ones
+        const allNotifications = [
+          ...notificationsFromCanister,
+          ...additionalNotifications,
+        ].sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        );
+
+        setNotifications(allNotifications);
+        const newUnreadCount = allNotifications.filter((n) => !n.read).length;
+        providerNotificationStore.setCount(newUnreadCount);
+        setLoading(false);
+      },
+      { userType: "provider" },
+    );
+
+    // Store the unsubscribe function
+    unsubscribeRef.current = unsubscribe;
+
+    // Cleanup on unmount
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [identity, bookings]);
+
   // Subscribe to the provider notification store
   useEffect(() => {
     const unsubscribe = providerNotificationStore.subscribe(() => {
@@ -202,106 +290,6 @@ export const useProviderNotificationsWithPush = () => {
       unsubscribe();
     };
   }, []);
-
-  // Generate provider-specific notifications based on bookings
-  const fetchProviderNotifications = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch notifications from canister first
-      const canisterNotifications =
-        await notificationCanisterService.getUserNotifications(
-          identity?.getPrincipal().toString(),
-          { userType: "provider" },
-        );
-
-      // Convert canister notifications to provider notification format
-      const notificationsFromCanister: ProviderNotification[] =
-        canisterNotifications.map((notif) => ({
-          id: notif.id,
-          message: notif.message,
-          type: notif.type as any,
-          timestamp: notif.timestamp,
-          read: notif.read,
-          href: notif.href,
-          clientName: notif.clientName,
-          bookingId: notif.bookingId,
-          amount: notif.metadata?.amount || undefined,
-        }));
-
-      // For backward compatibility, still generate some notifications from booking data
-      // But only if they don't already exist in the canister
-      const existingNotificationBookingIds = new Set(
-        canisterNotifications
-          .filter((n) => n.bookingId)
-          .map((n) => n.bookingId!),
-      );
-
-      // Generate additional notifications for bookings not covered by canister
-      const additionalNotifications: ProviderNotification[] = [];
-
-      // Only generate for bookings that don't have canister notifications
-      const uncoveredBookings = bookings.filter(
-        (b) => !existingNotificationBookingIds.has(b.id),
-      );
-
-      if (uncoveredBookings.length > 0) {
-        // 4. Service completion reminders (for InProgress bookings)
-        const serviceReminders = uncoveredBookings
-          .filter((booking) => booking.status === "InProgress")
-          .map((booking) => ({
-            id: `frontend-reminder-${booking.id}-${Date.now()}`,
-            message: `Don't forget to complete the service for`,
-            type: "service_completion_reminder" as const,
-            timestamp: new Date().toISOString(),
-            read: false,
-            href: `/provider/active-service/${booking.id}`,
-            clientName: booking.clientName,
-            bookingId: booking.id,
-          }));
-
-        additionalNotifications.push(...serviceReminders);
-      }
-
-      // Combine canister notifications with additional frontend-generated ones
-      const allNotifications = [
-        ...notificationsFromCanister,
-        ...additionalNotifications,
-      ].sort(
-        (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-      );
-
-      // Note: Push notifications are now sent automatically by Firebase Cloud Functions
-      // when notifications are created. No need to send them from frontend.
-      // Just track which notifications we've seen before
-      if (pwaState.pushSubscribed) {
-        const currentNotificationIds = new Set(
-          allNotifications.map((n) => n.id),
-        );
-
-        // Update the previous notification IDs for next comparison
-        previousNotificationIdsRef.current = currentNotificationIds;
-      }
-
-      setNotifications(allNotifications);
-      const newUnreadCount = allNotifications.filter((n) => !n.read).length;
-      providerNotificationStore.setCount(newUnreadCount);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error generating provider notifications:", error);
-      setError("Failed to load provider notifications");
-      setLoading(false);
-    }
-  }, [bookings]);
-
-  // Re-fetch notifications whenever the bookings data changes
-  useEffect(() => {
-    if (!bookingLoading) {
-      fetchProviderNotifications();
-    }
-  }, [bookingLoading, fetchProviderNotifications]);
 
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
@@ -385,7 +373,7 @@ export const useProviderNotificationsWithPush = () => {
     notifications,
     unreadCount,
     loading: loading || bookingLoading,
-    error: error || bookingError,
+    error: bookingError,
     markAsRead,
     markAsUnread,
     markAllAsRead,
