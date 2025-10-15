@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast, Toaster } from "sonner";
 import { useReputation } from "../../../hooks/useReputation";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import { useNavigate, useParams, Link } from "react-router-dom";
@@ -57,7 +58,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   if (loading) {
     return (
       <span
-        className="mb-2 mt-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
+        className="mt-2 mb-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
         style={{ minWidth: 0 }}
       >
         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
@@ -68,7 +69,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   return (
     <span
-      className="text-md mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
+      className="text-md mt-2 mb-2 flex items-center gap-2 font-semibold text-gray-900"
       style={{ minWidth: 0 }}
     >
       <span>Reputation Score:</span>
@@ -198,6 +199,8 @@ const BookingDetailsPage: React.FC = () => {
   const { identity } = useAuth();
   const { conversations, loading: chatLoading, createConversation } = useChat(); // Add the useChat hook
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Commission validation hook and state
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -334,8 +337,24 @@ const BookingDetailsPage: React.FC = () => {
 
   const handleCancelBooking = async () => {
     if (!specificBooking) return;
-    await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
-    alert(`Booking has been cancelled.`);
+    // Show confirmation dialog instead of alert
+    setShowCancelConfirm(true);
+  };
+
+  // New function to handle the actual cancellation after confirmation
+  const handleConfirmCancellation = async () => {
+    if (!specificBooking) return;
+
+    setIsCancelling(true);
+    try {
+      await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
+      toast.success("Booking has been cancelled.");
+      setShowCancelConfirm(false);
+    } catch (error) {
+      toast.error("Failed to cancel booking. Please try again.");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const handleChatWithProvider = async () => {
@@ -458,7 +477,7 @@ const BookingDetailsPage: React.FC = () => {
   if (hookLoading || localLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -591,20 +610,20 @@ const BookingDetailsPage: React.FC = () => {
             </div>
             <div className="space-y-3 text-base">
               <div className="flex items-start">
-                <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+                <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Package:</strong> {packageName}
                 </span>
               </div>
               <div className="flex items-start">
-                <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Scheduled:</strong>{" "}
                   {formatDate(requestedDate || createdAt)}
                 </span>
               </div>
               <div className="flex items-start">
-                <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Location:</strong>{" "}
                   {(formattedLocation || "Not specified")
@@ -619,7 +638,7 @@ const BookingDetailsPage: React.FC = () => {
               </div>
               {price != null && (
                 <div className="flex items-start">
-                  <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                   <span>
                     <strong>Payment:</strong> ₱
                     {(price + commissionValidation.estimatedCommission).toFixed(
@@ -714,6 +733,39 @@ const BookingDetailsPage: React.FC = () => {
       <div>
         <BottomNavigation />
       </div>
+
+      {/* Cancel Booking Confirmation Dialog */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Cancel Booking?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to cancel this booking? This action cannot
+              be undone and you may be charged a cancellation fee.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={isCancelling}
+              >
+                Keep Booking
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={handleConfirmCancellation}
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancelling..." : "Cancel Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toaster position="top-center" richColors />
     </div>
   );
 };
