@@ -1,6 +1,14 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const {v4: uuidv4} = require("uuid");
+
+/**
+ * Generate a v4 UUID using dynamic import to support ESM-only `uuid`.
+ * @returns {Promise<string>} A UUID v4 string
+ */
+async function generateUuid() {
+  const {v4: uuidv4} = await import("uuid");
+  return uuidv4();
+}
 
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
@@ -137,7 +145,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const mediaId = uuidv4();
+  const mediaId = await generateUuid();
     const ownerId = authInfo.uid;
     const filePath = generateFilePath(ownerId, mediaType, fileName, mediaId);
 
@@ -804,7 +812,7 @@ async function uploadMediaInternal({
   }
 
   // Generate unique media ID
-  const mediaId = uuidv4();
+  const mediaId = await generateUuid();
   const timestamp = new Date().toISOString();
 
   // Generate file path
@@ -986,3 +994,4 @@ exports.deleteMediaInternal = deleteMediaInternal;
 exports.getCertificatesByValidationStatusInternal = getCertificatesByValidationStatusInternal;
 exports.updateCertificateValidationStatusInternal = updateCertificateValidationStatusInternal;
 
+// ============================================================================
