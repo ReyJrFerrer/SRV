@@ -85,7 +85,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   if (loading) {
     return (
       <span
-        className="mt-2 mb-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
+        className="mb-2 mt-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
         style={{ minWidth: 0 }}
       >
         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
@@ -96,7 +96,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   return (
     <span
-      className={`mt-2 mb-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
+      className={`mb-2 mt-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
       style={{ minWidth: 0 }}
     >
       <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
@@ -161,7 +161,7 @@ const ReviewItem: React.FC<{
         </div>
       </div>
       <div className="w-full">
-        <p className="w-full text-base break-words text-gray-700">
+        <p className="w-full break-words text-base text-gray-700">
           {review.comment}
         </p>
       </div>
@@ -308,7 +308,7 @@ const ServiceImageModal: React.FC<{ src: string; onClose: () => void }> = ({
         }}
       />
       <button
-        className="absolute top-2 right-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+        className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
         onClick={onClose}
         aria-label="Close"
       >
@@ -398,7 +398,7 @@ const ServiceGallerySection: React.FC<{
                     }}
                   />
                   {/* Overlay for zoom icon */}
-                  <span className="absolute right-2 bottom-2 rounded-full bg-white/80 p-1 text-blue-700 shadow transition-transform group-hover:scale-110 group-focus:scale-110">
+                  <span className="absolute bottom-2 right-2 rounded-full bg-white/80 p-1 text-blue-700 shadow transition-transform group-hover:scale-110 group-focus:scale-110">
                     <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
                       <path
                         stroke="currentColor"
@@ -607,7 +607,7 @@ const ServiceDetailPage: React.FC = () => {
   if (serviceLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -715,7 +715,7 @@ const ServiceDetailPage: React.FC = () => {
                     <li key={day} className="py-1">
                       <button
                         type="button"
-                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:ring-2 focus:ring-blue-400 focus:outline-none`}
+                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-blue-400`}
                         onClick={() => setOpenDay(isOpen ? null : day)}
                         aria-expanded={isOpen}
                         aria-controls={`availability-panel-${day}`}
@@ -742,7 +742,7 @@ const ServiceDetailPage: React.FC = () => {
                       {isOpen && (
                         <div
                           id={`availability-panel-${day}`}
-                          className="mt-2 mb-4 flex flex-wrap items-center gap-2 px-3"
+                          className="mb-4 mt-2 flex flex-wrap items-center gap-2 px-3"
                         >
                           {slots.length > 0 ? (
                             slots.map((slot, idx) => (
@@ -982,7 +982,7 @@ const ServiceDetailPage: React.FC = () => {
                     />
                   </div>
                   <div className="mt-2 flex items-center">
-                    <h2 className="m-0 p-0 text-2xl leading-tight font-extrabold text-gray-900 drop-shadow-sm">
+                    <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
                       {providerName}
                     </h2>
                     {service.isActive && (
@@ -1061,12 +1061,12 @@ const ServiceDetailPage: React.FC = () => {
                       <h4 className="truncate text-lg font-bold text-gray-900">
                         {pkg.title}
                       </h4>
-                      <p className="mt-1 text-sm break-words text-gray-600 md:line-clamp-2">
+                      <p className="mt-1 break-words text-sm text-gray-600 md:line-clamp-2">
                         {pkg.description}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-4 ml-0 flex min-w-[120px] flex-col items-end justify-between md:mt-0 md:ml-6">
+                  <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
                     <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
                       ₱
                       {Number(pkg.price + pkg.commissionFee).toLocaleString(
@@ -1078,7 +1078,7 @@ const ServiceDetailPage: React.FC = () => {
                       )}
                     </span>
                   </div>
-                  <span className="absolute top-0 right-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
+                  <span className="absolute right-0 top-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
                 </div>
               ))}
             </div>
@@ -1117,7 +1117,7 @@ const ServiceDetailPage: React.FC = () => {
               <span className="text-base font-semibold">Chat</span>
             )}
             {isOwnService && (
-              <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 You cannot chat with your own service.
               </span>
             )}
@@ -1137,7 +1137,7 @@ const ServiceDetailPage: React.FC = () => {
             >
               {service.isActive ? "Book Now" : "Service Unavailable"}
               {isOwnService && (
-                <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   You cannot book your own service.
                 </span>
               )}
