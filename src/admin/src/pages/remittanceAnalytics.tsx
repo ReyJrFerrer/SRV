@@ -349,14 +349,14 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                   disabled={
                     loading.remittanceStats || loading.remittanceProviders
                   }
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
                   to="/remittance"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -383,14 +383,14 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 refreshRemittanceProviders(true);
               }}
               disabled={loading.remittanceStats || loading.remittanceProviders}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
               to="/remittance"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -415,7 +415,7 @@ export const RemittanceAnalyticsPage: React.FC = () => {
                 <button
                   key={option.value}
                   onClick={() => setDateRange(option.value as any)}
-                  className={`w-full rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap sm:w-auto ${
+                  className={`w-full whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium sm:w-auto ${
                     dateRange === option.value
                       ? "border border-blue-200 bg-blue-100 text-blue-700"
                       : "border border-gray-300 bg-white text-gray-700 hover:bg-yellow-50"

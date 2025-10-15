@@ -658,7 +658,7 @@ export const UserListPage: React.FC = () => {
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                           {formatDate(user.updatedAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                             Active
                           </span>
