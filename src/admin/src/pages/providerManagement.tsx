@@ -31,7 +31,7 @@ export const ProviderManagementPage: React.FC = () => {
   const [analyticsMode, setAnalyticsMode] = useState<"details" | "analytics">(
     "details",
   );
-  const [analyticsLoading, ] = useState(false);
+  const [analyticsLoading] = useState(false);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
 
@@ -121,7 +121,6 @@ export const ProviderManagementPage: React.FC = () => {
     setAnalyticsMode("details");
     setProviderAnalytics(null);
   };
-
 
   const loadInlineProviderAnalytics = async (_providerId: string) => {
     // tbd
