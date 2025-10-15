@@ -82,7 +82,7 @@ export const ServiceProviderCommissionTable: React.FC<
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Total Earnings
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Settled Commission
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
@@ -128,13 +128,13 @@ export const ServiceProviderCommissionTable: React.FC<
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-green-600">
                     {formatCurrency(provider.totalEarnings)}
                   </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {formatCurrency(provider.settledCommission)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatDate(provider.lastActivity)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 ring-1 ring-green-200">
                       Active
                     </span>

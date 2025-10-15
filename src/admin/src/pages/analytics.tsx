@@ -499,7 +499,7 @@ export const AnalyticsPage: React.FC = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon
                     className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -508,7 +508,7 @@ export const AnalyticsPage: React.FC = () => {
                 </button>
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -532,7 +532,7 @@ export const AnalyticsPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <ArrowPathIcon
                 className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -541,7 +541,7 @@ export const AnalyticsPage: React.FC = () => {
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -868,7 +868,7 @@ export const AnalyticsPage: React.FC = () => {
                   placeholder="Search providers by name or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -890,7 +890,7 @@ export const AnalyticsPage: React.FC = () => {
                       | "completedBookings",
                   )
                 }
-                className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:w-48"
+                className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
               >
                 <option value="totalRevenue">Total Revenue</option>
                 <option value="totalCommission">Total Commission</option>
@@ -902,7 +902,7 @@ export const AnalyticsPage: React.FC = () => {
                 onClick={() =>
                   setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                 }
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 title={sortOrder === "asc" ? "Ascending" : "Descending"}
                 aria-label="Toggle sort order"
               >
@@ -969,7 +969,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close"
               >
                 <XMarkIcon className="h-5 w-5" />
@@ -1073,7 +1073,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
               >
                 Close
               </button>

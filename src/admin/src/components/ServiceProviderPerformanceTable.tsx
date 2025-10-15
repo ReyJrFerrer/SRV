@@ -67,19 +67,19 @@ const ServiceProviderPerformanceTable: React.FC<
         <table className="min-w-full divide-y divide-blue-100">
           <thead className="bg-blue-50/60">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Service Provider
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Total Revenue
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Total Commission
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Completed Bookings
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Status
               </th>
             </tr>
@@ -97,7 +97,7 @@ const ServiceProviderPerformanceTable: React.FC<
             ) : (
               providers.map((provider) => (
                 <tr key={provider.id} className="hover:bg-blue-50/30">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -116,16 +116,16 @@ const ServiceProviderPerformanceTable: React.FC<
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {formatCurrency(provider.totalRevenue)}
                   </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {formatCurrency(provider.totalCommission)}
                   </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {provider.completedBookings}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         provider.status === "active"

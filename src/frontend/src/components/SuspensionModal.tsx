@@ -20,7 +20,7 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -55,7 +55,7 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleReturnToLanding}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Return to Home
           </button>
