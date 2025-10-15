@@ -19,7 +19,9 @@ interface ServiceProviderPerformanceTableProps {
   showRefresh?: boolean;
 }
 
-const ServiceProviderPerformanceTable: React.FC<ServiceProviderPerformanceTableProps> = ({
+const ServiceProviderPerformanceTable: React.FC<
+  ServiceProviderPerformanceTableProps
+> = ({
   providers,
   loading = false,
   onRefresh: _onRefresh,
@@ -53,7 +55,7 @@ const ServiceProviderPerformanceTable: React.FC<ServiceProviderPerformanceTableP
         {_showRefresh && (
           <button
             onClick={_onRefresh}
-            className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+            className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
           >
             <ArrowPathIcon className="h-4 w-4" />
             Refresh
@@ -98,7 +100,7 @@ const ServiceProviderPerformanceTable: React.FC<ServiceProviderPerformanceTableP
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                           <span className="text-sm font-medium text-blue-600">
                             {provider.name.charAt(0).toUpperCase()}
                           </span>
@@ -114,24 +116,27 @@ const ServiceProviderPerformanceTable: React.FC<ServiceProviderPerformanceTableP
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                     {formatCurrency(provider.totalRevenue)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                     {formatCurrency(provider.totalCommission)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                     {provider.completedBookings}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      provider.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : provider.status === 'inactive'
-                        ? 'bg-gray-100 text-gray-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {provider.status.charAt(0).toUpperCase() + provider.status.slice(1)}
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        provider.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : provider.status === "inactive"
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {provider.status.charAt(0).toUpperCase() +
+                        provider.status.slice(1)}
                     </span>
                   </td>
                 </tr>

@@ -13,9 +13,7 @@ import {
   FrontendRemittanceOrder as RemittanceOrder,
   RemittanceOrdersPage,
 } from "../services/remittanceServiceCanister";
-import {
-  MediaServiceError,
-} from "../services/mediaServiceCanister";
+import { MediaServiceError } from "../services/mediaServiceCanister";
 import {
   serviceCanister,
   ServiceData,
@@ -93,7 +91,6 @@ interface UseAdminReturn {
 
   // Service Provider Management
   refreshServiceProviders: (showSuccessToast?: boolean) => Promise<void>;
-
 
   // Remittance Management
   refreshRemittanceOrders: (showSuccessToast?: boolean) => Promise<void>;
@@ -174,9 +171,13 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Service data states
   const [services, setServices] = useState<ServiceData[]>([]);
-  const [serviceCategories, setServiceCategories] = useState<CategoryData[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<CategoryData[]>(
+    [],
+  );
   const [bookings, setBookings] = useState<any[]>([]);
-  const [commissionTransactions, setCommissionTransactions] = useState<any[]>([]);
+  const [commissionTransactions, setCommissionTransactions] = useState<any[]>(
+    [],
+  );
 
   // Initialize userLockStatus from localStorage
   const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(
@@ -280,14 +281,6 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleError],
   );
 
-
-
-
-
-
-
-
-
   // Update user lock status in local state and localStorage
   const updateUserLockStatus = useCallback(
     (userId: string, isLocked: boolean) => {
@@ -344,7 +337,8 @@ export const useAdmin = (): UseAdminReturn => {
       updateLoadingState("remittanceProviders", true);
       try {
         console.log("Calling getAllServiceProviders...");
-        const providers = await remittanceServiceCanister.getAllServiceProviders();
+        const providers =
+          await remittanceServiceCanister.getAllServiceProviders();
         console.log("Received remittance providers:", providers);
         setRemittanceProviders(providers);
         if (showSuccessToast) {
@@ -365,7 +359,8 @@ export const useAdmin = (): UseAdminReturn => {
       updateLoadingState("remittanceStats", true);
       try {
         console.log("Calling getSystemRemittanceStats...");
-        const stats = await remittanceServiceCanister.getSystemRemittanceStats();
+        const stats =
+          await remittanceServiceCanister.getSystemRemittanceStats();
         console.log("Received remittance stats:", stats);
         setRemittanceStats(stats);
         if (showSuccessToast) {
@@ -406,14 +401,28 @@ export const useAdmin = (): UseAdminReturn => {
       try {
         console.log("🔍 [refreshBookings] Calling getBookingsData...");
         const data = await adminServiceCanister.getBookingsData();
-        console.log("🔍 [refreshBookings] Raw bookings data from service:", data.bookings);
-        console.log("🔍 [refreshBookings] Raw commission transactions:", data.commissionTransactions);
-        console.log("🔍 [refreshBookings] Bookings length:", data.bookings?.length || 0);
-        console.log("🔍 [refreshBookings] Commission transactions length:", data.commissionTransactions?.length || 0);
+        console.log(
+          "🔍 [refreshBookings] Raw bookings data from service:",
+          data.bookings,
+        );
+        console.log(
+          "🔍 [refreshBookings] Raw commission transactions:",
+          data.commissionTransactions,
+        );
+        console.log(
+          "🔍 [refreshBookings] Bookings length:",
+          data.bookings?.length || 0,
+        );
+        console.log(
+          "🔍 [refreshBookings] Commission transactions length:",
+          data.commissionTransactions?.length || 0,
+        );
         setBookings(data.bookings);
         setCommissionTransactions(data.commissionTransactions);
         if (showSuccessToast) {
-          toast.success(`Successfully loaded ${data.bookings.length} bookings and ${data.commissionTransactions.length} commission transactions`);
+          toast.success(
+            `Successfully loaded ${data.bookings.length} bookings and ${data.commissionTransactions.length} commission transactions`,
+          );
         }
       } catch (error) {
         console.error("❌ [refreshBookings] Error refreshing bookings:", error);
@@ -432,7 +441,9 @@ export const useAdmin = (): UseAdminReturn => {
         const categories = await serviceCanister.getAllCategories();
         setServiceCategories(categories);
         if (showSuccessToast) {
-          toast.success(`Successfully loaded ${categories.length} service categories`);
+          toast.success(
+            `Successfully loaded ${categories.length} service categories`,
+          );
         }
       } catch (error) {
         handleError(error, "Failed to refresh service categories");
@@ -443,32 +454,28 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleError],
   );
 
-  const getServicesWithCertificates = useCallback(
-    async () => {
-      try {
-        const services = await adminServiceCanister.getServicesWithCertificates();
-        return services;
-      } catch (error) {
-        handleError(error, "Failed to get services with certificates");
-        return [];
-      }
-    },
-    [handleError],
-  );
+  const getServicesWithCertificates = useCallback(async () => {
+    try {
+      const services = await adminServiceCanister.getServicesWithCertificates();
+      return services;
+    } catch (error) {
+      handleError(error, "Failed to get services with certificates");
+      return [];
+    }
+  }, [handleError]);
 
-  const getReportsFromFeedbackCanister = useCallback(
-    async () => {
-      try {
-        const { getReportsFromFeedbackCanister } = await import("../services/adminServiceCanister");
-        const reports = await getReportsFromFeedbackCanister();
-        return reports;
-      } catch (error) {
-        handleError(error, "Failed to get reports from feedback canister");
-        return [];
-      }
-    },
-    [handleError],
-  );
+  const getReportsFromFeedbackCanister = useCallback(async () => {
+    try {
+      const { getReportsFromFeedbackCanister } = await import(
+        "../services/adminServiceCanister"
+      );
+      const reports = await getReportsFromFeedbackCanister();
+      return reports;
+    } catch (error) {
+      handleError(error, "Failed to get reports from feedback canister");
+      return [];
+    }
+  }, [handleError]);
 
   const queryRemittanceOrders = useCallback(
     async (
@@ -511,7 +518,6 @@ export const useAdmin = (): UseAdminReturn => {
     [handleError],
   );
 
-
   const cancelRemittanceOrder = useCallback(
     async (orderId: string) => {
       try {
@@ -524,9 +530,6 @@ export const useAdmin = (): UseAdminReturn => {
     },
     [handleError, refreshRemittanceOrders],
   );
-
-
-
 
   // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
@@ -545,7 +548,7 @@ export const useAdmin = (): UseAdminReturn => {
 
       await Promise.allSettled(refreshPromises);
       await refreshSystemStats();
-      
+
       toast.success("All admin data refreshed successfully");
     } catch (error) {
       handleError(error, "Failed to refresh all data");
@@ -566,7 +569,9 @@ export const useAdmin = (): UseAdminReturn => {
   // Refresh system stats when bookings change
   useEffect(() => {
     if (bookings.length > 0 || commissionTransactions.length > 0) {
-      console.log("🔄 [useAdmin] Bookings or commission transactions changed, refreshing system stats...");
+      console.log(
+        "🔄 [useAdmin] Bookings or commission transactions changed, refreshing system stats...",
+      );
       refreshSystemStats();
     }
   }, [bookings, commissionTransactions, refreshSystemStats]);
@@ -601,7 +606,6 @@ export const useAdmin = (): UseAdminReturn => {
 
     // Service Provider Management
     refreshServiceProviders,
-
 
     // Remittance Management
     refreshRemittanceOrders,

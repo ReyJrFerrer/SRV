@@ -44,7 +44,9 @@ export const AnalyticsPage: React.FC = () => {
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "totalRevenue" | "totalCommission" | "completedBookings">("totalRevenue");
+  const [sortBy, setSortBy] = useState<
+    "name" | "totalRevenue" | "totalCommission" | "completedBookings"
+  >("totalRevenue");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -91,7 +93,9 @@ export const AnalyticsPage: React.FC = () => {
   // Refresh system stats when bookings or commission transactions change
   useEffect(() => {
     if (bookings && bookings.length > 0) {
-      console.log("🔍 [Analytics] Bookings data changed, refreshing system stats");
+      console.log(
+        "🔍 [Analytics] Bookings data changed, refreshing system stats",
+      );
       refreshSystemStats();
     }
   }, [bookings, commissionTransactions, refreshSystemStats]);
@@ -113,41 +117,48 @@ export const AnalyticsPage: React.FC = () => {
   console.log("🔍 [Analytics] totalCommission:", systemStats?.totalCommission);
 
   // Count users by their current active role
-  const totalProviders = users?.filter(user => {
-    if (!user.activeRole) return false;
-    
-    // Handle both string format and Motoko variant format
-    if (typeof user.activeRole === 'string') {
-      return user.activeRole === 'ServiceProvider' || user.activeRole === 'Provider';
-    }
-    
-    // Handle Motoko variant format
-    if (typeof user.activeRole === 'object') {
-      return 'ServiceProvider' in user.activeRole || 'Provider' in user.activeRole;
-    }
-    
-    return false;
-  }).length ?? 0;
-  
-  const totalClients = users?.filter(user => {
-    if (!user.activeRole) return false;
-    
-    // Handle both string format and Motoko variant format
-    if (typeof user.activeRole === 'string') {
-      return user.activeRole === 'Client';
-    }
-    
-    // Handle Motoko variant format
-    if (typeof user.activeRole === 'object') {
-      return 'Client' in user.activeRole;
-    }
-    
-    return false;
-  }).length ?? 0;
+  const totalProviders =
+    users?.filter((user) => {
+      if (!user.activeRole) return false;
+
+      // Handle both string format and Motoko variant format
+      if (typeof user.activeRole === "string") {
+        return (
+          user.activeRole === "ServiceProvider" ||
+          user.activeRole === "Provider"
+        );
+      }
+
+      // Handle Motoko variant format
+      if (typeof user.activeRole === "object") {
+        return (
+          "ServiceProvider" in user.activeRole || "Provider" in user.activeRole
+        );
+      }
+
+      return false;
+    }).length ?? 0;
+
+  const totalClients =
+    users?.filter((user) => {
+      if (!user.activeRole) return false;
+
+      // Handle both string format and Motoko variant format
+      if (typeof user.activeRole === "string") {
+        return user.activeRole === "Client";
+      }
+
+      // Handle Motoko variant format
+      if (typeof user.activeRole === "object") {
+        return "Client" in user.activeRole;
+      }
+
+      return false;
+    }).length ?? 0;
 
   // Pie: Users by type (Providers vs Clients only)
   const totalUsers = totalProviders + totalClients;
-  
+
   const userPieData = [
     { name: "Providers", value: totalProviders, color: "#10b981" },
     { name: "Clients", value: totalClients, color: "#3b82f6" },
@@ -161,52 +172,67 @@ export const AnalyticsPage: React.FC = () => {
       usersLength: users?.length || 0,
       bookings: bookings,
       serviceProviders: serviceProviders,
-      systemStatsLoaded: !!systemStats
+      systemStatsLoaded: !!systemStats,
     });
 
     // Don't calculate if system stats are not loaded yet
     if (!systemStats) {
-      console.log("🔍 [ServiceProviderPerformance] SystemStats not loaded, returning empty array");
+      console.log(
+        "🔍 [ServiceProviderPerformance] SystemStats not loaded, returning empty array",
+      );
       return [];
     }
 
     // If no bookings data available due to network issues, show current service providers with basic info
     if (!bookings || bookings.length === 0) {
-      console.log("🔍 [ServiceProviderPerformance] No bookings data, showing current providers only");
+      console.log(
+        "🔍 [ServiceProviderPerformance] No bookings data, showing current providers only",
+      );
       if (!systemStats) {
-        console.log("🔍 [ServiceProviderPerformance] SystemStats not loaded yet, returning empty array");
+        console.log(
+          "🔍 [ServiceProviderPerformance] SystemStats not loaded yet, returning empty array",
+        );
         return [];
       }
-      
+
       let providersToShow = serviceProviders;
       if (!providersToShow || providersToShow.length === 0) {
-        console.log("🔍 [ServiceProviderPerformance] No serviceProviders, trying users data");
+        console.log(
+          "🔍 [ServiceProviderPerformance] No serviceProviders, trying users data",
+        );
         if (users && users.length > 0) {
           // Filter users who are service providers and convert to ServiceProviderData format
-          const serviceProviderUsers = users.filter(user => {
-            if (typeof user.activeRole === 'string') {
-              return user.activeRole === 'ServiceProvider';
-            } else if (user.activeRole && typeof user.activeRole === 'object') {
-              return 'ServiceProvider' in user.activeRole;
+          const serviceProviderUsers = users.filter((user) => {
+            if (typeof user.activeRole === "string") {
+              return user.activeRole === "ServiceProvider";
+            } else if (user.activeRole && typeof user.activeRole === "object") {
+              return "ServiceProvider" in user.activeRole;
             }
             return false;
           });
-          
+
           // Convert Profile[] to ServiceProviderData[] format
-          providersToShow = serviceProviderUsers.map(user => ({
+          providersToShow = serviceProviderUsers.map((user) => ({
             id: user.id.toString(),
             name: user.name,
             phone: user.phone,
             totalEarnings: 0,
             pendingCommission: 0,
             settledCommission: 0,
-            lastActivity: user.updatedAt ? new Date(Number(user.updatedAt) / 1000000) : new Date(),
+            lastActivity: user.updatedAt
+              ? new Date(Number(user.updatedAt) / 1000000)
+              : new Date(),
           }));
-          console.log("🔍 [ServiceProviderPerformance] Found service providers in users:", providersToShow.length);
+          console.log(
+            "🔍 [ServiceProviderPerformance] Found service providers in users:",
+            providersToShow.length,
+          );
         }
-        
+
         if (!providersToShow || providersToShow.length === 0) {
-          console.log("🔍 [ServiceProviderPerformance] No service providers found anywhere, returning empty array");
+          console.log(
+            "🔍 [ServiceProviderPerformance] No service providers found anywhere, returning empty array",
+          );
           return [];
         }
       }
@@ -215,32 +241,35 @@ export const AnalyticsPage: React.FC = () => {
       const totalCommission = systemStats?.totalCommission || 0;
       const totalBookings = systemStats?.totalBookings || 0;
       const settledBookings = systemStats?.settledBookings || 0;
-      
+
       console.log("🔍 [ServiceProviderPerformance] SystemStats data:", {
         totalRevenue,
         totalCommission,
         totalBookings,
         settledBookings,
-        systemStats
+        systemStats,
       });
-      
+
       const fallbackData = providersToShow.map((provider, index) => {
         const isOnlyProvider = providersToShow.length === 1;
         const isFirstProvider = index === 0;
         const shouldGetTotals = isOnlyProvider || isFirstProvider;
-        
+
         return {
           id: provider.id?.toString() || provider.id,
-          name: provider.name || 'Unknown',
-          phone: provider.phone || 'N/A',
+          name: provider.name || "Unknown",
+          phone: provider.phone || "N/A",
           totalRevenue: shouldGetTotals ? totalRevenue : 0,
           totalCommission: shouldGetTotals ? totalCommission : 0,
           completedBookings: shouldGetTotals ? settledBookings : 0,
           totalBookings: shouldGetTotals ? totalBookings : 0,
-          status: (provider as any).status || 'active',
+          status: (provider as any).status || "active",
         };
       });
-      console.log("🔍 [ServiceProviderPerformance] Fallback data:", fallbackData);
+      console.log(
+        "🔍 [ServiceProviderPerformance] Fallback data:",
+        fallbackData,
+      );
       return fallbackData;
     }
 
@@ -248,45 +277,48 @@ export const AnalyticsPage: React.FC = () => {
       return [];
     }
 
-    const performanceMap = new Map<string, {
-      id: string;
-      name: string;
-      phone: string;
-      totalRevenue: number;
-      totalCommission: number;
-      completedBookings: number;
-      totalBookings: number;
-      status: string;
-    }>();
+    const performanceMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        phone: string;
+        totalRevenue: number;
+        totalCommission: number;
+        completedBookings: number;
+        totalBookings: number;
+        status: string;
+      }
+    >();
 
     // Find all users who have ever been service providers
     const providerIds = new Set<string>();
-    bookings.forEach(booking => {
+    bookings.forEach((booking) => {
       if (booking.serviceProviderId) {
         providerIds.add(booking.serviceProviderId);
       }
     });
 
     // Initialize with users who have provider history
-    providerIds.forEach(providerId => {
-      const user = users.find(u => u.id.toString() === providerId);
+    providerIds.forEach((providerId) => {
+      const user = users.find((u) => u.id.toString() === providerId);
       if (user) {
         performanceMap.set(providerId, {
           id: providerId,
-          name: user.name || 'Unknown',
-          phone: user.phone || 'N/A',
+          name: user.name || "Unknown",
+          phone: user.phone || "N/A",
           totalRevenue: 0,
           totalCommission: 0,
           completedBookings: 0,
           totalBookings: 0,
-          status: 'active', 
+          status: "active",
         });
       }
     });
 
     // Add current service providers
     if (serviceProviders) {
-      serviceProviders.forEach(provider => {
+      serviceProviders.forEach((provider) => {
         if (!performanceMap.has(provider.id)) {
           performanceMap.set(provider.id, {
             id: provider.id,
@@ -296,21 +328,21 @@ export const AnalyticsPage: React.FC = () => {
             totalCommission: 0,
             completedBookings: 0,
             totalBookings: 0,
-            status: (provider as any).status || 'active',
+            status: (provider as any).status || "active",
           });
         }
       });
     }
 
     // Process bookings for revenue and booking counts
-    bookings.forEach(booking => {
+    bookings.forEach((booking) => {
       const providerId = booking.serviceProviderId || booking.providerId;
       if (providerId && performanceMap.has(providerId)) {
         const performance = performanceMap.get(providerId)!;
-        
+
         performance.totalBookings++;
-        
-        if (booking.status === 'Completed' || booking.status === 'Settled') {
+
+        if (booking.status === "Completed" || booking.status === "Settled") {
           performance.completedBookings++;
           performance.totalRevenue += booking.price || 0;
         }
@@ -319,7 +351,7 @@ export const AnalyticsPage: React.FC = () => {
 
     // Process commission transactions for actual commission collected
     if (commissionTransactions && commissionTransactions.length > 0) {
-      commissionTransactions.forEach(transaction => {
+      commissionTransactions.forEach((transaction) => {
         const providerId = transaction.from;
         if (providerId && performanceMap.has(providerId)) {
           const performance = performanceMap.get(providerId)!;
@@ -328,17 +360,18 @@ export const AnalyticsPage: React.FC = () => {
       });
     }
 
-    const result = Array.from(performanceMap.values())
-      .sort((a, b) => b.totalRevenue - a.totalRevenue);
-    
+    const result = Array.from(performanceMap.values()).sort(
+      (a, b) => b.totalRevenue - a.totalRevenue,
+    );
+
     console.log("🔍 [ServiceProviderPerformance] Final result:", {
       bookingsLength: bookings?.length || 0,
       serviceProvidersLength: serviceProviders?.length || 0,
       usersLength: users?.length || 0,
       resultLength: result.length,
-      result: result
+      result: result,
     });
-    
+
     return result;
   }, [bookings, serviceProviders, commissionTransactions, users, systemStats]);
 
@@ -348,16 +381,17 @@ export const AnalyticsPage: React.FC = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(provider =>
-        provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        provider.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (provider) =>
+          provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          provider.phone.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       let aValue: any, bValue: any;
-      
+
       switch (sortBy) {
         case "name":
           aValue = a.name.toLowerCase();
@@ -388,7 +422,6 @@ export const AnalyticsPage: React.FC = () => {
     return filtered;
   }, [serviceProviderPerformanceData, searchTerm, sortBy, sortOrder]);
 
-
   // Service Categories Pie Chart Data
   const serviceCategoryData = useMemo(() => {
     console.log("Services:", services);
@@ -410,7 +443,8 @@ export const AnalyticsPage: React.FC = () => {
     // Count services by category from actual services
     if (services && Array.isArray(services)) {
       services.forEach((service: any) => {
-        const categoryId = service.category?.id || service.category || "Unknown";
+        const categoryId =
+          service.category?.id || service.category || "Unknown";
         const categoryName = categoryNameMap[categoryId] || categoryId;
         categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
       });
@@ -418,18 +452,18 @@ export const AnalyticsPage: React.FC = () => {
 
     console.log("Category Counts:", categoryCounts);
     const categoryColors = [
-      "#3b82f6", 
-      "#10b981", 
-      "#f59e0b", 
-      "#ef4444", 
-      "#8b5cf6", 
-      "#06b6d4", 
-      "#84cc16", 
-      "#f97316", 
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#06b6d4",
+      "#84cc16",
+      "#f97316",
       "#6366f1",
-      "#ec4899", 
-      "#14b8a6", 
-      "#a855f7", 
+      "#ec4899",
+      "#14b8a6",
+      "#a855f7",
     ];
 
     const result = Object.entries(categoryCounts)
@@ -465,7 +499,7 @@ export const AnalyticsPage: React.FC = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon
                     className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -474,7 +508,7 @@ export const AnalyticsPage: React.FC = () => {
                 </button>
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -498,7 +532,7 @@ export const AnalyticsPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
             >
               <ArrowPathIcon
                 className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -507,7 +541,7 @@ export const AnalyticsPage: React.FC = () => {
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -574,9 +608,7 @@ export const AnalyticsPage: React.FC = () => {
                       Total Services
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.services
-                        ? "..."
-                        : services?.length || 0}
+                      {loading.services ? "..." : services?.length || 0}
                     </dd>
                   </dl>
                 </div>
@@ -596,9 +628,7 @@ export const AnalyticsPage: React.FC = () => {
                       Total Users
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.users
-                        ? "..."
-                        : totalUsers}
+                      {loading.users ? "..." : totalUsers}
                     </dd>
                   </dl>
                 </div>
@@ -606,7 +636,6 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
 
         {/* Provider Analytics */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -621,9 +650,7 @@ export const AnalyticsPage: React.FC = () => {
               {loading.users ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="mt-4 text-sm text-gray-500">
-                    Loading users...
-                  </p>
+                  <p className="mt-4 text-sm text-gray-500">Loading users...</p>
                 </div>
               ) : totalUsers === 0 ? (
                 <div className="py-12 text-center">
@@ -654,12 +681,14 @@ export const AnalyticsPage: React.FC = () => {
                             <Cell key={`upie-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                        <Tooltip
+                          formatter={(v: number) => v.toLocaleString()}
+                        />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  
+
                   {/* User counts below the chart */}
                   <div className="mt-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
                     <div className="flex items-center space-x-6">
@@ -854,7 +883,11 @@ export const AnalyticsPage: React.FC = () => {
                 value={sortBy}
                 onChange={(e) =>
                   setSortBy(
-                    e.target.value as "name" | "totalRevenue" | "totalCommission" | "completedBookings",
+                    e.target.value as
+                      | "name"
+                      | "totalRevenue"
+                      | "totalCommission"
+                      | "completedBookings",
                   )
                 }
                 className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:w-48"
@@ -909,7 +942,9 @@ export const AnalyticsPage: React.FC = () => {
           {/* Service Provider Performance Table */}
           <ServiceProviderPerformanceTable
             providers={filteredServiceProviderData}
-            loading={loading.bookings || loading.serviceProviders || !systemStats}
+            loading={
+              loading.bookings || loading.serviceProviders || !systemStats
+            }
             onRefresh={() => refreshBookings(true)}
             showRefresh={true}
           />
@@ -934,7 +969,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-md p-1 text-gray-400 hover:bg-blue-50 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 aria-label="Close"
               >
                 <XMarkIcon className="h-5 w-5" />
@@ -1038,7 +1073,7 @@ export const AnalyticsPage: React.FC = () => {
                   setSelectedProvider(null);
                   setProviderAnalytics(null);
                 }}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
               >
                 Close
               </button>

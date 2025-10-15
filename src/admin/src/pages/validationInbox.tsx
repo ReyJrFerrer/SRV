@@ -582,16 +582,21 @@ export const ValidationInboxPage: React.FC = () => {
       }
 
       // Remove the certificate from the pending list immediately
-      setServicesWithCertificates((prev) => 
-        prev.map(s => {
-          if (s.serviceId === service.serviceId) {
-            return {
-              ...s,
-              certificateUrls: s.certificateUrls.filter((_, index) => index !== certificateIndex)
-            };
-          }
-          return s;
-        }).filter(s => s.certificateUrls.length > 0) // Remove services with no certificates left
+      setServicesWithCertificates(
+        (prev) =>
+          prev
+            .map((s) => {
+              if (s.serviceId === service.serviceId) {
+                return {
+                  ...s,
+                  certificateUrls: s.certificateUrls.filter(
+                    (_, index) => index !== certificateIndex,
+                  ),
+                };
+              }
+              return s;
+            })
+            .filter((s) => s.certificateUrls.length > 0), // Remove services with no certificates left
       );
 
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;
@@ -632,16 +637,21 @@ export const ValidationInboxPage: React.FC = () => {
       }
 
       // Remove the certificate from the pending list immediately
-      setServicesWithCertificates((prev) => 
-        prev.map(s => {
-          if (s.serviceId === service.serviceId) {
-            return {
-              ...s,
-              certificateUrls: s.certificateUrls.filter((_, index) => index !== certificateIndex)
-            };
-          }
-          return s;
-        }).filter(s => s.certificateUrls.length > 0) // Remove services with no certificates left
+      setServicesWithCertificates(
+        (prev) =>
+          prev
+            .map((s) => {
+              if (s.serviceId === service.serviceId) {
+                return {
+                  ...s,
+                  certificateUrls: s.certificateUrls.filter(
+                    (_, index) => index !== certificateIndex,
+                  ),
+                };
+              }
+              return s;
+            })
+            .filter((s) => s.certificateUrls.length > 0), // Remove services with no certificates left
       );
 
       const uniqueId = `${service.serviceId}-${certificateUrl}-${Date.now()}`;

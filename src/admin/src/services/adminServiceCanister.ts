@@ -663,7 +663,7 @@ export const adminServiceCanister = {
       // but getAllUsers returns { success: true, users: [...] }
       const callable = httpsCallable(functions, "getAllUsers");
       const result = await callable({ data: {} });
-      
+
       if ((result.data as any).success) {
         const users = (result.data as any).users || [];
         return users;
@@ -676,7 +676,10 @@ export const adminServiceCanister = {
     }
   },
 
-  async getBookingsData(): Promise<{bookings: any[], commissionTransactions: any[]}> {
+  async getBookingsData(): Promise<{
+    bookings: any[];
+    commissionTransactions: any[];
+  }> {
     try {
       console.log("🔍 [getBookingsData] Starting...");
       requireAuth();
@@ -685,17 +688,25 @@ export const adminServiceCanister = {
       const callable = httpsCallable(functions, "getBookingsData");
       console.log("🔍 [getBookingsData] Calling Firebase function...");
       const result = await callable({ data: {} });
-      console.log("🔍 [getBookingsData] Firebase function result:", result.data);
-      
+      console.log(
+        "🔍 [getBookingsData] Firebase function result:",
+        result.data,
+      );
+
       if ((result.data as any).success) {
         console.log("🔍 [getBookingsData] Success response received");
         return {
           bookings: (result.data as any).bookings,
-          commissionTransactions: (result.data as any).commissionTransactions
+          commissionTransactions: (result.data as any).commissionTransactions,
         };
       } else {
-        console.error("🔍 [getBookingsData] Error response:", (result.data as any).message);
-        throw new Error((result.data as any).message || "Failed to get bookings data");
+        console.error(
+          "🔍 [getBookingsData] Error response:",
+          (result.data as any).message,
+        );
+        throw new Error(
+          (result.data as any).message || "Failed to get bookings data",
+        );
       }
     } catch (error) {
       console.error("❌ [getBookingsData] Error getting bookings data:", error);

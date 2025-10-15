@@ -6,7 +6,10 @@ interface SuspensionModalProps {
   onClose: () => void;
 }
 
-const SuspensionModal: React.FC<SuspensionModalProps> = ({ isOpen, onClose }) => {
+const SuspensionModal: React.FC<SuspensionModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const navigate = useNavigate();
 
   const handleReturnToLanding = () => {
@@ -17,7 +20,7 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({ isOpen, onClose }) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
       <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -40,17 +43,19 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({ isOpen, onClose }) =>
               Account Suspended
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Your account has been suspended by an administrator. You are unable to access your dashboard or any account features.
+              Your account has been suspended by an administrator. You are
+              unable to access your dashboard or any account features.
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              If you believe this is an error, please contact support for assistance.
+              If you believe this is an error, please contact support for
+              assistance.
             </p>
           </div>
         </div>
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleReturnToLanding}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
           >
             Return to Home
           </button>

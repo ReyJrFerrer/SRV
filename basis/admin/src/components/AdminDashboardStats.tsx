@@ -113,7 +113,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
               }`}
             >
               {card.isAlert && (
-                <div className="absolute right-2 top-2">
+                <div className="absolute top-2 right-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-500"></div>
                 </div>
               )}

@@ -244,7 +244,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
           e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="group relative flex h-32 w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-blue-100 hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
@@ -285,7 +285,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onApprove(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="flex-1 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
         >
           Approve
         </button>
@@ -294,7 +294,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
             e.stopPropagation();
             onReject(service, certificateIndex, certificateUrl);
           }}
-          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           Reject
         </button>
@@ -367,7 +367,7 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
           e.stopPropagation();
           onUndo(certificate);
         }}
-        className="absolute right-2 top-2 z-10 rounded-full bg-gray-100 p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        className="absolute top-2 right-2 z-10 rounded-full bg-gray-100 p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-800 focus:ring-2 focus:ring-gray-500 focus:outline-none"
         title={`Undo ${statusText.toLowerCase()}`}
       >
         <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -392,7 +392,7 @@ const ProcessedCertificateCard: React.FC<ProcessedCertificateCardProps> = ({
           e.stopPropagation();
           onViewCertificate(displayUrl);
         }}
-        className={`group relative h-32 w-full overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:outline-none focus:ring-2 ${buttonFocusColor} flex items-center justify-center`}
+        className={`group relative h-32 w-full overflow-hidden rounded-lg border ${borderColor} ${buttonBgColor} focus:ring-2 focus:outline-none ${buttonFocusColor} flex items-center justify-center`}
       >
         {isLoadingCertificates ? (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
@@ -735,7 +735,7 @@ export const ValidationInboxPage: React.FC = () => {
                 <button
                   onClick={handleRefresh}
                   disabled={loading.pendingValidations}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon
                     className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
@@ -744,7 +744,7 @@ export const ValidationInboxPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => navigate("/dashboard")}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -768,7 +768,7 @@ export const ValidationInboxPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={loading.pendingValidations}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
             >
               <ArrowPathIcon
                 className={`mr-2 h-4 w-4 ${loading.pendingValidations ? "animate-spin" : ""}`}
@@ -777,7 +777,7 @@ export const ValidationInboxPage: React.FC = () => {
             </button>
             <button
               onClick={() => navigate("/dashboard")}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back

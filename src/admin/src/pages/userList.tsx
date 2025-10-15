@@ -123,13 +123,16 @@ export const UserListPage: React.FC = () => {
       if (backendUsers.length > 0) {
         try {
           // Filter out profiles without id/uid and exclude admin users
-          const validProfiles = backendUsers.filter(profile => 
-            profile.id && 
-            !('Admin' in profile.role) && 
-            !('Admin' in profile.activeRole)
+          const validProfiles = backendUsers.filter(
+            (profile) =>
+              profile.id &&
+              !("Admin" in profile.role) &&
+              !("Admin" in profile.activeRole),
           );
-          console.log(`Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`);
-          
+          console.log(
+            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
+          );
+
           const convertedUsers = await Promise.all(
             validProfiles.map(convertProfileToUserData),
           );
@@ -149,13 +152,16 @@ export const UserListPage: React.FC = () => {
       if (backendUsers.length > 0) {
         try {
           // Filter out profiles without id/uid and exclude admin users
-          const validProfiles = backendUsers.filter(profile => 
-            profile.id && 
-            !('Admin' in profile.role) && 
-            !('Admin' in profile.activeRole)
+          const validProfiles = backendUsers.filter(
+            (profile) =>
+              profile.id &&
+              !("Admin" in profile.role) &&
+              !("Admin" in profile.activeRole),
           );
-          console.log(`Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`);
-          
+          console.log(
+            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
+          );
+
           const convertedUsers = await Promise.all(
             validProfiles.map(convertProfileToUserData),
           );
@@ -264,17 +270,21 @@ export const UserListPage: React.FC = () => {
     try {
       // Call Firebase function to unlock the account
       await adminServiceCanister.lockUserAccount(selectedUser.id, false);
-      
+
       // Update local state
-      setSelectedUser(prev => prev ? { ...prev, isLocked: false } : null);
-      
+      setSelectedUser((prev) => (prev ? { ...prev, isLocked: false } : null));
+
       // Update the users list
-      setUsers(prev => prev.map(user => 
-        user.id === selectedUser.id ? { ...user, isLocked: false } : user
-      ));
-      setFilteredUsers(prev => prev.map(user => 
-        user.id === selectedUser.id ? { ...user, isLocked: false } : user
-      ));
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
+        ),
+      );
+      setFilteredUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
+        ),
+      );
 
       console.log("Account activated successfully");
     } catch (error) {
@@ -292,17 +302,21 @@ export const UserListPage: React.FC = () => {
     try {
       // Call Firebase function to lock the account
       await adminServiceCanister.lockUserAccount(selectedUser.id, true);
-      
+
       // Update local state
-      setSelectedUser(prev => prev ? { ...prev, isLocked: true } : null);
-      
+      setSelectedUser((prev) => (prev ? { ...prev, isLocked: true } : null));
+
       // Update the users list
-      setUsers(prev => prev.map(user => 
-        user.id === selectedUser.id ? { ...user, isLocked: true } : user
-      ));
-      setFilteredUsers(prev => prev.map(user => 
-        user.id === selectedUser.id ? { ...user, isLocked: true } : user
-      ));
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
+        ),
+      );
+      setFilteredUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
+        ),
+      );
 
       console.log("Account locked successfully");
     } catch (error) {
@@ -324,15 +338,19 @@ export const UserListPage: React.FC = () => {
 
     try {
       // Call Firebase function to delete the account
-      const result = await adminServiceCanister.deleteUserAccount(selectedUser.id);
+      const result = await adminServiceCanister.deleteUserAccount(
+        selectedUser.id,
+      );
       console.log("Delete result:", result);
 
       console.log("Account deleted successfully");
       alert("Account deleted successfully");
 
       // Remove user from local state
-      setUsers(prev => prev.filter(user => user.id !== selectedUser.id));
-      setFilteredUsers(prev => prev.filter(user => user.id !== selectedUser.id));
+      setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
+      setFilteredUsers((prev) =>
+        prev.filter((user) => user.id !== selectedUser.id),
+      );
 
       // Close modals
       setShowUserModal(false);
@@ -341,7 +359,9 @@ export const UserListPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to delete account:", error);
       console.error("Error details:", error);
-      alert(`Failed to delete account: ${error instanceof Error ? error.message : String(error)}`);
+      alert(
+        `Failed to delete account: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   };
 
@@ -780,11 +800,13 @@ export const UserListPage: React.FC = () => {
                           {formatDate(user.updatedAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            user.isLocked 
-                              ? "bg-red-100 text-red-800" 
-                              : "bg-green-100 text-green-800"
-                          }`}>
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                              user.isLocked
+                                ? "bg-red-100 text-red-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
                             {user.isLocked ? "Suspended" : "Active"}
                           </span>
                         </td>
@@ -1019,7 +1041,7 @@ export const UserListPage: React.FC = () => {
                 {!selectedUser.isLocked ? (
                   <button
                     onClick={handleLockConfirmation}
-                    className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                    className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
                   >
                     <svg
                       className="mr-1 h-4 w-4"
@@ -1039,7 +1061,7 @@ export const UserListPage: React.FC = () => {
                 ) : (
                   <button
                     onClick={handleActivateAccount}
-                    className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
                   >
                     <svg
                       className="mr-1 h-4 w-4"
@@ -1059,7 +1081,7 @@ export const UserListPage: React.FC = () => {
                 )}
                 <button
                   onClick={handleDeleteConfirmation}
-                  className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
                 >
                   <svg
                     className="mr-1 h-4 w-4"
@@ -1077,7 +1099,7 @@ export const UserListPage: React.FC = () => {
                   Delete Account
                 </button>
               </div>
-              
+
               {/* Close Button */}
               <button
                 onClick={() => setShowUserModal(false)}
@@ -1092,7 +1114,7 @@ export const UserListPage: React.FC = () => {
 
       {/* Lock Account Confirmation Modal */}
       {showLockConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
             <div className="border-b border-gray-200 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -1108,13 +1130,13 @@ export const UserListPage: React.FC = () => {
             <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
               <button
                 onClick={() => setShowLockConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLockAccount}
-                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
               >
                 Lock Account
               </button>
@@ -1164,13 +1186,13 @@ export const UserListPage: React.FC = () => {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteAccount}
-                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
               >
                 Delete Account
               </button>

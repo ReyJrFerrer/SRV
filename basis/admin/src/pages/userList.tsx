@@ -334,14 +334,14 @@ export const UserListPage: React.FC = () => {
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
                   onClick={handleRefresh}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -364,14 +364,14 @@ export const UserListPage: React.FC = () => {
           <div className="flex flex-row items-stretch gap-2">
             <button
               onClick={handleRefresh}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 focus:outline-none"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:ring-2 focus:ring-blue-300 focus:outline-none"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -489,7 +489,7 @@ export const UserListPage: React.FC = () => {
                     placeholder="Search users by name or phone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
                   />
                 </div>
               </div>
@@ -507,7 +507,7 @@ export const UserListPage: React.FC = () => {
                       e.target.value as "name" | "createdAt" | "services",
                     )
                   }
-                  className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
+                  className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:w-48"
                 >
                   <option value="createdAt">Registration Date</option>
                   <option value="name">Name</option>
@@ -518,7 +518,7 @@ export const UserListPage: React.FC = () => {
                   onClick={() =>
                     setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                   }
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
                   title={sortOrder === "asc" ? "Ascending" : "Descending"}
                   aria-label="Toggle sort order"
                 >
@@ -575,26 +575,26 @@ export const UserListPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-50/60">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Phone
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Services
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Member Since
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Last Updated
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Status
                     </th>
                     {/* Actions header hidden on mobile */}
-                    <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell">
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
                       Actions
                     </th>
                   </tr>
@@ -652,7 +652,7 @@ export const UserListPage: React.FC = () => {
                           }
                         }}
                       >
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="h-12 w-12 flex-shrink-0">
                               {user.profilePicture ? (
@@ -706,23 +706,23 @@ export const UserListPage: React.FC = () => {
                             <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                           {user.phone}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                           <div className="flex items-center">
                             <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                               {user.servicesCount || 0}
                             </span>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                           {formatDate(user.createdAt)}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                           {formatDate(user.updatedAt)}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                               user.isLocked
@@ -734,14 +734,14 @@ export const UserListPage: React.FC = () => {
                           </span>
                         </td>
                         {/* Actions cell (desktop only) */}
-                        <td className="hidden whitespace-nowrap px-6 py-4 text-sm font-medium sm:table-cell">
+                        <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedUser(user);
                               setShowUserModal(true);
                             }}
-                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                           >
                             View Details
                           </button>
@@ -962,7 +962,7 @@ export const UserListPage: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowLockConfirm(true)}
-                  className={`inline-flex items-center rounded-md px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  className={`inline-flex items-center rounded-md px-4 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none ${
                     selectedUser.isLocked
                       ? "border border-green-600 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
                       : "border border-yellow-600 bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500"
@@ -982,7 +982,7 @@ export const UserListPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="inline-flex items-center rounded-md border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="inline-flex items-center rounded-md border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
                 >
                   <TrashIcon className="mr-2 h-4 w-4" />
                   Delete Account
@@ -1037,7 +1037,7 @@ export const UserListPage: React.FC = () => {
               <button
                 onClick={handleLockToggle}
                 disabled={actionLoading}
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50 ${
                   selectedUser.isLocked
                     ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                     : "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500"
@@ -1114,7 +1114,7 @@ export const UserListPage: React.FC = () => {
               <button
                 onClick={handleDelete}
                 disabled={actionLoading}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
               >
                 {actionLoading ? (
                   <span className="flex items-center">

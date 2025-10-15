@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  AdminDashboardStats,
-} from "../components";
+import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
 import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
@@ -38,26 +36,30 @@ export const AdminHomePage: React.FC = () => {
   const [showMobileBar, setShowMobileBar] = useState(false);
 
   // Services with certificates for pending validations
-  const [servicesWithCertificates, setServicesWithCertificates] = useState<any[]>([]);
-  
+  const [servicesWithCertificates, setServicesWithCertificates] = useState<
+    any[]
+  >([]);
+
   // Reports for pending tickets
   const [reports, setReports] = useState<any[]>([]);
 
   // Calculate provider and client counts based on current user roles
-  const providerIds = new Set(services?.map(service => service.providerId).filter(Boolean) ?? []);
-  
+  const providerIds = new Set(
+    services?.map((service) => service.providerId).filter(Boolean) ?? [],
+  );
 
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
-  
-  // Calculate settled bookings with fallback to systemStats when bookings array is empty
-  const settledBookings = bookings && bookings.length > 0 
-    ? bookings.filter(booking => 
-        booking.status?.toLowerCase() === 'completed' || 
-        booking.status?.toLowerCase() === 'settled'
-      ).length
-    : systemStats?.settledBookings || 0;
 
+  // Calculate settled bookings with fallback to systemStats when bookings array is empty
+  const settledBookings =
+    bookings && bookings.length > 0
+      ? bookings.filter(
+          (booking) =>
+            booking.status?.toLowerCase() === "completed" ||
+            booking.status?.toLowerCase() === "settled",
+        ).length
+      : systemStats?.settledBookings || 0;
 
   // Calculate dashboard stats from current data
   const dashboardStats = {
@@ -66,7 +68,9 @@ export const AdminHomePage: React.FC = () => {
       (total, service) => total + (service.certificateUrls?.length || 0),
       0,
     ),
-    totalPendingTickets: reports.filter(report => !report.status || report.status === 'open').length,
+    totalPendingTickets: reports.filter(
+      (report) => !report.status || report.status === "open",
+    ).length,
     totalAdminUsers: systemStats?.adminUsers || 0,
     totalBookings: totalBookings,
     settledBookings: settledBookings,
@@ -79,25 +83,28 @@ export const AdminHomePage: React.FC = () => {
     const today = new Date();
     const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     const chartData = [];
-    
+
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const formattedDate = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }).toUpperCase().replace(" ", ". ");
-      
+      const formattedDate = date
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+        .toUpperCase()
+        .replace(" ", ". ");
+
       let count = 0;
-      
+
       // Count bookings for this specific date
       if (bookings && bookings.length > 0) {
         const dateStr = date.toISOString().slice(0, 10);
-        count = bookings.filter(booking => {
+        count = bookings.filter((booking) => {
           let bookingDateStr;
           if (booking.createdAt instanceof Date) {
             bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === 'string') {
+          } else if (typeof booking.createdAt === "string") {
             bookingDateStr = booking.createdAt.slice(0, 10);
           } else {
             return false;
@@ -107,11 +114,11 @@ export const AdminHomePage: React.FC = () => {
       } else if (i === 0) {
         count = totalBookings;
       }
-      
-      chartData.push({ 
-        date: formattedDate, 
+
+      chartData.push({
+        date: formattedDate,
         count,
-        fullDate: date.toISOString().slice(0, 10)
+        fullDate: date.toISOString().slice(0, 10),
       });
     }
 
@@ -120,109 +127,134 @@ export const AdminHomePage: React.FC = () => {
 
   // Revenue per Day chart data with vertical grids
   const revenueLineData = useMemo(() => {
-    
     // Generate dynamic date range based on selected period
     const today = new Date();
     const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     const chartData = [];
-    
+
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const formattedDate = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      }).toUpperCase().replace(" ", ". ");
-      
+      const formattedDate = date
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+        .toUpperCase()
+        .replace(" ", ". ");
+
       let revenue = 0;
       let commission = 0;
-      
+
       // Calculate revenue for this specific date
       if (bookings && bookings.length > 0) {
         const dateStr = date.toISOString().slice(0, 10);
-        
+
         // Calculate revenue from completed bookings
-        revenue = bookings.filter(booking => {
-          let bookingDateStr;
-          if (booking.createdAt instanceof Date) {
-            bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === 'string') {
-            bookingDateStr = booking.createdAt.slice(0, 10);
-          } else {
-            return false;
-          }
-          return bookingDateStr === dateStr && 
-                 (booking.status === 'Completed' || booking.status === 'Settled');
-        }).reduce((sum, booking) => sum + (booking.price || 0), 0);
-        
+        revenue = bookings
+          .filter((booking) => {
+            let bookingDateStr;
+            if (booking.createdAt instanceof Date) {
+              bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
+            } else if (typeof booking.createdAt === "string") {
+              bookingDateStr = booking.createdAt.slice(0, 10);
+            } else {
+              return false;
+            }
+            return (
+              bookingDateStr === dateStr &&
+              (booking.status === "Completed" || booking.status === "Settled")
+            );
+          })
+          .reduce((sum, booking) => sum + (booking.price || 0), 0);
+
         // Calculate commission from commission transactions
         if (commissionTransactions && commissionTransactions.length > 0) {
-          commission = commissionTransactions.filter(transaction => {
-            const transactionDateStr = transaction.timestamp.toISOString().slice(0, 10);
-            return transactionDateStr === dateStr;
-          }).reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
+          commission = commissionTransactions
+            .filter((transaction) => {
+              const transactionDateStr = transaction.timestamp
+                .toISOString()
+                .slice(0, 10);
+              return transactionDateStr === dateStr;
+            })
+            .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
         }
       } else if (i === 0) {
         // If no bookings data, show totals on today
         revenue = systemStats?.totalRevenue || 0;
         commission = systemStats?.totalCommission || 0;
       }
-      
-      chartData.push({ 
-        date: formattedDate, 
+
+      chartData.push({
+        date: formattedDate,
         revenue,
         commission,
-        fullDate: date.toISOString().slice(0, 10)
+        fullDate: date.toISOString().slice(0, 10),
       });
     }
 
     return chartData;
-  }, [bookings, commissionTransactions, systemStats?.totalRevenue, systemStats?.totalCommission, period]);
+  }, [
+    bookings,
+    commissionTransactions,
+    systemStats?.totalRevenue,
+    systemStats?.totalCommission,
+    period,
+  ]);
 
   // Booking Distribution per Day chart data with vertical grids
   const bookingDistributionData = useMemo(() => {
-    
-    
     // Generate dynamic date range based on selected period
     const today = new Date();
     const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     const chartData = [];
-    
+
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const formattedDate = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }).toUpperCase().replace(" ", ". ");
-      
+      const formattedDate = date
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+        .toUpperCase()
+        .replace(" ", ". ");
+
       let pending = 0;
       let completed = 0;
       let canceled = 0;
-      
+
       // Count bookings by status for specific date
       if (bookings && bookings.length > 0) {
         const dateStr = date.toISOString().slice(0, 10);
-        
-        bookings.forEach(booking => {
+
+        bookings.forEach((booking) => {
           let bookingDateStr;
           if (booking.createdAt instanceof Date) {
             bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === 'string') {
+          } else if (typeof booking.createdAt === "string") {
             bookingDateStr = booking.createdAt.slice(0, 10);
           } else {
             return;
           }
-          
-          
+
           if (bookingDateStr === dateStr) {
             const status = booking.status?.toLowerCase();
-            
-            if (status === 'pending' || status === 'requested') {
+
+            if (status === "pending" || status === "requested") {
               pending++;
-            } else if (status === 'confirmed' || status === 'accepted' || status === 'completed' || status === 'settled') {
+            } else if (
+              status === "confirmed" ||
+              status === "accepted" ||
+              status === "completed" ||
+              status === "settled"
+            ) {
               completed++;
-            } else if (status === 'canceled' || status === 'cancelled' || status === 'declined') {
+            } else if (
+              status === "canceled" ||
+              status === "cancelled" ||
+              status === "declined"
+            ) {
               canceled++;
             } else {
             }
@@ -233,19 +265,18 @@ export const AdminHomePage: React.FC = () => {
         pending = 0;
         canceled = 0;
       }
-      
-      chartData.push({ 
-        date: formattedDate, 
+
+      chartData.push({
+        date: formattedDate,
         pending,
         completed,
         canceled,
-        fullDate: date.toISOString().slice(0, 10)
+        fullDate: date.toISOString().slice(0, 10),
       });
     }
 
     return chartData;
   }, [bookings, period, totalBookings]);
-
 
   useEffect(() => {
     refreshAll();
@@ -287,7 +318,6 @@ export const AdminHomePage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-
   const isRefreshing =
     loading.systemStats ||
     loading.serviceProviders ||
@@ -296,7 +326,6 @@ export const AdminHomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gray-50">
-
       {/* Header */}
       <header className="z-50 overflow-x-hidden border-b border-blue-100 bg-gradient-to-r from-yellow-50 via-white to-blue-50 shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -415,7 +444,6 @@ export const AdminHomePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6 p-6">
-
               {/* Line: Bookings per Day */}
               <div className="rounded-lg border border-gray-100 p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -440,8 +468,8 @@ export const AdminHomePage: React.FC = () => {
                       />
                       <YAxis allowDecimals={false} />
                       <Tooltip
-                      labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
-                        formatter={(value: number) => [`${value}`, 'Bookings']}
+                        labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
+                        formatter={(value: number) => [`${value}`, "Bookings"]}
                       />
                       <Legend />
                       <Line
@@ -465,11 +493,13 @@ export const AdminHomePage: React.FC = () => {
                   </h3>
                   <div className="flex gap-2">
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 ring-1 ring-green-200">
-                      Revenue: ₱{systemStats?.totalRevenue?.toFixed(2) || '0.00'}
+                      Revenue: ₱
+                      {systemStats?.totalRevenue?.toFixed(2) || "0.00"}
                     </span>
                     <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-                      Commission: ₱{systemStats?.totalCommission?.toFixed(2) || '0.00'}
-                  </span>
+                      Commission: ₱
+                      {systemStats?.totalCommission?.toFixed(2) || "0.00"}
+                    </span>
                   </div>
                 </div>
                 <div className="h-72">
@@ -506,8 +536,8 @@ export const AdminHomePage: React.FC = () => {
                           });
                         }}
                         formatter={(value: number, name: string) => [
-                          `₱${value.toFixed(2)}`, 
-                          name === 'revenue' ? 'Revenue' : 'Commission'
+                          `₱${value.toFixed(2)}`,
+                          name === "revenue" ? "Revenue" : "Commission",
                         ]}
                       />
                       <Legend />
@@ -540,14 +570,38 @@ export const AdminHomePage: React.FC = () => {
                   </h3>
                   <div className="flex gap-2">
                     <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-                      Pending: {bookings && bookings.length > 0 ? bookings.filter(b => b.status?.toLowerCase() === 'pending' || b.status?.toLowerCase() === 'requested').length : 0}
+                      Pending:{" "}
+                      {bookings && bookings.length > 0
+                        ? bookings.filter(
+                            (b) =>
+                              b.status?.toLowerCase() === "pending" ||
+                              b.status?.toLowerCase() === "requested",
+                          ).length
+                        : 0}
                     </span>
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 ring-1 ring-green-200">
-                      Completed: {bookings && bookings.length > 0 ? bookings.filter(b => b.status?.toLowerCase() === 'confirmed' || b.status?.toLowerCase() === 'accepted' || b.status?.toLowerCase() === 'completed' || b.status?.toLowerCase() === 'settled').length : totalBookings}
+                      Completed:{" "}
+                      {bookings && bookings.length > 0
+                        ? bookings.filter(
+                            (b) =>
+                              b.status?.toLowerCase() === "confirmed" ||
+                              b.status?.toLowerCase() === "accepted" ||
+                              b.status?.toLowerCase() === "completed" ||
+                              b.status?.toLowerCase() === "settled",
+                          ).length
+                        : totalBookings}
                     </span>
                     <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-red-200">
-                      Canceled: {bookings && bookings.length > 0 ? bookings.filter(b => b.status?.toLowerCase() === 'canceled' || b.status?.toLowerCase() === 'cancelled' || b.status?.toLowerCase() === 'declined').length : 0}
-                  </span>
+                      Canceled:{" "}
+                      {bookings && bookings.length > 0
+                        ? bookings.filter(
+                            (b) =>
+                              b.status?.toLowerCase() === "canceled" ||
+                              b.status?.toLowerCase() === "cancelled" ||
+                              b.status?.toLowerCase() === "declined",
+                          ).length
+                        : 0}
+                    </span>
                   </div>
                 </div>
                 <div className="h-72">
@@ -564,11 +618,14 @@ export const AdminHomePage: React.FC = () => {
                       />
                       <YAxis allowDecimals={false} />
                       <Tooltip
-                      labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
+                        labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
                         formatter={(value: number, name: string) => [
-                          `${value}`, 
-                          name === 'pending' ? 'Pending' : 
-                          name === 'completed' ? 'Completed' : 'Canceled'
+                          `${value}`,
+                          name === "pending"
+                            ? "Pending"
+                            : name === "completed"
+                              ? "Completed"
+                              : "Canceled",
                         ]}
                       />
                       <Legend />
@@ -600,12 +657,8 @@ export const AdminHomePage: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
               </div>
-
             </div>
           </section>
-
-
-
         </div>
       </main>
       {/* Mobile bottom actions bar (appears when header is scrolled out) */}

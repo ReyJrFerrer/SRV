@@ -25,7 +25,6 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   stats,
   loading = false,
 }) => {
-
   const formatNumber = (num: number) => {
     return num.toLocaleString();
   };

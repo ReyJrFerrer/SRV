@@ -169,20 +169,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     "",
                   );
 
-                  console.log(
-                    "✅ [Admin] Admin profile created successfully!",
-                  );
+                  console.log("✅ [Admin] Admin profile created successfully!");
 
                   // Force token refresh to get updated claims
                   if (adminResult.success) {
-                    console.log("🔄 [Admin] Refreshing token to get admin claims...");
+                    console.log(
+                      "🔄 [Admin] Refreshing token to get admin claims...",
+                    );
                     await result.user.getIdToken(true); // Force refresh
-                    console.log("✅ [Admin] Token refreshed with admin claims!");
-                    
+                    console.log(
+                      "✅ [Admin] Token refreshed with admin claims!",
+                    );
+
                     // Update admin status immediately
                     setIsAdmin(true);
                   } else {
-                    console.warn("⚠️ [Admin] Admin profile creation failed:", adminResult.message);
+                    console.warn(
+                      "⚠️ [Admin] Admin profile creation failed:",
+                      adminResult.message,
+                    );
                     setIsAdmin(true);
                   }
                 } catch (adminError) {

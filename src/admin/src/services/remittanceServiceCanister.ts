@@ -101,7 +101,6 @@ export class RemittanceServiceError extends Error {
 // Get Firebase instances
 const auth = getFirebaseAuth();
 
-
 // Helper function to check authentication
 const checkAuth = (requireAuth: boolean = true) => {
   if (requireAuth && !auth.currentUser) {
@@ -126,11 +125,14 @@ export const remittanceServiceCanister = {
   async getAllServiceProviders(): Promise<ServiceProviderData[]> {
     try {
       checkAuth();
-      
+
       const functions = getFirebaseFunctions();
-      const getAllServiceProviders = httpsCallable(functions, "getAllServiceProviders");
+      const getAllServiceProviders = httpsCallable(
+        functions,
+        "getAllServiceProviders",
+      );
       const result = await getAllServiceProviders({});
-      
+
       if ((result.data as any).success) {
         return (result.data as any).providers || [];
       } else {
@@ -158,10 +160,10 @@ export const remittanceServiceCanister = {
   ): Promise<FrontendProviderDashboard> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty dashboard for now
       console.warn("getProviderDashboard: Using placeholder implementation");
-      
+
       return {
         providerId,
         outstandingBalance: 0,
@@ -195,10 +197,10 @@ export const remittanceServiceCanister = {
   ): Promise<FrontendProviderAnalytics> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty analytics for now
       console.warn("getProviderAnalytics: Using placeholder implementation");
-      
+
       return {
         providerId,
         totalOrders: 0,
@@ -232,13 +234,18 @@ export const remittanceServiceCanister = {
   > {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty array for now
-      console.warn("getAllServiceProvidersWithCommissionData: Using placeholder implementation");
-      
+      console.warn(
+        "getAllServiceProvidersWithCommissionData: Using placeholder implementation",
+      );
+
       return [];
     } catch (error) {
-      console.error("Error getting service providers with commission data:", error);
+      console.error(
+        "Error getting service providers with commission data:",
+        error,
+      );
       if (error instanceof RemittanceServiceError) throw error;
       throw new RemittanceServiceError({
         message: `Failed to get service providers with commission data: ${error}`,
@@ -257,10 +264,10 @@ export const remittanceServiceCanister = {
   async getOrder(_orderId: string): Promise<FrontendRemittanceOrder | null> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return null for now
       console.warn("getOrder: Using placeholder implementation");
-      
+
       return null;
     } catch (error) {
       console.error("Error getting order:", error);
@@ -289,23 +296,30 @@ export const remittanceServiceCanister = {
   ): Promise<RemittanceOrdersPage> {
     try {
       checkAuth();
-      
+
       const functions = getFirebaseFunctions();
-      const queryRemittanceOrders = httpsCallable(functions, "queryRemittanceOrders");
-      
+      const queryRemittanceOrders = httpsCallable(
+        functions,
+        "queryRemittanceOrders",
+      );
+
       const result = await queryRemittanceOrders({
-        filter: filter ? {
-          status: filter.status,
-          serviceProviderId: filter.serviceProviderId,
-          fromDate: filter.fromDate?.toISOString(),
-          toDate: filter.toDate?.toISOString(),
-        } : undefined,
-        page: page ? {
-          cursor: page.cursor,
-          size: page.size,
-        } : undefined,
+        filter: filter
+          ? {
+              status: filter.status,
+              serviceProviderId: filter.serviceProviderId,
+              fromDate: filter.fromDate?.toISOString(),
+              toDate: filter.toDate?.toISOString(),
+            }
+          : undefined,
+        page: page
+          ? {
+              cursor: page.cursor,
+              size: page.size,
+            }
+          : undefined,
       });
-      
+
       return (result.data as any).page;
     } catch (error) {
       console.error("Error querying orders:", error);
@@ -321,15 +335,13 @@ export const remittanceServiceCanister = {
    * Get orders by status
    * TODO: Implement actual Firebase Function when available
    */
-  async getOrdersByStatus(
-    _status: any,
-  ): Promise<FrontendRemittanceOrder[]> {
+  async getOrdersByStatus(_status: any): Promise<FrontendRemittanceOrder[]> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty array for now
       console.warn("getOrdersByStatus: Using placeholder implementation");
-      
+
       return [];
     } catch (error) {
       console.error("Error getting orders by status:", error);
@@ -348,10 +360,10 @@ export const remittanceServiceCanister = {
   async getPendingValidations(): Promise<FrontendRemittanceOrder[]> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty array for now
       console.warn("getPendingValidations: Using placeholder implementation");
-      
+
       return [];
     } catch (error) {
       console.error("Error getting pending validations:", error);
@@ -378,11 +390,11 @@ export const remittanceServiceCanister = {
   ): Promise<string> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return success message for now
       console.warn("validatePaymentByAdmin: Using placeholder implementation");
-      
-      return `Payment ${approved ? 'approved' : 'rejected'} successfully`;
+
+      return `Payment ${approved ? "approved" : "rejected"} successfully`;
     } catch (error) {
       console.error("Error validating payment:", error);
       if (error instanceof RemittanceServiceError) throw error;
@@ -405,10 +417,12 @@ export const remittanceServiceCanister = {
   ): Promise<FrontendSettlementInstruction> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty instruction for now
-      console.warn("generateSettlementInstruction: Using placeholder implementation");
-      
+      console.warn(
+        "generateSettlementInstruction: Using placeholder implementation",
+      );
+
       return {
         corporateGcashAccount: "",
         commissionAmount: 0,
@@ -439,10 +453,12 @@ export const remittanceServiceCanister = {
   ): Promise<FrontendProviderAnalytics[]> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty array for now
-      console.warn("getHistoricalProviderData: Using placeholder implementation");
-      
+      console.warn(
+        "getHistoricalProviderData: Using placeholder implementation",
+      );
+
       return [];
     } catch (error) {
       console.error("Error getting historical provider data:", error);
@@ -474,10 +490,12 @@ export const remittanceServiceCanister = {
   }> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty stats for now
-      console.warn("getSystemRemittanceStats: Using placeholder implementation");
-      
+      console.warn(
+        "getSystemRemittanceStats: Using placeholder implementation",
+      );
+
       return {
         totalOrders: 0,
         totalSettledOrders: 0,
@@ -508,10 +526,10 @@ export const remittanceServiceCanister = {
   async cancelOrder(orderId: string): Promise<FrontendRemittanceOrder> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return empty order for now
       console.warn("cancelOrder: Using placeholder implementation");
-      
+
       return {
         id: orderId,
         serviceProviderId: "",
@@ -550,10 +568,12 @@ export const remittanceServiceCanister = {
   async setCanisterReferences(): Promise<string | null> {
     try {
       checkAuth();
-      
+
       // Placeholder implementation - return success for now
-      console.warn("setCanisterReferences: Using placeholder implementation (not needed for Firebase)");
-      
+      console.warn(
+        "setCanisterReferences: Using placeholder implementation (not needed for Firebase)",
+      );
+
       return "Canister references set successfully";
     } catch (error) {
       console.error("Failed to set canister references:", error);
