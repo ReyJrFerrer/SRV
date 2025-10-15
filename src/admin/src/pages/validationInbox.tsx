@@ -590,7 +590,7 @@ export const ValidationInboxPage: React.FC = () => {
                 return {
                   ...s,
                   certificateUrls: s.certificateUrls.filter(
-                    (_, index) => index !== certificateIndex,
+                    (_:any, index:any) => index !== certificateIndex,
                   ),
                 };
               }
@@ -645,7 +645,7 @@ export const ValidationInboxPage: React.FC = () => {
                 return {
                   ...s,
                   certificateUrls: s.certificateUrls.filter(
-                    (_, index) => index !== certificateIndex,
+                    (_:any, index:any) => index !== certificateIndex,
                   ),
                 };
               }

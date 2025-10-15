@@ -21,7 +21,6 @@ export const AdminHomePage: React.FC = () => {
 
     // Data states
     systemStats,
-    serviceProviders,
     services,
     bookings,
     commissionTransactions,

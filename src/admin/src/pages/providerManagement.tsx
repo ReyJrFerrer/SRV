@@ -31,7 +31,7 @@ export const ProviderManagementPage: React.FC = () => {
   const [analyticsMode, setAnalyticsMode] = useState<"details" | "analytics">(
     "details",
   );
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsLoading, ] = useState(false);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
 
@@ -122,11 +122,6 @@ export const ProviderManagementPage: React.FC = () => {
     setProviderAnalytics(null);
   };
 
-  // Inline analytics loading (stay on Provider Management page)
-  const getCurrentMonthStart = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  };
 
   const loadInlineProviderAnalytics = async (_providerId: string) => {
     // tbd
