@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ServiceListItem from "./ServiceListItem"; // Your individual card component
 import {
   EnrichedService,
   useAllServicesWithProviders,
 } from "../../hooks/serviceInformation";
 import { getCategoryImage } from "../../utils/serviceHelpers";
+import { getFirebaseFirestore } from "../../services/firebaseApp";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  DocumentData,
+} from "firebase/firestore";
 
 interface ServicesListProps {
   className?: string;
@@ -12,6 +20,111 @@ interface ServicesListProps {
 
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   const { services, loading, error } = useAllServicesWithProviders();
+
+  // Local state for realtime Firestore-backed services. If this is non-null
+  // we prefer it over the canister-based `services` returned by the hook.
+  const [realtimeServices, setRealtimeServices] = useState<
+    EnrichedService[] | null
+  >(null);
+
+  // Subscribe to Firestore 'service_packages' collection for realtime updates
+  // from the emulator (localhost). We map package documents into the
+  // EnrichedService shape used by the UI. Assumptions about Firestore schema
+  // are noted below.
+  useEffect(() => {
+    const firestore = getFirebaseFirestore();
+
+    // Build a query. If your documents have a `createdAt` timestamp field
+    // this will keep newest-first; otherwise the collection is un-ordered.
+    let q;
+    try {
+  q = query(collection(firestore, "service_packages"), orderBy("createdAt", "desc"));
+    } catch (e) {
+      // If createdAt doesn't exist for documents, fall back to the raw collection
+  q = query(collection(firestore, "service_packages"));
+    }
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const mapped: EnrichedService[] = snapshot.docs.map((doc) => {
+          const data = doc.data() as DocumentData;
+
+          // Map Firestore document fields to EnrichedService. These are
+          // best-effort mappings — adjust to match your exact Firestore schema.
+          const priceAmount =
+            data.price?.amount ?? (typeof data.price === "number" ? data.price : 0);
+          const ratingAverage = data.rating?.average ?? data.rating ?? 0;
+
+          const slug =
+            data.slug ||
+            (data.title &&
+              String(data.title)
+                .toLowerCase()
+                .replace(/[^^\w\s-]/g, "")
+                .replace(/\s+/g, "-")) ||
+            doc.id;
+
+          return {
+            id: doc.id,
+            slug,
+            name: data.title || data.name || "",
+            title: data.title || data.name || "",
+            heroImage:
+              data.heroImage || data.category?.imageUrl || getCategoryImage(data.category?.name || data.category?.slug || "others"),
+            description: data.description || "",
+
+            providerName: data.providerName || data.provider?.name || "Unknown Provider",
+            providerAvatar: data.providerAvatar || data.provider?.avatar || "",
+            providerId: data.providerId || data.provider?.id || "",
+
+            rating: {
+              average: ratingAverage,
+              count: data.rating?.count ?? data.reviewCount ?? 0,
+            },
+
+            price: {
+              amount: priceAmount,
+              unit: data.price?.unit || "starting from",
+              display: `₱${priceAmount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`,
+            },
+
+            location: {
+              serviceDistance: data.location?.serviceDistance,
+              address: data.location?.address || "",
+              city: data.location?.city || "",
+              state: data.location?.state || "",
+              serviceDistanceUnit: data.location?.serviceDistanceUnit,
+            },
+
+            category: {
+              name: data.category?.name || data.category || "",
+              id: data.category?.id || "",
+              slug: data.category?.slug || "",
+            },
+
+            availability: {
+              isAvailable: Boolean(
+                data.availability?.isAvailable ?? (data.status === "Available")
+              ),
+            },
+          } as EnrichedService;
+        });
+
+        setRealtimeServices(mapped);
+      },
+      (err) => {
+        // keep console error but don't break UI
+        // eslint-disable-next-line no-console
+        console.error("Realtime services listener error:", err);
+      },
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
     ...service,
@@ -88,7 +201,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      {services.length === 0 ? (
+      {(realtimeServices ?? services).length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-gray-500">
             No top-rated services available at the moment.
@@ -96,7 +209,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => (
+          {(realtimeServices ?? services).map((service) => (
             <div key={service.id}>
               <ServiceListItem service={enhanceService(service)} />
             </div>
