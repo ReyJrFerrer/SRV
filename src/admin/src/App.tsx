@@ -9,7 +9,6 @@ import { TicketInboxPage } from "./pages/ticketInbox";
 import { TicketDetailsPage } from "./pages/ticketDetails";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
-import { ProviderManagementPage } from "./pages/providerManagement";
 import { AnalyticsPage } from "./pages/analytics";
 
 // Login component
