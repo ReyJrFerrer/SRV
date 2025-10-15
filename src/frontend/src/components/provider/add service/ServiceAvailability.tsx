@@ -195,7 +195,7 @@ const TimeSlotInput: React.FC<{
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="mt-3 self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:mt-0 lg:ml-auto"
+        className="mt-3 self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:ml-auto lg:mt-0"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />
@@ -611,7 +611,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -635,7 +635,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -650,7 +650,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     onChange={(e) =>
                       handlePresetChange(allDays, e.target.checked)
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -688,7 +688,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                           type="checkbox"
                           checked={formData.availabilitySchedule.includes(day)}
                           onChange={() => handleDayToggle(day)}
-                          className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                          className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                           style={{ width: "1.2em", height: "1.2em" }}
                         />
                         <span className="px-2 text-base font-medium text-gray-700">
@@ -729,7 +729,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             />
             <label
               htmlFor="useSameTimeForAllDays"
-              className="ml-2 text-sm leading-relaxed font-medium text-gray-700 sm:text-base"
+              className="ml-2 text-sm font-medium leading-relaxed text-gray-700 sm:text-base"
             >
               Use the same working hours for all selected days
             </label>

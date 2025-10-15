@@ -57,7 +57,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   if (loading) {
     return (
       <span
-        className="mt-2 mb-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
+        className="mb-2 mt-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
         style={{ minWidth: 0 }}
       >
         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
@@ -68,7 +68,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   return (
     <span
-      className="text-md mt-2 mb-2 flex items-center gap-2 font-semibold text-gray-900"
+      className="text-md mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
       style={{ minWidth: 0 }}
     >
       <span>Reputation Score:</span>
@@ -458,7 +458,7 @@ const BookingDetailsPage: React.FC = () => {
   if (hookLoading || localLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -586,20 +586,20 @@ const BookingDetailsPage: React.FC = () => {
               </h3>
               <div className="space-y-3 text-base">
                 <div className="align-items-center flex items-start">
-                  <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                  <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                   <span>
                     <strong>Package:</strong> {packageName}
                   </span>
                 </div>
                 <div className="align-items-center flex items-start">
-                  <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                  <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                   <span>
                     <strong>Scheduled:</strong>{" "}
                     {formatDate(requestedDate || createdAt)}
                   </span>
                 </div>
                 <div className="align-items-center flex items-start">
-                  <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                  <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                   <span>
                     <strong>Location:</strong>{" "}
                     {(formattedLocation || "Not specified")
@@ -614,7 +614,7 @@ const BookingDetailsPage: React.FC = () => {
                 </div>
                 {price != null && (
                   <div className="align-items-center flex items-start">
-                    <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+                    <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 sm:h-5 sm:w-5" />
                     <span>
                       <strong>Payment:</strong> ₱
                       {(
@@ -630,7 +630,7 @@ const BookingDetailsPage: React.FC = () => {
 
           {/* Status pill positioned at top-right of the card */}
           <span
-            className={`absolute top-4 right-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
+            className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
             aria-label="Booking status"
           >
             {status?.replace("_", " ") || "Unknown"}

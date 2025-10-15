@@ -59,7 +59,7 @@ const ClientHomePage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
             {/* Girl character at the top */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/srv characters (SVG)/girl.svg"
                 alt="SRV Girl Character"
@@ -143,7 +143,7 @@ const ClientHomePage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
             {/* Computer guy character at the top */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/srv characters (SVG)/tech guy.svg"
                 alt="SRV Computer Guy Character"
@@ -466,7 +466,7 @@ const ClientHomePage: React.FC = () => {
        * <NotificationSettings />
        */}
 
-      <div className="w-full max-w-full px-4 pt-4 pb-16">
+      <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Header: displays welcome and location */}
         <Header className="mb-6 w-full max-w-full" />
         {/* Categories section */}

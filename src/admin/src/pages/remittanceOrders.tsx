@@ -276,21 +276,21 @@ export const RemittanceOrdersPage: React.FC = () => {
                 <button
                   onClick={() => refreshRemittanceOrders(true)}
                   disabled={isLoading}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
                   to="/remittance/analytics"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
                   Analytics
                 </Link>
                 <Link
                   to="/remittance"
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
                   Back
@@ -314,21 +314,21 @@ export const RemittanceOrdersPage: React.FC = () => {
             <button
               onClick={() => refreshRemittanceOrders(true)}
               disabled={isLoading}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
               to="/remittance/analytics"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
               Analytics
             </Link>
             <Link
               to="/remittance"
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:outline-none"
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
               Back
@@ -357,7 +357,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                 <input
                   type="text"
                   id="search"
-                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 pl-10 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                  className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                   placeholder="Search bookings..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -375,7 +375,7 @@ export const RemittanceOrdersPage: React.FC = () => {
               </label>
               <select
                 id="status"
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -397,7 +397,7 @@ export const RemittanceOrdersPage: React.FC = () => {
               </label>
               <select
                 id="provider"
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 value={providerFilter}
                 onChange={(e) => setProviderFilter(e.target.value)}
               >
@@ -420,7 +420,7 @@ export const RemittanceOrdersPage: React.FC = () => {
               </label>
               <select
                 id="date"
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
               >
@@ -441,7 +441,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                   setProviderFilter("");
                   setDateFilter("");
                 }}
-                className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 <FunnelIcon className="mr-2 h-4 w-4" />
                 Clear Filters
@@ -486,25 +486,25 @@ export const RemittanceOrdersPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-50/60">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Booking ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Provider
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Commission
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Created
                     </th>
-                    <th className="hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
+                    <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell">
                       Actions
                     </th>
                   </tr>
@@ -552,7 +552,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                       }}
                       aria-expanded={false}
                     >
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                         <div className="flex items-center">
                           <span>{order.id}</span>
                           <span className="ml-2 hidden text-xs text-gray-400 sm:hidden">
@@ -561,7 +561,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                           <ChevronRightIcon className="ml-3 h-4 w-4 text-gray-300 sm:hidden" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         <div>
                           <div className="font-medium text-gray-900">
                             {order.serviceProviderName || "Unknown Provider"}
@@ -571,13 +571,13 @@ export const RemittanceOrdersPage: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                         {formatCurrency(order.amount)}
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                         {formatCurrency(order.commissionAmount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap px-6 py-4">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
                         >
@@ -587,15 +587,15 @@ export const RemittanceOrdersPage: React.FC = () => {
                           </span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         {formatDate(order.createdAt)}
                       </td>
-                      <td className="hidden px-6 py-4 text-sm font-medium whitespace-nowrap sm:table-cell">
+                      <td className="hidden whitespace-nowrap px-6 py-4 text-sm font-medium sm:table-cell">
                         <div className="flex space-x-2">
                           {order.status === "AwaitingPayment" && (
                             <button
                               onClick={() => handleCancelOrder(order.id)}
-                              className="inline-flex items-center rounded-md border bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                              className="inline-flex items-center rounded-md border bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                             >
                               Cancel
                             </button>
@@ -604,7 +604,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                             <>
                               <button
                                 onClick={() => setSelectedOrder(order)}
-                                className="inline-flex items-center rounded-md border bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                                className="inline-flex items-center rounded-md border bg-indigo-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                               >
                                 View Proof
                               </button>
@@ -614,7 +614,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                                   setShowValidationModal(true);
                                   setValidationApproved(true);
                                 }}
-                                className="inline-flex items-center rounded-md border bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                                className="inline-flex items-center rounded-md border bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                               >
                                 Validate
                               </button>
@@ -770,7 +770,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                 <textarea
                   value={validationReason}
                   onChange={(e) => setValidationReason(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                   rows={3}
                   placeholder={
                     validationApproved
@@ -879,7 +879,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                       handleCancelOrder(selectedOrder.id);
                       setShowActionsModal(false);
                     }}
-                    className="inline-flex items-center justify-center rounded-md border bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                    className="inline-flex items-center justify-center rounded-md border bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                     Cancel Booking
                   </button>
@@ -891,7 +891,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                         // Keep behavior consistent with desktop
                         setSelectedOrder(selectedOrder);
                       }}
-                      className="inline-flex items-center justify-center rounded-md border bg-indigo-700 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                      className="inline-flex items-center justify-center rounded-md border bg-indigo-700 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                       View Proof
                     </button>
@@ -901,7 +901,7 @@ export const RemittanceOrdersPage: React.FC = () => {
                         setShowValidationModal(true);
                         setValidationApproved(true);
                       }}
-                      className="inline-flex items-center justify-center rounded-md border bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+                      className="inline-flex items-center justify-center rounded-md border bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                       Validate
                     </button>

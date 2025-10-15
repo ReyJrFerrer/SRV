@@ -166,7 +166,7 @@ const SearchResultsPage: React.FC = () => {
       <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
         {loading && (
           <div className="py-10 text-center text-gray-600">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
             Searching...
           </div>
         )}

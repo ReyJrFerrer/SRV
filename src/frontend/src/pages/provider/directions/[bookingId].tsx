@@ -835,7 +835,7 @@ const ProviderDirectionsPage: React.FC = () => {
         >
           <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <button
-              className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+              className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
               onClick={() => setShowStreetView(false)}
               aria-label="Close Street View"
             >
@@ -858,7 +858,7 @@ const ProviderDirectionsPage: React.FC = () => {
       )}
       {/* Floating button removed; recenter is in overlay */}
       {mapApiKey === "REPLACE_WITH_KEY" && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
+        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
           Missing Google Maps API key
         </div>
       )}
