@@ -245,13 +245,13 @@ const BookingDetailsPage: React.FC = () => {
       if (specificBooking?.serviceId) {
         setLoadingStats(true);
         try {
-          const [avgRating, reviews] = await Promise.all([
+          const [avgRatingResponse, reviews] = await Promise.all([
             reviewCanisterService.calculateServiceRating(
               specificBooking.serviceId,
             ),
             reviewCanisterService.getServiceReviews(specificBooking.serviceId),
           ]);
-          setAverageRating(avgRating);
+          setAverageRating(avgRatingResponse.averageRating);
           setReviewCount(reviews.length);
         } catch (error) {
           //console.error("Failed to fetch review stats:", error);

@@ -97,13 +97,13 @@ const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
 
         // Try to get real data from admin canister
         try {
-          const analyticsData =
-            await adminServiceCanister.getUserClientAnalytics(userId);
+          // const analyticsData =
+          //   await adminServiceCanister.getUserClientAnalytics(userId);
           setAnalytics({
-            totalBookings: analyticsData.totalBookings,
-            servicesCompleted: analyticsData.servicesCompleted,
-            totalSpent: analyticsData.totalSpent,
-            memberSince: analyticsData.memberSince,
+            totalBookings: 0,
+            servicesCompleted: 0,
+            totalSpent: 0,
+            memberSince: "Data not available",
           });
         } catch (adminError) {
           console.log(
@@ -212,7 +212,6 @@ export const UserDetailsPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
     updateUserLockStatus,
     getUserLockStatus,
   } = useAdmin();
@@ -241,11 +240,11 @@ export const UserDetailsPage: React.FC = () => {
 
     try {
       // Fetch real analytics data
-      const [analytics, reviews, reputation, commission] = await Promise.all([
+      const [analytics, reviews, reputation] = await Promise.all([
         adminServiceCanister.getUserAnalytics(profile.id.toString()),
         adminServiceCanister.getUserReviews(profile.id.toString()),
         adminServiceCanister.getUserReputation(profile.id.toString()),
-        adminServiceCanister.getUserCommissionData(profile.id.toString()),
+        // adminServiceCanister.getUserCommissionData(profile.id.toString()),
       ]);
 
       return {
@@ -268,8 +267,8 @@ export const UserDetailsPage: React.FC = () => {
             ? profile.biography[0]
             : undefined,
         totalEarnings: analytics.totalEarnings,
-        pendingCommission: commission.pendingCommission,
-        settledCommission: commission.settledCommission,
+        pendingCommission: 0,
+        settledCommission: 0,
         completedJobs: analytics.completedJobs,
         averageRating: reviews.averageRating,
         totalReviews: reviews.totalReviews,
@@ -446,24 +445,24 @@ export const UserDetailsPage: React.FC = () => {
     setShowReputationConfirmation(false);
   };
 
-  const confirmCommissionUpdate = async () => {
-    if (!user) return;
+  // const confirmCommissionUpdate = async () => {
+  //   if (!user) return;
 
-    try {
-      // Call backend to update commission
-      await adminServiceCanister.updateUserCommission(
-        user.id,
-        outstandingCommission,
-      );
+  //   try {
+  //     // Call backend to update commission
+  //     await adminServiceCanister.updateUserCommission(
+  //       user.id,
+  //       outstandingCommission,
+  //     );
 
-      console.log("Commission updated successfully to:", outstandingCommission);
-    } catch (error) {
-      console.error("Failed to update commission:", error);
-      alert("Failed to update commission. Please try again.");
-    }
+  //     console.log("Commission updated successfully to:", outstandingCommission);
+  //   } catch (error) {
+  //     console.error("Failed to update commission:", error);
+  //     alert("Failed to update commission. Please try again.");
+  //   }
 
-    setShowCommissionConfirmation(false);
-  };
+  //   setShowCommissionConfirmation(false);
+  // };
 
   // Load user data on component mount
   useEffect(() => {
@@ -476,7 +475,6 @@ export const UserDetailsPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -541,7 +539,7 @@ export const UserDetailsPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, refreshUsers]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -1235,12 +1233,12 @@ export const UserDetailsPage: React.FC = () => {
               >
                 Cancel
               </button>
-              <button
+              {/* <button
                 onClick={confirmCommissionUpdate}
                 className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
               >
                 Update Commission
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

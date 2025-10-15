@@ -3,7 +3,6 @@ import { Principal } from "@dfinity/principal";
 import { useAuth } from "../context/AuthContext";
 import walletCanisterService, {
   Transaction,
-  updateWalletActor,
 } from "../services/walletCanisterService";
 
 /**
@@ -13,6 +12,8 @@ export const useWallet = () => {
   const { isAuthenticated, identity } = useAuth();
 
   const [balance, setBalance] = useState<number>(0);
+  const [heldBalance, setHeldBalance] = useState<number>(0);
+  const [availableBalance, setAvailableBalance] = useState<number>(0);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
@@ -26,10 +27,7 @@ export const useWallet = () => {
 
   const TRANSACTIONS_PER_PAGE = 10;
 
-  // Update the wallet actor when authentication state changes
-  useEffect(() => {
-    updateWalletActor(identity);
-  }, [identity]);
+  // Firebase functions don't require actor management
 
   /**
    * Fetch wallet balance
@@ -37,21 +35,27 @@ export const useWallet = () => {
   const fetchBalance = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
       setLoading(false);
       return;
     }
 
     try {
       setError(null);
-      const currentBalance = await walletCanisterService.getBalanceOf(
-        identity.getPrincipal(),
+      const walletDetails = await walletCanisterService.getWalletDetails(
+        identity.getPrincipal().toString(),
       );
 
-      setBalance(currentBalance);
+      setBalance(walletDetails.balance);
+      setHeldBalance(walletDetails.heldBalance);
+      setAvailableBalance(walletDetails.availableBalance);
     } catch (err) {
       console.error("Failed to fetch wallet balance:", err);
       setError("Could not load wallet balance.");
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
     } finally {
       setLoading(false);
     }
@@ -70,7 +74,9 @@ export const useWallet = () => {
     try {
       setTransactionLoading(true);
       setError(null);
-      const history = await walletCanisterService.getTransactionHistory();
+      const history = await walletCanisterService.getTransactionHistory(
+        identity.getPrincipal().toString(),
+      );
       // Sort transactions by timestamp (newest first)
       const sortedTransactions = history.sort(
         (a, b) =>
@@ -130,7 +136,7 @@ export const useWallet = () => {
   const getBalanceOf = useCallback(
     async (principal: Principal): Promise<number> => {
       try {
-        return await walletCanisterService.getBalanceOf(principal);
+        return await walletCanisterService.getBalanceOf(principal.toString());
       } catch (err) {
         console.error("Failed to fetch balance for principal:", err);
         throw new Error("Could not load balance for the specified user.");
@@ -160,7 +166,11 @@ export const useWallet = () => {
         setTransferLoading(true);
         setError(null);
 
-        const transactionId = await walletCanisterService.transfer(to, amount);
+        const transactionId = await walletCanisterService.transfer(
+          identity.getPrincipal().toString(),
+          to.toString(),
+          amount,
+        );
 
         // Refresh balance and transactions after successful transfer
         await Promise.all([fetchBalance(), fetchTransactions()]);
@@ -189,7 +199,7 @@ export const useWallet = () => {
       amount: number,
       paymentChannel?: string,
       description?: string,
-    ): Promise<string> => {
+    ): Promise<number> => {
       if (!isAuthenticated || !identity) {
         throw new Error("Authentication required for crediting wallet");
       }
@@ -206,7 +216,7 @@ export const useWallet = () => {
          *
          */
         const result = await walletCanisterService.creditWallet(
-          principal,
+          principal.toString(),
           amount,
           paymentChannel,
           description,
@@ -258,7 +268,7 @@ export const useWallet = () => {
       if (!userPrincipal)
         return { type: "Unknown", color: "text-gray-500", sign: "" };
 
-      switch (transaction.transactionType) {
+      switch (transaction.transaction_type) {
         case "Credit":
           return {
             type: "Received",
@@ -290,9 +300,9 @@ export const useWallet = () => {
    */
   const hasSufficientBalance = useCallback(
     (amount: number): boolean => {
-      return balance >= amount;
+      return availableBalance >= amount;
     },
-    [balance],
+    [availableBalance],
   );
 
   // Initial data fetch
@@ -301,6 +311,8 @@ export const useWallet = () => {
       refreshWalletData();
     } else {
       setBalance(0);
+      setHeldBalance(0);
+      setAvailableBalance(0);
       setAllTransactions([]);
       setDisplayedTransactions([]);
       setLoading(false);
@@ -310,6 +322,8 @@ export const useWallet = () => {
   return {
     // State
     balance,
+    heldBalance,
+    availableBalance,
     transactions: displayedTransactions,
     loading,
     error,

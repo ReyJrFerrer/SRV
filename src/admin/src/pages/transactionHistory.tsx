@@ -25,11 +25,7 @@ interface UserData {
 const TransactionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    users: backendUsers,
-    refreshUsers,
-    initializeCanisterReferences,
-  } = useAdmin();
+  const { users: backendUsers, refreshUsers } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +57,6 @@ const TransactionHistoryPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           // The useEffect will run again when backendUsers updates
           return;
@@ -84,7 +79,7 @@ const TransactionHistoryPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, navigate, refreshUsers]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

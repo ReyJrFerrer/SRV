@@ -629,6 +629,7 @@ const ServiceDetailPage: React.FC = () => {
   }
 
   const { rating, providerName, name, category, location } = service;
+  console.log("Service Detail Page Component", service);
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;

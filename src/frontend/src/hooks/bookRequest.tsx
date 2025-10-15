@@ -26,8 +26,8 @@ export interface BookingRequest {
   }>;
   totalPrice: number;
   bookingType: "sameday" | "scheduled";
-  scheduledDate?: Date;
-  scheduledTime?: string;
+  scheduledDate: Date; // Required: represents the end time of the booking slot
+  scheduledTime: string; // Required: format "HH:MM-HH:MM" for start-end time
   location: string | Location;
   concerns?: string;
   notes?: string; // Optional notes for the booking
@@ -135,12 +135,13 @@ export const useBookRequest = (): UseBookRequestReturn => {
     async (serviceId: string): Promise<boolean> => {
       try {
         const now = new Date(); // Use actual current time
+        // Create today's date without changing the day of week
         const todayForBackend = new Date(
           now.getFullYear(),
           now.getMonth(),
           now.getDate(),
-          12,
-          0,
+          now.getHours(), // Use current hour instead of fixed 12
+          now.getMinutes(), // Use current minute
           0,
           0,
         );
@@ -201,11 +202,12 @@ export const useBookRequest = (): UseBookRequestReturn => {
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
         // IMPORTANT: Now using booking canister for availability (with conflict checking)
+        // Preserve the exact date without changing day of week
         const adjustedDate = new Date(
           date.getFullYear(),
           date.getMonth(),
           date.getDate(),
-          12,
+          9, // Use 9 AM as a safe default hour for date queries
           0,
           0,
           0,
@@ -241,11 +243,12 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         if (timeSlot.includes("-")) {
           // Handle time range, use start time
-          const startTime = timeSlot.split("-")[0];
+          const startTime = timeSlot.split("-")[0].trim();
           [hours, minutes] = startTime.split(":").map(Number);
         } else {
           // Handle single time
-          [hours, minutes] = timeSlot.split(":").map(Number);
+          const cleanTimeSlot = timeSlot.trim();
+          [hours, minutes] = cleanTimeSlot.split(":").map(Number);
         }
 
         if (isNaN(hours) || isNaN(minutes)) {
@@ -264,7 +267,31 @@ export const useBookRequest = (): UseBookRequestReturn => {
           0,
         );
 
-        // IMPORTANT: Using booking canister for availability check (with conflict checking)
+        // Debug logging
+        const currentTime = new Date();
+        const isToday = date.toDateString() === currentTime.toDateString();
+        console.log("🔍 [checkTimeSlotAvailability] Debug info:", {
+          originalTimeSlot: timeSlot,
+          parsedHours: hours,
+          parsedMinutes: minutes,
+          originalDate: date.toISOString(),
+          requestedDateTime: requestedDateTime.toISOString(),
+          dayOfWeek: requestedDateTime.getDay(),
+          dayName: [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ][requestedDateTime.getDay()],
+          isToday,
+          currentTime: currentTime.toISOString(),
+          timeDifferenceHours:
+            (requestedDateTime.getTime() - currentTime.getTime()) /
+            (1000 * 60 * 60),
+        }); // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(
             serviceId,
@@ -296,82 +323,66 @@ export const useBookRequest = (): UseBookRequestReturn => {
         // Format location
         const location = formatLocationForBooking(bookingData.location);
 
-        // Determine requested date with enhanced debugging
-        let requestedDate: Date;
+        // Parse the time slot (format: "HH:MM-HH:MM")
+        if (!bookingData.scheduledTime.includes("-")) {
+          throw new Error("Invalid time format. Expected format: HH:MM-HH:MM");
+        }
+
+        const [startTimeStr, endTimeStr] = bookingData.scheduledTime.split("-");
+        const [startHour, startMinute] = startTimeStr.split(":").map(Number);
+        const [endHour, endMinute] = endTimeStr.split(":").map(Number);
+
+        if (
+          isNaN(startHour) ||
+          isNaN(startMinute) ||
+          isNaN(endHour) ||
+          isNaN(endMinute)
+        ) {
+          throw new Error("Invalid time format");
+        }
+
+        // Determine the base date
+        let baseDate: Date;
         if (bookingData.bookingType === "sameday") {
-          // For same-day bookings, we need to use the current date with the selected time
-          requestedDate = new Date();
-
-          // If there's a scheduled time (which should be provided for same-day bookings too)
-          if (bookingData.scheduledTime) {
-            let startHour = requestedDate.getHours(); // Use current hour as default
-            let startMinute = requestedDate.getMinutes(); // Use current minute as default
-
-            try {
-              if (bookingData.scheduledTime.includes("-")) {
-                // Time range format: "09:00-10:00"
-                const [startTime] = bookingData.scheduledTime.split("-");
-                const [hour, minute] = startTime.split(":").map(Number);
-
-                if (!isNaN(hour) && !isNaN(minute)) {
-                  startHour = hour;
-                  startMinute = minute;
-                }
-              } else {
-                // Single time format: "09:00"
-                const [hour, minute] = bookingData.scheduledTime
-                  .split(":")
-                  .map(Number);
-
-                if (!isNaN(hour) && !isNaN(minute)) {
-                  startHour = hour;
-                  startMinute = minute;
-                }
-              }
-            } catch (timeParseError) {
-              //console.error("❌ Error parsing same-day time:", timeParseError);
-            }
-
-            requestedDate.setHours(startHour, startMinute, 0, 0);
-          }
-        } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
-          // Parse the time string (format: "HH:MM-HH:MM" or "HH:MM")
-          let startHour = 9; // default
-          let startMinute = 0; // default
-
-          try {
-            if (bookingData.scheduledTime.includes("-")) {
-              // Time range format: "09:00-10:00"
-              const [startTime] = bookingData.scheduledTime.split("-");
-              const [hour, minute] = startTime.split(":").map(Number);
-
-              if (!isNaN(hour) && !isNaN(minute)) {
-                startHour = hour;
-                startMinute = minute;
-              }
-            } else {
-              // Single time format: "09:00"
-              const [hour, minute] = bookingData.scheduledTime
-                .split(":")
-                .map(Number);
-
-              if (!isNaN(hour) && !isNaN(minute)) {
-                startHour = hour;
-                startMinute = minute;
-              }
-            }
-          } catch (timeParseError) {
-            //console.error("❌ Error parsing time:", timeParseError);
-            throw new Error("Invalid time format");
-          }
-
-          requestedDate = new Date(bookingData.scheduledDate);
-          requestedDate.setHours(startHour, startMinute, 0, 0);
+          const today = new Date();
+          baseDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            0,
+            0,
+            0,
+            0,
+          );
         } else {
-          throw new Error(
-            "Invalid booking data: missing date or time for scheduled booking",
+          baseDate = new Date(
+            bookingData.scheduledDate.getFullYear(),
+            bookingData.scheduledDate.getMonth(),
+            bookingData.scheduledDate.getDate(),
+            0,
+            0,
+            0,
+            0,
           );
         }
+
+        // requestedDate = start time of the booking slot
+        const requestedDate = new Date(baseDate);
+        requestedDate.setHours(startHour, startMinute, 0, 0);
+
+        // scheduledDate = end time of the booking slot (already provided in bookingData)
+        const scheduledDate = new Date(baseDate);
+        scheduledDate.setHours(endHour, endMinute, 0, 0);
+
+        // Debug logging
+        console.log("🔍 [createBookingRequest] Booking times:", {
+          bookingType: bookingData.bookingType,
+          scheduledTime: bookingData.scheduledTime,
+          requestedDate: requestedDate.toISOString(),
+          requestedDayOfWeek: requestedDate.getDay(),
+          scheduledDate: scheduledDate.toISOString(),
+          scheduledDayOfWeek: scheduledDate.getDay(),
+        });
 
         // Validate that totalPrice is a valid number
         const totalPrice = Number(bookingData.totalPrice);
@@ -394,6 +405,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           totalPrice, // This should now be a valid number
           location,
           requestedDate,
+          scheduledDate, // Pass the end time of the booking slot
           packageIds, // Send array of all package IDs
           bookingData.notes, // Pass the notes to the booking
           bookingData.amountToPay,
@@ -435,14 +447,21 @@ export const useBookRequest = (): UseBookRequestReturn => {
       errors.push("Total price must be greater than 0");
     }
 
-    if (bookingData.bookingType === "scheduled") {
-      if (!bookingData.scheduledDate) {
-        errors.push("Scheduled date is required");
-      }
-      if (!bookingData.scheduledTime) {
-        errors.push("Scheduled time is required");
-      }
+    // scheduledDate and scheduledTime are required for both same-day and scheduled bookings
+    if (!bookingData.scheduledDate) {
+      errors.push("Scheduled date is required");
+    }
 
+    if (!bookingData.scheduledTime) {
+      errors.push("Scheduled time is required");
+    }
+
+    // Validate time format (should be "HH:MM-HH:MM")
+    if (bookingData.scheduledTime && !bookingData.scheduledTime.includes("-")) {
+      errors.push("Invalid time format. Expected format: HH:MM-HH:MM");
+    }
+
+    if (bookingData.bookingType === "scheduled") {
       // Validate that scheduled date is in the future
       if (
         bookingData.scheduledDate &&

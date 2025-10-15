@@ -260,17 +260,69 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   // Helper function to check for time validation errors
   const getTimeValidationErrors = (timeSlots: TimeSlotUIData[]) => {
     const errors: string[] = [];
-    timeSlots.forEach((slot) => {
+
+    // Sort time slots by start time for proper validation
+    const sortedSlots = [...timeSlots].sort((a, b) => {
+      const aStart = toDate(a.startHour, a.startMinute, a.startPeriod);
+      const bStart = toDate(b.startHour, b.startMinute, b.startPeriod);
+      return aStart.getTime() - bStart.getTime();
+    });
+
+    sortedSlots.forEach((slot, index) => {
       const startTime = toDate(
         slot.startHour,
         slot.startMinute,
         slot.startPeriod,
       );
       const endTime = toDate(slot.endHour, slot.endMinute, slot.endPeriod);
+
+      // Check if start and end times are the same
       if (startTime.getTime() === endTime.getTime()) {
         errors.push("Start and end times cannot be the same");
       }
+
+      // Check if start time is after end time
+      if (startTime.getTime() > endTime.getTime()) {
+        errors.push("Start time cannot be after end time");
+      }
+
+      // Check for minimum 1-hour gap between consecutive time slots
+      if (index > 0) {
+        const prevSlot = sortedSlots[index - 1];
+        const prevEndTime = toDate(
+          prevSlot.endHour,
+          prevSlot.endMinute,
+          prevSlot.endPeriod,
+        );
+
+        // Calculate the time difference in milliseconds
+        const timeDiff = startTime.getTime() - prevEndTime.getTime();
+        const oneHourInMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+        if (timeDiff < oneHourInMs) {
+          const prevEndTimeStr = `${prevSlot.endHour}:${prevSlot.endMinute} ${prevSlot.endPeriod}`;
+          const currentStartTimeStr = `${slot.startHour}:${slot.startMinute} ${slot.startPeriod}`;
+          errors.push(
+            `Time slots must have at least 1 hour gap. Previous slot ends at ${prevEndTimeStr}, current slot starts at ${currentStartTimeStr}`,
+          );
+        }
+      }
+
+      // Check for overlapping time slots
+      if (index > 0) {
+        const prevSlot = sortedSlots[index - 1];
+        const prevEndTime = toDate(
+          prevSlot.endHour,
+          prevSlot.endMinute,
+          prevSlot.endPeriod,
+        );
+
+        if (startTime.getTime() < prevEndTime.getTime()) {
+          errors.push("Time slots cannot overlap");
+        }
+      }
     });
+
     return [...new Set(errors)]; // Remove duplicates
   };
 
@@ -703,6 +755,17 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 <PlusCircleIcon className="h-5 w-5" />
                 Add Time Slot
               </button>
+              {/* Error messages for common time slots */}
+              {getTimeValidationErrors(formData.commonTimeSlots).map(
+                (error, index) => (
+                  <div
+                    key={index}
+                    className="mt-2 flex items-center gap-2 text-sm text-red-600"
+                  >
+                    <span>⚠️ {error}</span>
+                  </div>
+                ),
+              )}
             </div>
           ) : (
             <div className="space-y-6">

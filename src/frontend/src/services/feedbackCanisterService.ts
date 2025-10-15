@@ -1,9 +1,11 @@
-// Feedback Canister Service
-import { Principal } from "@dfinity/principal";
-import { canisterId, createActor } from "../../../declarations/feedback";
-import { canisterId as authCanisterId } from "../../../declarations/auth";
-import type { _SERVICE as FeedbackService } from "../../../declarations/feedback/feedback.did";
-import { Identity } from "@dfinity/agent";
+// Feedback Service (Firebase Cloud Functions)
+import { httpsCallable } from "firebase/functions";
+import { initializeFirebase } from "./firebaseApp";
+
+// Initialize Firebase
+const { functions } = initializeFirebase();
+
+// Firebase authentication will be handled automatically by httpsCallable functions
 
 // Frontend-compatible interfaces
 export interface AppFeedback {
@@ -13,7 +15,7 @@ export interface AppFeedback {
   userPhone: string;
   rating: number; // 1-5 stars
   comment?: string; // Optional written review
-  createdAt: Date;
+  createdAt: string; // ISO string from Firebase
 }
 
 export interface FeedbackStats {
@@ -24,18 +26,14 @@ export interface FeedbackStats {
   latestFeedback?: AppFeedback;
 }
 
-export interface SubmitFeedbackRequest {
-  rating: number;
-  comment?: string;
-}
-
 export interface AppReport {
   id: string;
   userId: string;
   userName: string;
   userPhone: string;
   description: string;
-  createdAt: Date;
+  status?: string; // Admin-managed status: "open", "in_progress", "resolved", "closed"
+  createdAt: string; // ISO string from Firebase
 }
 
 export interface ReportStats {
@@ -43,153 +41,497 @@ export interface ReportStats {
   latestReport?: AppReport;
 }
 
-export interface SubmitReportRequest {
-  description: string;
-}
-
-/**
- * Creates a feedback actor with the provided identity
- * @param identity The user's identity from AuthContext
- * @returns An authenticated FeedbackService actor
- */
-const createFeedbackActor = (identity?: Identity | null): FeedbackService => {
-  return createActor(canisterId, {
-    agentOptions: {
-      identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
-    },
-  }) as FeedbackService;
-};
-
-// Singleton actor instance with identity tracking
-let feedbackActor: FeedbackService | null = null;
-let currentIdentity: Identity | null = null;
-
-/**
- * Gets or creates the feedback actor with the current identity
- * @param identity The user's identity
- * @returns The feedback actor instance
- */
-const getFeedbackActor = (identity?: Identity | null): FeedbackService => {
-  // Create new actor if identity changed or doesn't exist
-  if (!feedbackActor || currentIdentity !== identity) {
-    feedbackActor = createFeedbackActor(identity);
-    currentIdentity = identity ?? null; // Convert undefined to null
-  }
-  return feedbackActor;
-};
-
-/**
- * Converts backend AppFeedback to frontend format
- */
-const adaptBackendFeedback = (backendFeedback: any): AppFeedback => {
-  return {
-    id: backendFeedback.id,
-    userId: backendFeedback.userId.toText(),
-    userName: backendFeedback.userName,
-    userPhone: backendFeedback.userPhone,
-    rating: Number(backendFeedback.rating),
-    comment: backendFeedback.comment?.[0] || undefined,
-    createdAt: new Date(Number(backendFeedback.createdAt) / 1_000_000), // Convert from nanoseconds
-  };
-};
-
-/**
- * Converts backend AppReport to frontend format
- */
-const adaptBackendReport = (backendReport: any): AppReport => {
-  return {
-    id: backendReport.id,
-    userId: backendReport.userId.toText(),
-    userName: backendReport.userName,
-    userPhone: backendReport.userPhone,
-    description: backendReport.description,
-    createdAt: new Date(Number(backendReport.createdAt) / 1_000_000), // Convert from nanoseconds
-  };
-};
+// Firebase feedback data is already in the correct format, no conversion needed
 
 // Feedback Service Functions
+export const feedbackCanisterService = {
+  /**
+   * Submit feedback
+   */
+  async submitFeedback(rating: number, comment?: string): Promise<AppFeedback> {
+    console.log("🚀 [feedbackCanisterService] submitFeedback called with:", {
+      rating,
+      comment,
+    });
+    try {
+      const submitFeedbackFn = httpsCallable(functions, "submitFeedback");
 
-/**
- * Initialize feedback canister with required references
- * @param identity User identity
- */
-export const initializeFeedbackCanister = async (
-  identity?: Identity | null,
-): Promise<void> => {
-  try {
-    const actor = getFeedbackActor(identity);
+      const result = await submitFeedbackFn({
+        data: { rating, comment },
+      });
 
-    // Set canister references (auth canister)
-    await actor.setCanisterReferences([Principal.fromText(authCanisterId)]);
-    //console.log("Feedback canister initialized successfully");
-  } catch (error) {
-    //console.error("Failed to initialize feedback canister:", error);
-    throw error;
-  }
-};
+      console.log(
+        "✅ [feedbackCanisterService] submitFeedback raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppFeedback;
+      };
+      console.log(
+        "✅ [feedbackCanisterService] submitFeedback extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error submitting feedback:",
+        error,
+      );
+      throw new Error(`Failed to submit feedback: ${error}`);
+    }
+  },
 
-/**
- * Submit user feedback
- * @param request The feedback submission request
- * @param identity User identity
- * @returns The created feedback
- */
-export const submitFeedback = async (
-  request: SubmitFeedbackRequest,
-  identity?: Identity | null,
-): Promise<AppFeedback> => {
-  try {
-    const actor = getFeedbackActor(identity);
+  /**
+   * Get all feedback (admin function)
+   */
+  async getAllFeedback(): Promise<AppFeedback[]> {
+    console.log("🚀 [feedbackCanisterService] getAllFeedback called");
+    try {
+      const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
 
-    const result = await actor.submitFeedback(
-      BigInt(request.rating),
-      request.comment ? [request.comment] : [],
+      const result = await getAllFeedbackFn({
+        data: {},
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getAllFeedback raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppFeedback[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getAllFeedback extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting all feedback:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Get my feedback
+   */
+  async getMyFeedback(): Promise<AppFeedback[]> {
+    console.log("🚀 [feedbackCanisterService] getMyFeedback called");
+    try {
+      const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
+
+      const result = await getMyFeedbackFn({
+        data: {},
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getMyFeedback raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppFeedback[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getMyFeedback extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting my feedback:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Get feedback statistics
+   */
+  async getFeedbackStats(): Promise<FeedbackStats> {
+    console.log("🚀 [feedbackCanisterService] getFeedbackStats called");
+    try {
+      const getFeedbackStatsFn = httpsCallable(functions, "getFeedbackStats");
+
+      const result = await getFeedbackStatsFn({
+        data: {},
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getFeedbackStats raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: FeedbackStats;
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getFeedbackStats extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting feedback stats:",
+        error,
+      );
+      throw new Error(`Failed to get feedback stats: ${error}`);
+    }
+  },
+
+  /**
+   * Get feedback by ID
+   */
+  async getFeedbackById(feedbackId: string): Promise<AppFeedback> {
+    console.log("🚀 [feedbackCanisterService] getFeedbackById called with:", {
+      feedbackId,
+    });
+    try {
+      const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
+
+      const result = await getFeedbackByIdFn({
+        data: { feedbackId },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getFeedbackById raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppFeedback;
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getFeedbackById extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting feedback by ID:",
+        error,
+      );
+      throw new Error(`Failed to get feedback by ID: ${error}`);
+    }
+  },
+
+  /**
+   * Get recent feedback (limited number)
+   */
+  async getRecentFeedback(limit: number): Promise<AppFeedback[]> {
+    console.log("🚀 [feedbackCanisterService] getRecentFeedback called with:", {
+      limit,
+    });
+    try {
+      const getRecentFeedbackFn = httpsCallable(functions, "getRecentFeedback");
+
+      const result = await getRecentFeedbackFn({
+        data: { limit },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getRecentFeedback raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppFeedback[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getRecentFeedback extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting recent feedback:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  // ========== REPORT FUNCTIONS ==========
+
+  /**
+   * Submit report
+   */
+  async submitReport(description: string): Promise<AppReport> {
+    console.log("🚀 [feedbackCanisterService] submitReport called with:", {
+      description,
+    });
+    try {
+      const submitReportFn = httpsCallable(functions, "submitReport");
+
+      const result = await submitReportFn({
+        data: { description },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] submitReport raw result:",
+        result,
+      );
+      const responseData = result.data as { success: boolean; data: AppReport };
+      console.log(
+        "✅ [feedbackCanisterService] submitReport extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error submitting report:",
+        error,
+      );
+      throw new Error(`Failed to submit report: ${error}`);
+    }
+  },
+
+  /**
+   * Get all reports (admin function)
+   */
+  async getAllReports(): Promise<AppReport[]> {
+    console.log("🚀 [feedbackCanisterService] getAllReports called");
+    try {
+      const getAllReportsFn = httpsCallable(functions, "getAllReports");
+
+      const result = await getAllReportsFn({
+        data: { data: {} },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getAllReports raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppReport[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getAllReports extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting all reports:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Get my reports
+   */
+  async getMyReports(): Promise<AppReport[]> {
+    console.log("🚀 [feedbackCanisterService] getMyReports called");
+    try {
+      const getMyReportsFn = httpsCallable(functions, "getMyReports");
+
+      const result = await getMyReportsFn({
+        data: {},
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getMyReports raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppReport[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getMyReports extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting my reports:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Update report status (admin function)
+   */
+  async updateReportStatus(
+    reportId: string,
+    newStatus: string,
+  ): Promise<AppReport> {
+    console.log(
+      "🚀 [feedbackCanisterService] updateReportStatus called with:",
+      {
+        reportId,
+        newStatus,
+      },
     );
+    try {
+      const updateReportStatusFn = httpsCallable(
+        functions,
+        "updateReportStatus",
+      );
 
-    if ("ok" in result) {
-      return adaptBackendFeedback(result.ok);
-    } else {
-      throw new Error(result.err);
+      const result = await updateReportStatusFn({
+        data: { reportId, newStatus },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] updateReportStatus raw result:",
+        result,
+      );
+      const responseData = result.data as { success: boolean; data: AppReport };
+      console.log(
+        "✅ [feedbackCanisterService] updateReportStatus extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error updating report status:",
+        error,
+      );
+      throw new Error(`Failed to update report status: ${error}`);
     }
-  } catch (error) {
-    //console.error("Failed to submit feedback:", error);
-    throw error;
-  }
-};
+  },
 
-/**
- * Submit user report
- * @param request The report submission request
- * @param identity User identity
- * @returns The created report
- */
-export const submitReport = async (
-  request: SubmitReportRequest,
-  identity?: Identity | null,
-): Promise<AppReport> => {
-  try {
-    const actor = getFeedbackActor(identity);
+  /**
+   * Get report statistics
+   */
+  async getReportStats(): Promise<ReportStats> {
+    console.log("🚀 [feedbackCanisterService] getReportStats called");
+    try {
+      const getReportStatsFn = httpsCallable(functions, "getReportStats");
 
-    const result = await actor.submitReport(request.description);
+      const result = await getReportStatsFn({
+        data: {},
+      });
 
-    if ("ok" in result) {
-      return adaptBackendReport(result.ok);
-    } else {
-      throw new Error(result.err);
+      console.log(
+        "✅ [feedbackCanisterService] getReportStats raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: ReportStats;
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getReportStats extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting report stats:",
+        error,
+      );
+      throw new Error(`Failed to get report stats: ${error}`);
     }
-  } catch (error) {
-    //console.error("Failed to submit report:", error);
-    throw error;
-  }
+  },
+
+  /**
+   * Get report by ID
+   */
+  async getReportById(reportId: string): Promise<AppReport> {
+    console.log("🚀 [feedbackCanisterService] getReportById called with:", {
+      reportId,
+    });
+    try {
+      const getReportByIdFn = httpsCallable(functions, "getReportById");
+
+      const result = await getReportByIdFn({
+        data: { data: { reportId } },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getReportById raw result:",
+        result,
+      );
+      const responseData = result.data as { success: boolean; data: AppReport };
+      console.log(
+        "✅ [feedbackCanisterService] getReportById extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting report by ID:",
+        error,
+      );
+      throw new Error(`Failed to get report by ID: ${error}`);
+    }
+  },
+
+  /**
+   * Get recent reports (limited number)
+   */
+  async getRecentReports(limit: number): Promise<AppReport[]> {
+    console.log("🚀 [feedbackCanisterService] getRecentReports called with:", {
+      limit,
+    });
+    try {
+      const getRecentReportsFn = httpsCallable(functions, "getRecentReports");
+
+      const result = await getRecentReportsFn({
+        data: { limit },
+      });
+
+      console.log(
+        "✅ [feedbackCanisterService] getRecentReports raw result:",
+        result,
+      );
+      const responseData = result.data as {
+        success: boolean;
+        data: AppReport[];
+      };
+      console.log(
+        "✅ [feedbackCanisterService] getRecentReports extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting recent reports:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
+
+  /**
+   * Get top rated feedback
+   */
+  async getTopRatedFeedback(limit: number = 10): Promise<AppFeedback[]> {
+    try {
+      const allFeedback = await this.getAllFeedback();
+      const sortedFeedback = allFeedback.sort((a, b) => {
+        if (a.rating !== b.rating) {
+          return b.rating - a.rating;
+        }
+        // If ratings are equal, sort by creation date (newest first)
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      return sortedFeedback.slice(0, limit);
+    } catch (error) {
+      console.error(
+        "❌ [feedbackCanisterService] Error getting top rated feedback:",
+        error,
+      );
+      return []; // Return empty array on error
+    }
+  },
 };
 
-export default {
-  initializeFeedbackCanister,
-  submitFeedback,
-  submitReport,
-};
+// Firebase functions don't require actor management or reset functionality
+
+export default feedbackCanisterService;

@@ -64,7 +64,7 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const { invoiceId } = req.body.data;
+    const {invoiceId} = req.body.data;
 
     if (!invoiceId) {
       return res.status(400).json({
@@ -119,3 +119,4 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
     });
   }
 });
+

@@ -110,10 +110,7 @@ const ClientHomePage: React.FC = () => {
                   }
 
                   try {
-                    await submitFeedback({
-                      rating: feedbackRating,
-                      comment: feedbackComment.trim() || undefined,
-                    });
+                    await submitFeedback(feedbackRating, feedbackComment);
 
                     // Reset form
                     setFeedbackRating(0);

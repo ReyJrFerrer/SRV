@@ -1,9 +1,9 @@
-// Feedback Canister Service
-import { Principal } from "@dfinity/principal";
-import { canisterId, createActor } from "../../../declarations/feedback";
-import { canisterId as authCanisterId } from "../../../declarations/auth";
-import type { _SERVICE as FeedbackService } from "../../../declarations/feedback/feedback.did";
-import { Identity } from "@dfinity/agent";
+// Feedback Firebase Service
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
+
+// Get Firebase Functions instance from singleton
+const functions = getFirebaseFunctions();
 
 // Frontend-compatible interfaces
 export interface AppFeedback {
@@ -29,148 +29,87 @@ export interface SubmitFeedbackRequest {
   comment?: string;
 }
 
-/**
- * Creates a feedback actor with the provided identity
- * @param identity The user's identity from AuthContext
- * @returns An authenticated FeedbackService actor
- */
-const createFeedbackActor = (identity?: Identity | null): FeedbackService => {
-  return createActor(canisterId, {
-    agentOptions: {
-      identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
-    },
-  }) as FeedbackService;
-};
-
-// Singleton actor instance with identity tracking
-let feedbackActor: FeedbackService | null = null;
-let currentIdentity: Identity | null = null;
-
-/**
- * Gets or creates the feedback actor with the current identity
- * @param identity The user's identity
- * @returns The feedback actor instance
- */
-const getFeedbackActor = (identity?: Identity | null): FeedbackService => {
-  // Create new actor if identity changed or doesn't exist
-  if (!feedbackActor || currentIdentity !== identity) {
-    feedbackActor = createFeedbackActor(identity);
-    currentIdentity = identity ?? null; // Convert undefined to null
-  }
-  return feedbackActor;
-};
-
-/**
- * Converts backend AppFeedback to frontend format
- */
-const adaptBackendFeedback = (backendFeedback: any): AppFeedback => {
-  return {
-    id: backendFeedback.id,
-    userId: backendFeedback.userId.toText(),
-    userName: backendFeedback.userName,
-    userPhone: backendFeedback.userPhone,
-    rating: Number(backendFeedback.rating),
-    comment: backendFeedback.comment?.[0] || undefined,
-    createdAt: new Date(Number(backendFeedback.createdAt) / 1_000_000), // Convert from nanoseconds
-  };
-};
-
-/**
- * Converts backend FeedbackStats to frontend format
- */
-const adaptBackendFeedbackStats = (backendStats: any): FeedbackStats => {
-  return {
-    totalFeedback: Number(backendStats.totalFeedback),
-    averageRating: Number(backendStats.averageRating),
-    ratingDistribution: backendStats.ratingDistribution.map(
-      ([rating, count]: [any, any]) => [Number(rating), Number(count)],
-    ),
-    totalWithComments: Number(backendStats.totalWithComments),
-    latestFeedback: backendStats.latestFeedback?.[0]
-      ? adaptBackendFeedback(backendStats.latestFeedback[0])
-      : undefined,
-  };
+// Helper function to convert Firebase timestamps to Date
+const convertToDate = (timestamp: any): Date => {
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === "string") return new Date(timestamp);
+  if (typeof timestamp === "number") return new Date(timestamp);
+  return new Date();
 };
 
 // Feedback Service Functions
 
 /**
- * Initialize feedback canister with required references
- * @param identity User identity
- */
-export const initializeFeedbackCanister = async (
-  identity?: Identity | null,
-): Promise<void> => {
-  try {
-    const actor = getFeedbackActor(identity);
-
-    // Set canister references (auth canister)
-    await actor.setCanisterReferences([Principal.fromText(authCanisterId)]);
-    //console.log("Feedback canister initialized successfully");
-  } catch (error) {
-    ///console.error("Failed to initialize feedback canister:", error);
-    throw error;
-  }
-};
-
-/**
  * Get all feedback (admin function)
- * @param identity User identity
  * @returns Array of all feedback
  */
-export const getAllFeedback = async (
-  identity?: Identity | null,
-): Promise<AppFeedback[]> => {
+export const getAllFeedback = async (): Promise<AppFeedback[]> => {
   try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getAllFeedback();
+    const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
+    const result = await getAllFeedbackFn({ data: {} });
+    console.log(result);
 
-    return backendFeedback.map(adaptBackendFeedback);
+    const data = result.data as { success: boolean; feedback: AppFeedback[] };
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
-    //console.error("Failed to get all feedback:", error);
+    console.error("Failed to get all feedback:", error);
     throw error;
   }
 };
 
 /**
  * Get current user's feedback
- * @param identity User identity
  * @returns Array of user's feedback
  */
-export const getMyFeedback = async (
-  identity?: Identity | null,
-): Promise<AppFeedback[]> => {
+export const getMyFeedback = async (): Promise<AppFeedback[]> => {
   try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getMyFeedback();
+    const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
+    const result = await getMyFeedbackFn({ data: {} });
+    console.log(result);
 
-    return backendFeedback.map(adaptBackendFeedback);
+    const data = result.data as { success: boolean; feedback: AppFeedback[] };
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
-    //console.error("Failed to get user feedback:", error);
+    console.error("Failed to get user feedback:", error);
     throw error;
   }
 };
 
 /**
  * Get feedback statistics
- * @param identity User identity
  * @returns Feedback statistics
  */
-export const getFeedbackStats = async (
-  identity?: Identity | null,
-): Promise<FeedbackStats> => {
+export const getFeedbackStats = async (): Promise<FeedbackStats> => {
   try {
-    const actor = getFeedbackActor(identity);
-    const backendStats = await actor.getFeedbackStats();
+    const getFeedbackStatsFn = httpsCallable(functions, "getFeedbackStats");
+    const result = await getFeedbackStatsFn({ data: {} });
+    console.log(result);
 
-    return adaptBackendFeedbackStats(backendStats);
+    const data = result.data as { success: boolean; stats: FeedbackStats };
+    if (data.success && data.stats) {
+      return {
+        ...data.stats,
+        latestFeedback: data.stats.latestFeedback
+          ? {
+              ...data.stats.latestFeedback,
+              createdAt: convertToDate(data.stats.latestFeedback.createdAt),
+            }
+          : undefined,
+      };
+    }
+    throw new Error("Failed to get feedback stats");
   } catch (error) {
-    //console.error("Failed to get feedback stats:", error);
+    console.error("Failed to get feedback stats:", error);
     throw error;
   }
 };
@@ -178,20 +117,25 @@ export const getFeedbackStats = async (
 /**
  * Get recent feedback with a limit
  * @param limit Maximum number of feedback items to return
- * @param identity User identity
  * @returns Array of recent feedback
  */
 export const getRecentFeedback = async (
   limit: number,
-  identity?: Identity | null,
 ): Promise<AppFeedback[]> => {
   try {
-    const actor = getFeedbackActor(identity);
-    const backendFeedback = await actor.getRecentFeedback(BigInt(limit));
+    const getRecentFeedbackFn = httpsCallable(functions, "getRecentFeedback");
+    const result = await getRecentFeedbackFn({ limit });
+    console.log(result);
 
-    return backendFeedback.map(adaptBackendFeedback);
+    const data = result.data as { success: boolean; feedback: AppFeedback[] };
+    return data.success
+      ? data.feedback.map((f) => ({
+          ...f,
+          createdAt: convertToDate(f.createdAt),
+        }))
+      : [];
   } catch (error) {
-    //console.error("Failed to get recent feedback:", error);
+    console.error("Failed to get recent feedback:", error);
     throw error;
   }
 };
@@ -199,30 +143,31 @@ export const getRecentFeedback = async (
 /**
  * Get feedback by ID
  * @param feedbackId The feedback ID
- * @param identity User identity
  * @returns The feedback item
  */
 export const getFeedbackById = async (
   feedbackId: string,
-  identity?: Identity | null,
 ): Promise<AppFeedback> => {
   try {
-    const actor = getFeedbackActor(identity);
-    const result = await actor.getFeedbackById(feedbackId);
+    const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
+    const result = await getFeedbackByIdFn({ feedbackId });
+    console.log(result);
 
-    if ("ok" in result) {
-      return adaptBackendFeedback(result.ok);
-    } else {
-      throw new Error(result.err);
+    const data = result.data as { success: boolean; feedback: AppFeedback };
+    if (data.success && data.feedback) {
+      return {
+        ...data.feedback,
+        createdAt: convertToDate(data.feedback.createdAt),
+      };
     }
+    throw new Error("Feedback not found");
   } catch (error) {
-    //console.error("Failed to get feedback by ID:", error);
+    console.error("Failed to get feedback by ID:", error);
     throw error;
   }
 };
 
 export default {
-  initializeFeedbackCanister,
   getAllFeedback,
   getMyFeedback,
   getFeedbackStats,

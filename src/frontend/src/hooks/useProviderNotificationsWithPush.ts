@@ -21,7 +21,8 @@ export interface ProviderNotification {
     | "booking_cancelled"
     | "booking_rescheduled"
     | "client_no_show"
-    | "payment_issue";
+    | "payment_issue"
+    | "service_reminder";
   timestamp: string;
   read: boolean;
   href: string;
@@ -192,11 +193,6 @@ export const useProviderNotificationsWithPush = () => {
     initializeIntegration();
   }, [identity, pwaState.pushSubscribed]);
 
-  // Update push status when it changes
-  useEffect(() => {
-    notificationIntegrationService.updatePushStatus(pwaState.pushSubscribed);
-  }, [pwaState.pushSubscribed]);
-
   // Subscribe to the provider notification store
   useEffect(() => {
     const unsubscribe = providerNotificationStore.subscribe(() => {
@@ -277,37 +273,15 @@ export const useProviderNotificationsWithPush = () => {
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
 
-      // Handle push notifications for new notifications
+      // Note: Push notifications are now sent automatically by Firebase Cloud Functions
+      // when notifications are created. No need to send them from frontend.
+      // Just track which notifications we've seen before
       if (pwaState.pushSubscribed) {
         const currentNotificationIds = new Set(
           allNotifications.map((n) => n.id),
         );
-        const newNotificationIds = Array.from(currentNotificationIds).filter(
-          (id) => !previousNotificationIdsRef.current.has(id),
-        );
 
-        if (newNotificationIds.length > 0) {
-          const newNotifications = allNotifications.filter(
-            (n) => newNotificationIds.includes(n.id) && !n.read,
-          );
-
-          // Send push notifications for new notifications
-          if (newNotifications.length > 0) {
-            notificationIntegrationService
-              .sendProviderNotificationsBatch(newNotifications)
-              .then((successCount) => {
-                console.log(`Sent ${successCount} provider push notifications`);
-              })
-              .catch((error) => {
-                console.error(
-                  "Error sending provider push notifications:",
-                  error,
-                );
-              });
-          }
-        }
-
-        // Update the previous notification IDs
+        // Update the previous notification IDs for next comparison
         previousNotificationIdsRef.current = currentNotificationIds;
       }
 

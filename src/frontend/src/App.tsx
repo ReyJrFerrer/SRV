@@ -4,48 +4,72 @@ import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
-import { AccountLockedModal } from "./components/AccountLockedModal";
+import Contact from "./components/Contact";
+import { initializeFirebase } from "./services/firebaseApp";
 
-type CurrentView = "main" | "about";
+// Initialize Firebase as early as possible
+try {
+  initializeFirebase();
+} catch (error) {
+  console.error("Failed to initialize Firebase in App.tsx:", error);
+}
+
+type CurrentView = "main" | "about" | "contact";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, identity, login, isLoading } = useAuth();
+  const { isAuthenticated, identity, firebaseUser, login, isLoading } =
+    useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
-  const [showAccountLockedModal, setShowAccountLockedModal] = useState(false);
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
-      if (isAuthenticated && identity) {
+      // CRITICAL: Only check profile if BOTH IC and Firebase auth are ready
+      if (isAuthenticated && identity && firebaseUser) {
         setIsCheckingProfile(true);
 
         try {
           const profile = await authCanisterService.getMyProfile();
-          if (profile) {
-            if (profile.activeRole === "Client") navigate("/client/home");
-            else if (profile.activeRole === "ServiceProvider")
+
+          // If profile exists, redirect based on role
+          if (profile && profile.name && profile.phone) {
+            if (profile.activeRole === "Client") {
+              navigate("/client/home");
+            } else if (profile.activeRole === "ServiceProvider") {
               navigate("/provider/home");
-            else navigate("/create-profile");
+            } else {
+              // Profile exists but no valid role - go to create profile
+              navigate("/create-profile");
+            }
           } else {
+            // No profile or incomplete profile - go to create profile
+            console.log(
+              "No complete profile found, redirecting to create profile",
+            );
             navigate("/create-profile");
           }
         } catch (err) {
-          // Check if account is locked
-          if (err instanceof Error && err.message === "ACCOUNT_LOCKED") {
-            setShowAccountLockedModal(true);
-          }
-          //console.error("Profile check error:", err);
+          // Any error (including "Profile not found") - go to create profile
+          console.log(
+            "Error fetching profile, redirecting to create profile:",
+            err,
+          );
+          navigate("/create-profile");
         } finally {
           setIsCheckingProfile(false);
         }
+      } else if (isAuthenticated && identity && !firebaseUser) {
+        // IC auth ready but Firebase not ready yet - keep loading
+        console.log("Waiting for Firebase auth...");
+        setIsCheckingProfile(true);
       } else {
-        // If not authenticated, we are done checking.
+        // Not authenticated - done checking
         setIsCheckingProfile(false);
       }
     };
     checkProfileAndRedirect();
-  }, [isAuthenticated, identity, navigate]);
+  }, [isAuthenticated, identity, firebaseUser, navigate]);
 
   // Show a loading indicator while checking the user's session.
   if (isCheckingProfile) {
@@ -64,6 +88,9 @@ const LandingPage = () => {
   const handleNavigateToMain = () => {
     setCurrentView("main");
   };
+  const handleNavigateToContact = () => {
+    setCurrentView("contact");
+  };
 
   return (
     <main className="bg-gray-50">
@@ -72,6 +99,7 @@ const LandingPage = () => {
           onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToAbout={handleNavigateToAbout}
+          onNavigateToContact={handleNavigateToContact}
         />
       )}
 
@@ -80,12 +108,17 @@ const LandingPage = () => {
           onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToMain={handleNavigateToMain}
+          onNavigateToContact={handleNavigateToContact}
         />
       )}
 
-      {/* Account Locked Modal */}
-      {showAccountLockedModal && (
-        <AccountLockedModal onClose={() => setShowAccountLockedModal(false)} />
+      {currentView === "contact" && (
+        <Contact
+          onLoginClick={login}
+          isLoginLoading={isLoading}
+          onNavigateToMain={handleNavigateToMain}
+          onNavigateToAbout={handleNavigateToAbout}
+        />
       )}
     </main>
   );

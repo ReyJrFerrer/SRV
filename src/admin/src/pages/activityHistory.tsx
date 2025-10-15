@@ -33,11 +33,7 @@ interface UserData {
 const ActivityHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    users: backendUsers,
-    refreshUsers,
-    initializeCanisterReferences,
-  } = useAdmin();
+  const { users: backendUsers, refreshUsers } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
   const [activities, setActivities] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +64,6 @@ const ActivityHistoryPage: React.FC = () => {
 
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -90,7 +85,7 @@ const ActivityHistoryPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, navigate, refreshUsers]);
 
   const getActivityColor = (type: string) => {
     switch (type) {

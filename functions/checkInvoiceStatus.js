@@ -1,5 +1,5 @@
-const { onRequest } = require("firebase-functions/v2/https");
-const { Xendit } = require("xendit-node");
+const {onRequest} = require("firebase-functions/v2/https");
+const {Xendit} = require("xendit-node");
 const admin = require("firebase-admin");
 
 // Initialize Xendit client
@@ -85,7 +85,7 @@ exports.checkInvoiceStatus = onRequest(async (req, res) => {
   }
 
   try {
-    const { invoiceId } = req.body.data;
+    const {invoiceId} = req.body.data;
 
     if (!invoiceId) {
       return res.status(400).json({
@@ -147,7 +147,7 @@ exports.checkInvoiceStatus = onRequest(async (req, res) => {
     }
 
     // Fetch invoice status from Xendit
-    const { Invoice } = xendit;
+    const {Invoice} = xendit;
     let invoice;
 
     try {
@@ -201,3 +201,4 @@ exports.checkInvoiceStatus = onRequest(async (req, res) => {
     });
   }
 });
+

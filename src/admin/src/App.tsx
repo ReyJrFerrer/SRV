@@ -9,10 +9,15 @@ import UserServicesPage from "./pages/userServices";
 import { ValidationInboxPage } from "./pages/validationInbox";
 import { TicketInboxPage } from "./pages/ticketInbox";
 import { TicketDetailsPage } from "./pages/ticketDetails";
-import { AdminChatPage } from "./pages/adminChat";
+// import { AdminChatPage } from "./pages/adminChat";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
-import { AnalyticsPage } from "./pages/analytics";
+import { RemittanceDashboardPage } from "./pages/remittanceDashboard";
+import { RemittanceOrdersPage } from "./pages/remittanceOrders";
+import { PaymentValidationPage } from "./pages/paymentValidation";
+import { ProviderManagementPage } from "./pages/providerManagement";
+import { SettlementInstructionsPage } from "./pages/settlementInstructions";
+import { RemittanceAnalyticsPage } from "./pages/remittanceAnalytics";
 
 // Login component
 const LoginPage = () => {
@@ -172,20 +177,60 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/chat/:userId"
         element={
           <ProtectedRoute>
             <AdminChatPage />
           </ProtectedRoute>
         }
-      />
-      {/* Analytics Route */}
+      /> */}
+      {/* Remittance Routes */}
       <Route
-        path="/analytics"
+        path="/remittance"
         element={
           <ProtectedRoute>
-            <AnalyticsPage />
+            <RemittanceDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/remittance/orders"
+        element={
+          <ProtectedRoute>
+            <RemittanceOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/remittance/validation"
+        element={
+          <ProtectedRoute>
+            <PaymentValidationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/remittance/providers"
+        element={
+          <ProtectedRoute>
+            <ProviderManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/remittance/settlements"
+        element={
+          <ProtectedRoute>
+            <SettlementInstructionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/remittance/analytics"
+        element={
+          <ProtectedRoute>
+            <RemittanceAnalyticsPage />
           </ProtectedRoute>
         }
       />

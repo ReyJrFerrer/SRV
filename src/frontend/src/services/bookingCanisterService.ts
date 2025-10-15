@@ -1,81 +1,12 @@
-// Booking Canister Service
+// Booking Service (Firebase Cloud Functions)
 import { Principal } from "@dfinity/principal";
-import { canisterId as authCanisterId } from "../../../declarations/auth";
-import { createActor, canisterId } from "../../../declarations/booking";
-import { canisterId as reviewCanisterId } from "../../../declarations/review";
-import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
-import { canisterId as serviceCanisterId } from "../../../declarations/service";
-import { canisterId as remittanceCanisterId } from "../../../declarations/remittance";
-import { canisterId as commissionCanisterId } from "../../../declarations/commission";
-import { canisterId as walletCanisterId } from "../../../declarations/wallet";
-import { canisterId as notificationCanisterId } from "../../../declarations/notification";
-import { Identity } from "@dfinity/agent";
-import type {
-  _SERVICE as BookingService,
-  Booking as CanisterBooking,
-  BookingStatus as CanisterBookingStatus,
-  PaymentMethod as CanisterPaymentMethod,
-  Location as CanisterLocation,
-  Evidence as CanisterEvidence,
-  AvailableSlot as CanisterAvailableSlot,
-  ClientAnalytics as CanisterClientAnalytics,
-  ProviderAvailability as CanisterProviderAvailability,
-  ProviderAnalytics as CanisterProviderAnalytics,
-  TimeSlot as CanisterTimeSlot,
-  DayOfWeek as CanisterDayOfWeek,
-  DayAvailability as CanisterDayAvailability,
-} from "../../../declarations/booking/booking.did";
+import { httpsCallable } from "firebase/functions";
+import { initializeFirebase } from "./firebaseApp";
 
-/**
- * Creates a booking actor with the provided identity
- * @param identity The user's identity from AuthContext
- * @returns An authenticated BookingService actor
- */
-const createBookingActor = (identity?: Identity | null): BookingService => {
-  return createActor(canisterId, {
-    agentOptions: {
-      identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic" &&
-        process.env.DFX_NETWORK !== "playground"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
-    },
-  }) as BookingService;
-};
+// Initialize Firebase
+const { functions } = initializeFirebase();
 
-// Singleton actor instance with identity tracking
-let bookingActor: BookingService | null = null;
-let currentIdentity: Identity | null = null;
-
-/**
- * Updates the booking actor with a new identity
- * This should be called when the user's authentication state changes
- */
-export const updateBookingActor = (identity: Identity | null) => {
-  if (currentIdentity !== identity) {
-    bookingActor = createBookingActor(identity);
-    currentIdentity = identity;
-  }
-};
-
-/**
- * Gets the current booking actor
- * Throws error if no authenticated identity is available for auth-required operations
- */
-const getBookingActor = (requireAuth: boolean = false): BookingService => {
-  if (requireAuth && !currentIdentity) {
-    throw new Error(
-      "Authentication required: Please log in to perform this action",
-    );
-  }
-
-  if (!bookingActor) {
-    bookingActor = createBookingActor(currentIdentity);
-  }
-
-  return bookingActor;
-};
+// Firebase authentication will be handled automatically by httpsCallable functions
 
 // Type mappings for frontend compatibility
 export type BookingStatus =
@@ -183,10 +114,11 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
-  servicePackageId: string[]; // Array of package IDs for multiple package bookings
+  servicePackageId: string[]; // Array of package IDs for multiple package bookings (frontend field name)
+  servicePackageIds?: string[]; // Backend field name (optional for compatibility)
   status: BookingStatus;
   requestedDate: string;
-  scheduledDate?: string;
+  scheduledDate: string;
   startedDate?: string; // When service status changed to InProgress
   completedDate?: string;
   price: number;
@@ -210,221 +142,12 @@ export interface Booking {
   serviceSlug?: string;
 }
 
-// Helper functions to convert between canister and frontend types
-const convertCanisterBookingStatus = (
-  status: CanisterBookingStatus,
-): BookingStatus => {
-  if ("Requested" in status) return "Requested";
-  if ("Accepted" in status) return "Accepted";
-  if ("Declined" in status) return "Declined";
-  if ("Cancelled" in status) return "Cancelled";
-  if ("InProgress" in status) return "InProgress";
-  if ("Completed" in status) return "Completed";
-  if ("Disputed" in status) return "Disputed";
-  return "Requested"; // fallback
-};
+// Firebase booking data is already in the correct format, no conversion needed
 
-const convertToCanisterBookingStatus = (
-  status: BookingStatus,
-): CanisterBookingStatus => {
-  switch (status) {
-    case "Requested":
-      return { Requested: null };
-    case "Accepted":
-      return { Accepted: null };
-    case "Declined":
-      return { Declined: null };
-    case "Cancelled":
-      return { Cancelled: null };
-    case "InProgress":
-      return { InProgress: null };
-    case "Completed":
-      return { Completed: null };
-    case "Disputed":
-      return { Disputed: null };
-    default:
-      return { Requested: null };
-  }
-};
-
-const convertCanisterPaymentMethod = (
-  paymentMethod: CanisterPaymentMethod,
-): PaymentMethod => {
-  if ("CashOnHand" in paymentMethod) return "CashOnHand";
-  if ("GCash" in paymentMethod) return "GCash";
-  if ("SRVWallet" in paymentMethod) return "SRVWallet";
-  return "CashOnHand"; // fallback
-};
-
-const convertToCanisterPaymentMethod = (
-  paymentMethod: PaymentMethod,
-): CanisterPaymentMethod => {
-  switch (paymentMethod) {
-    case "CashOnHand":
-      return { CashOnHand: null };
-    case "GCash":
-      return { GCash: null };
-    case "SRVWallet":
-      return { SRVWallet: null };
-    default:
-      return { CashOnHand: null };
-  }
-};
-
-const convertCanisterLocation = (location: CanisterLocation): Location => ({
-  latitude: location.latitude,
-  longitude: location.longitude,
-  address: location.address,
-  city: location.city,
-  state: location.state,
-  country: location.country,
-  postalCode: location.postalCode,
-});
-
-const convertToCanisterLocation = (location: Location): CanisterLocation => ({
-  latitude: location.latitude,
-  longitude: location.longitude,
-  address: location.address,
-  city: location.city,
-  state: location.state,
-  country: location.country,
-  postalCode: location.postalCode,
-});
-
-const convertCanisterEvidence = (evidence: CanisterEvidence): Evidence => ({
-  id: evidence.id,
-  bookingId: evidence.bookingId,
-  submitterId: evidence.submitterId,
-  description: evidence.description,
-  fileUrls: evidence.fileUrls,
-  qualityScore: evidence.qualityScore[0],
-  createdAt: new Date(Number(evidence.createdAt) / 1000000).toISOString(),
-});
-
-const convertCanisterDayOfWeek = (day: CanisterDayOfWeek): DayOfWeek => {
-  if ("Monday" in day) return "Monday";
-  if ("Tuesday" in day) return "Tuesday";
-  if ("Wednesday" in day) return "Wednesday";
-  if ("Thursday" in day) return "Thursday";
-  if ("Friday" in day) return "Friday";
-  if ("Saturday" in day) return "Saturday";
-  if ("Sunday" in day) return "Sunday";
-  return "Monday"; // fallback
-};
-
-const convertCanisterTimeSlot = (slot: CanisterTimeSlot): TimeSlot => ({
-  startTime: slot.startTime,
-  endTime: slot.endTime,
-});
-
-const convertCanisterDayAvailability = (
-  availability: CanisterDayAvailability,
-): DayAvailability => ({
-  isAvailable: availability.isAvailable,
-  slots: availability.slots.map(convertCanisterTimeSlot),
-});
-
-const convertCanisterProviderAvailability = (
-  availability: CanisterProviderAvailability,
-): ProviderAvailability => ({
-  providerId: availability.providerId,
-  isActive: availability.isActive,
-  instantBookingEnabled: availability.instantBookingEnabled,
-  bookingNoticeHours: Number(availability.bookingNoticeHours),
-  maxBookingsPerDay: Number(availability.maxBookingsPerDay),
-  weeklySchedule: availability.weeklySchedule.map(([day, avail]) => ({
-    day: convertCanisterDayOfWeek(day),
-    availability: convertCanisterDayAvailability(avail),
-  })),
-  // Note: vacationDates removed to match backend implementation
-  createdAt: new Date(Number(availability.createdAt) / 1000000).toISOString(),
-  updatedAt: new Date(Number(availability.updatedAt) / 1000000).toISOString(),
-});
-
-const convertCanisterAvailableSlot = (
-  slot: CanisterAvailableSlot,
-): AvailableSlot => ({
-  date: new Date(Number(slot.date) / 1000000).toISOString(),
-  timeSlot: convertCanisterTimeSlot(slot.timeSlot),
-  isAvailable: slot.isAvailable,
-  conflictingBookings: slot.conflictingBookings,
-});
-
-const convertCanisterProviderAnalytics = (
-  analytics: CanisterProviderAnalytics,
-): ProviderAnalytics => ({
-  providerId: analytics.providerId,
-  totalJobs: Number(analytics.totalJobs),
-  completedJobs: Number(analytics.completedJobs),
-  cancelledJobs: Number(analytics.cancelledJobs),
-  totalEarnings: Number(analytics.totalEarnings),
-  completionRate: analytics.completionRate,
-  packageBreakdown: analytics.packageBreakdown.map(([pkg, count]) => [
-    pkg,
-    Number(count),
-  ]),
-  startDate: analytics.startDate[0]
-    ? new Date(Number(analytics.startDate[0]) / 1000000).toISOString()
-    : undefined,
-  endDate: analytics.endDate[0]
-    ? new Date(Number(analytics.endDate[0]) / 1000000).toISOString()
-    : undefined,
-});
-
-const convertCanisterClientAnalytics = (
-  analytics: CanisterClientAnalytics,
-): ClientAnalytics => ({
-  clientId: analytics.clientId,
-  totalBookings: Number(analytics.totalBookings),
-  servicesCompleted: Number(analytics.servicesCompleted),
-  totalSpent: Number(analytics.totalSpent),
-  memberSince: new Date(Number(analytics.memberSince) / 1000000).toISOString(),
-  packageBreakdown: analytics.packageBreakdown.map(
-    ([pkg, count]: [string, bigint]) => [pkg, Number(count)],
-  ),
-  startDate: analytics.startDate[0]
-    ? new Date(Number(analytics.startDate[0]) / 1000000).toISOString()
-    : undefined,
-  endDate: analytics.endDate[0]
-    ? new Date(Number(analytics.endDate[0]) / 1000000).toISOString()
-    : undefined,
-});
-
-const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
-  id: booking.id,
-  clientId: booking.clientId,
-  providerId: booking.providerId,
-  serviceId: booking.serviceId,
-  servicePackageId: booking.servicePackageId, // Now directly assign the array
-  status: convertCanisterBookingStatus(booking.status),
-  requestedDate: new Date(
-    Number(booking.requestedDate) / 1000000,
-  ).toISOString(),
-  scheduledDate: booking.scheduledDate[0]
-    ? new Date(Number(booking.scheduledDate[0]) / 1000000).toISOString()
-    : undefined,
-  startedDate: booking.startedDate[0]
-    ? new Date(Number(booking.startedDate[0]) / 1000000).toISOString()
-    : undefined,
-  completedDate: booking.completedDate[0]
-    ? new Date(Number(booking.completedDate[0]) / 1000000).toISOString()
-    : undefined,
-  price: Number(booking.price),
-  amountPaid: booking.amountPaid[0]
-    ? Number(booking.amountPaid[0]) / 100
-    : undefined, // Convert from cents back to dollars
-  serviceTime: booking.serviceTime[0]
-    ? Number(booking.serviceTime[0])
-    : undefined,
-  location: convertCanisterLocation(booking.location),
-  evidence: booking.evidence[0]
-    ? convertCanisterEvidence(booking.evidence[0])
-    : undefined,
-  notes: booking.notes[0],
-  paymentMethod: convertCanisterPaymentMethod(booking.paymentMethod),
-  paymentId: booking.paymentId[0], // Xendit invoice ID
-  createdAt: new Date(Number(booking.createdAt) / 1000000).toISOString(),
-  updatedAt: new Date(Number(booking.updatedAt) / 1000000).toISOString(),
+// Helper function to map backend field names to frontend interface
+const mapBookingFields = (booking: any): Booking => ({
+  ...booking,
+  servicePackageId: booking.servicePackageIds || booking.servicePackageId || [],
 });
 
 // Booking Canister Service Functions
@@ -438,6 +161,7 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
+    scheduledDate: Date, // End time of the booking slot
     servicePackageId: string,
     notes?: string,
     amountToPay?: number,
@@ -450,6 +174,7 @@ export const bookingCanisterService = {
       price,
       location,
       requestedDate,
+      scheduledDate, // Pass the end time
       [servicePackageId], // Convert single package to array
       notes,
       amountToPay,
@@ -467,44 +192,54 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
+    scheduledDate: Date, // End time of the booking slot
     servicePackageIds: string[] = [], // Array of package IDs for multiple package bookings
     notes?: string,
     amountToPay?: number,
     paymentMethod: PaymentMethod = "CashOnHand",
     paymentId?: string,
   ): Promise<Booking | null> {
+    console.log("🚀 [bookingCanisterService] createBooking called with:", {
+      serviceId,
+      providerId: providerId.toString(),
+      price,
+      servicePackageIds,
+      requestedDate: requestedDate.toISOString(),
+      scheduledDate: scheduledDate.toISOString(),
+    });
     try {
-      const actor = getBookingActor(true); // Requires authentication
-      const canisterLocation = convertToCanisterLocation(location);
-      const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
-      const amountToPayOptional: [] | [bigint] =
-        amountToPay !== undefined
-          ? [BigInt(Math.round(amountToPay * 100))] // Convert to cents and then to BigInt
-          : [];
-      const canisterPaymentMethod =
-        convertToCanisterPaymentMethod(paymentMethod);
+      const createBookingFn = httpsCallable(functions, "createBooking");
 
-      const result = await actor.createBooking(
+      const result = await createBookingFn({
         serviceId,
-        providerId,
-        BigInt(price),
-        canisterLocation,
-        requestedTimestamp,
-        servicePackageIds, // Send the array directly
-        notes ? [notes] : [],
-        amountToPayOptional,
-        canisterPaymentMethod,
-        paymentId ? [paymentId] : [],
-      );
+        providerId: providerId.toString(),
+        price,
+        location,
+        requestedDate: requestedDate.toISOString(),
+        scheduledDate: scheduledDate.toISOString(), // Send the end time to backend
+        servicePackageIds,
+        notes,
+        amountToPay,
+        paymentMethod,
+        paymentId,
+      });
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error creating booking:", result.err);
-        throw new Error(result.err);
-      }
+      console.log(
+        "✅ [bookingCanisterService] createBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] createBooking extracted data:",
+        responseData,
+      );
+      return responseData;
     } catch (error) {
-      //console.error("Error creating booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error creating booking:",
+        error,
+      );
       throw new Error(`Failed to create booking: ${error}`);
     }
   },
@@ -513,18 +248,33 @@ export const bookingCanisterService = {
    * Get a specific booking by ID
    */
   async getBooking(bookingId: string): Promise<Booking | null> {
+    console.log("🚀 [bookingCanisterService] getBooking called with:", {
+      bookingId,
+    });
     try {
-      const actor = getBookingActor();
-      const result = await actor.getBooking(bookingId);
+      const getBookingFn = httpsCallable(functions, "getBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error fetching booking:", result.err);
-        return null;
+      const result = await getBookingFn({ bookingId });
+      console.log("✅ [bookingCanisterService] getBooking raw result:", result);
+      const responseData = (
+        result.data as { success: boolean; data: Booking | null }
+      ).data;
+      console.log(
+        "✅ [bookingCanisterService] getBooking extracted data:",
+        responseData,
+      );
+
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      if (responseData) {
+        return mapBookingFields(responseData);
       }
+
+      return responseData;
     } catch (error) {
-      //console.error("Error fetching booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error fetching booking:",
+        error,
+      );
       throw new Error(`Failed to fetch booking: ${error}`);
     }
   },
@@ -533,13 +283,35 @@ export const bookingCanisterService = {
    * Get all bookings for a client
    */
   async getClientBookings(clientId: Principal): Promise<Booking[]> {
+    console.log(
+      "🚀 [bookingCanisterService] getClientBookings called for client:",
+      clientId.toString(),
+    );
     try {
-      const actor = getBookingActor();
-      const bookings = await actor.getClientBookings(clientId);
-      return bookings.map(convertCanisterBooking);
+      const getClientBookingsFn = httpsCallable(functions, "getClientBookings");
+
+      const result = await getClientBookingsFn({
+        clientId: clientId.toString(),
+      });
+      console.log(
+        "✅ [bookingCanisterService] getClientBookings raw result:",
+        result,
+      );
+      const responseData = (
+        result.data as { success: boolean; data: Booking[] }
+      ).data;
+      console.log("Booking Canister Data function", responseData);
+
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+
+      return mappedBookings;
     } catch (error) {
-      //console.error("Error fetching client bookings:", error);
-      throw new Error(`Failed to fetch client bookings: ${error}`);
+      console.error(
+        "❌ [bookingCanisterService] Error fetching client bookings:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
     }
   },
 
@@ -547,13 +319,40 @@ export const bookingCanisterService = {
    * Get all bookings for a provider
    */
   async getProviderBookings(providerId: Principal): Promise<Booking[]> {
+    console.log(
+      "🚀 [bookingCanisterService] getProviderBookings called for provider:",
+      providerId.toString(),
+    );
     try {
-      const actor = getBookingActor();
-      const bookings = await actor.getProviderBookings(providerId);
-      return bookings.map(convertCanisterBooking);
+      const getProviderBookingsFn = httpsCallable(
+        functions,
+        "getProviderBookings",
+      );
+
+      const result = await getProviderBookingsFn({
+        providerId: providerId.toString(),
+      });
+      console.log(
+        "✅ [bookingCanisterService] getProviderBookings raw result:",
+        result,
+      );
+      const responseData = (
+        result.data as { success: boolean; data: Booking[] }
+      ).data;
+      console.log(
+        `✅ [bookingCanisterService] getProviderBookings extracted ${responseData?.length ?? 0} bookings.`,
+      );
+
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+
+      return mappedBookings;
     } catch (error) {
-      //console.error("Error fetching provider bookings:", error);
-      throw new Error(`Failed to fetch provider bookings: ${error}`);
+      console.error(
+        "❌ [bookingCanisterService] Error fetching provider bookings:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
     }
   },
 
@@ -561,14 +360,38 @@ export const bookingCanisterService = {
    * Get bookings by status
    */
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
+    console.log(
+      "🚀 [bookingCanisterService] getBookingsByStatus called with status:",
+      status,
+    );
     try {
-      const actor = getBookingActor();
-      const canisterStatus = convertToCanisterBookingStatus(status);
-      const bookings = await actor.getBookingsByStatus(canisterStatus);
-      return bookings.map(convertCanisterBooking);
+      const getBookingsByStatusFn = httpsCallable(
+        functions,
+        "getBookingsByStatus",
+      );
+
+      const result = await getBookingsByStatusFn({ status });
+      console.log(
+        "✅ [bookingCanisterService] getBookingsByStatus raw result:",
+        result,
+      );
+      const responseData = (
+        result.data as { success: boolean; data: Booking[] }
+      ).data;
+      console.log(
+        `✅ [bookingCanisterService] getBookingsByStatus extracted ${responseData?.length ?? 0} bookings.`,
+      );
+
+      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
+      const mappedBookings = (responseData || []).map(mapBookingFields);
+
+      return mappedBookings;
     } catch (error) {
-      //console.error("Error fetching bookings by status:", error);
-      throw new Error(`Failed to fetch bookings by status: ${error}`);
+      console.error(
+        "❌ [bookingCanisterService] Error fetching bookings by status:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
     }
   },
 
@@ -579,20 +402,34 @@ export const bookingCanisterService = {
     bookingId: string,
     scheduledDate: Date,
   ): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] acceptBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const scheduledTimestamp = BigInt(scheduledDate.getTime() * 1000000);
+      const acceptBookingFn = httpsCallable(functions, "acceptBooking");
 
-      const result = await actor.acceptBooking(bookingId, scheduledTimestamp);
+      const result = await acceptBookingFn({
+        bookingId,
+        scheduledDate: scheduledDate.toISOString(),
+      });
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error accepting booking:", result.err);
-        throw new Error(result.err);
-      }
+      console.log(
+        "✅ [bookingCanisterService] acceptBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] acceptBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error accepting booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error accepting booking:",
+        error,
+      );
       throw new Error(`Failed to accept booking: ${error}`);
     }
   },
@@ -601,18 +438,30 @@ export const bookingCanisterService = {
    * Decline a booking
    */
   async declineBooking(bookingId: string): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] declineBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const result = await actor.declineBooking(bookingId);
+      const declineBookingFn = httpsCallable(functions, "declineBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error declining booking:", result.err);
-        throw new Error(result.err);
-      }
+      const result = await declineBookingFn({ bookingId });
+      console.log(
+        "✅ [bookingCanisterService] declineBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] declineBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error declining booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error declining booking:",
+        error,
+      );
       throw new Error(`Failed to decline booking: ${error}`);
     }
   },
@@ -621,18 +470,30 @@ export const bookingCanisterService = {
    * Cancel a booking
    */
   async cancelBooking(bookingId: string): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] cancelBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const result = await actor.cancelBooking(bookingId);
+      const cancelBookingFn = httpsCallable(functions, "cancelBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error cancelling booking:", result.err);
-        throw new Error(result.err);
-      }
+      const result = await cancelBookingFn({ bookingId });
+      console.log(
+        "✅ [bookingCanisterService] cancelBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] cancelBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error cancelling booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error cancelling booking:",
+        error,
+      );
       throw new Error(`Failed to cancel booking: ${error}`);
     }
   },
@@ -641,18 +502,30 @@ export const bookingCanisterService = {
    * Start a booking (mark as in progress)
    */
   async startBooking(bookingId: string): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] startBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const result = await actor.startBooking(bookingId);
+      const startBookingFn = httpsCallable(functions, "startBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error starting booking:", result.err);
-        throw new Error(result.err);
-      }
+      const result = await startBookingFn({ bookingId });
+      console.log(
+        "✅ [bookingCanisterService] startBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] startBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error starting booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error starting booking:",
+        error,
+      );
       throw new Error(`Failed to start booking: ${error}`);
     }
   },
@@ -664,22 +537,34 @@ export const bookingCanisterService = {
     bookingId: string,
     amountPaid?: number,
   ): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] completeBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const amountPaidOptional: [] | [bigint] =
-        amountPaid !== undefined
-          ? [BigInt(Math.round(amountPaid * 100))] // Convert to cents and then to BigInt
-          : [];
-      const result = await actor.completeBooking(bookingId, amountPaidOptional);
+      const completeBookingFn = httpsCallable(functions, "completeBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error completing booking:", result.err);
-        throw new Error(result.err);
-      }
+      const result = await completeBookingFn({
+        bookingId,
+        amountPaid,
+      });
+
+      console.log(
+        "✅ [bookingCanisterService] completeBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] completeBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error completing booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error completing booking:",
+        error,
+      );
       throw new Error(`Failed to complete booking: ${error}`);
     }
   },
@@ -688,165 +573,31 @@ export const bookingCanisterService = {
    * Dispute a booking
    */
   async disputeBooking(bookingId: string): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] disputeBooking called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor();
-      const result = await actor.disputeBooking(bookingId);
+      const disputeBookingFn = httpsCallable(functions, "disputeBooking");
 
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        //console.error("Error disputing booking:", result.err);
-        throw new Error(result.err);
-      }
+      const result = await disputeBookingFn({ bookingId });
+      console.log(
+        "✅ [bookingCanisterService] disputeBooking raw result:",
+        result,
+      );
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] disputeBooking extracted data:",
+        responseData,
+      );
+      return mapBookingFields(responseData);
     } catch (error) {
-      //console.error("Error disputing booking:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error disputing booking:",
+        error,
+      );
       throw new Error(`Failed to dispute booking: ${error}`);
-    }
-  },
-
-  /**
-   * Submit evidence for a booking
-   */
-  async submitEvidence(
-    bookingId: string,
-    description: string,
-    fileUrls: string[],
-  ): Promise<Evidence | null> {
-    try {
-      const actor = getBookingActor();
-      const result = await actor.submitEvidence(
-        bookingId,
-        description,
-        fileUrls,
-      );
-
-      if ("ok" in result) {
-        return convertCanisterEvidence(result.ok);
-      } else {
-        //console.error("Error submitting evidence:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      //console.error("Error submitting evidence:", error);
-      throw new Error(`Failed to submit evidence: ${error}`);
-    }
-  },
-
-  /**
-   * Check if a booking is eligible for review
-   */
-  async isEligibleForReview(
-    bookingId: string,
-    reviewerId: Principal,
-  ): Promise<boolean | null> {
-    try {
-      const actor = getBookingActor();
-      const result = await actor.isEligibleForReview(bookingId, reviewerId);
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        //console.error("Error checking review eligibility:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error checking review eligibility:", error);
-      throw new Error(`Failed to check review eligibility: ${error}`);
-    }
-  },
-
-  /**
-   * Get active bookings for a client
-   */
-  async getClientActiveBookings(clientId: Principal): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getClientActiveBookings(clientId);
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching client active bookings:", error);
-      throw new Error(`Failed to fetch client active bookings: ${error}`);
-    }
-  },
-
-  /**
-   * Get active bookings for a provider
-   */
-  async getProviderActiveBookings(providerId: Principal): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getProviderActiveBookings(providerId);
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching provider active bookings:", error);
-      throw new Error(`Failed to fetch provider active bookings: ${error}`);
-    }
-  },
-
-  /**
-   * Get completed bookings for a client
-   */
-  async getClientCompletedBookings(clientId: Principal): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getClientCompletedBookings(clientId);
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching client completed bookings:", error);
-      throw new Error(`Failed to fetch client completed bookings: ${error}`);
-    }
-  },
-
-  /**
-   * Get completed bookings for a provider
-   */
-  async getProviderCompletedBookings(
-    providerId: Principal,
-  ): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getProviderCompletedBookings(providerId);
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching provider completed bookings:", error);
-      throw new Error(`Failed to fetch provider completed bookings: ${error}`);
-    }
-  },
-
-  /**
-   * Get disputed bookings
-   */
-  async getDisputedBookings(): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getDisputedBookings();
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching disputed bookings:", error);
-      throw new Error(`Failed to fetch disputed bookings: ${error}`);
-    }
-  },
-
-  /**
-   * Get bookings by date range
-   */
-  async getBookingsByDateRange(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = BigInt(startDate.getTime() * 1000000);
-      const endTimestamp = BigInt(endDate.getTime() * 1000000);
-
-      const bookings = await actor.getBookingsByDateRange(
-        startTimestamp,
-        endTimestamp,
-      );
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching bookings by date range:", error);
-      throw new Error(`Failed to fetch bookings by date range: ${error}`);
     }
   },
 
@@ -859,78 +610,38 @@ export const bookingCanisterService = {
     serviceId: string,
     date: Date,
   ): Promise<AvailableSlot[] | null> {
+    console.log(
+      "🚀 [bookingCanisterService] getServiceAvailableSlots called for service:",
+      serviceId,
+    );
     try {
-      const actor = getBookingActor();
-      const dateTimestamp = BigInt(date.getTime() * 1000000);
+      const getServiceAvailableSlotsFn = httpsCallable(
+        functions,
+        "getServiceAvailableSlots",
+      );
 
-      // DEBUG: Log the values being sent
-      // //console.log("DEBUG getServiceAvailableSlots:", {
-      //   serviceId,
-      //   inputDate: date.toISOString(),
-      //   dayOfWeek: date.getDay(),
-      //   dayName: [
-      //     "Sunday",
-      //     "Monday",
-      //     "Tuesday",
-      //     "Wednesday",
-      //     "Thursday",
-      //     "Friday",
-      //     "Saturday",
-      //   ][date.getDay()],
-      //   timestamp: dateTimestamp.toString(),
-      //   millisTimestamp: date.getTime(),
-      // });
-
-      const result = await actor.getServiceAvailableSlots(
+      const result = await getServiceAvailableSlotsFn({
         serviceId,
-        dateTimestamp,
+        date: date.toISOString(),
+      });
+
+      console.log(
+        "✅ [bookingCanisterService] getServiceAvailableSlots raw result:",
+        result,
       );
-
-      if ("ok" in result) {
-        // //console.log("DEBUG result:", {
-        //   slotsCount: result.ok.length,
-        //   slots: result.ok.map((slot) => ({
-        //     date: slot.date,
-        //     isAvailable: slot.isAvailable,
-        //     timeSlot: slot.timeSlot,
-        //     conflictingBookings: slot.conflictingBookings,
-        //   })),
-        // });
-        return result.ok.map(convertCanisterAvailableSlot);
-      } else {
-        //console.error("Error fetching service available slots:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching service available slots:", error);
-      throw new Error(`Failed to fetch service available slots: ${error}`);
-    }
-  },
-
-  /**
-   * Get service's availability settings
-   */
-  async getServiceAvailabilitySettings(
-    serviceId: string,
-  ): Promise<ProviderAvailability | null> {
-    try {
-      const actor = getBookingActor();
-      const result = await actor.getServiceAvailabilitySettings(serviceId);
-
-      if ("ok" in result) {
-        return convertCanisterProviderAvailability(result.ok);
-      } else {
-        // //console.error(
-        //   "Error fetching service availability settings:",
-        //   result.err,
-        // );
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching service availability settings:", error);
-      throw new Error(
-        `Failed to fetch service availability settings: ${error}`,
+      const responseData = (
+        result.data as { success: boolean; data: AvailableSlot[] }
+      ).data;
+      console.log(
+        `✅ [bookingCanisterService] getServiceAvailableSlots extracted ${responseData?.length ?? 0} slots.`,
       );
+      return responseData || [];
+    } catch (error) {
+      console.error(
+        "❌ [bookingCanisterService] Error fetching service available slots:",
+        error,
+      );
+      return [];
     }
   },
 
@@ -941,130 +652,39 @@ export const bookingCanisterService = {
     serviceId: string,
     requestedDateTime: Date,
   ): Promise<boolean | null> {
+    console.log(
+      "🚀 [bookingCanisterService] checkServiceAvailability called for service:",
+      serviceId,
+    );
     try {
-      const actor = getBookingActor();
-      const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
+      const checkServiceAvailabilityFn = httpsCallable(
+        functions,
+        "checkServiceAvailability",
+      );
 
-      const result = await actor.checkServiceAvailability(serviceId, timestamp);
+      const result = await checkServiceAvailabilityFn({
+        serviceId,
+        requestedDateTime: requestedDateTime.toISOString(),
+      });
 
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        //console.error("Error checking service availability:", result.err);
-        return null;
-      }
+      console.log(
+        "✅ [bookingCanisterService] checkServiceAvailability raw result:",
+        result,
+      );
+      const responseData = (
+        result.data as { success: boolean; data: { available: boolean } }
+      ).data;
+      console.log(
+        "✅ [bookingCanisterService] checkServiceAvailability extracted data:",
+        responseData,
+      );
+      return responseData?.available || false;
     } catch (error) {
-      //console.error("Error checking service availability:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error checking service availability:",
+        error,
+      );
       throw new Error(`Failed to check service availability: ${error}`);
-    }
-  },
-
-  /**
-   * Get service's booking conflicts for a date range
-   */
-  async getServiceBookingConflicts(
-    serviceId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = BigInt(startDate.getTime() * 1000000);
-      const endTimestamp = BigInt(endDate.getTime() * 1000000);
-
-      const bookings = await actor.getServiceBookingConflicts(
-        serviceId,
-        startTimestamp,
-        endTimestamp,
-      );
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching service booking conflicts:", error);
-      throw new Error(`Failed to fetch service booking conflicts: ${error}`);
-    }
-  },
-
-  /**
-   * Get daily booking count for a service on a specific date
-   */
-  async getServiceDailyBookingCount(
-    serviceId: string,
-    date: Date,
-  ): Promise<number> {
-    try {
-      const actor = getBookingActor();
-      const dateTimestamp = BigInt(date.getTime() * 1000000);
-
-      const count = await actor.getServiceDailyBookingCount(
-        serviceId,
-        dateTimestamp,
-      );
-      return Number(count);
-    } catch (error) {
-      //console.error("Error fetching service daily booking count:", error);
-      throw new Error(`Failed to fetch service daily booking count: ${error}`);
-    }
-  },
-
-  /**
-   * Get daily booking count for a provider on a specific date
-   */
-  async getDailyBookingCount(
-    providerId: Principal,
-    date: Date,
-  ): Promise<number> {
-    try {
-      const actor = getBookingActor();
-      const dateTimestamp = BigInt(date.getTime() * 1000000);
-
-      const count = await actor.getDailyBookingCount(providerId, dateTimestamp);
-      return Number(count);
-    } catch (error) {
-      //console.error("Error fetching daily booking count:", error);
-      throw new Error(`Failed to fetch daily booking count: ${error}`);
-    }
-  },
-
-  /**
-   * Set canister references (admin function)
-   */
-  async setCanisterReferences(): Promise<string | null> {
-    try {
-      const actor = getBookingActor(true);
-      const result = await actor.setCanisterReferences(
-        [Principal.fromText(authCanisterId)],
-        [Principal.fromText(serviceCanisterId)],
-        [Principal.fromText(reviewCanisterId)],
-        [Principal.fromText(reputationCanisterId)],
-        [Principal.fromText(commissionCanisterId)],
-        [Principal.fromText(walletCanisterId)],
-        [Principal.fromText(notificationCanisterId)],
-        [Principal.fromText(remittanceCanisterId)],
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        // //console.error("Error setting canister references:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      // //console.error("Error setting canister references:", error);
-      throw new Error(`Failed to set canister references: ${error}`);
-    }
-  },
-
-  /**
-   * Get bookings by service package
-   */
-  async getBookingsByPackage(packageId: string): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const bookings = await actor.getBookingsByPackage(packageId);
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      //console.error("Error fetching bookings by package:", error);
-      throw new Error(`Failed to fetch bookings by package: ${error}`);
     }
   },
 
@@ -1076,163 +696,40 @@ export const bookingCanisterService = {
     startDate?: Date,
     endDate?: Date,
   ): Promise<ClientAnalytics | null> {
+    console.log(
+      "🚀 [bookingCanisterService] getClientAnalytics called for client:",
+      clientId.toString(),
+    );
     try {
-      const actor = getBookingActor();
-      const startTimestamp = startDate
-        ? [BigInt(startDate.getTime() * 1000000)]
-        : [];
-      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
-
-      const result = await actor.getClientAnalytics(
-        clientId,
-        startTimestamp as [] | [bigint],
-        endTimestamp as [] | [bigint],
+      const getClientAnalyticsFn = httpsCallable(
+        functions,
+        "getClientAnalytics",
       );
 
-      if ("ok" in result) {
-        return convertCanisterClientAnalytics(result.ok);
-      } else {
-        //console.error("Error fetching client analytics:", result.err);
-        return null;
-      }
+      const result = await getClientAnalyticsFn({
+        clientId: clientId.toString(),
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      });
+
+      console.log(
+        "✅ [bookingCanisterService] getClientAnalytics raw result:",
+        result,
+      );
+      const responseData = (
+        result.data as { success: boolean; data: ClientAnalytics }
+      ).data;
+      console.log(
+        "✅ [bookingCanisterService] getClientAnalytics extracted data:",
+        responseData,
+      );
+      return responseData;
     } catch (error) {
-      //console.error("Error fetching client analytics:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error fetching client analytics:",
+        error,
+      );
       throw new Error(`Failed to fetch client analytics: ${error}`);
-    }
-  },
-
-  /**
-   * Get client analytics for admin (bypasses security check)
-   * @param clientId Principal ID of the client
-   * @param startDate Optional start date for analytics range
-   * @param endDate Optional end date for analytics range
-   */
-  async getClientAnalyticsForAdmin(
-    clientId: Principal,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<ClientAnalytics | null> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = startDate
-        ? [BigInt(startDate.getTime() * 1000000)]
-        : [];
-      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
-
-      const result = await actor.getClientAnalyticsForAdmin(
-        clientId,
-        startTimestamp as [] | [bigint],
-        endTimestamp as [] | [bigint],
-      );
-
-      if ("ok" in result) {
-        return convertCanisterClientAnalytics(result.ok);
-      } else {
-        //console.error("Error fetching client analytics for admin:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching client analytics for admin:", error);
-      throw new Error(`Failed to fetch client analytics for admin: ${error}`);
-    }
-  },
-
-  /**
-   * Get provider analytics
-   */
-  async getProviderAnalytics(
-    providerId: Principal,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<ProviderAnalytics | null> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = startDate
-        ? [BigInt(startDate.getTime() * 1000000)]
-        : [];
-      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
-
-      const result = await actor.getProviderAnalytics(
-        providerId,
-        startTimestamp as [] | [bigint],
-        endTimestamp as [] | [bigint],
-      );
-
-      if ("ok" in result) {
-        return convertCanisterProviderAnalytics(result.ok);
-      } else {
-        //console.error("Error fetching provider analytics:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching provider analytics:", error);
-      throw new Error(`Failed to fetch provider analytics: ${error}`);
-    }
-  },
-
-  /**
-   * Get service analytics
-   */
-  async getServiceAnalytics(
-    serviceId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<ProviderAnalytics | null> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = startDate
-        ? [BigInt(startDate.getTime() * 1000000)]
-        : [];
-      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
-
-      const result = await actor.getServiceAnalytics(
-        serviceId,
-        startTimestamp as [] | [bigint],
-        endTimestamp as [] | [bigint],
-      );
-
-      if ("ok" in result) {
-        return convertCanisterProviderAnalytics(result.ok);
-      } else {
-        //console.error("Error fetching service analytics:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching service analytics:", error);
-      throw new Error(`Failed to fetch service analytics: ${error}`);
-    }
-  },
-
-  /**
-   * Get package analytics
-   */
-  async getPackageAnalytics(
-    packageId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<ProviderAnalytics | null> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = startDate
-        ? [BigInt(startDate.getTime() * 1000000)]
-        : [];
-      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
-
-      const result = await actor.getPackageAnalytics(
-        packageId,
-        startTimestamp as [] | [bigint],
-        endTimestamp as [] | [bigint],
-      );
-
-      if ("ok" in result) {
-        return convertCanisterProviderAnalytics(result.ok);
-      } else {
-        //console.error("Error fetching package analytics:", result.err);
-        return null;
-      }
-    } catch (error) {
-      //console.error("Error fetching package analytics:", error);
-      throw new Error(`Failed to fetch package analytics: ${error}`);
     }
   },
 
@@ -1247,74 +744,38 @@ export const bookingCanisterService = {
     commissionRetained?: number,
     payoutId?: string,
   ): Promise<Booking | null> {
+    console.log(
+      "🚀 [bookingCanisterService] releasePayment called for booking:",
+      bookingId,
+    );
     try {
-      const actor = getBookingActor(true); // Requires authentication
+      const releasePaymentFn = httpsCallable(functions, "releasePayment");
 
-      const result = await actor.releasePayment(
+      const result = await releasePaymentFn({
         bookingId,
-        paymentId ? [paymentId] : [],
-        BigInt(Math.round((releasedAmount || 0) * 100)), // Convert to cents
-        BigInt(Math.round((commissionRetained || 0) * 100)), // Convert to cents
-        payoutId ? [payoutId] : [],
+        paymentId,
+        releasedAmount,
+        commissionRetained,
+        payoutId,
+      });
+
+      console.log(
+        "✅ [bookingCanisterService] releasePayment raw result:",
+        result,
       );
-
-      if ("ok" in result) {
-        return convertCanisterBooking(result.ok);
-      } else {
-        console.error("Error releasing payment:", result.err);
-        return null;
-      }
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      console.log(
+        "✅ [bookingCanisterService] releasePayment extracted data:",
+        responseData,
+      );
+      return responseData;
     } catch (error) {
-      console.error("Error releasing payment:", error);
+      console.error(
+        "❌ [bookingCanisterService] Error releasing payment:",
+        error,
+      );
       throw new Error(`Failed to release payment: ${error}`);
-    }
-  },
-
-  /**
-   * Get payment status for a booking
-   */
-  async getPaymentStatus(bookingId: string): Promise<{
-    paymentStatus?: string;
-    paymentId?: string;
-    heldAmount?: number;
-    releasedAmount?: number;
-    commissionRetained?: number;
-    paymentReleased?: boolean;
-    releasedAt?: Date;
-    payoutId?: string;
-  } | null> {
-    try {
-      const actor = getBookingActor();
-
-      const result = await actor.getPaymentStatus(bookingId);
-
-      if ("ok" in result) {
-        const data = result.ok;
-        return {
-          paymentStatus: data.paymentStatus[0],
-          paymentId: data.paymentId[0],
-          heldAmount: data.heldAmount[0]
-            ? Number(data.heldAmount[0]) / 100
-            : undefined, // Convert from cents
-          releasedAmount: data.releasedAmount[0]
-            ? Number(data.releasedAmount[0]) / 100
-            : undefined, // Convert from cents
-          commissionRetained: data.commissionRetained[0]
-            ? Number(data.commissionRetained[0]) / 100
-            : undefined, // Convert from cents
-          paymentReleased: data.paymentReleased[0],
-          releasedAt: data.releasedAt[0]
-            ? new Date(Number(data.releasedAt[0]) / 1000000)
-            : undefined,
-          payoutId: data.payoutId[0],
-        };
-      } else {
-        console.error("Error getting payment status:", result.err);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error getting payment status:", error);
-      throw new Error(`Failed to get payment status: ${error}`);
     }
   },
 
@@ -1353,14 +814,6 @@ export const bookingCanisterService = {
   },
 };
 
-// Reset functions for authentication state changes
-export const resetBookingActor = () => {
-  bookingActor = null;
-};
-
-export const refreshBookingActor = async () => {
-  resetBookingActor();
-  return await getBookingActor();
-};
+// Firebase functions don't require actor management or reset functionality
 
 export default bookingCanisterService;

@@ -28,11 +28,10 @@ export const useChatNotifications = () => {
       const conversations = await chatCanisterService.getMyConversations();
       const currentUserId = identity.getPrincipal().toString();
 
-      return conversations.reduce((total, conversationSummary) => {
-        const unreadEntry = conversationSummary.conversation.unreadCount.find(
-          (entry) => entry.userId === currentUserId,
-        );
-        return total + (unreadEntry?.count || 0);
+      return conversations.reduce((total, convoSummary) => {
+        // unreadCount is now an object: { [userId: string]: number }
+        const count = convoSummary.conversation.unreadCount[currentUserId] || 0;
+        return total + count;
       }, 0);
     } catch (error) {
       //console.error("Failed to fetch real unread count:", error);

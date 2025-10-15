@@ -35,11 +35,7 @@ interface UserData {
 const UserServicesPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    users: backendUsers,
-    refreshUsers,
-    initializeCanisterReferences,
-  } = useAdmin();
+  const { users: backendUsers, refreshUsers } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
   const [services, setServices] = useState<ServiceData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +143,6 @@ const UserServicesPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -186,7 +181,7 @@ const UserServicesPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, navigate, refreshUsers]);
 
   const handleRefresh = async () => {
     setLoading(true);

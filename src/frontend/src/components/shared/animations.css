@@ -1,0 +1,265 @@
+/* HERO */
+.hero-section .hero-anim-init {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  filter: blur(4px);
+  transition:
+    opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--hero-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.hero-section .hero-anim-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+/* Hero pop-in on initial load */
+.hero-section .hero-content.hero-pop {
+  animation: heroPop 0.85s cubic-bezier(0.16, 0.84, 0.44, 1) 0.05s both;
+  will-change: transform, opacity;
+}
+
+@keyframes heroPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(20px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.035) translateY(0);
+  }
+  80% {
+    transform: scale(0.995);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* FEATURES (How does SRV work?) */
+.features-section .feature-init {
+  opacity: 0;
+  transform: translateY(34px) scale(0.97);
+  transition:
+    opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--feat-delay, 0ms);
+  will-change: opacity, transform;
+}
+.features-section .feature-init.feature-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* WHY CHOOSE SRV */
+.why-choose-section .why-fade-up-init,
+.why-choose-section .why-slide-left-init,
+.why-choose-section .why-slide-right-init {
+  opacity: 0;
+  transition:
+    opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--why-delay, 0ms);
+  will-change: opacity, transform;
+}
+.why-choose-section .why-fade-up-init {
+  transform: translateY(28px);
+}
+.why-choose-section .why-slide-left-init {
+  transform: translateX(-60px) scale(0.96);
+}
+.why-choose-section .why-slide-right-init {
+  transform: translateX(60px) scale(0.96);
+}
+.why-choose-section .why-animate-in {
+  opacity: 1;
+  transform: translateX(0) translateY(0) scale(1);
+}
+
+/* SDG */
+.sdg-card.sdg-init {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--sdg-delay, 0ms);
+  will-change: opacity, transform;
+}
+.sdg-card.sdg-init.sdg-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* (Optional) Ensure gallery indicators visible */
+.gallery-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d1d5db;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+.gallery-indicator.active {
+  background: #2563eb;
+}
+
+/* SERVICES (Services We Connect) */
+.services-preview-section .service-init {
+  opacity: 0;
+  transform: translateY(36px) scale(0.96);
+  filter: blur(3px);
+  transition:
+    opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: var(--service-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.services-preview-section .service-init.service-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+.services-preview-section .services-title.service-title-init {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+.services-preview-section .services-title.service-title-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* SDG Header additional animation */
+.sdg-section .sdg-header.sdg-header-init {
+  opacity: 0;
+  transform: translateY(34px) scale(0.97);
+  transition:
+    opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+.sdg-section .sdg-header.sdg-header-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ABOUT PAGE: About SRV (slide from right) & Mission (slide from left) */
+.about-hero-section.about-slide-right-init,
+.about-hero-section .about-slide-right-init {
+  /* allow either section or child */
+  opacity: 0;
+  transform: translateX(70px) scale(0.97);
+  filter: blur(4px);
+  transition:
+    opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform, filter;
+}
+.about-hero-section.about-slide-right-in,
+.about-hero-section .about-slide-right-in {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0);
+}
+
+.mission-section.mission-slide-left-init,
+.mission-section .mission-slide-left-init {
+  opacity: 0;
+  transform: translateX(-70px) scale(0.97);
+  filter: blur(4px);
+  transition:
+    opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform, filter;
+}
+.mission-section.mission-slide-left-in,
+.mission-section .mission-slide-left-in {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0);
+}
+
+/* ABOUT PAGE: Our Potential Impact (pop) */
+.pillars-section .impact-pop-init,
+.pillars-section .metrics-grid .metric-card.impact-pop-init {
+  opacity: 0;
+  transform: scale(0.88) translateY(30px);
+  filter: blur(6px);
+  transition:
+    opacity 0.7s cubic-bezier(0.34, 0.84, 0.44, 1),
+    transform 0.7s cubic-bezier(0.34, 0.84, 0.44, 1),
+    filter 0.7s cubic-bezier(0.34, 0.84, 0.44, 1);
+  transition-delay: var(--impact-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.pillars-section .impact-pop-init.impact-pop-in,
+.pillars-section .metrics-grid .metric-card.impact-pop-init.impact-pop-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
+/* ABOUT PAGE: Milestones (pop) */
+.milestones-section .milestone-card.milestone-pop-init {
+  opacity: 0;
+  transform: scale(0.9) translateY(40px);
+  filter: blur(5px);
+  transition:
+    opacity 0.75s cubic-bezier(0.34, 0.84, 0.44, 1),
+    transform 0.75s cubic-bezier(0.34, 0.84, 0.44, 1),
+    filter 0.75s cubic-bezier(0.34, 0.84, 0.44, 1);
+  transition-delay: var(--mile-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.milestones-section .milestone-card.milestone-pop-init.milestone-pop-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
+/* ABOUT PAGE: Meet the Team (pop) */
+.team-section .team-pop-init,
+.team-section .team-member.team-pop-init {
+  opacity: 0;
+  transform: scale(0.9) translateY(45px);
+  filter: blur(5px);
+  transition:
+    opacity 0.75s cubic-bezier(0.34, 0.84, 0.44, 1),
+    transform 0.75s cubic-bezier(0.34, 0.84, 0.44, 1),
+    filter 0.75s cubic-bezier(0.34, 0.84, 0.44, 1);
+  transition-delay: var(--team-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.team-section .team-pop-init.team-pop-in,
+.team-section .team-member.team-pop-init.team-pop-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
+/* ABOUT PAGE: Map Section (pop) */
+.map-section .map-pop-init {
+  opacity: 0;
+  transform: scale(0.92) translateY(40px);
+  filter: blur(6px);
+  transition:
+    opacity 0.8s cubic-bezier(0.34, 0.84, 0.44, 1),
+    transform 0.8s cubic-bezier(0.34, 0.84, 0.44, 1),
+    filter 0.8s cubic-bezier(0.34, 0.84, 0.44, 1);
+  will-change: opacity, transform, filter;
+}
+.map-section .map-pop-init.map-pop-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}

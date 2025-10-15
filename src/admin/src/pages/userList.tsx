@@ -10,9 +10,6 @@ import {
   CurrencyDollarIcon,
   UserIcon,
   LockClosedIcon,
-  LockOpenIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 
@@ -37,7 +34,6 @@ export const UserListPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
     getUserLockStatus,
   } = useAdmin();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -99,14 +95,13 @@ export const UserListPage: React.FC = () => {
   useEffect(() => {
     const initializeAndLoadUsers = async () => {
       try {
-        await initializeCanisterReferences();
         await refreshUsers();
       } catch (error) {
         console.error("Error during initialization:", error);
       }
     };
     initializeAndLoadUsers();
-  }, [initializeCanisterReferences, refreshUsers]);
+  }, [, refreshUsers]);
 
   // Show mobile bottom action bar when header scrolls out
   useEffect(() => {
@@ -231,60 +226,6 @@ export const UserListPage: React.FC = () => {
     setShowUserModal(true);
   };
 
-  const handleLockToggle = async () => {
-    if (!selectedUser) return;
-
-    setActionLoading(true);
-    try {
-      await adminServiceCanister.toggleUserLock(
-        selectedUser.id,
-        !selectedUser.isLocked,
-      );
-
-      // Update local state immediately
-      const updatedIsLocked = !selectedUser.isLocked;
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u.id === selectedUser.id ? { ...u, isLocked: updatedIsLocked } : u,
-        ),
-      );
-      setSelectedUser({ ...selectedUser, isLocked: updatedIsLocked });
-
-      setShowLockConfirm(false);
-    } catch (error) {
-      console.error("Failed to toggle user lock:", error);
-      alert(
-        `Failed to ${selectedUser.isLocked ? "unlock" : "lock"} user. Please try again.`,
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedUser) return;
-
-    setActionLoading(true);
-    try {
-      await adminServiceCanister.deleteUser(selectedUser.id);
-
-      // Remove from local state
-      setUsers((prevUsers) =>
-        prevUsers.filter((u) => u.id !== selectedUser.id),
-      );
-
-      // Close modals
-      setShowDeleteConfirm(false);
-      setShowUserModal(false);
-      setSelectedUser(null);
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      alert("Failed to delete user. Please try again.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   // Determine if viewport is mobile (< sm)
   const isMobileViewport =
     typeof window !== "undefined"
@@ -294,11 +235,6 @@ export const UserListPage: React.FC = () => {
   // User details modal state
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-
-  // Confirmation modals
-  const [showLockConfirm, setShowLockConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   // Stats for header cards
   const stats = useMemo(() => {
@@ -723,14 +659,8 @@ export const UserListPage: React.FC = () => {
                           {formatDate(user.updatedAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                              user.isLocked
-                                ? "bg-red-100 text-red-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {user.isLocked ? "Suspended" : "Active"}
+                          <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                            Active
                           </span>
                         </td>
                         {/* Actions cell (desktop only) */}
@@ -929,7 +859,7 @@ export const UserListPage: React.FC = () => {
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${selectedUser.isLocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
                       >
-                        {selectedUser.isLocked ? "Suspended" : "Active"}
+                        {selectedUser.isLocked ? "Locked" : "Active"}
                       </span>
                     </div>
                     {selectedUser.biography && (
@@ -958,190 +888,12 @@ export const UserListPage: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowLockConfirm(true)}
-                  className={`inline-flex items-center rounded-md px-4 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none ${
-                    selectedUser.isLocked
-                      ? "border border-green-600 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
-                      : "border border-yellow-600 bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500"
-                  }`}
-                >
-                  {selectedUser.isLocked ? (
-                    <>
-                      <LockOpenIcon className="mr-2 h-4 w-4" />
-                      Unlock Account
-                    </>
-                  ) : (
-                    <>
-                      <LockClosedIcon className="mr-2 h-4 w-4" />
-                      Lock Account
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="inline-flex items-center rounded-md border border-red-600 bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
-                >
-                  <TrashIcon className="mr-2 h-4 w-4" />
-                  Delete Account
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
               <button
                 onClick={() => setShowUserModal(false)}
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Lock/Unlock Confirmation Modal */}
-      {showLockConfirm && selectedUser && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-start gap-4">
-              <div
-                className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                  selectedUser.isLocked ? "bg-green-100" : "bg-yellow-100"
-                }`}
-              >
-                {selectedUser.isLocked ? (
-                  <LockOpenIcon className="h-6 w-6 text-green-600" />
-                ) : (
-                  <LockClosedIcon className="h-6 w-6 text-yellow-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedUser.isLocked ? "Unlock Account" : "Lock Account"}
-                </h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  {selectedUser.isLocked
-                    ? `Are you sure you want to unlock ${selectedUser.name}'s account? They will regain access to their account.`
-                    : `Are you sure you want to lock ${selectedUser.name}'s account? They will be unable to access their account until unlocked.`}
-                </p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowLockConfirm(false)}
-                disabled={actionLoading}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLockToggle}
-                disabled={actionLoading}
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50 ${
-                  selectedUser.isLocked
-                    ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
-                    : "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500"
-                }`}
-              >
-                {actionLoading ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="mr-2 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : selectedUser.isLocked ? (
-                  "Unlock"
-                ) : (
-                  "Lock"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && selectedUser && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delete Account
-                </h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Are you sure you want to permanently delete{" "}
-                  <span className="font-semibold">{selectedUser.name}'s</span>{" "}
-                  account? This action cannot be undone and will delete:
-                </p>
-                <ul className="mt-2 list-inside list-disc text-sm text-gray-600">
-                  <li>User profile and personal information</li>
-                  <li>All services posted by this user</li>
-                  <li>All bookings (as client and provider)</li>
-                  <li>All reviews and feedback</li>
-                  <li>All associated records</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={actionLoading}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={actionLoading}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
-              >
-                {actionLoading ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="mr-2 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Deleting...
-                  </span>
-                ) : (
-                  "Delete Permanently"
-                )}
               </button>
             </div>
           </div>

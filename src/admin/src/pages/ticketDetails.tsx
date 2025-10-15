@@ -116,11 +116,7 @@ const getCategoryColor = (category: string) => {
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    initializeCanisterReferences,
-    refreshUsers,
-    users: backendUsers,
-  } = useAdmin();
+  const { refreshUsers, users: backendUsers } = useAdmin();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +128,6 @@ export const TicketDetailsPage: React.FC = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await initializeCanisterReferences();
         await refreshUsers();
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -140,7 +135,7 @@ export const TicketDetailsPage: React.FC = () => {
     };
 
     initializeData();
-  }, [initializeCanisterReferences, refreshUsers]);
+  }, [, refreshUsers]);
 
   // Load reports from feedback canister
   const loadReportsAsTickets = async (): Promise<Ticket[]> => {

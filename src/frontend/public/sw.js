@@ -1,4 +1,12 @@
-// Service Worker for SRV PWA - Enhanced for cross-browser compatibility
+// Service Worker for SRV PWA - Enhanced for cross-browser compatibility with FCM support
+// Import Firebase Messaging for FCM support
+importScripts(
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
+);
+importScripts(
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js",
+);
+
 const CACHE_NAME = "srv-pwa-v1";
 const STATIC_CACHE_URLS = [
   "/",
@@ -22,6 +30,41 @@ function detectBrowser() {
 
   //console.log("🔍 SW: Browser detected:", browserInfo);
   return browserInfo;
+}
+
+// Initialize Firebase for FCM background messages
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyDRyQ38qXdEDDF1gcw33UhyAXocHAtnQzs",
+    authDomain: "devsrv-rey.firebaseapp.com",
+    projectId: "devsrv-rey",
+    storageBucket: "devsrv-rey.firebasestorage.app",
+    messagingSenderId: "851522429469",
+    appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4",
+  });
+
+  const messaging = firebase.messaging();
+
+  // Handle background messages from FCM
+  messaging.onBackgroundMessage((payload) => {
+    console.log("SW: Received background message from FCM:", payload);
+
+    const notificationTitle = payload.notification?.title || "SRV Notification";
+    const notificationOptions = {
+      body: payload.notification?.body || "You have a new notification",
+      icon: payload.notification?.icon || "/logo.svg",
+      badge: "/logo.svg",
+      data: payload.data || {},
+      tag: payload.data?.notificationId || "srv-notification",
+    };
+
+    return self.registration.showNotification(
+      notificationTitle,
+      notificationOptions,
+    );
+  });
+} catch (error) {
+  console.error("SW: Failed to initialize Firebase:", error);
 }
 
 // Install event - cache resources

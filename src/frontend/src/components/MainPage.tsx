@@ -1,28 +1,29 @@
-import {
-  FingerPrintIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { FingerPrintIcon } from "@heroicons/react/24/solid";
+import { useState, useEffect } from "react";
+import { SiteHeader } from "./layout/SiteHeader";
+import { SiteFooter } from "./layout/SiteFooter";
+import { MobileSiteHeader } from "./layout/MobileSiteHeader";
+import "./shared/animations.css";
+import { CommunityCTASection } from "./layout/CommunityCTASection";
 import "./shared/styles.css";
 
 interface MainPageProps {
   onLoginClick: () => void;
   isLoginLoading: boolean;
   onNavigateToAbout: () => void;
+  onNavigateToContact: () => void;
 }
 
 export default function MainPage({
   onLoginClick,
   isLoginLoading,
   onNavigateToAbout,
+  onNavigateToContact,
 }: MainPageProps) {
-  // Modal for Internet Identity info
-  const [showIdentityInfoModal, setShowIdentityInfoModal] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Handler for login button click
   const handleLoginClick = () => {
-    setShowIdentityInfoModal(true);
+    onLoginClick();
     // Close mobile menu if it's open
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
@@ -31,246 +32,317 @@ export default function MainPage({
     }
   };
 
-  // Handler for confirming identity info
-  const handleConfirmIdentityInfo = () => {
-    setShowIdentityInfoModal(false);
-    onLoginClick();
-  };
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-    const nav = document.querySelector(".main-nav");
-    nav?.classList.toggle("active");
-  };
+  // ===================== RESTORED / NEW EFFECTS =====================
+
+  // Services gallery autoplay + indicators
+  useEffect(() => {
+    const galleryContainer =
+      document.querySelector<HTMLElement>(".gallery-container");
+    if (!galleryContainer) return;
+    const slides = Array.from(
+      document.querySelectorAll<HTMLElement>(".gallery-image-wrapper"),
+    );
+    const prevBtn = document.querySelector<HTMLButtonElement>(".prev-btn");
+    const nextBtn = document.querySelector<HTMLButtonElement>(".next-btn");
+    const indicators = document.querySelector<HTMLElement>(
+      ".gallery-indicators",
+    );
+    let currentIndex = 0;
+    let autoplay: ReturnType<typeof setInterval> | null = null;
+
+    // Apply enhanced transition classes (single time)
+    slides.forEach((s) => {
+      s.style.transition =
+        "opacity 1s cubic-bezier(.4,0,.2,1), transform 1.2s cubic-bezier(.25,.8,.25,1)";
+      s.style.willChange = "opacity, transform";
+    });
+
+    slides.forEach((_, index) => {
+      const indicator = document.createElement("div");
+      indicator.classList.add("gallery-indicator");
+      if (index === 0) indicator.classList.add("active");
+      indicator.addEventListener("click", () => {
+        currentIndex = index;
+        updateGallery();
+      });
+      indicators?.appendChild(indicator);
+    });
+
+    function updateGallery() {
+      slides.forEach((s) => s.classList.remove("active"));
+      slides[currentIndex].classList.add("active");
+      document
+        .querySelectorAll(".gallery-indicator")
+        .forEach((ind, i) =>
+          ind.classList.toggle("active", i === currentIndex),
+        );
+    }
+
+    function goTo(delta: number) {
+      currentIndex = (currentIndex + delta + slides.length) % slides.length;
+      updateGallery();
+      restartAutoplay();
+    }
+    const handleNext = () => goTo(1);
+    const handlePrev = () => goTo(-1);
+
+    slides.forEach((slide) => {
+      slide.addEventListener("click", handleNext);
+    });
+    nextBtn?.addEventListener("click", handleNext);
+    prevBtn?.addEventListener("click", handlePrev);
+
+    function startAutoplay() {
+      autoplay = setInterval(handleNext, 3000);
+    }
+    function stopAutoplay() {
+      if (autoplay) clearInterval(autoplay);
+    }
+    function restartAutoplay() {
+      stopAutoplay();
+      startAutoplay();
+    }
+    startAutoplay();
+
+    const pause = () => stopAutoplay();
+    const resume = () => startAutoplay();
+    galleryContainer.addEventListener("mouseenter", pause);
+    galleryContainer.addEventListener("mouseleave", resume);
+
+    return () => {
+      stopAutoplay();
+      nextBtn?.removeEventListener("click", handleNext);
+      prevBtn?.removeEventListener("click", handlePrev);
+      galleryContainer.removeEventListener("mouseenter", pause);
+      galleryContainer.removeEventListener("mouseleave", resume);
+      slides.forEach((slide) => slide.removeEventListener("click", handleNext));
+      if (indicators) indicators.innerHTML = "";
+    };
+  }, []);
+
+  // Hero stagger animation
+  useEffect(() => {
+    const hero = document.querySelector<HTMLElement>(".hero-section");
+    if (!hero) return;
+    const elems = Array.from(hero.querySelectorAll<HTMLElement>(".hero-anim"));
+    if (!elems.length) return;
+    elems.forEach((el, i) => {
+      el.classList.add("hero-anim-init");
+      el.style.setProperty("--hero-delay", `${i * 130}ms`);
+    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            elems.forEach((el) => el.classList.add("hero-anim-in"));
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
+  // Features (“How does SRV work?”) reveal
+  useEffect(() => {
+    const cards = Array.from(
+      document.querySelectorAll<HTMLElement>(".features-section .feature-card"),
+    );
+    if (!cards.length) return;
+    cards.forEach((c, i) => {
+      c.classList.add("feature-init");
+      c.style.setProperty("--feat-delay", `${i * 120}ms`);
+    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add("feature-in");
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+    cards.forEach((c) => observer.observe(c));
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Why Choose SRV
+  useEffect(() => {
+    const section = document.querySelector<HTMLElement>(".why-choose-section");
+    if (!section) return;
+    const title = section.querySelector<HTMLElement>(".why-choose-title");
+    const phone = section.querySelector<HTMLElement>(".phone-container");
+    const reasons = Array.from(
+      section.querySelectorAll<HTMLElement>(".reason-item"),
+    );
+    if (!title || !phone || !reasons.length) return;
+
+    title.classList.add("why-fade-up-init");
+    title.style.setProperty("--why-delay", "0ms");
+    phone.classList.add("why-slide-left-init");
+    phone.style.setProperty("--why-delay", "120ms");
+    reasons.forEach((r, i) => {
+      r.classList.add("why-slide-right-init");
+      r.style.setProperty("--why-delay", `${240 + i * 140}ms`);
+    });
+
+    let done = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!done && entry.isIntersecting) {
+            done = true;
+            title.classList.add("why-animate-in");
+            phone.classList.add("why-animate-in");
+            reasons.forEach((r) => r.classList.add("why-animate-in"));
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // SDG cards reveal
+  useEffect(() => {
+    const cards = Array.from(
+      document.querySelectorAll<HTMLElement>(".sdg-card"),
+    );
+    if (!cards.length) return;
+    cards.forEach((c, i) => {
+      c.classList.add("sdg-init");
+      c.style.setProperty("--sdg-delay", `${i * 100}ms`);
+    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add("sdg-in");
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+    cards.forEach((c) => observer.observe(c));
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Services We Connect (gallery wrappers & title) animation
+  useEffect(() => {
+    const section = document.querySelector<HTMLElement>(
+      ".services-preview-section",
+    );
+    if (!section) return;
+    const title = section.querySelector<HTMLElement>(".services-title");
+    const items = Array.from(
+      section.querySelectorAll<HTMLElement>(".gallery-image-wrapper"),
+    );
+    if (title) title.classList.add("service-title-init");
+    items.forEach((it, i) => {
+      it.classList.add("service-init");
+      it.style.setProperty("--service-delay", `${120 + i * 90}ms`);
+    });
+    let triggered = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!triggered && entry.isIntersecting) {
+            triggered = true;
+            if (title) title.classList.add("service-title-in");
+            items.forEach((it) => it.classList.add("service-in"));
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // SDG header animation (separate from cards)
+  useEffect(() => {
+    const sdgHeader = document.querySelector<HTMLElement>(
+      ".sdg-section .sdg-header",
+    );
+    if (!sdgHeader) return;
+    sdgHeader.classList.add("sdg-header-init");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            sdgHeader.classList.add("sdg-header-in");
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    observer.observe(sdgHeader);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // =================== END RESTORED / NEW EFFECTS =====================
+
+  // (Removed community modal; CTA will open waitlist directly)
 
   return (
     <div>
-      {/* Internet Identity Info Modal (top-level, so all buttons trigger it) */}
-      {showIdentityInfoModal && (
-        <div
-          className="fixed inset-0 z-50 mt-10 flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowIdentityInfoModal(false);
-          }}
-        >
-          <div
-            className={`relative w-full max-w-md rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-2xl ${
-              showHowItWorks ? "max-h-[90vh] overflow-y-auto" : ""
-            }`}
-            style={
-              showHowItWorks ? { maxHeight: "90vh", overflowY: "auto" } : {}
-            }
-          >
-            <button
-              className="absolute top-3 right-3 rounded-full border border-gray-300 bg-gray-100 p-2 hover:bg-gray-200"
-              onClick={() => setShowIdentityInfoModal(false)}
-              aria-label="Close"
-              tabIndex={0}
-            >
-              <span className="text-xl font-bold text-gray-700">&times;</span>
-            </button>
-            <div className="mb-4 flex flex-col items-center">
-              <img
-                src="/images/srv characters (SVG)/tech guy.svg"
-                alt="Tech Guy"
-                className="mb-2 h-20 w-20 drop-shadow"
-              />
-              <h2 className="mb-1 text-2xl font-extrabold text-blue-700">
-                Internet Identity Login
-              </h2>
-              <span className="mb-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
-                Secure & Private
-              </span>
-            </div>
-            <div className="mb-6 text-center">
-              <p className="mb-2 text-base text-gray-700">
-                You will be redirected to Internet Identity to securely log in
-                or sign up.
-              </p>
-              <div className="mb-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
-                <strong className="mb-1 block text-blue-700">
-                  Why is this important?
-                </strong>
-                <span className="text-sm text-gray-700">
-                  Internet Identity protects your privacy and security,{" "}
-                  <strong>
-                    allowing you to use SRV without sharing personal passwords.
-                  </strong>{" "}
-                  It helps keep your account safe and enables trusted
-                  interactions on the platform.
-                </span>
-              </div>
-              <button
-                className="mx-auto mt-2 flex w-full items-center justify-center gap-1 text-blue-700 hover:underline"
-                onClick={() => setShowHowItWorks((v) => !v)}
-                aria-expanded={showHowItWorks}
-                aria-controls="how-ii-works-section"
-                type="button"
-              >
-                <InformationCircleIcon className="h-5 w-5" />
-                <span className="text-center">
-                  How does Internet Identity login work?
-                </span>
-              </button>
-              {/* How It Works Section (hidden by default) */}
-              {showHowItWorks && (
-                <div
-                  id="how-ii-works-section"
-                  className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-left text-sm text-gray-700"
-                >
-                  <h3 className="mb-2 text-base font-bold text-blue-700">
-                    How Internet Identity Works
-                  </h3>
-                  <ul className="list-disc space-y-2 pl-5">
-                    <li>
-                      <b>Imagine you have a magic key</b> that you don't need to
-                      remember, and it automatically creates a new, private
-                      "you" every time you visit a different website. That's
-                      basically how Internet Identity on ICP works.
-                    </li>
-                    <li>
-                      <b>No password needed:</b> Instead of a password, you use
-                      something you physically have, like your phone or a
-                      special security key, and something you are, like your
-                      fingerprint or face. This is called a <b>passkey</b>. This
-                      passkey is like your master key.
-                    </li>
+      <MobileSiteHeader
+        current="home"
+        onHome={() => window.scrollTo(0, 0)}
+        onAbout={() => {
+          onNavigateToAbout();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onContact={() => {
+          onNavigateToContact();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onLogin={handleLoginClick}
+        isLoginLoading={isLoginLoading}
+      />
+      <SiteHeader
+        current="home"
+        onHome={() => window.scrollTo(0, 0)}
+        onAbout={() => {
+          onNavigateToAbout();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onContact={() => {
+          onNavigateToContact();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onLogin={handleLoginClick}
+        isLoginLoading={isLoginLoading}
+      />
 
-                    <li>
-                      <b>Private & secure:</b> This process proves to the
-                      website that it's really you without ever sending a
-                      password. The system then creates a completely new, unique
-                      "you" (a digital identity) just for that app.
-                    </li>
-                    <li>
-                      <b>Privacy by design:</b> Because each app gets a
-                      different "you," none of them can talk to each other to
-                      figure out who you are or what you've been doing on other
-                      apps. This keeps your online life private. It's a way to
-                      log in that's more secure than passwords and keeps your
-                      information from being tracked.
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
-            <button
-              className="mt-2 w-full rounded-lg bg-blue-600 py-3 text-lg font-bold text-white shadow transition hover:bg-blue-700"
-              onClick={handleConfirmIdentityInfo}
-            >
-              Continue to Internet Identity
-            </button>
-          </div>
-        </div>
-      )}
-      {/* Header Section */}
-      <header className="site-header sticky top-0 z-40 rounded-b-2xl border-b border-blue-100 bg-white/80 shadow-lg backdrop-blur-lg">
-        <div className="container mx-auto flex items-center px-4 py-3">
-          <div className="flex items-center gap-4">
-            <a
-              href="/"
-              className="logo-link flex items-center gap-2"
-              aria-label="SRV Home"
-            >
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="logo-image h-10 w-auto"
-              />
-            </a>
-          </div>
-
-          <button
-            className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""} ml-auto rounded-lg border border-gray-300 bg-white p-2 shadow md:hidden`}
-            aria-label="Toggle menu"
-            onClick={toggleMobileMenu}
-          >
-            <span className="hamburger-line mb-1 block h-0.5 w-6 bg-blue-700"></span>
-            <span className="hamburger-line mb-1 block h-0.5 w-6 bg-blue-700"></span>
-            <span className="hamburger-line block h-0.5 w-6 bg-blue-700"></span>
-          </button>
-
-          <nav
-            className={`main-nav ${isMobileMenuOpen ? "active" : ""} hidden flex-1 items-center justify-center gap-6 md:flex`}
-          >
-            <ul className="nav-list flex items-center gap-6">
-              <li className="nav-item">
-                <a
-                  href="#"
-                  className="nav-link nav-link-active font-semibold text-blue-700 hover:underline"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  Home
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  href="#"
-                  className="nav-link font-semibold text-gray-700 hover:underline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onNavigateToAbout();
-                  }}
-                >
-                  About
-                </a>
-              </li>
-              <li className="nav-item nav-cta">
-                <button
-                  onClick={handleLoginClick}
-                  disabled={isLoginLoading}
-                  className="btn-primary ml-2 flex min-h-0 items-center gap-1 px-2 py-1 text-xs"
-                >
-                  {isLoginLoading ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                      <span className="text-base">Connecting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FingerPrintIcon className="h-4 w-4" />
-                      <span className="text-base">Login / Sign Up</span>
-                    </>
-                  )}
-                </button>
-              </li>
-            </ul>
-          </nav>
-
-          <div className="header-button hidden md:block">
-            <button
-              onClick={handleLoginClick}
-              disabled={isLoginLoading}
-              className="btn-primary"
-            >
-              {isLoginLoading ? (
-                <>
-                  <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                  <span>Connecting...</span>
-                </>
-              ) : (
-                <>
-                  <FingerPrintIcon className="mr-3 h-6 w-6" />
-                  <span>Login / Sign Up</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="container mx-auto px-4 py-12 md:py-20">
-          <div className="hero-content relative flex flex-col items-center rounded-3xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-8 shadow-xl md:p-16">
-            {/* Decorative background shapes */}
+      {/* HERO (hero-anim classes added) */}
+      <section className="hero-section home-hero">
+        <div className="container mx-auto px-4 pt-1 pb-4 md:pt-2 md:pb-5">
+          <div className="hero-content hero-pop relative flex flex-col items-center p-2 md:p-3">
             <div className="absolute top-0 left-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
             <div className="absolute right-0 bottom-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
-            <div className="hero-text-container mb-8">
+            <div className="hero-text-container mb-2">
               <h1 className="hero-text text-center text-3xl leading-tight font-extrabold text-blue-800 drop-shadow-lg md:text-5xl">
-                <div className="text-line mb-2 flex items-center justify-center gap-2">
+                <div className="text-line hero-anim mb-2 flex items-center justify-center gap-2">
                   <span className="text-segment">
                     Ang <span className="text-yellow-400">S</span>erbisyo
                   </span>
@@ -285,8 +357,7 @@ export default function MainPage({
                     <span className="toggle-switch"></span>
                   </span>
                 </div>
-
-                <div className="text-line mb-2 flex items-center justify-center gap-2">
+                <div className="text-line hero-anim mb-2 flex items-center justify-center gap-2">
                   <span className="component-group-before">
                     <img
                       src="/hero/star.svg"
@@ -305,8 +376,7 @@ export default function MainPage({
                     />
                   </span>
                 </div>
-
-                <div className="text-line flex items-center justify-center gap-2">
+                <div className="text-line hero-anim flex items-center justify-center gap-2">
                   <span className="component-group-before">
                     <div className="dots-line flex items-center gap-1">
                       <span className="line h-0.5 w-6 rounded bg-blue-300"></span>
@@ -317,7 +387,6 @@ export default function MainPage({
                       <span className="line h-0.5 w-6 rounded bg-blue-300"></span>
                     </div>
                   </span>
-
                   <span className="text-segment">
                     always <span className="text-yellow-400">V</span>alued!
                   </span>
@@ -336,15 +405,13 @@ export default function MainPage({
                 </div>
               </h1>
             </div>
-
-            <p className="hero-description mx-auto mb-8 max-w-2xl text-center text-lg text-gray-700 md:text-2xl">
+            <p className="hero-description hero-anim mx-auto mb-4 max-w-2xl text-center text-lg text-gray-700 md:text-2xl">
               Finding reliable help for everyday tasks can be a challenge.
               <strong className="text-blue-700"> SRV</strong> is your platform
               to easily discover, compare, and book a wide range of local
               service providers.
             </p>
-
-            <div className="hero-buttons flex justify-center">
+            <div className="hero-buttons hero-anim flex justify-center">
               <button
                 onClick={handleLoginClick}
                 disabled={isLoginLoading}
@@ -367,6 +434,7 @@ export default function MainPage({
         </div>
       </section>
 
+      {/* Features */}
       <section className="features-section">
         <div className="container">
           <div className="features-header">
@@ -436,6 +504,7 @@ export default function MainPage({
         </div>
       </section>
 
+      {/* Why Choose SRV */}
       <section className="why-choose-section">
         <img src="CircleArrow.svg" className="bg-shape-arrow-left" alt="" />
         <img src="Polygon 3.svg" className="bg-shape-triangle-top" alt="" />
@@ -450,7 +519,7 @@ export default function MainPage({
           <div className="why-choose-content">
             <div className="phone-container">
               <img
-                src="/images/main page assets/phone mockup.png"
+                src="/images/main page assets/phone mockup.svg"
                 alt="SRV Mobile App"
                 className="phone-image"
                 style={{ width: "100%", height: "auto", maxWidth: "100%" }}
@@ -541,6 +610,153 @@ export default function MainPage({
         </div>
       </section>
 
+      {/* Services Preview */}
+      <section className="services-preview-section">
+        <div className="container">
+          <div className="services-header">
+            <h2 className="services-title">Services We Connect</h2>
+          </div>
+
+          <div className="services-gallery">
+            <div className="gallery-container">
+              <div className="gallery-image-wrapper active" data-index="0">
+                <img
+                  src="services/electrician.jpeg"
+                  alt="Home Repairs"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/home-services.svg"
+                  alt="Home Repairs category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Home Repairs</h3>
+                  <p className="overlay-description">
+                    Electricians, plumbers, carpenters
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="1">
+                <img
+                  src="services/mechanic.jpeg"
+                  alt="Automobile Repairs"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/automobile-repairs.svg"
+                  alt="Automobile Repairs category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Automobile Repairs</h3>
+                  <p className="overlay-description">
+                    Mechanics, car detailing
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="2">
+                <img
+                  src="services/technician.jpeg"
+                  alt="Gadget & Appliance Tech"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/gadget-technicians.svg"
+                  alt="Gadget & Appliance Tech category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Gadget & Appliance Tech</h3>
+                  <p className="overlay-description">
+                    Phone repair, appliance fixing
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="3">
+                <img
+                  src="services/hair-stylist.jpeg"
+                  alt="Beauty Services"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/beauty-services.svg"
+                  alt="Beauty Services category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Beauty Services</h3>
+                  <p className="overlay-description">
+                    Hair styling, manicures, facials
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="4">
+                <img
+                  src="services/massager.jpeg"
+                  alt="Massage Services"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/beauty-wellness.svg"
+                  alt="Massage Services category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Massage Services</h3>
+                  <p className="overlay-description">
+                    Massage therapy, relaxation treatments
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="5">
+                <img
+                  src="services/delivery-man.jpeg"
+                  alt="Delivery & Errands"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/delivery-errands.svg"
+                  alt="Delivery & Errands category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Delivery & Errands</h3>
+                  <p className="overlay-description">
+                    Shopping, document delivery
+                  </p>
+                </div>
+              </div>
+              <div className="gallery-image-wrapper" data-index="6">
+                <img
+                  src="services/tutor.jpeg"
+                  alt="Tutoring"
+                  className="gallery-image"
+                />
+                <img
+                  src="/images/categories/tutoring.svg"
+                  alt="Tutoring category icon"
+                  className="category-icon"
+                />
+                <div className="image-overlay">
+                  <h3 className="overlay-title">Tutoring</h3>
+                  <p className="overlay-description">
+                    Academic support, skill training
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="gallery-controls">
+              <button className="gallery-control prev-btn">◀</button>
+              <div className="gallery-indicators"></div>
+              <button className="gallery-control next-btn">▶</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SDG */}
       <section className="sdg-section">
         <div className="container">
           <div className="sdg-header">
@@ -554,184 +770,70 @@ export default function MainPage({
           </div>
 
           <div className="sdg-grid">
-            <div className="sdg-card">
-              <h3 className="sdg-card-title">
-                SDG 9: Industry, Innovation, and Infrastructure
-              </h3>
-              <div className="sdg-icon">
-                <img src="sdg9.png" alt="sdg 9" />
+            <div className="sdg-card" data-sdg="9">
+              <div className="sdg-icon-circle">
+                <img src="sdg9.svg" alt="SDG 9 icon" className="sdg-icon-img" />
               </div>
+              <h3 className="sdg-card-title">
+                SDG 9: Industry, Innovation, & Infrastructure
+              </h3>
+              <p className="sdg-card-description">
+                Integrating blockchain into e‑commerce drives innovation, public
+                adoption, and resilient digital infrastructure.
+              </p>
+            </div>
+
+            <div className="sdg-card sdg-card-primary" data-sdg="8">
+              <div className="sdg-icon-circle">
+                <img src="sdg8.svg" alt="SDG 8 icon" className="sdg-icon-img" />
+              </div>
+
+              <h3 className="sdg-card-title">
+                SDG 8: Decent Work & Economic Growth
+              </h3>
+              <div className="sdg-primary-badge">Primary Focus</div>
 
               <p className="sdg-card-description">
-                Integrating blockchain into e-commerce brings innovation to a
-                mature industry while promoting public adoption of the
-                technology and strengthening the platform's infrastructure.
+                A professional transaction layer creating livelihood pathways
+                and elevating service reputation, trust, and opportunity.
               </p>
             </div>
 
-            <div className="sdg-card sdg-card-primary">
-              <h3 className="sdg-card-title sdg-primary-title">
-                SDG 8: Decent Work and Economic Growth
-              </h3>
-              <div className="sdg-icon">
-                <img src="sdg8.png" alt="sdg 8" />
+            <div className="sdg-card" data-sdg="17">
+              <div className="sdg-icon-circle">
+                <img
+                  src="sdg17.svg"
+                  alt="SDG 17 icon"
+                  className="sdg-icon-img"
+                />
               </div>
-
-              <p className="sdg-card-description sdg-primary-description">
-                SRV provides a professional platform for service transactions,
-                promoting mutual respect and creating job opportunities for
-                skilled but unemployed individuals.
-              </p>
-              <div className="sdg-primary-badge">Primary Focus</div>
-            </div>
-
-            <div className="sdg-card">
               <h3 className="sdg-card-title">
                 SDG 17: Partnerships for the Goals
               </h3>
-              <div className="sdg-icon">
-                <img src="sdg17.png" alt="sdg 17" />
-              </div>
-
               <p className="sdg-card-description">
-                SRV fosters collaboration among service providers, clients, and
-                support staff through technology, aligning with the SDG goals of
-                partnership and knowledge sharing.
+                Enabling collaboration among providers, customers, and local
+                support networks through transparent digital tooling.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="about-cta-section">
-        <div className="container">
-          <div className="about-cta-card">
-            <h2 className="about-cta-title">Join the SRV Community Today</h2>
-            <p className="about-cta-description">
-              Connect with trusted local service providers and discover a better
-              way to get things done in your community.
-            </p>
-            <div className="about-cta-button-container">
-              <button
-                onClick={handleLoginClick}
-                disabled={isLoginLoading}
-                className={"btn-primary"}
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="mr-3 h-6 w-6" />
-                    <span>Login / Sign Up</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Restored Bottom Join Community CTA Section */}
+      <CommunityCTASection onOpenCommunity={handleLoginClick} />
 
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-brand">
-              <a href="/" className="footer-logo-link">
-                <img src="logo.svg" alt="SRV Logo" className="footer-logo" />
-              </a>
-            </div>
-            <div className="footer-section footer-nav">
-              <ul className="footer-links nav-links">
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="footer-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    Home
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="footer-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigateToAbout();
-                    }}
-                  >
-                    About
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div className="footer-section">
-              <ul className="footer-links">
-                <li className="social-item-main">
-                  <a
-                    href="https://www.facebook.com/srvpinoy"
-                    className="footer-link social-link-main"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-facebook.svg"
-                      alt="Facebook"
-                      className="social-icon-main"
-                    />
-                  </a>
-                  <a
-                    href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr"
-                    className="footer-link social-link-main"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-instagram.svg"
-                      alt="Instagram"
-                      className="social-icon-main"
-                    />
-                  </a>
-                  <a
-                    href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-"
-                    className="footer-link social-link-main"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-youtube.svg"
-                      alt="Youtube"
-                      className="social-icon-main"
-                    />
-                  </a>
-                  <a
-                    href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
-                    className="footer-link social-link-main"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-tiktok.svg"
-                      alt="Tiktok"
-                      className="social-icon-main"
-                    />
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="footer-bottom">
-            <p className="footer-copyright">
-              © 2025 SRV Service Booking. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter
+        current="home"
+        onHome={() => window.scrollTo(0, 0)}
+        onAbout={() => {
+          onNavigateToAbout();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+        onContact={() => {
+          onNavigateToContact();
+          setTimeout(() => window.scrollTo(0, 0), 0);
+        }}
+      />
     </div>
   );
 }

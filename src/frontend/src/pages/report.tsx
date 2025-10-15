@@ -69,16 +69,13 @@ const ReportIssuePage: React.FC = () => {
     setSuccessMessage(null);
 
     // Create ticket-compatible report with structured data
-    const reportData = {
-      description: JSON.stringify({
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        timestamp: new Date().toISOString(),
-        source: "client_report", // Identify source for admin
-      }),
-    };
-
+    const reportData = JSON.stringify({
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      timestamp: new Date().toISOString(),
+      source: "client_report", // Identify source for admin
+    });
     const success = await submitReport(reportData);
 
     if (success) {

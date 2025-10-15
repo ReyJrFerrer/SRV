@@ -1,3 +1,9 @@
+// Component: LocationMapPicker
+// Purpose: Pin/search control for selecting a precise map location with reverse geocoding.
+// Inputs: props.value (StructuredLocation | null), props.highlight, props.label, props.persistKey
+// Outputs: onChange(StructuredLocation) with lat/lng and a user-friendly address
+// Side effects: persists to localStorage when persistKey is provided
+// Dependencies: @vis.gl/react-google-maps Map/AdvancedMarker; Google Maps JS (Places + Geocoder)
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
@@ -36,6 +42,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   highlight = false,
   persistKey,
 }) => {
+  // SECTION: State/Refs
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
@@ -54,6 +61,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
   const debounceRef = useRef<number | null>(null);
 
+  // SECTION: Helpers
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
