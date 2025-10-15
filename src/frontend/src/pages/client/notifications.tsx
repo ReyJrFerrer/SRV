@@ -223,7 +223,7 @@ const NotificationsPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-4xl px-4 py-3">
-          <h1 className="text-left text-2xl font-extrabold tracking-tight text-black sm:text-center lg:text-3xl">
+          <h1 className="text-center text-2xl font-extrabold tracking-tight text-black">
             Notifications
           </h1>
         </div>
@@ -232,9 +232,9 @@ const NotificationsPage = () => {
           <div className="absolute top-1/2 right-4 -translate-y-1/2">
             <button
               onClick={markAllAsRead}
-              className="flex items-center rounded-lg bg-blue-100 px-2 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900 sm:px-3 sm:py-2 sm:text-sm"
+              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
             >
-              <EnvelopeOpenIcon className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4" />
+              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
               Mark all as read
             </button>
           </div>

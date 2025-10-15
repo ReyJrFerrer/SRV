@@ -528,7 +528,7 @@ const BookingDetailsPage: React.FC = () => {
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Combined Provider and Service Details Card */}
-        <div className="relative mt-6 rounded-2xl border border-blue-100 bg-white/90 p-8 pt-4 shadow-xl backdrop-blur-md">
+        <div className="relative mt-6 rounded-3xl border border-blue-100 bg-white/90 p-8 pt-4 shadow-2xl backdrop-blur-md">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             {/* Left Column: Provider Details */}
             <div className="border-r-0 border-gray-200 pr-0 lg:border-r lg:pr-8">
@@ -638,7 +638,7 @@ const BookingDetailsPage: React.FC = () => {
         </div>
 
         {/* Section 3: Progress Tracker */}
-        <div className="rounded-2xl border border-blue-100 bg-white/90 p-8 shadow-xl backdrop-blur-md">
+        <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
           <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
             <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
             Progress
@@ -662,11 +662,11 @@ const BookingDetailsPage: React.FC = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 rounded-2xl bg-white p-4 shadow-lg">
+        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
           <button
             onClick={handleChatWithProvider}
             disabled={chatLoading}
-            className="flex min-w-[120px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-3 py-2 text-xs font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400 sm:min-w-[150px] sm:px-4 sm:py-2.5 sm:text-sm"
+            className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {chatLoading ? (
               <>
@@ -685,7 +685,7 @@ const BookingDetailsPage: React.FC = () => {
             <button
               onClick={handleCancelBooking}
               disabled={isOperationInProgress(`update-${id}`)}
-              className="flex min-w-[120px] flex-1 items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 sm:min-w-[150px] sm:px-4 sm:py-2.5 sm:text-sm"
+              className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
             >
               <XCircleIcon className="mr-2 h-5 w-5" />
               {isOperationInProgress(`update-${id}`)
@@ -699,7 +699,7 @@ const BookingDetailsPage: React.FC = () => {
               <Link
                 to={reviewButtonContent.to}
                 state={reviewButtonContent.state}
-                className={`flex min-w-[120px] flex-1 items-center justify-center rounded-lg px-3 py-2 text-xs font-medium text-white sm:min-w-[150px] sm:px-4 sm:py-2.5 sm:text-sm ${reviewButtonContent.className}`}
+                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className}`}
               >
                 {reviewButtonContent.icon} {reviewButtonContent.text}
               </Link>
@@ -707,7 +707,7 @@ const BookingDetailsPage: React.FC = () => {
               <button
                 onClick={reviewButtonContent.onClick}
                 disabled={reviewButtonContent.disabled}
-                className={`flex min-w-[120px] flex-1 items-center justify-center rounded-lg px-3 py-2 text-xs font-medium text-white sm:min-w-[150px] sm:px-4 sm:py-2.5 sm:text-sm ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
+                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
               >
                 {reviewButtonContent.icon} {reviewButtonContent.text}
               </button>
