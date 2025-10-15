@@ -1,6 +1,6 @@
 This is the Google Pub/Sub fake.
 Implementation may be incomplete or differ from the real system.
-Oct 15, 2025 4:10:05 AM com.google.cloud.pubsub.testing.v1.Main main
+Oct 15, 2025 7:35:48 AM com.google.cloud.pubsub.testing.v1.Main main
 INFO: IAM integration is disabled. IAM policy methods and ACL checks are not supported
 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
 SLF4J: Defaulting to no-operation (NOP) logger implementation
@@ -14,7 +14,7 @@ WARNING: java.lang.System::loadLibrary has been called by io.grpc.netty.shaded.i
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-Oct 15, 2025 4:10:05 AM com.google.cloud.pubsub.testing.v1.Main main
+Oct 15, 2025 7:35:48 AM com.google.cloud.pubsub.testing.v1.Main main
 INFO: Server started, listening on 8085
-Oct 15, 2025 4:12:16 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Oct 15, 2025 7:38:00 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
