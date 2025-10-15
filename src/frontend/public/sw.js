@@ -147,6 +147,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Bypass third-party requests that can be blocked (e.g., Google Maps telemetry) so we don't
+  // intercept them and cause console noise when blocked by the network or extensions.
+  try {
+    const reqUrl = new URL(event.request.url);
+    const isThirdParty = reqUrl.origin !== self.location.origin;
+    const isGoogleMapsDomain =
+      reqUrl.hostname === "maps.googleapis.com" ||
+      reqUrl.hostname === "maps.gstatic.com";
+    const isMapsTelemetry =
+      isGoogleMapsDomain && reqUrl.pathname.includes("/maps/api/js/QuotaService.RecordEvent");
+
+    if (isMapsTelemetry || isGoogleMapsDomain) {
+      // Let the browser handle it (no caching, no SW respondWith)
+      return;
+    }
+  } catch (_) {
+    // If URL parsing fails, continue to default handler below
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Return cached response if found
@@ -192,24 +211,26 @@ self.addEventListener("fetch", (event) => {
         })
         .catch((error) => {
           //console.error("❌ SW: Fetch failed:", error);
-
-          // Return a fallback response for navigation requests
+          // For navigation requests return an offline fallback if we have it
           if (event.request.mode === "navigate") {
             return caches.match("/").then((fallbackResponse) => {
-              if (fallbackResponse) {
-                return fallbackResponse;
-              }
-              // If no cached fallback, return a basic offline page
-              return new Response(
-                "App is offline. Please check your connection.",
-                {
-                  status: 503,
-                  headers: { "Content-Type": "text/plain" },
-                },
-              );
+              if (fallbackResponse) return fallbackResponse;
+              return new Response("App is offline. Please check your connection.", {
+                status: 503,
+                headers: { "Content-Type": "text/plain" },
+              });
             });
           }
-          throw error;
+          // For third-party or opaque requests, avoid rejecting the promise to silence console noise
+          try {
+            const reqUrl = new URL(event.request.url);
+            if (reqUrl.origin !== self.location.origin) {
+              // Return an empty 204 to satisfy callers expecting a response (e.g., telemetry beacons)
+              return new Response(null, { status: 204 });
+            }
+          } catch (_) {}
+          // Otherwise, return a generic 504 response
+          return new Response("Network error", { status: 504 });
         });
     }),
   );
