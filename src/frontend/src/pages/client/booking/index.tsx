@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast, Toaster } from "sonner";
 import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
 import {
@@ -38,6 +39,9 @@ const MyBookingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Effect to sync the active tab with the URL query parameter
   useEffect(() => {
@@ -183,15 +187,26 @@ const MyBookingsPage: React.FC = () => {
   };
 
   const handleCancelBookingOnListPage = async (bookingId: string) => {
-    // NOTE: window.confirm is blocking and not ideal for modern UX.
-    // Consider replacing this with a custom modal component.
+    // Show confirmation dialog instead of alert
+    setBookingToCancel(bookingId);
+    setShowCancelConfirm(true);
+  };
+
+  // New function to handle the actual cancellation after confirmation
+  const handleConfirmCancellation = async () => {
+    if (!bookingToCancel) return;
+
+    setIsCancelling(true);
     try {
-      await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
-      // NOTE: window.alert is also blocking. Use a toast notification instead.
-      alert(`Booking has been cancelled successfully.`);
+      await bookingManagement.updateBookingStatus(bookingToCancel, "Cancelled");
+      toast.success("Booking has been cancelled successfully.");
+      setShowCancelConfirm(false);
+      setBookingToCancel(null);
     } catch (error) {
       //console.error("Error cancelling booking:", error);
-      alert("Failed to cancel booking. Please try again.");
+      toast.error("Failed to cancel booking. Please try again.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -340,6 +355,42 @@ const MyBookingsPage: React.FC = () => {
           <BottomNavigation />
         </div>
       </div>
+
+      {/* Cancel Booking Confirmation Dialog */}
+      {showCancelConfirm && bookingToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Cancel Booking?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to cancel this booking? This action cannot
+              be undone and you may be charged a cancellation fee.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  setBookingToCancel(null);
+                }}
+                disabled={isCancelling}
+              >
+                Keep Booking
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={handleConfirmCancellation}
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancelling..." : "Cancel Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toaster position="top-center" richColors />
     </>
   );
 };
