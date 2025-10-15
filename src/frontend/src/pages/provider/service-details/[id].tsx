@@ -64,9 +64,9 @@ const Tooltip: React.FC<TooltipProps> = ({
     return (
       <div className="group relative">
         {children}
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           {content}
-          <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
         </div>
       </div>
     );
@@ -104,6 +104,73 @@ const addHoursToTime = (time: string, hoursToAdd: number): string => {
   }
 
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+};
+
+// **Helper function to convert time string to Date for comparison**
+const timeStringToDate = (timeStr: string): Date => {
+  const [hourStr, minuteStr] = timeStr.split(":");
+  const date = new Date();
+  date.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+  return date;
+};
+
+// **Helper function to validate time slots for a day**
+const validateTimeSlots = (slots: TimeSlot[]): string[] => {
+  const errors: string[] = [];
+
+  if (slots.length === 0) return errors;
+
+  // Sort time slots by start time for proper validation
+  const sortedSlots = [...slots].sort((a, b) => {
+    const aStart = timeStringToDate(a.startTime);
+    const bStart = timeStringToDate(b.startTime);
+    return aStart.getTime() - bStart.getTime();
+  });
+
+  sortedSlots.forEach((slot, index) => {
+    const startTime = timeStringToDate(slot.startTime);
+    const endTime = timeStringToDate(slot.endTime);
+
+    // Check if start and end times are the same
+    if (startTime.getTime() === endTime.getTime()) {
+      errors.push("Start and end times cannot be the same");
+    }
+
+    // Check if start time is after end time
+    if (startTime.getTime() > endTime.getTime()) {
+      errors.push("Start time cannot be after end time");
+    }
+
+    // Check for minimum 1-hour gap between consecutive time slots
+    if (index > 0) {
+      const prevSlot = sortedSlots[index - 1];
+      const prevEndTime = timeStringToDate(prevSlot.endTime);
+
+      // Calculate the time difference in milliseconds
+      const timeDiff = startTime.getTime() - prevEndTime.getTime();
+      const oneHourInMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (timeDiff < oneHourInMs) {
+        const prevEndTimeStr = formatTime(prevSlot.endTime);
+        const currentStartTimeStr = formatTime(slot.startTime);
+        errors.push(
+          `Time slots must have at least 1 hour gap. Previous slot ends at ${prevEndTimeStr}, current slot starts at ${currentStartTimeStr}`,
+        );
+      }
+    }
+
+    // Check for overlapping time slots
+    if (index > 0) {
+      const prevSlot = sortedSlots[index - 1];
+      const prevEndTime = timeStringToDate(prevSlot.endTime);
+
+      if (startTime.getTime() < prevEndTime.getTime()) {
+        errors.push("Time slots cannot overlap");
+      }
+    }
+  });
+
+  return [...new Set(errors)]; // Remove duplicates
 };
 
 // Availability Editor component
@@ -345,73 +412,130 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
           {dayEntry.availability.isAvailable && (
             <div className="mt-3 space-y-3">
               {dayEntry.availability.slots.length > 0 ? (
-                dayEntry.availability.slots.map((slot, slotIndex) => (
-                  <div
-                    key={slotIndex}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input
-                      type="time"
-                      value={slot.startTime}
-                      onChange={(e) => {
-                        const newStartTime = e.target.value;
-                        const newSchedule = [...weeklySchedule];
-                        const dayIndex = weeklySchedule.findIndex(
-                          (d) => d.day === dayEntry.day,
-                        );
+                <>
+                  {dayEntry.availability.slots.map((slot, slotIndex) => {
+                    // Check if current slot has validation errors
+                    const currentDayErrors = validateTimeSlots(
+                      dayEntry.availability.slots,
+                    );
+                    const hasErrors = currentDayErrors.length > 0;
+                    const isSameTime = slot.startTime === slot.endTime;
+                    const startTime = timeStringToDate(slot.startTime);
+                    const endTime = timeStringToDate(slot.endTime);
+                    const isStartAfterEnd =
+                      startTime.getTime() > endTime.getTime();
 
-                        // Update start time
-                        newSchedule[dayIndex].availability.slots[
-                          slotIndex
-                        ].startTime = newStartTime;
+                    return (
+                      <div
+                        key={slotIndex}
+                        className={`rounded-lg border p-3 ${
+                          isSameTime || isStartAfterEnd
+                            ? "border-red-200 bg-red-50"
+                            : hasErrors
+                              ? "border-yellow-200 bg-yellow-50"
+                              : "border-gray-200 bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 text-sm">
+                          <input
+                            type="time"
+                            value={slot.startTime}
+                            onChange={(e) => {
+                              const newStartTime = e.target.value;
+                              const newSchedule = [...weeklySchedule];
+                              const dayIndex = weeklySchedule.findIndex(
+                                (d) => d.day === dayEntry.day,
+                              );
 
-                        // If start time equals end time, automatically increment end time by 1 hour
-                        if (newStartTime === slot.endTime) {
-                          newSchedule[dayIndex].availability.slots[
-                            slotIndex
-                          ].endTime = addHoursToTime(newStartTime, 1);
-                        }
+                              // Update start time
+                              newSchedule[dayIndex].availability.slots[
+                                slotIndex
+                              ].startTime = newStartTime;
 
-                        setWeeklySchedule(newSchedule);
-                      }}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span>-</span>
-                    <input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) => {
-                        const newEndTime = e.target.value;
-                        // Prevent setting end time same as start time
-                        if (newEndTime !== slot.startTime) {
-                          const newSchedule = [...weeklySchedule];
-                          newSchedule[
-                            weeklySchedule.findIndex(
-                              (d) => d.day === dayEntry.day,
-                            )
-                          ].availability.slots[slotIndex].endTime = newEndTime;
-                          setWeeklySchedule(newSchedule);
-                        }
-                      }}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => {
-                        const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots.splice(slotIndex, 1);
-                        setWeeklySchedule(newSchedule);
-                      }}
-                      className="rounded-full p-1 text-red-600 hover:bg-red-100"
-                      aria-label="Remove time slot"
-                    >
-                      <MinusCircleIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                ))
+                              // If start time equals end time, automatically increment end time by 1 hour
+                              if (newStartTime === slot.endTime) {
+                                newSchedule[dayIndex].availability.slots[
+                                  slotIndex
+                                ].endTime = addHoursToTime(newStartTime, 1);
+                              }
+
+                              setWeeklySchedule(newSchedule);
+                            }}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
+                          />
+                          <span className="text-gray-500">to</span>
+                          <input
+                            type="time"
+                            value={slot.endTime}
+                            onChange={(e) => {
+                              const newEndTime = e.target.value;
+                              // Prevent setting end time same as start time
+                              if (newEndTime !== slot.startTime) {
+                                const newSchedule = [...weeklySchedule];
+                                newSchedule[
+                                  weeklySchedule.findIndex(
+                                    (d) => d.day === dayEntry.day,
+                                  )
+                                ].availability.slots[slotIndex].endTime =
+                                  newEndTime;
+                                setWeeklySchedule(newSchedule);
+                              }
+                            }}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
+                          />
+                          <button
+                            onClick={() => {
+                              const newSchedule = [...weeklySchedule];
+                              newSchedule[
+                                weeklySchedule.findIndex(
+                                  (d) => d.day === dayEntry.day,
+                                )
+                              ].availability.slots.splice(slotIndex, 1);
+                              setWeeklySchedule(newSchedule);
+                            }}
+                            className="rounded-full p-1 text-red-600 hover:bg-red-100"
+                            aria-label="Remove time slot"
+                          >
+                            <MinusCircleIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+
+                        {/* Display time slot specific validation errors */}
+                        {(isSameTime || isStartAfterEnd) && (
+                          <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                            <span>⚠️</span>
+                            <span>
+                              {isSameTime
+                                ? "Start and end times cannot be the same"
+                                : "Start time cannot be after end time"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Display day-level validation errors */}
+                  {validateTimeSlots(dayEntry.availability.slots).map(
+                    (error, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+                      >
+                        <span>⚠️</span>
+                        <span>{error}</span>
+                      </div>
+                    ),
+                  )}
+                </>
               ) : (
                 <p className="text-sm text-gray-500">No time slots added.</p>
               )}
@@ -792,34 +916,18 @@ const ProviderServiceDetailPage: React.FC = () => {
       return;
     }
 
-    // Basic validation for time slots: start < end, no overlaps within a day (can be more robust)
+    // Comprehensive validation for time slots using the same validation as ServiceAvailability
     for (const day of editedWeeklySchedule) {
-      if (day.availability.isAvailable) {
-        for (let i = 0; i < day.availability.slots.length; i++) {
-          const slotA = day.availability.slots[i];
-          if (slotA.startTime >= slotA.endTime) {
-            toast.error(
-              `For ${day.day}, start time (${formatTime(slotA.startTime)}) must be before end time (${formatTime(slotA.endTime)}).`,
-            );
-            return;
-          }
-          for (let j = i + 1; j < day.availability.slots.length; j++) {
-            const slotB = day.availability.slots[j];
-            // Check for overlap
-            if (
-              slotA.startTime < slotB.endTime &&
-              slotB.startTime < slotA.endTime
-            ) {
-              toast.error(
-                `For ${day.day}, time slots overlap: ${formatTime(
-                  slotA.startTime,
-                )}-${formatTime(slotA.endTime)} and ${formatTime(
-                  slotB.startTime,
-                )}-${formatTime(slotB.endTime)}.`,
-              );
-              return;
-            }
-          }
+      if (day.availability.isAvailable && day.availability.slots.length > 0) {
+        const errors = validateTimeSlots(day.availability.slots);
+        if (errors.length > 0) {
+          toast.error(
+            `${day.day} has invalid time slots: ${errors.join(", ")}`,
+            {
+              duration: 6000, // Show longer to read the full message
+            },
+          );
+          return;
         }
       }
     }
@@ -1335,7 +1443,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
@@ -1439,7 +1547,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         />
         <div className="relative z-10 flex flex-col items-center justify-center">
           <button
-            className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
+            className="absolute top-2 right-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
             onClick={() => setPreviewUrl(null)}
             aria-label="Close preview"
           >
@@ -1579,7 +1687,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
+                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >
@@ -2147,19 +2255,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
+                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
                             </div>
                           )}
                           <button
                             onClick={() => handleRemoveCertificate(index)}
-                            className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                             aria-label="Remove certificate"
                             type="button"
                           >
                             <XMarkIcon className="h-4 w-4" />
                           </button>
                           {certificate.isNew && (
-                            <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
                               NEW
                             </div>
                           )}
@@ -2313,19 +2421,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
+                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
                             </div>
                           )}
                           <button
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                             aria-label="Remove image"
                             type="button"
                           >
                             <XMarkIcon className="h-4 w-4" />
                           </button>
                           {image.isNew && (
-                            <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
                               NEW
                             </div>
                           )}
@@ -2439,7 +2547,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 : handleStatusToggle
             }
             disabled={isUpdatingStatus || hasActiveBookings}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none ${
               service.status === "Available"
                 ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
                 : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
@@ -2467,7 +2575,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
               }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-red-400 hover:text-white"
