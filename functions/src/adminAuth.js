@@ -79,7 +79,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       success: true,
       message: "Admin profile created and role assigned successfully",
       uid: uid,
-      needsSignOut: true, // Indicate that user should sign out/in to refresh token
+      needsSignOut: false, // Token refresh is handled automatically in the frontend
     };
   } catch (error) {
     console.error("❌ [Admin] Error in createAdminProfile:", error);
