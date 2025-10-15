@@ -68,7 +68,7 @@ export const PWAInstall: React.FC<PWAInstallProps> = ({
           }}
         >
           <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/srv characters (SVG)/tech guy.svg"
                 alt="SRV Install"

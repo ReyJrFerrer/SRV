@@ -800,7 +800,7 @@ const ProviderDirectionsPage: React.FC = () => {
       </div>
       {/* Floating button removed; recenter is in overlay */}
       {mapApiKey === "REPLACE_WITH_KEY" && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
+        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
           Missing Google Maps API key
         </div>
       )}

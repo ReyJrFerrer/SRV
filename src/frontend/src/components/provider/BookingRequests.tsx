@@ -19,7 +19,7 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
 }) => {
   return (
     <div className={className}>
-      <h2 className="mt-5 mb-6 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
+      <h2 className="mb-6 mt-5 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
         Bookings
       </h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

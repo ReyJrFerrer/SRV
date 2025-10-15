@@ -166,7 +166,7 @@ const ActiveServicePage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -263,8 +263,8 @@ const ActiveServicePage: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <MapPinIcon className="mt-1 mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="font-medium break-words text-gray-800">
+                <MapPinIcon className="mr-3 mt-1 h-6 w-6 flex-shrink-0 text-blue-400" />
+                <span className="break-words font-medium text-gray-800">
                   {booking.formattedLocation || "Location not specified"}
                 </span>
               </div>
