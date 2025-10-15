@@ -22,6 +22,7 @@ When a user sends a chat message, the following happens:
 ### For Clients
 
 When a client receives a chat message notification:
+
 - **URL Pattern**: `/client/chat/{conversationId}`
 - **Example**: `/client/chat/1729123456789abc123`
 - **Component**: `src/frontend/src/pages/client/chat/[providerId].tsx`
@@ -31,6 +32,7 @@ The `conversationId` parameter matches the conversation document ID in Firestore
 ### For Providers
 
 When a provider receives a chat message notification:
+
 - **URL Pattern**: `/provider/chat/{conversationId}`
 - **Example**: `/provider/chat/1729123456789abc123`
 - **Component**: `src/frontend/src/pages/provider/chat/[clientId].tsx`
@@ -52,10 +54,10 @@ function generateNotificationHref(notificationType, userType, entityId) {
   switch (notificationType) {
     case NOTIFICATION_TYPES.CHAT_MESSAGE:
       // For chat messages, entityId is the conversation ID
-      return isProvider ?
-        `/provider/chat/${entityId}` :
-        `/client/chat/${entityId}`;
-    
+      return isProvider
+        ? `/provider/chat/${entityId}`
+        : `/client/chat/${entityId}`;
+
     // ... other notification types
   }
 }
@@ -77,7 +79,7 @@ const notificationData = {
   href: generateNotificationHref(
     NOTIFICATION_TYPES.CHAT_MESSAGE,
     receiverUserType,
-    conversationId,  // ← Conversation ID passed here
+    conversationId, // ← Conversation ID passed here
   ),
   relatedEntityId: conversationId,
   status: "unread",
@@ -146,6 +148,7 @@ useEffect(() => {
 ### Conversation Loading
 
 The `loadConversation` function in `useChat` hook handles both cases:
+
 - If passed a conversation ID that exists → loads that conversation
 - If passed a user ID → finds or creates a conversation with that user
 
@@ -177,6 +180,7 @@ To test the notification routing:
 ### Issue: Notification goes to wrong page
 
 **Check**:
+
 - Is `userType` correctly set to "client" or "provider"?
 - Is `relatedEntityId` the conversation ID (not message ID)?
 - Is `generateNotificationHref` being called with correct parameters?
@@ -184,6 +188,7 @@ To test the notification routing:
 ### Issue: Chat page shows "Conversation not found"
 
 **Check**:
+
 - Does the conversation exist in Firestore?
 - Is the conversation ID correctly passed in the URL?
 - Does the user have permission to view this conversation?
@@ -191,6 +196,7 @@ To test the notification routing:
 ### Issue: Notification shows but clicking does nothing
 
 **Check**:
+
 - Is the `href` field properly set in the notification?
 - Are the route configurations correct in your app?
 - Check browser console for navigation errors

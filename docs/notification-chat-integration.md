@@ -28,7 +28,7 @@ This document describes the integration of the notification system with the chat
      - Notification type: `CHAT_MESSAGE`
      - Title: "New message from [Sender Name]"
      - Message preview: First 50 characters of the message
-     - **Direct link to the conversation**: 
+     - **Direct link to the conversation**:
        - Client: `/client/chat/{conversationId}`
        - Provider: `/provider/chat/{conversationId}`
      - Metadata: sender ID, sender name, conversation ID, message ID
