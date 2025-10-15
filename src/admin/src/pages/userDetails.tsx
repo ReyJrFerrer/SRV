@@ -212,7 +212,6 @@ export const UserDetailsPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    initializeCanisterReferences,
     updateUserLockStatus,
     getUserLockStatus,
   } = useAdmin();
@@ -476,7 +475,6 @@ export const UserDetailsPage: React.FC = () => {
       // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
-          await initializeCanisterReferences();
           await refreshUsers();
           return;
         } catch (error) {
@@ -541,7 +539,7 @@ export const UserDetailsPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id, backendUsers, refreshUsers, initializeCanisterReferences]);
+  }, [id, backendUsers, refreshUsers]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -1237,7 +1235,7 @@ export const UserDetailsPage: React.FC = () => {
               </button>
               {/* <button
                 onClick={confirmCommissionUpdate}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
               >
                 Update Commission
               </button> */}

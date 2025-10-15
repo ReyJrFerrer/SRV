@@ -189,8 +189,8 @@ const WalletPage: React.FC = () => {
     }
 
     const amount = parseFloat(topUpAmount);
-    if (!amount || amount < 50) {
-      toast.error("Minimum top-up amount is ₱50");
+    if (!amount || amount < 100) {
+      toast.error("Minimum top-up amount is ₱100");
       return;
     }
 
@@ -631,14 +631,14 @@ const WalletPage: React.FC = () => {
                       value={topUpAmount}
                       onChange={(e) => setTopUpAmount(e.target.value)}
                       placeholder="0.00"
-                      min="50"
+                      min="100"
                       max="50000"
                       step="0.01"
                       className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    Minimum: ₱50 • Maximum: ₱50,000
+                    Minimum: ₱100 • Maximum: ₱50,000
                   </p>
                 </div>
               </div>
@@ -657,7 +657,9 @@ const WalletPage: React.FC = () => {
                 <button
                   onClick={handleTopUpSubmit}
                   disabled={
-                    topUpLoading || !topUpAmount || parseFloat(topUpAmount) < 50
+                    topUpLoading ||
+                    !topUpAmount ||
+                    parseFloat(topUpAmount) < 100
                   }
                   className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >

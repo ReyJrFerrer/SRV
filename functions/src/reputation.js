@@ -175,7 +175,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: process.env.CANISTER_ID_REPUTATION || "br5f7-7uaaa-aaaaa-qaaca-cai",
+    reputation: process.env.CANISTER_ID_REPUTATION || "bd3sg-teaaa-aaaaa-qaaba-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION_IC,
@@ -188,8 +188,8 @@ const CANISTER_IDS = {
 // Host URLs for different environments
 const HOSTS = {
   local: "http://127.0.0.1:4943",
-  ic: "https://ic0.app",
-  playground: "https://ic0.app",
+  ic: `https://id.ai`,
+  playground: `https://id.ai`,
 };
 
 /**

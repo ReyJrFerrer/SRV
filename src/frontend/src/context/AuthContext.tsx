@@ -204,8 +204,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
-            ? `https://identity.ic0.app`
+            ? `https://id.ai `
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
+
         onSuccess: async () => {
           const identity = authClient.getIdentity();
           setIsAuthenticated(true);

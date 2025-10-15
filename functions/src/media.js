@@ -145,7 +145,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
   }
 
   try {
-  const mediaId = await generateUuid();
+    const mediaId = await generateUuid();
     const ownerId = authInfo.uid;
     const filePath = generateFilePath(ownerId, mediaType, fileName, mediaId);
 

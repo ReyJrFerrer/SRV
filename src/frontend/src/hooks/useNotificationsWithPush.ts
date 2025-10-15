@@ -31,7 +31,9 @@ export interface Notification {
     | "service_rescheduled"
     | "service_reminder"
     | "promo_offer"
-    | "provider_on_the_way";
+    | "provider_on_the_way"
+    | "booking_not_selected"
+    | "booking_missed_timeslot";
   timestamp: string;
   read: boolean;
   href: string;

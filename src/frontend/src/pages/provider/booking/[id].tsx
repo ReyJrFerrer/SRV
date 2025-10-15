@@ -296,11 +296,17 @@ const ProviderBookingDetailsPage: React.FC = () => {
     estimatedCommission: number;
     hasInsufficientBalance: boolean;
     commissionValidationMessage?: string;
+    totalBalance?: number;
+    heldBalance?: number;
+    availableBalance?: number;
     loading: boolean;
   }>({
     estimatedCommission: 0,
     hasInsufficientBalance: false,
     commissionValidationMessage: "",
+    totalBalance: 0,
+    heldBalance: 0,
+    availableBalance: 0,
     loading: false,
   });
 
@@ -332,6 +338,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
           estimatedCommission: 0,
           hasInsufficientBalance: false,
           commissionValidationMessage: "",
+          totalBalance: 0,
+          heldBalance: 0,
+          availableBalance: 0,
           loading: false,
         });
         return;
@@ -350,6 +359,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
           estimatedCommission: 0,
           hasInsufficientBalance: true,
           commissionValidationMessage: "Error checking commission requirements",
+          totalBalance: 0,
+          heldBalance: 0,
+          availableBalance: 0,
           loading: false,
         });
       }
@@ -387,8 +399,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
     }
-
-    const success = await acceptBookingById(specificBooking.id);
+    const scheduledDate = new Date(specificBooking.scheduledDate);
+    const success = await acceptBookingById(specificBooking.id, scheduledDate);
     if (success) {
       await refreshBookings();
       const updatedBooking = bookings.find(
@@ -526,8 +538,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     if (!specificBooking) return false;
 
     // Use scheduledDate if available, otherwise fall back to requestedDate
-    const serviceDateTime =
-      specificBooking.scheduledDate || specificBooking.requestedDate;
+    const serviceDateTime = specificBooking.requestedDate;
     if (!serviceDateTime) return false;
 
     try {
@@ -611,7 +622,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         }
       }
     } catch {}
-    return { lat: 14.5995, lng: 120.9842 }; // fallback
+    return { lat: 16.413, lng: 120.5914 }; // fallback
   }, [specificBooking]);
 
   const hasExplicitCoords = useMemo(() => {
@@ -993,6 +1004,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                     specificBooking?.requestedDate ||
                       specificBooking?.createdAt,
                   )}
+                  and {formatDate(specificBooking?.scheduledDate)}
                 </span>
               </span>
             </div>
@@ -1086,7 +1098,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           specificBooking?.canAccept && (
             <div className="rounded-2xl bg-white p-4 shadow-lg">
               <h3 className="mb-3 text-lg font-bold text-blue-700">
-                Commission Information
+                Wallet & Commission Information
               </h3>
               {commissionValidation.loading ? (
                 <div className="flex items-center gap-2 text-gray-600">
@@ -1094,12 +1106,45 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   <span>Calculating commission...</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
+                  {/* Wallet Balance Breakdown */}
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <h4 className="mb-2 text-sm font-semibold text-blue-800">
+                      Wallet Balance Breakdown
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Total Balance:</span>
+                        <span className="font-semibold text-gray-900">
+                          ₱{(commissionValidation.totalBalance || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Held (Reserved):</span>
+                        <span className="font-semibold text-yellow-700">
+                          -₱{(commissionValidation.heldBalance || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-blue-200 pt-1">
+                        <span className="font-medium text-blue-900">
+                          Available Balance:
+                        </span>
+                        <span className="font-bold text-blue-900">
+                          ₱
+                          {(commissionValidation.availableBalance || 0).toFixed(
+                            2,
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Commission Requirement */}
                   {commissionValidation.estimatedCommission > 0 && (
                     <div className="flex items-center gap-2">
                       <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
                       <span className="font-medium text-gray-700">
-                        Estimated Commission:{" "}
+                        Required Commission:{" "}
                         <span className="font-semibold text-red-600">
                           ₱{commissionValidation.estimatedCommission.toFixed(2)}
                         </span>
@@ -1107,16 +1152,28 @@ const ProviderBookingDetailsPage: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Validation Result */}
                   {commissionValidation.hasInsufficientBalance ? (
                     <div className="rounded-lg bg-red-50 p-3">
                       <div className="flex items-start gap-2">
                         <XCircleIcon className="mt-0.5 h-5 w-5 text-red-500" />
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-red-800">
-                            Insufficient Wallet Balance
+                            Insufficient Available Balance
                           </p>
                           <p className="mt-1 text-sm text-red-700">
                             {commissionValidation.commissionValidationMessage}
+                          </p>
+                          <p className="mt-2 text-sm text-red-600">
+                            You need ₱
+                            {commissionValidation.estimatedCommission.toFixed(
+                              2,
+                            )}{" "}
+                            but only have ₱
+                            {(
+                              commissionValidation.availableBalance || 0
+                            ).toFixed(2)}{" "}
+                            available.
                           </p>
                           <Link
                             to="/provider/wallet"
@@ -1132,22 +1189,29 @@ const ProviderBookingDetailsPage: React.FC = () => {
                       <div className="rounded-lg bg-green-50 p-3">
                         <div className="flex items-start gap-2">
                           <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-500" />
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-green-800">
-                              Wallet Balance Sufficient: ₱
-                              {commissionValidation.commissionValidationMessage}
+                              Available Balance Sufficient
                             </p>
                             <p className="mt-1 text-sm text-green-700">
-                              Result: ₱
-                              {commissionValidation.commissionValidationMessage}{" "}
+                              ₱
+                              {(
+                                commissionValidation.availableBalance || 0
+                              ).toFixed(2)}{" "}
                               - ₱
                               {commissionValidation.estimatedCommission.toFixed(
                                 2,
                               )}{" "}
                               = ₱
-                              {Number(
-                                commissionValidation.commissionValidationMessage,
-                              ) - commissionValidation.estimatedCommission}
+                              {(
+                                (commissionValidation.availableBalance || 0) -
+                                commissionValidation.estimatedCommission
+                              ).toFixed(2)}{" "}
+                              remaining
+                            </p>
+                            <p className="mt-1 text-xs text-green-600">
+                              Commission will be held when you accept this
+                              booking.
                             </p>
                           </div>
                         </div>
@@ -1163,7 +1227,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         <section className="rounded-2xl bg-white p-4 shadow-lg">
           <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
             <MapPinIcon className="h-5 w-5 text-blue-500" /> Service Location
-            Map
           </h3>
           <p className="mb-2 text-xs text-gray-500">
             Interactive map centered on the client's provided location. Use the
@@ -1204,7 +1267,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {mapsReady ? (
             <div>
               <Map
-                defaultCenter={resolvedCoords || clientLocation}
+                center={resolvedCoords || clientLocation}
                 defaultZoom={16}
                 mapId="6922634ff75ae05ac38cc473"
                 style={{

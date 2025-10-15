@@ -21,7 +21,8 @@ export interface ProviderNotification {
     | "booking_cancelled"
     | "booking_rescheduled"
     | "client_no_show"
-    | "payment_issue";
+    | "payment_issue"
+    | "service_reminder";
   timestamp: string;
   read: boolean;
   href: string;

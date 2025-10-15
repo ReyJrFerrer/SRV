@@ -2,7 +2,13 @@
 // Purpose: Booking flow with packages, schedule selection, location via map or manual form, and payment.
 // Inputs: serviceId via route, Zustand location context.
 // Outputs: Creates booking request; optionally initiates digital payment.
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -15,6 +21,7 @@ import {
   WalletIcon,
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
+import useBookingManagement from "../../hooks/bookingManagement";
 import phLocations from "../../data/ph_locations.json";
 import {
   createDirectPayment,
@@ -268,6 +275,9 @@ const ClientBookingPageComponent: React.FC = () => {
     createBookingRequest,
     calculateTotalPrice,
   } = useBookRequest();
+
+  // --- Get user's existing bookings ---
+  const { bookings: userBookings } = useBookingManagement();
 
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
@@ -642,6 +652,45 @@ const ClientBookingPageComponent: React.FC = () => {
     checkTimeSlotAvailability,
   ]);
 
+  // --- Helper: Check if user already has a booking for a specific time slot ---
+  const hasUserBookedTimeSlot = useCallback(
+    (timeSlot: string, dateToCheck: Date): boolean => {
+      if (!service) return false;
+
+      const [startTimeStr] = timeSlot.split("-");
+      const targetDay = dateToCheck.toDateString();
+
+      return userBookings.some((booking) => {
+        // Skip cancelled or declined bookings
+        if (booking.status === "Cancelled" || booking.status === "Declined") {
+          return false;
+        }
+
+        // Check if it's the same service
+        if (booking.serviceId !== service.id) {
+          return false;
+        }
+
+        // Parse booking's scheduled date
+        const bookingDate = new Date(booking.scheduledDate);
+        const bookingDay = bookingDate.toDateString();
+
+        // Check if same day
+        if (bookingDay !== targetDay) {
+          return false;
+        }
+
+        // Parse booking's time slot from requestedDate (start time)
+        const bookingRequestedDate = new Date(booking.requestedDate);
+        const bookingStartTime = `${String(bookingRequestedDate.getHours()).padStart(2, "0")}:${String(bookingRequestedDate.getMinutes()).padStart(2, "0")}`;
+
+        // Check if same time slot
+        return bookingStartTime === startTimeStr.trim();
+      });
+    },
+    [service, userBookings],
+  );
+
   // --- Calculate total price for selected packages ---
   const totalPrice = useMemo(() => {
     return packages
@@ -806,11 +855,11 @@ const ClientBookingPageComponent: React.FC = () => {
 
       // 3. Service Location validation
       // If a map pin has been chosen, skip granular address validation (treat form as fallback)
-      const isUsingMapPin = !!(
-        mapLocation &&
-        mapLocation.lat &&
-        mapLocation.lng
-      );
+      const isUsingMapPin =
+        !showFallbackForms &&
+        !!(mapLocation && mapLocation.lat && mapLocation.lng);
+
+      // If we are NOT using a map pin (i.e., manual form is active or no pin is set)
       if (!isUsingMapPin) {
         if (!selectedBarangay.trim()) {
           setFormError(
@@ -908,11 +957,48 @@ const ClientBookingPageComponent: React.FC = () => {
         return;
       }
 
-      let finalScheduledDate: Date | undefined = undefined;
+      // Calculate scheduledDate (end time of the booking slot)
+      // selectedTime format: "HH:MM-HH:MM"
+      const [, endTimeStr] = selectedTime.split("-");
+      if (!endTimeStr) {
+        setFormError("Invalid time slot format. Expected format: HH:MM-HH:MM");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const [endHour, endMinute] = endTimeStr.split(":").map(Number);
+      if (isNaN(endHour) || isNaN(endMinute)) {
+        setFormError("Invalid time slot format.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      let finalScheduledDate: Date;
       if (bookingOption === "sameday") {
-        finalScheduledDate = new Date();
+        const today = new Date();
+        finalScheduledDate = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          endHour,
+          endMinute,
+          0,
+          0,
+        );
       } else if (bookingOption === "scheduled" && selectedDate) {
-        finalScheduledDate = selectedDate;
+        finalScheduledDate = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          endHour,
+          endMinute,
+          0,
+          0,
+        );
+      } else {
+        setFormError("Please select a date for scheduled booking.");
+        setIsSubmitting(false);
+        return;
       }
       // Build address string from manual entry and header context
       const barangayValue =
@@ -960,6 +1046,65 @@ const ClientBookingPageComponent: React.FC = () => {
           .filter(Boolean)
           .join(", ");
       }
+
+      // 5. Check for duplicate booking (same service, date, and timeslot)
+      const [startTimeStr] = selectedTime.split("-");
+      const duplicateBooking = userBookings.find((booking) => {
+        // Skip cancelled or declined bookings
+        if (booking.status === "Cancelled" || booking.status === "Declined") {
+          return false;
+        }
+
+        // Check if it's the same service
+        if (booking.serviceId !== service!.id) {
+          return false;
+        }
+
+        // Parse booking's scheduled time
+        const bookingDate = new Date(booking.scheduledDate);
+        const bookingDay = bookingDate.toDateString();
+
+        // Get the date we're trying to book
+        let targetDate: Date;
+        if (bookingOption === "sameday") {
+          const today = new Date();
+          targetDate = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+          );
+        } else {
+          targetDate = new Date(
+            selectedDate!.getFullYear(),
+            selectedDate!.getMonth(),
+            selectedDate!.getDate(),
+          );
+        }
+        const targetDay = targetDate.toDateString();
+
+        // Check if same day
+        if (bookingDay !== targetDay) {
+          return false;
+        }
+
+        // Parse booking's time slot from requestedDate (start time)
+        const bookingRequestedDate = new Date(booking.requestedDate);
+        const bookingStartTime = `${String(bookingRequestedDate.getHours()).padStart(2, "0")}:${String(bookingRequestedDate.getMinutes()).padStart(2, "0")}`;
+
+        // Check if same time slot
+        return bookingStartTime === startTimeStr.trim();
+      });
+
+      if (duplicateBooking) {
+        setFormError(
+          `You already have a ${duplicateBooking.status.toLowerCase()} booking for this service on ${new Date(duplicateBooking.scheduledDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} at ${selectedTime}. Please choose a different time slot or cancel your existing booking.`,
+        );
+        highlightField = "selectedTime";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+
       const bookingData: BookingRequest = {
         serviceId: service!.id,
         serviceName: service!.title,
@@ -1364,6 +1509,18 @@ const ClientBookingPageComponent: React.FC = () => {
                               const isSlotAvailable =
                                 slotAvailability[time] !== false;
 
+                              // Check if user already booked this time slot
+                              const today = new Date();
+                              const todayDate = new Date(
+                                today.getFullYear(),
+                                today.getMonth(),
+                                today.getDate(),
+                              );
+                              const isUserBooked = hasUserBookedTimeSlot(
+                                time,
+                                todayDate,
+                              );
+
                               // Check if the time slot has passed (for same-day booking)
                               const isTimeSlotPassed = (): boolean => {
                                 const now = new Date();
@@ -1378,28 +1535,41 @@ const ClientBookingPageComponent: React.FC = () => {
                               const hasTimePassed = isTimeSlotPassed();
                               const unavailableReason = hasTimePassed
                                 ? "Time has passed"
-                                : "This time slot is already booked";
+                                : isUserBooked
+                                  ? "You already have a booking for this time slot"
+                                  : "This time slot is already booked";
 
                               return (
                                 <button
                                   key={index}
                                   onClick={() =>
-                                    isSlotAvailable && setSelectedTime(time)
+                                    isSlotAvailable &&
+                                    !isUserBooked &&
+                                    setSelectedTime(time)
                                   }
-                                  disabled={!isSlotAvailable}
+                                  disabled={!isSlotAvailable || isUserBooked}
                                   className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                    !isSlotAvailable
-                                      ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                    !isSlotAvailable || isUserBooked
+                                      ? isUserBooked
+                                        ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                        : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
                                       : selectedTime === time
                                         ? "border-blue-600 bg-blue-600 text-white"
                                         : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                   }`}
                                   title={
-                                    !isSlotAvailable ? unavailableReason : ""
+                                    !isSlotAvailable || isUserBooked
+                                      ? unavailableReason
+                                      : ""
                                   }
                                 >
                                   {formatted}
-                                  {!isSlotAvailable && (
+                                  {isUserBooked && (
+                                    <span className="ml-1 text-xs">
+                                      (You Booked)
+                                    </span>
+                                  )}
+                                  {!isUserBooked && !isSlotAvailable && (
                                     <span className="ml-1 text-xs">
                                       {hasTimePassed ? "(Passed)" : "(Booked)"}
                                     </span>
@@ -1548,28 +1718,47 @@ const ClientBookingPageComponent: React.FC = () => {
                                 const isSlotAvailable =
                                   slotAvailability[time] !== false;
 
+                                // Check if user already booked this time slot
+                                const isUserBooked = hasUserBookedTimeSlot(
+                                  time,
+                                  selectedDate!,
+                                );
+
+                                const unavailableReason = isUserBooked
+                                  ? "You already have a booking for this time slot"
+                                  : "This time slot is already booked";
+
                                 return (
                                   <button
                                     key={index}
                                     onClick={() =>
-                                      isSlotAvailable && setSelectedTime(time)
+                                      isSlotAvailable &&
+                                      !isUserBooked &&
+                                      setSelectedTime(time)
                                     }
-                                    disabled={!isSlotAvailable}
+                                    disabled={!isSlotAvailable || isUserBooked}
                                     className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                      !isSlotAvailable
-                                        ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                      !isSlotAvailable || isUserBooked
+                                        ? isUserBooked
+                                          ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                          : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
                                         : selectedTime === time
                                           ? "border-blue-600 bg-blue-600 text-white"
                                           : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                     }`}
                                     title={
-                                      !isSlotAvailable
-                                        ? "This time slot is already booked"
+                                      !isSlotAvailable || isUserBooked
+                                        ? unavailableReason
                                         : ""
                                     }
                                   >
                                     {formatted}
-                                    {!isSlotAvailable && (
+                                    {isUserBooked && (
+                                      <span className="ml-1 text-xs">
+                                        (You Booked)
+                                      </span>
+                                    )}
+                                    {!isUserBooked && !isSlotAvailable && (
                                       <span className="ml-1 text-xs">
                                         (Booked)
                                       </span>
@@ -1597,23 +1786,25 @@ const ClientBookingPageComponent: React.FC = () => {
                   Service Location <span className="text-red-500">*</span>
                 </h3>
                 {/* Toggle buttons */}
-                <div className="mb-4 flex gap-3 text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("detected")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Use Detected Location
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapMode("custom")}
-                    className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                  >
-                    Pin / Search Location
-                  </button>
-                </div>
-                {mapMode === "detected" && (
+                {!showFallbackForms && (
+                  <div className="mb-4 flex gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("detected")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Use Detected Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("custom")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Pin / Search Location
+                    </button>
+                  </div>
+                )}
+                {mapMode === "detected" && !showFallbackForms && (
                   <div className="mb-6">
                     <div className="mb-2 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
@@ -1660,7 +1851,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {mapMode === "custom" && (
+                {mapMode === "custom" && !showFallbackForms && (
                   <div className="mb-4">
                     <LocationMapPicker
                       value={
