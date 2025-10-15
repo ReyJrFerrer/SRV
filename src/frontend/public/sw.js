@@ -156,7 +156,8 @@ self.addEventListener("fetch", (event) => {
       reqUrl.hostname === "maps.googleapis.com" ||
       reqUrl.hostname === "maps.gstatic.com";
     const isMapsTelemetry =
-      isGoogleMapsDomain && reqUrl.pathname.includes("/maps/api/js/QuotaService.RecordEvent");
+      isGoogleMapsDomain &&
+      reqUrl.pathname.includes("/maps/api/js/QuotaService.RecordEvent");
 
     if (isMapsTelemetry || isGoogleMapsDomain) {
       // Let the browser handle it (no caching, no SW respondWith)
@@ -215,10 +216,13 @@ self.addEventListener("fetch", (event) => {
           if (event.request.mode === "navigate") {
             return caches.match("/").then((fallbackResponse) => {
               if (fallbackResponse) return fallbackResponse;
-              return new Response("App is offline. Please check your connection.", {
-                status: 503,
-                headers: { "Content-Type": "text/plain" },
-              });
+              return new Response(
+                "App is offline. Please check your connection.",
+                {
+                  status: 503,
+                  headers: { "Content-Type": "text/plain" },
+                },
+              );
             });
           }
           // For third-party or opaque requests, avoid rejecting the promise to silence console noise
