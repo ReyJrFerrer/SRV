@@ -3,25 +3,17 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 
-interface ActivityData {
+interface TransactionData {
   id: string;
-  type:
-    | "login"
-    | "logout"
-    | "profile_update"
-    | "service_booked"
-    | "service_completed"
-    | "service_cancelled"
-    | "review_posted"
-    | "payment_made"
-    | "account_locked"
-    | "account_unlocked";
+  type: "payment" | "refund" | "withdrawal" | "deposit";
+  amount: number;
+  currency: string;
+  status: "completed" | "pending" | "failed" | "cancelled";
+  date: Date;
   description: string;
-  timestamp: Date;
-  ipAddress?: string;
-  userAgent?: string;
-  location?: string;
-  metadata?: Record<string, any>;
+  reference?: string;
+  fromUser?: string;
+  toUser?: string;
 }
 
 interface UserData {
@@ -30,21 +22,25 @@ interface UserData {
   phone: string;
 }
 
-const ActivityHistoryPage: React.FC = () => {
+const TransactionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { users: backendUsers, refreshUsers } = useAdmin();
+  const {
+    users: backendUsers,
+    refreshUsers,
+    initializeCanisterReferences,
+  } = useAdmin();
   const [user, setUser] = useState<UserData | null>(null);
-  const [activities, setActivities] = useState<ActivityData[]>([]);
+  const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // No activity data available - tracking not implemented
-  const mockActivities: ActivityData[] = [];
+  // No transaction data available - tracking not implemented
+  const mockTransactions: TransactionData[] = [];
 
   // Convert Profile to UserData format
   const convertProfileToUserData = (profile: Profile): UserData => {
@@ -62,9 +58,12 @@ const ActivityHistoryPage: React.FC = () => {
         return;
       }
 
+      // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
+          await initializeCanisterReferences();
           await refreshUsers();
+          // The useEffect will run again when backendUsers updates
           return;
         } catch (error) {
           console.error("Failed to load users:", error);
@@ -78,45 +77,48 @@ const ActivityHistoryPage: React.FC = () => {
       if (foundProfile) {
         const userData = convertProfileToUserData(foundProfile);
         setUser(userData);
-        setActivities(mockActivities);
+        setTransactions(mockTransactions);
       }
 
       setLoading(false);
     };
 
     loadUser();
-  }, [id, backendUsers, navigate, refreshUsers]);
+  }, [id, backendUsers, navigate, refreshUsers, initializeCanisterReferences]);
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case "login":
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
         return "bg-green-100 text-green-800";
-      case "logout":
-        return "bg-gray-100 text-gray-800";
-      case "profile_update":
-        return "bg-blue-100 text-blue-800";
-      case "service_booked":
-        return "bg-purple-100 text-purple-800";
-      case "service_completed":
-        return "bg-green-100 text-green-800";
-      case "service_cancelled":
-        return "bg-red-100 text-red-800";
-      case "review_posted":
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "payment_made":
-        return "bg-blue-100 text-blue-800";
-      case "account_locked":
+      case "failed":
         return "bg-red-100 text-red-800";
-      case "account_unlocked":
+      case "cancelled":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "payment":
+        return "bg-blue-100 text-blue-800";
+      case "refund":
+        return "bg-orange-100 text-orange-800";
+      case "withdrawal":
+        return "bg-purple-100 text-purple-800";
+      case "deposit":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getActivityIcon = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case "login":
+      case "payment":
         return (
           <svg
             className="h-4 w-4"
@@ -128,11 +130,11 @@ const ActivityHistoryPage: React.FC = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
             />
           </svg>
         );
-      case "logout":
+      case "refund":
         return (
           <svg
             className="h-4 w-4"
@@ -144,11 +146,11 @@ const ActivityHistoryPage: React.FC = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
             />
           </svg>
         );
-      case "profile_update":
+      case "withdrawal":
         return (
           <svg
             className="h-4 w-4"
@@ -160,11 +162,11 @@ const ActivityHistoryPage: React.FC = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
             />
           </svg>
         );
-      case "service_booked":
+      case "deposit":
         return (
           <svg
             className="h-4 w-4"
@@ -176,177 +178,49 @@ const ActivityHistoryPage: React.FC = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
             />
           </svg>
         );
-      case "service_completed":
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        );
-      case "service_cancelled":
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        );
-      case "review_posted":
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-            />
-          </svg>
-        );
-      case "payment_made":
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-            />
-          </svg>
-        );
-      case "account_locked":
-      case "account_unlocked":
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
-        );
-      default:
-        return (
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        );
-    }
-  };
-
-  const getDateRange = (filter: string) => {
-    const now = new Date();
-    switch (filter) {
-      case "today":
-        return {
-          start: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-          end: now,
-        };
-      case "week":
-        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return { start: weekStart, end: now };
-      case "month":
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { start: monthStart, end: now };
       default:
         return null;
     }
   };
 
-  // Filter activities
-  const filteredActivities = activities.filter((activity) => {
+  // Filter transactions
+  const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
-      activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.type.toLowerCase().includes(searchTerm.toLowerCase());
+      transaction.description
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType = typeFilter === "all" || activity.type === typeFilter;
+    const matchesStatus =
+      statusFilter === "all" || transaction.status === statusFilter;
+    const matchesType = typeFilter === "all" || transaction.type === typeFilter;
 
-    let matchesDate = true;
-    if (dateFilter !== "all") {
-      const dateRange = getDateRange(dateFilter);
-      if (dateRange) {
-        matchesDate =
-          activity.timestamp >= dateRange.start &&
-          activity.timestamp <= dateRange.end;
-      }
-    }
-
-    return matchesSearch && matchesType && matchesDate;
+    return matchesSearch && matchesStatus && matchesType;
   });
 
-  // Sort activities by timestamp
-  const sortedActivities = [...filteredActivities].sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-  );
-
   // Pagination
-  const totalPages = Math.ceil(sortedActivities.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentActivities = sortedActivities.slice(startIndex, endIndex);
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
 
-  const formatDateTime = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
+    }).format(amount);
   };
 
   const handleRefresh = async () => {
     setLoading(true);
     try {
       await refreshUsers();
-      // Reload activities
-      setActivities(mockActivities);
+      setTransactions(mockTransactions);
     } catch (error) {
       console.error("Failed to refresh data:", error);
     } finally {
@@ -354,18 +228,14 @@ const ActivityHistoryPage: React.FC = () => {
     }
   };
 
-  const getRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return formatDateTime(date);
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (loading) {
@@ -417,10 +287,10 @@ const ActivityHistoryPage: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Activity History
+                Transaction History
               </h1>
               <p className="text-gray-600">
-                View all activities for {user.name}
+                View all transactions for {user.name}
               </p>
             </div>
           </div>
@@ -462,9 +332,30 @@ const ActivityHistoryPage: React.FC = () => {
               id="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search activities..."
+              placeholder="Search transactions..."
               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="status"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Status
+            </label>
+            <select
+              id="status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
 
           <div>
@@ -472,7 +363,7 @@ const ActivityHistoryPage: React.FC = () => {
               htmlFor="type"
               className="mb-1 block text-sm font-medium text-gray-700"
             >
-              Activity Type
+              Type
             </label>
             <select
               id="type"
@@ -481,36 +372,10 @@ const ActivityHistoryPage: React.FC = () => {
               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Types</option>
-              <option value="login">Login</option>
-              <option value="logout">Logout</option>
-              <option value="profile_update">Profile Update</option>
-              <option value="service_booked">Service Booked</option>
-              <option value="service_completed">Service Completed</option>
-              <option value="service_cancelled">Service Cancelled</option>
-              <option value="review_posted">Review Posted</option>
-              <option value="payment_made">Payment Made</option>
-              <option value="account_locked">Account Locked</option>
-              <option value="account_unlocked">Account Unlocked</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="date"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Time Period
-            </label>
-            <select
-              id="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">Last 7 days</option>
-              <option value="month">This Month</option>
+              <option value="payment">Payment</option>
+              <option value="refund">Refund</option>
+              <option value="withdrawal">Withdrawal</option>
+              <option value="deposit">Deposit</option>
             </select>
           </div>
 
@@ -518,8 +383,8 @@ const ActivityHistoryPage: React.FC = () => {
             <button
               onClick={() => {
                 setSearchTerm("");
+                setStatusFilter("all");
                 setTypeFilter("all");
-                setDateFilter("all");
                 setCurrentPage(1);
               }}
               className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -530,81 +395,87 @@ const ActivityHistoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Activities List */}
-      <div className="rounded-lg bg-white shadow">
+      {/* Transactions Table */}
+      <div className="overflow-hidden rounded-lg bg-white shadow">
         <div className="border-b border-gray-200 px-6 py-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Activities ({sortedActivities.length})
+            Transactions ({filteredTransactions.length})
           </h3>
         </div>
 
-        <div className="divide-y divide-gray-200">
-          {currentActivities.map((activity) => (
-            <div key={activity.id} className="p-6 hover:bg-gray-50">
-              <div className="flex items-start space-x-4">
-                <div
-                  className={`flex-shrink-0 rounded-full p-2 ${getActivityColor(activity.type)}`}
-                >
-                  {getActivityIcon(activity.type)}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Reference
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {currentTransactions.map((transaction) => (
+                <tr key={transaction.id} className="hover:bg-gray-50">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.description}
-                      </p>
-                      <div className="mt-1 flex items-center space-x-2">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getActivityColor(activity.type)}`}
-                        >
-                          {activity.type.replace("_", " ")}
-                        </span>
-                        {activity.ipAddress && (
-                          <span className="text-xs text-gray-500">
-                            IP: {activity.ipAddress}
-                          </span>
-                        )}
-                        {activity.location && (
-                          <span className="text-xs text-gray-500">
-                            {activity.location}
-                          </span>
-                        )}
+                      <div className="text-sm font-medium text-gray-900">
+                        {transaction.description}
                       </div>
+                      {transaction.fromUser && transaction.toUser && (
+                        <div className="text-sm text-gray-500">
+                          {transaction.fromUser} → {transaction.toUser}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">
-                        {getRelativeTime(activity.timestamp)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatDateTime(activity.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {activity.metadata &&
-                    Object.keys(activity.metadata).length > 0 && (
-                      <div className="mt-2 text-xs text-gray-600">
-                        <details className="group">
-                          <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
-                            View details
-                          </summary>
-                          <div className="mt-2 rounded bg-gray-50 p-2 text-xs">
-                            <pre className="whitespace-pre-wrap">
-                              {JSON.stringify(activity.metadata, null, 2)}
-                            </pre>
-                          </div>
-                        </details>
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTypeColor(transaction.type)}`}
+                    >
+                      {getTypeIcon(transaction.type)}
+                      <span className="ml-1 capitalize">
+                        {transaction.type}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                    {formatCurrency(transaction.amount, transaction.currency)}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(transaction.status)}`}
+                    >
+                      {transaction.status}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    {formatDate(transaction.date)}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    {transaction.reference || "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Empty State */}
-        {sortedActivities.length === 0 && (
+        {filteredTransactions.length === 0 && (
           <div className="py-12 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -620,11 +491,11 @@ const ActivityHistoryPage: React.FC = () => {
               />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Activity Tracking Not Available
+              Transaction Tracking Not Available
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Activity history tracking not implemented yet. No activity logging
-              in user modules.
+              Transaction history tracking not implemented yet. No transaction
+              logging in user modules.
             </p>
           </div>
         )}
@@ -656,10 +527,12 @@ const ActivityHistoryPage: React.FC = () => {
                   Showing <span className="font-medium">{startIndex + 1}</span>{" "}
                   to{" "}
                   <span className="font-medium">
-                    {Math.min(endIndex, sortedActivities.length)}
+                    {Math.min(endIndex, filteredTransactions.length)}
                   </span>{" "}
                   of{" "}
-                  <span className="font-medium">{sortedActivities.length}</span>{" "}
+                  <span className="font-medium">
+                    {filteredTransactions.length}
+                  </span>{" "}
                   results
                 </p>
               </div>
@@ -706,4 +579,4 @@ const ActivityHistoryPage: React.FC = () => {
   );
 };
 
-export default ActivityHistoryPage;
+export default TransactionHistoryPage;

@@ -190,6 +190,10 @@ export interface FrontendSystemStats {
   activeCommissionRules: number;
   totalUsersWithRoles: number;
   adminUsers: number;
+  totalBookings: number;
+  settledBookings: number;
+  totalRevenue: number;
+  totalCommission: number;
 }
 
 export class AdminServiceError extends Error {
@@ -213,9 +217,8 @@ const callFirebaseFunction = async (functionName: string, payload: any) => {
     requireAuth(); // Ensure user is authenticated
     const callable = httpsCallable(functions, functionName);
 
-    // Call the function with data wrapped in data object (following admin.js pattern)
-    // admin.js expects: data.data || data, so we wrap it as { data: payload }
-    const result = await callable({ data: payload });
+    // Call the function with data directly (admin.js expects: data.data || data)
+    const result = await callable(payload);
 
     if ((result.data as any).success) {
       return (result.data as any).data || (result.data as any).message;
@@ -634,6 +637,10 @@ export const adminServiceCanister = {
         activeCommissionRules: result.activeCommissionRules,
         totalUsersWithRoles: result.totalUsersWithRoles,
         adminUsers: result.adminUsers,
+        totalBookings: result.totalBookings,
+        settledBookings: result.settledBookings,
+        totalRevenue: result.totalRevenue,
+        totalCommission: result.totalCommission,
       };
     } catch (error) {
       if (error instanceof AdminServiceError) throw error;
@@ -652,11 +659,58 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      const result = await callFirebaseFunction("getAllUsers", {});
-      return result || [];
+      // Call Firebase function directly since callFirebaseFunction expects { success: true, data: [...] }
+      // but getAllUsers returns { success: true, users: [...] }
+      const callable = httpsCallable(functions, "getAllUsers");
+      const result = await callable({ data: {} });
+
+      if ((result.data as any).success) {
+        const users = (result.data as any).users || [];
+        return users;
+      } else {
+        throw new Error((result.data as any).message || "Failed to get users");
+      }
     } catch (error) {
       console.error("Error getting all users:", error);
       return [];
+    }
+  },
+
+  async getBookingsData(): Promise<{
+    bookings: any[];
+    commissionTransactions: any[];
+  }> {
+    try {
+      console.log("🔍 [getBookingsData] Starting...");
+      requireAuth();
+      console.log("🔍 [getBookingsData] Auth passed");
+
+      const callable = httpsCallable(functions, "getBookingsData");
+      console.log("🔍 [getBookingsData] Calling Firebase function...");
+      const result = await callable({ data: {} });
+      console.log(
+        "🔍 [getBookingsData] Firebase function result:",
+        result.data,
+      );
+
+      if ((result.data as any).success) {
+        console.log("🔍 [getBookingsData] Success response received");
+        return {
+          bookings: (result.data as any).bookings,
+          commissionTransactions: (result.data as any).commissionTransactions,
+        };
+      } else {
+        console.error(
+          "🔍 [getBookingsData] Error response:",
+          (result.data as any).message,
+        );
+        throw new Error(
+          (result.data as any).message || "Failed to get bookings data",
+        );
+      }
+    } catch (error) {
+      console.error("❌ [getBookingsData] Error getting bookings data:", error);
+      return { bookings: [], commissionTransactions: [] };
     }
   },
 
@@ -815,6 +869,7 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
+      console.log("lockUserAccount called with:", { userId, locked });
       const result = await callFirebaseFunction("lockUserAccount", {
         userId,
         locked,
@@ -836,12 +891,15 @@ export const adminServiceCanister = {
   async deleteUserAccount(userId: string): Promise<string> {
     try {
       requireAuth();
+      console.log("Calling deleteUserAccount with userId:", userId);
 
       const result = await callFirebaseFunction("deleteUserAccount", {
         userId,
       });
+      console.log("Delete user account result:", result);
       return result || "User account deleted successfully";
     } catch (error) {
+      console.error("Error in deleteUserAccount:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to delete user account: ${error}`,
@@ -1225,6 +1283,7 @@ export const {
   getSettings,
   getSystemStats,
   getAllUsers,
+  getBookingsData,
   getUserServicesAndBookings,
   getUserServiceCount,
   lockUserAccount,

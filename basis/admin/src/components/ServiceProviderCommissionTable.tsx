@@ -82,10 +82,7 @@ export const ServiceProviderCommissionTable: React.FC<
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Total Earnings
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Pending Commission
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
+              <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-blue-700 uppercase">
                 Settled Commission
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
@@ -100,7 +97,7 @@ export const ServiceProviderCommissionTable: React.FC<
             {providers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="px-6 py-12 text-center text-sm text-gray-500"
                 >
                   No service providers found
@@ -131,26 +128,15 @@ export const ServiceProviderCommissionTable: React.FC<
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-green-600">
                     {formatCurrency(provider.totalEarnings)}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-orange-600">
-                    {formatCurrency(provider.pendingCommission)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                     {formatCurrency(provider.settledCommission)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatDate(provider.lastActivity)}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
-                        provider.pendingCommission > 0
-                          ? "bg-orange-100 text-orange-800 ring-orange-200"
-                          : "bg-green-100 text-green-800 ring-green-200"
-                      }`}
-                    >
-                      {provider.pendingCommission > 0
-                        ? "Pending"
-                        : "Up to Date"}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 ring-1 ring-green-200">
+                      Active
                     </span>
                   </td>
                 </tr>
@@ -165,14 +151,6 @@ export const ServiceProviderCommissionTable: React.FC<
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>Showing {providers.length} service providers</span>
             <div className="flex space-x-6">
-              <span>
-                Total Pending:{" "}
-                <span className="font-semibold text-orange-600">
-                  {formatCurrency(
-                    providers.reduce((sum, p) => sum + p.pendingCommission, 0),
-                  )}
-                </span>
-              </span>
               <span>
                 Total Settled:{" "}
                 <span className="font-semibold text-green-600">

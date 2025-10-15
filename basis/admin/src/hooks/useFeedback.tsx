@@ -1,17 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import {
-  getAllFeedback,
-  getMyFeedback,
-  getFeedbackStats,
-  getRecentFeedback,
+import feedbackCanisterService, {
   AppFeedback,
   FeedbackStats,
 } from "../services/feedbackCanisterService";
 export type { AppFeedback, FeedbackStats };
 
 export const useFeedback = () => {
-  const { isAuthenticated, firebaseUser } = useAuth();
+  const { isAuthenticated, identity } = useAuth();
 
   const [allFeedback, setAllFeedback] = useState<AppFeedback[]>([]);
   const [myFeedback, setMyFeedback] = useState<AppFeedback[]>([]);
@@ -21,8 +17,18 @@ export const useFeedback = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const initializeFeedbackCanister = useCallback(async () => {
+    if (isAuthenticated && identity) {
+      try {
+        await feedbackCanisterService.initializeFeedbackCanister(identity);
+      } catch (err) {
+        console.error("Failed to initialize feedback canister:", err);
+      }
+    }
+  }, [isAuthenticated, identity]);
+
   const fetchAllFeedback = useCallback(async () => {
-    if (!isAuthenticated || !firebaseUser) {
+    if (!isAuthenticated || !identity) {
       return;
     }
 
@@ -30,17 +36,17 @@ export const useFeedback = () => {
     setError(null);
 
     try {
-      const feedback = await getAllFeedback();
+      const feedback = await feedbackCanisterService.getAllFeedback(identity);
       setAllFeedback(feedback);
     } catch (err) {
       setError("Could not load feedback");
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, firebaseUser]);
+  }, [isAuthenticated, identity]);
 
   const fetchMyFeedback = useCallback(async () => {
-    if (!isAuthenticated || !firebaseUser) {
+    if (!isAuthenticated || !identity) {
       return;
     }
 
@@ -48,42 +54,53 @@ export const useFeedback = () => {
     setError(null);
 
     try {
-      const feedback = await getMyFeedback();
+      const feedback = await feedbackCanisterService.getMyFeedback(identity);
       setMyFeedback(feedback);
     } catch (err) {
       setError("Could not load your feedback");
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, firebaseUser]);
+  }, [isAuthenticated, identity]);
 
   const fetchFeedbackStats = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const stats = await getFeedbackStats();
+      const stats = await feedbackCanisterService.getFeedbackStats(identity);
       setFeedbackStats(stats);
     } catch (err) {
       setError("Could not load feedback statistics");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [identity]);
 
-  const fetchRecentFeedback = useCallback(async (limit: number = 10) => {
-    setLoading(true);
-    setError(null);
+  const fetchRecentFeedback = useCallback(
+    async (limit: number = 10) => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const feedback = await getRecentFeedback(limit);
-      setAllFeedback(feedback);
-    } catch (err) {
-      setError("Could not load recent feedback");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const feedback = await feedbackCanisterService.getRecentFeedback(
+          limit,
+          identity,
+        );
+        setAllFeedback(feedback);
+      } catch (err) {
+        setError("Could not load recent feedback");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [identity],
+  );
+
+  // Initialize feedback canister on mount
+  useEffect(() => {
+    initializeFeedbackCanister();
+  }, [initializeFeedbackCanister]);
 
   // Fetch feedback stats on mount (public data)
   useEffect(() => {
