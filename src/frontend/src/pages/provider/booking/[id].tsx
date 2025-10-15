@@ -289,6 +289,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     refreshBookings,
     clearError,
     checkCommissionValidation,
+    startBookingById
     // canAcceptCashBooking,
     // getWalletBalance,
   } = useProviderBookingManagement();
@@ -449,7 +450,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Updated: Navigate to directions page first; actual start occurs from directions view
   const handleStartService = async () => {
     if (!specificBooking) return;
-    navigate(`/provider/directions/${specificBooking.id}`);
+    // commented for debugging
+    // navigate(`/provider/directions/${specificBooking.id}`);
+    startBookingById(specificBooking.id);
+    
   };
 
   const handleCompleteService = async () => {
