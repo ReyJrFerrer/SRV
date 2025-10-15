@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user has admin custom claim
         try {
-          const tokenResult = await user.getIdTokenResult();
+          const tokenResult = await user.getIdTokenResult(true); // Force refresh to get latest claims
           const isAdminUser = tokenResult.claims.isAdmin === true;
           setIsAdmin(isAdminUser);
           console.log("[Admin] Admin status from token:", isAdminUser);
@@ -97,9 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = client.getIdentity();
           setIdentity(identity);
           updateAllAdminActors(identity);
-
-          // Check if user has admin role from Firebase custom claims
-          // The assignRole function will be called during login
         } else {
           updateAllAdminActors(null);
         }
@@ -165,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   );
 
                   // Create admin profile with UID and principal
-                  await createAdminProfile(
+                  const adminResult = await createAdminProfile(
                     result.user.uid,
                     principal,
                     "Admin User",
@@ -173,21 +170,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   );
 
                   console.log(
-                    "✅ [Admin] Admin profile created successfully! Please sign out and sign in again to refresh your token.",
+                    "✅ [Admin] Admin profile created successfully!",
                   );
 
-                  // Alert user to refresh
-                  alert(
-                    "Admin profile created! Please sign out and sign in again to activate admin privileges.",
-                  );
-
-                  setIsAdmin(true);
+                  // Force token refresh to get updated claims
+                  if (adminResult.success) {
+                    console.log("🔄 [Admin] Refreshing token to get admin claims...");
+                    await result.user.getIdToken(true); // Force refresh
+                    console.log("✅ [Admin] Token refreshed with admin claims!");
+                    
+                    // Update admin status immediately
+                    setIsAdmin(true);
+                  } else {
+                    console.warn("⚠️ [Admin] Admin profile creation failed:", adminResult.message);
+                    setIsAdmin(true);
+                  }
                 } catch (adminError) {
                   console.warn(
                     "⚠️ [Admin] Could not auto-create admin profile:",
                     adminError,
                   );
-                  // Still set admin locally for testing
                   setIsAdmin(true);
                 }
               }
@@ -206,8 +208,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 "❌ [Admin] Failed to authenticate with Firebase:",
                 fbError,
               );
-              // Don't fail the login if Firebase auth fails
-              // The user is still authenticated with IC
             }
 
             setIsLoading(false);

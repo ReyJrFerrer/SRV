@@ -5,8 +5,8 @@ import {
   ClipboardDocumentListIcon,
   TicketIcon,
   ShieldCheckIcon,
-  CurrencyDollarIcon,
-  BanknotesIcon,
+  CalendarDaysIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 
 interface AdminDashboardStatsProps {
@@ -15,23 +15,16 @@ interface AdminDashboardStatsProps {
     totalPendingValidations: number;
     totalPendingTickets: number;
     totalAdminUsers: number;
-    totalPendingCommission: number;
-    totalSettledCommission: number;
+    totalBookings: number;
+    settledBookings: number;
   };
   loading?: boolean;
-  onRefresh: () => void;
-  showRefresh?: boolean;
 }
 
 export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   stats,
   loading = false,
-  onRefresh: _onRefresh,
-  showRefresh: _showRefresh = false,
 }) => {
-  const formatCurrency = (amount: number) => {
-    return `₱${amount.toFixed(2)}`;
-  };
 
   const formatNumber = (num: number) => {
     return num.toLocaleString();
@@ -89,16 +82,16 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       icon: ShieldCheckIcon,
     },
     {
-      title: "Pending Commission",
-      value: formatCurrency(stats.totalPendingCommission),
-      subtitle: "Awaiting settlement",
-      icon: CurrencyDollarIcon,
+      title: "Total Bookings",
+      value: formatNumber(stats.totalBookings),
+      subtitle: "All booking statuses",
+      icon: CalendarDaysIcon,
     },
     {
-      title: "Settled Commission",
-      value: formatCurrency(stats.totalSettledCommission),
-      subtitle: "Total processed",
-      icon: BanknotesIcon,
+      title: "Completed Bookings",
+      value: formatNumber(stats.settledBookings),
+      subtitle: "Completed bookings only",
+      icon: CheckCircleIcon,
     },
   ];
 

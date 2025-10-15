@@ -21,8 +21,6 @@ export const ProviderManagementPage: React.FC = () => {
     remittanceProviders,
     loading,
     refreshRemittanceProviders,
-    getProviderDashboard,
-    getProviderAnalytics,
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,13 +123,6 @@ export const ProviderManagementPage: React.FC = () => {
     setShowProviderDetails(true);
     setAnalyticsMode("details");
     setProviderAnalytics(null);
-
-    try {
-      const dashboard = await getProviderDashboard(provider.id);
-      setProviderDashboard(dashboard);
-    } catch (error) {
-      console.error("Failed to load provider details:", error);
-    }
   };
 
   // Inline analytics loading (stay on Provider Management page)
@@ -140,20 +131,8 @@ export const ProviderManagementPage: React.FC = () => {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   };
 
-  const loadInlineProviderAnalytics = async (providerId: string) => {
-    try {
-      setAnalyticsLoading(true);
-      const analytics = await getProviderAnalytics(
-        providerId,
-        getCurrentMonthStart(),
-        new Date(),
-      );
-      setProviderAnalytics(analytics);
-    } catch (error) {
-      console.error("Failed to load provider analytics:", error);
-    } finally {
-      setAnalyticsLoading(false);
-    }
+  const loadInlineProviderAnalytics = async (_providerId: string) => {
+    // tbd
   };
 
   // Status chip helpers for provider status

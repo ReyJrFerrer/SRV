@@ -94,11 +94,7 @@ const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
       try {
         setLoading(true);
         setError(null);
-
-        // Try to get real data from admin canister
         try {
-          // const analyticsData =
-          //   await adminServiceCanister.getUserClientAnalytics(userId);
           setAnalytics({
             totalBookings: 0,
             servicesCompleted: 0,
@@ -244,7 +240,6 @@ export const UserDetailsPage: React.FC = () => {
         adminServiceCanister.getUserAnalytics(profile.id.toString()),
         adminServiceCanister.getUserReviews(profile.id.toString()),
         adminServiceCanister.getUserReputation(profile.id.toString()),
-        // adminServiceCanister.getUserCommissionData(profile.id.toString()),
       ]);
 
       return {
@@ -274,7 +269,6 @@ export const UserDetailsPage: React.FC = () => {
         totalReviews: reviews.totalReviews,
         completionRate: analytics.completionRate,
         lastActivity: new Date(Number(profile.updatedAt) / 1000000),
-        // Real reputation data from backend
         reputationScore: reputation.reputationScore,
         reputationLevel: reputation.trustLevel,
         reputationRing: Math.min(
@@ -445,25 +439,6 @@ export const UserDetailsPage: React.FC = () => {
     setShowReputationConfirmation(false);
   };
 
-  // const confirmCommissionUpdate = async () => {
-  //   if (!user) return;
-
-  //   try {
-  //     // Call backend to update commission
-  //     await adminServiceCanister.updateUserCommission(
-  //       user.id,
-  //       outstandingCommission,
-  //     );
-
-  //     console.log("Commission updated successfully to:", outstandingCommission);
-  //   } catch (error) {
-  //     console.error("Failed to update commission:", error);
-  //     alert("Failed to update commission. Please try again.");
-  //   }
-
-  //   setShowCommissionConfirmation(false);
-  // };
-
   // Load user data on component mount
   useEffect(() => {
     const loadUser = async () => {
@@ -471,8 +446,6 @@ export const UserDetailsPage: React.FC = () => {
         setLoadingUser(false);
         return;
       }
-
-      // If no backend users loaded yet, initialize and load them
       if (backendUsers.length === 0) {
         try {
           await refreshUsers();
@@ -778,27 +751,6 @@ export const UserDetailsPage: React.FC = () => {
                 totalRevenue: user.totalEarnings,
               }}
             />
-            <div className="mt-6 flex justify-end">
-              <Link
-                to={`/user/${user.id}/transactions`}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                  />
-                </svg>
-                View Transaction History
-              </Link>
-            </div>
           </div>
 
           {/* Provider Details */}
@@ -946,29 +898,10 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Performance Metrics */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Performance Metrics
               </h3>
-              <Link
-                to={`/user/${user.id}/activities`}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                View Activity History
-              </Link>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <div className="text-center">

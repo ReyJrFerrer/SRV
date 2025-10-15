@@ -23,6 +23,7 @@ export interface FrontendProfile {
   biography?: string;
   createdAt: Date;
   updatedAt: Date;
+  locked?: boolean; // Account suspension status
 }
 
 /**
@@ -46,6 +47,7 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
     biography: firestoreProfile.biography || undefined,
     createdAt: new Date(firestoreProfile.createdAt),
     updatedAt: new Date(firestoreProfile.updatedAt),
+    locked: firestoreProfile.locked || false, // Default to false if not specified
   };
 }
 
