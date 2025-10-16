@@ -590,7 +590,7 @@ export const ValidationInboxPage: React.FC = () => {
                 return {
                   ...s,
                   certificateUrls: s.certificateUrls.filter(
-                    (_, index) => index !== certificateIndex,
+                    (_url: string, index: number) => index !== certificateIndex,
                   ),
                 };
               }
@@ -645,7 +645,7 @@ export const ValidationInboxPage: React.FC = () => {
                 return {
                   ...s,
                   certificateUrls: s.certificateUrls.filter(
-                    (_, index) => index !== certificateIndex,
+                    (_url: string, index: number) => index !== certificateIndex,
                   ),
                 };
               }
@@ -694,10 +694,43 @@ export const ValidationInboxPage: React.FC = () => {
         prev.filter((cert) => cert.id !== certificate.id),
       );
 
-      console.log("Certificate undone:", certificate);
+      // Add the certificate back to pending list
+      setServicesWithCertificates((prev) => {
+        // Check if the service already exists in the list
+        const existingServiceIndex = prev.findIndex(
+          (s) => s.serviceId === certificate.service.serviceId,
+        );
 
-      // Refresh data from backend
-      await loadServicesWithCertificates();
+        if (existingServiceIndex !== -1) {
+          // Service exists, add the certificate URL if it's not already there
+          const service = prev[existingServiceIndex];
+          if (!service.certificateUrls.includes(certificate.certificateUrl)) {
+            return prev.map((s, idx) =>
+              idx === existingServiceIndex
+                ? {
+                    ...s,
+                    certificateUrls: [
+                      ...s.certificateUrls,
+                      certificate.certificateUrl,
+                    ],
+                  }
+                : s,
+            );
+          }
+          return prev;
+        } else {
+          // Service doesn't exist, add it with the certificate
+          return [
+            ...prev,
+            {
+              ...certificate.service,
+              certificateUrls: [certificate.certificateUrl],
+            },
+          ];
+        }
+      });
+
+      console.log("Certificate undone:", certificate);
     } catch (error) {
       console.error("Error undoing certificate:", error);
     }

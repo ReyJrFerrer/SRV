@@ -21,8 +21,7 @@ export const AdminHomePage: React.FC = () => {
 
     // Data states
     systemStats,
-    serviceProviders,
-    services,
+    users,
     bookings,
     commissionTransactions,
 
@@ -43,10 +42,15 @@ export const AdminHomePage: React.FC = () => {
   // Reports for pending tickets
   const [reports, setReports] = useState<any[]>([]);
 
-  // Calculate provider and client counts based on current user roles
-  const providerIds = new Set(
-    services?.map((service) => service.providerId).filter(Boolean) ?? [],
-  );
+  // Calculate active service providers count from users with ServiceProvider role
+  const activeServiceProvidersCount = users?.filter((user: any) => {
+    if (typeof user.activeRole === "string") {
+      return user.activeRole === "ServiceProvider";
+    } else if (user.activeRole && typeof user.activeRole === "object") {
+      return "ServiceProvider" in user.activeRole;
+    }
+    return false;
+  }).length || 0;
 
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
@@ -63,7 +67,7 @@ export const AdminHomePage: React.FC = () => {
 
   // Calculate dashboard stats from current data
   const dashboardStats = {
-    totalServiceProviders: providerIds.size,
+    totalServiceProviders: activeServiceProvidersCount,
     totalPendingValidations: servicesWithCertificates.reduce(
       (total, service) => total + (service.certificateUrls?.length || 0),
       0,
@@ -201,82 +205,6 @@ export const AdminHomePage: React.FC = () => {
     systemStats?.totalCommission,
     period,
   ]);
-
-  // Booking Distribution per Day chart data with vertical grids
-  const bookingDistributionData = useMemo(() => {
-    // Generate dynamic date range based on selected period
-    const today = new Date();
-    const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const chartData = [];
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const formattedDate = date
-        .toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-        .toUpperCase()
-        .replace(" ", ". ");
-
-      let pending = 0;
-      let completed = 0;
-      let canceled = 0;
-
-      // Count bookings by status for specific date
-      if (bookings && bookings.length > 0) {
-        const dateStr = date.toISOString().slice(0, 10);
-
-        bookings.forEach((booking) => {
-          let bookingDateStr;
-          if (booking.createdAt instanceof Date) {
-            bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === "string") {
-            bookingDateStr = booking.createdAt.slice(0, 10);
-          } else {
-            return;
-          }
-
-          if (bookingDateStr === dateStr) {
-            const status = booking.status?.toLowerCase();
-
-            if (status === "pending" || status === "requested") {
-              pending++;
-            } else if (
-              status === "confirmed" ||
-              status === "accepted" ||
-              status === "completed" ||
-              status === "settled"
-            ) {
-              completed++;
-            } else if (
-              status === "canceled" ||
-              status === "cancelled" ||
-              status === "declined"
-            ) {
-              canceled++;
-            } else {
-            }
-          }
-        });
-      } else if (i === 0) {
-        completed = totalBookings;
-        pending = 0;
-        canceled = 0;
-      }
-
-      chartData.push({
-        date: formattedDate,
-        pending,
-        completed,
-        canceled,
-        fullDate: date.toISOString().slice(0, 10),
-      });
-    }
-
-    return chartData;
-  }, [bookings, period, totalBookings]);
 
   useEffect(() => {
     refreshAll();
@@ -537,7 +465,7 @@ export const AdminHomePage: React.FC = () => {
                         }}
                         formatter={(value: number, name: string) => [
                           `₱${value.toFixed(2)}`,
-                          name === "revenue" ? "Revenue" : "Commission",
+                          name === "revenue" ? "Revenue" : name === "commission" ? "Commission" : name,
                         ]}
                       />
                       <Legend />
@@ -554,102 +482,6 @@ export const AdminHomePage: React.FC = () => {
                         dataKey="commission"
                         name="Commission"
                         stroke="#3b82f6"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Booking Distribution per Day */}
-              <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-800">
-                    Booking Distribution per Day
-                  </h3>
-                  <div className="flex gap-2">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
-                      Pending:{" "}
-                      {bookings && bookings.length > 0
-                        ? bookings.filter(
-                            (b) =>
-                              b.status?.toLowerCase() === "pending" ||
-                              b.status?.toLowerCase() === "requested",
-                          ).length
-                        : 0}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 ring-1 ring-green-200">
-                      Completed:{" "}
-                      {bookings && bookings.length > 0
-                        ? bookings.filter(
-                            (b) =>
-                              b.status?.toLowerCase() === "confirmed" ||
-                              b.status?.toLowerCase() === "accepted" ||
-                              b.status?.toLowerCase() === "completed" ||
-                              b.status?.toLowerCase() === "settled",
-                          ).length
-                        : totalBookings}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 ring-1 ring-red-200">
-                      Canceled:{" "}
-                      {bookings && bookings.length > 0
-                        ? bookings.filter(
-                            (b) =>
-                              b.status?.toLowerCase() === "canceled" ||
-                              b.status?.toLowerCase() === "cancelled" ||
-                              b.status?.toLowerCase() === "declined",
-                          ).length
-                        : 0}
-                    </span>
-                  </div>
-                </div>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={bookingDistributionData}
-                      margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(dateStr) => dateStr}
-                      />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip
-                        labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
-                        formatter={(value: number, name: string) => [
-                          `${value}`,
-                          name === "pending"
-                            ? "Pending"
-                            : name === "completed"
-                              ? "Completed"
-                              : "Canceled",
-                        ]}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="pending"
-                        name="Pending"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="completed"
-                        name="Completed"
-                        stroke="#10b981"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="canceled"
-                        name="Canceled"
-                        stroke="#ef4444"
                         strokeWidth={2}
                         dot={false}
                       />

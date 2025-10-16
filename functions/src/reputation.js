@@ -761,25 +761,59 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
   }
 
   try {
+    // First, try to get reputation from Firestore (where admin updates are stored)
+    console.log(`🔍 Checking Firestore for reputation data for ${userId}`);
+    const userDoc = await db.collection("users").doc(userId).get();
+    
+    if (userDoc.exists && userDoc.data().reputationScore !== undefined) {
+      const userData = userDoc.data();
+      console.log(`✅ Found reputation in Firestore for ${userId}:`, userData.reputationScore);
+      return {
+        success: true,
+        data: {
+          trustScore: userData.reputationScore || 50,
+          trustLevel: userData.reputationLevel || "New",
+          completedBookings: userData.completedBookings || 0,
+        },
+      };
+    }
+
+    // If not in Firestore, try IC canister
+    console.log(`📞 No Firestore data, trying IC canister for ${userId}`);
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(userId);
-
-    console.log(`📞 Calling reputation canister to get score for ${userId}`);
 
     const result = await reputationActor.getReputationScore(principal);
 
     if ("ok" in result) {
-      console.log(`✅ Reputation score retrieved for ${userId}`);
+      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
       return {
         success: true,
         data: result.ok,
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      throw new functions.https.HttpsError("internal", result.err);
+      // Return default reputation instead of throwing error
+      return {
+        success: true,
+        data: {
+          trustScore: 50,
+          trustLevel: "New",
+          completedBookings: 0,
+        },
+      };
     }
   } catch (error) {
     console.error("Error getting reputation score:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    // Return default reputation instead of throwing error
+    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
+    return {
+      success: true,
+      data: {
+        trustScore: 50,
+        trustLevel: "New", 
+        completedBookings: 0,
+      },
+    };
   }
 });

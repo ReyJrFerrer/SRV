@@ -268,6 +268,7 @@ export const feedbackCanisterService = {
     try {
       const submitReportFn = httpsCallable(functions, "submitReport");
 
+      // Send the description directly - backend will handle JSON parsing if needed
       const result = await submitReportFn({
         data: { description },
       });

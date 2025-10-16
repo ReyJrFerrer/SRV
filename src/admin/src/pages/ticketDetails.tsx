@@ -191,12 +191,19 @@ export const TicketDetailsPage: React.FC = () => {
     setUpdatingStatus(true);
     try {
       const reportId = ticket.id.replace("REPORT-", "");
+      const oldStatus = ticket.status;
 
-      // Call backend to update status
+      // Call backend to update status with notification
       const { updateReportStatus } = await import(
         "../services/adminServiceCanister"
       );
-      const success = await updateReportStatus(reportId, newStatus);
+      const success = await updateReportStatus(
+        reportId, 
+        newStatus, 
+        ticket.submittedById, 
+        ticket.title, 
+        oldStatus
+      );
 
       if (success) {
         // Update local state
@@ -222,7 +229,7 @@ export const TicketDetailsPage: React.FC = () => {
         const statusText = newStatus
           .replace("_", " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
-        console.log(`Status changed to "${statusText}" - persisted to backend`);
+        console.log(`Status changed to "${statusText}" - persisted to backend and notification sent`);
       } else {
         console.error("Failed to update status in backend");
       }
@@ -253,6 +260,27 @@ export const TicketDetailsPage: React.FC = () => {
           }
         : null,
     );
+
+    // Send notification to user about the new comment
+    try {
+      const { sendTicketCommentNotificationToUser } = await import(
+        "../services/adminServiceCanister"
+      );
+      const reportId = ticket.id.replace("REPORT-", "");
+      
+      await sendTicketCommentNotificationToUser(
+        ticket.submittedById,
+        reportId,
+        ticket.title,
+        newComment.trim(),
+        isInternal
+      );
+      
+      console.log(`✅ Comment notification sent to user ${ticket.submittedById} for ticket ${ticket.id}`);
+    } catch (error) {
+      console.error("❌ Error sending comment notification:", error);
+      // Don't show error to user as comment was still added successfully
+    }
 
     setNewComment("");
   };

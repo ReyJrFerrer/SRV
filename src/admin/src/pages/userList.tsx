@@ -108,7 +108,7 @@ export const UserListPage: React.FC = () => {
       }
     };
     initializeAndLoadUsers();
-  }, [, refreshUsers]);
+  }, [refreshUsers]);
 
   // Show mobile bottom action bar when header scrolls out
   useEffect(() => {
@@ -123,41 +123,22 @@ export const UserListPage: React.FC = () => {
       if (backendUsers.length > 0) {
         try {
           // Filter out profiles without id/uid and exclude admin users
-          const validProfiles = backendUsers.filter(
-            (profile) =>
-              profile.id &&
-              !("Admin" in profile.role) &&
-              !("Admin" in profile.activeRole),
-          );
-          console.log(
-            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
-          );
-
-          const convertedUsers = await Promise.all(
-            validProfiles.map(convertProfileToUserData),
-          );
-          setUsers(convertedUsers);
-          setFilteredUsers(convertedUsers);
-        } catch (error) {
-          console.error("Failed to convert users on mount:", error);
-        }
-      }
-    };
-
-    convertUsers();
-  }, []);
-
-  useEffect(() => {
-    const convertUsers = async () => {
-      if (backendUsers.length > 0) {
-        try {
-          // Filter out profiles without id/uid and exclude admin users
-          const validProfiles = backendUsers.filter(
-            (profile) =>
-              profile.id &&
-              !("Admin" in profile.role) &&
-              !("Admin" in profile.activeRole),
-          );
+          const validProfiles = backendUsers.filter((profile) => {
+            if (!profile.id) return false;
+            
+            // Check if role is Admin (handle both string and object types)
+            const isAdminRole = typeof profile.role === 'string' 
+              ? profile.role === 'Admin' 
+              : typeof profile.role === 'object' && profile.role !== null && 'Admin' in profile.role;
+            
+            // Check if activeRole is Admin (handle both string and object types)
+            const isAdminActiveRole = typeof profile.activeRole === 'string'
+              ? profile.activeRole === 'Admin'
+              : typeof profile.activeRole === 'object' && profile.activeRole !== null && 'Admin' in profile.activeRole;
+            
+            return !isAdminRole && !isAdminActiveRole;
+          });
+          
           console.log(
             `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
           );
@@ -179,14 +160,29 @@ export const UserListPage: React.FC = () => {
     };
 
     convertUsers();
-  }, [backendUsers]);
+  }, [backendUsers, getUserLockStatus]);
 
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (!document.hidden && backendUsers.length > 0) {
         try {
+          // Filter out admin users same as main useEffect
+          const validProfiles = backendUsers.filter((profile) => {
+            if (!profile.id) return false;
+            
+            const isAdminRole = typeof profile.role === 'string' 
+              ? profile.role === 'Admin' 
+              : typeof profile.role === 'object' && profile.role !== null && 'Admin' in profile.role;
+            
+            const isAdminActiveRole = typeof profile.activeRole === 'string'
+              ? profile.activeRole === 'Admin'
+              : typeof profile.activeRole === 'object' && profile.activeRole !== null && 'Admin' in profile.activeRole;
+            
+            return !isAdminRole && !isAdminActiveRole;
+          });
+          
           const convertedUsers = await Promise.all(
-            backendUsers.map(convertProfileToUserData),
+            validProfiles.map(convertProfileToUserData),
           );
           setUsers(convertedUsers);
           setFilteredUsers(convertedUsers);
