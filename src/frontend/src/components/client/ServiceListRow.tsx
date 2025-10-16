@@ -38,10 +38,13 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     // this will keep newest-first; otherwise the collection is un-ordered.
     let q;
     try {
-  q = query(collection(firestore, "service_packages"), orderBy("createdAt", "desc"));
+      q = query(
+        collection(firestore, "service_packages"),
+        orderBy("createdAt", "desc"),
+      );
     } catch (e) {
       // If createdAt doesn't exist for documents, fall back to the raw collection
-  q = query(collection(firestore, "service_packages"));
+      q = query(collection(firestore, "service_packages"));
     }
 
     const unsubscribe = onSnapshot(
@@ -53,7 +56,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
           // Map Firestore document fields to EnrichedService. These are
           // best-effort mappings — adjust to match your exact Firestore schema.
           const priceAmount =
-            data.price?.amount ?? (typeof data.price === "number" ? data.price : 0);
+            data.price?.amount ??
+            (typeof data.price === "number" ? data.price : 0);
           const ratingAverage = data.rating?.average ?? data.rating ?? 0;
 
           const slug =
@@ -71,10 +75,15 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
             name: data.title || data.name || "",
             title: data.title || data.name || "",
             heroImage:
-              data.heroImage || data.category?.imageUrl || getCategoryImage(data.category?.name || data.category?.slug || "others"),
+              data.heroImage ||
+              data.category?.imageUrl ||
+              getCategoryImage(
+                data.category?.name || data.category?.slug || "others",
+              ),
             description: data.description || "",
 
-            providerName: data.providerName || data.provider?.name || "Unknown Provider",
+            providerName:
+              data.providerName || data.provider?.name || "Unknown Provider",
             providerAvatar: data.providerAvatar || data.provider?.avatar || "",
             providerId: data.providerId || data.provider?.id || "",
 
@@ -108,7 +117,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
 
             availability: {
               isAvailable: Boolean(
-                data.availability?.isAvailable ?? (data.status === "Available")
+                data.availability?.isAvailable ?? data.status === "Available",
               ),
             },
           } as EnrichedService;
