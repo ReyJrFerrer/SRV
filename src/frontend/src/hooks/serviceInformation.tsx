@@ -414,15 +414,12 @@ export const useServiceById = (
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchService = useCallback(async () => {
+  // Manual refetch function (for backwards compatibility)
+  const refetch = useCallback(async () => {
     if (!serviceId) {
-      setService(null);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
     try {
       // Fetch the specific service
       const serviceData = await serviceCanisterService.getService(serviceId);
@@ -449,17 +446,64 @@ export const useServiceById = (
       setError(
         err instanceof Error ? err : new Error("Failed to fetch service"),
       );
-      //console.error("Error fetching service:", err);
-    } finally {
-      setLoading(false);
     }
   }, [serviceId]);
 
+  // Subscribe to realtime updates
   useEffect(() => {
-    fetchService();
-  }, [fetchService, serviceId]);
+    if (!serviceId) {
+      setService(null);
+      setLoading(false);
+      return;
+    }
 
-  return { service, loading, error, refetch: fetchService };
+    setLoading(true);
+    setError(null);
+
+    // Subscribe to service changes
+    const unsubscribe = serviceCanisterService.subscribeToService(
+      serviceId,
+      async (serviceData) => {
+        if (!serviceData) {
+          setService(null);
+          setError(new Error("Service not found"));
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Fetch the provider profile and service packages in parallel
+          const [providerProfile, servicePackages] = await Promise.all([
+            authCanisterService.getProfile(
+              serviceData.providerId.toString(),
+            ),
+            serviceCanisterService.getServicePackages(serviceId),
+          ]);
+
+          // Transform to enriched service
+          const enrichedService = transformToEnrichedService(
+            serviceData,
+            providerProfile,
+            servicePackages,
+          );
+          setService(enrichedService);
+          setError(null);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err : new Error("Failed to fetch service"),
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [serviceId]);
+
+  return { service, loading, error, refetch };
 };
 
 /**
