@@ -203,7 +203,6 @@ const transformServicesWithData = (
   });
 };
 
-
 /**
  * Hook to subscribe to all services with provider information (real-time)
  * This hook listens to Firestore changes and updates services in real-time

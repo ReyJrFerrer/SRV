@@ -739,11 +739,65 @@ export const useBookingManagement = (): BookingManagementHook => {
     loadUserProfile();
   }, [loadUserProfile]);
 
+  // Subscribe to bookings with realtime updates when user is authenticated
   useEffect(() => {
-    if (isUserAuthenticated()) {
-      loadUserBookings();
+    if (!isUserAuthenticated()) {
+      return;
     }
-  }, [isUserAuthenticated, loadUserBookings]);
+
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) {
+      return;
+    }
+
+    setLoadingState("bookings", true);
+    clearError();
+
+    try {
+      const userPrincipal = Principal.fromText(currentUserId);
+
+      // Subscribe to realtime updates
+      const unsubscribe = bookingCanisterService.subscribeToClientBookings(
+        userPrincipal,
+        async (bookings) => {
+          try {
+            // Transform base bookings to extended bookings with package support
+            const transformedBookings = bookings.map(transformBooking);
+
+            // Enrich bookings with all data (provider, service, package) in parallel
+            const enrichedBookings = await Promise.all(
+              transformedBookings.map((booking) =>
+                enrichBookingWithAllData(booking),
+              ),
+            );
+
+            setUserBookings(enrichedBookings);
+            setLoadingState("bookings", false);
+          } catch (error) {
+            console.error("Error enriching client bookings:", error);
+            handleBookingError(error, "enrich client bookings");
+            setLoadingState("bookings", false);
+          }
+        },
+      );
+
+      // Cleanup subscription on unmount or when dependencies change
+      return () => {
+        unsubscribe();
+      };
+    } catch (error) {
+      handleBookingError(error, "subscribe to client bookings");
+      setLoadingState("bookings", false);
+    }
+  }, [
+    isUserAuthenticated,
+    getCurrentUserId,
+    transformBooking,
+    enrichBookingWithAllData,
+    setLoadingState,
+    clearError,
+    handleBookingError,
+  ]);
 
   // Return hook interface
   return {

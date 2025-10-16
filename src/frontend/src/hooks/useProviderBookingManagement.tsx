@@ -1428,27 +1428,24 @@ export const useProviderBookingManagement =
         const providerPrincipal = Principal.fromText(currentProviderId);
 
         // Subscribe to realtime updates
-        const unsubscribe =
-          bookingCanisterService.subscribeToProviderBookings(
-            providerPrincipal,
-            async (bookings) => {
-              try {
-                // Enrich bookings with client data in parallel
-                const enrichedBookings = await Promise.all(
-                  bookings.map((booking) =>
-                    enrichBookingWithClientData(booking),
-                  ),
-                );
+        const unsubscribe = bookingCanisterService.subscribeToProviderBookings(
+          providerPrincipal,
+          async (bookings) => {
+            try {
+              // Enrich bookings with client data in parallel
+              const enrichedBookings = await Promise.all(
+                bookings.map((booking) => enrichBookingWithClientData(booking)),
+              );
 
-                setProviderBookings(enrichedBookings);
-                setLoadingState("bookings", false);
-              } catch (error) {
-                console.error("Error enriching bookings:", error);
-                handleBookingError(error, "enrich provider bookings");
-                setLoadingState("bookings", false);
-              }
-            },
-          );
+              setProviderBookings(enrichedBookings);
+              setLoadingState("bookings", false);
+            } catch (error) {
+              console.error("Error enriching bookings:", error);
+              handleBookingError(error, "enrich provider bookings");
+              setLoadingState("bookings", false);
+            }
+          },
+        );
 
         // Cleanup subscription on unmount or when dependencies change
         return () => {
