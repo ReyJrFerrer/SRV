@@ -13,9 +13,7 @@ import {
   enrichServiceWithProvider,
   getCategoryImage,
 } from "../utils/serviceHelpers";
-import {
-  OrganizedWeeklySchedule,
-} from "./serviceManagement";
+import { OrganizedWeeklySchedule } from "./serviceManagement";
 
 /**
  * Helper function to organize weekly schedule similar to serviceManagement.tsx
