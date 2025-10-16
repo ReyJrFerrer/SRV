@@ -723,14 +723,7 @@ const ProviderDirectionsPage: React.FC = () => {
               aria-label="Open Street View"
             >
               {/* Eye icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-5 w-5"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
                 <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
@@ -828,11 +821,7 @@ const ProviderDirectionsPage: React.FC = () => {
       </div>
       {/* Street View modal */}
       {showStreetView && destinationHasCoords && destinationCoords && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-        >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70" role="dialog" aria-modal="true">
           <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <button
               className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
@@ -845,11 +834,7 @@ const ProviderDirectionsPage: React.FC = () => {
               <GStreetView
                 position={destinationCoords}
                 pov={{ heading: 0, pitch: 0 }}
-                options={{
-                  addressControl: true,
-                  linksControl: true,
-                  panControl: true,
-                }}
+                options={{ addressControl: true, linksControl: true, panControl: true }}
                 style={{ width: "100%", height: "100%" }}
               />
             </div>

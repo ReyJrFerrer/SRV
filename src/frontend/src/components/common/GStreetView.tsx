@@ -8,13 +8,7 @@ interface Props {
   className?: string;
 }
 
-const GStreetView: React.FC<Props> = ({
-  position,
-  pov,
-  options,
-  style,
-  className,
-}) => {
+const GStreetView: React.FC<Props> = ({ position, pov, options, style, className }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const panoRef = useRef<google.maps.StreetViewPanorama | null>(null);
   const failedRef = useRef<boolean>(false);
@@ -23,22 +17,13 @@ const GStreetView: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const init = () => {
-      if (
-        !containerRef.current ||
-        panoRef.current ||
-        !(window as any).google?.maps ||
-        failedRef.current
-      )
-        return false;
+      if (!containerRef.current || panoRef.current || !(window as any).google?.maps || failedRef.current) return false;
       try {
-        panoRef.current = new google.maps.StreetViewPanorama(
-          containerRef.current,
-          {
-            position,
-            pov: pov || { heading: 0, pitch: 0 },
-            ...(options || {}),
-          },
-        );
+        panoRef.current = new google.maps.StreetViewPanorama(containerRef.current, {
+          position,
+          pov: pov || { heading: 0, pitch: 0 },
+          ...(options || {}),
+        });
         return true;
       } catch (e) {
         // eslint-disable-next-line no-console
