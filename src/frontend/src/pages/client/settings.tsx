@@ -12,7 +12,6 @@ import BottomNavigation from "../../components/client/BottomNavigation"; // Adju
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
 
-
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { logout } = useLogout();
@@ -128,7 +127,6 @@ const SettingsPage: React.FC = () => {
                 />
               </button>
             </div>
-
 
             {/* --- Other Menu Items --- */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">

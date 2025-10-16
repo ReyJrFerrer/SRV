@@ -204,7 +204,7 @@ const transformServicesWithData = (
 };
 
 /**
- * Hook to fetch all services with provider information
+ * Hook to fetch all services with provider information (one-time fetch)
  */
 export const useAllServicesWithProviders = (): UseServicesResult => {
   const [services, setServices] = useState<EnrichedService[]>([]);
@@ -260,6 +260,74 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
     loading,
     error,
     refetch: fetchServices,
+  };
+};
+
+/**
+ * Hook to subscribe to all services with provider information (real-time)
+ * This hook listens to Firestore changes and updates services in real-time
+ */
+export const useAllServicesRealtimeWithProviders = (): UseServicesResult => {
+  const [services, setServices] = useState<EnrichedService[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    // Subscribe to real-time updates
+    const unsubscribe = serviceCanisterService.subscribeToAllServices(
+      async (allServices) => {
+        if (allServices.length === 0) {
+          setServices([]);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Fetch provider profiles and service packages in parallel
+          const [providerMap, servicePackagesMap] = await Promise.all([
+            fetchProviderProfiles(allServices),
+            fetchServicePackages(allServices),
+          ]);
+
+          // Transform services with provider data and packages
+          const enrichedServices = transformServicesWithData(
+            allServices,
+            providerMap,
+            servicePackagesMap,
+          );
+
+          setServices(enrichedServices);
+          setLoading(false);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err : new Error("Failed to enrich services"),
+          );
+          setLoading(false);
+        }
+      },
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const refetch = useCallback(async () => {
+    // For realtime hook, refetch just resets the state
+    // The listener will automatically update with new data
+    setLoading(true);
+    setError(null);
+  }, []);
+
+  return {
+    services,
+    loading,
+    error,
+    refetch,
   };
 };
 
@@ -503,6 +571,7 @@ export const useCategories = (): {
 // Default export with all hooks for convenience
 export default {
   useAllServicesWithProviders,
+  useAllServicesRealtimeWithProviders,
   useServicesByCategory,
   useTopPickServices,
   useServiceById,

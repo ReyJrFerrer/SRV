@@ -14,7 +14,7 @@ const ServiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   // Use our custom hook to fetch service details
-  const { service, loading, error } = useServiceDetail(id as string);
+  const { service, error } = useServiceDetail(id as string);
 
   // Set document title
   useEffect(() => {
@@ -28,13 +28,6 @@ const ServiceDetailPage: React.FC = () => {
     navigate(-1);
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
