@@ -135,8 +135,6 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-         
-
             {/* --- Other Menu Items --- */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
