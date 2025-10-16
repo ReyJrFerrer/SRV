@@ -1,6 +1,7 @@
 // --- Client Booking Item Card ---
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
 import { reviewCanisterService } from "../../services/reviewCanisterService";
 import { authCanisterService } from "../../services/authCanisterService";
@@ -149,6 +150,50 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
+  // --- Date range formatting helper ---
+  const formatDateRange = (
+    requestedDate: Date | string | number,
+    scheduledDate: Date | string | number,
+  ) => {
+    try {
+      const requestedDateObj = new Date(requestedDate);
+      const scheduledDateObj = new Date(scheduledDate);
+
+      const requestedDateStr = requestedDateObj.toLocaleDateString([], {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const requestedTimeStr = requestedDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const scheduledTimeStr = scheduledDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // Check if both dates are on the same day
+      const isSameDay =
+        requestedDateObj.toDateString() === scheduledDateObj.toDateString();
+
+      if (isSameDay) {
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledTimeStr}`;
+      } else {
+        const scheduledDateStr = scheduledDateObj.toLocaleDateString([], {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledDateStr} at ${scheduledTimeStr}`;
+      }
+    } catch {
+      return "Date range not available";
+    }
+  };
+
   // --- Status color mapping ---
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
@@ -185,12 +230,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       } else if (onCancelBooking) {
         onCancelBooking(booking.id);
       } else {
-        alert(
+        toast.error(
           `Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`,
         );
       }
     } catch (error) {
-      alert("Failed to cancel booking. Please try again.");
+      toast.error("Failed to cancel booking. Please try again.");
     }
   };
 
@@ -201,7 +246,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     if (booking.serviceId) {
       navigate(`/client/book/${booking.serviceId}`);
     } else {
-      alert("Service information not available to book again.");
+      toast.error("Service information not available to book again.");
       navigate("/client/home");
     }
   };
@@ -214,7 +259,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     if (booking.serviceId) {
       navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
-      alert("Service information not available.");
+      toast.error("Service information not available.");
     }
   };
 
@@ -358,7 +403,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               <p className="flex items-center">
                 <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                {formatDate(booking.requestedDate || booking.createdAt)}
+                {booking.scheduledDate
+                  ? formatDateRange(
+                      booking.requestedDate || booking.createdAt,
+                      booking.scheduledDate,
+                    )
+                  : formatDate(booking.requestedDate || booking.createdAt)}
               </p>
 
               <p className="flex items-center">

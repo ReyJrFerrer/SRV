@@ -374,9 +374,14 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             lastSlot.endMinute,
             lastSlot.endPeriod,
           );
-          const newStartTime = fromDate(lastEndTime);
 
-          const newEndTimeDate = new Date(lastEndTime.getTime());
+          // Add 1 hour to the last end time to create the new start time
+          const newStartTimeDate = new Date(lastEndTime.getTime());
+          newStartTimeDate.setHours(newStartTimeDate.getHours() + 1);
+          const newStartTime = fromDate(newStartTimeDate);
+
+          // Add another hour to create the new end time
+          const newEndTimeDate = new Date(newStartTimeDate.getTime());
           newEndTimeDate.setHours(newEndTimeDate.getHours() + 1);
           const newEndTime = fromDate(newEndTimeDate);
 

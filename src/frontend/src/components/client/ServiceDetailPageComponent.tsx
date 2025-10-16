@@ -1107,10 +1107,11 @@ const ServiceDetailPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                Creating{" "}
+                <span className="text-base font-semibold">Creating Chat</span>
               </>
-            ) : null}
-            <span className="text-base font-semibold"> Chat</span>
+            ) : (
+              <span className="text-base font-semibold">Chat</span>
+            )}
             {isOwnService && (
               <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 You cannot chat with your own service.

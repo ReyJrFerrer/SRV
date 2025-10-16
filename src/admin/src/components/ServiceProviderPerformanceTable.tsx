@@ -1,25 +1,26 @@
 import React from "react";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
-interface ServiceProviderData {
+interface ServiceProviderPerformanceData {
   id: string;
   name: string;
   phone: string;
-  totalEarnings: number;
-  pendingCommission: number;
-  settledCommission: number;
-  lastActivity: Date;
+  totalRevenue: number;
+  totalCommission: number;
+  completedBookings: number;
+  totalBookings: number;
+  status: string;
 }
 
-interface ServiceProviderCommissionTableProps {
-  providers: ServiceProviderData[];
+interface ServiceProviderPerformanceTableProps {
+  providers: ServiceProviderPerformanceData[];
   loading?: boolean;
   onRefresh: () => void;
   showRefresh?: boolean;
 }
 
-export const ServiceProviderCommissionTable: React.FC<
-  ServiceProviderCommissionTableProps
+const ServiceProviderPerformanceTable: React.FC<
+  ServiceProviderPerformanceTableProps
 > = ({
   providers,
   loading = false,
@@ -28,14 +29,6 @@ export const ServiceProviderCommissionTable: React.FC<
 }) => {
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-    });
   };
 
   if (loading) {
@@ -55,18 +48,16 @@ export const ServiceProviderCommissionTable: React.FC<
 
   return (
     <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
-        <h2 className="text-lg font-semibold text-blue-900">
-          Service Provider Commission Overview
-        </h2>
+      <div className="flex items-center justify-between border-b border-blue-100 px-6 py-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Service Provider Performance
+        </h3>
         {_showRefresh && (
           <button
             onClick={_onRefresh}
-            className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
           >
-            <ArrowPathIcon
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
+            <ArrowPathIcon className="h-4 w-4" />
             Refresh
           </button>
         )}
@@ -80,16 +71,13 @@ export const ServiceProviderCommissionTable: React.FC<
                 Service Provider
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Total Earnings
+                Total Revenue
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Pending Commission
+                Total Commission
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Settled Commission
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Last Activity
+                Completed Bookings
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Status
@@ -100,7 +88,7 @@ export const ServiceProviderCommissionTable: React.FC<
             {providers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="px-6 py-12 text-center text-sm text-gray-500"
                 >
                   No service providers found
@@ -108,18 +96,18 @@ export const ServiceProviderCommissionTable: React.FC<
               </tr>
             ) : (
               providers.map((provider) => (
-                <tr key={provider.id} className="hover:bg-blue-50/40">
+                <tr key={provider.id} className="hover:bg-blue-50/30">
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                          <span className="text-sm font-medium text-blue-800">
+                          <span className="text-sm font-medium text-blue-600">
                             {provider.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="text-sm font-medium text-gray-900">
                           {provider.name}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -128,29 +116,27 @@ export const ServiceProviderCommissionTable: React.FC<
                       </div>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-green-600">
-                    {formatCurrency(provider.totalEarnings)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-orange-600">
-                    {formatCurrency(provider.pendingCommission)}
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                    {formatCurrency(provider.totalRevenue)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    {formatCurrency(provider.settledCommission)}
+                    {formatCurrency(provider.totalCommission)}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {formatDate(provider.lastActivity)}
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                    {provider.completedBookings}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
-                        provider.pendingCommission > 0
-                          ? "bg-orange-100 text-orange-800 ring-orange-200"
-                          : "bg-green-100 text-green-800 ring-green-200"
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        provider.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : provider.status === "inactive"
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {provider.pendingCommission > 0
-                        ? "Pending"
-                        : "Up to Date"}
+                      {provider.status.charAt(0).toUpperCase() +
+                        provider.status.slice(1)}
                     </span>
                   </td>
                 </tr>
@@ -159,32 +145,8 @@ export const ServiceProviderCommissionTable: React.FC<
           </tbody>
         </table>
       </div>
-
-      {providers.length > 0 && (
-        <div className="border-t border-blue-100 bg-blue-50/60 px-6 py-4">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {providers.length} service providers</span>
-            <div className="flex space-x-6">
-              <span>
-                Total Pending:{" "}
-                <span className="font-semibold text-orange-600">
-                  {formatCurrency(
-                    providers.reduce((sum, p) => sum + p.pendingCommission, 0),
-                  )}
-                </span>
-              </span>
-              <span>
-                Total Settled:{" "}
-                <span className="font-semibold text-green-600">
-                  {formatCurrency(
-                    providers.reduce((sum, p) => sum + p.settledCommission, 0),
-                  )}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
+export { ServiceProviderPerformanceTable };

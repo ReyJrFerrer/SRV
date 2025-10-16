@@ -3,21 +3,13 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AdminHomePage } from "./pages/home";
 import { UserListPage } from "./pages/userList";
 import { UserDetailsPage } from "./pages/userDetails";
-import TransactionHistoryPage from "./pages/transactionHistory";
-import ActivityHistoryPage from "./pages/activityHistory";
 import UserServicesPage from "./pages/userServices";
 import { ValidationInboxPage } from "./pages/validationInbox";
 import { TicketInboxPage } from "./pages/ticketInbox";
 import { TicketDetailsPage } from "./pages/ticketDetails";
-// import { AdminChatPage } from "./pages/adminChat";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
-import { RemittanceDashboardPage } from "./pages/remittanceDashboard";
-import { RemittanceOrdersPage } from "./pages/remittanceOrders";
-import { PaymentValidationPage } from "./pages/paymentValidation";
-import { ProviderManagementPage } from "./pages/providerManagement";
-import { SettlementInstructionsPage } from "./pages/settlementInstructions";
-import { RemittanceAnalyticsPage } from "./pages/remittanceAnalytics";
+import { AnalyticsPage } from "./pages/analytics";
 
 // Login component
 const LoginPage = () => {
@@ -114,22 +106,6 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/user/:id/transactions"
-        element={
-          <ProtectedRoute>
-            <TransactionHistoryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/activities"
-        element={
-          <ProtectedRoute>
-            <ActivityHistoryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/user/:id/services"
         element={
           <ProtectedRoute>
@@ -177,60 +153,12 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      {/* <Route
-        path="/chat/:userId"
-        element={
-          <ProtectedRoute>
-            <AdminChatPage />
-          </ProtectedRoute>
-        }
-      /> */}
-      {/* Remittance Routes */}
+      {/* Analytics Route */}
       <Route
-        path="/remittance"
+        path="/analytics"
         element={
           <ProtectedRoute>
-            <RemittanceDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/orders"
-        element={
-          <ProtectedRoute>
-            <RemittanceOrdersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/validation"
-        element={
-          <ProtectedRoute>
-            <PaymentValidationPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/providers"
-        element={
-          <ProtectedRoute>
-            <ProviderManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/settlements"
-        element={
-          <ProtectedRoute>
-            <SettlementInstructionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/remittance/analytics"
-        element={
-          <ProtectedRoute>
-            <RemittanceAnalyticsPage />
+            <AnalyticsPage />
           </ProtectedRoute>
         }
       />

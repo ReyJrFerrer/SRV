@@ -106,6 +106,73 @@ const addHoursToTime = (time: string, hoursToAdd: number): string => {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 };
 
+// **Helper function to convert time string to Date for comparison**
+const timeStringToDate = (timeStr: string): Date => {
+  const [hourStr, minuteStr] = timeStr.split(":");
+  const date = new Date();
+  date.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
+  return date;
+};
+
+// **Helper function to validate time slots for a day**
+const validateTimeSlots = (slots: TimeSlot[]): string[] => {
+  const errors: string[] = [];
+
+  if (slots.length === 0) return errors;
+
+  // Sort time slots by start time for proper validation
+  const sortedSlots = [...slots].sort((a, b) => {
+    const aStart = timeStringToDate(a.startTime);
+    const bStart = timeStringToDate(b.startTime);
+    return aStart.getTime() - bStart.getTime();
+  });
+
+  sortedSlots.forEach((slot, index) => {
+    const startTime = timeStringToDate(slot.startTime);
+    const endTime = timeStringToDate(slot.endTime);
+
+    // Check if start and end times are the same
+    if (startTime.getTime() === endTime.getTime()) {
+      errors.push("Start and end times cannot be the same");
+    }
+
+    // Check if start time is after end time
+    if (startTime.getTime() > endTime.getTime()) {
+      errors.push("Start time cannot be after end time");
+    }
+
+    // Check for minimum 1-hour gap between consecutive time slots
+    if (index > 0) {
+      const prevSlot = sortedSlots[index - 1];
+      const prevEndTime = timeStringToDate(prevSlot.endTime);
+
+      // Calculate the time difference in milliseconds
+      const timeDiff = startTime.getTime() - prevEndTime.getTime();
+      const oneHourInMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (timeDiff < oneHourInMs) {
+        const prevEndTimeStr = formatTime(prevSlot.endTime);
+        const currentStartTimeStr = formatTime(slot.startTime);
+        errors.push(
+          `Time slots must have at least 1 hour gap. Previous slot ends at ${prevEndTimeStr}, current slot starts at ${currentStartTimeStr}`,
+        );
+      }
+    }
+
+    // Check for overlapping time slots
+    if (index > 0) {
+      const prevSlot = sortedSlots[index - 1];
+      const prevEndTime = timeStringToDate(prevSlot.endTime);
+
+      if (startTime.getTime() < prevEndTime.getTime()) {
+        errors.push("Time slots cannot overlap");
+      }
+    }
+  });
+
+  return [...new Set(errors)]; // Remove duplicates
+};
+
 // Availability Editor component
 interface AvailabilityEditorProps {
   weeklySchedule: WeeklyScheduleEntry[];
@@ -345,73 +412,130 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
           {dayEntry.availability.isAvailable && (
             <div className="mt-3 space-y-3">
               {dayEntry.availability.slots.length > 0 ? (
-                dayEntry.availability.slots.map((slot, slotIndex) => (
-                  <div
-                    key={slotIndex}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input
-                      type="time"
-                      value={slot.startTime}
-                      onChange={(e) => {
-                        const newStartTime = e.target.value;
-                        const newSchedule = [...weeklySchedule];
-                        const dayIndex = weeklySchedule.findIndex(
-                          (d) => d.day === dayEntry.day,
-                        );
+                <>
+                  {dayEntry.availability.slots.map((slot, slotIndex) => {
+                    // Check if current slot has validation errors
+                    const currentDayErrors = validateTimeSlots(
+                      dayEntry.availability.slots,
+                    );
+                    const hasErrors = currentDayErrors.length > 0;
+                    const isSameTime = slot.startTime === slot.endTime;
+                    const startTime = timeStringToDate(slot.startTime);
+                    const endTime = timeStringToDate(slot.endTime);
+                    const isStartAfterEnd =
+                      startTime.getTime() > endTime.getTime();
 
-                        // Update start time
-                        newSchedule[dayIndex].availability.slots[
-                          slotIndex
-                        ].startTime = newStartTime;
+                    return (
+                      <div
+                        key={slotIndex}
+                        className={`rounded-lg border p-3 ${
+                          isSameTime || isStartAfterEnd
+                            ? "border-red-200 bg-red-50"
+                            : hasErrors
+                              ? "border-yellow-200 bg-yellow-50"
+                              : "border-gray-200 bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 text-sm">
+                          <input
+                            type="time"
+                            value={slot.startTime}
+                            onChange={(e) => {
+                              const newStartTime = e.target.value;
+                              const newSchedule = [...weeklySchedule];
+                              const dayIndex = weeklySchedule.findIndex(
+                                (d) => d.day === dayEntry.day,
+                              );
 
-                        // If start time equals end time, automatically increment end time by 1 hour
-                        if (newStartTime === slot.endTime) {
-                          newSchedule[dayIndex].availability.slots[
-                            slotIndex
-                          ].endTime = addHoursToTime(newStartTime, 1);
-                        }
+                              // Update start time
+                              newSchedule[dayIndex].availability.slots[
+                                slotIndex
+                              ].startTime = newStartTime;
 
-                        setWeeklySchedule(newSchedule);
-                      }}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span>-</span>
-                    <input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) => {
-                        const newEndTime = e.target.value;
-                        // Prevent setting end time same as start time
-                        if (newEndTime !== slot.startTime) {
-                          const newSchedule = [...weeklySchedule];
-                          newSchedule[
-                            weeklySchedule.findIndex(
-                              (d) => d.day === dayEntry.day,
-                            )
-                          ].availability.slots[slotIndex].endTime = newEndTime;
-                          setWeeklySchedule(newSchedule);
-                        }
-                      }}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => {
-                        const newSchedule = [...weeklySchedule];
-                        newSchedule[
-                          weeklySchedule.findIndex(
-                            (d) => d.day === dayEntry.day,
-                          )
-                        ].availability.slots.splice(slotIndex, 1);
-                        setWeeklySchedule(newSchedule);
-                      }}
-                      className="rounded-full p-1 text-red-600 hover:bg-red-100"
-                      aria-label="Remove time slot"
-                    >
-                      <MinusCircleIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                ))
+                              // If start time equals end time, automatically increment end time by 1 hour
+                              if (newStartTime === slot.endTime) {
+                                newSchedule[dayIndex].availability.slots[
+                                  slotIndex
+                                ].endTime = addHoursToTime(newStartTime, 1);
+                              }
+
+                              setWeeklySchedule(newSchedule);
+                            }}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
+                          />
+                          <span className="text-gray-500">to</span>
+                          <input
+                            type="time"
+                            value={slot.endTime}
+                            onChange={(e) => {
+                              const newEndTime = e.target.value;
+                              // Prevent setting end time same as start time
+                              if (newEndTime !== slot.startTime) {
+                                const newSchedule = [...weeklySchedule];
+                                newSchedule[
+                                  weeklySchedule.findIndex(
+                                    (d) => d.day === dayEntry.day,
+                                  )
+                                ].availability.slots[slotIndex].endTime =
+                                  newEndTime;
+                                setWeeklySchedule(newSchedule);
+                              }
+                            }}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
+                          />
+                          <button
+                            onClick={() => {
+                              const newSchedule = [...weeklySchedule];
+                              newSchedule[
+                                weeklySchedule.findIndex(
+                                  (d) => d.day === dayEntry.day,
+                                )
+                              ].availability.slots.splice(slotIndex, 1);
+                              setWeeklySchedule(newSchedule);
+                            }}
+                            className="rounded-full p-1 text-red-600 hover:bg-red-100"
+                            aria-label="Remove time slot"
+                          >
+                            <MinusCircleIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+
+                        {/* Display time slot specific validation errors */}
+                        {(isSameTime || isStartAfterEnd) && (
+                          <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                            <span>⚠️</span>
+                            <span>
+                              {isSameTime
+                                ? "Start and end times cannot be the same"
+                                : "Start time cannot be after end time"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Display day-level validation errors */}
+                  {validateTimeSlots(dayEntry.availability.slots).map(
+                    (error, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+                      >
+                        <span>⚠️</span>
+                        <span>{error}</span>
+                      </div>
+                    ),
+                  )}
+                </>
               ) : (
                 <p className="text-sm text-gray-500">No time slots added.</p>
               )}
@@ -792,34 +916,18 @@ const ProviderServiceDetailPage: React.FC = () => {
       return;
     }
 
-    // Basic validation for time slots: start < end, no overlaps within a day (can be more robust)
+    // Comprehensive validation for time slots using the same validation as ServiceAvailability
     for (const day of editedWeeklySchedule) {
-      if (day.availability.isAvailable) {
-        for (let i = 0; i < day.availability.slots.length; i++) {
-          const slotA = day.availability.slots[i];
-          if (slotA.startTime >= slotA.endTime) {
-            toast.error(
-              `For ${day.day}, start time (${formatTime(slotA.startTime)}) must be before end time (${formatTime(slotA.endTime)}).`,
-            );
-            return;
-          }
-          for (let j = i + 1; j < day.availability.slots.length; j++) {
-            const slotB = day.availability.slots[j];
-            // Check for overlap
-            if (
-              slotA.startTime < slotB.endTime &&
-              slotB.startTime < slotA.endTime
-            ) {
-              toast.error(
-                `For ${day.day}, time slots overlap: ${formatTime(
-                  slotA.startTime,
-                )}-${formatTime(slotA.endTime)} and ${formatTime(
-                  slotB.startTime,
-                )}-${formatTime(slotB.endTime)}.`,
-              );
-              return;
-            }
-          }
+      if (day.availability.isAvailable && day.availability.slots.length > 0) {
+        const errors = validateTimeSlots(day.availability.slots);
+        if (errors.length > 0) {
+          toast.error(
+            `${day.day} has invalid time slots: ${errors.join(", ")}`,
+            {
+              duration: 6000, // Show longer to read the full message
+            },
+          );
+          return;
         }
       }
     }
