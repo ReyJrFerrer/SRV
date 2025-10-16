@@ -5,14 +5,16 @@ import {
   DayAvailability,
   serviceCanisterService,
 } from "../services/serviceCanisterService";
-import { FrontendProfile, authCanisterService } from "../services/authCanisterService";
+import {
+  FrontendProfile,
+  authCanisterService,
+} from "../services/authCanisterService";
 import {
   enrichServiceWithProvider,
   getCategoryImage,
 } from "../utils/serviceHelpers";
 import {
   OrganizedWeeklySchedule,
-  useServiceManagement,
 } from "./serviceManagement";
 
 /**

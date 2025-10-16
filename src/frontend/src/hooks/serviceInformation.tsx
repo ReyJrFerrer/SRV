@@ -474,9 +474,7 @@ export const useServiceById = (
         try {
           // Fetch the provider profile and service packages in parallel
           const [providerProfile, servicePackages] = await Promise.all([
-            authCanisterService.getProfile(
-              serviceData.providerId.toString(),
-            ),
+            authCanisterService.getProfile(serviceData.providerId.toString()),
             serviceCanisterService.getServicePackages(serviceId),
           ]);
 
