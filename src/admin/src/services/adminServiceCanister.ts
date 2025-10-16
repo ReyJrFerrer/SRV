@@ -2,8 +2,7 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 // Keep some Motoko types for compatibility during migration
-import { Principal } from "@dfinity/principal";
-import { Identity } from "@dfinity/agent";
+import { notificationCanisterService } from "../../../frontend/src/services/notificationCanisterService";
 
 // Get Firebase instances from singleton
 const auth = getFirebaseAuth();
@@ -235,14 +234,12 @@ const callFirebaseFunction = async (functionName: string, payload: any) => {
   }
 };
 
-// Keep track of current identity for compatibility
-let currentIdentity: Identity | null = null;
-
 /**
  * Updates the current identity (compatibility function)
+ * Note: Admin service uses Firebase auth, not IC identity
  */
-export const updateAdminActor = (identity: Identity | null) => {
-  currentIdentity = identity;
+export const updateAdminActor = (_identity: any) => {
+  // Admin service uses Firebase authentication, not IC identity
   return null; // Firebase doesn't use actors
 };
 
@@ -255,6 +252,94 @@ const requireAuth = () => {
       "Authentication required: Please log in as an admin to perform this action",
       "AUTH_REQUIRED",
     );
+  }
+};
+
+/**
+ * Helper function to send ticket status update notification
+ */
+const sendTicketStatusNotification = async (
+  userId: string,
+  ticketId: string,
+  oldStatus: string,
+  newStatus: string,
+  ticketTitle: string,
+) => {
+  try {
+    const statusText = newStatus
+      .replace("_", " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+
+    const title = "Ticket Status Updated";
+    const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatus} to ${statusText}.`;
+
+    await notificationCanisterService.createNotification(
+      userId,
+      "client", // Assuming tickets are submitted by clients
+      "generic",
+      title,
+      message,
+      undefined, // No related entity ID to prevent navigation
+      {
+        ticketId,
+        oldStatus,
+        newStatus,
+        ticketTitle,
+      },
+    );
+
+    console.log(
+      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+    );
+  } catch (error) {
+    console.error(
+      "❌ [sendTicketStatusNotification] Error sending notification:",
+      error,
+    );
+    // Don't throw error to avoid breaking the main flow
+  }
+};
+
+/**
+ * Helper function to send ticket comment notification
+ */
+const sendTicketCommentNotification = async (
+  userId: string,
+  ticketId: string,
+  ticketTitle: string,
+  commentText: string,
+  isInternal: boolean = false,
+) => {
+  try {
+    const title = isInternal ? "Internal Comment Added" : "New Comment Added";
+    const message = isInternal
+      ? `An internal comment has been added to your ticket "${ticketTitle}".`
+      : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
+
+    await notificationCanisterService.createNotification(
+      userId,
+      "client", // Assuming tickets are submitted by clients
+      "generic",
+      title,
+      message,
+      undefined, // No related entity ID to prevent navigation
+      {
+        ticketId,
+        ticketTitle,
+        commentText,
+        isInternal,
+      },
+    );
+
+    console.log(
+      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+    );
+  } catch (error) {
+    console.error(
+      "❌ [sendTicketCommentNotification] Error sending notification:",
+      error,
+    );
+    // Don't throw error to avoid breaking the main flow
   }
 };
 
@@ -659,20 +744,33 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
+      console.log("🔍 [getAllUsers] Calling Firebase function...");
       // Call Firebase function directly since callFirebaseFunction expects { success: true, data: [...] }
       // but getAllUsers returns { success: true, users: [...] }
       const callable = httpsCallable(functions, "getAllUsers");
       const result = await callable({ data: {} });
 
+      console.log("🔍 [getAllUsers] Firebase function result:", result.data);
+
       if ((result.data as any).success) {
         const users = (result.data as any).users || [];
+        console.log(
+          `🔍 [getAllUsers] Successfully retrieved ${users.length} users`,
+        );
         return users;
       } else {
-        throw new Error((result.data as any).message || "Failed to get users");
+        const errorMsg = (result.data as any).message || "Failed to get users";
+        console.error("🔍 [getAllUsers] Error:", errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error("Error getting all users:", error);
-      return [];
+      console.error("❌ [getAllUsers] Error getting all users:", error);
+      if (error instanceof AdminServiceError) throw error;
+      throw new AdminServiceError({
+        message: `Failed to get users: ${error instanceof Error ? error.message : String(error)}`,
+        code: "GET_ALL_USERS_ERROR",
+        details: error,
+      } as AdminServiceError);
     }
   },
 
@@ -982,17 +1080,49 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      // Call getUserReviews and calculateUserAverageRating from Firebase
-      const [reviews, ratingResult] = await Promise.all([
+      // Try to get reviews as both client and provider
+      const [clientReviews, providerReviews] = await Promise.allSettled([
         callFirebaseFunction("getUserReviews", { userId }),
-        callFirebaseFunction("calculateUserAverageRating", { userId }),
+        callFirebaseFunction("getProviderReviews", { providerId: userId }),
       ]);
 
-      const totalReviews = Array.isArray(reviews) ? reviews.length : 0;
-      const averageRating = ratingResult?.averageRating || 0;
+      // Combine reviews from both sources
+      const allReviews = [];
+
+      if (
+        clientReviews.status === "fulfilled" &&
+        Array.isArray(clientReviews.value)
+      ) {
+        allReviews.push(...clientReviews.value);
+      }
+
+      if (
+        providerReviews.status === "fulfilled" &&
+        Array.isArray(providerReviews.value)
+      ) {
+        allReviews.push(...providerReviews.value);
+      }
+
+      const totalReviews = allReviews.length;
+
+      // Calculate average rating from all reviews
+      let averageRating = 0;
+      if (totalReviews > 0) {
+        const validReviews = allReviews.filter(
+          (review) =>
+            review && typeof review.rating === "number" && review.rating > 0,
+        );
+        if (validReviews.length > 0) {
+          const sum = validReviews.reduce(
+            (acc, review) => acc + review.rating,
+            0,
+          );
+          averageRating = sum / validReviews.length;
+        }
+      }
 
       return {
-        averageRating: Number(averageRating),
+        averageRating: Number(averageRating.toFixed(1)),
         totalReviews,
       };
     } catch (error) {
@@ -1013,37 +1143,22 @@ export const adminServiceCanister = {
     completedBookings: number;
   }> {
     try {
-      // Call reputation canister directly (like reputationCanisterService.ts pattern)
-      if (!currentIdentity) {
-        throw new AdminServiceError({
-          message: "Authentication required to get reputation data",
-          code: "AUTH_REQUIRED",
-        } as AdminServiceError);
-      }
-
-      const { createActor } = await import("../../../declarations/reputation");
-      const { canisterId: reputationId } = await import(
-        "../../../declarations/reputation"
-      );
-      const reputationActor = createActor(reputationId, {
-        agentOptions: {
-          identity: currentIdentity,
-        },
+      // Call Firebase function to get reputation data
+      const result = await callFirebaseFunction("getReputationScore", {
+        userId,
       });
-      const userPrincipal = Principal.fromText(userId);
+      const reputation = result.data || result;
 
-      const reputationResult =
-        await reputationActor.getReputationScore(userPrincipal);
-
-      if ("ok" in reputationResult) {
-        const reputation = reputationResult.ok;
+      // Check if we got valid reputation data
+      if (reputation && typeof reputation.trustScore === "number") {
         return {
           reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
-          trustLevel: reputation.trustLevel.toString(),
-          completedBookings: Number(reputation.completedBookings),
+          trustLevel: reputation.trustLevel?.toString() || "New",
+          completedBookings: Number(reputation.completedBookings || 0),
         };
       } else {
-        logError("No reputation found for user", reputationResult.err);
+        // Fallback to default values if data is invalid
+        console.warn(`Invalid reputation data for user ${userId}:`, reputation);
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
@@ -1052,6 +1167,19 @@ export const adminServiceCanister = {
       }
     } catch (error) {
       logError("Error fetching user reputation", error);
+
+      // If it's a 500 error, try to get reputation from local storage or return default
+      if (error instanceof Error && error.message.includes("INTERNAL")) {
+        console.warn(
+          `Firebase function error for user ${userId}, using default reputation`,
+        );
+        return {
+          reputationScore: 50, // Default score
+          trustLevel: "New",
+          completedBookings: 0,
+        };
+      }
+
       return {
         reputationScore: 50, // Default score
         trustLevel: "New",
@@ -1322,17 +1450,34 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
 export const updateReportStatus = async (
   reportId: string,
   newStatus: string,
+  userId?: string,
+  ticketTitle?: string,
+  oldStatus?: string,
 ): Promise<boolean> => {
   try {
     requireAuth();
 
     const result = await callFirebaseFunction("updateReportStatus", {
-      reportId,
-      status: newStatus,
+      data: {
+        reportId,
+        newStatus: newStatus,
+      },
     });
 
     if (result) {
       logSuccess(`Report ${reportId} status updated to: ${newStatus}`);
+
+      // Send notification to user if userId and ticketTitle are provided
+      if (userId && ticketTitle && oldStatus) {
+        await sendTicketStatusNotification(
+          userId,
+          reportId,
+          oldStatus,
+          newStatus,
+          ticketTitle,
+        );
+      }
+
       return true;
     } else {
       logError(`Failed to update report status`);
@@ -1340,6 +1485,32 @@ export const updateReportStatus = async (
     }
   } catch (error) {
     logError("Error updating report status", error);
+    return false;
+  }
+};
+
+// Send ticket comment notification
+export const sendTicketCommentNotificationToUser = async (
+  userId: string,
+  ticketId: string,
+  ticketTitle: string,
+  commentText: string,
+  isInternal: boolean = false,
+): Promise<boolean> => {
+  try {
+    requireAuth();
+
+    await sendTicketCommentNotification(
+      userId,
+      ticketId,
+      ticketTitle,
+      commentText,
+      isInternal,
+    );
+
+    return true;
+  } catch (error) {
+    logError("Error sending ticket comment notification", error);
     return false;
   }
 };

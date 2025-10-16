@@ -4,6 +4,7 @@ import { useAdmin } from "../hooks/useAdmin";
 import ProviderStats from "../components/ProviderStats";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
+import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 
 // Reputation Score Component
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
@@ -77,6 +78,8 @@ interface UserData {
   reputationLevel: string;
   reputationRing: number;
   isLocked: boolean;
+  walletBalance: number;
+  servicesCount: number;
 }
 
 const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
@@ -208,7 +211,6 @@ export const UserDetailsPage: React.FC = () => {
     loading,
     users: backendUsers,
     refreshUsers,
-    updateUserLockStatus,
     getUserLockStatus,
   } = useAdmin();
 
@@ -218,8 +220,6 @@ export const UserDetailsPage: React.FC = () => {
   const ticketId = urlParams.get("ticketId");
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [showLockConfirmation, setShowLockConfirmation] = useState(false);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showReputationConfirmation, setShowReputationConfirmation] =
     useState(false);
   const [showCommissionConfirmation, setShowCommissionConfirmation] =
@@ -235,12 +235,75 @@ export const UserDetailsPage: React.FC = () => {
     const lockStatus = getUserLockStatus(profile.id.toString());
 
     try {
-      // Fetch real analytics data
-      const [analytics, reviews, reputation] = await Promise.all([
-        adminServiceCanister.getUserAnalytics(profile.id.toString()),
-        adminServiceCanister.getUserReviews(profile.id.toString()),
-        adminServiceCanister.getUserReputation(profile.id.toString()),
-      ]);
+      // Fetch real analytics data with individual error handling
+      const [analytics, reviews, reputation, walletBalance, servicesData] =
+        await Promise.allSettled([
+          adminServiceCanister.getUserAnalytics(profile.id.toString()),
+          adminServiceCanister.getUserReviews(profile.id.toString()),
+          adminServiceCanister.getUserReputation(profile.id.toString()),
+          walletCanisterService.getBalanceOf(profile.id.toString()),
+          adminServiceCanister.getUserServicesAndBookings(
+            profile.id.toString(),
+          ),
+        ]);
+
+      // Extract results with fallbacks
+      const analyticsData =
+        analytics.status === "fulfilled"
+          ? analytics.value
+          : {
+              totalEarnings: 0,
+              completedJobs: 0,
+              cancelledJobs: 0,
+              totalJobs: 0,
+              completionRate: 0,
+            };
+
+      const reviewsData =
+        reviews.status === "fulfilled"
+          ? reviews.value
+          : {
+              averageRating: 0,
+              totalReviews: 0,
+            };
+
+      const reputationData =
+        reputation.status === "fulfilled"
+          ? reputation.value
+          : {
+              reputationScore: 50,
+              trustLevel: "New",
+              completedBookings: 0,
+            };
+
+      const walletBalanceData =
+        walletBalance.status === "fulfilled" ? walletBalance.value : 0;
+
+      const servicesDataResult =
+        servicesData.status === "fulfilled"
+          ? servicesData.value
+          : {
+              offeredServices: [],
+              clientBookings: [],
+              providerBookings: [],
+            };
+
+      // Log any failed requests for debugging
+      if (analytics.status === "rejected") {
+        console.warn("Analytics fetch failed:", analytics.reason);
+      }
+      if (reviews.status === "rejected") {
+        console.warn("Reviews fetch failed:", reviews.reason);
+      }
+      if (reputation.status === "rejected") {
+        console.warn("Reputation fetch failed:", reputation.reason);
+      }
+      if (walletBalance.status === "rejected") {
+        console.warn("Wallet balance fetch failed:", walletBalance.reason);
+      }
+      if (servicesData.status === "rejected") {
+        console.warn("Services data fetch failed:", servicesData.reason);
+      }
 
       return {
         id: profile.id.toString(),
@@ -261,21 +324,23 @@ export const UserDetailsPage: React.FC = () => {
           profile.biography && profile.biography.length > 0
             ? profile.biography[0]
             : undefined,
-        totalEarnings: analytics.totalEarnings,
+        totalEarnings: analyticsData.totalEarnings,
         pendingCommission: 0,
         settledCommission: 0,
-        completedJobs: analytics.completedJobs,
-        averageRating: reviews.averageRating,
-        totalReviews: reviews.totalReviews,
-        completionRate: analytics.completionRate,
+        completedJobs: analyticsData.completedJobs,
+        averageRating: reviewsData.averageRating,
+        totalReviews: reviewsData.totalReviews,
+        completionRate: analyticsData.completionRate,
         lastActivity: new Date(Number(profile.updatedAt) / 1000000),
-        reputationScore: reputation.reputationScore,
-        reputationLevel: reputation.trustLevel,
+        reputationScore: reputationData.reputationScore,
+        reputationLevel: reputationData.trustLevel,
         reputationRing: Math.min(
           5,
-          Math.floor(reputation.completedBookings / 10) + 1,
+          Math.floor(reputationData.completedBookings / 10) + 1,
         ),
         isLocked: lockStatus,
+        walletBalance: walletBalanceData || 0,
+        servicesCount: servicesDataResult.offeredServices.length,
       };
     } catch (error) {
       console.error("Error fetching real user data, using defaults:", error);
@@ -312,87 +377,10 @@ export const UserDetailsPage: React.FC = () => {
         reputationLevel: "New",
         reputationRing: 1,
         isLocked: lockStatus,
+        walletBalance: 0,
+        servicesCount: 0,
       };
     }
-  };
-
-  // Handle account lock/unlock
-  const handleActivateAccount = async () => {
-    if (user) {
-      try {
-        // Call backend to unlock the account
-        await adminServiceCanister.lockUserAccount(user.id, false);
-        setUser((prevUser) => {
-          if (prevUser) {
-            return { ...prevUser, isLocked: false };
-          }
-          return prevUser;
-        });
-
-        // Update the shared state so it reflects in user list
-        updateUserLockStatus(user.id, false);
-
-        console.log("Account activated successfully");
-      } catch (error) {
-        console.error("Failed to activate account:", error);
-        alert("Failed to activate account. Please try again.");
-      }
-    }
-  };
-
-  const handleLockConfirmation = () => {
-    setShowLockConfirmation(true);
-  };
-
-  const handleDeleteConfirmation = () => {
-    setShowDeleteConfirmation(true);
-  };
-
-  const confirmLockAccount = async () => {
-    if (!user) return;
-
-    try {
-      // Call backend to lock the account
-      await adminServiceCanister.lockUserAccount(user.id, true);
-      setUser((prevUser) =>
-        prevUser ? { ...prevUser, isLocked: true } : null,
-      );
-      updateUserLockStatus(user.id, true);
-
-      console.log("Account locked successfully");
-    } catch (error) {
-      console.error("Failed to lock account:", error);
-      alert("Failed to lock account. Please try again.");
-    }
-
-    setShowLockConfirmation(false);
-  };
-
-  const confirmDeleteAccount = async () => {
-    if (!user) return;
-
-    try {
-      // Call backend to delete the account
-      await adminServiceCanister.deleteUserAccount(user.id);
-
-      console.log("Account deleted successfully");
-      alert("Account deleted successfully");
-
-      // Navigate back to user list
-      navigate("/users");
-    } catch (error) {
-      console.error("Failed to delete account:", error);
-      alert("Failed to delete account. Please try again.");
-    }
-
-    setShowDeleteConfirmation(false);
-  };
-
-  const handleChat = () => {
-    if (!user) return;
-
-    // Navigate to chat page with user ID
-    navigate(`/chat/${user.id}`);
   };
 
   const handleUpdateCommission = (newAmount: number) => {
@@ -417,14 +405,9 @@ export const UserDetailsPage: React.FC = () => {
         user.id,
         pendingReputationScore,
       );
-      setUser((prevUser) =>
-        prevUser
-          ? { ...prevUser, reputationScore: pendingReputationScore }
-          : null,
-      );
 
-      // Update the pending reputation score to match the new value
-      setPendingReputationScore(pendingReputationScore);
+      // Refresh user data to get the updated reputation from backend
+      await loadUser();
 
       console.log(
         "Reputation updated successfully to:",
@@ -439,78 +422,81 @@ export const UserDetailsPage: React.FC = () => {
     setShowReputationConfirmation(false);
   };
 
-  // Load user data on component mount
-  useEffect(() => {
-    const loadUser = async () => {
-      if (!id) {
+  // Load user data function
+  const loadUser = async () => {
+    if (!id) {
+      setLoadingUser(false);
+      return;
+    }
+    if (backendUsers.length === 0) {
+      try {
+        await refreshUsers();
+        return;
+      } catch (error) {
+        setUser(null);
         setLoadingUser(false);
         return;
       }
-      if (backendUsers.length === 0) {
-        try {
-          await refreshUsers();
-          return;
-        } catch (error) {
-          setUser(null);
-          setLoadingUser(false);
-          return;
-        }
+    }
+
+    // Find the user in backend users
+    const foundProfile = backendUsers.find((p) => p.id.toString() === id);
+
+    if (foundProfile) {
+      try {
+        const userData = await convertProfileToUserData(foundProfile);
+        setUser(userData);
+        setPendingReputationScore(userData.reputationScore);
+        setOutstandingCommission(userData.pendingCommission);
+      } catch (error) {
+        console.error("Error converting user data:", error);
+        // Fallback to basic user data
+        const basicUserData: UserData = {
+          id: foundProfile.id.toString(),
+          name: foundProfile.name,
+          phone: foundProfile.phone,
+          createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
+          updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
+          profilePicture:
+            foundProfile.profilePicture &&
+            foundProfile.profilePicture.length > 0
+              ? {
+                  imageUrl: foundProfile.profilePicture[0]!.imageUrl,
+                  thumbnailUrl: foundProfile.profilePicture[0]!.thumbnailUrl,
+                }
+              : undefined,
+          biography:
+            foundProfile.biography && foundProfile.biography.length > 0
+              ? foundProfile.biography[0]
+              : undefined,
+          totalEarnings: 0,
+          pendingCommission: 0,
+          settledCommission: 0,
+          completedJobs: 0,
+          averageRating: 0,
+          totalReviews: 0,
+          completionRate: 0,
+          lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
+          reputationScore: 50,
+          reputationLevel: "New",
+          reputationRing: 1,
+          isLocked: getUserLockStatus(foundProfile.id.toString()),
+          walletBalance: 0,
+          servicesCount: 0,
+        };
+        setUser(basicUserData);
+        setPendingReputationScore(50);
+        setOutstandingCommission(0);
       }
+    } else {
+      setUser(null);
+    }
 
-      // Find the user in backend users
-      const foundProfile = backendUsers.find((p) => p.id.toString() === id);
+    setLoadingUser(false);
+  };
 
-      if (foundProfile) {
-        try {
-          const userData = await convertProfileToUserData(foundProfile);
-          setUser(userData);
-          setPendingReputationScore(userData.reputationScore);
-          setOutstandingCommission(userData.pendingCommission);
-        } catch (error) {
-          console.error("Error converting user data:", error);
-          // Fallback to basic user data
-          const basicUserData: UserData = {
-            id: foundProfile.id.toString(),
-            name: foundProfile.name,
-            phone: foundProfile.phone,
-            createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
-            updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
-            profilePicture:
-              foundProfile.profilePicture &&
-              foundProfile.profilePicture.length > 0
-                ? {
-                    imageUrl: foundProfile.profilePicture[0]!.imageUrl,
-                    thumbnailUrl: foundProfile.profilePicture[0]!.thumbnailUrl,
-                  }
-                : undefined,
-            biography:
-              foundProfile.biography && foundProfile.biography.length > 0
-                ? foundProfile.biography[0]
-                : undefined,
-            totalEarnings: 0,
-            pendingCommission: 0,
-            settledCommission: 0,
-            completedJobs: 0,
-            averageRating: 0,
-            totalReviews: 0,
-            completionRate: 0,
-            lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
-            reputationScore: 50,
-            reputationLevel: "New",
-            reputationRing: 1,
-            isLocked: getUserLockStatus(foundProfile.id.toString()),
-          };
-          setUser(basicUserData);
-          setPendingReputationScore(50);
-          setOutstandingCommission(0);
-        }
-      } else {
-        setUser(null);
-      }
-
-      setLoadingUser(false);
-    };
-
+  // Load user data on component mount
+  useEffect(() => {
     loadUser();
   }, [id, backendUsers, refreshUsers]);
 
@@ -739,7 +725,7 @@ export const UserDetailsPage: React.FC = () => {
               providerId={user.id}
               loading={loading.users}
               onUpdateCommission={handleUpdateCommission}
-              outstandingCommission={outstandingCommission}
+              outstandingCommission={user.walletBalance}
               userData={{
                 totalEarnings: user.totalEarnings,
                 pendingCommission: user.pendingCommission,
@@ -787,6 +773,22 @@ export const UserDetailsPage: React.FC = () => {
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {formatDate(user.updatedAt)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">
+                    Services Posted
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {user.servicesCount}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">
+                    SRV Wallet Balance
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    ₱{user.walletBalance.toFixed(2)}
                   </dd>
                 </div>
               </div>
@@ -959,157 +961,8 @@ export const UserDetailsPage: React.FC = () => {
             </div>
             <ClientStats userId={user.id} />
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={handleChat}
-              className="inline-flex items-center rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              Chat
-            </button>
-            {!user.isLocked ? (
-              <button
-                onClick={handleLockConfirmation}
-                className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                Lock Account
-              </button>
-            ) : (
-              <button
-                onClick={handleActivateAccount}
-                className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Activate Account
-              </button>
-            )}
-            <button
-              onClick={handleDeleteConfirmation}
-              className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-              Delete Account
-            </button>
-          </div>
         </div>
       </main>
-
-      {/* Lock Account Confirmation Modal */}
-      {showLockConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Lock Account
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to lock this account? The user will not be
-                able to access their account until it's unlocked.
-              </p>
-            </div>
-            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
-              <button
-                onClick={() => setShowLockConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmLockAccount}
-                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-              >
-                Lock Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Account Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Delete Account
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to delete this account? This action cannot
-                be undone and will permanently remove all user data.
-              </p>
-            </div>
-            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
-              <button
-                onClick={() => setShowDeleteConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteAccount}
-                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              >
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Reputation Update Confirmation Modal */}
       {showReputationConfirmation && (

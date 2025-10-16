@@ -137,7 +137,9 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex cursor-pointer items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 hover:border-blue-200 ${
+      className={`flex items-start space-x-4 p-4 transition-colors duration-200 ${
+        notification.href ? "cursor-pointer" : "cursor-default"
+      } ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
@@ -189,7 +191,36 @@ const NotificationsPageSP = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    navigate(notification.href || "/provider/bookings");
+
+    // Only navigate if href exists (null href means non-clickable)
+    if (!notification.href) {
+      return;
+    }
+
+    // Navigate based on notification type
+    switch (notification.type) {
+      case "new_booking_request":
+      case "booking_confirmation":
+      case "service_completion_reminder":
+      case "review_request":
+      case "booking_cancelled":
+      case "booking_rescheduled":
+        navigate(notification.href);
+        break;
+      case "payment_completed":
+        navigate(notification.href);
+        break;
+      case "chat_message":
+        navigate(`/provider/chat/${notification.clientName}`);
+        break;
+      case "client_no_show":
+      case "payment_issue":
+        navigate(notification.href);
+        break;
+      default:
+        navigate(notification.href);
+        break;
+    }
   };
 
   const { unread, read } = useMemo(() => {

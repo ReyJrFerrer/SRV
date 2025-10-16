@@ -76,6 +76,12 @@ const NOTIFICATION_STATUS = {
  * @return {string} URL href
  */
 function generateNotificationHref(notificationType, userType, entityId) {
+  // Special handling for ticket notifications - make them non-clickable
+  if (notificationType === NOTIFICATION_TYPES.GENERIC &&
+      (!entityId|| entityId === null)) {
+    return null; // Return null to make notification non-clickable
+  }
+
   if (!entityId) return "/";
 
   const isProvider = userType === USER_TYPES.PROVIDER;
