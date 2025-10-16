@@ -203,71 +203,12 @@ const transformServicesWithData = (
   });
 };
 
-/**
- * Hook to fetch all services with provider information (one-time fetch)
- */
-export const useAllServicesWithProviders = (): UseServicesResult => {
-  const [services, setServices] = useState<EnrichedService[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchServices = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setServices([]); // Clear services to prevent flickering
-
-    try {
-      // Fetch all services first
-      const allServices = await serviceCanisterService.getAllServices();
-
-      if (allServices.length === 0) {
-        setServices([]);
-        return;
-      }
-
-      // Fetch provider profiles and service packages in parallel
-      const [providerMap, servicePackagesMap] = await Promise.all([
-        fetchProviderProfiles(allServices),
-        fetchServicePackages(allServices),
-      ]);
-
-      // Transform services with provider data and packages
-      const enrichedServices = transformServicesWithData(
-        allServices,
-        providerMap,
-        servicePackagesMap,
-      );
-
-      // Set all services at once to prevent flickering
-      setServices(enrichedServices);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch services"),
-      );
-      //console.error("Error fetching services:", err);
-      setServices([]); // Ensure empty state on error
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchServices();
-  }, [fetchServices]);
-
-  return {
-    services,
-    loading,
-    error,
-    refetch: fetchServices,
-  };
-};
 
 /**
  * Hook to subscribe to all services with provider information (real-time)
  * This hook listens to Firestore changes and updates services in real-time
  */
-export const useAllServicesRealtimeWithProviders = (): UseServicesResult => {
+export const useAllServicesWithProviders = (): UseServicesResult => {
   const [services, setServices] = useState<EnrichedService[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -571,7 +512,6 @@ export const useCategories = (): {
 // Default export with all hooks for convenience
 export default {
   useAllServicesWithProviders,
-  useAllServicesRealtimeWithProviders,
   useServicesByCategory,
   useTopPickServices,
   useServiceById,

@@ -2,7 +2,7 @@ import React from "react";
 import ServiceListItem from "./ServiceListItem";
 import {
   EnrichedService,
-  useAllServicesRealtimeWithProviders,
+  useAllServicesWithProviders,
 } from "../../hooks/serviceInformation";
 import { getCategoryImage } from "../../utils/serviceHelpers";
 
@@ -12,7 +12,7 @@ interface ServicesListProps {
 
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   // Use the realtime hook for live updates from Firestore
-  const { services, loading, error } = useAllServicesRealtimeWithProviders();
+  const { services, loading, error } = useAllServicesWithProviders();
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
     ...service,
@@ -82,9 +82,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
 
       {services.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-gray-500">
-            No services available at the moment.
-          </p>
+          <p className="text-gray-500">No services available at the moment.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">

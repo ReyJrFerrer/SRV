@@ -17,7 +17,7 @@ import { toast } from "sonner";
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
 
-// --- Client Home Page --- 
+// --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
   // Navigation
   const navigate = useNavigate();

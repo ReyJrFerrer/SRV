@@ -28,7 +28,6 @@ const ServiceDetailPage: React.FC = () => {
     navigate(-1);
   };
 
-
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Page Header */}

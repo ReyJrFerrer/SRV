@@ -423,7 +423,7 @@ export const serviceCanisterService = {
       (snapshot) => {
         const services: Service[] = snapshot.docs.map((doc) => {
           const data = doc.data();
-          
+
           return {
             id: doc.id,
             providerId: data.providerId || "",
@@ -437,7 +437,9 @@ export const serviceCanisterService = {
               imageUrl: data.category?.imageUrl || "",
               parentId: data.category?.parentId,
             } as ServiceCategory,
-            price: data.price?.amount ?? (typeof data.price === "number" ? data.price : 0),
+            price:
+              data.price?.amount ??
+              (typeof data.price === "number" ? data.price : 0),
             commissionFee: data.commissionFee || 0,
             commissionRate: data.commissionRate || 0,
             location: {
