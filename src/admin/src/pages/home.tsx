@@ -43,14 +43,15 @@ export const AdminHomePage: React.FC = () => {
   const [reports, setReports] = useState<any[]>([]);
 
   // Calculate active service providers count from users with ServiceProvider role
-  const activeServiceProvidersCount = users?.filter((user: any) => {
-    if (typeof user.activeRole === "string") {
-      return user.activeRole === "ServiceProvider";
-    } else if (user.activeRole && typeof user.activeRole === "object") {
-      return "ServiceProvider" in user.activeRole;
-    }
-    return false;
-  }).length || 0;
+  const activeServiceProvidersCount =
+    users?.filter((user: any) => {
+      if (typeof user.activeRole === "string") {
+        return user.activeRole === "ServiceProvider";
+      } else if (user.activeRole && typeof user.activeRole === "object") {
+        return "ServiceProvider" in user.activeRole;
+      }
+      return false;
+    }).length || 0;
 
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
@@ -465,7 +466,11 @@ export const AdminHomePage: React.FC = () => {
                         }}
                         formatter={(value: number, name: string) => [
                           `₱${value.toFixed(2)}`,
-                          name === "revenue" ? "Revenue" : name === "commission" ? "Commission" : name,
+                          name === "revenue"
+                            ? "Revenue"
+                            : name === "commission"
+                              ? "Commission"
+                              : name,
                         ]}
                       />
                       <Legend />

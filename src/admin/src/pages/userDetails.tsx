@@ -236,57 +236,73 @@ export const UserDetailsPage: React.FC = () => {
 
     try {
       // Fetch real analytics data with individual error handling
-      const [analytics, reviews, reputation, walletBalance, servicesData] = await Promise.allSettled([
-        adminServiceCanister.getUserAnalytics(profile.id.toString()),
-        adminServiceCanister.getUserReviews(profile.id.toString()),
-        adminServiceCanister.getUserReputation(profile.id.toString()),
-        walletCanisterService.getBalanceOf(profile.id.toString()),
-        adminServiceCanister.getUserServicesAndBookings(profile.id.toString()),
-      ]);
+      const [analytics, reviews, reputation, walletBalance, servicesData] =
+        await Promise.allSettled([
+          adminServiceCanister.getUserAnalytics(profile.id.toString()),
+          adminServiceCanister.getUserReviews(profile.id.toString()),
+          adminServiceCanister.getUserReputation(profile.id.toString()),
+          walletCanisterService.getBalanceOf(profile.id.toString()),
+          adminServiceCanister.getUserServicesAndBookings(
+            profile.id.toString(),
+          ),
+        ]);
 
       // Extract results with fallbacks
-      const analyticsData = analytics.status === 'fulfilled' ? analytics.value : {
-        totalEarnings: 0,
-        completedJobs: 0,
-        cancelledJobs: 0,
-        totalJobs: 0,
-        completionRate: 0,
-      };
+      const analyticsData =
+        analytics.status === "fulfilled"
+          ? analytics.value
+          : {
+              totalEarnings: 0,
+              completedJobs: 0,
+              cancelledJobs: 0,
+              totalJobs: 0,
+              completionRate: 0,
+            };
 
-      const reviewsData = reviews.status === 'fulfilled' ? reviews.value : {
-        averageRating: 0,
-        totalReviews: 0,
-      };
+      const reviewsData =
+        reviews.status === "fulfilled"
+          ? reviews.value
+          : {
+              averageRating: 0,
+              totalReviews: 0,
+            };
 
-      const reputationData = reputation.status === 'fulfilled' ? reputation.value : {
-        reputationScore: 50,
-        trustLevel: "New",
-        completedBookings: 0,
-      };
+      const reputationData =
+        reputation.status === "fulfilled"
+          ? reputation.value
+          : {
+              reputationScore: 50,
+              trustLevel: "New",
+              completedBookings: 0,
+            };
 
-      const walletBalanceData = walletBalance.status === 'fulfilled' ? walletBalance.value : 0;
+      const walletBalanceData =
+        walletBalance.status === "fulfilled" ? walletBalance.value : 0;
 
-      const servicesDataResult = servicesData.status === 'fulfilled' ? servicesData.value : {
-        offeredServices: [],
-        clientBookings: [],
-        providerBookings: [],
-      };
+      const servicesDataResult =
+        servicesData.status === "fulfilled"
+          ? servicesData.value
+          : {
+              offeredServices: [],
+              clientBookings: [],
+              providerBookings: [],
+            };
 
       // Log any failed requests for debugging
-      if (analytics.status === 'rejected') {
-        console.warn('Analytics fetch failed:', analytics.reason);
+      if (analytics.status === "rejected") {
+        console.warn("Analytics fetch failed:", analytics.reason);
       }
-      if (reviews.status === 'rejected') {
-        console.warn('Reviews fetch failed:', reviews.reason);
+      if (reviews.status === "rejected") {
+        console.warn("Reviews fetch failed:", reviews.reason);
       }
-      if (reputation.status === 'rejected') {
-        console.warn('Reputation fetch failed:', reputation.reason);
+      if (reputation.status === "rejected") {
+        console.warn("Reputation fetch failed:", reputation.reason);
       }
-      if (walletBalance.status === 'rejected') {
-        console.warn('Wallet balance fetch failed:', walletBalance.reason);
+      if (walletBalance.status === "rejected") {
+        console.warn("Wallet balance fetch failed:", walletBalance.reason);
       }
-      if (servicesData.status === 'rejected') {
-        console.warn('Services data fetch failed:', servicesData.reason);
+      if (servicesData.status === "rejected") {
+        console.warn("Services data fetch failed:", servicesData.reason);
       }
 
       return {
@@ -367,7 +383,6 @@ export const UserDetailsPage: React.FC = () => {
     }
   };
 
-
   const handleUpdateCommission = (newAmount: number) => {
     setOutstandingCommission(newAmount);
     setShowCommissionConfirmation(true);
@@ -390,10 +405,10 @@ export const UserDetailsPage: React.FC = () => {
         user.id,
         pendingReputationScore,
       );
-      
+
       // Refresh user data to get the updated reputation from backend
       await loadUser();
-      
+
       console.log(
         "Reputation updated successfully to:",
         pendingReputationScore,
@@ -409,75 +424,75 @@ export const UserDetailsPage: React.FC = () => {
 
   // Load user data function
   const loadUser = async () => {
-      if (!id) {
+    if (!id) {
+      setLoadingUser(false);
+      return;
+    }
+    if (backendUsers.length === 0) {
+      try {
+        await refreshUsers();
+        return;
+      } catch (error) {
+        setUser(null);
         setLoadingUser(false);
         return;
       }
-      if (backendUsers.length === 0) {
-        try {
-          await refreshUsers();
-          return;
-        } catch (error) {
-          setUser(null);
-          setLoadingUser(false);
-          return;
-        }
+    }
+
+    // Find the user in backend users
+    const foundProfile = backendUsers.find((p) => p.id.toString() === id);
+
+    if (foundProfile) {
+      try {
+        const userData = await convertProfileToUserData(foundProfile);
+        setUser(userData);
+        setPendingReputationScore(userData.reputationScore);
+        setOutstandingCommission(userData.pendingCommission);
+      } catch (error) {
+        console.error("Error converting user data:", error);
+        // Fallback to basic user data
+        const basicUserData: UserData = {
+          id: foundProfile.id.toString(),
+          name: foundProfile.name,
+          phone: foundProfile.phone,
+          createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
+          updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
+          profilePicture:
+            foundProfile.profilePicture &&
+            foundProfile.profilePicture.length > 0
+              ? {
+                  imageUrl: foundProfile.profilePicture[0]!.imageUrl,
+                  thumbnailUrl: foundProfile.profilePicture[0]!.thumbnailUrl,
+                }
+              : undefined,
+          biography:
+            foundProfile.biography && foundProfile.biography.length > 0
+              ? foundProfile.biography[0]
+              : undefined,
+          totalEarnings: 0,
+          pendingCommission: 0,
+          settledCommission: 0,
+          completedJobs: 0,
+          averageRating: 0,
+          totalReviews: 0,
+          completionRate: 0,
+          lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
+          reputationScore: 50,
+          reputationLevel: "New",
+          reputationRing: 1,
+          isLocked: getUserLockStatus(foundProfile.id.toString()),
+          walletBalance: 0,
+          servicesCount: 0,
+        };
+        setUser(basicUserData);
+        setPendingReputationScore(50);
+        setOutstandingCommission(0);
       }
+    } else {
+      setUser(null);
+    }
 
-      // Find the user in backend users
-      const foundProfile = backendUsers.find((p) => p.id.toString() === id);
-
-      if (foundProfile) {
-        try {
-          const userData = await convertProfileToUserData(foundProfile);
-          setUser(userData);
-          setPendingReputationScore(userData.reputationScore);
-          setOutstandingCommission(userData.pendingCommission);
-        } catch (error) {
-          console.error("Error converting user data:", error);
-          // Fallback to basic user data
-          const basicUserData: UserData = {
-            id: foundProfile.id.toString(),
-            name: foundProfile.name,
-            phone: foundProfile.phone,
-            createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
-            updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
-            profilePicture:
-              foundProfile.profilePicture &&
-              foundProfile.profilePicture.length > 0
-                ? {
-                    imageUrl: foundProfile.profilePicture[0]!.imageUrl,
-                    thumbnailUrl: foundProfile.profilePicture[0]!.thumbnailUrl,
-                  }
-                : undefined,
-            biography:
-              foundProfile.biography && foundProfile.biography.length > 0
-                ? foundProfile.biography[0]
-                : undefined,
-            totalEarnings: 0,
-            pendingCommission: 0,
-            settledCommission: 0,
-            completedJobs: 0,
-            averageRating: 0,
-            totalReviews: 0,
-            completionRate: 0,
-            lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
-            reputationScore: 50,
-            reputationLevel: "New",
-            reputationRing: 1,
-            isLocked: getUserLockStatus(foundProfile.id.toString()),
-            walletBalance: 0,
-            servicesCount: 0,
-          };
-          setUser(basicUserData);
-          setPendingReputationScore(50);
-          setOutstandingCommission(0);
-        }
-      } else {
-        setUser(null);
-      }
-
-      setLoadingUser(false);
+    setLoadingUser(false);
   };
 
   // Load user data on component mount
@@ -946,10 +961,8 @@ export const UserDetailsPage: React.FC = () => {
             </div>
             <ClientStats userId={user.id} />
           </div>
-
         </div>
       </main>
-
 
       {/* Reputation Update Confirmation Modal */}
       {showReputationConfirmation && (

@@ -198,11 +198,11 @@ export const TicketDetailsPage: React.FC = () => {
         "../services/adminServiceCanister"
       );
       const success = await updateReportStatus(
-        reportId, 
-        newStatus, 
-        ticket.submittedById, 
-        ticket.title, 
-        oldStatus
+        reportId,
+        newStatus,
+        ticket.submittedById,
+        ticket.title,
+        oldStatus,
       );
 
       if (success) {
@@ -229,7 +229,9 @@ export const TicketDetailsPage: React.FC = () => {
         const statusText = newStatus
           .replace("_", " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
-        console.log(`Status changed to "${statusText}" - persisted to backend and notification sent`);
+        console.log(
+          `Status changed to "${statusText}" - persisted to backend and notification sent`,
+        );
       } else {
         console.error("Failed to update status in backend");
       }
@@ -267,16 +269,18 @@ export const TicketDetailsPage: React.FC = () => {
         "../services/adminServiceCanister"
       );
       const reportId = ticket.id.replace("REPORT-", "");
-      
+
       await sendTicketCommentNotificationToUser(
         ticket.submittedById,
         reportId,
         ticket.title,
         newComment.trim(),
-        isInternal
+        isInternal,
       );
-      
-      console.log(`✅ Comment notification sent to user ${ticket.submittedById} for ticket ${ticket.id}`);
+
+      console.log(
+        `✅ Comment notification sent to user ${ticket.submittedById} for ticket ${ticket.id}`,
+      );
     } catch (error) {
       console.error("❌ Error sending comment notification:", error);
       // Don't show error to user as comment was still added successfully

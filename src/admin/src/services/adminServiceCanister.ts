@@ -269,10 +269,10 @@ const sendTicketStatusNotification = async (
     const statusText = newStatus
       .replace("_", " ")
       .replace(/\b\w/g, (l) => l.toUpperCase());
-    
+
     const title = "Ticket Status Updated";
     const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatus} to ${statusText}.`;
-    
+
     await notificationCanisterService.createNotification(
       userId,
       "client", // Assuming tickets are submitted by clients
@@ -285,12 +285,17 @@ const sendTicketStatusNotification = async (
         oldStatus,
         newStatus,
         ticketTitle,
-      }
+      },
     );
-    
-    console.log(`✅ [sendTicketStatusNotification] Notification sent to user ${userId} for ticket ${ticketId}`);
+
+    console.log(
+      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+    );
   } catch (error) {
-    console.error("❌ [sendTicketStatusNotification] Error sending notification:", error);
+    console.error(
+      "❌ [sendTicketStatusNotification] Error sending notification:",
+      error,
+    );
     // Don't throw error to avoid breaking the main flow
   }
 };
@@ -307,10 +312,10 @@ const sendTicketCommentNotification = async (
 ) => {
   try {
     const title = isInternal ? "Internal Comment Added" : "New Comment Added";
-    const message = isInternal 
+    const message = isInternal
       ? `An internal comment has been added to your ticket "${ticketTitle}".`
-      : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}"`;
-    
+      : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
+
     await notificationCanisterService.createNotification(
       userId,
       "client", // Assuming tickets are submitted by clients
@@ -323,12 +328,17 @@ const sendTicketCommentNotification = async (
         ticketTitle,
         commentText,
         isInternal,
-      }
+      },
     );
-    
-    console.log(`✅ [sendTicketCommentNotification] Notification sent to user ${userId} for ticket ${ticketId}`);
+
+    console.log(
+      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+    );
   } catch (error) {
-    console.error("❌ [sendTicketCommentNotification] Error sending notification:", error);
+    console.error(
+      "❌ [sendTicketCommentNotification] Error sending notification:",
+      error,
+    );
     // Don't throw error to avoid breaking the main flow
   }
 };
@@ -744,7 +754,9 @@ export const adminServiceCanister = {
 
       if ((result.data as any).success) {
         const users = (result.data as any).users || [];
-        console.log(`🔍 [getAllUsers] Successfully retrieved ${users.length} users`);
+        console.log(
+          `🔍 [getAllUsers] Successfully retrieved ${users.length} users`,
+        );
         return users;
       } else {
         const errorMsg = (result.data as any).message || "Failed to get users";
@@ -1076,25 +1088,35 @@ export const adminServiceCanister = {
 
       // Combine reviews from both sources
       const allReviews = [];
-      
-      if (clientReviews.status === 'fulfilled' && Array.isArray(clientReviews.value)) {
+
+      if (
+        clientReviews.status === "fulfilled" &&
+        Array.isArray(clientReviews.value)
+      ) {
         allReviews.push(...clientReviews.value);
       }
-      
-      if (providerReviews.status === 'fulfilled' && Array.isArray(providerReviews.value)) {
+
+      if (
+        providerReviews.status === "fulfilled" &&
+        Array.isArray(providerReviews.value)
+      ) {
         allReviews.push(...providerReviews.value);
       }
 
       const totalReviews = allReviews.length;
-      
+
       // Calculate average rating from all reviews
       let averageRating = 0;
       if (totalReviews > 0) {
-        const validReviews = allReviews.filter(review => 
-          review && typeof review.rating === 'number' && review.rating > 0
+        const validReviews = allReviews.filter(
+          (review) =>
+            review && typeof review.rating === "number" && review.rating > 0,
         );
         if (validReviews.length > 0) {
-          const sum = validReviews.reduce((acc, review) => acc + review.rating, 0);
+          const sum = validReviews.reduce(
+            (acc, review) => acc + review.rating,
+            0,
+          );
           averageRating = sum / validReviews.length;
         }
       }
@@ -1122,11 +1144,13 @@ export const adminServiceCanister = {
   }> {
     try {
       // Call Firebase function to get reputation data
-      const result = await callFirebaseFunction("getReputationScore", { userId });
+      const result = await callFirebaseFunction("getReputationScore", {
+        userId,
+      });
       const reputation = result.data || result;
 
       // Check if we got valid reputation data
-      if (reputation && typeof reputation.trustScore === 'number') {
+      if (reputation && typeof reputation.trustScore === "number") {
         return {
           reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
           trustLevel: reputation.trustLevel?.toString() || "New",
@@ -1143,17 +1167,19 @@ export const adminServiceCanister = {
       }
     } catch (error) {
       logError("Error fetching user reputation", error);
-      
+
       // If it's a 500 error, try to get reputation from local storage or return default
-      if (error instanceof Error && error.message.includes('INTERNAL')) {
-        console.warn(`Firebase function error for user ${userId}, using default reputation`);
+      if (error instanceof Error && error.message.includes("INTERNAL")) {
+        console.warn(
+          `Firebase function error for user ${userId}, using default reputation`,
+        );
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
           completedBookings: 0,
         };
       }
-      
+
       return {
         reputationScore: 50, // Default score
         trustLevel: "New",
@@ -1435,12 +1461,12 @@ export const updateReportStatus = async (
       data: {
         reportId,
         newStatus: newStatus,
-      }
+      },
     });
 
     if (result) {
       logSuccess(`Report ${reportId} status updated to: ${newStatus}`);
-      
+
       // Send notification to user if userId and ticketTitle are provided
       if (userId && ticketTitle && oldStatus) {
         await sendTicketStatusNotification(
@@ -1448,10 +1474,10 @@ export const updateReportStatus = async (
           reportId,
           oldStatus,
           newStatus,
-          ticketTitle
+          ticketTitle,
         );
       }
-      
+
       return true;
     } else {
       logError(`Failed to update report status`);
@@ -1473,15 +1499,15 @@ export const sendTicketCommentNotificationToUser = async (
 ): Promise<boolean> => {
   try {
     requireAuth();
-    
+
     await sendTicketCommentNotification(
       userId,
       ticketId,
       ticketTitle,
       commentText,
-      isInternal
+      isInternal,
     );
-    
+
     return true;
   } catch (error) {
     logError("Error sending ticket comment notification", error);

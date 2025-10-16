@@ -125,20 +125,26 @@ export const UserListPage: React.FC = () => {
           // Filter out profiles without id/uid and exclude admin users
           const validProfiles = backendUsers.filter((profile) => {
             if (!profile.id) return false;
-            
+
             // Check if role is Admin (handle both string and object types)
-            const isAdminRole = typeof profile.role === 'string' 
-              ? profile.role === 'Admin' 
-              : typeof profile.role === 'object' && profile.role !== null && 'Admin' in profile.role;
-            
+            const isAdminRole =
+              typeof profile.role === "string"
+                ? profile.role === "Admin"
+                : typeof profile.role === "object" &&
+                  profile.role !== null &&
+                  "Admin" in profile.role;
+
             // Check if activeRole is Admin (handle both string and object types)
-            const isAdminActiveRole = typeof profile.activeRole === 'string'
-              ? profile.activeRole === 'Admin'
-              : typeof profile.activeRole === 'object' && profile.activeRole !== null && 'Admin' in profile.activeRole;
-            
+            const isAdminActiveRole =
+              typeof profile.activeRole === "string"
+                ? profile.activeRole === "Admin"
+                : typeof profile.activeRole === "object" &&
+                  profile.activeRole !== null &&
+                  "Admin" in profile.activeRole;
+
             return !isAdminRole && !isAdminActiveRole;
           });
-          
+
           console.log(
             `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
           );
@@ -169,18 +175,24 @@ export const UserListPage: React.FC = () => {
           // Filter out admin users same as main useEffect
           const validProfiles = backendUsers.filter((profile) => {
             if (!profile.id) return false;
-            
-            const isAdminRole = typeof profile.role === 'string' 
-              ? profile.role === 'Admin' 
-              : typeof profile.role === 'object' && profile.role !== null && 'Admin' in profile.role;
-            
-            const isAdminActiveRole = typeof profile.activeRole === 'string'
-              ? profile.activeRole === 'Admin'
-              : typeof profile.activeRole === 'object' && profile.activeRole !== null && 'Admin' in profile.activeRole;
-            
+
+            const isAdminRole =
+              typeof profile.role === "string"
+                ? profile.role === "Admin"
+                : typeof profile.role === "object" &&
+                  profile.role !== null &&
+                  "Admin" in profile.role;
+
+            const isAdminActiveRole =
+              typeof profile.activeRole === "string"
+                ? profile.activeRole === "Admin"
+                : typeof profile.activeRole === "object" &&
+                  profile.activeRole !== null &&
+                  "Admin" in profile.activeRole;
+
             return !isAdminRole && !isAdminActiveRole;
           });
-          
+
           const convertedUsers = await Promise.all(
             validProfiles.map(convertProfileToUserData),
           );

@@ -148,7 +148,9 @@ const NotificationItem: React.FC<{
     <div
       onClick={onClick}
       className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
-        notification.href ? "cursor-pointer hover:border-blue-200" : "cursor-default"
+        notification.href
+          ? "cursor-pointer hover:border-blue-200"
+          : "cursor-default"
       } ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
