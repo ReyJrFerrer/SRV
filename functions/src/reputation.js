@@ -148,6 +148,13 @@ function getManualReputationIdl() {
  * @return {string} The detected environment
  */
 function detectEnvironment() {
+  // Check explicit environment variable first
+  if (process.env.ICP_ENVIRONMENT) {
+    console.log(`🔧 Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
+    return process.env.ICP_ENVIRONMENT;
+  }
+
+  // Check if running in Firebase Functions emulator
   if (
     process.env.FUNCTIONS_EMULATOR === "true" ||
     process.env.NODE_ENV === "development"
@@ -155,6 +162,7 @@ function detectEnvironment() {
     return "local";
   }
 
+  // Check for production IC environment
   if (
     process.env.DFX_NETWORK === "ic" ||
     process.env.ENVIRONMENT === "production"
@@ -162,6 +170,7 @@ function detectEnvironment() {
     return "ic";
   }
 
+  // Check for playground environment
   if (
     process.env.DFX_NETWORK === "playground" ||
     process.env.ENVIRONMENT === "playground"
@@ -169,19 +178,28 @@ function detectEnvironment() {
     return "playground";
   }
 
+  // If deployed to Firebase (not in emulator) but no environment set, default to playground
+  // This is the case when functions are deployed to Firebase Cloud Functions
+  if (process.env.FUNCTION_NAME || process.env.K_SERVICE) {
+    console.log("⚠️ No ICP_ENVIRONMENT set, defaulting to playground for deployed functions");
+    return "playground";
+  }
+
+  // Default to local for development
+  console.log("⚠️ No environment detected, defaulting to local");
   return "local";
 }
 
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: process.env.CANISTER_ID_REPUTATION || "bd3sg-teaaa-aaaaa-qaaba-cai",
+    reputation: process.env.CANISTER_ID_REPUTATION || "6xhyy-ryaaa-aaaab-qacqa-cai",
   },
   ic: {
-    reputation: process.env.CANISTER_ID_REPUTATION_IC,
+    reputation: process.env.CANISTER_ID_REPUTATION,
   },
   playground: {
-    reputation: process.env.CANISTER_ID_REPUTATION_PLAYGROUND,
+    reputation: process.env.CANISTER_ID_REPUTATION,
   },
 };
 
