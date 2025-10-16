@@ -10,7 +10,6 @@ import {
   collection,
   onSnapshot,
   query,
-  orderBy,
   DocumentData,
 } from "firebase/firestore";
 
@@ -27,112 +26,132 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     EnrichedService[] | null
   >(null);
 
-  // Subscribe to Firestore 'service_packages' collection for realtime updates
-  // from the emulator (localhost). We map package documents into the
+  // Subscribe to Firestore 'services' collection for realtime updates
+  // from the emulator (localhost). We map service documents into the
   // EnrichedService shape used by the UI. Assumptions about Firestore schema
   // are noted below.
   useEffect(() => {
-    const firestore = getFirebaseFirestore();
+    let unsubscribe: (() => void) | undefined;
 
-    // Build a query. If your documents have a `createdAt` timestamp field
-    // this will keep newest-first; otherwise the collection is un-ordered.
-    let q;
-    try {
-      q = query(
-        collection(firestore, "service_packages"),
-        orderBy("createdAt", "desc"),
-      );
-    } catch (e) {
-      // If createdAt doesn't exist for documents, fall back to the raw collection
-      q = query(collection(firestore, "service_packages"));
-    }
+    const setupListener = async () => {
+      try {
+        const firestore = getFirebaseFirestore();
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const mapped: EnrichedService[] = snapshot.docs.map((doc) => {
-          const data = doc.data() as DocumentData;
+        // Build a simple query without orderBy to avoid indexing issues
+        const q = query(collection(firestore, "services"));
 
-          // Map Firestore document fields to EnrichedService. These are
-          // best-effort mappings — adjust to match your exact Firestore schema.
-          const priceAmount =
-            data.price?.amount ??
-            (typeof data.price === "number" ? data.price : 0);
-          const ratingAverage = data.rating?.average ?? data.rating ?? 0;
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const mapped: EnrichedService[] = snapshot.docs.map((doc) => {
+              const data = doc.data() as DocumentData;
 
-          const slug =
-            data.slug ||
-            (data.title &&
-              String(data.title)
-                .toLowerCase()
-                .replace(/[^^\w\s-]/g, "")
-                .replace(/\s+/g, "-")) ||
-            doc.id;
+              // Map Firestore document fields to EnrichedService. These are
+              // best-effort mappings — adjust to match your exact Firestore schema.
+              const priceAmount =
+                data.price?.amount ??
+                (typeof data.price === "number" ? data.price : 0);
+              const ratingAverage = data.rating?.average ?? data.rating ?? 0;
 
-          return {
-            id: doc.id,
-            slug,
-            name: data.title || data.name || "",
-            title: data.title || data.name || "",
-            heroImage:
-              data.heroImage ||
-              data.category?.imageUrl ||
-              getCategoryImage(
-                data.category?.name || data.category?.slug || "others",
-              ),
-            description: data.description || "",
+              const slug =
+                data.slug ||
+                (data.title &&
+                  String(data.title)
+                    .toLowerCase()
+                    .replace(/[^^\w\s-]/g, "")
+                    .replace(/\s+/g, "-")) ||
+                doc.id;
 
-            providerName:
-              data.providerName || data.provider?.name || "Unknown Provider",
-            providerAvatar: data.providerAvatar || data.provider?.avatar || "",
-            providerId: data.providerId || data.provider?.id || "",
+              console.log("From Servie List Row", data);
 
-            rating: {
-              average: ratingAverage,
-              count: data.rating?.count ?? data.reviewCount ?? 0,
-            },
+              return {
+                id: doc.id,
+                slug,
+                name: data.title || data.name || "",
+                title: data.title || data.name || "",
+                heroImage:
+                  data.heroImage ||
+                  data.category?.imageUrl ||
+                  getCategoryImage(
+                    data.category?.name || data.category?.slug || "others",
+                  ),
+                description: data.description || "",
 
-            price: {
-              amount: priceAmount,
-              unit: data.price?.unit || "starting from",
-              display: `₱${priceAmount.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}`,
-            },
+                providerName:
+                  data.providerName,
+                providerAvatar: data.providerAvatar || data.provider?.avatar || "",
+                providerId: data.providerId || data.provider?.id || "",
 
-            location: {
-              serviceDistance: data.location?.serviceDistance,
-              address: data.location?.address || "",
-              city: data.location?.city || "",
-              state: data.location?.state || "",
-              serviceDistanceUnit: data.location?.serviceDistanceUnit,
-            },
+                rating: {
+                  average: ratingAverage,
+                  count: data.rating?.count ?? data.reviewCount ?? 0,
+                },
 
-            category: {
-              name: data.category?.name || data.category || "",
-              id: data.category?.id || "",
-              slug: data.category?.slug || "",
-            },
+                price: {
+                  amount: priceAmount,
+                  unit: data.price?.unit || "starting from",
+                  display: `₱${priceAmount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`,
+                },
 
-            availability: {
-              isAvailable: Boolean(
-                data.availability?.isAvailable ?? data.status === "Available",
-              ),
-            },
-          } as EnrichedService;
-        });
+                location: {
+                  serviceDistance: data.location?.serviceDistance,
+                  address: data.location?.address || "",
+                  city: data.location?.city || "",
+                  state: data.location?.state || "",
+                  serviceDistanceUnit: data.location?.serviceDistanceUnit,
+                },
 
-        setRealtimeServices(mapped);
-      },
-      (err) => {
-        // keep console error but don't break UI
+                category: {
+                  name: data.category?.name || data.category || "",
+                  id: data.category?.id || "",
+                  slug: data.category?.slug || "",
+                },
+
+                availability: {
+                  isAvailable: Boolean(
+                    data.availability?.isAvailable ?? data.status === "Available",
+                  ),
+                },
+              } as EnrichedService;
+            });
+
+            // Sort by createdAt in memory if the field exists
+            const sorted = mapped.sort((a, b) => {
+              const aData = snapshot.docs.find(doc => doc.id === a.id)?.data();
+              const bData = snapshot.docs.find(doc => doc.id === b.id)?.data();
+              const aTime = aData?.createdAt?.toMillis?.() ?? 0;
+              const bTime = bData?.createdAt?.toMillis?.() ?? 0;
+              return bTime - aTime;
+            });
+
+            setRealtimeServices(sorted);
+          },
+          (err) => {
+            // keep console error but don't break UI
+            // eslint-disable-next-line no-console
+            console.error("Realtime services listener error:", err);
+            // Fallback to canister services on error
+            setRealtimeServices(null);
+          },
+        );
+      } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("Realtime services listener error:", err);
-      },
-    );
+        console.error("Failed to setup Firestore listener:", error);
+        // Fallback to canister services
+        setRealtimeServices(null);
+      }
+    };
 
-    return () => unsubscribe();
+    setupListener();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
