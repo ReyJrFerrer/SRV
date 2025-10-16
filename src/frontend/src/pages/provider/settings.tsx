@@ -7,14 +7,13 @@ import {
   ChevronRightIcon,
   ArrowPathRoundedSquareIcon, // Icon for the new switch button
   ExclamationCircleIcon,
-  BellIcon,
   DevicePhoneMobileIcon,
   BanknotesIcon, // Add icon for payout settings
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
-import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
+// import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
 const SettingsPage: React.FC = () => {
@@ -152,17 +151,6 @@ const SettingsPage: React.FC = () => {
                     <h3 className="font-medium text-blue-900">Install App</h3>
                   </div>
                   <PWAInstallDetailed />
-                </div>
-
-                {/* Notification Settings Section */}
-                <div>
-                  <div className="mb-3 flex items-center">
-                    <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">
-                      Push Notifications
-                    </h3>
-                  </div>
-                  <NotificationSettingsDetailed />
                 </div>
               </div>
             </div>

@@ -1,1 +1,12 @@
 functions/
+# Ignore build output and temporary files
+dist
+dev-dist
+build
+.dfx
+.turbo
+node_modules
+coverage
+
+.env
+
