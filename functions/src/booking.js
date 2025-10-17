@@ -1256,14 +1256,18 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    // Update reputation scores. If any of these fail, the entire function will fail.
-    console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
-    await updateUserReputationInternal(booking.clientId);
-    console.log(`✅ [completeBooking] Client reputation updated successfully`);
+    // Try-catch of updating reputation scores, if these fails then the functions goes through
+    try {
+      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
+      await updateUserReputationInternal(booking.clientId);
+      console.log(`✅ [completeBooking] Client reputation updated successfully`);
 
-    console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
-    await updateProviderReputationInternal(booking.providerId);
-    console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+      console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
+      await updateProviderReputationInternal(booking.providerId);
+      console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+    } catch (error) {
+      console.log("Reputation couldn't update");
+    }
 
 
     console.log("✅ [completeBooking] Function finished successfully.");

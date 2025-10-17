@@ -39,6 +39,9 @@ let firebaseStorage: FBStorage | null = null;
 let firebaseFirestore: Firestore | null = null;
 let emulatorsConnected = false;
 
+// Store the IC custom token for restoration after phone verification
+let icCustomToken: string | null = null;
+
 /**
  * Initialize Firebase App
  * This should be called once at app startup
@@ -216,4 +219,30 @@ export function getFirebaseFirestore(): Firestore {
  */
 export function isFirebaseInitialized(): boolean {
   return getApps().length > 0;
+}
+
+/**
+ * Store the IC custom token for later restoration
+ * This is used to restore the IC-based Firebase session after phone verification
+ * @param token - The Firebase custom token from IC authentication
+ */
+export function storeICCustomToken(token: string): void {
+  icCustomToken = token;
+  console.log("🔐 Stored IC custom token for session restoration");
+}
+
+/**
+ * Get the stored IC custom token
+ * @returns The stored IC custom token or null
+ */
+export function getStoredICCustomToken(): string | null {
+  return icCustomToken;
+}
+
+/**
+ * Clear the stored IC custom token
+ */
+export function clearICCustomToken(): void {
+  icCustomToken = null;
+  console.log("🗑️ Cleared stored IC custom token");
 }
