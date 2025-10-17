@@ -8,9 +8,10 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useBookingManagement } from "../../hooks/bookingManagement";
 import {
+  StarIcon,
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { useLocationStore } from "../../store/locationStore";
 import { toast } from "sonner";
@@ -19,10 +20,11 @@ import { toast } from "sonner";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
-  // Navigation
+  //Navigation 
   const navigate = useNavigate();
-  // --- State: Service category error ---
+    // --- State: Service category error ---
   const { error } = useServiceManagement();
+
   // --- Use Zustand location store for location permission status ---
   const { locationStatus } = useLocationStore();
   const { bookings } = useBookingManagement();
@@ -30,6 +32,7 @@ const ClientHomePage: React.FC = () => {
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   // --- State: Star rating for feedback ---
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   // --- State: Feedback comment ---
   const [feedbackComment, setFeedbackComment] = useState<string>("");
   // --- State: Button loading for provider CTA ---
@@ -76,21 +79,29 @@ const ClientHomePage: React.FC = () => {
                 your experience.
               </p>
               {/* Star rating input */}
-              <div className="mb-4 flex items-center justify-center">
+              <div className="mb-3 flex justify-center space-x-3">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
                     aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                    className={
-                      `mx-1 text-3xl transition-colors ` +
-                      (feedbackRating >= star
-                        ? "text-yellow-400"
-                        : "text-gray-300 hover:text-yellow-400")
-                    }
+                    className="transition-transform focus:outline-none hover:scale-110 focus:scale-110"
                     onClick={() => setFeedbackRating(star)}
+                    onMouseEnter={() => setHoveredRating(star)}
+                    onMouseLeave={() => setHoveredRating(null)}
                   >
-                    ★
+                    <StarIcon
+                      className={`h-12 w-12 drop-shadow transition-colors ${
+                        (hoveredRating ?? feedbackRating) >= star
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                      fill={
+                        (hoveredRating ?? feedbackRating) >= star
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
                   </button>
                 ))}
               </div>
