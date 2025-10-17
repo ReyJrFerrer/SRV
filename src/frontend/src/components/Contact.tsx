@@ -92,7 +92,7 @@ const Contact = ({
   };
 
   return (
-    <div className="contact-page-wrapper">
+    <div>
       <MobileSiteHeader
         current="contact"
         onHome={() => {
@@ -121,6 +121,9 @@ const Contact = ({
         onLogin={handleLoginClick}
         isLoginLoading={isLoginLoading}
       />
+
+
+    <div className="contact-page-wrapper">
 
       <section className="contact-section">
         <div className="contact-container">
@@ -343,6 +346,7 @@ const Contact = ({
           </div>
         </div>
       </section>
+      </div>
       {showMapModal && (
         <div
           className="contact-modal"
