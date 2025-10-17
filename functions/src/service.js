@@ -327,6 +327,17 @@ exports.createService = functions.https.onCall(async (data, context) => {
   const category = {id: categoryDoc.id, ...categoryDoc.data()};
 
   try {
+    // Fetch provider information to get name
+    const providerDoc = await db.collection("users").doc(providerId).get();
+    if (!providerDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Provider not found");
+    }
+    const providerData = providerDoc.data();
+    const providerName = providerData.name || "Unknown Provider";
+    const providerAvatar = providerData.profilePicture || null;
+
     // Create service document
     const serviceRef = db.collection("services").doc();
     const serviceId = serviceRef.id;
@@ -369,6 +380,8 @@ exports.createService = functions.https.onCall(async (data, context) => {
     const newService = {
       id: serviceId,
       providerId,
+      providerName,
+      providerAvatar,
       title,
       description,
       category,

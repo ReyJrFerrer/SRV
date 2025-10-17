@@ -147,7 +147,11 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex cursor-pointer items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 hover:border-blue-200 ${
+      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
+        notification.href
+          ? "cursor-pointer hover:border-blue-200"
+          : "cursor-default"
+      } ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
@@ -199,7 +203,10 @@ const NotificationsPage = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    navigate(notification.href || "/client/booking");
+    // Only navigate if href exists (null href means non-clickable)
+    if (notification.href) {
+      navigate(notification.href);
+    }
   };
 
   const { unread, read } = useMemo(() => {

@@ -27,3 +27,5 @@ firestore-debug.log
 canister_ids.json
 
 pubsub-debug.log
+
+.dev-dist/

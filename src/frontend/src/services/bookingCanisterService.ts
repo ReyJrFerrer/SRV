@@ -1,10 +1,20 @@
 // Booking Service (Firebase Cloud Functions)
 import { Principal } from "@dfinity/principal";
 import { httpsCallable } from "firebase/functions";
+import {
+  getFirestore,
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
+  Unsubscribe,
+} from "firebase/firestore";
 import { initializeFirebase } from "./firebaseApp";
 
 // Initialize Firebase
 const { functions } = initializeFirebase();
+const db = getFirestore();
 
 // Firebase authentication will be handled automatically by httpsCallable functions
 
@@ -811,6 +821,118 @@ export const bookingCanisterService = {
       return "No packages";
     }
     return booking.servicePackageId.join(", ");
+  },
+
+  // ==================== REALTIME SUBSCRIPTION FUNCTIONS ====================
+
+  /**
+   * Subscribe to all bookings for a client with realtime updates
+   */
+  subscribeToClientBookings(
+    clientId: Principal,
+    callback: (bookings: Booking[]) => void,
+  ): Unsubscribe {
+    const bookingsRef = collection(db, "bookings");
+    const q = query(bookingsRef, where("clientId", "==", clientId.toString()));
+
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const bookings: Booking[] = [];
+        snapshot.forEach((doc) => {
+          const data = { id: doc.id, ...doc.data() } as Booking;
+          bookings.push(mapBookingFields(data));
+        });
+        callback(bookings);
+      },
+      (error) => {
+        console.error("Error listening to client bookings:", error);
+        callback([]);
+      },
+    );
+  },
+
+  /**
+   * Subscribe to all bookings for a provider with realtime updates
+   */
+  subscribeToProviderBookings(
+    providerId: Principal,
+    callback: (bookings: Booking[]) => void,
+  ): Unsubscribe {
+    const bookingsRef = collection(db, "bookings");
+    const q = query(
+      bookingsRef,
+      where("providerId", "==", providerId.toString()),
+    );
+
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const bookings: Booking[] = [];
+        snapshot.forEach((doc) => {
+          const data = { id: doc.id, ...doc.data() } as Booking;
+          bookings.push(mapBookingFields(data));
+        });
+        callback(bookings);
+      },
+      (error) => {
+        console.error("Error listening to provider bookings:", error);
+        callback([]);
+      },
+    );
+  },
+
+  /**
+   * Subscribe to a single booking with realtime updates
+   */
+  subscribeToBooking(
+    bookingId: string,
+    callback: (booking: Booking | null) => void,
+  ): Unsubscribe {
+    const bookingRef = doc(db, "bookings", bookingId);
+
+    return onSnapshot(
+      bookingRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = { id: snapshot.id, ...snapshot.data() } as Booking;
+          callback(mapBookingFields(data));
+        } else {
+          callback(null);
+        }
+      },
+      (error) => {
+        console.error("Error listening to booking:", error);
+        callback(null);
+      },
+    );
+  },
+
+  /**
+   * Subscribe to bookings by status with realtime updates
+   */
+  subscribeToBookingsByStatus(
+    status: BookingStatus,
+    callback: (bookings: Booking[]) => void,
+  ): Unsubscribe {
+    const bookingsRef = collection(db, "bookings");
+    const q = query(bookingsRef, where("status", "==", status));
+
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const bookings: Booking[] = [];
+        snapshot.forEach((doc) => {
+          const data = { id: doc.id, ...doc.data() } as Booking;
+          bookings.push(mapBookingFields(data));
+        });
+        callback(bookings);
+      },
+      (error) => {
+        console.error("Error listening to bookings by status:", error);
+        callback([]);
+      },
+    );
   },
 };
 

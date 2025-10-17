@@ -7,16 +7,17 @@ import {
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
-
 import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
-import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useReputation } from "../../hooks/useReputation";
 import { useServiceImages } from "../../hooks/useMediaLoader";
 import BottomNavigation from "../../components/client/BottomNavigation";
-import { ServicePackage } from "../../services/serviceCanisterService";
+import {
+  ServicePackage,
+  serviceCanisterService,
+} from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useMediaLoader";
 
 // --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
@@ -486,13 +487,14 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
+  const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
+
   // Load service gallery images for hero image (must be top-level)
   const { images: heroImages } = useServiceImages(
     service?.id,
     service?.media || [],
   );
 
-  const { getServicePackages } = useServiceManagement();
   const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
 
@@ -513,23 +515,30 @@ const ServiceDetailPage: React.FC = () => {
     }
   }, [userImageUrl, refetch]);
 
+  // Subscribe to service packages with realtime updates
   useEffect(() => {
-    const fetchPackages = async () => {
-      if (service?.id) {
-        setLoadingPackages(true);
-        try {
-          // Fetch packages using the centralized hook
-          const fetchedPackages = await getServicePackages(service.id);
-          setPackages(fetchedPackages);
-        } catch (error) {
-          // Failed to fetch service packages
-        } finally {
-          setLoadingPackages(false);
-        }
-      }
+    if (!service?.id) {
+      setPackages([]);
+      setLoadingPackages(false);
+      return;
+    }
+
+    setLoadingPackages(true);
+
+    // Subscribe to realtime package updates
+    const unsubscribe = serviceCanisterService.subscribeToServicePackages(
+      service.id,
+      (packageData) => {
+        setPackages(packageData);
+        setLoadingPackages(false);
+      },
+    );
+
+    // Cleanup subscription on unmount or when service changes
+    return () => {
+      unsubscribe();
     };
-    fetchPackages();
-  }, [service?.id, getServicePackages]);
+  }, [service?.id]);
 
   const handleBookNow = () => {
     if (!service) return;
@@ -628,11 +637,12 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const { rating, providerName, name, category, location } = service;
+  const { providerName, name, category, location } = service;
   console.log("Service Detail Page Component", service);
   const isVerified = service.isVerified;
-  const averageRating = rating?.average ?? 0;
-  const reviewCount = rating?.count ?? 0;
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
 
   // --- Availability Section Types and Component ---
   type Availability = {

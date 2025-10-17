@@ -72,26 +72,39 @@ const NOTIFICATION_STATUS = {
  * Generate notification href based on type and user type
  * @param {string} notificationType - Type of notification
  * @param {string} userType - Type of user (client/provider)
- * @param {string} bookingId - Optional booking ID
+ * @param {string} entityId - Optional entity ID (booking ID or conversation ID)
  * @return {string} URL href
  */
-function generateNotificationHref(notificationType, userType, bookingId) {
-  if (!bookingId) return "/";
+function generateNotificationHref(notificationType, userType, entityId) {
+  // Special handling for ticket notifications - make them non-clickable
+  if (notificationType === NOTIFICATION_TYPES.GENERIC &&
+      (!entityId|| entityId === null)) {
+    return null; // Return null to make notification non-clickable
+  }
+
+  if (!entityId) return "/";
 
   const isProvider = userType === USER_TYPES.PROVIDER;
 
   switch (notificationType) {
+  case NOTIFICATION_TYPES.CHAT_MESSAGE:
+    // For chat messages, entityId is the conversation ID
+    // Redirect to the specific chat conversation page
+    return isProvider ?
+      `/provider/chat/${entityId}` :
+      `/client/chat/${entityId}`;
+
   case NOTIFICATION_TYPES.REVIEW_REMINDER:
   case NOTIFICATION_TYPES.REVIEW_REQUEST:
     return isProvider ?
-      `/provider/booking/${bookingId}` :
-      `/client/review/${bookingId}`;
+      `/provider/booking/${entityId}` :
+      `/client/review/${entityId}`;
 
   case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
-    return `/provider/receipt/${bookingId}`;
+    return `/provider/receipt/${entityId}`;
 
   case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
-    return `/provider/active-service/${bookingId}`;
+    return `/provider/active-service/${entityId}`;
 
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
@@ -101,13 +114,13 @@ function generateNotificationHref(notificationType, userType, bookingId) {
   case NOTIFICATION_TYPES.SERVICE_REMINDER:
     // Redirect to active service or booking details
     return isProvider ?
-      `/provider/active-service/${bookingId}` :
-      `/client/booking/${bookingId}`;
+      `/provider/active-service/${entityId}` :
+      `/client/booking/${entityId}`;
 
   default:
     return isProvider ?
-      `/provider/booking/${bookingId}` :
-      `/client/booking/${bookingId}`;
+      `/provider/booking/${entityId}` :
+      `/client/booking/${entityId}`;
   }
 }
 

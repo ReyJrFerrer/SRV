@@ -413,6 +413,7 @@ export const serviceCanisterService = {
 
   /**
    * Get all services (real-time listener)
+   * Returns raw service data from Firestore without formatting
    */
   subscribeToAllServices(callback: (services: Service[]) => void): Unsubscribe {
     const servicesRef = collection(db, "services");
@@ -420,11 +421,60 @@ export const serviceCanisterService = {
     return onSnapshot(
       servicesRef,
       (snapshot) => {
-        const services: Service[] = [];
-        snapshot.forEach((doc) => {
-          services.push({ id: doc.id, ...doc.data() } as Service);
+        const services: Service[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          return {
+            id: doc.id,
+            providerId: data.providerId || "",
+            title: data.title || data.name || "",
+            description: data.description || "",
+            category: {
+              id: data.category?.id || "",
+              name: data.category?.name || data.category || "",
+              slug: data.category?.slug || "",
+              description: data.category?.description || "",
+              imageUrl: data.category?.imageUrl || "",
+              parentId: data.category?.parentId,
+            } as ServiceCategory,
+            price:
+              data.price?.amount ??
+              (typeof data.price === "number" ? data.price : 0),
+            commissionFee: data.commissionFee || 0,
+            commissionRate: data.commissionRate || 0,
+            location: {
+              latitude: data.location?.latitude || 0,
+              longitude: data.location?.longitude || 0,
+              address: data.location?.address || "",
+              city: data.location?.city || "",
+              state: data.location?.state || "",
+              country: data.location?.country || "",
+              postalCode: data.location?.postalCode || "",
+            },
+            status: (data.status as ServiceStatus) || "Unavailable",
+            rating: data.rating?.average ?? data.rating ?? 0,
+            reviewCount: data.rating?.count ?? data.reviewCount ?? 0,
+            imageUrls: data.imageUrls || [],
+            certificateUrls: data.certificateUrls || [],
+            isVerifiedService: data.isVerifiedService || false,
+            weeklySchedule: data.weeklySchedule,
+            instantBookingEnabled: data.instantBookingEnabled,
+            bookingNoticeHours: data.bookingNoticeHours,
+            maxBookingsPerDay: data.maxBookingsPerDay,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            providerName: data.providerName,
+          } as Service;
         });
-        callback(services);
+
+        // Sort by createdAt in descending order (newest first)
+        const sorted = services.sort((a, b) => {
+          const aTime = a.createdAt?.toMillis?.() ?? 0;
+          const bTime = b.createdAt?.toMillis?.() ?? 0;
+          return bTime - aTime;
+        });
+
+        callback(sorted);
       },
       (error) => {
         console.error("Error listening to all services:", error);

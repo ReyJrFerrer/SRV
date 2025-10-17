@@ -100,6 +100,13 @@ function getManualAuthIdl() {
  * @return {string} The detected environment
  */
 function detectEnvironment() {
+  // Check explicit environment variable first
+  if (process.env.ICP_ENVIRONMENT) {
+    console.log(`🔧 Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
+    return process.env.ICP_ENVIRONMENT;
+  }
+
+  // Check if running in Firebase Functions emulator
   if (
     process.env.FUNCTIONS_EMULATOR === "true" ||
     process.env.NODE_ENV === "development"
@@ -107,6 +114,7 @@ function detectEnvironment() {
     return "local";
   }
 
+  // Check for production IC environment
   if (
     process.env.DFX_NETWORK === "ic" ||
     process.env.ENVIRONMENT === "production"
@@ -114,6 +122,7 @@ function detectEnvironment() {
     return "ic";
   }
 
+  // Check for playground environment
   if (
     process.env.DFX_NETWORK === "playground" ||
     process.env.ENVIRONMENT === "playground"
@@ -121,20 +130,28 @@ function detectEnvironment() {
     return "playground";
   }
 
+  // If deployed to Firebase (not in emulator) but no environment set, default to playground
+  // This is the case when functions are deployed to Firebase Cloud Functions
+  if (process.env.FUNCTION_NAME || process.env.K_SERVICE) {
+    console.log("⚠️ No ICP_ENVIRONMENT set, defaulting to playground for deployed functions");
+    return "playground";
+  }
+
   // Default to local for development
+  console.log("⚠️ No environment detected, defaulting to local");
   return "local";
 }
 
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    auth: process.env.CANISTER_ID_AUTH || "bkyz2-fmaaa-aaaaa-qaaaq-cai",
+    auth: process.env.CANISTER_ID_AUTH || "3f6pv-baaaa-aaaab-qacoq-cai",
   },
   ic: {
-    auth: process.env.CANISTER_ID_AUTH_IC,
+    auth: process.env.CANISTER_ID_AUTH,
   },
   playground: {
-    auth: process.env.CANISTER_ID_AUTH_PLAYGROUND,
+    auth: process.env.CANISTER_ID_AUTH,
   },
 };
 

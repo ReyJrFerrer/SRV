@@ -7,15 +7,12 @@ import {
   ChevronRightIcon,
   ArrowPathRoundedSquareIcon, // Icon for the new switch button
   ExclamationCircleIcon,
-  BellIcon,
-  DevicePhoneMobileIcon,
   BanknotesIcon, // Add icon for payout settings
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
-import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
-import PWAInstallDetailed from "../../components/PWAInstallDetailed";
+// import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -136,35 +133,6 @@ const SettingsPage: React.FC = () => {
                   className={`h-6 w-6 text-white group-hover:text-black ${switching ? "opacity-70" : ""}`}
                 />
               </button>
-            </div>
-
-            {/* --- App Settings Section --- */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
-              <div className="p-5">
-                <h2 className="mb-4 text-lg font-semibold text-blue-900">
-                  App Settings
-                </h2>
-
-                {/* PWA Install Section */}
-                <div className="mb-6">
-                  <div className="mb-3 flex items-center">
-                    <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">Install App</h3>
-                  </div>
-                  <PWAInstallDetailed />
-                </div>
-
-                {/* Notification Settings Section */}
-                <div>
-                  <div className="mb-3 flex items-center">
-                    <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">
-                      Push Notifications
-                    </h3>
-                  </div>
-                  <NotificationSettingsDetailed />
-                </div>
-              </div>
             </div>
 
             {/* --- Other Menu Items --- */}

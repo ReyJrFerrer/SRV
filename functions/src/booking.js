@@ -109,6 +109,7 @@ async function checkBookingConflicts(
 
     const query = db.collection("bookings")
       .where("providerId", "==", providerId)
+      .where("serviceId", "==", serviceId)
       .where("status", "in", ["Accepted", "InProgress"])
       .where("requestedDate", ">=", dayStart.toISOString())
       .where("requestedDate", "<=", dayEnd.toISOString());
@@ -277,7 +278,7 @@ async function createNotification(
       title,
       message,
       relatedEntityId: bookingId || null,
-      metadata: metadata ? JSON.stringify(metadata) : null,
+      metadata: metadata,
       href,
       status: NOTIFICATION_STATUS.UNREAD,
       createdAt: FieldValue.serverTimestamp(),
@@ -335,9 +336,10 @@ async function cancelConflictingBookings(
     const dayEnd = new Date(acceptedStart);
     dayEnd.setHours(23, 59, 59, 999);
 
-    // Find all "Requested" bookings for this provider on the same day
+    // Find  "Requested" bookings for the service for this provider on the same day
     const conflictingBookingsQuery = await db.collection("bookings")
       .where("providerId", "==", providerId)
+      .where("serviceId", "==", serviceId)
       .where("status", "==", "Requested")
       .where("requestedDate", ">=", dayStart.toISOString())
       .where("requestedDate", "<=", dayEnd.toISOString())
@@ -346,6 +348,12 @@ async function cancelConflictingBookings(
     // Fetch service details once for all notifications
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "this service";
+
+    // Fetch provider details for notification
+    const providerDoc = await db.collection("users").doc(providerId).get();
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "The provider" :
+      "The provider";
 
     const batch = db.batch();
     const notificationPromises = [];
@@ -399,6 +407,7 @@ async function cancelConflictingBookings(
             serviceId,
             serviceName,
             providerId,
+            senderName: providerName,
             requestedDate: conflictingBooking.requestedDate,
           },
         ),
@@ -617,7 +626,12 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       "New Booking Request",
       `${clientName} has requested to book "${serviceName}"`,
       bookingId,
-      {serviceId, serviceName, clientId: authInfo.uid, clientName},
+      {
+        serviceId,
+        serviceName,
+        clientId: authInfo.uid,
+        senderName: clientName,
+      },
     );
 
     console.log("✅ [createBooking] Function finished successfully.");
@@ -806,7 +820,12 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       "Booking Accepted",
       `${providerName} has accepted your booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [acceptBooking] Function finished successfully.");
@@ -908,7 +927,12 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
       "Booking Declined",
       `${providerName} has declined your booking request for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [declineBooking] Function finished successfully.");
@@ -1012,7 +1036,12 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       "Service Started",
       `${providerName} has started working on "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     console.log("✅ [startBooking] Function finished successfully.");
@@ -1216,7 +1245,12 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       "Service Completed",
       `${providerName} has completed "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, providerId: booking.providerId, providerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
     );
 
     // Update reputation scores. If any of these fail, the entire function will fail.
@@ -1346,7 +1380,12 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       "Booking Cancelled",
       `${cancellerName} has cancelled the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, cancelledBy: authInfo.uid, cancellerName},
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        cancelledBy: authInfo.uid,
+        senderName: cancellerName,
+      },
     );
 
     console.log("✅ [cancelBooking] Function finished successfully.");

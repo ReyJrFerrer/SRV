@@ -137,18 +137,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         identity &&
         !pwaState.pushSubscribed &&
         pwaState.pushNotificationSupported &&
-        pwaState.pushPermission !== "denied" &&
-        pwaState.browserInfo.canReceivePushNotifications
+        pwaState.pushPermission !== "denied"
       ) {
         try {
           const userId = identity.getPrincipal().toString();
           const success = await enablePushNotificationsPWA(userId);
           if (success) {
-            // console.log("✅ Auto-enabled push notifications for user:", userId);
+            console.log("✅ Auto-enabled push notifications for user:", userId);
           }
         } catch (error) {
           // Silently fail auto-enable - user can still enable manually if desired
-          // console.log("ℹ️ Auto-enable push notifications failed (this is normal):", error);
+          console.log("ℹ️ Auto-enable push notifications skipped:", error);
         }
       }
     };
@@ -163,7 +162,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     pwaState.pushSubscribed,
     pwaState.pushNotificationSupported,
     pwaState.pushPermission,
-    pwaState.browserInfo.canReceivePushNotifications,
     isLoading,
     enablePushNotificationsPWA,
   ]);

@@ -423,17 +423,6 @@ const BookingDetailsPage: React.FC = () => {
       navigate(`/client/service/reviews/${specificBooking.serviceId}`);
   };
 
-  const formatDate = (date: Date | string | undefined) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleString([], {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
       REQUESTED: "bg-yellow-100 text-yellow-700",
@@ -521,13 +510,56 @@ const BookingDetailsPage: React.FC = () => {
     providerProfile,
     packageName,
     requestedDate,
-    createdAt,
     formattedLocation,
     price,
     status,
+    scheduledDate,
   } = specificBooking;
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
+
+  const formatDateRange = (
+    requestedDate: Date | string | number,
+    scheduledDate: Date | string | number,
+  ) => {
+    try {
+      const requestedDateObj = new Date(requestedDate);
+      const scheduledDateObj = new Date(scheduledDate);
+
+      const requestedDateStr = requestedDateObj.toLocaleDateString([], {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const requestedTimeStr = requestedDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const scheduledTimeStr = scheduledDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // Check if both dates are on the same day
+      const isSameDay =
+        requestedDateObj.toDateString() === scheduledDateObj.toDateString();
+
+      if (isSameDay) {
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledTimeStr}`;
+      } else {
+        const scheduledDateStr = scheduledDateObj.toLocaleDateString([], {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledDateStr} at ${scheduledTimeStr}`;
+      }
+    } catch {
+      return "Date range not available";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
@@ -619,7 +651,7 @@ const BookingDetailsPage: React.FC = () => {
                 <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Scheduled:</strong>{" "}
-                  {formatDate(requestedDate || createdAt)}
+                  {formatDateRange(requestedDate, scheduledDate)}
                 </span>
               </div>
               <div className="flex items-start">

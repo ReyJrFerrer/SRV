@@ -3,16 +3,17 @@ import {
   Service,
   DayOfWeek,
   DayAvailability,
+  serviceCanisterService,
 } from "../services/serviceCanisterService";
-import { FrontendProfile } from "../services/authCanisterService";
+import {
+  FrontendProfile,
+  authCanisterService,
+} from "../services/authCanisterService";
 import {
   enrichServiceWithProvider,
   getCategoryImage,
 } from "../utils/serviceHelpers";
-import {
-  OrganizedWeeklySchedule,
-  useServiceManagement,
-} from "./serviceManagement";
+import { OrganizedWeeklySchedule } from "./serviceManagement";
 
 /**
  * Helper function to organize weekly schedule similar to serviceManagement.tsx
@@ -264,7 +265,7 @@ const formatServiceForDetailPage = (
 export { organizeWeeklySchedule, formatTimeSlots, isServiceAvailableNow };
 
 /**
- * Custom hook to fetch service detail by ID with provider information
+ * Custom hook to fetch service detail by ID with provider information and realtime updates
  * @param serviceId The service ID to fetch (from router slug)
  * @returns Object containing service details, provider, loading state, error and refetch function
  */
@@ -274,10 +275,8 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use serviceManagement hook to get enhanced service data
-  const { getService: getEnhancedService } = useServiceManagement();
-
-  const fetchServiceDetail = useCallback(async () => {
+  // Realtime subscription to service changes
+  useEffect(() => {
     if (!serviceId) {
       setService(null);
       setProvider(null);
@@ -288,49 +287,86 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
     setLoading(true);
     setError(null);
 
+    // Subscribe to realtime service updates
+    const unsubscribe = serviceCanisterService.subscribeToService(
+      serviceId,
+      async (serviceData) => {
+        if (!serviceData) {
+          setService(null);
+          setProvider(null);
+          setError("Service not found");
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Fetch provider data
+          let providerData: FrontendProfile | null = null;
+          if (serviceData.providerId) {
+            try {
+              providerData = await authCanisterService.getProfile(
+                serviceData.providerId,
+              );
+            } catch (err) {
+              console.error("Failed to fetch provider data:", err);
+            }
+          }
+
+          setProvider(providerData);
+
+          // Format service with provider data
+          const formattedService = formatServiceForDetailPage(
+            serviceData,
+            providerData,
+          );
+
+          setService(formattedService);
+          setError(null);
+        } catch (err) {
+          console.error("Failed to process service data:", err);
+          setError("Failed to load service data");
+        } finally {
+          setLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [serviceId]);
+
+  // Manual refetch function
+  const refetch = useCallback(async () => {
+    if (!serviceId) return;
+
     try {
-      // Use serviceManagement's getService method which already includes provider data
-      const enhancedServiceData = await getEnhancedService(serviceId);
-
-      if (!enhancedServiceData) {
-        //console.warn(`Service with ID "${serviceId}" not found`);
-        setService(null);
-        setProvider(null);
-        setError("Service not found");
-        return;
+      const serviceData = await serviceCanisterService.getService(serviceId);
+      if (serviceData) {
+        let providerData: FrontendProfile | null = null;
+        if (serviceData.providerId) {
+          providerData = await authCanisterService.getProfile(
+            serviceData.providerId,
+          );
+        }
+        setProvider(providerData);
+        const formattedService = formatServiceForDetailPage(
+          serviceData,
+          providerData,
+        );
+        setService(formattedService);
       }
-
-      // Extract provider from enhanced service
-      const providerData = enhancedServiceData.providerProfile || null;
-      setProvider(providerData);
-
-      // Format service with the enhanced data
-      const formattedService = formatServiceForDetailPage(
-        enhancedServiceData,
-        providerData,
-      );
-
-      setService(formattedService);
-    } catch (serviceError) {
-      //console.error("Failed to load service data:", serviceError);
-      setService(null);
-      setProvider(null);
-      setError("Failed to load service data");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Failed to refetch service:", err);
     }
-  }, [serviceId, getEnhancedService]);
-
-  useEffect(() => {
-    fetchServiceDetail();
-  }, [fetchServiceDetail]);
+  }, [serviceId]);
 
   return {
     service,
     provider,
     loading,
     error,
-    refetch: fetchServiceDetail,
+    refetch,
   };
 };
 

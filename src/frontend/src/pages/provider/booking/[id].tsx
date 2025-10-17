@@ -289,6 +289,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     refreshBookings,
     clearError,
     checkCommissionValidation,
+    startBookingById,
     // canAcceptCashBooking,
     // getWalletBalance,
   } = useProviderBookingManagement();
@@ -449,7 +450,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Updated: Navigate to directions page first; actual start occurs from directions view
   const handleStartService = async () => {
     if (!specificBooking) return;
-    navigate(`/provider/directions/${specificBooking.id}`);
+    // commented for debugging
+    // navigate(`/provider/directions/${specificBooking.id}`);
+    startBookingById(specificBooking.id);
   };
 
   const handleCompleteService = async () => {
@@ -517,21 +520,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
           ? error.message
           : "Could not start conversation. Please try again.",
       );
-    }
-  };
-
-  const formatDate = (date: Date | string | undefined) => {
-    if (!date) return "N/A";
-    try {
-      return new Date(date).toLocaleString([], {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return "Date not available";
     }
   };
 
@@ -882,6 +870,49 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const duration = specificBooking?.duration ?? "N/A";
   const amountToPay = specificBooking?.amountPaid ?? 0;
 
+  const formatDateRange = (
+    requestedDate: Date | string | number,
+    scheduledDate: Date | string | number,
+  ) => {
+    try {
+      const requestedDateObj = new Date(requestedDate);
+      const scheduledDateObj = new Date(scheduledDate);
+
+      const requestedDateStr = requestedDateObj.toLocaleDateString([], {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const requestedTimeStr = requestedDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const scheduledTimeStr = scheduledDateObj.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // Check if both dates are on the same day
+      const isSameDay =
+        requestedDateObj.toDateString() === scheduledDateObj.toDateString();
+
+      if (isSameDay) {
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledTimeStr}`;
+      } else {
+        const scheduledDateStr = scheduledDateObj.toLocaleDateString([], {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledDateStr} at ${scheduledTimeStr}`;
+      }
+    } catch {
+      return "Date range not available";
+    }
+  };
+
   // --- Main Page Layout ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
@@ -1002,11 +1033,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
               <span className="font-medium text-gray-700">
                 Date:{" "}
                 <span className="font-normal text-gray-700">
-                  {formatDate(
-                    specificBooking?.requestedDate ||
-                      specificBooking?.createdAt,
+                  {formatDateRange(
+                    specificBooking?.requestedDate || "",
+                    specificBooking?.scheduledDate || "",
                   )}
-                  and {formatDate(specificBooking?.scheduledDate)}
                 </span>
               </span>
             </div>

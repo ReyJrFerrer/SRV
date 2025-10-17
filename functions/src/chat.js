@@ -1,5 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const {
+  NOTIFICATION_TYPES,
+  USER_TYPES,
+  generateNotificationHref,
+  sendFCMNotification,
+} = require("./notification");
 
 const db = admin.firestore();
 
@@ -162,7 +168,7 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 
   try {
     // Use Firestore transaction for atomic updates
-    return await db.runTransaction(async (transaction) => {
+    const result = await db.runTransaction(async (transaction) => {
       const conversationRef = db.collection("conversations").doc(conversationId);
       const conversationDoc = await transaction.get(conversationRef);
 
@@ -240,8 +246,73 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
       return {
         success: true,
         data: newMessage,
+        conversation: conversation,
       };
     });
+
+    // After transaction, create and send notification
+    // Determine sender and receiver names and user types
+    try {
+      const senderDoc = await db.collection("users").doc(senderId).get();
+      const receiverDoc = await db.collection("users").doc(receiverId).get();
+
+      if (senderDoc.exists && receiverDoc.exists) {
+        const senderData = senderDoc.data();
+        const conversation = result.conversation;
+
+        // Determine user types based on conversation roles
+        const receiverUserType =
+          receiverId === conversation.clientId ?
+            USER_TYPES.CLIENT :
+            USER_TYPES.PROVIDER;
+
+        const senderName = senderData.displayName || senderData.name || "Someone";
+        const messagePreview = content.trim().substring(0, 50) +
+          (content.length > 50 ? "..." : "");
+
+        // Create notification in Firestore
+        const notificationId = generateId();
+        const notificationData = {
+          id: notificationId,
+          userId: receiverId,
+          userType: receiverUserType,
+          notificationType: NOTIFICATION_TYPES.CHAT_MESSAGE,
+          title: `New message from ${senderName}`,
+          message: messagePreview,
+          href: generateNotificationHref(
+            NOTIFICATION_TYPES.CHAT_MESSAGE,
+            receiverUserType,
+            conversationId,
+          ),
+          relatedEntityId: conversationId,
+          status: "unread",
+          createdAt: new Date(),
+          metadata: {
+            senderId: senderId,
+            senderName: senderName,
+            conversationId: conversationId,
+            messageId: result.data.id,
+          },
+        };
+
+        await db.collection("notifications").doc(notificationId).set(notificationData);
+
+        // Send FCM push notification (non-blocking)
+        sendFCMNotification(receiverId, notificationData).catch((error) => {
+          console.error("Failed to send FCM notification for chat message:", error);
+        });
+
+        console.log(`Chat notification created and sent to ${receiverId}`);
+      }
+    } catch (notificationError) {
+      // Don't fail the message send if notification fails
+      console.error("Error creating chat notification:", notificationError);
+    }
+
+    return {
+      success: result.success,
+      data: result.data,
+    };
   } catch (error) {
     console.error("Error sending message:", error);
     if (error instanceof functions.https.HttpsError) {

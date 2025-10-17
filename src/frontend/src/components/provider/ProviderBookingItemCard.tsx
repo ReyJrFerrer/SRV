@@ -34,6 +34,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     declineBookingById,
     isBookingActionInProgress,
     checkCommissionValidation,
+    startBookingById,
   } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
@@ -284,7 +285,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleStartService = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/provider/directions/${booking.id}`);
+    // commented for debugging
+    // navigate(`/provider/directions/${booking.id}`);
+    startBookingById(booking.id);
+    window.location.reload();
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---

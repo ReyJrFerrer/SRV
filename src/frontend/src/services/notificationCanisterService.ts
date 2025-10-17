@@ -72,10 +72,10 @@ const convertToFrontendNotification = (
     read:
       notificationData.status === "read" ||
       notificationData.status === "push_sent_and_read",
-    href: notificationData.href || "/",
+    href: notificationData.href, // Will be null for non-clickable notifications
     userType: notificationData.userType as "client" | "provider",
-    providerName: notificationData.metadata?.providerName,
-    clientName: notificationData.metadata?.clientName,
+    providerName: notificationData.metadata?.senderName,
+    clientName: notificationData.metadata?.senderName,
     bookingId: notificationData.relatedEntityId,
     metadata: notificationData.metadata,
   };
