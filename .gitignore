@@ -29,3 +29,5 @@ canister_ids.json
 pubsub-debug.log
 
 .dev-dist/
+
+sw.js
