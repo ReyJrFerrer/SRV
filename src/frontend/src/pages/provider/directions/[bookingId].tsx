@@ -649,12 +649,15 @@ const ProviderDirectionsPage: React.FC = () => {
   }, [booking, mapApiKey, destResolveStatus]);
 
   const handleStartService = async () => {
-    if(!bookingId) return;
+    if (!bookingId) return;
     const success = await startBookingById(bookingId);
-    if (success) { const startTime = new Date().toISOString();
+    if (success) {
+      const startTime = new Date().toISOString();
       localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
-      navigate(`/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`, );
-    };
+      navigate(
+        `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+      );
+    }
   };
   // Removed manual start handler; auto-start is handled by proximity effect above
 
@@ -829,8 +832,9 @@ const ProviderDirectionsPage: React.FC = () => {
         <button
           onClick={handleStartService}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
-          disabled={!destinationHasCoords}>
-            I've Arrived - Start Service
+          disabled={!destinationHasCoords}
+        >
+          I've Arrived - Start Service
         </button>
         <button
           onClick={() => navigate(-1)}

@@ -662,7 +662,11 @@ const ClientBookingPageComponent: React.FC = () => {
 
       return userBookings.some((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined" || booking.status === "Completed") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 
@@ -1052,7 +1056,11 @@ const ClientBookingPageComponent: React.FC = () => {
       const [startTimeStr] = selectedTime.split("-");
       const duplicateBooking = userBookings.find((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined" || booking.status === "Completed") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 

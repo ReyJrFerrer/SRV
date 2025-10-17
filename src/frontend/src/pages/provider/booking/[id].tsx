@@ -451,10 +451,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = async () => {
     if (!specificBooking) return;
-    
+
     // Check the locationDetection flag
     const locationDetection = (specificBooking as any).locationDetection;
-    
+
     if (locationDetection === "automatic") {
       // If location was detected automatically (via GPS/maps), navigate to directions page
       navigate(`/provider/directions/${specificBooking.id}`);
