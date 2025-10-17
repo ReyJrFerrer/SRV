@@ -208,6 +208,7 @@ export const bookingCanisterService = {
     amountToPay?: number,
     paymentMethod: PaymentMethod = "CashOnHand",
     paymentId?: string,
+    locationDetection: "automatic" | "manual" = "manual",
   ): Promise<Booking | null> {
     console.log("🚀 [bookingCanisterService] createBooking called with:", {
       serviceId,
@@ -232,6 +233,7 @@ export const bookingCanisterService = {
         amountToPay,
         paymentMethod,
         paymentId,
+        locationDetection,
       });
 
       console.log(

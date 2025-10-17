@@ -462,6 +462,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     amountToPay,
     paymentMethod,
     paymentId,
+    locationDetection = "manual", // Default to manual if not provided
   } = payload;
 
   // Authentication
@@ -591,6 +592,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       evidence: null,
       notes: notes || null,
       paymentMethod,
+      // Location detection flag (automatic = detected via GPS/maps, manual = manually entered)
+      locationDetection: locationDetection,
       // Initialize payment status tracking fields
       paymentStatus: paymentId ? "PAID_HELD" : "PENDING",
       paymentId: paymentId || null,

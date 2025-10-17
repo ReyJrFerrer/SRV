@@ -662,7 +662,7 @@ const ClientBookingPageComponent: React.FC = () => {
 
       return userBookings.some((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (booking.status === "Cancelled" || booking.status === "Declined" || booking.status === "Completed") {
           return false;
         }
 
@@ -1052,7 +1052,7 @@ const ClientBookingPageComponent: React.FC = () => {
       const [startTimeStr] = selectedTime.split("-");
       const duplicateBooking = userBookings.find((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (booking.status === "Cancelled" || booking.status === "Declined" || booking.status === "Completed") {
           return false;
         }
 
@@ -1119,6 +1119,7 @@ const ClientBookingPageComponent: React.FC = () => {
         notes: notes,
         amountToPay: parseFloat(amountPaid),
         paymentMethod: paymentMethod, // Include the selected payment method
+        locationDetection: !showFallbackForms ? "automatic" : "manual", // Map the mode to location detection type
       };
       // Append raw coordinates if map picker used
       if (mapLocation?.lat && mapLocation?.lng) {
