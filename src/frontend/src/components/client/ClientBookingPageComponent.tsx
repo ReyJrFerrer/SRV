@@ -66,21 +66,23 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   // isProviderOnboarded = false,
 }) => (
   <div
-    className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
-      highlight
-        ? "border-2 border-red-500 ring-2 ring-red-200"
-        : "border border-gray-200"
-    }`}
+    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlight
+      ? "border-2 border-red-500 ring-2 ring-red-200"
+      : "border border-gray-100"
+      }`}
   >
-    <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
+    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+      <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+      Payment Method
+    </h3>
     <div className="space-y-3">
+
       <div
         onClick={() => setPaymentMethod("CashOnHand")}
-        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
-          paymentMethod === "CashOnHand"
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300"
-        }`}
+        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${paymentMethod === "CashOnHand"
+          ? "border-blue-500 bg-blue-50"
+          : "border-gray-300"
+          }`}
       >
         <div className="flex items-center">
           <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-500" />
@@ -91,7 +93,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-2">
+        <div className="pl-4 pt-0">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -101,9 +103,8 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             value={amountPaid}
             onChange={handleAmountChange}
             placeholder={`e.g., ${totalPrice.toFixed(2)}`}
-            className={`mt-1 w-full rounded-md border p-2 ${
-              paymentError ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`mt-1 w-full rounded-md border p-2 ${paymentError ? "border-red-500" : "border-gray-300"
+              }`}
           />
           {paymentError && amountPaid && (
             <p className="mt-1 flex items-center text-xs text-red-600">
@@ -126,6 +127,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           // }
         }
       >
+
         <div className="flex items-center">
           <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />
           <div className="flex flex-col">
@@ -571,14 +573,14 @@ const ClientBookingPageComponent: React.FC = () => {
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate(),
-              9, // Use 9 AM instead of noon to avoid any timezone edge cases
-              0,
-              0,
-              0,
-            )
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            9, // Use 9 AM instead of noon to avoid any timezone edge cases
+            0,
+            0,
+            0,
+          )
           : selectedDate;
 
       if (!dateToCheck) {
@@ -1175,7 +1177,7 @@ const ClientBookingPageComponent: React.FC = () => {
         if (!paymentResult.success) {
           setFormError(
             paymentResult.error ||
-              "Failed to create payment invoice. Please try again.",
+            "Failed to create payment invoice. Please try again.",
           );
           return;
         }
@@ -1207,11 +1209,11 @@ const ClientBookingPageComponent: React.FC = () => {
           providerName: providerProfile?.name,
           date: finalScheduledDate
             ? finalScheduledDate.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),
@@ -1367,14 +1369,13 @@ const ClientBookingPageComponent: React.FC = () => {
         <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
           <div className="md:flex md:gap-x-8">
             <div className="space-y-6 md:w-1/2">
-              {/* --- Highlight Select Package Section --- */}
+              {/* --- Highlight Select Package Section (STAYS) --- */}
               <div
                 ref={packageSectionRef}
-                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-                  highlightInput === "package"
-                    ? "border-2 border-red-500 ring-2 ring-red-200"
-                    : "border-blue-100"
-                }`}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "package"
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : "border-blue-100"
+                  }`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1413,9 +1414,9 @@ const ClientBookingPageComponent: React.FC = () => {
                 ))}
               </div>
 
-              {/* Moved Service Location here (was previously in right column) */}
+              {/* --- Service Location Section (MOVED FROM RIGHT) --- */}
               <div
-                className={`glass-card rounded-2xl border bg-white p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1442,7 +1443,7 @@ const ClientBookingPageComponent: React.FC = () => {
                 )}
                 {mapMode === "detected" && !showFallbackForms && (
                   <div className="mb-2.5">
-                    <div className="mb-3 text-[11px] font-medium text-gray-600">
+                    <div className="mb-2 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
                       custom pin if this is inaccurate.
                     </div>
@@ -1488,14 +1489,14 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
                 {mapMode === "custom" && !showFallbackForms && (
-                  <div className="mb-3">
+                  <div className="mb-4">
                     <LocationMapPicker
                       value={
                         mapLocation
                           ? {
-                              ...mapLocation,
-                              address: mapLocation.address ?? "",
-                            }
+                            ...mapLocation,
+                            address: mapLocation.address ?? "",
+                          }
                           : null
                       }
                       onChange={(loc: any) => {
@@ -1560,6 +1561,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     )}
                   </div>
                 )}
+
                 {!showFallbackForms && (
                   <button
                     type="button"
@@ -1571,7 +1573,9 @@ const ClientBookingPageComponent: React.FC = () => {
                   >
                     Use Manual Address Form
                   </button>
+
                 )}
+
                 {showFallbackForms && (
                   <div className="mb-4 flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 text-xs">
@@ -1594,7 +1598,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         onChange={() => setLocationInputMode("manual")}
                         className="h-4 w-4 text-blue-600"
                       />
-                      <span className="text-gray-700">Manual City/Prov</span>
+                      <span className="text-gray-700">Manual City/Province</span>
                     </label>
                     <button
                       type="button"
@@ -1608,12 +1612,13 @@ const ClientBookingPageComponent: React.FC = () => {
                     </button>
                   </div>
                 )}
+
                 {showFallbackForms && locationInputMode === "detected" ? (
                   <div className="mt-2 space-y-3">
                     <p className="text-xs text-gray-600">
                       Your location is automatically detected.
                     </p>
-                    <div className="w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                    <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <label className="mb-1 block text-xs text-blue-700">
@@ -1625,8 +1630,8 @@ const ClientBookingPageComponent: React.FC = () => {
                               locationLoading
                                 ? "Detecting..."
                                 : (displayMunicipality || "")
-                                      .trim()
-                                      .toLowerCase() === "baguio"
+                                  .trim()
+                                  .toLowerCase() === "baguio"
                                   ? "Baguio City"
                                   : displayMunicipality || ""
                             }
@@ -1645,7 +1650,7 @@ const ClientBookingPageComponent: React.FC = () => {
                               locationLoading
                                 ? "Detecting..."
                                 : displayProvince ===
-                                    "Cordillera Administrative Region"
+                                  "Cordillera Administrative Region"
                                   ? "Benguet"
                                   : displayProvince || ""
                             }
@@ -1661,11 +1666,10 @@ const ClientBookingPageComponent: React.FC = () => {
                       ref={barangayRef}
                       value={selectedBarangay}
                       onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                        }`}
                     >
                       <option value="" disabled>
                         Select Barangay *
@@ -1675,7 +1679,7 @@ const ClientBookingPageComponent: React.FC = () => {
                           (b) =>
                             b &&
                             b.trim().toLowerCase().replace(/\s+/g, "") !==
-                              "others",
+                            "others",
                         )
                         .map((barangay, idx) => (
                           <option key={idx} value={barangay}>
@@ -1691,14 +1695,13 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
                               otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : "border-blue-400"
+                          }`}
                         minLength={3}
                         maxLength={20}
                         required
@@ -1710,18 +1713,16 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Street Name *"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "street" ||
+                          (street &&
+                            (street.trim().length < 3 ||
+                              street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
@@ -1732,17 +1733,15 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "houseNumber" ||
+                          (houseNumber &&
+                            (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!street}
                       maxLength={15}
                     />
@@ -1759,7 +1758,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   <div className="mt-2 space-y-3">
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
+                        <label className="mb-2 block text-xs text-blue-700">
                           Province *
                         </label>
                         <select
@@ -1781,7 +1780,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
+                        <label className="mb-2 block text-xs text-blue-700">
                           City/Municipality *
                         </label>
                         <select
@@ -1813,11 +1812,10 @@ const ClientBookingPageComponent: React.FC = () => {
                       ref={barangayRef}
                       value={selectedBarangay}
                       onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                        }`}
                       disabled={!manualCity}
                     >
                       <option value="" disabled>
@@ -1837,14 +1835,13 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
                               otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : "border-blue-400"
+                          }`}
                         minLength={3}
                         maxLength={20}
                         required
@@ -1856,18 +1853,16 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Street Name *"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "street" ||
+                          (street &&
+                            (street.trim().length < 3 ||
+                              street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
@@ -1878,17 +1873,15 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "houseNumber" ||
+                          (houseNumber &&
+                            (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!street}
                       maxLength={15}
                     />
@@ -1903,17 +1896,17 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 ) : null}
               </div>
+
             </div>
             <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
-              {/* --- Highlight Booking Schedule Section --- */}
+              {/* --- Highlight Booking Schedule Section (STAYS) --- */}
               <div
                 ref={bookingSectionRef}
-                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-                  highlightInput === "bookingOption" ||
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "bookingOption" ||
                   highlightInput === "selectedTime"
-                    ? "border-2 border-red-500 ring-2 ring-red-200"
-                    : "border-yellow-100"
-                }`}
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : "border-yellow-100"
+                  }`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1921,13 +1914,12 @@ const ClientBookingPageComponent: React.FC = () => {
                 </h3>
                 <div className="mb-4 flex gap-3">
                   <button
-                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
-                      !isSameDayAvailable
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : bookingOption === "sameday"
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
-                    }`}
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${!isSameDayAvailable
+                      ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                      : bookingOption === "sameday"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                      }`}
                     onClick={() =>
                       isSameDayAvailable && handleBookingOptionChange("sameday")
                     }
@@ -1946,11 +1938,10 @@ const ClientBookingPageComponent: React.FC = () => {
                     )}
                   </button>
                   <button
-                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
-                      bookingOption === "scheduled"
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
-                    }`}
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${bookingOption === "scheduled"
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                      }`}
                     onClick={() => handleBookingOptionChange("scheduled")}
                   >
                     <div className="text-base font-semibold">Scheduled</div>
@@ -1986,6 +1977,18 @@ const ClientBookingPageComponent: React.FC = () => {
                               const isSlotAvailable =
                                 slotAvailability[time] !== false;
 
+                              // Check if user already booked this time slot
+                              const today = new Date();
+                              const todayDate = new Date(
+                                today.getFullYear(),
+                                today.getMonth(),
+                                today.getDate(),
+                              );
+                              const isUserBooked = hasUserBookedTimeSlot(
+                                time,
+                                todayDate,
+                              );
+
                               // Check if the time slot has passed (for same-day booking)
                               const isTimeSlotPassed = (): boolean => {
                                 const now = new Date();
@@ -2000,28 +2003,40 @@ const ClientBookingPageComponent: React.FC = () => {
                               const hasTimePassed = isTimeSlotPassed();
                               const unavailableReason = hasTimePassed
                                 ? "Time has passed"
-                                : "This time slot is already booked";
+                                : isUserBooked
+                                  ? "You already have a booking for this time slot"
+                                  : "This time slot is already booked";
 
                               return (
                                 <button
                                   key={index}
                                   onClick={() =>
-                                    isSlotAvailable && setSelectedTime(time)
+                                    isSlotAvailable &&
+                                    !isUserBooked &&
+                                    setSelectedTime(time)
                                   }
-                                  disabled={!isSlotAvailable}
-                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                    !isSlotAvailable
-                                      ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-                                      : selectedTime === time
-                                        ? "border-blue-600 bg-blue-600 text-white"
-                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                  disabled={!isSlotAvailable || isUserBooked}
+                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${!isSlotAvailable || isUserBooked
+                                    ? isUserBooked
+                                      ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                      : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                    : selectedTime === time
+                                      ? "border-blue-600 bg-blue-600 text-white"
+                                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
                                   title={
-                                    !isSlotAvailable ? unavailableReason : ""
+                                    !isSlotAvailable || isUserBooked
+                                      ? unavailableReason
+                                      : ""
                                   }
                                 >
                                   {formatted}
-                                  {!isSlotAvailable && (
+                                  {isUserBooked && (
+                                    <span className="ml-1 text-xs">
+                                      (You Booked)
+                                    </span>
+                                  )}
+                                  {!isUserBooked && !isSlotAvailable && (
                                     <span className="ml-1 text-xs">
                                       {hasTimePassed ? "(Passed)" : "(Booked)"}
                                     </span>
@@ -2052,10 +2067,10 @@ const ClientBookingPageComponent: React.FC = () => {
                           const dayName = dayIndexToName(date.getDay());
                           return service.weeklySchedule
                             ? service.weeklySchedule.some(
-                                (s) =>
-                                  s.day === dayName &&
-                                  s.availability.isAvailable,
-                              )
+                              (s) =>
+                                s.day === dayName &&
+                                s.availability.isAvailable,
+                            )
                             : false;
                         }}
                         inline
@@ -2124,10 +2139,10 @@ const ClientBookingPageComponent: React.FC = () => {
                           const dayName = dayIndexToName(date.getDay());
                           const isAvailable = service.weeklySchedule
                             ? service.weeklySchedule.some(
-                                (s) =>
-                                  s.day === dayName &&
-                                  s.availability.isAvailable,
-                              )
+                              (s) =>
+                                s.day === dayName &&
+                                s.availability.isAvailable,
+                            )
                             : false;
                           return [
                             "transition-colors duration-150",
@@ -2170,28 +2185,46 @@ const ClientBookingPageComponent: React.FC = () => {
                                 const isSlotAvailable =
                                   slotAvailability[time] !== false;
 
+                                // Check if user already booked this time slot
+                                const isUserBooked = hasUserBookedTimeSlot(
+                                  time,
+                                  selectedDate!,
+                                );
+
+                                const unavailableReason = isUserBooked
+                                  ? "You already have a booking for this time slot"
+                                  : "This time slot is already booked";
+
                                 return (
                                   <button
                                     key={index}
                                     onClick={() =>
-                                      isSlotAvailable && setSelectedTime(time)
+                                      isSlotAvailable &&
+                                      !isUserBooked &&
+                                      setSelectedTime(time)
                                     }
-                                    disabled={!isSlotAvailable}
-                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                      !isSlotAvailable
-                                        ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-                                        : selectedTime === time
-                                          ? "border-blue-600 bg-blue-600 text-white"
-                                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                                    }`}
+                                    disabled={!isSlotAvailable || isUserBooked}
+                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${!isSlotAvailable || isUserBooked
+                                      ? isUserBooked
+                                        ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                        : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                      : selectedTime === time
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                      }`}
                                     title={
-                                      !isSlotAvailable
-                                        ? "This time slot is already booked"
+                                      !isSlotAvailable || isUserBooked
+                                        ? unavailableReason
                                         : ""
                                     }
                                   >
                                     {formatted}
-                                    {!isSlotAvailable && (
+                                    {isUserBooked && (
+                                      <span className="ml-1 text-xs">
+                                        (You Booked)
+                                      </span>
+                                    )}
+                                    {!isUserBooked && !isSlotAvailable && (
                                       <span className="ml-1 text-xs">
                                         (Booked)
                                       </span>
@@ -2210,7 +2243,8 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- Payment Method (moved here for desktop) --- */}
+
+              {/* --- Payment Section (DESKTOP) (MOVED FROM LEFT) --- */}
               <div className="hidden md:block">
                 <div ref={paymentSectionRef}>
                   <PaymentSection
@@ -2226,23 +2260,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-4 shadow-xl backdrop-blur-md">
-                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
-                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-                  Notes for Provider{" "}
-                  <span className="text-base font-normal text-gray-400">
-                    (Optional)
-                  </span>
-                </h3>
-                <textarea
-                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
-                  value={notes}
-                  onChange={handleNotesChange}
-                  rows={4}
-                  maxLength={NOTES_CHAR_LIMIT}
-                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
+
               <div className="mt-4 md:hidden">
                 <div ref={paymentSectionRef}>
                   <PaymentSection
@@ -2257,6 +2275,24 @@ const ClientBookingPageComponent: React.FC = () => {
                     isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
+              </div>
+
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Notes for Provider{" "}
+                  <span className="text-base font-normal text-gray-400">
+                    (Optional)
+                  </span>
+                </h3>
+                <textarea
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  rows={4}
+                  maxLength={NOTES_CHAR_LIMIT}
+                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500 resize-none" // <-- Add resize-none here
+                />
               </div>
             </div>
           </div>
@@ -2283,4 +2319,5 @@ const ClientBookingPageComponent: React.FC = () => {
     </div>
   );
 };
+
 export default ClientBookingPageComponent;

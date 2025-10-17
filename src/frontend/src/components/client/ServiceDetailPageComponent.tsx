@@ -660,9 +660,6 @@ const ServiceDetailPage: React.FC = () => {
       return Math.max(max, slots.length);
     }, 0);
 
-    // Mobile accordion state - moved outside IIFE to prevent resets
-    const [openDay, setOpenDay] = React.useState<string | null>(null);
-
     // Icon for section header
     const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
       <svg

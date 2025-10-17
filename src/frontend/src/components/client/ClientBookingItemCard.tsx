@@ -37,12 +37,14 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const { userImageUrl, refetch } = useUserImage(
     booking?.providerProfile?.profilePicture?.imageUrl,
   );
+  
   // Refetch provider avatar if changed
   useEffect(() => {
     if (userImageUrl) {
       refetch();
     }
   }, [userImageUrl, refetch]);
+  
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
