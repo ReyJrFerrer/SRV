@@ -31,3 +31,4 @@ pubsub-debug.log
 .dev-dist/
 
 sw.js
+/src/frontend/dev-dist
