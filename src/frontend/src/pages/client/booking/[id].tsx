@@ -423,7 +423,6 @@ const BookingDetailsPage: React.FC = () => {
       navigate(`/client/service/reviews/${specificBooking.serviceId}`);
   };
 
-
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
       REQUESTED: "bg-yellow-100 text-yellow-700",
@@ -514,12 +513,12 @@ const BookingDetailsPage: React.FC = () => {
     formattedLocation,
     price,
     status,
-    scheduledDate
+    scheduledDate,
   } = specificBooking;
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
 
-   const formatDateRange = (
+  const formatDateRange = (
     requestedDate: Date | string | number,
     scheduledDate: Date | string | number,
   ) => {
@@ -561,7 +560,6 @@ const BookingDetailsPage: React.FC = () => {
       return "Date range not available";
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
