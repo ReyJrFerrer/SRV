@@ -204,62 +204,70 @@ const transformServicesWithData = (
 };
 
 /**
- * Hook to fetch all services with provider information
+ * Hook to subscribe to all services with provider information (real-time)
+ * This hook listens to Firestore changes and updates services in real-time
  */
 export const useAllServicesWithProviders = (): UseServicesResult => {
   const [services, setServices] = useState<EnrichedService[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchServices = useCallback(async () => {
+  useEffect(() => {
     setLoading(true);
     setError(null);
-    setServices([]); // Clear services to prevent flickering
 
-    try {
-      // Fetch all services first
-      const allServices = await serviceCanisterService.getAllServices();
+    // Subscribe to real-time updates
+    const unsubscribe = serviceCanisterService.subscribeToAllServices(
+      async (allServices) => {
+        if (allServices.length === 0) {
+          setServices([]);
+          setLoading(false);
+          return;
+        }
 
-      if (allServices.length === 0) {
-        setServices([]);
-        return;
-      }
+        try {
+          // Fetch provider profiles and service packages in parallel
+          const [providerMap, servicePackagesMap] = await Promise.all([
+            fetchProviderProfiles(allServices),
+            fetchServicePackages(allServices),
+          ]);
 
-      // Fetch provider profiles and service packages in parallel
-      const [providerMap, servicePackagesMap] = await Promise.all([
-        fetchProviderProfiles(allServices),
-        fetchServicePackages(allServices),
-      ]);
+          // Transform services with provider data and packages
+          const enrichedServices = transformServicesWithData(
+            allServices,
+            providerMap,
+            servicePackagesMap,
+          );
 
-      // Transform services with provider data and packages
-      const enrichedServices = transformServicesWithData(
-        allServices,
-        providerMap,
-        servicePackagesMap,
-      );
+          setServices(enrichedServices);
+          setLoading(false);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err : new Error("Failed to enrich services"),
+          );
+          setLoading(false);
+        }
+      },
+    );
 
-      // Set all services at once to prevent flickering
-      setServices(enrichedServices);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch services"),
-      );
-      //console.error("Error fetching services:", err);
-      setServices([]); // Ensure empty state on error
-    } finally {
-      setLoading(false);
-    }
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  useEffect(() => {
-    fetchServices();
-  }, [fetchServices]);
+  const refetch = useCallback(async () => {
+    // For realtime hook, refetch just resets the state
+    // The listener will automatically update with new data
+    setLoading(true);
+    setError(null);
+  }, []);
 
   return {
     services,
     loading,
     error,
-    refetch: fetchServices,
+    refetch,
   };
 };
 
@@ -406,15 +414,12 @@ export const useServiceById = (
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchService = useCallback(async () => {
+  // Manual refetch function (for backwards compatibility)
+  const refetch = useCallback(async () => {
     if (!serviceId) {
-      setService(null);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
     try {
       // Fetch the specific service
       const serviceData = await serviceCanisterService.getService(serviceId);
@@ -441,17 +446,62 @@ export const useServiceById = (
       setError(
         err instanceof Error ? err : new Error("Failed to fetch service"),
       );
-      //console.error("Error fetching service:", err);
-    } finally {
-      setLoading(false);
     }
   }, [serviceId]);
 
+  // Subscribe to realtime updates
   useEffect(() => {
-    fetchService();
-  }, [fetchService, serviceId]);
+    if (!serviceId) {
+      setService(null);
+      setLoading(false);
+      return;
+    }
 
-  return { service, loading, error, refetch: fetchService };
+    setLoading(true);
+    setError(null);
+
+    // Subscribe to service changes
+    const unsubscribe = serviceCanisterService.subscribeToService(
+      serviceId,
+      async (serviceData) => {
+        if (!serviceData) {
+          setService(null);
+          setError(new Error("Service not found"));
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Fetch the provider profile and service packages in parallel
+          const [providerProfile, servicePackages] = await Promise.all([
+            authCanisterService.getProfile(serviceData.providerId.toString()),
+            serviceCanisterService.getServicePackages(serviceId),
+          ]);
+
+          // Transform to enriched service
+          const enrichedService = transformToEnrichedService(
+            serviceData,
+            providerProfile,
+            servicePackages,
+          );
+          setService(enrichedService);
+          setError(null);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err : new Error("Failed to fetch service"),
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [serviceId]);
+
+  return { service, loading, error, refetch };
 };
 
 /**

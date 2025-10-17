@@ -49,7 +49,7 @@ export interface UseBookRequestReturn {
   isSameDayAvailable: boolean;
 
   // Booking operations
-  loadServiceData: (serviceSlug: string) => Promise<void>;
+  loadServiceData: (serviceSlug: string) => (() => void) | undefined;
   checkSameDayAvailability: (serviceId: string) => Promise<boolean>;
   getAvailableSlots: (
     serviceId: string,
@@ -87,45 +87,64 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [isSameDayAvailable, setIsSameDayAvailable] = useState(false);
 
-  // Load service and package data
-  const loadServiceData = useCallback(async (serviceId: string) => {
+  // Load service and package data with realtime subscriptions
+  const loadServiceData = useCallback((serviceId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Get service details
-      const serviceData = await serviceCanisterService.getService(serviceId);
-      if (!serviceData) {
-        throw new Error("Service not found");
-      }
+      // Subscribe to service updates
+      const serviceUnsubscribe = serviceCanisterService.subscribeToService(
+        serviceId,
+        async (serviceData) => {
+          if (!serviceData) {
+            setError("Service not found");
+            setService(null);
+            setLoading(false);
+            return;
+          }
 
-      // Get service packages
-      const servicePackages =
-        await serviceCanisterService.getServicePackages(serviceId);
+          setService(serviceData);
 
-      // Get provider profile
-      let providerData: FrontendProfile | null = null;
-      try {
-        providerData = await authCanisterService.getProfile(
-          serviceData.providerId.toString(),
+          // Get provider profile when service loads
+          try {
+            const providerData = await authCanisterService.getProfile(
+              serviceData.providerId.toString(),
+            );
+            setProviderProfile(providerData);
+          } catch (providerError) {
+            console.warn("Could not load provider profile:", providerError);
+            setProviderProfile(null);
+          }
+
+          // Check same-day availability
+          const sameDayAvailable = await checkSameDayAvailability(serviceId);
+          setIsSameDayAvailable(sameDayAvailable);
+
+          setLoading(false);
+        },
+      );
+
+      // Subscribe to package updates
+      const packageUnsubscribe =
+        serviceCanisterService.subscribeToServicePackages(
+          serviceId,
+          (packageData) => {
+            setPackages(packageData || []);
+          },
         );
-      } catch (providerError) {
-        //console.warn("Could not load provider profile:", providerError);
-      }
 
-      setService(serviceData);
-      setPackages(servicePackages || []);
-      setProviderProfile(providerData);
-
-      // Check same-day availability
-      const sameDayAvailable = await checkSameDayAvailability(serviceId);
-      setIsSameDayAvailable(sameDayAvailable);
+      // Store unsubscribe functions for cleanup
+      // Return cleanup function
+      return () => {
+        serviceUnsubscribe();
+        packageUnsubscribe();
+      };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load service data";
       setError(errorMessage);
-      //console.error("Error loading service data:", err);
-    } finally {
+      console.error("Error loading service data:", err);
       setLoading(false);
     }
   }, []);

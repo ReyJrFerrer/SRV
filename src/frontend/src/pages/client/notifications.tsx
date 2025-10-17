@@ -147,7 +147,11 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex cursor-pointer items-start gap-4 border border-transparent p-4 shadow-sm transition-all duration-200 hover:border-blue-200 ${
+      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
+        notification.href
+          ? "cursor-pointer hover:border-blue-200"
+          : "cursor-default"
+      } ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
@@ -199,7 +203,10 @@ const NotificationsPage = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    navigate(notification.href || "/client/booking");
+    // Only navigate if href exists (null href means non-clickable)
+    if (notification.href) {
+      navigate(notification.href);
+    }
   };
 
   const { unread, read } = useMemo(() => {
@@ -222,14 +229,13 @@ const NotificationsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-4xl px-4 py-3">
-          <h1 className="text-center text-2xl font-extrabold tracking-tight text-black">
+        <div
+          className={`mx-auto flex max-w-3xl items-center px-4 py-4 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+        >
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Notifications
           </h1>
-        </div>
-
-        {unreadCount > 0 && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
               className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
@@ -237,8 +243,8 @@ const NotificationsPage = () => {
               <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
               Mark all as read
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">

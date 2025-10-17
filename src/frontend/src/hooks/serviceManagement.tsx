@@ -1192,10 +1192,39 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [isAuthenticated, identity, fetchUserProfile]);
 
+  // Subscribe to all services with realtime updates
   useEffect(() => {
-    fetchServices();
+    setLoadingState("services", true);
+
+    const unsubscribe = serviceCanisterService.subscribeToAllServices(
+      async (servicesData: Service[]) => {
+        try {
+          // Enrich services with provider data
+          const enrichedServices = await Promise.all(
+            servicesData.map((service: Service) =>
+              enrichServiceWithProviderData(service),
+            ),
+          );
+
+          setServices(enrichedServices);
+          setError(null);
+        } catch (error) {
+          handleError(error, "subscribe to services");
+        } finally {
+          setLoadingState("services", false);
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [setLoadingState, handleError, enrichServiceWithProviderData]);
+
+  // Fetch categories once
+  useEffect(() => {
     fetchCategories();
-  }, [fetchServices, fetchCategories]);
+  }, [fetchCategories]);
 
   // Availability management functions
   const getServiceAvailability = useCallback(

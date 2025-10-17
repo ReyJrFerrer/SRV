@@ -1,5 +1,5 @@
 import React from "react";
-import ServiceListItem from "./ServiceListItem"; // Your individual card component
+import ServiceListItem from "./ServiceListItem";
 import {
   EnrichedService,
   useAllServicesWithProviders,
@@ -11,13 +11,12 @@ interface ServicesListProps {
 }
 
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
+  // Use the realtime hook for live updates from Firestore
   const { services, loading, error } = useAllServicesWithProviders();
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
     ...service,
     heroImage: getCategoryImage(service.category.name),
-    providerName: service.providerName,
-    providerAvatar: service.providerAvatar,
     rating: {
       average: service.rating.average ?? 0,
       count: service.rating.count ?? 0,
@@ -29,13 +28,6 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
-    },
-    location: {
-      serviceDistance: service.location?.serviceDistance,
-      address: service.location?.address,
-      city: service.location?.city,
-      state: service.location?.state,
-      serviceDistanceUnit: service.location?.serviceDistanceUnit,
     },
   });
 
@@ -90,9 +82,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
 
       {services.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-gray-500">
-            No top-rated services available at the moment.
-          </p>
+          <p className="text-gray-500">No services available at the moment.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
