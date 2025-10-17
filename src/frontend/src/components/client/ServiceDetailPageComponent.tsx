@@ -7,7 +7,6 @@ import {
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
-
 import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
 import { useChat } from "../../hooks/useChat";
@@ -488,6 +487,8 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
+  const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
+
   // Load service gallery images for hero image (must be top-level)
   const { images: heroImages } = useServiceImages(
     service?.id,
@@ -636,11 +637,12 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const { rating, providerName, name, category, location } = service;
+  const { providerName, name, category, location } = service;
   console.log("Service Detail Page Component", service);
   const isVerified = service.isVerified;
-  const averageRating = rating?.average ?? 0;
-  const reviewCount = rating?.count ?? 0;
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
 
   // --- Availability Section Types and Component ---
   type Availability = {

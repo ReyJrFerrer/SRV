@@ -20,9 +20,9 @@ import { toast } from "sonner";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
-  //Navigation 
+  //Navigation
   const navigate = useNavigate();
-    // --- State: Service category error ---
+  // --- State: Service category error ---
   const { error } = useServiceManagement();
 
   // --- Use Zustand location store for location permission status ---
@@ -85,7 +85,7 @@ const ClientHomePage: React.FC = () => {
                     key={star}
                     type="button"
                     aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                    className="transition-transform focus:outline-none hover:scale-110 focus:scale-110"
+                    className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
                     onClick={() => setFeedbackRating(star)}
                     onMouseEnter={() => setHoveredRating(star)}
                     onMouseLeave={() => setHoveredRating(null)}

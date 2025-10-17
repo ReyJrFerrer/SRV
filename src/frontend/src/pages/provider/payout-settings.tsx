@@ -254,7 +254,9 @@ const PayoutSettingsPage: React.FC = () => {
             {error && (
               <div className="mb-4 flex items-start rounded-lg border border-red-200 bg-red-50 p-3">
                 <ExclamationTriangleIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
-                <span className="text-sm text-red-700">{error}</span>
+                <span className="text-sm text-red-700">
+                  {"You already have an account, proceed to wallet"}
+                </span>
               </div>
             )}
 

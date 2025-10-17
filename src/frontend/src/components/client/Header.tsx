@@ -254,8 +254,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         (results: any, status: string) => {
           if (status === "OK" && results && results[0]) {
             let address = results[0].formatted_address as string;
-            // Remove geocode prefix if present (e.g., "geocode, " at the beginning)
-            address = address.replace(/^[^,]+,\s*/, "");
             setGmapsAddress(address);
             setGmapsStatus("ok");
             try {
