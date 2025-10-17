@@ -7,17 +7,16 @@ import {
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
+
 import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
+import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useReputation } from "../../hooks/useReputation";
 import { useServiceImages } from "../../hooks/useMediaLoader";
 import BottomNavigation from "../../components/client/BottomNavigation";
-import {
-  ServicePackage,
-  serviceCanisterService,
-} from "../../services/serviceCanisterService";
+import { ServicePackage } from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useMediaLoader";
 
 // --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
@@ -487,14 +486,13 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
-  const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
-
   // Load service gallery images for hero image (must be top-level)
   const { images: heroImages } = useServiceImages(
     service?.id,
     service?.media || [],
   );
 
+  const { getServicePackages } = useServiceManagement();
   const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
 
@@ -515,30 +513,23 @@ const ServiceDetailPage: React.FC = () => {
     }
   }, [userImageUrl, refetch]);
 
-  // Subscribe to service packages with realtime updates
   useEffect(() => {
-    if (!service?.id) {
-      setPackages([]);
-      setLoadingPackages(false);
-      return;
-    }
-
-    setLoadingPackages(true);
-
-    // Subscribe to realtime package updates
-    const unsubscribe = serviceCanisterService.subscribeToServicePackages(
-      service.id,
-      (packageData) => {
-        setPackages(packageData);
-        setLoadingPackages(false);
-      },
-    );
-
-    // Cleanup subscription on unmount or when service changes
-    return () => {
-      unsubscribe();
+    const fetchPackages = async () => {
+      if (service?.id) {
+        setLoadingPackages(true);
+        try {
+          // Fetch packages using the centralized hook
+          const fetchedPackages = await getServicePackages(service.id);
+          setPackages(fetchedPackages);
+        } catch (error) {
+          // Failed to fetch service packages
+        } finally {
+          setLoadingPackages(false);
+        }
+      }
     };
-  }, [service?.id]);
+    fetchPackages();
+  }, [service?.id, getServicePackages]);
 
   const handleBookNow = () => {
     if (!service) return;
@@ -637,12 +628,10 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const { providerName, name, category, location } = service;
-  console.log("Service Detail Page Component", service);
+  const { rating, providerName, name, category, location } = service;
   const isVerified = service.isVerified;
-  const visibleReviews = reviews.filter((r) => r.status === "Visible");
-  const averageRating = getAverageRating(visibleReviews);
-  const reviewCount = visibleReviews.length;
+  const averageRating = rating?.average ?? 0;
+  const reviewCount = rating?.count ?? 0;
 
   // --- Availability Section Types and Component ---
   type Availability = {
@@ -673,7 +662,6 @@ const ServiceDetailPage: React.FC = () => {
 
     // Mobile accordion state - moved outside IIFE to prevent resets
     const [openDay, setOpenDay] = React.useState<string | null>(null);
-    const [hoveredDay, setHoveredDay] = React.useState<string | null>(null);
 
     // Icon for section header
     const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -704,7 +692,7 @@ const ServiceDetailPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
           {service?.isActive && (
             <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
               Available Now
             </span>
           )}
@@ -720,54 +708,35 @@ const ServiceDetailPage: React.FC = () => {
                   let slots = slotsByDay[day];
                   if (typeof slots === "string") slots = [slots];
                   if (!Array.isArray(slots)) slots = [];
-                  const isOpen = openDay === day;
+
                   return (
-                    <li key={day} className="py-1">
-                      <button
-                        type="button"
-                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-blue-400`}
-                        onClick={() => setOpenDay(isOpen ? null : day)}
-                        aria-expanded={isOpen}
-                        aria-controls={`availability-panel-${day}`}
-                      >
+                    <li key={day} className="py-2">
+                      {/* Day Header - Replaced the toggle button with a static div */}
+                      <div className="flex w-full items-center justify-between px-4 py-1 text-left text-base font-semibold text-blue-700">
                         <span className="flex items-center gap-2">
                           <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
                           {day}
                         </span>
-                        <svg
-                          className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {isOpen && (
-                        <div
-                          id={`availability-panel-${day}`}
-                          className="mb-4 mt-2 flex flex-wrap items-center gap-2 px-3"
-                        >
-                          {slots.length > 0 ? (
-                            slots.map((slot, idx) => (
-                              <span
-                                key={slot + idx}
-                                className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md transition hover:bg-yellow-200"
-                              >
-                                {slot}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-gray-400">Not specified</span>
-                          )}
-                        </div>
-                      )}
+                        {/* Optionally show a count or status here if desired */}
+                      </div>
+
+                      {/* Content Panel - Now always visible, immediately after the day header */}
+                      <div className="mt-1 flex flex-wrap items-center gap-2 px-4">
+                        {slots.length > 0 ? (
+                          slots.map((slot, idx) => (
+                            <span
+                              key={slot + idx}
+                              className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md"
+                            >
+                              {slot}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm italic text-gray-400">
+                            Not specified
+                          </span>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
@@ -782,9 +751,7 @@ const ServiceDetailPage: React.FC = () => {
                       {days.map((day) => (
                         <th
                           key={day}
-                          className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-50" : "hover:bg-yellow-50"}`}
-                          onMouseEnter={() => setHoveredDay(day)}
-                          onMouseLeave={() => setHoveredDay(null)}
+                          className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm`}
                         >
                           <span className="flex items-center justify-center gap-2">
                             <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
@@ -810,7 +777,7 @@ const ServiceDetailPage: React.FC = () => {
                               >
                                 {slot ? (
                                   <span
-                                    className={`inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-200" : "hover:bg-yellow-200"}`}
+                                    className={`} inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
                                   >
                                     {slot}
                                   </span>
@@ -1063,8 +1030,7 @@ const ServiceDetailPage: React.FC = () => {
               {packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md transition-all duration-200 hover:scale-[0.98] hover:shadow-xl md:flex-row"
-                  style={{ willChange: "transform" }}
+                  className="md:flow-center group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
                 >
                   <div className="flex flex-1 items-center gap-4">
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -1121,11 +1087,10 @@ const ServiceDetailPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                <span className="text-base font-semibold">Creating Chat</span>
+                Creating{" "}
               </>
-            ) : (
-              <span className="text-base font-semibold">Chat</span>
-            )}
+            ) : null}
+            <span className="text-base font-semibold"> Chat</span>
             {isOwnService && (
               <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 You cannot chat with your own service.

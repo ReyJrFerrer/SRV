@@ -12,25 +12,25 @@ const BottomNavigation: React.FC = () => {
     { to: "/client/home", label: "Home", icon: null, count: 0 },
     {
       to: "/client/booking",
-      label: "booking",
+      label: "Booking",
       icon: null,
       count: 0,
     },
     {
       to: "/client/chat",
-      label: "chat",
+      label: "Chat",
       icon: null,
       count: unreadChatCount,
     },
     {
       to: "/client/notifications",
-      label: "notifications",
+      label: "Notifications",
       icon: null,
       count: unreadCount,
     },
     {
       to: "/client/settings",
-      label: "settings",
+      label: "Settings",
       icon: null,
       count: 0,
     },
@@ -39,15 +39,20 @@ const BottomNavigation: React.FC = () => {
   // Helper function to get icon source
   const getIconSrc = React.useCallback(
     (label: string, state: "default" | "selected" | "hover") => {
-      const basePath = `/images/navigation icons/${label.toLowerCase()}`;
+      const basePath = `images/navigation icons/${label.toLowerCase()}`;
+      let path: string;
       switch (state) {
         case "selected":
-          return `${basePath}-selected.svg`;
+          path = `${basePath}-selected.svg`;
+          break;
         case "hover":
-          return `${basePath}-hover.svg`;
+          path = `${basePath}-hover.svg`;
+          break;
         default:
-          return `${basePath}.svg`;
+          path = `${basePath}.svg`;
       }
+      // Encode to ensure spaces and special characters are handled in URLs
+      return encodeURI(path);
     },
     [],
   );
@@ -81,13 +86,13 @@ const BottomNavigation: React.FC = () => {
   }, [location.pathname, getIconSrc]);
 
   return (
-    <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 h-12 w-full border-t border-gray-200 bg-white sm:h-16">
-      <nav className="mx-auto flex h-full w-full max-w-full items-center justify-center">
-        <div className="grid h-full w-full grid-cols-5 font-medium">
+    <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2">
+      <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
+        <div className="grid w-full grid-cols-5 font-medium">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.to);
             if (
-              ["Home", "booking", "settings", "notifications", "chat"].includes(
+              ["Home", "Booking", "Settings", "Notifications", "Chat"].includes(
                 item.label,
               )
             ) {
@@ -113,7 +118,7 @@ const BottomNavigation: React.FC = () => {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className="group relative flex h-12 min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50 sm:h-16"
+                  className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                   onClick={(e) => {
                     if (isActive) {
                       e.preventDefault();
@@ -131,14 +136,13 @@ const BottomNavigation: React.FC = () => {
                         ? "flex w-full flex-1 items-center justify-center"
                         : "flex w-full items-center justify-center"
                     }
-                    style={isActive ? { minHeight: 0, minWidth: 0 } : {}}
                   >
                     <img
                       src={iconStates[item.label]}
                       alt={item.label}
                       className={`transition-all duration-300 ease-in-out ${
                         isActive
-                          ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-12 sm:w-12"
+                          ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
                           : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
                       }`}
                       style={{
@@ -171,7 +175,7 @@ const BottomNavigation: React.FC = () => {
               <Link
                 key={item.label}
                 to={item.to}
-                className="group relative inline-flex h-12 min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50 sm:h-16"
+                className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                 onClick={(e) => {
                   if (isActive) {
                     e.preventDefault();

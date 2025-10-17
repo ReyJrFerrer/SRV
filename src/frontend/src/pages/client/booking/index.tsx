@@ -242,7 +242,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
 
           <div className="container mx-auto px-4 pb-3 pt-2">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mb-4 mt-4 flex flex-col gap-3 sm:flex-row">
               <div className="relative w-full sm:flex-grow">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
@@ -258,12 +258,12 @@ const MyBookingsPage: React.FC = () => {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full appearance-none rounded-lg border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                  <option value="all">All Types</option>
-                  <option value="sameDay">Same Day</option>
-                  <option value="scheduled">Scheduled</option>
                   <optgroup label="Categories">
+                    <option value="all">All Types</option>
+                    <option value="sameDay">Same Day</option>
+                    <option value="scheduled">Scheduled</option>
                     {bookingCategories.slice(1).map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
