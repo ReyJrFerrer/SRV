@@ -158,6 +158,17 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   // Create new profile
   const now = new Date().toISOString();
+
+  // Initialize reputation score. If this fails, the entire function will fail.
+  try {
+    await initializeReputationInternal(principalId, now);
+    console.log(`✅ Reputation initialized for user: ${principalId}`);
+  } catch (error) {
+    console.log(`❌ Reputation initialization failed for user: ${principalId}`);
+  }
+
+
+  // Initialize reputation score, if this fails then push through with profile creation
   const newProfile = {
     id: principalId,
     name: name,
@@ -175,9 +186,6 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   await userRef.set(newProfile);
 
-  // Initialize reputation score. If this fails, the entire function will fail.
-  await initializeReputationInternal(principalId, now);
-  console.log(`✅ Reputation initialized for user: ${principalId}`);
 
   return {
     success: true,

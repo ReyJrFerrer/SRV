@@ -288,7 +288,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     // commented for debugging
     // navigate(`/provider/directions/${booking.id}`);
     startBookingById(booking.id);
-    window.location.reload();
+    navigate(`/provider/active-service/${booking.id}`);
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---

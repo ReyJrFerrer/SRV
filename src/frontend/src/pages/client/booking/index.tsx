@@ -242,7 +242,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
 
           <div className="container mx-auto px-4 pb-3 pt-2">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mb-4 mt-4 flex flex-col gap-3 sm:flex-row">
               <div className="relative w-full sm:flex-grow">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input

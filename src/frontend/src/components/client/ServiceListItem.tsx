@@ -50,17 +50,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     );
 
     // Define layout classes based on props
-    // const itemWidthClass = isGrid
-    //   ? "w-full" // Full width for grid items
-    //   : "w-full"; // Default width for list items
+    const itemWidthClass = isGridItem ? "w-full" : "w-full";
 
-    // Determine availability status (simplified since we may not have full availability data)
+    // Determine availability status
     const isAvailable = service.availability?.isAvailable ?? false;
     const availabilityText = isAvailable ? "Available Now" : "Not Available";
 
     const priceLocationContainerClass = retainMobileLayout
-      ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
-      : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100"; // Default responsive
+      ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100"
+      : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100";
 
     const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
 
@@ -112,25 +110,24 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     // Normalize slug for mapping
     const getCategoryIcon = (slug: string | undefined): string => {
       if (!slug) return "/images/categories/others.svg";
-      // Handle special cases for mapping
       if (categoryIconMap[slug]) {
         return `/images/categories/${categoryIconMap[slug]}`;
       }
-      // Fallback: try replacing hyphens with spaces and capitalize
       const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
       return fallback;
     };
+
     const { userImageUrl, refetch } = useUserImage(service.providerAvatar);
     refetch();
 
     // Helper function to determine the image source with proper priority
     const getImageSource = (): string => {
-      // Priority 1: Service images (if available)
+      // Priority 1: Service images
       if (images[0]?.dataUrl) {
         return images[0].dataUrl;
       }
 
-      // Priority 2: User avatar (if valid)
+      // Priority 2: User avatar
       if (
         userImageUrl &&
         userImageUrl !== "/default-avatar.png" &&
@@ -140,7 +137,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         return userImageUrl;
       }
 
-      // Priority 3: Category-specific fallback image
+      // Priority 3: Category-specific fallback
       if (service.category?.slug) {
         return `/images/ai-sp/${service.category.slug}.svg`;
       }
@@ -153,7 +150,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
           to={`/client/service/${service.id}`}
-          className="service-card relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2"
+          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
         >
           <div className="relative">
             {/* Image container */}
@@ -170,7 +167,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             </div>
             {/* Category icon and availability badge row */}
             <div className="pointer-events-none absolute left-2 right-2 top-2 flex items-center justify-between">
-              {/* Category icon (if available) */}
+              {/* Category icon */}
               {service.category?.slug && (
                 <img
                   src={getCategoryIcon(service.category.slug)}
@@ -191,13 +188,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               </div>
             </div>
           </div>
+
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
-              {/* Service title at the top */}
+              {/* Service title */}
               <p className="mb-1 mt-2 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
                 {service.title}
               </p>
-              {/* Provider name below service title, with blue check if verified */}
+              {/* Provider name with verification badge */}
               <p className="mb-2 flex items-center gap-1 truncate text-base font-bold text-blue-700">
                 {service.providerName}
                 {isVerified && (
@@ -208,7 +206,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 )}
               </p>
 
-              {/* Location info - city/address if available */}
+              {/* Location info */}
               {service.location &&
                 (service.location.city || service.location.address) && (
                   <div className="mb-2 flex items-center text-sm text-blue-700">
@@ -254,8 +252,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               </div>
             </div>
           </div>
-          {/* 'Check service' banner: inset to show white corners and spacing */}
 
+          {/* Check service banner with smooth expand animation */}
           <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
             <div className="flex h-10 items-center justify-center rounded-xl border border-yellow-300 bg-yellow-200 px-2 shadow-sm">
               <span className="text-base font-bold tracking-wide text-blue-800">

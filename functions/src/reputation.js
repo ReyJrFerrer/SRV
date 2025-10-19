@@ -782,7 +782,7 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
     // First, try to get reputation from Firestore (where admin updates are stored)
     console.log(`🔍 Checking Firestore for reputation data for ${userId}`);
     const userDoc = await db.collection("users").doc(userId).get();
-    
+
     if (userDoc.exists && userDoc.data().reputationScore !== undefined) {
       const userData = userDoc.data();
       console.log(`✅ Found reputation in Firestore for ${userId}:`, userData.reputationScore);
@@ -829,7 +829,7 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
       success: true,
       data: {
         trustScore: 50,
-        trustLevel: "New", 
+        trustLevel: "New",
         completedBookings: 0,
       },
     };

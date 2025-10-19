@@ -6,7 +6,9 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult,
   signOut,
+  signInWithCustomToken,
 } from "firebase/auth";
+import { getStoredICCustomToken } from "./firebaseApp";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -197,8 +199,31 @@ class FirebaseAuthService {
       if (result.user) {
         console.log("Phone number verified successfully");
 
-        // Sign out the user since we only need verification
-        await this.signOut();
+        // CRITICAL: Restore the IC-based Firebase session
+        // Phone verification creates a separate Firebase user, so we need to
+        // restore the original IC-based session for profile creation
+        const icToken = getStoredICCustomToken();
+        if (icToken && this.auth) {
+          console.log(
+            "🔄 Restoring IC-based Firebase session after phone verification...",
+          );
+          try {
+            await signInWithCustomToken(this.auth, icToken);
+            console.log("✅ IC-based Firebase session restored successfully");
+          } catch (restoreError) {
+            console.error(
+              "❌ Failed to restore IC Firebase session:",
+              restoreError,
+            );
+            throw new Error(
+              "Failed to restore authentication session. Please refresh and try again.",
+            );
+          }
+        } else {
+          console.warn(
+            "⚠️ No IC custom token found to restore. User may need to re-authenticate.",
+          );
+        }
 
         return true;
       }

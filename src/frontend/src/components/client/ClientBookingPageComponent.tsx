@@ -66,15 +66,15 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   // isProviderOnboarded = false,
 }) => (
   <div
-    className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-xl ${
+    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
       highlight
         ? "border-2 border-red-500 ring-2 ring-red-200"
-        : "border border-gray-200"
+        : "border border-gray-100"
     }`}
   >
     <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-      Payment method <span className="text-red-500">*</span>
+      Payment Method
     </h3>
     <div className="space-y-3">
       <div
@@ -94,7 +94,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-2">
+        <div className="pl-4 pt-0">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -665,7 +665,11 @@ const ClientBookingPageComponent: React.FC = () => {
 
       return userBookings.some((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 
@@ -1055,7 +1059,11 @@ const ClientBookingPageComponent: React.FC = () => {
       const [startTimeStr] = selectedTime.split("-");
       const duplicateBooking = userBookings.find((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 
@@ -1122,6 +1130,7 @@ const ClientBookingPageComponent: React.FC = () => {
         notes: notes,
         amountToPay: parseFloat(amountPaid),
         paymentMethod: paymentMethod, // Include the selected payment method
+        locationDetection: !showFallbackForms ? "automatic" : "manual", // Map the mode to location detection type
       };
       // Append raw coordinates if map picker used
       if (mapLocation?.lat && mapLocation?.lng) {
@@ -1370,7 +1379,7 @@ const ClientBookingPageComponent: React.FC = () => {
         <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
           <div className="md:flex md:gap-x-8">
             <div className="space-y-6 md:w-1/2">
-              {/* --- Highlight Select Package Section --- */}
+              {/* --- Highlight Select Package Section (STAYS) --- */}
               <div
                 ref={packageSectionRef}
                 className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -1416,9 +1425,9 @@ const ClientBookingPageComponent: React.FC = () => {
                 ))}
               </div>
 
-              {/* Moved Service Location here (was previously in right column) */}
+              {/* --- Service Location Section (MOVED FROM RIGHT) --- */}
               <div
-                className={`glass-card rounded-2xl border bg-white p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1444,7 +1453,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
                 {mapMode === "detected" && !showFallbackForms && (
-                  <div className="mb-6">
+                  <div className="mb-2.5">
                     <div className="mb-2 text-[11px] font-medium text-gray-600">
                       Automatically detected via browser geolocation. Drop a
                       custom pin if this is inaccurate.
@@ -1563,6 +1572,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     )}
                   </div>
                 )}
+
                 {!showFallbackForms && (
                   <button
                     type="button"
@@ -1570,11 +1580,12 @@ const ClientBookingPageComponent: React.FC = () => {
                       setShowFallbackForms(true);
                       setLocationInputMode("detected");
                     }}
-                    className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Use Manual Address Form
                   </button>
                 )}
+
                 {showFallbackForms && (
                   <div className="mb-4 flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 text-xs">
@@ -1597,7 +1608,9 @@ const ClientBookingPageComponent: React.FC = () => {
                         onChange={() => setLocationInputMode("manual")}
                         className="h-4 w-4 text-blue-600"
                       />
-                      <span className="text-gray-700">Manual City/Prov</span>
+                      <span className="text-gray-700">
+                        Manual City/Province
+                      </span>
                     </label>
                     <button
                       type="button"
@@ -1611,12 +1624,13 @@ const ClientBookingPageComponent: React.FC = () => {
                     </button>
                   </div>
                 )}
+
                 {showFallbackForms && locationInputMode === "detected" ? (
                   <div className="mt-2 space-y-3">
                     <p className="text-xs text-gray-600">
                       Your location is automatically detected.
                     </p>
-                    <div className="w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                    <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <label className="mb-1 block text-xs text-blue-700">
@@ -1762,7 +1776,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   <div className="mt-2 space-y-3">
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
+                        <label className="mb-2 block text-xs text-blue-700">
                           Province *
                         </label>
                         <select
@@ -1784,7 +1798,7 @@ const ClientBookingPageComponent: React.FC = () => {
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
+                        <label className="mb-2 block text-xs text-blue-700">
                           City/Municipality *
                         </label>
                         <select
@@ -1908,7 +1922,7 @@ const ClientBookingPageComponent: React.FC = () => {
               </div>
             </div>
             <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
-              {/* --- Highlight Booking Schedule Section --- */}
+              {/* --- Highlight Booking Schedule Section (STAYS) --- */}
               <div
                 ref={bookingSectionRef}
                 className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -2257,7 +2271,8 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- Payment Method (moved here for desktop) --- */}
+
+              {/* --- Payment Section (DESKTOP) (MOVED FROM LEFT) --- */}
               <div className="hidden md:block">
                 <div ref={paymentSectionRef}>
                   <PaymentSection
@@ -2273,23 +2288,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-4 shadow-xl backdrop-blur-md">
-                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
-                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-                  Notes for Provider{" "}
-                  <span className="text-base font-normal text-gray-400">
-                    (Optional)
-                  </span>
-                </h3>
-                <textarea
-                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
-                  value={notes}
-                  onChange={handleNotesChange}
-                  rows={4}
-                  maxLength={NOTES_CHAR_LIMIT}
-                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
+
               <div className="mt-4 md:hidden">
                 <div ref={paymentSectionRef}>
                   <PaymentSection
@@ -2304,6 +2303,24 @@ const ClientBookingPageComponent: React.FC = () => {
                     isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
+              </div>
+
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Notes for Provider{" "}
+                  <span className="text-base font-normal text-gray-400">
+                    (Optional)
+                  </span>
+                </h3>
+                <textarea
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  rows={4}
+                  maxLength={NOTES_CHAR_LIMIT}
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500" // <-- Add resize-none here
+                />
               </div>
             </div>
           </div>

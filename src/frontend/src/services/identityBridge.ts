@@ -8,7 +8,11 @@
 
 import { signInWithCustomToken, User } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
-import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
+import {
+  getFirebaseAuth,
+  getFirebaseFunctions,
+  storeICCustomToken,
+} from "./firebaseApp";
 
 const FIREBASE_PROJECT_ID = "devsrv-rey";
 const FIREBASE_REGION = "us-central1";
@@ -83,6 +87,9 @@ export async function signInWithInternetIdentity(
     if (!data.success || !data.customToken) {
       throw new Error("Invalid response from Identity Bridge");
     }
+
+    // Store the custom token for potential restoration after phone verification
+    storeICCustomToken(data.customToken);
 
     // Sign in to Firebase with the custom token
     const auth = getFirebaseAuth();

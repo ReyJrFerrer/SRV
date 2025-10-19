@@ -648,6 +648,17 @@ const ProviderDirectionsPage: React.FC = () => {
     tryNext();
   }, [booking, mapApiKey, destResolveStatus]);
 
+  const handleStartService = async () => {
+    if (!bookingId) return;
+    const success = await startBookingById(bookingId);
+    if (success) {
+      const startTime = new Date().toISOString();
+      localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
+      navigate(
+        `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+      );
+    }
+  };
   // Removed manual start handler; auto-start is handled by proximity effect above
 
   if (loading || !providerLocation) {
@@ -818,7 +829,13 @@ const ProviderDirectionsPage: React.FC = () => {
             </p>
           )}
         </div>
-        {/* Start Service button removed; service auto-starts within 50 meters */}
+        <button
+          onClick={handleStartService}
+          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
+          disabled={!destinationHasCoords}
+        >
+          I've Arrived - Start Service
+        </button>
         <button
           onClick={() => navigate(-1)}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"

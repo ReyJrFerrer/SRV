@@ -462,6 +462,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     amountToPay,
     paymentMethod,
     paymentId,
+    locationDetection = "manual", // Default to manual if not provided
   } = payload;
 
   // Authentication
@@ -591,6 +592,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       evidence: null,
       notes: notes || null,
       paymentMethod,
+      // Location detection flag (automatic = detected via GPS/maps, manual = manually entered)
+      locationDetection: locationDetection,
       // Initialize payment status tracking fields
       paymentStatus: paymentId ? "PAID_HELD" : "PENDING",
       paymentId: paymentId || null,
@@ -1253,14 +1256,18 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    // Update reputation scores. If any of these fail, the entire function will fail.
-    console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
-    await updateUserReputationInternal(booking.clientId);
-    console.log(`✅ [completeBooking] Client reputation updated successfully`);
+    // Try-catch of updating reputation scores, if these fails then the functions goes through
+    try {
+      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
+      await updateUserReputationInternal(booking.clientId);
+      console.log(`✅ [completeBooking] Client reputation updated successfully`);
 
-    console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
-    await updateProviderReputationInternal(booking.providerId);
-    console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+      console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
+      await updateProviderReputationInternal(booking.providerId);
+      console.log(`✅ [completeBooking] Provider reputation updated successfully`);
+    } catch (error) {
+      console.log("Reputation couldn't update");
+    }
 
 
     console.log("✅ [completeBooking] Function finished successfully.");
