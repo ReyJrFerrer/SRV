@@ -8,7 +8,50 @@ const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
-  const { profileImageUrl, isUsingDefaultAvatar } = useUserProfile();
+  const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } = useUserProfile();
+
+  // Keep a stable avatar src to avoid flashing default while new image loads
+  const defaultClientAvatar = "/default-client.svg";
+  const clientAvatarCacheKey = "nav:client:avatar";
+  const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
+    const cached = typeof window !== "undefined" ? localStorage.getItem(clientAvatarCacheKey) : null;
+    return (
+      cached ||
+      (profile?.profilePicture?.imageUrl as string | undefined) ||
+      defaultClientAvatar
+    );
+  });
+
+  React.useEffect(() => {
+    // While loading a new avatar, prefer showing previous or raw profile URL over default
+    if (isImageLoading) {
+      // If we have a raw profile URL, use it to avoid default flash
+      const raw = (profile?.profilePicture?.imageUrl as string | undefined) || null;
+      if (raw && stableProfileSrc !== raw) {
+        setStableProfileSrc(raw);
+      }
+      return;
+    }
+
+    // After loading completes, if we have a real image (not default), use it;
+    // otherwise, use cached previous or default
+    const hasReal = !isUsingDefaultAvatar && !!profileImageUrl && profileImageUrl !== defaultClientAvatar;
+    const next = hasReal
+      ? profileImageUrl
+      : (localStorage.getItem(clientAvatarCacheKey) || (profile?.profilePicture?.imageUrl as string | undefined) || defaultClientAvatar);
+    if (next && stableProfileSrc !== next) {
+      setStableProfileSrc(next);
+    }
+  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile, stableProfileSrc]);
+
+  // Persist the last good avatar so we can show it instantly on next mount
+  React.useEffect(() => {
+    try {
+      if (stableProfileSrc) {
+        localStorage.setItem(clientAvatarCacheKey, stableProfileSrc);
+      }
+    } catch {}
+  }, [stableProfileSrc]);
 
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
@@ -186,12 +229,12 @@ const BottomNavigation: React.FC = () => {
                     >
                       {item.label === "Profile" ? (
                         <img
-                          src={isUsingDefaultAvatar ? "/default-client.svg" : profileImageUrl}
+                          src={stableProfileSrc}
                           alt="Profile"
-                          className={`rounded-full object-cover transition-all duration-300 ease-in-out ${
+                          className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
                             isActive
-                              ? "h-9 w-9 scale-110 ring-2 ring-yellow-500 sm:h-11 sm:w-11"
-                              : "h-7 w-7 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500 sm:h-9 sm:w-9"
+                              ? "h-10 w-10 scale-110 ring-2 ring-yellow-500 sm:h-12 sm:w-12"
+                              : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500 sm:h-10 sm:w-10"
                           }`}
                           style={{
                             margin: "0 auto",
@@ -316,10 +359,10 @@ const BottomNavigation: React.FC = () => {
               >
                 {item.label === "Profile" ? (
                   <img
-                    src={isUsingDefaultAvatar ? "/default-client.svg" : profileImageUrl}
+                    src={stableProfileSrc}
                     alt="Profile"
-                    className={`rounded-full object-cover transition-all duration-300 ease-in-out ${
-                      isActive ? "h-9 w-9 ring-2 ring-yellow-500" : "h-7 w-7 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+                    className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
+                      isActive ? "h-10 w-10 ring-2 ring-yellow-500" : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
                     }`}
                     draggable={false}
                   />
