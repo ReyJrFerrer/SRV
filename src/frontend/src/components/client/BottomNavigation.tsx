@@ -180,17 +180,19 @@ const BottomNavigation: React.FC = () => {
         <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
           <div className="grid w-full grid-cols-5 font-medium">
             {navItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.to);
+              // On mobile, show Settings instead of Profile
+              const displayItem = item.label === "Profile" ? settingsItem : item;
+              const isActive = location.pathname.startsWith(displayItem.to);
               if (
-                ["Home", "Booking", "Profile", "Notifications", "Chat"].includes(
-                  item.label,
+                ["Home", "Booking", "Settings", "Notifications", "Chat"].includes(
+                  displayItem.label,
                 )
               ) {
                 const handleMouseEnter = () => {
                   if (!isActive) {
                     setIconStates((prev) => ({
                       ...prev,
-                      [item.label]: getIconSrc(item.label, "hover"),
+                      [displayItem.label]: getIconSrc(displayItem.label, "hover"),
                     }));
                   }
                 };
@@ -199,15 +201,15 @@ const BottomNavigation: React.FC = () => {
                   if (!isActive) {
                     setIconStates((prev) => ({
                       ...prev,
-                      [item.label]: getIconSrc(item.label, "default"),
+                      [displayItem.label]: getIconSrc(displayItem.label, "default"),
                     }));
                   }
                 };
 
                 return (
                   <Link
-                    key={item.label}
-                    to={item.to}
+                    key={displayItem.label}
+                    to={displayItem.to}
                     className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                     onClick={(e) => {
                       if (isActive) {
@@ -227,37 +229,20 @@ const BottomNavigation: React.FC = () => {
                           : "flex w-full items-center justify-center"
                       }
                     >
-                      {item.label === "Profile" ? (
-                        <img
-                          src={stableProfileSrc}
-                          alt="Profile"
-                          className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                            isActive
-                              ? "h-10 w-10 scale-110 ring-2 ring-yellow-500 sm:h-12 sm:w-12"
-                              : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500 sm:h-10 sm:w-10"
-                          }`}
-                          style={{
-                            margin: "0 auto",
-                            pointerEvents: "none",
-                          }}
-                          draggable={false}
-                        />)
-                      : (
-                        <img
-                          src={iconStates[item.label]}
-                          alt={item.label}
-                          className={`transition-all duration-300 ease-in-out ${
-                            isActive
-                              ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
-                              : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
-                          }`}
-                          style={{
-                            margin: "0 auto",
-                            pointerEvents: "none",
-                          }}
-                          draggable={false}
-                        />
-                      )}
+                      <img
+                        src={iconStates[displayItem.label]}
+                        alt={displayItem.label}
+                        className={`transition-all duration-300 ease-in-out ${
+                          isActive
+                            ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
+                            : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
+                        }`}
+                        style={{
+                          margin: "0 auto",
+                          pointerEvents: "none",
+                        }}
+                        draggable={false}
+                      />
                     </div>
                     <span
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
@@ -270,7 +255,7 @@ const BottomNavigation: React.FC = () => {
                         transform: isActive ? "scale(1.05)" : undefined,
                       }}
                     >
-                      {item.label}
+                      {displayItem.label}
                     </span>
                     {item.count > 0 && (
                       <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
@@ -280,8 +265,8 @@ const BottomNavigation: React.FC = () => {
               }
               return (
                 <Link
-                  key={item.label}
-                  to={item.to}
+                  key={displayItem.label}
+                  to={displayItem.to}
                   className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                   onClick={(e) => {
                     if (isActive) {
@@ -303,7 +288,7 @@ const BottomNavigation: React.FC = () => {
                       transform: isActive ? "scale(1.05)" : undefined,
                     }}
                   >
-                    {item.label}
+                    {displayItem.label}
                   </span>
                   {item.count > 0 && (
                     <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
