@@ -243,14 +243,7 @@ const CompleteServicePage: React.FC = () => {
     }
   };
 
-  // Check authentication
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Please log in as a service provider to access this page.
-      </div>
-    );
-  }
+
 
   if (loading) {
     return (
@@ -264,6 +257,15 @@ const CompleteServicePage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
         Booking not found or an error occurred.
+      </div>
+    );
+  }
+
+    // Check authentication
+  if (!isProviderAuthenticated()) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+        Please log in as a service provider to access this page.
       </div>
     );
   }

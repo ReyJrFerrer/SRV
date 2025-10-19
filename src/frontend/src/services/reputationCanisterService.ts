@@ -70,14 +70,15 @@ class ReputationCanisterService {
       const result = await actor.getMyReputationScore();
 
       if ("ok" in result) {
+        console.log("From reputation score", result)
         return result.ok;
       } else {
-        //console.error("❌ Failed to fetch reputation score:", result.err);
-        throw new Error(`Failed to fetch reputation: ${result.err}`);
+        console.error("❌ Failed to fetch reputation score:", result.err);
+        // throw new Error(`Failed to fetch reputation: ${result.err}`);
       }
     } catch (error) {
-      //console.error("❌ Error fetching reputation score:", error);
-      throw new Error("Network error: Could not fetch reputation score");
+      console.error("❌ Error fetching reputation score:", error);
+      // throw new Error("Network error: Could not fetch reputation score");
     }
   }
 
@@ -93,14 +94,15 @@ class ReputationCanisterService {
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.getReputationScore(userPrincipal);
       if ("ok" in result) {
+        console.log("From reputation score", result)
         return result.ok;
       } else {
-        //console.error("❌ Failed to fetch reputation score:", result.err);
-        throw new Error(`Failed to fetch reputation: ${result.err}`);
+        console.error("❌ Failed to fetch reputation score:", result.err);
+        // throw new Error(`Failed to fetch reputation: ${result.err}`);
       }
     } catch (error) {
-      //console.error("❌ Error fetching reputation score:", error);
-      throw new Error("Network error: Could not fetch reputation score");
+      console.error("❌ Error fetching reputation score:", error);
+      // throw new Error("Network error: Could not fetch reputation score");
     }
   }
 
@@ -117,14 +119,15 @@ class ReputationCanisterService {
       );
 
       if ("ok" in result) {
+        console.log("From reputation score", result)
         return result.ok;
       } else {
-        //console.error("❌ Failed to initialize reputation:", result.err);
+        console.error("❌ Failed to initialize reputation:", result.err);
         throw new Error(`Failed to initialize reputation: ${result.err}`);
       }
     } catch (error) {
-      //console.error("❌ Error initializing reputation:", error);
-      throw new Error("Network error: Could not initialize reputation");
+      console.error("❌ Error initializing reputation:", error);
+      // throw new Error("Network error: Could not initialize reputation");
     }
   }
 }
