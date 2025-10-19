@@ -1,0 +1,13 @@
+/* Global layout adjustments for fixed left sidebar on desktop */
+@media (min-width: 768px) {
+  body.has-left-sidebar #root {
+    padding-left: 5rem; /* matches w-20 on the sidebar */
+  }
+}
+
+/* Ensure mobile bottom bar doesn't overlap main content bottom area */
+@media (max-width: 767.98px) {
+  body #root {
+    padding-bottom: 3.5rem; /* approximate height of bottom nav */
+  }
+}
