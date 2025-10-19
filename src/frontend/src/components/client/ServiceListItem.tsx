@@ -14,13 +14,13 @@ import { useServiceImages } from "../../hooks/useMediaLoader";
 interface ServiceListItemProps {
   service: EnrichedService;
   inCategories?: boolean;
-  //isGridItem?: boolean;
+  isGridItem?: boolean;
   retainMobileLayout?: boolean;
 }
 
 // ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({ service, retainMobileLayout = false }) => {
+  ({ service, retainMobileLayout = false, isGridItem = false }) => {
     // Fetch the latest service data to get isVerified
     const { service: fetchedService } = useServiceById(service.id);
     const isVerified = fetchedService?.isVerified;
