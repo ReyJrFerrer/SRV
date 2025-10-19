@@ -155,7 +155,6 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -171,14 +170,13 @@ const ActiveServicePage: React.FC = () => {
   //     </div>
   //   );
   // }
-    if (!isProviderAuthenticated()) {
+  if (!isProviderAuthenticated()) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
         Please log in as a service provider to access this page.
       </div>
     );
   }
-
 
   if (!booking) {
     return (

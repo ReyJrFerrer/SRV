@@ -243,8 +243,6 @@ const CompleteServicePage: React.FC = () => {
     }
   };
 
-
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -261,7 +259,7 @@ const CompleteServicePage: React.FC = () => {
     );
   }
 
-    // Check authentication
+  // Check authentication
   if (!isProviderAuthenticated()) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">

@@ -70,7 +70,7 @@ class ReputationCanisterService {
       const result = await actor.getMyReputationScore();
 
       if ("ok" in result) {
-        console.log("From reputation score", result)
+        console.log("From reputation score", result);
         return result.ok;
       } else {
         console.error("❌ Failed to fetch reputation score:", result.err);
@@ -94,7 +94,7 @@ class ReputationCanisterService {
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.getReputationScore(userPrincipal);
       if ("ok" in result) {
-        console.log("From reputation score", result)
+        console.log("From reputation score", result);
         return result.ok;
       } else {
         console.error("❌ Failed to fetch reputation score:", result.err);
@@ -119,7 +119,7 @@ class ReputationCanisterService {
       );
 
       if ("ok" in result) {
-        console.log("From reputation score", result)
+        console.log("From reputation score", result);
         return result.ok;
       } else {
         console.error("❌ Failed to initialize reputation:", result.err);
