@@ -673,7 +673,6 @@ const ServiceDetailPage: React.FC = () => {
 
     // Mobile accordion state - moved outside IIFE to prevent resets
     const [openDay, setOpenDay] = React.useState<string | null>(null);
-    const [hoveredDay, setHoveredDay] = React.useState<string | null>(null);
 
     // Icon for section header
     const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -704,7 +703,7 @@ const ServiceDetailPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
           {service?.isActive && (
             <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
               Available Now
             </span>
           )}
@@ -725,7 +724,7 @@ const ServiceDetailPage: React.FC = () => {
                     <li key={day} className="py-1">
                       <button
                         type="button"
-                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                        className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400`}
                         onClick={() => setOpenDay(isOpen ? null : day)}
                         aria-expanded={isOpen}
                         aria-controls={`availability-panel-${day}`}
@@ -758,7 +757,7 @@ const ServiceDetailPage: React.FC = () => {
                             slots.map((slot, idx) => (
                               <span
                                 key={slot + idx}
-                                className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md transition hover:bg-yellow-200"
+                                className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md"
                               >
                                 {slot}
                               </span>
@@ -782,9 +781,7 @@ const ServiceDetailPage: React.FC = () => {
                       {days.map((day) => (
                         <th
                           key={day}
-                          className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-50" : "hover:bg-yellow-50"}`}
-                          onMouseEnter={() => setHoveredDay(day)}
-                          onMouseLeave={() => setHoveredDay(null)}
+                          className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm`}
                         >
                           <span className="flex items-center justify-center gap-2">
                             <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
@@ -810,7 +807,7 @@ const ServiceDetailPage: React.FC = () => {
                               >
                                 {slot ? (
                                   <span
-                                    className={`inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-200" : "hover:bg-yellow-200"}`}
+                                    className={`} inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
                                   >
                                     {slot}
                                   </span>
@@ -1063,8 +1060,7 @@ const ServiceDetailPage: React.FC = () => {
               {packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md transition-all duration-200 hover:scale-[0.98] hover:shadow-xl md:flex-row"
-                  style={{ willChange: "transform" }}
+                  className="md:flow-center group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
                 >
                   <div className="flex flex-1 items-center gap-4">
                     <div className="flex min-w-0 flex-1 flex-col">

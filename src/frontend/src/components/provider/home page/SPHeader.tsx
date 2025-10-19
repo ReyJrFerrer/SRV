@@ -78,7 +78,7 @@ const MapModal: React.FC<MapModalProps> = ({
           {/* Recenter button (icon-only, positioned above native zoom +/-) */}
           <button
             type="button"
-            className="pointer-events-auto absolute bottom-24 right-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
+            className="pointer-events-auto absolute bottom-28 right-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
             onClick={() => {
               setMapCenter(center);
               setZoom((z) => (typeof z === "number" ? Math.max(z, 16) : 16));

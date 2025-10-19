@@ -20,7 +20,7 @@ interface ServiceListItemProps {
 
 // ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({ service, isGridItem = false, retainMobileLayout = false }) => {
+  ({ service, retainMobileLayout = false, isGridItem = false }) => {
     // Fetch the latest service data to get isVerified
     const { service: fetchedService } = useServiceById(service.id);
     const isVerified = fetchedService?.isVerified;
