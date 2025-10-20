@@ -253,10 +253,11 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                 />
                 <span
                   className={
-                    textClass + " w-full truncate group-hover:text-blue-700"
+                    textClass +
+                    "w-full items-center truncate group-hover:text-blue-700"
                   }
                 >
-                  {mobileExpanded ? "Bawasan" : "Iba pa"}
+                  {mobileExpanded ? "Bawasan" : "More"}
                 </span>
               </span>
             </button>

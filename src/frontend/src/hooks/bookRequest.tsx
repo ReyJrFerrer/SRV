@@ -34,6 +34,7 @@ export interface BookingRequest {
   amountToPay?: number;
   paymentMethod: "CashOnHand" | "GCash" | "SRVWallet"; // Payment method chosen by client
   paymentId?: string; // Optional payment ID for e-wallet payments (Xendit invoice ID)
+  locationDetection?: "automatic" | "manual"; // Track if location was detected automatically or entered manually
 }
 
 export interface UseBookRequestReturn {
@@ -430,6 +431,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           bookingData.amountToPay,
           bookingData.paymentMethod, // Pass the payment method to the booking
           bookingData.paymentId, // Pass the payment ID (Xendit invoice ID) for e-wallet payments
+          bookingData.locationDetection || "manual", // Pass the location detection mode
         );
         //console.log("✅ Booking created successfully:", booking);
         return booking;

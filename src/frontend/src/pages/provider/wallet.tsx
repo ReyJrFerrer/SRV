@@ -228,7 +228,9 @@ const WalletPage: React.FC = () => {
         setShowTopUpModal(false);
         setTopUpAmount("");
       } else {
-        throw new Error(response.error || "Failed to create top-up invoice");
+        throw new Error(
+          "Failed to create top-up invoice, create an account through the payout settings",
+        );
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to initiate top-up");

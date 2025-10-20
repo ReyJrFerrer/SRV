@@ -289,39 +289,42 @@ const ConversationPage: React.FC = () => {
       </main>
 
       {/* Message Input Area */}
-      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3 shadow-md">
-        <form
-          onSubmit={handleSendMessage}
-          className="mx-auto flex max-w-3xl items-center gap-3"
-        >
-          <input
-            type="text"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type a message..."
-            maxLength={500}
-            disabled={sendingMessage || !currentConversation}
-            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={
-              sendingMessage || !messageText.trim() || !currentConversation
-            }
-            className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+      <div className="sticky bottom-16 left-0 z-30 mb-20 flex w-full flex-col">
+        <div className="border-t border-gray-200 bg-white p-3 shadow-md">
+          <form
+            onSubmit={handleSendMessage}
+            className="mx-auto flex max-w-3xl items-center gap-3"
           >
-            <PaperAirplaneIcon className="h-5 w-5" />
-          </button>
-        </form>
-        {messageText.length > 400 && (
-          <p className="mt-1 text-center text-xs text-gray-500">
-            {500 - messageText.length} characters remaining
-          </p>
-        )}
-      </footer>
+            <input
+              type="text"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Type a message..."
+              maxLength={500}
+              disabled={sendingMessage || !currentConversation}
+              className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={
+                sendingMessage || !messageText.trim() || !currentConversation
+              }
+              className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              <PaperAirplaneIcon className="h-5 w-5" />
+            </button>
+          </form>
+
+          {messageText.length > 400 && (
+            <p className="mt-1 text-center text-xs text-gray-500">
+              {500 - messageText.length} characters remaining
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 z-30 w-full">
+      <div className="w-full">
         <BottomNavigation />
       </div>
     </div>
