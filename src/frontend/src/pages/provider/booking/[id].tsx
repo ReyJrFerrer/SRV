@@ -282,7 +282,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     bookings,
     acceptBookingById,
     declineBookingById,
-    completeBookingById,
     isBookingActionInProgress,
     loading: hookLoading,
     error: hookError,
@@ -447,26 +446,28 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
-  // Updated: Navigate to directions page first; actual start occurs from directions view
+  console.log("From booking details page", specificBooking);
+
+  // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = async () => {
     if (!specificBooking) return;
-    // commented for debugging
-    // navigate(`/provider/directions/${specificBooking.id}`);
-    startBookingById(specificBooking.id);
+
+    // Check the locationDetection flag
+    const locationDetection = (specificBooking as any).locationDetection;
+
+    if (locationDetection === "automatic") {
+      // If location was detected automatically (via GPS/maps), navigate to directions page
+      navigate(`/provider/directions/${specificBooking.id}`);
+    } else {
+      // If location was manually entered, start the booking directly
+      startBookingById(specificBooking.id);
+      navigate(`/provider/active-service/${specificBooking.id}`);
+    }
   };
 
   const handleCompleteService = async () => {
     if (!specificBooking) return;
-    const success = await completeBookingById(specificBooking.id);
-    if (success) {
-      await refreshBookings();
-      const updatedBooking = bookings.find(
-        (booking) => booking.id === specificBooking.id,
-      );
-      if (updatedBooking) {
-        setSpecificBooking(updatedBooking);
-      }
-    }
+    navigate(`/provider/complete-service/${specificBooking.id}`);
   };
 
   // Chat button handler (ProviderBookingItemCard logic)

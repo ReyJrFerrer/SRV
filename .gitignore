@@ -28,4 +28,5 @@ canister_ids.json
 
 pubsub-debug.log
 
-.dev-dist/
+# Vite PWA build/dev output
+/src/frontend/dev-dist

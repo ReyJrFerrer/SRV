@@ -32,7 +32,7 @@ const ActiveServicePage: React.FC = () => {
   const {
     getBookingById,
     loading,
-    error,
+    // error,
     isProviderAuthenticated,
     checkCommissionValidation,
   } = useProviderBookingManagement();
@@ -155,14 +155,6 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Please log in as a service provider to access this page.
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -171,13 +163,20 @@ const ActiveServicePage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Error: {error}
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+  //       Error: {error}
+  //     </div>
+  //   );
+  // }
+  // if (!isProviderAuthenticated()) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+  //       Please log in as a service provider to access this page.
+  //     </div>
+  //   );
+  // }
 
   if (!booking) {
     return (
@@ -202,7 +201,7 @@ const ActiveServicePage: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/provider/booking/${booking.id}`)}
             className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >

@@ -66,13 +66,16 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   // isProviderOnboarded = false,
 }) => (
   <div
-    className={`mt-4 bg-white p-4 md:rounded-xl md:shadow-sm ${
+    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
       highlight
         ? "border-2 border-red-500 ring-2 ring-red-200"
-        : "border border-gray-200"
+        : "border border-gray-100"
     }`}
   >
-    <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
+    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+      <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+      Payment Method
+    </h3>
     <div className="space-y-3">
       <div
         onClick={() => setPaymentMethod("CashOnHand")}
@@ -91,7 +94,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-2">
+        <div className="pl-4 pt-0">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>
@@ -662,7 +665,11 @@ const ClientBookingPageComponent: React.FC = () => {
 
       return userBookings.some((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 
@@ -1052,7 +1059,11 @@ const ClientBookingPageComponent: React.FC = () => {
       const [startTimeStr] = selectedTime.split("-");
       const duplicateBooking = userBookings.find((booking) => {
         // Skip cancelled or declined bookings
-        if (booking.status === "Cancelled" || booking.status === "Declined") {
+        if (
+          booking.status === "Cancelled" ||
+          booking.status === "Declined" ||
+          booking.status === "Completed"
+        ) {
           return false;
         }
 
@@ -1119,6 +1130,7 @@ const ClientBookingPageComponent: React.FC = () => {
         notes: notes,
         amountToPay: parseFloat(amountPaid),
         paymentMethod: paymentMethod, // Include the selected payment method
+        locationDetection: !showFallbackForms ? "automatic" : "manual", // Map the mode to location detection type
       };
       // Append raw coordinates if map picker used
       if (mapLocation?.lat && mapLocation?.lng) {
@@ -1367,7 +1379,7 @@ const ClientBookingPageComponent: React.FC = () => {
         <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
           <div className="md:flex md:gap-x-8">
             <div className="space-y-6 md:w-1/2">
-              {/* --- Highlight Select Package Section --- */}
+              {/* --- Highlight Select Package Section (STAYS) --- */}
               <div
                 ref={packageSectionRef}
                 className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -1412,24 +1424,505 @@ const ClientBookingPageComponent: React.FC = () => {
                   </label>
                 ))}
               </div>
-              <div className="hidden md:block">
-                <div ref={paymentSectionRef}>
-                  <PaymentSection
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
-                    packages={packages}
-                    amountPaid={amountPaid}
-                    handleAmountChange={handleAmountChange}
-                    paymentError={paymentError}
-                    totalPrice={totalPrice}
-                    highlight={highlightInput === "paymentSection"}
-                    isProviderOnboarded={isProviderOnboarded}
-                  />
-                </div>
+
+              {/* --- Service Location Section (MOVED FROM RIGHT) --- */}
+              <div
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
+              >
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Service Location <span className="text-red-500">*</span>
+                </h3>
+                {/* Toggle buttons */}
+                {!showFallbackForms && (
+                  <div className="mb-4 flex gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("detected")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Use Detected Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapMode("custom")}
+                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
+                    >
+                      Pin / Search Location
+                    </button>
+                  </div>
+                )}
+                {mapMode === "detected" && !showFallbackForms && (
+                  <div className="mb-2.5">
+                    <div className="mb-2 text-[11px] font-medium text-gray-600">
+                      Automatically detected via browser geolocation. Drop a
+                      custom pin if this is inaccurate.
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-gray-200">
+                      {mapsReady && geoLocation ? (
+                        <Map
+                          defaultCenter={{
+                            lat: geoLocation.latitude,
+                            lng: geoLocation.longitude,
+                          }}
+                          defaultZoom={16}
+                          mapId="6922634ff75ae05ac38cc473"
+                          style={{ width: "100%", height: 260 }}
+                          disableDefaultUI={true}
+                          zoomControl={true}
+                        >
+                          <AdvancedMarker
+                            position={{
+                              lat: geoLocation.latitude,
+                              lng: geoLocation.longitude,
+                            }}
+                          />
+                        </Map>
+                      ) : (
+                        <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                          {locationLoading || detectedStatus === "loading"
+                            ? "Detecting location..."
+                            : "Map loading..."}
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
+                      {detectedStatus === "ok" && detectedAddress
+                        ? detectedAddress
+                        : detectedStatus === "failed"
+                          ? "Unable to resolve address. You can switch to Pin / Search."
+                          : detectedStatus === "loading" || locationLoading
+                            ? "Resolving detected address..."
+                            : !geoLocation
+                              ? "Location not yet available."
+                              : "Detected."}
+                    </div>
+                  </div>
+                )}
+                {mapMode === "custom" && !showFallbackForms && (
+                  <div className="mb-4">
+                    <LocationMapPicker
+                      value={
+                        mapLocation
+                          ? {
+                              ...mapLocation,
+                              address: mapLocation.address ?? "",
+                            }
+                          : null
+                      }
+                      onChange={(loc: any) => {
+                        // Save structured map location
+                        setMapLocation(loc);
+                        const preciseAddressForDB =
+                          loc.formatted_address || loc.address || "";
+                        const placeName = loc.rawName;
+                        let displayAddress = preciseAddressForDB;
+                        if (
+                          placeName &&
+                          !preciseAddressForDB.startsWith(placeName)
+                        ) {
+                          displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                        }
+                        setMapPreciseAddress(preciseAddressForDB);
+                        setMapDisplayAddress(displayAddress);
+                        if (highlightInput === "mapLocation")
+                          setHighlightInput("");
+                      }}
+                      persistKey="booking:lastLocation"
+                      highlight={highlightInput === "mapLocation"}
+                      label="Pin / Search Location"
+                    />
+                    {(mapDisplayAddress || mapPreciseAddress) && (
+                      <div className="mt-2 space-y-1">
+                        {mapDisplayAddress && (
+                          <div className="flex items-start gap-1">
+                            <span
+                              className="truncate text-xs font-medium text-gray-700"
+                              title={mapDisplayAddress}
+                            >
+                              {mapDisplayAddress}
+                            </span>
+                            <span
+                              className="cursor-help text-[10px] text-blue-500"
+                              title="Display Address: Readable version (place/building, street, barangay, city)."
+                            >
+                              (?)
+                            </span>
+                          </div>
+                        )}
+                        {mapPreciseAddress &&
+                          mapDisplayAddress &&
+                          mapDisplayAddress !== mapPreciseAddress && (
+                            <div className="flex items-start gap-1">
+                              <span
+                                className="truncate text-[10px] text-gray-500"
+                                title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                              >
+                                Provider reference: {mapPreciseAddress}
+                              </span>
+                              <span
+                                className="cursor-help text-[10px] text-blue-400"
+                                title="Used internally to help the provider navigate accurately."
+                              >
+                                (i)
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!showFallbackForms && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFallbackForms(true);
+                      setLocationInputMode("detected");
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Use Manual Address Form
+                  </button>
+                )}
+
+                {showFallbackForms && (
+                  <div className="mb-4 flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="locationInputMode"
+                        value="detected"
+                        checked={locationInputMode === "detected"}
+                        onChange={() => setLocationInputMode("detected")}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-gray-700">Use Detected</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="radio"
+                        name="locationInputMode"
+                        value="manual"
+                        checked={locationInputMode === "manual"}
+                        onChange={() => setLocationInputMode("manual")}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-gray-700">
+                        Manual City/Province
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFallbackForms(false);
+                        setLocationInputMode("hidden");
+                      }}
+                      className="ml-auto text-xs text-blue-600 underline"
+                    >
+                      Use Maps
+                    </button>
+                  </div>
+                )}
+
+                {showFallbackForms && locationInputMode === "detected" ? (
+                  <div className="mt-2 space-y-3">
+                    <p className="text-xs text-gray-600">
+                      Your location is automatically detected.
+                    </p>
+                    <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Municipality/City
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationLoading
+                                ? "Detecting..."
+                                : (displayMunicipality || "")
+                                      .trim()
+                                      .toLowerCase() === "baguio"
+                                  ? "Baguio City"
+                                  : displayMunicipality || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                            placeholder="Municipality/City"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-blue-700">
+                            Province
+                          </label>
+                          <input
+                            type="text"
+                            value={
+                              locationLoading
+                                ? "Detecting..."
+                                : displayProvince ===
+                                    "Cordillera Administrative Region"
+                                  ? "Benguet"
+                                  : displayProvince || ""
+                            }
+                            readOnly
+                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                            placeholder="Province"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Barangay dropdown populated from ph_locations.json */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {barangayOptions
+                        .filter(
+                          (b) =>
+                            b &&
+                            b.trim().toLowerCase().replace(/\s+/g, "") !==
+                              "others",
+                        )
+                        .map((barangay, idx) => (
+                          <option key={idx} value={barangay}>
+                            {barangay}
+                          </option>
+                        ))}
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
+                    <input
+                      ref={streetRef}
+                      type="text"
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!selectedBarangay}
+                      minLength={3}
+                      maxLength={20}
+                    />
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                ) : showFallbackForms && locationInputMode === "manual" ? (
+                  <div className="mt-2 space-y-3">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="mb-2 block text-xs text-blue-700">
+                          Province *
+                        </label>
+                        <select
+                          value={manualProvince}
+                          onChange={(e) => {
+                            setManualProvince(e.target.value);
+                            setManualCity("");
+                          }}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                        >
+                          <option value="" disabled>
+                            Select Province
+                          </option>
+                          {phLocations.provinces.map((prov: any) => (
+                            <option key={prov.name} value={prov.name}>
+                              {prov.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-2 block text-xs text-blue-700">
+                          City/Municipality *
+                        </label>
+                        <select
+                          value={manualCity}
+                          onChange={(e) => setManualCity(e.target.value)}
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                          disabled={!manualProvince}
+                        >
+                          <option value="" disabled>
+                            Select City/Municipality
+                          </option>
+                          {manualProvince &&
+                            phLocations.provinces
+                              .find(
+                                (prov: any) =>
+                                  prov.name.trim().toLowerCase() ===
+                                  manualProvince.trim().toLowerCase(),
+                              )
+                              ?.municipalities.map((muni: any) => (
+                                <option key={muni.name} value={muni.name}>
+                                  {muni.name}
+                                </option>
+                              ))}
+                        </select>
+                      </div>
+                    </div>
+                    {/* Barangay dropdown for manual selection */}
+                    <select
+                      ref={barangayRef}
+                      value={selectedBarangay}
+                      onChange={(e) => setSelectedBarangay(e.target.value)}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                        highlightInput === "barangay"
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!manualCity}
+                    >
+                      <option value="" disabled>
+                        Select Barangay *
+                      </option>
+                      {manualBarangayOptions.map((barangay, idx) => (
+                        <option key={idx} value={barangay}>
+                          {barangay}
+                        </option>
+                      ))}
+                      <option value="__other__">Others</option>
+                    </select>
+                    {selectedBarangay === "__other__" && (
+                      <input
+                        ref={otherBarangayRef}
+                        type="text"
+                        placeholder="Enter your Barangay *"
+                        value={otherBarangay}
+                        onChange={(e) => setOtherBarangay(e.target.value)}
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                          highlightInput === "otherBarangay" ||
+                          (otherBarangay &&
+                            (otherBarangay.trim().length < 3 ||
+                              otherBarangay.trim().length > 20))
+                            ? "border-2 border-red-500 ring-2 ring-red-200"
+                            : "border-blue-400"
+                        }`}
+                        minLength={3}
+                        maxLength={20}
+                        required
+                      />
+                    )}
+                    <input
+                      ref={streetRef}
+                      type="text"
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !selectedBarangay
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "street" ||
+                        (street &&
+                          (street.trim().length < 3 ||
+                            street.trim().length > 20))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!selectedBarangay}
+                      minLength={3}
+                      maxLength={20}
+                    />
+                    <input
+                      ref={houseNumberRef}
+                      type="text"
+                      placeholder="House/Unit No. *"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                        !street
+                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                          : "border-gray-300 bg-white text-gray-700"
+                      } ${
+                        highlightInput === "houseNumber" ||
+                        (houseNumber &&
+                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : ""
+                      }`}
+                      disabled={!street}
+                      maxLength={15}
+                    />
+                    {/* Landmark input, always enabled */}
+                    <input
+                      type="text"
+                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
-              {/* --- Highlight Booking Schedule Section --- */}
+              {/* --- Highlight Booking Schedule Section (STAYS) --- */}
               <div
                 ref={bookingSectionRef}
                 className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -1439,8 +1932,8 @@ const ClientBookingPageComponent: React.FC = () => {
                     : "border-yellow-100"
                 }`}
               >
-                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-yellow-900">
-                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-yellow-400"></span>
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
                   Booking Schedule <span className="text-red-500">*</span>
                 </h3>
                 <div className="mb-4 flex gap-3">
@@ -1778,513 +2271,24 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- Service Location Section (Detected default; custom pin/search secondary) --- */}
-              <div
-                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "mapLocation" ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"}`}
-              >
-                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
-                  Service Location <span className="text-red-500">*</span>
-                </h3>
-                {/* Toggle buttons */}
-                {!showFallbackForms && (
-                  <div className="mb-4 flex gap-3 text-xs font-medium">
-                    <button
-                      type="button"
-                      onClick={() => setMapMode("detected")}
-                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "detected" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                    >
-                      Use Detected Location
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMapMode("custom")}
-                      className={`flex-1 rounded-lg border px-3 py-2 transition ${mapMode === "custom" ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"}`}
-                    >
-                      Pin / Search Location
-                    </button>
-                  </div>
-                )}
-                {mapMode === "detected" && !showFallbackForms && (
-                  <div className="mb-6">
-                    <div className="mb-2 text-[11px] font-medium text-gray-600">
-                      Automatically detected via browser geolocation. Drop a
-                      custom pin if this is inaccurate.
-                    </div>
-                    <div className="overflow-hidden rounded-xl border border-gray-200">
-                      {mapsReady && geoLocation ? (
-                        <Map
-                          defaultCenter={{
-                            lat: geoLocation.latitude,
-                            lng: geoLocation.longitude,
-                          }}
-                          defaultZoom={16}
-                          mapId="6922634ff75ae05ac38cc473"
-                          style={{ width: "100%", height: 260 }}
-                          disableDefaultUI={true}
-                          zoomControl={true}
-                        >
-                          <AdvancedMarker
-                            position={{
-                              lat: geoLocation.latitude,
-                              lng: geoLocation.longitude,
-                            }}
-                          />
-                        </Map>
-                      ) : (
-                        <div className="flex h-64 items-center justify-center text-sm text-gray-500">
-                          {locationLoading || detectedStatus === "loading"
-                            ? "Detecting location..."
-                            : "Map loading..."}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
-                      {detectedStatus === "ok" && detectedAddress
-                        ? detectedAddress
-                        : detectedStatus === "failed"
-                          ? "Unable to resolve address. You can switch to Pin / Search."
-                          : detectedStatus === "loading" || locationLoading
-                            ? "Resolving detected address..."
-                            : !geoLocation
-                              ? "Location not yet available."
-                              : "Detected."}
-                    </div>
-                  </div>
-                )}
-                {mapMode === "custom" && !showFallbackForms && (
-                  <div className="mb-4">
-                    <LocationMapPicker
-                      value={
-                        mapLocation
-                          ? {
-                              ...mapLocation,
-                              address: mapLocation.address ?? "",
-                            }
-                          : null
-                      }
-                      onChange={(loc: any) => {
-                        // Save structured map location
-                        setMapLocation(loc);
-                        const preciseAddressForDB =
-                          loc.formatted_address || loc.address || "";
-                        const placeName = loc.rawName;
-                        let displayAddress = preciseAddressForDB;
-                        if (
-                          placeName &&
-                          !preciseAddressForDB.startsWith(placeName)
-                        ) {
-                          displayAddress = `${placeName}, ${preciseAddressForDB}`;
-                        }
-                        setMapPreciseAddress(preciseAddressForDB);
-                        setMapDisplayAddress(displayAddress);
-                        if (highlightInput === "mapLocation")
-                          setHighlightInput("");
-                      }}
-                      persistKey="booking:lastLocation"
-                      highlight={highlightInput === "mapLocation"}
-                      label="Pin / Search Location"
-                    />
-                    {(mapDisplayAddress || mapPreciseAddress) && (
-                      <div className="mt-2 space-y-1">
-                        {mapDisplayAddress && (
-                          <div className="flex items-start gap-1">
-                            <span
-                              className="truncate text-xs font-medium text-gray-700"
-                              title={mapDisplayAddress}
-                            >
-                              {mapDisplayAddress}
-                            </span>
-                            <span
-                              className="cursor-help text-[10px] text-blue-500"
-                              title="Display Address: Readable version (place/building, street, barangay, city)."
-                            >
-                              (?)
-                            </span>
-                          </div>
-                        )}
-                        {mapPreciseAddress &&
-                          mapDisplayAddress &&
-                          mapDisplayAddress !== mapPreciseAddress && (
-                            <div className="flex items-start gap-1">
-                              <span
-                                className="truncate text-[10px] text-gray-500"
-                                title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
-                              >
-                                Provider reference: {mapPreciseAddress}
-                              </span>
-                              <span
-                                className="cursor-help text-[10px] text-blue-400"
-                                title="Used internally to help the provider navigate accurately."
-                              >
-                                (i)
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {!showFallbackForms && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowFallbackForms(true);
-                      setLocationInputMode("detected");
-                    }}
-                    className="mb-3 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Use Manual Address Form
-                  </button>
-                )}
-                {showFallbackForms && (
-                  <div className="mb-4 flex flex-wrap gap-4">
-                    <label className="flex items-center gap-2 text-xs">
-                      <input
-                        type="radio"
-                        name="locationInputMode"
-                        value="detected"
-                        checked={locationInputMode === "detected"}
-                        onChange={() => setLocationInputMode("detected")}
-                        className="h-4 w-4 text-blue-600"
-                      />
-                      <span className="text-gray-700">Use Detected</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-xs">
-                      <input
-                        type="radio"
-                        name="locationInputMode"
-                        value="manual"
-                        checked={locationInputMode === "manual"}
-                        onChange={() => setLocationInputMode("manual")}
-                        className="h-4 w-4 text-blue-600"
-                      />
-                      <span className="text-gray-700">Manual City/Prov</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowFallbackForms(false);
-                        setLocationInputMode("hidden");
-                      }}
-                      className="ml-auto text-xs text-blue-600 underline"
-                    >
-                      Use Maps
-                    </button>
-                  </div>
-                )}
-                {showFallbackForms && locationInputMode === "detected" ? (
-                  <div className="mt-2 space-y-3">
-                    <p className="text-xs text-gray-600">
-                      Your location is automatically detected.
-                    </p>
-                    <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="mb-1 block text-xs text-blue-700">
-                            Municipality/City
-                          </label>
-                          <input
-                            type="text"
-                            value={
-                              locationLoading
-                                ? "Detecting..."
-                                : (displayMunicipality || "")
-                                      .trim()
-                                      .toLowerCase() === "baguio"
-                                  ? "Baguio City"
-                                  : displayMunicipality || ""
-                            }
-                            readOnly
-                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
-                            placeholder="Municipality/City"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="mb-1 block text-xs text-blue-700">
-                            Province
-                          </label>
-                          <input
-                            type="text"
-                            value={
-                              locationLoading
-                                ? "Detecting..."
-                                : displayProvince ===
-                                    "Cordillera Administrative Region"
-                                  ? "Benguet"
-                                  : displayProvince || ""
-                            }
-                            readOnly
-                            className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
-                            placeholder="Province"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {/* Barangay dropdown populated from ph_locations.json */}
-                    <select
-                      ref={barangayRef}
-                      value={selectedBarangay}
-                      onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                    >
-                      <option value="" disabled>
-                        Select Barangay *
-                      </option>
-                      {barangayOptions
-                        .filter(
-                          (b) =>
-                            b &&
-                            b.trim().toLowerCase().replace(/\s+/g, "") !==
-                              "others",
-                        )
-                        .map((barangay, idx) => (
-                          <option key={idx} value={barangay}>
-                            {barangay}
-                          </option>
-                        ))}
-                      <option value="__other__">Others</option>
-                    </select>
-                    {selectedBarangay === "__other__" && (
-                      <input
-                        ref={otherBarangayRef}
-                        type="text"
-                        placeholder="Enter your Barangay *"
-                        value={otherBarangay}
-                        onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
-                          (otherBarangay &&
-                            (otherBarangay.trim().length < 3 ||
-                              otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
-                        minLength={3}
-                        maxLength={20}
-                        required
-                      />
-                    )}
-                    <input
-                      ref={streetRef}
-                      type="text"
-                      placeholder="Street Name *"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                      disabled={!selectedBarangay}
-                      minLength={3}
-                      maxLength={20}
-                    />
-                    <input
-                      ref={houseNumberRef}
-                      type="text"
-                      placeholder="House/Unit No. *"
-                      value={houseNumber}
-                      onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                      disabled={!street}
-                      maxLength={15}
-                    />
-                    {/* Landmark input, always enabled */}
-                    <input
-                      type="text"
-                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
-                      value={landmark}
-                      onChange={(e) => setLandmark(e.target.value)}
-                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
-                  </div>
-                ) : showFallbackForms && locationInputMode === "manual" ? (
-                  <div className="mt-2 space-y-3">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
-                          Province *
-                        </label>
-                        <select
-                          value={manualProvince}
-                          onChange={(e) => {
-                            setManualProvince(e.target.value);
-                            setManualCity("");
-                          }}
-                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                        >
-                          <option value="" disabled>
-                            Select Province
-                          </option>
-                          {phLocations.provinces.map((prov: any) => (
-                            <option key={prov.name} value={prov.name}>
-                              {prov.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="mb-1 block text-xs text-blue-700">
-                          City/Municipality *
-                        </label>
-                        <select
-                          value={manualCity}
-                          onChange={(e) => setManualCity(e.target.value)}
-                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                          disabled={!manualProvince}
-                        >
-                          <option value="" disabled>
-                            Select City/Municipality
-                          </option>
-                          {manualProvince &&
-                            phLocations.provinces
-                              .find(
-                                (prov: any) =>
-                                  prov.name.trim().toLowerCase() ===
-                                  manualProvince.trim().toLowerCase(),
-                              )
-                              ?.municipalities.map((muni: any) => (
-                                <option key={muni.name} value={muni.name}>
-                                  {muni.name}
-                                </option>
-                              ))}
-                        </select>
-                      </div>
-                    </div>
-                    {/* Barangay dropdown for manual selection */}
-                    <select
-                      ref={barangayRef}
-                      value={selectedBarangay}
-                      onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                      disabled={!manualCity}
-                    >
-                      <option value="" disabled>
-                        Select Barangay *
-                      </option>
-                      {manualBarangayOptions.map((barangay, idx) => (
-                        <option key={idx} value={barangay}>
-                          {barangay}
-                        </option>
-                      ))}
-                      <option value="__other__">Others</option>
-                    </select>
-                    {selectedBarangay === "__other__" && (
-                      <input
-                        ref={otherBarangayRef}
-                        type="text"
-                        placeholder="Enter your Barangay *"
-                        value={otherBarangay}
-                        onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`mt-3 w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
-                          (otherBarangay &&
-                            (otherBarangay.trim().length < 3 ||
-                              otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
-                        minLength={3}
-                        maxLength={20}
-                        required
-                      />
-                    )}
-                    <input
-                      ref={streetRef}
-                      type="text"
-                      placeholder="Street Name *"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                      disabled={!selectedBarangay}
-                      minLength={3}
-                      maxLength={20}
-                    />
-                    <input
-                      ref={houseNumberRef}
-                      type="text"
-                      placeholder="House/Unit No. *"
-                      value={houseNumber}
-                      onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
-                      disabled={!street}
-                      maxLength={15}
-                    />
-                    {/* Landmark input, always enabled */}
-                    <input
-                      type="text"
-                      placeholder="Building / Subdivision / Sitio / etc. (optional)"
-                      value={landmark}
-                      onChange={(e) => setLandmark(e.target.value)}
-                      className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
-                  </div>
-                ) : null}
+
+              {/* --- Payment Section (DESKTOP) (MOVED FROM LEFT) --- */}
+              <div className="hidden md:block">
+                <div ref={paymentSectionRef}>
+                  <PaymentSection
+                    paymentMethod={paymentMethod}
+                    setPaymentMethod={setPaymentMethod}
+                    packages={packages}
+                    amountPaid={amountPaid}
+                    handleAmountChange={handleAmountChange}
+                    paymentError={paymentError}
+                    totalPrice={totalPrice}
+                    highlight={highlightInput === "paymentSection"}
+                    isProviderOnboarded={isProviderOnboarded}
+                  />
+                </div>
               </div>
-              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
-                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
-                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-                  Notes for Provider{" "}
-                  <span className="text-base font-normal text-gray-400">
-                    (Optional)
-                  </span>
-                </h3>
-                <textarea
-                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
-                  value={notes}
-                  onChange={handleNotesChange}
-                  rows={4}
-                  maxLength={NOTES_CHAR_LIMIT}
-                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
+
               <div className="mt-4 md:hidden">
                 <div ref={paymentSectionRef}>
                   <PaymentSection
@@ -2299,6 +2303,24 @@ const ClientBookingPageComponent: React.FC = () => {
                     isProviderOnboarded={isProviderOnboarded}
                   />
                 </div>
+              </div>
+
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Notes for Provider{" "}
+                  <span className="text-base font-normal text-gray-400">
+                    (Optional)
+                  </span>
+                </h3>
+                <textarea
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  rows={4}
+                  maxLength={NOTES_CHAR_LIMIT}
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500" // <-- Add resize-none here
+                />
               </div>
             </div>
           </div>

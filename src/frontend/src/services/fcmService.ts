@@ -165,6 +165,8 @@ class FCMService {
    */
   private async performInitialization(): Promise<string | null> {
     try {
+      console.log("[FCM] Starting initialization...");
+      
       // Check if notifications are supported
       if (!("Notification" in window)) {
         console.warn("[FCM] Notifications not supported in this browser");
@@ -178,14 +180,22 @@ class FCMService {
       }
 
       // Wait for service worker to be ready
+      console.log("[FCM] Waiting for service worker to be ready...");
       const registration = await navigator.serviceWorker.ready;
       console.log("[FCM] Service Worker ready:", registration.scope);
+      console.log("[FCM] Service Worker state:", registration.active?.state);
 
       // Initialize Firebase Messaging with Vite PWA service worker
+      console.log("[FCM] Initializing Firebase Messaging...");
       this.messaging = getMessaging(getFirebaseApp());
 
       // Request notification permission
+      console.log(
+        "[FCM] Current permission status:",
+        Notification.permission,
+      );
       const permission = await Notification.requestPermission();
+      console.log("[FCM] Permission request result:", permission);
 
       if (permission !== "granted") {
         console.info("[FCM] Notification permission denied");
@@ -198,6 +208,12 @@ class FCMService {
         console.error("[FCM] VAPID key not configured");
         return null;
       }
+      
+      console.log(
+        "[FCM] VAPID key configured:",
+        vapidKey.substring(0, 20) + "...",
+      );
+      console.log("[FCM] Requesting FCM token...");
 
       const token = await getToken(this.messaging, {
         vapidKey,
@@ -208,26 +224,41 @@ class FCMService {
         this.currentToken = token;
         this.isInitialized = true;
         this.saveCachedToken(token); // Cache the token
-        console.log("[FCM] Token obtained successfully");
+        console.log("[FCM] ✅ Token obtained successfully");
+        console.log("[FCM] Token preview:", token.substring(0, 30) + "...");
 
         // Setup foreground message listener
         this.setupForegroundListener();
 
         return token;
       } else {
-        console.warn("[FCM] No registration token available");
+        console.warn("[FCM] ❌ No registration token available");
         return null;
       }
     } catch (error: any) {
+      console.error("[FCM] ❌ Initialization error:", error);
+      console.error("[FCM] Error code:", error?.code);
+      console.error("[FCM] Error message:", error?.message);
+      console.error("[FCM] Full error:", JSON.stringify(error, null, 2));
+      
       // Handle rate limiting
       if (
         error?.code === "messaging/too-many-requests" ||
+        error?.code === "messaging/token-subscribe-failed" ||
         error?.message?.includes("429") ||
         error?.message?.includes("Too Many Requests") ||
-        error?.message?.includes("push service error")
+        error?.message?.includes("push service error") ||
+        error?.message?.includes("messaging/token-subscribe")
       ) {
         console.error(
           "[FCM] Rate limit exceeded or push service error. Please wait before trying again.",
+        );
+        console.error(
+          "[FCM] Common causes:",
+          "\n  1. Too many token requests in a short time",
+          "\n  2. Firebase push service is temporarily unavailable",
+          "\n  3. Invalid VAPID key",
+          "\n  4. Service worker configuration issue",
         );
         this.setRateLimited(); // Set cooldown period
 
@@ -240,7 +271,7 @@ class FCMService {
           return this.currentToken;
         }
       } else {
-        console.error("[FCM] Initialization failed:", error);
+        console.error("[FCM] Initialization failed with unexpected error");
       }
       return null;
     }
@@ -405,6 +436,60 @@ class FCMService {
   clearRateLimit(): void {
     this.rateLimitedUntil = 0;
     console.log("[FCM] Rate limit cleared");
+  }
+
+  /**
+   * Force re-initialization (clears cache and rate limits)
+   * Use this to troubleshoot FCM issues
+   */
+  async forceReinitialize(): Promise<string | null> {
+    console.log("[FCM] Force re-initializing...");
+    
+    // Clear all cached state
+    this.clearCachedToken();
+    this.clearRateLimit();
+    this.currentToken = null;
+    this.isInitialized = false;
+    this.initializationPromise = null;
+    
+    // Try to delete existing token from Firebase
+    if (this.messaging && this.currentToken) {
+      try {
+        await deleteToken(this.messaging);
+        console.log("[FCM] Deleted existing Firebase token");
+      } catch (error) {
+        console.warn("[FCM] Could not delete existing token:", error);
+      }
+    }
+    
+    // Wait a bit to avoid immediate rate limiting
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Re-initialize
+    return await this.initialize();
+  }
+
+  /**
+   * Get detailed status for debugging
+   */
+  getDebugInfo(): {
+    isInitialized: boolean;
+    hasToken: boolean;
+    tokenPreview: string | null;
+    isRateLimited: boolean;
+    rateLimitRemaining: number;
+    permissionStatus: NotificationPermission;
+    hasMessaging: boolean;
+  } {
+    return {
+      isInitialized: this.isInitialized,
+      hasToken: this.currentToken !== null,
+      tokenPreview: this.currentToken ? `${this.currentToken.substring(0, 30)}...` : null,
+      isRateLimited: this.isRateLimited(),
+      rateLimitRemaining: this.getRateLimitRemaining(),
+      permissionStatus: this.getPermissionStatus(),
+      hasMessaging: this.messaging !== null,
+    };
   }
 }
 
