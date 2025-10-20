@@ -166,7 +166,7 @@ class FCMService {
   private async performInitialization(): Promise<string | null> {
     try {
       console.log("[FCM] Starting initialization...");
-      
+
       // Check if notifications are supported
       if (!("Notification" in window)) {
         console.warn("[FCM] Notifications not supported in this browser");
@@ -190,10 +190,7 @@ class FCMService {
       this.messaging = getMessaging(getFirebaseApp());
 
       // Request notification permission
-      console.log(
-        "[FCM] Current permission status:",
-        Notification.permission,
-      );
+      console.log("[FCM] Current permission status:", Notification.permission);
       const permission = await Notification.requestPermission();
       console.log("[FCM] Permission request result:", permission);
 
@@ -208,7 +205,7 @@ class FCMService {
         console.error("[FCM] VAPID key not configured");
         return null;
       }
-      
+
       console.log(
         "[FCM] VAPID key configured:",
         vapidKey.substring(0, 20) + "...",
@@ -240,7 +237,7 @@ class FCMService {
       console.error("[FCM] Error code:", error?.code);
       console.error("[FCM] Error message:", error?.message);
       console.error("[FCM] Full error:", JSON.stringify(error, null, 2));
-      
+
       // Handle rate limiting
       if (
         error?.code === "messaging/too-many-requests" ||
@@ -444,14 +441,14 @@ class FCMService {
    */
   async forceReinitialize(): Promise<string | null> {
     console.log("[FCM] Force re-initializing...");
-    
+
     // Clear all cached state
     this.clearCachedToken();
     this.clearRateLimit();
     this.currentToken = null;
     this.isInitialized = false;
     this.initializationPromise = null;
-    
+
     // Try to delete existing token from Firebase
     if (this.messaging && this.currentToken) {
       try {
@@ -461,10 +458,10 @@ class FCMService {
         console.warn("[FCM] Could not delete existing token:", error);
       }
     }
-    
+
     // Wait a bit to avoid immediate rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Re-initialize
     return await this.initialize();
   }
@@ -484,7 +481,9 @@ class FCMService {
     return {
       isInitialized: this.isInitialized,
       hasToken: this.currentToken !== null,
-      tokenPreview: this.currentToken ? `${this.currentToken.substring(0, 30)}...` : null,
+      tokenPreview: this.currentToken
+        ? `${this.currentToken.substring(0, 30)}...`
+        : null,
       isRateLimited: this.isRateLimited(),
       rateLimitRemaining: this.getRateLimitRemaining(),
       permissionStatus: this.getPermissionStatus(),

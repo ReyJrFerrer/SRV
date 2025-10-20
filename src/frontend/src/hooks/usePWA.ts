@@ -204,7 +204,8 @@ export const usePWA = () => {
         console.log("[usePWA] Enabling push notifications for user:", userId);
 
         if (!pwaState.pushNotificationSupported) {
-          const errorMsg = "Push notifications are not supported in this browser";
+          const errorMsg =
+            "Push notifications are not supported in this browser";
           setError(errorMsg);
           throw new Error(errorMsg);
         }
@@ -228,25 +229,28 @@ export const usePWA = () => {
           }));
           return true;
         } else {
-          const errorMsg = result.error || "Failed to enable push notifications. Please try again.";
+          const errorMsg =
+            result.error ||
+            "Failed to enable push notifications. Please try again.";
           console.error("[usePWA]", errorMsg);
           setError(errorMsg);
           return false;
         }
       } catch (err) {
         console.error("[usePWA] Failed to enable push notifications:", err);
-        const errorMsg = err instanceof Error
-          ? err.message
-          : "Failed to enable push notifications";
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Failed to enable push notifications";
         setError(errorMsg);
-        
+
         // Update state to reflect failure
         setPwaState((prev) => ({
           ...prev,
           pushSubscribed: false,
           pushPermission: Notification.permission,
         }));
-        
+
         return false;
       }
     },

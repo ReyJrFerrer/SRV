@@ -1,18 +1,18 @@
 /**
  * Unified Notification Service
- * 
+ *
  * This service handles BOTH foreground and background notifications:
- * 
- * 1. FOREGROUND (App Open): 
+ *
+ * 1. FOREGROUND (App Open):
  *    - Uses realtime Firestore listeners
  *    - Displays browser notifications using Notification API
  *    - No FCM needed for display (but token still registered for background)
- * 
+ *
  * 2. BACKGROUND (App Closed/Background):
  *    - FCM token registered with backend
  *    - Backend Cloud Functions send FCM push messages
  *    - Service worker handles background messages
- * 
+ *
  * ARCHITECTURE:
  * - FCM is initialized ONCE on app load if permission granted
  * - Token is registered with backend for background push
@@ -27,7 +27,11 @@ import notificationCanisterService, {
 } from "./notificationCanisterService";
 import type { Unsubscribe } from "firebase/firestore";
 
-export type NotificationPermissionState = "granted" | "denied" | "default" | "unsupported";
+export type NotificationPermissionState =
+  | "granted"
+  | "denied"
+  | "default"
+  | "unsupported";
 
 export interface NotificationServiceState {
   permission: NotificationPermissionState;
@@ -54,7 +58,7 @@ class NotificationService {
   /**
    * Initialize the notification service
    * This should be called once on app load
-   * 
+   *
    * @param autoEnableFCM - Whether to automatically enable FCM if permission is granted
    * @returns Current state of the service
    */
@@ -62,10 +66,12 @@ class NotificationService {
     console.log("[NotificationService] Initializing...");
 
     const state = this.getState();
-    
+
     // If permission already granted and autoEnable is true, setup FCM
     if (autoEnableFCM && state.permission === "granted" && !state.fcmReady) {
-      console.log("[NotificationService] Auto-enabling FCM for background notifications");
+      console.log(
+        "[NotificationService] Auto-enabling FCM for background notifications",
+      );
       await this.enableBackgroundNotifications();
     }
 
@@ -102,7 +108,8 @@ class NotificationService {
         return {
           success: false,
           permission: permission as NotificationPermissionState,
-          error: "Notification permission denied. Please enable in browser settings.",
+          error:
+            "Notification permission denied. Please enable in browser settings.",
         };
       }
 
@@ -112,14 +119,20 @@ class NotificationService {
       return {
         success: fcmEnabled,
         permission: "granted",
-        error: fcmEnabled ? undefined : "Failed to setup background notifications. Foreground notifications will still work.",
+        error: fcmEnabled
+          ? undefined
+          : "Failed to setup background notifications. Foreground notifications will still work.",
       };
     } catch (error) {
-      console.error("[NotificationService] Failed to request permission:", error);
+      console.error(
+        "[NotificationService] Failed to request permission:",
+        error,
+      );
       return {
         success: false,
         permission: this.getPermissionStatus(),
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
@@ -130,7 +143,9 @@ class NotificationService {
    * Can be called separately if permission is already granted
    */
   async enableBackgroundNotifications(): Promise<boolean> {
-    console.log("[NotificationService] Enabling background notifications via FCM...");
+    console.log(
+      "[NotificationService] Enabling background notifications via FCM...",
+    );
 
     // Check if already enabled
     if (fcmService.isReady()) {
@@ -142,7 +157,7 @@ class NotificationService {
     const rateLimitRemaining = fcmService.getRateLimitRemaining();
     if (rateLimitRemaining > 0) {
       console.warn(
-        `[NotificationService] Rate limited. Wait ${rateLimitRemaining} seconds.`
+        `[NotificationService] Rate limited. Wait ${rateLimitRemaining} seconds.`,
       );
       return false;
     }
@@ -150,7 +165,9 @@ class NotificationService {
     // Check permission
     const permission = this.getPermissionStatus();
     if (permission !== "granted") {
-      console.warn("[NotificationService] Cannot enable FCM without notification permission");
+      console.warn(
+        "[NotificationService] Cannot enable FCM without notification permission",
+      );
       return false;
     }
 
@@ -159,7 +176,9 @@ class NotificationService {
       const token = await fcmService.initialize();
 
       if (!token) {
-        console.error("[NotificationService] FCM initialization failed - no token");
+        console.error(
+          "[NotificationService] FCM initialization failed - no token",
+        );
         return false;
       }
 
@@ -167,14 +186,19 @@ class NotificationService {
       const registered = await fcmService.registerToken(token);
 
       if (!registered) {
-        console.warn("[NotificationService] FCM token not registered with backend");
+        console.warn(
+          "[NotificationService] FCM token not registered with backend",
+        );
         return false;
       }
 
       console.log("[NotificationService] ✅ Background notifications enabled");
       return true;
     } catch (error) {
-      console.error("[NotificationService] Failed to enable background notifications:", error);
+      console.error(
+        "[NotificationService] Failed to enable background notifications:",
+        error,
+      );
       return false;
     }
   }
@@ -196,7 +220,10 @@ class NotificationService {
       console.log("[NotificationService] ✅ Notifications disabled");
       return true;
     } catch (error) {
-      console.error("[NotificationService] Failed to disable notifications:", error);
+      console.error(
+        "[NotificationService] Failed to disable notifications:",
+        error,
+      );
       return false;
     }
   }
@@ -204,7 +231,7 @@ class NotificationService {
   /**
    * Start listening for new notifications (foreground only)
    * This uses Firestore realtime listeners + browser Notification API
-   * 
+   *
    * @param userId - Current user ID
    * @param onNotification - Callback when new notification arrives
    * @param filter - Optional filter for notifications
@@ -213,7 +240,7 @@ class NotificationService {
   startForegroundListener(
     userId: string,
     onNotification: (notification: FrontendNotification) => void,
-    filter?: NotificationFilter
+    filter?: NotificationFilter,
   ): Unsubscribe {
     const listenerId = `foreground-${userId}`;
 
@@ -222,42 +249,52 @@ class NotificationService {
       this.listeners.get(listenerId)?.();
     }
 
-    console.log("[NotificationService] Starting foreground listener for user:", userId);
+    console.log(
+      "[NotificationService] Starting foreground listener for user:",
+      userId,
+    );
 
     let lastNotificationTimestamp = Date.now();
 
-    const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
-      userId,
-      (notifications) => {
-        // Only show notification for NEW notifications
-        // Filter out notifications that existed before we started listening
-        const newNotifications = notifications.filter(
-          (n) => new Date(n.timestamp).getTime() > lastNotificationTimestamp
-        );
-
-        // Display browser notification for each new notification
-        newNotifications.forEach((notification) => {
-          this.displayForegroundNotification(notification);
-          onNotification(notification);
-        });
-
-        // Update timestamp
-        if (notifications.length > 0) {
-          const latestTimestamp = Math.max(
-            ...notifications.map((n) => new Date(n.timestamp).getTime())
+    const unsubscribe =
+      notificationCanisterService.subscribeToUserNotifications(
+        userId,
+        (notifications) => {
+          // Only show notification for NEW notifications
+          // Filter out notifications that existed before we started listening
+          const newNotifications = notifications.filter(
+            (n) => new Date(n.timestamp).getTime() > lastNotificationTimestamp,
           );
-          lastNotificationTimestamp = Math.max(lastNotificationTimestamp, latestTimestamp);
-        }
-      },
-      filter
-    );
+
+          // Display browser notification for each new notification
+          newNotifications.forEach((notification) => {
+            this.displayForegroundNotification(notification);
+            onNotification(notification);
+          });
+
+          // Update timestamp
+          if (notifications.length > 0) {
+            const latestTimestamp = Math.max(
+              ...notifications.map((n) => new Date(n.timestamp).getTime()),
+            );
+            lastNotificationTimestamp = Math.max(
+              lastNotificationTimestamp,
+              latestTimestamp,
+            );
+          }
+        },
+        filter,
+      );
 
     // Store the unsubscribe function
     this.listeners.set(listenerId, unsubscribe);
 
     // Return unsubscribe function
     return () => {
-      console.log("[NotificationService] Stopping foreground listener for user:", userId);
+      console.log(
+        "[NotificationService] Stopping foreground listener for user:",
+        userId,
+      );
       unsubscribe();
       this.listeners.delete(listenerId);
     };
@@ -267,32 +304,41 @@ class NotificationService {
    * Display a foreground notification using browser Notification API
    * This is for when the app is OPEN (foreground)
    */
-  private displayForegroundNotification(notification: FrontendNotification): void {
+  private displayForegroundNotification(
+    notification: FrontendNotification,
+  ): void {
     // Check if permission is granted
     if (Notification.permission !== "granted") {
-      console.warn("[NotificationService] Cannot display notification - permission not granted");
+      console.warn(
+        "[NotificationService] Cannot display notification - permission not granted",
+      );
       return;
     }
 
     // Don't show notification if document is visible (user is looking at the app)
     // Let the UI update handle it instead
     if (!document.hidden) {
-      console.log("[NotificationService] Document visible, skipping notification display");
+      console.log(
+        "[NotificationService] Document visible, skipping notification display",
+      );
       return;
     }
 
     try {
-      const browserNotification = new Notification(notification.title || notification.message, {
-        body: notification.message,
-        icon: "/logo.svg",
-        badge: "/logo.svg",
-        tag: notification.id,
-        requireInteraction: false,
-        data: {
-          notificationId: notification.id,
-          href: notification.href,
+      const browserNotification = new Notification(
+        notification.title || notification.message,
+        {
+          body: notification.message,
+          icon: "/logo.svg",
+          badge: "/logo.svg",
+          tag: notification.id,
+          requireInteraction: false,
+          data: {
+            notificationId: notification.id,
+            href: notification.href,
+          },
         },
-      });
+      );
 
       // Handle click
       browserNotification.onclick = () => {
@@ -303,9 +349,15 @@ class NotificationService {
         browserNotification.close();
       };
 
-      console.log("[NotificationService] Foreground notification displayed:", notification.title);
+      console.log(
+        "[NotificationService] Foreground notification displayed:",
+        notification.title,
+      );
     } catch (error) {
-      console.error("[NotificationService] Failed to display foreground notification:", error);
+      console.error(
+        "[NotificationService] Failed to display foreground notification:",
+        error,
+      );
     }
   }
 
@@ -326,7 +378,8 @@ class NotificationService {
       permission: this.getPermissionStatus(),
       fcmReady: fcmService.isReady(),
       fcmToken: fcmService.getToken(),
-      supportsNotifications: "Notification" in window && "serviceWorker" in navigator,
+      supportsNotifications:
+        "Notification" in window && "serviceWorker" in navigator,
       isRateLimited: fcmService.getRateLimitRemaining() > 0,
       rateLimitRemaining: fcmService.getRateLimitRemaining(),
     };
@@ -347,7 +400,7 @@ class NotificationService {
    */
   async getUserNotifications(
     userId?: string,
-    filter?: NotificationFilter
+    filter?: NotificationFilter,
   ): Promise<FrontendNotification[]> {
     return notificationCanisterService.getUserNotifications(userId, filter);
   }
@@ -372,7 +425,10 @@ class NotificationService {
    * This is a placeholder for future implementation
    */
   async deleteNotification(notificationId: string): Promise<void> {
-    console.warn("[NotificationService] Delete notification not yet implemented:", notificationId);
+    console.warn(
+      "[NotificationService] Delete notification not yet implemented:",
+      notificationId,
+    );
     // TODO: Implement when backend supports it
     throw new Error("Delete notification not yet implemented");
   }
@@ -382,7 +438,9 @@ class NotificationService {
    */
   async testNotification(): Promise<boolean> {
     if (Notification.permission !== "granted") {
-      console.error("[NotificationService] Cannot test - permission not granted");
+      console.error(
+        "[NotificationService] Cannot test - permission not granted",
+      );
       return false;
     }
 

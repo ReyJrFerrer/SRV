@@ -40,7 +40,7 @@ class NotificationIntegrationService {
   async enablePushNotifications(): Promise<boolean> {
     try {
       console.log("[NotificationIntegration] Enabling push notifications...");
-      
+
       // Check if already enabled
       if (this.pushEnabled && fcmService.isReady()) {
         console.log("[NotificationIntegration] Push already enabled");
@@ -51,21 +51,23 @@ class NotificationIntegrationService {
       const rateLimitRemaining = fcmService.getRateLimitRemaining();
       if (rateLimitRemaining > 0) {
         console.warn(
-          `[NotificationIntegration] FCM is rate limited. Wait ${rateLimitRemaining} seconds before retrying.`
+          `[NotificationIntegration] FCM is rate limited. Wait ${rateLimitRemaining} seconds before retrying.`,
         );
         throw new Error(
-          `Please wait ${rateLimitRemaining} seconds before trying again. This is a temporary restriction from Firebase.`
+          `Please wait ${rateLimitRemaining} seconds before trying again. This is a temporary restriction from Firebase.`,
         );
       }
 
       // Check permission first
       const permission = fcmService.getPermissionStatus();
       console.log("[NotificationIntegration] Current permission:", permission);
-      
+
       if (permission === "denied") {
-        console.error("[NotificationIntegration] Notification permission denied by user");
+        console.error(
+          "[NotificationIntegration] Notification permission denied by user",
+        );
         throw new Error(
-          "Notification permission is denied. Please enable notifications in your browser settings."
+          "Notification permission is denied. Please enable notifications in your browser settings.",
         );
       }
 
@@ -75,52 +77,63 @@ class NotificationIntegrationService {
 
       if (!token) {
         console.error("[NotificationIntegration] Failed to get FCM token");
-        
+
         // Provide helpful error message based on debug info
         const debugInfo = fcmService.getDebugInfo();
         console.log("[NotificationIntegration] Debug info:", debugInfo);
-        
+
         if (debugInfo.isRateLimited) {
           throw new Error(
-            `Firebase rate limit exceeded. Please wait ${debugInfo.rateLimitRemaining} seconds before trying again.`
+            `Firebase rate limit exceeded. Please wait ${debugInfo.rateLimitRemaining} seconds before trying again.`,
           );
         }
-        
+
         if (permission === "default") {
           throw new Error(
-            "Please grant notification permission when prompted."
+            "Please grant notification permission when prompted.",
           );
         }
-        
+
         throw new Error(
-          "Failed to initialize push notifications. Please check your browser settings and ensure notifications are enabled."
+          "Failed to initialize push notifications. Please check your browser settings and ensure notifications are enabled.",
         );
       }
 
-      console.log("[NotificationIntegration] FCM token obtained, registering with backend...");
+      console.log(
+        "[NotificationIntegration] FCM token obtained, registering with backend...",
+      );
 
       // Register token with backend
       const registered = await fcmService.registerToken(token);
-      
+
       if (!registered) {
-        console.error("[NotificationIntegration] Failed to register token with backend");
+        console.error(
+          "[NotificationIntegration] Failed to register token with backend",
+        );
         throw new Error(
-          "Failed to register push notification token. Please try again."
+          "Failed to register push notification token. Please try again.",
         );
       }
 
-      console.log("[NotificationIntegration] ✅ Push notifications enabled successfully");
+      console.log(
+        "[NotificationIntegration] ✅ Push notifications enabled successfully",
+      );
       this.pushEnabled = true;
       return true;
     } catch (error) {
-      console.error("[NotificationIntegration] Failed to enable push notifications:", error);
+      console.error(
+        "[NotificationIntegration] Failed to enable push notifications:",
+        error,
+      );
       this.pushEnabled = false;
-      
+
       // Re-throw the error so the UI can display it
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("Failed to enable push notifications. Please try again later.");
+      throw new Error(
+        "Failed to enable push notifications. Please try again later.",
+      );
     }
   }
 

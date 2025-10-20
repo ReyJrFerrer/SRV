@@ -116,7 +116,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               {/* Public Routes */}
               <Route path="/" element={<App />} />
               <Route path="/create-profile" element={<CreateProfile />} />
-              
+
               {/* FCM Test Route - Development Only */}
               <Route path="/fcm-test" element={<FCMTestPage />} />
 

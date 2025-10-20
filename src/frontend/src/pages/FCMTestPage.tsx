@@ -24,7 +24,10 @@ export default function FCMTestPage() {
   }, []);
 
   const addTestResult = (message: string) => {
-    setTestResults((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`]);
+    setTestResults((prev) => [
+      ...prev,
+      `[${new Date().toLocaleTimeString()}] ${message}`,
+    ]);
   };
 
   const handleRunDiagnostics = async () => {
@@ -49,7 +52,9 @@ export default function FCMTestPage() {
       if (permission === "granted") {
         addTestResult("✅ Permission granted! You can now initialize FCM.");
       } else {
-        addTestResult("❌ Permission denied. Please enable notifications in browser settings.");
+        addTestResult(
+          "❌ Permission denied. Please enable notifications in browser settings.",
+        );
       }
     } catch (error) {
       addTestResult(`Permission request failed: ${error}`);
@@ -151,70 +156,71 @@ export default function FCMTestPage() {
   const getStatusIcon = (value: boolean) => (value ? "✅" : "❌");
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-lg">
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">
             🔧 FCM Test & Debug Tool
           </h1>
           <p className="text-gray-600">
-            Comprehensive testing interface for Firebase Cloud Messaging integration
+            Comprehensive testing interface for Firebase Cloud Messaging
+            integration
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-lg">
+          <h2 className="mb-4 text-xl font-semibold">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <button
               onClick={handleRunDiagnostics}
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
             >
               Run Diagnostics
             </button>
             <button
               onClick={handleRequestPermission}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
             >
               Request Permission
             </button>
             <button
               onClick={handleInitializeFCM}
               disabled={isLoading}
-              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-gray-400"
+              className="rounded bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
             >
               Initialize FCM
             </button>
             <button
               onClick={handleRegisterToken}
               disabled={!currentToken}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400"
+              className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:bg-gray-400"
             >
               Register Token
             </button>
             <button
               onClick={handleTestNotification}
-              className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+              className="rounded bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
             >
               Test Notification
             </button>
             <button
               onClick={handleClearRateLimit}
-              className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+              className="rounded bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
             >
               Clear Rate Limit
             </button>
             <button
               onClick={handleDeleteToken}
               disabled={!currentToken}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+              className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:bg-gray-400"
             >
               Delete Token
             </button>
             <button
               onClick={handleClearCache}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
             >
               Clear All Cache
             </button>
@@ -222,8 +228,8 @@ export default function FCMTestPage() {
         </div>
 
         {/* Current Status */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Current Status</h2>
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-lg">
+          <h2 className="mb-4 text-xl font-semibold">Current Status</h2>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-medium">FCM Ready:</span>
@@ -231,16 +237,22 @@ export default function FCMTestPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="font-medium">Permission:</span>
-              <span className="uppercase">{fcmService.getPermissionStatus()}</span>
+              <span className="uppercase">
+                {fcmService.getPermissionStatus()}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="font-medium">Rate Limited:</span>
-              <span>{fcmService.getRateLimitRemaining() > 0 ? `Yes (${fcmService.getRateLimitRemaining()}s)` : "No"}</span>
+              <span>
+                {fcmService.getRateLimitRemaining() > 0
+                  ? `Yes (${fcmService.getRateLimitRemaining()}s)`
+                  : "No"}
+              </span>
             </div>
             {currentToken && (
               <div className="flex items-center justify-between">
                 <span className="font-medium">Token:</span>
-                <span className="text-sm font-mono truncate max-w-xs">
+                <span className="max-w-xs truncate font-mono text-sm">
                   {currentToken.substring(0, 30)}...
                 </span>
               </div>
@@ -250,62 +262,82 @@ export default function FCMTestPage() {
 
         {/* Diagnostics Results */}
         {diagnostics && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Diagnostics Report</h2>
-            
+          <div className="mb-6 rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="mb-4 text-xl font-semibold">Diagnostics Report</h2>
+
             {/* Browser Support */}
             <div className="mb-6">
-              <h3 className="font-semibold text-lg mb-2">📱 Browser Support</h3>
+              <h3 className="mb-2 text-lg font-semibold">📱 Browser Support</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center justify-between">
                   <span>Notification API:</span>
-                  <span>{getStatusIcon(diagnostics.browserSupport.notificationAPI)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.browserSupport.notificationAPI)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Service Worker:</span>
-                  <span>{getStatusIcon(diagnostics.browserSupport.serviceWorker)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.browserSupport.serviceWorker)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Push Manager:</span>
-                  <span>{getStatusIcon(diagnostics.browserSupport.pushManager)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.browserSupport.pushManager)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>FCM Supported:</span>
-                  <span>{getStatusIcon(diagnostics.browserSupport.fcmSupported)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.browserSupport.fcmSupported)}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Configuration */}
             <div className="mb-6">
-              <h3 className="font-semibold text-lg mb-2">⚙️ Configuration</h3>
+              <h3 className="mb-2 text-lg font-semibold">⚙️ Configuration</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Firebase Config Valid:</span>
-                  <span>{getStatusIcon(diagnostics.configuration.firebaseConfigValid)}</span>
+                  <span>
+                    {getStatusIcon(
+                      diagnostics.configuration.firebaseConfigValid,
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>VAPID Key Present:</span>
-                  <span>{getStatusIcon(diagnostics.configuration.vapidKeyPresent)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.configuration.vapidKeyPresent)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Project ID:</span>
-                  <span className="text-sm">{diagnostics.configuration.projectId || "N/A"}</span>
+                  <span className="text-sm">
+                    {diagnostics.configuration.projectId || "N/A"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Sender ID:</span>
-                  <span className="text-sm">{diagnostics.configuration.messagingSenderId || "N/A"}</span>
+                  <span className="text-sm">
+                    {diagnostics.configuration.messagingSenderId || "N/A"}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Service Worker */}
             <div className="mb-6">
-              <h3 className="font-semibold text-lg mb-2">🔧 Service Worker</h3>
+              <h3 className="mb-2 text-lg font-semibold">🔧 Service Worker</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Registered:</span>
-                  <span>{getStatusIcon(diagnostics.serviceWorker.registered)}</span>
+                  <span>
+                    {getStatusIcon(diagnostics.serviceWorker.registered)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Active:</span>
@@ -314,7 +346,9 @@ export default function FCMTestPage() {
                 {diagnostics.serviceWorker.scope && (
                   <div className="flex items-center justify-between">
                     <span>Scope:</span>
-                    <span className="text-sm truncate max-w-xs">{diagnostics.serviceWorker.scope}</span>
+                    <span className="max-w-xs truncate text-sm">
+                      {diagnostics.serviceWorker.scope}
+                    </span>
                   </div>
                 )}
               </div>
@@ -323,10 +357,14 @@ export default function FCMTestPage() {
             {/* Issues */}
             {diagnostics.issues.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-semibold text-lg mb-2 text-red-600">❌ Issues Found</h3>
-                <ul className="list-disc list-inside space-y-1">
+                <h3 className="mb-2 text-lg font-semibold text-red-600">
+                  ❌ Issues Found
+                </h3>
+                <ul className="list-inside list-disc space-y-1">
                   {diagnostics.issues.map((issue, i) => (
-                    <li key={i} className="text-sm text-red-700">{issue}</li>
+                    <li key={i} className="text-sm text-red-700">
+                      {issue}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -335,10 +373,14 @@ export default function FCMTestPage() {
             {/* Recommendations */}
             {diagnostics.recommendations.length > 0 && (
               <div>
-                <h3 className="font-semibold text-lg mb-2 text-blue-600">💡 Recommendations</h3>
-                <ul className="list-disc list-inside space-y-1">
+                <h3 className="mb-2 text-lg font-semibold text-blue-600">
+                  💡 Recommendations
+                </h3>
+                <ul className="list-inside list-disc space-y-1">
                   {diagnostics.recommendations.map((rec, i) => (
-                    <li key={i} className="text-sm text-blue-700">{rec}</li>
+                    <li key={i} className="text-sm text-blue-700">
+                      {rec}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -347,38 +389,62 @@ export default function FCMTestPage() {
         )}
 
         {/* Test Results Log */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-lg bg-white p-6 shadow-lg">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Test Results Log</h2>
             <button
               onClick={() => setTestResults([])}
-              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+              className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
             >
               Clear Log
             </button>
           </div>
-          <div className="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto rounded bg-gray-900 p-4 font-mono text-sm text-green-400">
             {testResults.length === 0 ? (
-              <div className="text-gray-500">No test results yet. Run some tests above.</div>
+              <div className="text-gray-500">
+                No test results yet. Run some tests above.
+              </div>
             ) : (
               testResults.map((result, i) => (
-                <div key={i} className="mb-1">{result}</div>
+                <div key={i} className="mb-1">
+                  {result}
+                </div>
               ))
             )}
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
-          <h3 className="font-semibold text-lg mb-2">📖 How to Use</h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm">
-            <li><strong>Run Diagnostics</strong> - Check if your environment is properly configured</li>
-            <li><strong>Request Permission</strong> - Ask user for notification permission</li>
-            <li><strong>Initialize FCM</strong> - Get FCM token from Firebase</li>
-            <li><strong>Register Token</strong> - Save token to backend for push notifications</li>
-            <li><strong>Test Notification</strong> - Display a test notification in the browser</li>
-            <li><strong>Clear Rate Limit</strong> - Manually clear rate limit cooldown (use after waiting)</li>
-            <li><strong>Clear Cache</strong> - Remove all cached data and service workers (requires page reload)</li>
+        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
+          <h3 className="mb-2 text-lg font-semibold">📖 How to Use</h3>
+          <ol className="list-inside list-decimal space-y-2 text-sm">
+            <li>
+              <strong>Run Diagnostics</strong> - Check if your environment is
+              properly configured
+            </li>
+            <li>
+              <strong>Request Permission</strong> - Ask user for notification
+              permission
+            </li>
+            <li>
+              <strong>Initialize FCM</strong> - Get FCM token from Firebase
+            </li>
+            <li>
+              <strong>Register Token</strong> - Save token to backend for push
+              notifications
+            </li>
+            <li>
+              <strong>Test Notification</strong> - Display a test notification
+              in the browser
+            </li>
+            <li>
+              <strong>Clear Rate Limit</strong> - Manually clear rate limit
+              cooldown (use after waiting)
+            </li>
+            <li>
+              <strong>Clear Cache</strong> - Remove all cached data and service
+              workers (requires page reload)
+            </li>
           </ol>
         </div>
       </div>
