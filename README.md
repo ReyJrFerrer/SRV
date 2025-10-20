@@ -233,6 +233,7 @@ Our platform leverages a **hybrid architecture** combining Firebase's real-time 
 ### **🔑 Key Architecture Decisions**
 
 #### **Why Firebase for Core Backend?**
+
 - ✅ **Real-Time Synchronization**: Instant updates across all connected clients
 - ✅ **Scalability**: Auto-scaling infrastructure handling millions of concurrent connections
 - ✅ **Developer Velocity**: Rapid development with comprehensive SDKs and built-in features
@@ -240,6 +241,7 @@ Our platform leverages a **hybrid architecture** combining Firebase's real-time 
 - ✅ **Reliability**: 99.95% uptime SLA with global infrastructure
 
 #### **Why ICP for AI & Reputation?**
+
 - ✅ **Tamper-Proof Intelligence**: AI analysis results cannot be manipulated or altered
 - ✅ **Decentralized Trust**: Reputation scores stored on blockchain for transparency
 - ✅ **Advanced AI Capabilities**: LLM integration for sophisticated sentiment analysis
@@ -247,6 +249,7 @@ Our platform leverages a **hybrid architecture** combining Firebase's real-time 
 - ✅ **Privacy-Preserving**: On-chain AI without compromising user data privacy
 
 #### **Hybrid Architecture Benefits**
+
 - 🚀 **Best Performance**: Firebase's real-time capabilities for instant user experience
 - 🔒 **Enhanced Trust**: ICP's blockchain-backed reputation system
 - 💡 **Smart Intelligence**: AI-powered fraud detection and sentiment analysis
@@ -264,6 +267,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Migrating core business logic from ICP canisters to Firebase while retaining AI-powered reputation intelligence on ICP without service disruption.
 
 **Solution**:
+
 - Implemented phased migration approach with feature flags for gradual rollout
 - Created Firebase Cloud Functions mirroring existing canister functionality (auth, service, booking, chat, wallet)
 - Developed dual-write strategy during transition period to maintain data consistency
@@ -277,6 +281,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Ensuring seamless real-time updates between Firebase Firestore and ICP canisters while maintaining data consistency.
 
 **Solution**:
+
 - Implemented Firestore real-time listeners for instant UI updates on bookings, services, and chat
 - Created webhook-based communication pattern between Firebase Cloud Functions and ICP canisters
 - Developed event-driven architecture with Firestore triggers for automated workflows
@@ -289,7 +294,8 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Transitioning from Internet Identity to Firebase Authentication while maintaining backward compatibility and security.
 
 **Solution**:
-- Implemented Firebase OTP-based authentication 
+
+- Implemented Firebase OTP-based authentication
 - Created custom claims system in Firebase Auth for role management (client/provider/admin)
 - Maintained ICP Auth canister for decentralized identity verification
 - Built bridge layer mapping Firebase UIDs to ICP Principals for reputation queries
@@ -301,6 +307,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Migrating payment workflows from canister-based wallet system to Firebase while integrating external payment gateway (Xendit).
 
 **Solution**:
+
 - Redesigned payment architecture: Firebase Cloud Functions ↔ Xendit API ↔ Firestore
 - Implemented secure webhook handling for real-time payment status updates
 - Created Firestore-based wallet system with transaction history and balance tracking
@@ -314,6 +321,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Maintaining AI-powered reputation intelligence on ICP while core data lives in Firebase.
 
 **Solution**:
+
 - Designed hybrid reputation pipeline: Firestore data → Firebase Functions → ICP Reputation Canister
 - Implemented batch processing for reputation score updates to minimize canister calls
 - Created caching layer in Firestore for frequently accessed reputation scores
@@ -326,6 +334,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Building comprehensive admin dashboard with real-time analytics from Firebase data sources.
 
 **Solution**:
+
 - Implemented Firestore composite queries for complex analytics aggregations
 - Created Firebase Admin SDK-based user management system
 - Developed real-time dashboard using Firestore listeners for live statistics
@@ -339,6 +348,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Migrating encrypted chat from ICP canister to Firebase Realtime Database while maintaining security.
 
 **Solution**:
+
 - Redesigned chat architecture using Firestore subcollections for conversations
 - Implemented end-to-end encryption using Web Crypto API before Firestore storage
 - Created real-time message delivery using Firestore snapshots
@@ -351,6 +361,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 **Problem**: Managing different configurations for local development, staging, and production across Firebase and ICP.
 
 **Solution**:
+
 - Created environment-aware configuration system with automatic detection
 - Implemented separate Firebase projects for development and production
 - Developed canister ID management system for multi-network deployments
@@ -370,6 +381,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 #### **Migration Highlights**
 
 **📦 Core Backend Migration to Firebase**
+
 - ✅ **Complete Function Suite**: Migrated 15+ business logic modules to Firebase Cloud Functions
   - Authentication (OTP, login, signup)
   - Service management (CRUD, search, filtering)
@@ -383,12 +395,12 @@ The platform underwent a comprehensive architectural transformation, migrating c
   - Admin operations (user management, analytics)
 
 **🔄 Real-Time Data Infrastructure**
+
 - ✅ **Firestore Database**: NoSQL real-time database replacing canister stable storage
   - 10+ primary collections (Users, Services, Bookings, Reviews, Wallets, Chat, Media, etc.)
   - Real-time listeners for instant UI updates
   - Composite indexes for complex queries
   - Security rules for data protection
-  
 - ✅ **Firebase Authentication**: Secure OTP-based authentication
   - Custom claims for role management
   - Admin SDK for user management
@@ -403,6 +415,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
   - Automatic CDN distribution
 
 **🤖 ICP Intelligence Layer (Retained)**
+
 - ✅ **Reputation Canister**: AI-powered reputation scoring on blockchain
   - Tamper-proof reputation history
   - Fraud detection algorithms
@@ -423,12 +436,14 @@ The platform underwent a comprehensive architectural transformation, migrating c
 ### **🚀 Recent Major Enhancements**
 
 #### **Real-Time Service Management (v2.0)**
+
 - **Live Service Updates**: Firestore real-time listeners for instant service catalog updates
 - **Dynamic Search & Filtering**: Real-time query capabilities with composite indexes
 - **Service State Management**: Automatic synchronization across all connected clients
 - **Provider Dashboard**: Real-time analytics and booking notifications
 
 #### **Enhanced Booking Experience**
+
 - **Real-Time Booking Callbacks**: Instant booking status updates via Firestore listeners
 - **Conflict Detection**: Real-time availability checking preventing double bookings
 - **GPS Integration**: Enhanced distance calculation and location services
@@ -436,12 +451,14 @@ The platform underwent a comprehensive architectural transformation, migrating c
 - **Date Display Enhancements**: Clear, localized date and time formatting
 
 #### **Chat & Communication System**
+
 - **Firebase-Powered Chat**: Real-time messaging using Firestore subcollections
 - **Conversation Management**: Automatic chat creation post-booking completion
 - **Message Encryption**: Client-side encryption before Firestore storage
 - **Read Receipts**: Real-time message status tracking
 
 #### **Authentication & Security**
+
 - **OTP Authentication**: Firebase-based OTP verification for secure access
 - **Session Management**: Persistent authentication across browser sessions
 - **Role-Based Access**: Custom claims for client, provider, and admin roles
@@ -449,6 +466,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 - **Admin Authentication**: Secure admin panel access with Firebase Admin SDK
 
 #### **User Interface Improvements**
+
 - **Active Service Banner**: Provider navigation banner for quick access to active services
 - **Enhanced Bottom Navigation**: Mobile-optimized navigation with Settings integration
 - **Profile Management**: Improved profile image handling and user settings
@@ -457,6 +475,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 - **Contact Page Optimization**: Enhanced mobile UI for contact and support pages
 
 #### **Admin Dashboard Enhancements**
+
 - **Real-Time Analytics**: Live statistics using Firestore aggregation queries
 - **User Management**: Firebase Admin SDK-powered user administration
 - **Booking Oversight**: Real-time booking monitoring and management
@@ -466,12 +485,14 @@ The platform underwent a comprehensive architectural transformation, migrating c
 ### **⚡ Performance Optimizations**
 
 #### **Firebase Infrastructure**
+
 - **Real-Time Queries**: Firestore composite indexes for complex query optimization
 - **CDN Distribution**: Firebase Hosting with global CDN for sub-100ms load times
 - **Database Optimization**: Efficient document structure and denormalization strategies
 - **Function Cold Start Optimization**: Keep-alive mechanisms for Cloud Functions
 
 #### **Frontend Performance**
+
 - **Code Splitting**: Dynamic imports reducing initial bundle size by 60%
 - **React Optimization**: React.memo and useMemo preventing unnecessary re-renders
 - **Image Optimization**: Lazy loading and responsive images with Firebase Storage CDN
@@ -479,6 +500,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 - **Network Optimization**: Request batching and debouncing for API calls
 
 #### **ICP Integration Optimization**
+
 - **Batch Processing**: Aggregated reputation updates minimizing canister calls
 - **Caching Layer**: Firestore cache for ICP reputation scores reducing blockchain queries
 - **Async Processing**: Non-blocking AI analysis with background job processing
@@ -487,6 +509,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 ### **🔒 Security Enhancements**
 
 #### **Firebase Security**
+
 - **Firestore Security Rules**: Granular access control at document and collection level
 - **Authentication Flow**: Multi-factor authentication with OTP verification
 - **API Security**: Cloud Functions with proper authentication and validation
@@ -494,6 +517,7 @@ The platform underwent a comprehensive architectural transformation, migrating c
 - **Audit Logging**: Comprehensive activity logs for security monitoring
 
 #### **ICP Security (Retained)**
+
 - **Immutable Records**: Blockchain-backed reputation history preventing manipulation
 - **Principal Authentication**: Decentralized identity verification
 - **Smart Contract Security**: Audited Motoko code for AI canisters
@@ -502,18 +526,21 @@ The platform underwent a comprehensive architectural transformation, migrating c
 ### **🎨 UI/UX Improvements from Global Migration**
 
 #### **Service Provider Experience**
+
 - Active service status banner for quick navigation
 - Enhanced service management with real-time updates
 - Improved booking notification system
 - Streamlined provider dashboard with live analytics
 
 #### **Client Experience**
+
 - Real-time service catalog with instant search results
 - Enhanced booking flow with better date/time selection
 - Improved cancellation process with clear prompts
 - Better mobile navigation and touch interactions
 
 #### **Admin Experience**
+
 - Real-time platform analytics and metrics
 - Enhanced user management interface
 - Live booking monitoring dashboard
@@ -522,12 +549,14 @@ The platform underwent a comprehensive architectural transformation, migrating c
 ### **🎯 Legacy Features (Pre-Migration)**
 
 #### **Payment Integration System (Features 1.0 - 3.4)**
+
 - **Hybrid Commission Model**: Dynamic tiered commission structure with Tier A (7%), Tier B (5%), and Tier C (3.5%) based on service categories
 - **Integrated Wallet System**: Balance tracking and transaction history
 - **Payment Holding Mechanism**: Secure escrow system where digital payments are held until service completion
 - **Multi-Environment Support**: Seamless operation across local, emulator, and production environments
 
 #### **AI & Intelligence Features**
+
 - **Sentiment Analysis Integration**: LLM-powered review analysis for authentic feedback verification
 - **Fraud Detection**: Advanced algorithms for detecting suspicious review patterns and user behaviors
 - **Smart Booking Validation**: GPS-based distance calculation and conflict detection
@@ -642,6 +671,7 @@ npm test tests/src/backend.test.ts    # individual test
 ### 8. Deploy to Production
 
 #### Firebase Deployment
+
 ```bash
 # Deploy all Firebase services
 firebase deploy
@@ -653,6 +683,7 @@ firebase deploy --only firestore
 ```
 
 #### ICP Canister Deployment
+
 ```bash
 # Deploy to mainnet (reputation canisters only)
 dfx deploy --network ic auth
@@ -751,6 +782,7 @@ SRV-WCHL/
 ### **🏗️ Architecture Highlights**
 
 #### **Frontend Layer**
+
 - **Multi-App Structure**: Separate web applications for client, provider, and admin interfaces
 - **Shared Components**: Reusable UI components across all applications
 - **Service Integration**: Dedicated service layers for Firebase and ICP interactions
@@ -758,6 +790,7 @@ SRV-WCHL/
 - **Responsive Design**: Mobile-first approach optimized for all screen sizes
 
 #### **Firebase Backend Layer (Primary)**
+
 - **Cloud Functions**: 15+ serverless functions handling core business logic
 - **Firestore Database**: Real-time NoSQL database with 10+ collections
 - **Authentication**: Firebase Auth with OTP verification and custom claims
@@ -765,12 +798,14 @@ SRV-WCHL/
 - **Hosting**: Firebase Hosting with global CDN
 
 #### **ICP Intelligence Layer (AI Features)**
+
 - **Reputation Canister**: Blockchain-based AI reputation scoring
 - **Auth Canister**: Decentralized identity verification
 - **LLM Integration**: External LLM canister for sentiment analysis
 - **Tamper-Proof**: Immutable reputation history on blockchain
 
 #### **Integration Layer**
+
 - **Firebase-ICP Bridge**: Cloud Functions communicating with ICP canisters
 - **Webhook Handling**: Real-time payment status updates
 - **Multi-Environment Support**: Seamless operation across dev and production
@@ -871,6 +906,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 ## 📚 Learning Resources
 
 ### Firebase
+
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
 - [Firebase Cloud Functions](https://firebase.google.com/docs/functions)
@@ -878,16 +914,19 @@ Analyzes git diffs and provides comprehensive code review covering:
 - [Firebase Authentication](https://firebase.google.com/docs/auth)
 
 ### Internet Computer Protocol (ICP)
+
 - [Internet Computer Documentation](https://internetcomputer.org/docs)
 - [Motoko Programming Language](https://internetcomputer.org/docs/motoko/home)
 - [PocketIC Testing Framework](https://dfinity.github.io/pic-js/)
 
 ### Development Tools
+
 - [Vitest Testing Framework](https://vitest.dev/)
 - [Vite Build Tool](https://vitejs.dev/)
 - [GitHub Copilot Customization](https://code.visualstudio.com/docs/copilot/copilot-customization)
 
 ### Payment Integration
+
 - [Xendit API Documentation](https://developers.xendit.co/)
 - [GCash Integration Guide](https://developers.xendit.co/api-reference/#gcash)
 
@@ -900,6 +939,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 This project underwent a significant architectural transformation during the global migration phase. Key changes include:
 
 #### **What Changed**
+
 - ✅ Core business logic migrated from Motoko canisters to Firebase Cloud Functions
 - ✅ Data storage moved from ICP stable memory to Firestore collections
 - ✅ Authentication transitioned from Internet Identity to Firebase Auth with OTP
@@ -908,11 +948,13 @@ This project underwent a significant architectural transformation during the glo
 - ✅ Payment processing integrated directly with Firebase and Xendit
 
 #### **What Remained on ICP**
+
 - ✅ AI-powered reputation scoring and analysis (tamper-proof blockchain storage)
 - ✅ LLM integration for sentiment analysis and fraud detection
 - ✅ Decentralized identity verification via Auth canister
 
 #### **Why the Migration?**
+
 - **Real-Time Performance**: Firestore provides instant updates across all clients
 - **Scalability**: Firebase auto-scales to handle millions of concurrent users
 - **Developer Velocity**: Faster development with Firebase's comprehensive SDK
@@ -920,6 +962,7 @@ This project underwent a significant architectural transformation during the glo
 - **Best of Both Worlds**: Firebase performance + ICP's tamper-proof AI intelligence
 
 #### **Migration Resources**
+
 - See `MIGRATION_LOG.md` for detailed migration documentation
 - Check commit history for step-by-step migration process
 - Firebase Functions in `/functions/` replace previous canister logic
@@ -939,6 +982,7 @@ We welcome contributions to improve the marketplace! Please:
 For bugs or feature requests, please open an issue with detailed information.
 
 ### Development Guidelines
+
 - Follow Firebase Cloud Functions best practices
 - Maintain ICP canister compatibility for AI features
 - Write tests for both Firebase and ICP components
@@ -949,4 +993,4 @@ For bugs or feature requests, please open an issue with detailed information.
 
 **Build the future of local services with hybrid cloud intelligence 🚀**
 
-*Powered by Firebase for real-time performance and ICP for tamper-proof AI trust*
+_Powered by Firebase for real-time performance and ICP for tamper-proof AI trust_
