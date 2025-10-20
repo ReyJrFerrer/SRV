@@ -73,7 +73,6 @@ const ProviderDirectionsPage: React.FC = () => {
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
   // Prevent multiple auto-start triggers
 
-
   // Navigation mode and device heading (compass)
   const [isInNavigationMode, setIsInNavigationMode] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
@@ -335,7 +334,10 @@ const ProviderDirectionsPage: React.FC = () => {
     };
 
     try {
-      if (anyDeviceOrientation && typeof anyDeviceOrientation.requestPermission === "function") {
+      if (
+        anyDeviceOrientation &&
+        typeof anyDeviceOrientation.requestPermission === "function"
+      ) {
         anyDeviceOrientation.requestPermission().then((state: string) => {
           if (state === "granted") addListener();
         });
@@ -375,10 +377,14 @@ const ProviderDirectionsPage: React.FC = () => {
       dragListenerRef.current.remove();
       dragListenerRef.current = null;
     }
-    dragListenerRef.current = google.maps.event.addListener(map, "dragstart", () => {
-      setFollowMe(false);
-      setIsInNavigationMode(false);
-    });
+    dragListenerRef.current = google.maps.event.addListener(
+      map,
+      "dragstart",
+      () => {
+        setFollowMe(false);
+        setIsInNavigationMode(false);
+      },
+    );
     return () => {
       if (dragListenerRef.current) {
         dragListenerRef.current.remove();
@@ -685,220 +691,231 @@ const ProviderDirectionsPage: React.FC = () => {
   return (
     <APIProvider apiKey={mapApiKey}>
       <div className="relative h-screen w-screen">
-      {providerLocation && destinationHasCoords && (
-        <Map
-          style={containerStyle}
-          defaultZoom={15}
-          defaultCenter={providerLocation}
-          onCameraChanged={(ev) => (mapRef.current = ev.map)}
-          gestureHandling={isInNavigationMode ? "none" : "greedy"}
-          disableDefaultUI={true}
-          zoomControl={true}
-          mapId={"6922634ff75ae05ac38cc473"}
-        >
-          {providerLocation && (
-            <AdvancedMarker position={providerLocation}>
-              {isInNavigationMode ? (
-                <div style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}>
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="#1D4ED8"
-                    xmlns="http://www.w3.org/2000/svg"
+        {providerLocation && destinationHasCoords && (
+          <Map
+            style={containerStyle}
+            defaultZoom={15}
+            defaultCenter={providerLocation}
+            onCameraChanged={(ev) => (mapRef.current = ev.map)}
+            gestureHandling={isInNavigationMode ? "none" : "greedy"}
+            disableDefaultUI={true}
+            zoomControl={true}
+            mapId={"6922634ff75ae05ac38cc473"}
+          >
+            {providerLocation && (
+              <AdvancedMarker position={providerLocation}>
+                {isInNavigationMode ? (
+                  <div
+                    style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}
                   >
-                    <path d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    backgroundColor: "#2563eb",
-                    border: "2px solid #ffffff",
-                  }}
-                />
-              )}
-            </AdvancedMarker>
-          )}
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="#1D4ED8"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z"
+                        stroke="#FFFFFF"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: "50%",
+                      backgroundColor: "#2563eb",
+                      border: "2px solid #ffffff",
+                    }}
+                  />
+                )}
+              </AdvancedMarker>
+            )}
+            {destinationHasCoords && destinationCoords && (
+              <AdvancedMarker position={destinationCoords} />
+            )}
+          </Map>
+        )}
+        {/* Overlay controls */}
+        <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
+          {/* Street View button above Follow me */}
           {destinationHasCoords && destinationCoords && (
-            <AdvancedMarker position={destinationCoords} />
+            <div className="flex w-full justify-end px-1">
+              <button
+                type="button"
+                onClick={() => setShowStreetView(true)}
+                className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
+                title="Open Street View"
+                aria-label="Open Street View"
+              >
+                {/* Eye icon */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-5 w-5"
+                >
+                  <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
           )}
-        </Map>
-      )}
-      {/* Overlay controls */}
-      <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-        {/* Street View button above Follow me */}
-        {destinationHasCoords && destinationCoords && (
-          <div className="flex w-full justify-end px-1">
+          {/* Follow toggle and Re-center controls */}
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center gap-2 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                checked={followMe}
+                onChange={(e) => setFollowMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              Follow me
+            </label>
             <button
               type="button"
-              onClick={() => setShowStreetView(true)}
+              onClick={() => {
+                if (mapRef.current && providerLocation) {
+                  mapRef.current.panTo(providerLocation);
+                }
+              }}
               className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
-              title="Open Street View"
-              aria-label="Open Street View"
+              title="Re-center map on your location"
+              aria-label="Re-center map"
             >
-              {/* Eye icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="h-5 w-5"
+                className="h-4 w-4"
               >
-                <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
                 <circle cx="12" cy="12" r="3" />
+                <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
+                <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
               </svg>
             </button>
           </div>
-        )}
-        {/* Follow toggle and Re-center controls */}
-        <div className="flex items-center justify-between px-1">
-          <label className="flex items-center gap-2 text-xs text-gray-700">
-            <input
-              type="checkbox"
-              checked={followMe}
-              onChange={(e) => setFollowMe(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            Follow me
-          </label>
-          <button
-            type="button"
-            onClick={() => {
-              if (mapRef.current && providerLocation) {
-                mapRef.current.panTo(providerLocation);
-              }
-            }}
-            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
-            title="Re-center map on your location"
-            aria-label="Re-center map"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-4 w-4"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
-              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
-            </svg>
-          </button>
-        </div>
-        <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
-          {/* Re-center moved above card */}
-          {directionsStatus === "pending" && (
-            <p className="text-center text-sm font-medium text-gray-700">
-              Calculating route...
-            </p>
-          )}
-          {directionsStatus === "ok" && directionsResponse && (
-            <div className="text-center">
-              {(() => {
-                const leg =
-                  directionsResponse.routes[selectedRouteIndex]?.legs[0] ||
-                  directionsResponse.routes[0].legs[0];
-                return (
-                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                    <div className="text-lg font-extrabold text-gray-900">{leg.duration?.text || "N/A"}</div>
-                    <span className="text-gray-300">•</span>
-                    <div className="text-base font-semibold text-gray-700">{leg.distance?.text || "N/A"}</div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-          {directionsStatus === "failed" && (
-            <p className="text-center text-sm font-medium text-red-600">
-              Could not compute directions.
-            </p>
-          )}
-          {!destinationHasCoords && destResolveStatus !== "pending" && (
-            <p className="mt-2 text-center text-xs text-red-600">
-              Destination coordinates missing for this booking.
-            </p>
-          )}
-          {!destinationHasCoords && destResolveStatus === "pending" && (
-            <p className="mt-2 text-center text-xs text-gray-600">
-              Resolving destination...
-            </p>
-          )}
-        </div>
+          <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
+            {/* Re-center moved above card */}
+            {directionsStatus === "pending" && (
+              <p className="text-center text-sm font-medium text-gray-700">
+                Calculating route...
+              </p>
+            )}
+            {directionsStatus === "ok" && directionsResponse && (
+              <div className="text-center">
+                {(() => {
+                  const leg =
+                    directionsResponse.routes[selectedRouteIndex]?.legs[0] ||
+                    directionsResponse.routes[0].legs[0];
+                  return (
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                      <div className="text-lg font-extrabold text-gray-900">
+                        {leg.duration?.text || "N/A"}
+                      </div>
+                      <span className="text-gray-300">•</span>
+                      <div className="text-base font-semibold text-gray-700">
+                        {leg.distance?.text || "N/A"}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            {directionsStatus === "failed" && (
+              <p className="text-center text-sm font-medium text-red-600">
+                Could not compute directions.
+              </p>
+            )}
+            {!destinationHasCoords && destResolveStatus !== "pending" && (
+              <p className="mt-2 text-center text-xs text-red-600">
+                Destination coordinates missing for this booking.
+              </p>
+            )}
+            {!destinationHasCoords && destResolveStatus === "pending" && (
+              <p className="mt-2 text-center text-xs text-gray-600">
+                Resolving destination...
+              </p>
+            )}
+          </div>
 
-        {/* Navigation mode toggle */}
-        {isInNavigationMode ? (
+          {/* Navigation mode toggle */}
+          {isInNavigationMode ? (
+            <button
+              onClick={toggleNavigationMode}
+              className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-red-700"
+            >
+              Exit Navigation
+            </button>
+          ) : (
+            <button
+              onClick={toggleNavigationMode}
+              className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-green-700 disabled:opacity-50"
+              disabled={!destinationHasCoords}
+            >
+              Start Navigation
+            </button>
+          )}
           <button
-            onClick={toggleNavigationMode}
-            className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-red-700"
-          >
-            Exit Navigation
-          </button>
-        ) : (
-          <button
-            onClick={toggleNavigationMode}
-            className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-green-700 disabled:opacity-50"
+            onClick={handleStartService}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
             disabled={!destinationHasCoords}
           >
-            Start Navigation
+            I've Arrived - Start Service
           </button>
-        )}
-        <button
-          onClick={handleStartService}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
-          disabled={!destinationHasCoords}
-        >
-          I've Arrived - Start Service
-        </button>
-        <button
-          onClick={() => navigate(-1)}
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-        >
-          Back
-        </button>
-      </div>
-      {/* Street View modal */}
-      {showStreetView && destinationHasCoords && destinationCoords && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
-            <button
-              className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-              onClick={() => setShowStreetView(false)}
-              aria-label="Close Street View"
-            >
-              <span className="text-xl font-bold text-gray-700">&times;</span>
-            </button>
-            <div className="h-full w-full">
-              <GStreetView
-                position={destinationCoords}
-                pov={{ heading: 0, pitch: 0 }}
-                options={{
-                  addressControl: true,
-                  linksControl: true,
-                  panControl: true,
-                }}
-                style={{ width: "100%", height: "100%" }}
-              />
+          <button
+            onClick={() => navigate(-1)}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          >
+            Back
+          </button>
+        </div>
+        {/* Street View modal */}
+        {showStreetView && destinationHasCoords && destinationCoords && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
+              <button
+                className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+                onClick={() => setShowStreetView(false)}
+                aria-label="Close Street View"
+              >
+                <span className="text-xl font-bold text-gray-700">&times;</span>
+              </button>
+              <div className="h-full w-full">
+                <GStreetView
+                  position={destinationCoords}
+                  pov={{ heading: 0, pitch: 0 }}
+                  options={{
+                    addressControl: true,
+                    linksControl: true,
+                    panControl: true,
+                  }}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Floating button removed; recenter is in overlay */}
-      {mapApiKey === "REPLACE_WITH_KEY" && (
-        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
-          Missing Google Maps API key
-        </div>
-      )}
-    </div>
+        )}
+        {/* Floating button removed; recenter is in overlay */}
+        {mapApiKey === "REPLACE_WITH_KEY" && (
+          <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
+            Missing Google Maps API key
+          </div>
+        )}
+      </div>
     </APIProvider>
   );
 };

@@ -139,7 +139,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         pwaState.pushNotificationSupported &&
         pwaState.pushPermission !== "denied" &&
         pwaState.browserInfo.canReceivePushNotifications
-
       ) {
         try {
           const userId = identity.getPrincipal().toString();

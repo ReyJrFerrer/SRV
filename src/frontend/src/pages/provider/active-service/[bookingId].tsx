@@ -29,11 +29,8 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const {
-    getBookingById,
-    loading,
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { getBookingById, loading, checkCommissionValidation } =
+    useProviderBookingManagement();
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();

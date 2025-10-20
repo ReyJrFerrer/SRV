@@ -5,11 +5,8 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 const ActiveServiceBanner: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    getActiveBookings,
-    getServiceDisplayName,
-    getPackageDisplayName,
-  } = useProviderBookingManagement();
+  const { getActiveBookings, getServiceDisplayName, getPackageDisplayName } =
+    useProviderBookingManagement();
 
   // Hide on active-service page itself
   if (location.pathname.startsWith("/provider/active-service/")) {
@@ -20,10 +17,16 @@ const ActiveServiceBanner: React.FC = () => {
   if (!activeBookings || activeBookings.length === 0) return null;
 
   const booking = activeBookings[0];
-  const serviceName = getServiceDisplayName(booking) || booking.serviceName || "Service";
-  const packageName = getPackageDisplayName(booking) || booking.packageName || "Package";
-  const categoryName = booking.serviceDetails?.category?.name || booking.serviceDetails?.category?.slug || "Category";
-  const clientName = booking.clientName || booking.clientProfile?.name || "Client";
+  const serviceName =
+    getServiceDisplayName(booking) || booking.serviceName || "Service";
+  const packageName =
+    getPackageDisplayName(booking) || booking.packageName || "Package";
+  const categoryName =
+    booking.serviceDetails?.category?.name ||
+    booking.serviceDetails?.category?.slug ||
+    "Category";
+  const clientName =
+    booking.clientName || booking.clientProfile?.name || "Client";
 
   return (
     <>
