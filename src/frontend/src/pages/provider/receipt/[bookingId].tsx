@@ -25,11 +25,8 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const {
-    getBookingById,
-    loading,
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { getBookingById, loading, checkCommissionValidation } =
+    useProviderBookingManagement();
 
   // Get booking data from hook
   const booking = useMemo(() => {
@@ -98,7 +95,6 @@ const ReceiptPage: React.FC = () => {
       alert("Web Share API not supported. You can copy the URL.");
     }
   };
-
 
   if (loading) {
     return (
