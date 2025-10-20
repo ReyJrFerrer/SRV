@@ -86,8 +86,6 @@ import ProviderHelpSupportPage from "./src/pages/provider/help";
 import WalletPage from "./src/pages/provider/wallet";
 import PayoutSettingsPage from "./src/pages/provider/payout-settings";
 
-// FCM Test Page (Development Only)
-import FCMTestPage from "./src/pages/FCMTestPage";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -116,10 +114,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               {/* Public Routes */}
               <Route path="/" element={<App />} />
               <Route path="/create-profile" element={<CreateProfile />} />
-
-              {/* FCM Test Route - Development Only */}
-              <Route path="/fcm-test" element={<FCMTestPage />} />
-
+              
               <Route path="/client" element={<ClientLayout />}>
                 <Route index element={<ClientRedirect />} />
                 <Route path="home" element={<ClientHome />} />
