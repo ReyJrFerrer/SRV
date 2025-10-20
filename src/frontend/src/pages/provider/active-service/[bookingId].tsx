@@ -32,8 +32,6 @@ const ActiveServicePage: React.FC = () => {
   const {
     getBookingById,
     loading,
-    // error,
-    isProviderAuthenticated,
     checkCommissionValidation,
   } = useProviderBookingManagement();
 

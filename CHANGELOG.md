@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots
+ - Add provider active service banner that appears across provider pages (except the active-service page) showing current in-progress booking details with quick navigation
 
 ## Payment Integration Feature
 
