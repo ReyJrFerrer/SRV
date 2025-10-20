@@ -28,7 +28,6 @@ const ReceiptPage: React.FC = () => {
   const {
     getBookingById,
     loading,
-    isProviderAuthenticated,
     checkCommissionValidation,
   } = useProviderBookingManagement();
 
@@ -100,13 +99,6 @@ const ReceiptPage: React.FC = () => {
     }
   };
 
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Maglogin bilang service provider upang makita ang page na ito.
-      </div>
-    );
-  }
 
   if (loading) {
     return (
