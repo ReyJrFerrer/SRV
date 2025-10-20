@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useBookingManagement } from "./bookingManagement";
 import { useAuth } from "../context/AuthContext";
 import { usePWA } from "./usePWA";
-import notificationIntegrationService from "../services/notificationIntegrationService";
 import notificationCanisterService, {
   updateNotificationActor,
 } from "../services/notificationCanisterService";
@@ -167,19 +166,6 @@ export const useNotificationsWithPush = () => {
   useEffect(() => {
     updateNotificationActor(identity);
   }, [identity]);
-
-  // Initialize notification integration service
-  useEffect(() => {
-    const initializeIntegration = async () => {
-      if (identity && pwaState.pushSubscribed) {
-        await notificationIntegrationService.initialize(
-          getUserId(),
-          pwaState.pushSubscribed,
-        );
-      }
-    };
-    initializeIntegration();
-  }, [identity, pwaState.pushSubscribed]);
 
   // Subscribe to real-time notifications from Firebase
   useEffect(() => {

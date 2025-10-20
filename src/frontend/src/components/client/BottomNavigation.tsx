@@ -8,13 +8,17 @@ const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
-  const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } = useUserProfile();
+  const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
+    useUserProfile();
 
   // Keep a stable avatar src to avoid flashing default while new image loads
   const defaultClientAvatar = "/default-client.svg";
   const clientAvatarCacheKey = "nav:client:avatar";
   const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
-    const cached = typeof window !== "undefined" ? localStorage.getItem(clientAvatarCacheKey) : null;
+    const cached =
+      typeof window !== "undefined"
+        ? localStorage.getItem(clientAvatarCacheKey)
+        : null;
     return (
       cached ||
       (profile?.profilePicture?.imageUrl as string | undefined) ||
@@ -26,7 +30,8 @@ const BottomNavigation: React.FC = () => {
     // While loading a new avatar, prefer showing previous or raw profile URL over default
     if (isImageLoading) {
       // If we have a raw profile URL, use it to avoid default flash
-      const raw = (profile?.profilePicture?.imageUrl as string | undefined) || null;
+      const raw =
+        (profile?.profilePicture?.imageUrl as string | undefined) || null;
       if (raw && stableProfileSrc !== raw) {
         setStableProfileSrc(raw);
       }
@@ -35,14 +40,25 @@ const BottomNavigation: React.FC = () => {
 
     // After loading completes, if we have a real image (not default), use it;
     // otherwise, use cached previous or default
-    const hasReal = !isUsingDefaultAvatar && !!profileImageUrl && profileImageUrl !== defaultClientAvatar;
+    const hasReal =
+      !isUsingDefaultAvatar &&
+      !!profileImageUrl &&
+      profileImageUrl !== defaultClientAvatar;
     const next = hasReal
       ? profileImageUrl
-      : (localStorage.getItem(clientAvatarCacheKey) || (profile?.profilePicture?.imageUrl as string | undefined) || defaultClientAvatar);
+      : localStorage.getItem(clientAvatarCacheKey) ||
+        (profile?.profilePicture?.imageUrl as string | undefined) ||
+        defaultClientAvatar;
     if (next && stableProfileSrc !== next) {
       setStableProfileSrc(next);
     }
-  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile, stableProfileSrc]);
+  }, [
+    profileImageUrl,
+    isUsingDefaultAvatar,
+    isImageLoading,
+    profile,
+    stableProfileSrc,
+  ]);
 
   // Persist the last good avatar so we can show it instantly on next mount
   React.useEffect(() => {
@@ -181,18 +197,26 @@ const BottomNavigation: React.FC = () => {
           <div className="grid w-full grid-cols-5 font-medium">
             {navItems.map((item) => {
               // On mobile, show Settings instead of Profile
-              const displayItem = item.label === "Profile" ? settingsItem : item;
+              const displayItem =
+                item.label === "Profile" ? settingsItem : item;
               const isActive = location.pathname.startsWith(displayItem.to);
               if (
-                ["Home", "Booking", "Settings", "Notifications", "Chat"].includes(
-                  displayItem.label,
-                )
+                [
+                  "Home",
+                  "Booking",
+                  "Settings",
+                  "Notifications",
+                  "Chat",
+                ].includes(displayItem.label)
               ) {
                 const handleMouseEnter = () => {
                   if (!isActive) {
                     setIconStates((prev) => ({
                       ...prev,
-                      [displayItem.label]: getIconSrc(displayItem.label, "hover"),
+                      [displayItem.label]: getIconSrc(
+                        displayItem.label,
+                        "hover",
+                      ),
                     }));
                   }
                 };
@@ -201,7 +225,10 @@ const BottomNavigation: React.FC = () => {
                   if (!isActive) {
                     setIconStates((prev) => ({
                       ...prev,
-                      [displayItem.label]: getIconSrc(displayItem.label, "default"),
+                      [displayItem.label]: getIconSrc(
+                        displayItem.label,
+                        "default",
+                      ),
                     }));
                   }
                 };
@@ -347,7 +374,9 @@ const BottomNavigation: React.FC = () => {
                     src={stableProfileSrc}
                     alt="Profile"
                     className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                      isActive ? "h-10 w-10 ring-2 ring-yellow-500" : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+                      isActive
+                        ? "h-10 w-10 ring-2 ring-yellow-500"
+                        : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
                     }`}
                     draggable={false}
                   />
@@ -379,7 +408,7 @@ const BottomNavigation: React.FC = () => {
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mt-auto mb-4 flex w-full flex-col items-center border-t border-gray-100 pt-2">
+        <div className="mb-4 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-2">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);
