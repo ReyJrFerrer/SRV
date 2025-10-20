@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "@tailwindcss/vite";
@@ -19,7 +19,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
     rollupOptions: {
       output: {
-        assetFileNames: (assetInfo) => {
+  assetFileNames: (assetInfo: { name?: string }) => {
           // Keep original structure for images and fonts
           if (assetInfo.name?.match(/\.(png|jpe?g|svg|gif|webp)$/)) {
             return "images/[name][extname]";
@@ -73,11 +73,11 @@ export default defineConfig({
       "/api": {
         target: "http://127.0.0.1:4943",
         changeOrigin: true,
-        configure: (proxy) => {
+  configure: (proxy: any) => {
           proxy.on("error", () => {
             //console.log("proxy error", err);
           });
-          proxy.on("proxyReq", (_proxyReq) => {
+          proxy.on("proxyReq", (_proxyReq: any) => {
             //console.log("Sending Request to the Target:", req.method, req.url);
           });
           proxy.on("proxyRes", () => {
@@ -101,8 +101,9 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    environment("all", { prefix: "CANISTER_" }),
-    environment("all", { prefix: "DFX_" }),
+  // Cast to any to avoid Vite type mismatch across workspace/root
+  (environment as unknown as any)("all", { prefix: "CANISTER_" }),
+  (environment as unknown as any)("all", { prefix: "DFX_" }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["logo.svg", "heroImage.png"],
@@ -219,4 +220,4 @@ export default defineConfig({
     setupFiles: "frontend-test-setup.ts",
     globals: true,
   },
-});
+} as any);
