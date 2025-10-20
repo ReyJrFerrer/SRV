@@ -197,7 +197,7 @@ class FirebaseAuthService {
       const result = await confirmationResult.confirm(otpCode);
 
       if (result.user) {
-        console.log("Phone number verified successfully");
+        console.log("✅ Phone number verified successfully");
 
         // CRITICAL: Restore the IC-based Firebase session
         // Phone verification creates a separate Firebase user, so we need to
@@ -230,7 +230,18 @@ class FirebaseAuthService {
 
       return false;
     } catch (error: any) {
-      console.error("Error verifying OTP:", error);
+      // Don't log expected validation errors
+      if (error.code === "auth/invalid-verification-code") {
+        // Silent - this is expected when user enters wrong code
+      } else if (error.code === "auth/invalid-verification-id") {
+        console.log("⚠️ Verification session expired or invalid");
+      } else if (error.code === "auth/code-expired") {
+        console.log("⚠️ Verification code expired");
+      } else {
+        // Log unexpected errors
+        console.error("❌ Error verifying OTP:", error);
+      }
+      
       throw this.handleFirebaseError(error);
     }
   }
@@ -285,6 +296,9 @@ class FirebaseAuthService {
         break;
       case "auth/invalid-verification-code":
         message = "Invalid verification code. Please try again.";
+        break;
+      case "auth/invalid-verification-id":
+        message = "Verification session expired. Please request a new code.";
         break;
       case "auth/code-expired":
         message = "Verification code has expired. Please request a new code.";

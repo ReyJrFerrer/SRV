@@ -21,6 +21,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
 }) => {
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const lastCompletedValue = useRef<string>("");
 
   // Initialize the refs array
   useEffect(() => {
@@ -34,10 +35,14 @@ const OtpInput: React.FC<OtpInputProps> = ({
     }
   }, [focusedIndex]);
 
-  // Call onComplete when all digits are entered
+  // Call onComplete when all digits are entered (only once per value)
   useEffect(() => {
-    if (value.length === length && onComplete) {
+    if (value.length === length && onComplete && value !== lastCompletedValue.current) {
+      lastCompletedValue.current = value;
       onComplete(value);
+    } else if (value.length < length) {
+      // Reset when value changes to incomplete
+      lastCompletedValue.current = "";
     }
   }, [value, length, onComplete]);
 

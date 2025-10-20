@@ -40,7 +40,10 @@ let firebaseFirestore: Firestore | null = null;
 let emulatorsConnected = false;
 
 // Store the IC custom token for restoration after phone verification
-let icCustomToken: string | null = null;
+// We use localStorage to persist across page reloads
+const IC_TOKEN_KEY = "ic_custom_token";
+const IC_TOKEN_TIMESTAMP_KEY = "ic_custom_token_timestamp";
+const TOKEN_VALIDITY_DURATION = 55 * 60 * 1000; // 55 minutes (tokens expire after 1 hour)
 
 /**
  * Initialize Firebase App
@@ -224,25 +227,60 @@ export function isFirebaseInitialized(): boolean {
 /**
  * Store the IC custom token for later restoration
  * This is used to restore the IC-based Firebase session after phone verification
+ * Stores in localStorage with timestamp to check validity
  * @param token - The Firebase custom token from IC authentication
  */
 export function storeICCustomToken(token: string): void {
-  icCustomToken = token;
-  console.log("🔐 Stored IC custom token for session restoration");
+  try {
+    localStorage.setItem(IC_TOKEN_KEY, token);
+    localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
+    console.log("🔐 Stored IC custom token in localStorage for session restoration");
+  } catch (error) {
+    console.error("Failed to store IC custom token:", error);
+  }
 }
 
 /**
- * Get the stored IC custom token
- * @returns The stored IC custom token or null
+ * Get the stored IC custom token if it's still valid
+ * @returns The stored IC custom token or null if expired/missing
  */
 export function getStoredICCustomToken(): string | null {
-  return icCustomToken;
+  try {
+    const token = localStorage.getItem(IC_TOKEN_KEY);
+    const timestampStr = localStorage.getItem(IC_TOKEN_TIMESTAMP_KEY);
+    
+    if (!token || !timestampStr) {
+      return null;
+    }
+
+    const timestamp = parseInt(timestampStr, 10);
+    const now = Date.now();
+    const age = now - timestamp;
+
+    // Check if token is still valid (less than 55 minutes old)
+    if (age > TOKEN_VALIDITY_DURATION) {
+      console.log("⏰ IC custom token expired, clearing...");
+      clearICCustomToken();
+      return null;
+    }
+
+    console.log(`✅ IC custom token is valid (age: ${Math.floor(age / 60000)} minutes)`);
+    return token;
+  } catch (error) {
+    console.error("Failed to retrieve IC custom token:", error);
+    return null;
+  }
 }
 
 /**
  * Clear the stored IC custom token
  */
 export function clearICCustomToken(): void {
-  icCustomToken = null;
-  console.log("🗑️ Cleared stored IC custom token");
+  try {
+    localStorage.removeItem(IC_TOKEN_KEY);
+    localStorage.removeItem(IC_TOKEN_TIMESTAMP_KEY);
+    console.log("🗑️ Cleared stored IC custom token from localStorage");
+  } catch (error) {
+    console.error("Failed to clear IC custom token:", error);
+  }
 }

@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { getFirebaseAuth } from "../services/firebaseApp";
+import { getFirebaseAuth, clearICCustomToken } from "../services/firebaseApp";
 import { updateReputationActor } from "../services/reputationCanisterService";
 
 // import {
@@ -265,6 +265,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     if (!authClient) return;
+
+    // Clear stored IC custom token
+    clearICCustomToken();
 
     // Logout from Firebase
     const auth = getFirebaseAuth();
