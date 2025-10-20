@@ -4,7 +4,7 @@
 // Behavior: Watches GPS, computes directions, renders native polylines, supports alternate selection.
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import GStreetView from "../../../components/common/GStreetView";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
@@ -72,15 +72,18 @@ const ProviderDirectionsPage: React.FC = () => {
   >("idle");
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
   // Prevent multiple auto-start triggers
-  const hasAutoStartedRef = useRef<boolean>(false);
+
+
+  // Navigation mode and device heading (compass)
+  const [isInNavigationMode, setIsInNavigationMode] = useState(false);
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
 
   // Timing and reroute thresholds
   const lastRouteTimeRef = useRef<number>(0);
   const lastOriginRef = useRef<google.maps.LatLngLiteral | null>(null);
   const recomputeCooldownMs = 90_000; // 90s
   const driftThresholdMeters = 120; // 120m drift threshold
-  const etaIntervalRef = useRef<number | null>(null);
-  const etaRefreshIntervalMs = 180_000; // default 3 minutes
+
   // Route deviation threshold
   const routeDeviationMeters = 60; // reroute when > 60m from current route
   // Native polylines for rendering
@@ -315,76 +318,52 @@ const ProviderDirectionsPage: React.FC = () => {
     computeDirections();
   }, [computeDirections]);
 
-  // SECTION: Periodic ETA refresh
-  useEffect(() => {
-    if (!(window as any).google?.maps || !destinationCoords) return;
-    if (etaIntervalRef.current) clearInterval(etaIntervalRef.current);
-    etaIntervalRef.current = window.setInterval(() => {
-      if (!providerLocation || !destinationCoords) return;
-      const dist = haversineDistanceMeters(providerLocation, destinationCoords);
+  // NOTE: Removed periodic ETA refresh with nested effect. Rerouting is handled in the geolocation watch
+  // and computeDirections with drift/deviation thresholds.
 
-      // Auto-start service when arriving near destination (within 50 meters)
-      useEffect(() => {
-        if (!bookingId || !destinationCoords || !providerLocation) return;
-        if (hasAutoStartedRef.current) return;
-        const dist = haversineDistanceMeters(
-          providerLocation,
-          destinationCoords,
-        );
-        const ARRIVE_THRESHOLD_M = 50; // meters
-        if (dist <= ARRIVE_THRESHOLD_M) {
-          hasAutoStartedRef.current = true;
-          (async () => {
-            const success = await startBookingById(bookingId);
-            if (success) {
-              const startTime = new Date().toISOString();
-              localStorage.setItem(
-                `activeServiceStartTime:${bookingId}`,
-                startTime,
-              );
-              navigate(
-                `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
-                { replace: true },
-              );
-            } else {
-              // Allow retrigger if starting failed
-              setTimeout(() => (hasAutoStartedRef.current = false), 5000);
-            }
-          })();
-        }
-      }, [
-        bookingId,
-        destinationCoords,
-        providerLocation,
-        startBookingById,
-        navigate,
-      ]);
-      if (dist < 50) return; // close to destination
-      const sinceLast = Date.now() - lastRouteTimeRef.current;
-      if (sinceLast > 60_000 && directionsStatus !== "pending") {
-        computeDirections(
-          lastOriginRef.current || baseOrigin || providerLocation || undefined,
-        );
-      }
-    }, etaRefreshIntervalMs);
-    return () => {
-      if (etaIntervalRef.current) clearInterval(etaIntervalRef.current);
+  // Device orientation (compass) when in navigation mode
+  useEffect(() => {
+    if (!isInNavigationMode) return;
+    const anyDeviceOrientation: any = (window as any).DeviceOrientationEvent;
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (event.alpha !== null) setDeviceHeading(event.alpha);
     };
-  }, [
-    destinationCoords,
-    providerLocation,
-    directionsStatus,
-    computeDirections,
-    baseOrigin,
-  ]);
+
+    const addListener = () => {
+      window.addEventListener("deviceorientation", handleOrientation);
+    };
+
+    try {
+      if (anyDeviceOrientation && typeof anyDeviceOrientation.requestPermission === "function") {
+        anyDeviceOrientation.requestPermission().then((state: string) => {
+          if (state === "granted") addListener();
+        });
+      } else {
+        addListener();
+      }
+    } catch {
+      addListener();
+    }
+
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation);
+    };
+  }, [isInNavigationMode]);
 
   // Map ref updated in onCameraChanged
   const mapRef = useRef<google.maps.Map | null>(null);
-  // When following is enabled, keep centering on provider's location
+  // Camera control: navigation mode uses tilt/heading; otherwise follow-me pans to location
   useEffect(() => {
-    if (!mapRef.current || !providerLocation || !followMe) return;
-    mapRef.current.panTo(providerLocation);
-  }, [providerLocation, followMe]);
+    const map = mapRef.current;
+    if (!map || !providerLocation) return;
+    if (isInNavigationMode) {
+      const heading = deviceHeading ?? 0;
+      map.moveCamera({ center: providerLocation, zoom: 18, heading, tilt: 45 });
+    } else if (followMe) {
+      map.panTo(providerLocation);
+    }
+  }, [providerLocation, followMe, isInNavigationMode, deviceHeading]);
 
   // Disable follow when user starts dragging the map
   const dragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
@@ -396,11 +375,10 @@ const ProviderDirectionsPage: React.FC = () => {
       dragListenerRef.current.remove();
       dragListenerRef.current = null;
     }
-    dragListenerRef.current = google.maps.event.addListener(
-      map,
-      "dragstart",
-      () => setFollowMe(false),
-    );
+    dragListenerRef.current = google.maps.event.addListener(map, "dragstart", () => {
+      setFollowMe(false);
+      setIsInNavigationMode(false);
+    });
     return () => {
       if (dragListenerRef.current) {
         dragListenerRef.current.remove();
@@ -690,30 +668,59 @@ const ProviderDirectionsPage: React.FC = () => {
   }
   const destinationHasCoords = !!destinationCoords;
 
+  const toggleNavigationMode = () => {
+    setIsInNavigationMode((prev) => {
+      const next = !prev;
+      const map = mapRef.current;
+      if (next && map && providerLocation) {
+        setFollowMe(true);
+        map.moveCamera({ center: providerLocation, zoom: 18, tilt: 45 });
+      } else if (!next && map) {
+        map.moveCamera({ zoom: 15, tilt: 0, heading: 0 });
+      }
+      return next;
+    });
+  };
+
   return (
-    <div className="relative h-screen w-screen">
+    <APIProvider apiKey={mapApiKey}>
+      <div className="relative h-screen w-screen">
       {providerLocation && destinationHasCoords && (
         <Map
           style={containerStyle}
           defaultZoom={15}
           defaultCenter={providerLocation}
           onCameraChanged={(ev) => (mapRef.current = ev.map)}
-          gestureHandling="greedy"
+          gestureHandling={isInNavigationMode ? "none" : "greedy"}
           disableDefaultUI={true}
           zoomControl={true}
           mapId={"6922634ff75ae05ac38cc473"}
         >
           {providerLocation && (
             <AdvancedMarker position={providerLocation}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  backgroundColor: "#2563eb",
-                  border: "2px solid #ffffff",
-                }}
-              />
+              {isInNavigationMode ? (
+                <div style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}>
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="#1D4ED8"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    backgroundColor: "#2563eb",
+                    border: "2px solid #ffffff",
+                  }}
+                />
+              )}
             </AdvancedMarker>
           )}
           {destinationHasCoords && destinationCoords && (
@@ -797,17 +804,11 @@ const ProviderDirectionsPage: React.FC = () => {
                 const leg =
                   directionsResponse.routes[selectedRouteIndex]?.legs[0] ||
                   directionsResponse.routes[0].legs[0];
-                const eta = leg.duration?.text || "N/A";
-                const dist = leg.distance?.text || "N/A";
                 return (
                   <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                    <div className="text-lg font-extrabold text-gray-900">
-                      Estimated time of arrival: {eta}
-                    </div>
+                    <div className="text-lg font-extrabold text-gray-900">{leg.duration?.text || "N/A"}</div>
                     <span className="text-gray-300">•</span>
-                    <div className="text-base font-semibold text-gray-700">
-                      Distance: {dist}
-                    </div>
+                    <div className="text-base font-semibold text-gray-700">{leg.distance?.text || "N/A"}</div>
                   </div>
                 );
               })()}
@@ -829,6 +830,24 @@ const ProviderDirectionsPage: React.FC = () => {
             </p>
           )}
         </div>
+
+        {/* Navigation mode toggle */}
+        {isInNavigationMode ? (
+          <button
+            onClick={toggleNavigationMode}
+            className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-red-700"
+          >
+            Exit Navigation
+          </button>
+        ) : (
+          <button
+            onClick={toggleNavigationMode}
+            className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-green-700 disabled:opacity-50"
+            disabled={!destinationHasCoords}
+          >
+            Start Navigation
+          </button>
+        )}
         <button
           onClick={handleStartService}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
@@ -880,6 +899,7 @@ const ProviderDirectionsPage: React.FC = () => {
         </div>
       )}
     </div>
+    </APIProvider>
   );
 };
 
