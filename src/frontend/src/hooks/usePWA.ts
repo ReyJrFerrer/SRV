@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import fcmService from "../services/fcmService";
-import notificationIntegrationService from "../services/notificationIntegrationService";
+import notificationService from "../services/notificationService";
 
 export interface PWAState {
   isInstallable: boolean;
@@ -48,7 +47,9 @@ export const usePWA = () => {
             ? Notification.permission
             : ("denied" as NotificationPermission);
 
-        const pushSubscribed = fcmService.isReady();
+        // Get notification service state
+        const notifState = notificationService.getState();
+        const pushSubscribed = notifState.fcmReady;
 
         setPwaState((prev) => ({
           ...prev,
@@ -57,6 +58,9 @@ export const usePWA = () => {
           pushPermission,
           pushSubscribed,
         }));
+
+        // Auto-initialize notification service (this won't trigger FCM unless permission is granted)
+        await notificationService.initialize(false);
 
         setLoading(false);
       } catch (err) {
@@ -119,7 +123,8 @@ export const usePWA = () => {
     const handleVisibilityChange = () => {
       if (!document.hidden && "Notification" in window) {
         const currentPermission = Notification.permission;
-        const isSubscribed = fcmService.isReady();
+        const notifState = notificationService.getState();
+        const isSubscribed = notifState.fcmReady;
 
         setPwaState((prev) => ({
           ...prev,
@@ -144,7 +149,8 @@ export const usePWA = () => {
         "Notification" in window
           ? Notification.permission
           : ("denied" as NotificationPermission);
-      const isSubscribed = fcmService.isReady();
+      const notifState = notificationService.getState();
+      const isSubscribed = notifState.fcmReady;
       const isPWA =
         window.matchMedia("(display-mode: standalone)").matches ||
         (window.navigator as any).standalone;
@@ -198,34 +204,53 @@ export const usePWA = () => {
         console.log("[usePWA] Enabling push notifications for user:", userId);
 
         if (!pwaState.pushNotificationSupported) {
-          throw new Error(
-            "Push notifications are not supported in this browser",
-          );
+          const errorMsg = "Push notifications are not supported in this browser";
+          setError(errorMsg);
+          throw new Error(errorMsg);
         }
 
-        const success =
-          await notificationIntegrationService.enablePushNotifications();
+        // Check if already subscribed to avoid unnecessary calls
+        const notifState = notificationService.getState();
+        if (pwaState.pushSubscribed && notifState.fcmReady) {
+          console.log("[usePWA] Already subscribed to push notifications");
+          return true;
+        }
 
-        if (success) {
+        console.log("[usePWA] Calling requestPermissionAndEnable...");
+        const result = await notificationService.requestPermissionAndEnable();
+
+        if (result.success) {
+          console.log("[usePWA] Push notifications enabled, updating state");
           setPwaState((prev) => ({
             ...prev,
             pushSubscribed: true,
             pushPermission: Notification.permission,
           }));
+          return true;
+        } else {
+          const errorMsg = result.error || "Failed to enable push notifications. Please try again.";
+          console.error("[usePWA]", errorMsg);
+          setError(errorMsg);
+          return false;
         }
-
-        return success;
       } catch (err) {
         console.error("[usePWA] Failed to enable push notifications:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to enable push notifications",
-        );
+        const errorMsg = err instanceof Error
+          ? err.message
+          : "Failed to enable push notifications";
+        setError(errorMsg);
+        
+        // Update state to reflect failure
+        setPwaState((prev) => ({
+          ...prev,
+          pushSubscribed: false,
+          pushPermission: Notification.permission,
+        }));
+        
         return false;
       }
     },
-    [pwaState.pushNotificationSupported],
+    [pwaState.pushNotificationSupported, pwaState.pushSubscribed],
   );
 
   const disablePushNotifications = useCallback(
@@ -234,8 +259,7 @@ export const usePWA = () => {
         setError(null);
         console.log("[usePWA] Disabling push notifications");
 
-        const success =
-          await notificationIntegrationService.disablePushNotifications();
+        const success = await notificationService.disableNotifications();
 
         if (success) {
           setPwaState((prev) => ({
