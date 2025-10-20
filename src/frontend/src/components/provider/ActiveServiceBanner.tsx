@@ -30,7 +30,7 @@ const ActiveServiceBanner: React.FC = () => {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow">
+      <div className="fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow md:left-20">
         <button
           type="button"
           onClick={() => navigate(`/provider/active-service/${booking.id}`)}
