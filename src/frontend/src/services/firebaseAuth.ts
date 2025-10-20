@@ -241,7 +241,7 @@ class FirebaseAuthService {
         // Log unexpected errors
         console.error("❌ Error verifying OTP:", error);
       }
-      
+
       throw this.handleFirebaseError(error);
     }
   }

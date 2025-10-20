@@ -29,7 +29,8 @@ const OtpModal: React.FC<OtpModalProps> = ({
   const [shouldShowReload, setShouldShowReload] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [isVerified, setIsVerified] = useState(false);
-  const [isProcessingVerification, setIsProcessingVerification] = useState(false);
+  const [isProcessingVerification, setIsProcessingVerification] =
+    useState(false);
   const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Timer for resend cooldown
@@ -52,14 +53,14 @@ const OtpModal: React.FC<OtpModalProps> = ({
       setResendTimer(60);
       setIsVerified(false);
       setIsProcessingVerification(false);
-      
+
       // Clear any pending verification timeout
       if (verificationTimeoutRef.current) {
         clearTimeout(verificationTimeoutRef.current);
         verificationTimeoutRef.current = null;
       }
     }
-    
+
     // Cleanup on unmount
     return () => {
       if (verificationTimeoutRef.current) {
@@ -97,7 +98,7 @@ const OtpModal: React.FC<OtpModalProps> = ({
           // Clear any errors and show success
           setError(null);
           setIsVerified(true);
-          
+
           // Wait a moment to show success state before proceeding
           setTimeout(() => {
             onVerified();
@@ -112,8 +113,10 @@ const OtpModal: React.FC<OtpModalProps> = ({
           }
 
           // Clear OTP for session expired or too many attempts
-          if (errorMessage.includes("expired") || 
-              errorMessage.includes("Too many failed attempts")) {
+          if (
+            errorMessage.includes("expired") ||
+            errorMessage.includes("Too many failed attempts")
+          ) {
             setOtpCode("");
           }
           // For simple invalid code, keep the input so user can correct it
@@ -127,8 +130,10 @@ const OtpModal: React.FC<OtpModalProps> = ({
         }
 
         // Only clear on serious errors
-        if (errorMessage.includes("expired") || 
-            errorMessage.includes("Too many failed attempts")) {
+        if (
+          errorMessage.includes("expired") ||
+          errorMessage.includes("Too many failed attempts")
+        ) {
           setOtpCode("");
         }
       } finally {

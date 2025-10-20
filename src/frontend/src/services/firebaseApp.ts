@@ -234,7 +234,9 @@ export function storeICCustomToken(token: string): void {
   try {
     localStorage.setItem(IC_TOKEN_KEY, token);
     localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
-    console.log("🔐 Stored IC custom token in localStorage for session restoration");
+    console.log(
+      "🔐 Stored IC custom token in localStorage for session restoration",
+    );
   } catch (error) {
     console.error("Failed to store IC custom token:", error);
   }
@@ -248,7 +250,7 @@ export function getStoredICCustomToken(): string | null {
   try {
     const token = localStorage.getItem(IC_TOKEN_KEY);
     const timestampStr = localStorage.getItem(IC_TOKEN_TIMESTAMP_KEY);
-    
+
     if (!token || !timestampStr) {
       return null;
     }
@@ -264,7 +266,9 @@ export function getStoredICCustomToken(): string | null {
       return null;
     }
 
-    console.log(`✅ IC custom token is valid (age: ${Math.floor(age / 60000)} minutes)`);
+    console.log(
+      `✅ IC custom token is valid (age: ${Math.floor(age / 60000)} minutes)`,
+    );
     return token;
   } catch (error) {
     console.error("Failed to retrieve IC custom token:", error);

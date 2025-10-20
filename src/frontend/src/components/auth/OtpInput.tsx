@@ -37,7 +37,11 @@ const OtpInput: React.FC<OtpInputProps> = ({
 
   // Call onComplete when all digits are entered (only once per value)
   useEffect(() => {
-    if (value.length === length && onComplete && value !== lastCompletedValue.current) {
+    if (
+      value.length === length &&
+      onComplete &&
+      value !== lastCompletedValue.current
+    ) {
       lastCompletedValue.current = value;
       onComplete(value);
     } else if (value.length < length) {
