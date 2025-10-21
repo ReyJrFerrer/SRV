@@ -102,9 +102,17 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         </div>
         <span className="text-xs text-gray-400">Soon</span>
       </div>
-      <div className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`}>
+      <div
+        className={`flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50`}
+      >
         <div className="flex items-center">
-          <img src="/logo.svg" alt="SRV" width={24} height={24} className="mr-3" />
+          <img
+            src="/logo.svg"
+            alt="SRV"
+            width={24}
+            height={24}
+            className="mr-3"
+          />
           <span className="font-medium text-gray-800">SRV Wallet</span>
         </div>
         <span className="text-xs text-gray-400">Soon</span>

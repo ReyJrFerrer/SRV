@@ -155,7 +155,9 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       <button
                         key={index}
                         onClick={() =>
-                          isSlotAvailable && !isUserBooked && setSelectedTime(time)
+                          isSlotAvailable &&
+                          !isUserBooked &&
+                          setSelectedTime(time)
                         }
                         disabled={!isSlotAvailable || isUserBooked}
                         className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
@@ -241,7 +243,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                     </svg>
                   </button>
                   <span className="text-base font-semibold text-gray-800">
-                    {date.toLocaleString("default", { month: "long" })} {date.getFullYear()}
+                    {date.toLocaleString("default", { month: "long" })}{" "}
+                    {date.getFullYear()}
                   </span>
                   <button
                     onClick={increaseMonth}
@@ -321,7 +324,9 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                         <button
                           key={index}
                           onClick={() =>
-                            isSlotAvailable && !isUserBooked && setSelectedTime(time)
+                            isSlotAvailable &&
+                            !isUserBooked &&
+                            setSelectedTime(time)
                           }
                           disabled={!isSlotAvailable || isUserBooked}
                           className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${

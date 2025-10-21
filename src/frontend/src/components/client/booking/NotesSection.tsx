@@ -6,11 +6,15 @@ export type NotesSectionProps = {
   limit: number;
 };
 
-const NotesSection: React.FC<NotesSectionProps> = ({ notes, onChange, limit }) => (
+const NotesSection: React.FC<NotesSectionProps> = ({
+  notes,
+  onChange,
+  limit,
+}) => (
   <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
     <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-      Notes for Provider {" "}
+      Notes for Provider{" "}
       <span className="text-base font-normal text-gray-400">(Optional)</span>
     </h3>
     <textarea

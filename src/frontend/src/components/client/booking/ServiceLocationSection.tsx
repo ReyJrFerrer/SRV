@@ -99,7 +99,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-        highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border-gray-100"
+        highlight
+          ? "border-2 border-red-500 ring-2 ring-red-200"
+          : "border-gray-100"
       }`}
     >
       <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
@@ -137,19 +139,28 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       {mapMode === "detected" && !showFallbackForms && (
         <div className="mb-2.5">
           <div className="mb-2 text-[11px] font-medium text-gray-600">
-            Automatically detected via browser geolocation. Drop a custom pin if this is inaccurate.
+            Automatically detected via browser geolocation. Drop a custom pin if
+            this is inaccurate.
           </div>
           <div className="overflow-hidden rounded-xl border border-gray-200">
             {mapsReady && geoLocation ? (
               <Map
-                defaultCenter={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+                defaultCenter={{
+                  lat: geoLocation.latitude,
+                  lng: geoLocation.longitude,
+                }}
                 defaultZoom={16}
                 mapId="6922634ff75ae05ac38cc473"
                 style={{ width: "100%", height: 260 }}
                 disableDefaultUI={true}
                 zoomControl={true}
               >
-                <AdvancedMarker position={{ lat: geoLocation.latitude, lng: geoLocation.longitude }} />
+                <AdvancedMarker
+                  position={{
+                    lat: geoLocation.latitude,
+                    lng: geoLocation.longitude,
+                  }}
+                />
               </Map>
             ) : (
               <div className="flex h-64 items-center justify-center text-sm text-gray-500">
@@ -177,11 +188,14 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         <div className="mb-4">
           <LocationMapPicker
             value={
-              mapLocation ? { ...mapLocation, address: mapLocation.address ?? "" } : null
+              mapLocation
+                ? { ...mapLocation, address: mapLocation.address ?? "" }
+                : null
             }
             onChange={(loc: any) => {
               setMapLocation(loc);
-              const preciseAddressForDB = loc.formatted_address || loc.address || "";
+              const preciseAddressForDB =
+                loc.formatted_address || loc.address || "";
               const placeName = loc.rawName;
               let displayAddress = preciseAddressForDB;
               if (placeName && !preciseAddressForDB.startsWith(placeName)) {
@@ -198,7 +212,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             <div className="mt-2 space-y-1">
               {mapDisplayAddress && (
                 <div className="flex items-start gap-1">
-                  <span className="truncate text-xs font-medium text-gray-700" title={mapDisplayAddress}>
+                  <span
+                    className="truncate text-xs font-medium text-gray-700"
+                    title={mapDisplayAddress}
+                  >
                     {mapDisplayAddress}
                   </span>
                   <span
@@ -209,22 +226,24 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   </span>
                 </div>
               )}
-              {mapPreciseAddress && mapDisplayAddress && mapDisplayAddress !== mapPreciseAddress && (
-                <div className="flex items-start gap-1">
-                  <span
-                    className="truncate text-[10px] text-gray-500"
-                    title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
-                  >
-                    Provider reference: {mapPreciseAddress}
-                  </span>
-                  <span
-                    className="cursor-help text-[10px] text-blue-400"
-                    title="Used internally to help the provider navigate accurately."
-                  >
-                    (i)
-                  </span>
-                </div>
-              )}
+              {mapPreciseAddress &&
+                mapDisplayAddress &&
+                mapDisplayAddress !== mapPreciseAddress && (
+                  <div className="flex items-start gap-1">
+                    <span
+                      className="truncate text-[10px] text-gray-500"
+                      title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                    >
+                      Provider reference: {mapPreciseAddress}
+                    </span>
+                    <span
+                      className="cursor-help text-[10px] text-blue-400"
+                      title="Used internally to help the provider navigate accurately."
+                    >
+                      (i)
+                    </span>
+                  </div>
+                )}
             </div>
           )}
         </div>
@@ -282,11 +301,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {showFallbackForms && locationInputMode === "detected" && (
         <div className="mt-2 space-y-3">
-          <p className="text-xs text-gray-600">Your location is automatically detected.</p>
+          <p className="text-xs text-gray-600">
+            Your location is automatically detected.
+          </p>
           <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-blue-700">Municipality/City</label>
+                <label className="mb-1 block text-xs text-blue-700">
+                  Municipality/City
+                </label>
                 <input
                   type="text"
                   value={displayMunicipality || ""}
@@ -296,7 +319,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs text-blue-700">Province</label>
+                <label className="mb-1 block text-xs text-blue-700">
+                  Province
+                </label>
                 <input
                   type="text"
                   value={displayProvince || ""}
@@ -312,14 +337,19 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             value={selectedBarangay}
             onChange={(e) => setSelectedBarangay(e.target.value)}
             className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay" ? "border-2 border-red-500 ring-2 ring-red-200" : ""
+              highlightInput === "barangay"
+                ? "border-2 border-red-500 ring-2 ring-red-200"
+                : ""
             }`}
           >
             <option value="" disabled>
               Select Barangay *
             </option>
             {barangayOptions
-              .filter((b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others")
+              .filter(
+                (b) =>
+                  b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+              )
               .map((barangay, idx) => (
                 <option key={idx} value={barangay}>
                   {barangay}
@@ -336,7 +366,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               onChange={(e) => setOtherBarangay(e.target.value)}
               className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
                 highlightInput === "otherBarangay" ||
-                (otherBarangay && (otherBarangay.trim().length < 3 || otherBarangay.trim().length > 20))
+                (otherBarangay &&
+                  (otherBarangay.trim().length < 3 ||
+                    otherBarangay.trim().length > 20))
                   ? "border-2 border-red-500 ring-2 ring-red-200"
                   : "border-blue-400"
               }`}
@@ -356,7 +388,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                 : "border-gray-300 bg-white text-gray-700"
             } ${
-              highlightInput === "street" || (street && (street.trim().length < 3 || street.trim().length > 20))
+              highlightInput === "street" ||
+              (street &&
+                (street.trim().length < 3 || street.trim().length > 20))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
             }`}
@@ -375,7 +409,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                 : "border-gray-300 bg-white text-gray-700"
             } ${
-              highlightInput === "houseNumber" || (houseNumber && (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+              highlightInput === "houseNumber" ||
+              (houseNumber &&
+                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
             }`}
@@ -396,7 +432,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         <div className="mt-2 space-y-3">
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="mb-2 block text-xs text-blue-700">Province *</label>
+              <label className="mb-2 block text-xs text-blue-700">
+                Province *
+              </label>
               <select
                 value={manualProvince}
                 onChange={(e) => {
@@ -411,7 +449,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               </select>
             </div>
             <div className="flex-1">
-              <label className="mb-2 block text-xs text-blue-700">City/Municipality *</label>
+              <label className="mb-2 block text-xs text-blue-700">
+                City/Municipality *
+              </label>
               <select
                 value={manualCity}
                 onChange={(e) => setManualCity(e.target.value)}
@@ -430,7 +470,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             value={selectedBarangay}
             onChange={(e) => setSelectedBarangay(e.target.value)}
             className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay" ? "border-2 border-red-500 ring-2 ring-red-200" : ""
+              highlightInput === "barangay"
+                ? "border-2 border-red-500 ring-2 ring-red-200"
+                : ""
             }`}
             disabled={!manualCity}
           >
@@ -453,7 +495,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               onChange={(e) => setOtherBarangay(e.target.value)}
               className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
                 highlightInput === "otherBarangay" ||
-                (otherBarangay && (otherBarangay.trim().length < 3 || otherBarangay.trim().length > 20))
+                (otherBarangay &&
+                  (otherBarangay.trim().length < 3 ||
+                    otherBarangay.trim().length > 20))
                   ? "border-2 border-red-500 ring-2 ring-red-200"
                   : "border-blue-400"
               }`}
@@ -473,7 +517,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                 : "border-gray-300 bg-white text-gray-700"
             } ${
-              highlightInput === "street" || (street && (street.trim().length < 3 || street.trim().length > 20))
+              highlightInput === "street" ||
+              (street &&
+                (street.trim().length < 3 || street.trim().length > 20))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
             }`}
@@ -492,7 +538,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
                 : "border-gray-300 bg-white text-gray-700"
             } ${
-              highlightInput === "houseNumber" || (houseNumber && (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+              highlightInput === "houseNumber" ||
+              (houseNumber &&
+                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
             }`}
