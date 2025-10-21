@@ -16,6 +16,12 @@ const ActiveServiceBanner: React.FC = () => {
   const activeBookings = getActiveBookings();
   if (!activeBookings || activeBookings.length === 0) return null;
 
+  // Remove desktop left offset on service details pages where no sidebar spacing is needed
+  const isServiceDetailsPage =
+    location.pathname.startsWith("/provider/service-details/") ||
+    location.pathname.startsWith("/provider/service-details") ||
+    location.pathname.startsWith("/provider/booking/");
+
   const booking = activeBookings[0];
   const serviceName =
     getServiceDisplayName(booking) || booking.serviceName || "Service";
@@ -30,7 +36,12 @@ const ActiveServiceBanner: React.FC = () => {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow md:left-20">
+      <div
+        className={
+          `fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow ` +
+          (isServiceDetailsPage ? "" : "md:left-20")
+        }
+      >
         <button
           type="button"
           onClick={() => navigate(`/provider/active-service/${booking.id}`)}
