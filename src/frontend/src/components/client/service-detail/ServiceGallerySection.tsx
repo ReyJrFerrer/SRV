@@ -2,11 +2,14 @@ import React from "react";
 import { CameraIcon } from "@heroicons/react/24/outline";
 import { useServiceImages } from "../../../hooks/useMediaLoader";
 
-export const ServiceImageModal: React.FC<{ src: string; onClose: () => void }> = ({
-  src,
-  onClose,
-}) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
+export const ServiceImageModal: React.FC<{
+  src: string;
+  onClose: () => void;
+}> = ({ src, onClose }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+    onClick={onClose}
+  >
     <div className="relative" onClick={(e) => e.stopPropagation()}>
       <img
         src={src}
@@ -21,19 +24,33 @@ export const ServiceImageModal: React.FC<{ src: string; onClose: () => void }> =
         onClick={onClose}
         aria-label="Close"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-6 w-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+          className="h-6 w-6"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
   </div>
 );
 
-const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }> = ({
-  serviceId,
-  imageUrls,
-}) => {
-  const { images, isLoading, errorCount } = useServiceImages(serviceId, imageUrls);
+const ServiceGallerySection: React.FC<{
+  serviceId: string;
+  imageUrls: string[];
+}> = ({ serviceId, imageUrls }) => {
+  const { images, isLoading, errorCount } = useServiceImages(
+    serviceId,
+    imageUrls,
+  );
   const [modalImage, setModalImage] = React.useState<string | null>(null);
 
   const displayImages = images?.slice(0, 5) || [];
@@ -45,11 +62,16 @@ const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }
       </h3>
       {isLoading ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-          {Array.from({ length: Math.min(imageUrls.length || 4, 5) }).map((_, index) => (
-            <div key={index} className="flex aspect-square animate-pulse items-center justify-center rounded-lg bg-gray-200">
-              <div className="h-8 w-8 rounded bg-gray-300"></div>
-            </div>
-          ))}
+          {Array.from({ length: Math.min(imageUrls.length || 4, 5) }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="flex aspect-square animate-pulse items-center justify-center rounded-lg bg-gray-200"
+              >
+                <div className="h-8 w-8 rounded bg-gray-300"></div>
+              </div>
+            ),
+          )}
         </div>
       ) : displayImages.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
@@ -62,7 +84,8 @@ const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }
               aria-label={`Inspect service image ${index + 1}`}
               role="button"
               onKeyDown={(e) => {
-                if ((e.key === "Enter" || e.key === " ") && image.dataUrl) setModalImage(image.dataUrl);
+                if ((e.key === "Enter" || e.key === " ") && image.dataUrl)
+                  setModalImage(image.dataUrl);
               }}
             >
               {image.error ? (
@@ -79,12 +102,17 @@ const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }
                     loading="lazy"
                     tabIndex={-1}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/default-provider.svg";
+                      (e.target as HTMLImageElement).src =
+                        "/default-provider.svg";
                     }}
                   />
                   <span className="absolute bottom-2 right-2 rounded-full bg-white/80 p-1 text-blue-700 shadow transition-transform group-hover:scale-110 group-focus:scale-110">
                     <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                      <path stroke="currentColor" strokeWidth="2" d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" />
+                      <path
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
+                      />
                     </svg>
                   </span>
                 </div>
@@ -99,7 +127,10 @@ const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="flex aspect-square items-center justify-center rounded-xl border-2 border-gray-100 bg-gray-50">
+            <div
+              key={index}
+              className="flex aspect-square items-center justify-center rounded-xl border-2 border-gray-100 bg-gray-50"
+            >
               <CameraIcon className="h-10 w-10 text-gray-300" />
             </div>
           ))}
@@ -110,7 +141,12 @@ const ServiceGallerySection: React.FC<{ serviceId: string; imageUrls: string[] }
           ? `Showing ${displayImages.length} of ${imageUrls.length} service images${errorCount > 0 ? ` (${errorCount} failed to load)` : ""}`
           : "The service provider will add photos of their work soon."}
       </p>
-      {modalImage && <ServiceImageModal src={modalImage} onClose={() => setModalImage(null)} />}
+      {modalImage && (
+        <ServiceImageModal
+          src={modalImage}
+          onClose={() => setModalImage(null)}
+        />
+      )}
     </div>
   );
 };

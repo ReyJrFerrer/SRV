@@ -1,10 +1,10 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 
-export const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
-  rating,
-  maxStars = 5,
-}) => (
+export const StarRatingDisplay: React.FC<{
+  rating: number;
+  maxStars?: number;
+}> = ({ rating, maxStars = 5 }) => (
   <div className="flex items-center">
     {[...Array(maxStars)].map((_, index) => {
       const starValue = index + 1;

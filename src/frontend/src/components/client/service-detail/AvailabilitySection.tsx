@@ -14,7 +14,10 @@ interface AvailabilitySectionProps {
   isActive?: boolean;
 }
 
-const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({ availability, isActive }) => {
+const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
+  availability,
+  isActive,
+}) => {
   const slotsByDay = availability?.timeSlotsByDay || {};
   const days = Object.keys(slotsByDay);
   const hasDays = days.length > 0;
@@ -33,7 +36,15 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({ availability,
       stroke="currentColor"
       className={"h-7 w-7 text-blue-400 " + (props.className || "")}
     >
-      <rect x="3" y="7" width="18" height="13" rx="3" strokeWidth="2" stroke="currentColor" />
+      <rect
+        x="3"
+        y="7"
+        width="18"
+        height="13"
+        rx="3"
+        strokeWidth="2"
+        stroke="currentColor"
+      />
       <path d="M16 3v4M8 3v4" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
@@ -79,11 +90,19 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({ availability,
                         viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </button>
                     {isOpen && (
-                      <div id={`availability-panel-${day}`} className="mb-4 mt-2 flex flex-wrap items-center gap-2 px-3">
+                      <div
+                        id={`availability-panel-${day}`}
+                        className="mb-4 mt-2 flex flex-wrap items-center gap-2 px-3"
+                      >
                         {slots.length > 0 ? (
                           slots.map((slot, idx) => (
                             <span
@@ -130,13 +149,20 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({ availability,
                         if (!Array.isArray(slots)) slots = [];
                         const slot = slots[rowIdx];
                         return (
-                          <td key={day + rowIdx} className="px-4 py-3 text-center align-top">
+                          <td
+                            key={day + rowIdx}
+                            className="px-4 py-3 text-center align-top"
+                          >
                             {slot ? (
-                              <span className={` inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}>
+                              <span
+                                className={` inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
+                              >
                                 {slot}
                               </span>
                             ) : (
-                              <span className="text-gray-400">{rowIdx === 0 ? "Not specified" : ""}</span>
+                              <span className="text-gray-400">
+                                {rowIdx === 0 ? "Not specified" : ""}
+                              </span>
                             )}
                           </td>
                         );

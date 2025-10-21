@@ -4,10 +4,10 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../hooks/reviewManagement";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 
-export const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
-  rating,
-  maxStars = 5,
-}) => (
+export const StarRatingDisplay: React.FC<{
+  rating: number;
+  maxStars?: number;
+}> = ({ rating, maxStars = 5 }) => (
   <div className="flex items-center">
     {[...Array(maxStars)].map((_, index) => {
       const starValue = index + 1;
@@ -55,7 +55,9 @@ export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
         </div>
       </div>
       <div className="w-full">
-        <p className="w-full break-words text-base text-gray-700">{review.comment}</p>
+        <p className="w-full break-words text-base text-gray-700">
+          {review.comment}
+        </p>
       </div>
     </div>
   );
@@ -138,7 +140,8 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
               <div className="space-y-2">
                 {[5, 4, 3, 2, 1].map((star) => {
                   const count = ratingDistribution[star] || 0;
-                  const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                  const percentage =
+                    totalReviews > 0 ? (count / totalReviews) * 100 : 0;
                   return (
                     <div key={star} className="flex items-center text-sm">
                       <span className="w-12 font-medium text-gray-600">
@@ -150,7 +153,9 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
-                      <span className="w-8 text-right font-semibold text-gray-700">{count}</span>
+                      <span className="w-8 text-right font-semibold text-gray-700">
+                        {count}
+                      </span>
                     </div>
                   );
                 })}
@@ -166,7 +171,9 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
       ) : (
         <div className="flex flex-col items-center justify-center py-12">
           <ChatBubbleIcon className="mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-lg font-semibold text-gray-400">No reviews yet for this service.</p>
+          <p className="text-lg font-semibold text-gray-400">
+            No reviews yet for this service.
+          </p>
         </div>
       )}
     </div>

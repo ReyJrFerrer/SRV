@@ -21,7 +21,9 @@ import ReputationScore from "../../../components/client/service-detail/Reputatio
 import ReviewsSection from "../../../components/client/service-detail/ReviewsSection";
 import ServiceGallerySection from "../../../components/client/service-detail/ServiceGallerySection";
 import CredentialsSection from "../../../components/client/service-detail/CredentialsSection";
-import AvailabilitySection, { Availability } from "../../../components/client/service-detail/AvailabilitySection";
+import AvailabilitySection, {
+  Availability,
+} from "../../../components/client/service-detail/AvailabilitySection";
 
 // --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
 function formatTime12Hour(time: string): string {
@@ -436,7 +438,10 @@ const ClientServiceDetailsPage: React.FC = () => {
             </div>
           )}
         </div>
-        <AvailabilitySection availability={mappedAvailability} isActive={service?.isActive} />
+        <AvailabilitySection
+          availability={mappedAvailability}
+          isActive={service?.isActive}
+        />
         <ServiceGallerySection
           serviceId={service.id}
           imageUrls={service.media || []}
