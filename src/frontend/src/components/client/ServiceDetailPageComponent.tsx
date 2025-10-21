@@ -1104,8 +1104,8 @@ const ServiceDetailPage: React.FC = () => {
         <CredentialsSection isVerified={isVerified} />
         <ReviewsSection serviceId={service.id} />
       </div>
-      {/* --- Sticky Footer for Actions (bottom of page) --- */}
-      <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
+  {/* --- Sticky Footer for Actions (bottom of page) --- */}
+  <div className="shadow-t-lg fixed bottom-16 md:bottom-0 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           {/* Chat button (left, less wide) */}
           <button

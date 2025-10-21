@@ -289,7 +289,7 @@ const ConversationPage: React.FC = () => {
       </main>
 
       {/* Message Input Area */}
-      <div className="sticky bottom-16 left-0 z-30 mb-20 flex w-full flex-col">
+  <div className="sticky bottom-16 md:bottom-0 left-0 z-30 mb-20 md:mb-0 flex w-full flex-col">
         <div className="border-t border-gray-200 bg-white p-3 shadow-md">
           <form
             onSubmit={handleSendMessage}

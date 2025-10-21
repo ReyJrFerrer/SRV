@@ -266,7 +266,7 @@ const ConversationPage: React.FC = () => {
       </main>
 
       {/* Message Input */}
-      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3">
+  <footer className="fixed bottom-16 md:bottom-0 left-0 z-20 w-full border-t border-gray-200 bg-white p-3">
         <form
           onSubmit={handleSendMessage}
           className="mx-auto flex max-w-3xl items-center gap-3"
