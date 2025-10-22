@@ -675,7 +675,7 @@ const ProviderProfilePage: React.FC = () => {
                 )}
               </button>
             </div>
-           
+
             <div className="hidden lg:block">
               <button
                 onClick={logout}
