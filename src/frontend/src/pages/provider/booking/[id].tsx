@@ -1577,8 +1577,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </main>
 
-  <div></div>
-  <BottomNavigation />
+      <div></div>
+      <BottomNavigation />
     </div>
   );
 };

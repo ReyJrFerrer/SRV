@@ -219,8 +219,8 @@ const ReportIssuePage: React.FC = () => {
             {submitting ? "Submitting..." : "Submit Report"}
           </button>
         </form>
-  </div>
-  <BottomNavigation />
+      </div>
+      <BottomNavigation />
     </div>
   );
 };

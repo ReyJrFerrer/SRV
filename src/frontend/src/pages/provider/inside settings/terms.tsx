@@ -260,8 +260,8 @@ const TermsAndConditionsPage: React.FC = () => {
             </p>
           </div>
         </div>
-  </div>
-  <BottomNavigation />
+      </div>
+      <BottomNavigation />
     </div>
   );
 };

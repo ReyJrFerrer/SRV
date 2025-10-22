@@ -217,7 +217,7 @@ export default function ProviderReviewView() {
           </div>
         </div>
 
-  <BottomNavigation />
+        <BottomNavigation />
       </div>
     );
   }
@@ -396,7 +396,7 @@ export default function ProviderReviewView() {
           </div> */}
       </main>
 
-  <BottomNavigation />
+      <BottomNavigation />
     </div>
   );
 }

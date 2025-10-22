@@ -343,8 +343,8 @@ const ActiveServicePage: React.FC = () => {
           </section>
         </div>
       </main>
-  <div className="lg:hidden"></div>
-  <BottomNavigation />
+      <div className="lg:hidden"></div>
+      <BottomNavigation />
     </div>
   );
 };

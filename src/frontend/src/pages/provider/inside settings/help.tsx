@@ -106,8 +106,8 @@ const HelpSupportPage: React.FC = () => {
             using SRV!
           </p>
         </div>
-  </div>
-  <BottomNavigation />
+      </div>
+      <BottomNavigation />
     </div>
   );
 };
