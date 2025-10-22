@@ -98,9 +98,7 @@ export const useUserProfile = () => {
       }
 
       // Update name and phone in backend if they're different from current profile
-      const needsUpdate =
-        profile &&
-        (updatedData.name !== profile.name);
+      const needsUpdate = profile && updatedData.name !== profile.name;
 
       if (needsUpdate) {
         const result = await authCanisterService.updateProfile(

@@ -14,6 +14,7 @@ interface Props {
   editedCategory: string;
   categories: Array<{ id: string; name: string }>;
   categoriesLoading: boolean;
+  savingTitleCategory: boolean;
   setEditedTitle: (v: string) => void;
   setEditedCategory: (v: string) => void;
   onEdit: () => void;
@@ -32,6 +33,7 @@ const HeroSection: React.FC<Props> = ({
   editedCategory,
   categories,
   categoriesLoading,
+  savingTitleCategory,
   setEditedTitle,
   setEditedCategory,
   onEdit,
@@ -84,8 +86,15 @@ const HeroSection: React.FC<Props> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
         </div>
         <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 block md:hidden">
+          {savingTitleCategory ? (
+            // Skeleton UI when saving
+            <div className="min-w-0 flex-1 animate-pulse">
+              <div className="mb-4 h-8 w-3/4 rounded-lg bg-blue-200/50"></div>
+              <div className="h-6 w-1/2 rounded-lg bg-blue-200/50"></div>
+            </div>
+          ) : (
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 block md:hidden">
               <div className="flex flex-col items-start gap-1">
                 <div className="flex w-full flex-wrap items-center gap-2">
                   <h2
@@ -181,22 +190,29 @@ const HeroSection: React.FC<Props> = ({
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={onSave}
-                    className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
+                    className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Save title and category"
+                    disabled={savingTitleCategory}
                   >
-                    {/* CheckIcon from parent file */}✓
+                    {savingTitleCategory ? (
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      "✓"
+                    )}
                   </button>
                   <button
                     onClick={onCancel}
-                    className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300"
+                    className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Cancel editing title and category"
+                    disabled={savingTitleCategory}
                   >
                     ✕
                   </button>
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
           <div className="flex min-w-[180px] flex-col items-center justify-center gap-2">
             <ViewReviewsButton
               serviceId={service.id}

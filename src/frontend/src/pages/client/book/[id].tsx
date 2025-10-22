@@ -552,8 +552,28 @@ const BookingPage: React.FC = () => {
     setFormError(null);
   };
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*\.?\d{0,2}$/.test(value)) setAmountPaid(value);
+    let value = e.target.value;
+
+    // 1. Allow only numbers and a single decimal point
+    value = value.replace(/[^0-9.]/g, "");
+    const parts = value.split(".");
+    if (parts.length > 2) {
+      value = parts[0] + "." + parts.slice(1).join("");
+    }
+
+    // 2. Prevent leading zeros on the integer part
+    if (parts[0].length > 1 && parts[0].startsWith("0")) {
+      parts[0] = parseInt(parts[0], 10).toString();
+      value = parts.join(".");
+    }
+
+    // 3. Prevent exceeding 1,000,000
+    if (parseFloat(value) > 1000000) {
+      value = "1000000";
+    }
+
+    // 4. Update state
+    setAmountPaid(value);
     setFormError(null);
   };
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

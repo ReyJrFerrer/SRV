@@ -107,6 +107,13 @@ const ProviderServiceDetailPage: React.FC = () => {
     string | null
   >(null);
 
+  // Section loading states
+  const [savingTitleCategory, setSavingTitleCategory] = useState(false);
+  const [savingLocationAvailability, setSavingLocationAvailability] =
+    useState(false);
+  const [savingImages, setSavingImages] = useState(false);
+  const [savingCertifications, setSavingCertifications] = useState(false);
+
   // Temporary display state for immediate UI feedback
   const [tempDisplayImages, setTempDisplayImages] = useState<
     Array<{
@@ -339,11 +346,16 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Service title cannot be empty.");
       return;
     }
+    if (editedTitle.trim().length > 40) {
+      toast.error("Service title must not exceed 40 characters.");
+      return;
+    }
     if (!editedCategory.trim()) {
       toast.error("Service category cannot be empty.");
       return;
     }
 
+    setSavingTitleCategory(true);
     try {
       const selectedCategory = categories.find(
         (cat) => cat.id === editedCategory,
@@ -372,7 +384,12 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditTitleCategory(false);
       toast.success("Service title and category updated!");
     } catch (err) {
-      toast.error("Failed to update title or category. Please try again.");
+      console.error("Error saving title/category:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred.";
+      toast.error(`Failed to update: ${errorMessage}`);
+    } finally {
+      setSavingTitleCategory(false);
     }
   };
 
@@ -420,6 +437,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
     }
 
+    setSavingLocationAvailability(true);
     try {
       // Create updated location object
       const updatedLocation: Location = {
@@ -454,6 +472,8 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error(
         "Failed to update location or availability. Please try again.",
       );
+    } finally {
+      setSavingLocationAvailability(false);
     }
   };
 
@@ -566,6 +586,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     setUploadingImages(true);
+    setSavingImages(true);
     setUploadError(null);
 
     try {
@@ -606,6 +627,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Failed to update images.");
     } finally {
       setUploadingImages(false);
+      setSavingImages(false);
     }
   };
 
@@ -773,6 +795,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     setUploadingCertificates(true);
+    setSavingCertifications(true);
     setCertificateUploadError(null);
 
     try {
@@ -818,6 +841,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Failed to update certifications.");
     } finally {
       setUploadingCertificates(false);
+      setSavingCertifications(false);
     }
   };
 
@@ -1036,6 +1060,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         editedCategory={editedCategory}
         categories={categories}
         categoriesLoading={categoriesLoading}
+        savingTitleCategory={savingTitleCategory}
         setEditedTitle={setEditedTitle}
         setEditedCategory={setEditedCategory}
         onEdit={handleEditTitleCategory}
@@ -1064,6 +1089,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               setEditedState={setEditedState}
               editedWeeklySchedule={editedWeeklySchedule as any}
               setEditedWeeklySchedule={setEditedWeeklySchedule as any}
+              savingLocationAvailability={savingLocationAvailability}
               onEdit={handleEditLocationAvailability}
               onCancel={handleCancelLocationAvailability}
               onSave={handleSaveLocationAvailability}
@@ -1101,6 +1127,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               serviceCertificates={serviceCertificates}
               certificateUploadError={certificateUploadError}
               uploadingCertificates={uploadingCertificates}
+              savingCertifications={savingCertifications}
               onToggleEdit={handleEditCertifications}
               onCancel={handleCancelCertifications}
               onSave={handleSaveCertifications}
@@ -1121,6 +1148,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               serviceImages={serviceImages}
               uploadError={uploadError}
               uploadingImages={uploadingImages}
+              savingImages={savingImages}
               onToggleEdit={handleEditImages}
               onCancel={handleCancelImages}
               onSave={handleSaveImages}

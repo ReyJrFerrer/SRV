@@ -754,7 +754,6 @@ const ProviderProfilePage: React.FC = () => {
               )}
             </div>
           </div>
-       
         </div>
       </main>
       <div className="mt-8 block w-full px-4 lg:hidden">
