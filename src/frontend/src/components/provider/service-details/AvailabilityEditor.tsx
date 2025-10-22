@@ -5,7 +5,11 @@ import {
   DayAvailability,
   TimeSlot,
 } from "../../../hooks/serviceManagement";
-import { addHoursToTime, timeStringToDate, validateTimeSlots } from "./timeUtils";
+import {
+  addHoursToTime,
+  timeStringToDate,
+  validateTimeSlots,
+} from "./timeUtils";
 
 export interface WeeklyScheduleEntry {
   day: DayOfWeek;
@@ -14,7 +18,9 @@ export interface WeeklyScheduleEntry {
 
 interface AvailabilityEditorProps {
   weeklySchedule: WeeklyScheduleEntry[];
-  setWeeklySchedule: React.Dispatch<React.SetStateAction<WeeklyScheduleEntry[]>>;
+  setWeeklySchedule: React.Dispatch<
+    React.SetStateAction<WeeklyScheduleEntry[]>
+  >;
 }
 
 const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
@@ -82,7 +88,8 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
   };
 
   const sortedSchedule = [...weeklySchedule].sort(
-    (a, b) => allDays.indexOf(a.day as DayOfWeek) - allDays.indexOf(b.day as DayOfWeek),
+    (a, b) =>
+      allDays.indexOf(a.day as DayOfWeek) - allDays.indexOf(b.day as DayOfWeek),
   );
 
   return (
@@ -119,21 +126,46 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
             onChange={(e) => {
               const newEndTime = e.target.value;
               if (newEndTime !== templateTimeSlot.startTime) {
-                setTemplateTimeSlot({ ...templateTimeSlot, endTime: newEndTime });
+                setTemplateTimeSlot({
+                  ...templateTimeSlot,
+                  endTime: newEndTime,
+                });
               }
             }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
         <div className="flex flex-wrap items-center justify-start gap-2">
-          <button onClick={() => setScheduleToDays(allDays)} className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200">Apply to All</button>
-          <button onClick={() => setScheduleToDays(weekdays)} className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200">Apply to Weekdays</button>
-          <button onClick={() => setScheduleToDays(weekends)} className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200">Apply to Weekends</button>
-          <button onClick={deselectAllDays} className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300">Deselect All</button>
+          <button
+            onClick={() => setScheduleToDays(allDays)}
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to All
+          </button>
+          <button
+            onClick={() => setScheduleToDays(weekdays)}
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to Weekdays
+          </button>
+          <button
+            onClick={() => setScheduleToDays(weekends)}
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to Weekends
+          </button>
+          <button
+            onClick={deselectAllDays}
+            className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
+          >
+            Deselect All
+          </button>
         </div>
         {missingDays.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="text-xs font-semibold text-blue-700">Add a day:</span>
+            <span className="text-xs font-semibold text-blue-700">
+              Add a day:
+            </span>
             {missingDays.map((day) => (
               <button
                 key={day}
@@ -151,7 +183,11 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
       {sortedSchedule.map((dayEntry) => {
         const dayErrors = validateTimeSlots(dayEntry.availability.slots || []);
         return (
-          <div key={dayEntry.day} id={`availability-day-${dayEntry.day}`} className="mb-4 rounded-md border border-gray-100 p-3">
+          <div
+            key={dayEntry.day}
+            id={`availability-day-${dayEntry.day}`}
+            className="mb-4 rounded-md border border-gray-100 p-3"
+          >
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <input
@@ -159,7 +195,9 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                   checked={dayEntry.availability.isAvailable}
                   onChange={() => {
                     const newSchedule = [...weeklySchedule];
-                    newSchedule[weeklySchedule.findIndex((d) => d.day === dayEntry.day)] = {
+                    newSchedule[
+                      weeklySchedule.findIndex((d) => d.day === dayEntry.day)
+                    ] = {
                       ...dayEntry,
                       availability: {
                         ...dayEntry.availability,
@@ -175,7 +213,9 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
               {dayEntry.availability.isAvailable && (
                 <button
                   onClick={() => {
-                    const idx = weeklySchedule.findIndex((d) => d.day === dayEntry.day);
+                    const idx = weeklySchedule.findIndex(
+                      (d) => d.day === dayEntry.day,
+                    );
                     const newSchedule = [...weeklySchedule];
                     const slots = newSchedule[idx].availability.slots || [];
                     let newSlot: TimeSlot;
@@ -183,7 +223,10 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       const lastSlotEndTime = slots[slots.length - 1].endTime;
                       const newStartTime = lastSlotEndTime;
                       const newEndTime = addHoursToTime(newStartTime, 2);
-                      newSlot = { startTime: newStartTime, endTime: newEndTime };
+                      newSlot = {
+                        startTime: newStartTime,
+                        endTime: newEndTime,
+                      };
                     } else {
                       newSlot = { startTime: "09:00", endTime: "17:00" };
                     }
@@ -200,13 +243,15 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
 
             {dayEntry.availability.isAvailable && (
               <div className="mt-3 space-y-3">
-                {dayEntry.availability.slots && dayEntry.availability.slots.length > 0 ? (
+                {dayEntry.availability.slots &&
+                dayEntry.availability.slots.length > 0 ? (
                   <>
                     {dayEntry.availability.slots.map((slot, slotIndex) => {
                       const isSameTime = slot.startTime === slot.endTime;
                       const startTime = timeStringToDate(slot.startTime);
                       const endTime = timeStringToDate(slot.endTime);
-                      const isStartAfterEnd = startTime.getTime() > endTime.getTime();
+                      const isStartAfterEnd =
+                        startTime.getTime() > endTime.getTime();
 
                       return (
                         <div
@@ -215,8 +260,8 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                             isSameTime || isStartAfterEnd
                               ? "border-red-200 bg-red-50"
                               : dayErrors.length > 0
-                              ? "border-yellow-200 bg-yellow-50"
-                              : "border-gray-200 bg-gray-50"
+                                ? "border-yellow-200 bg-yellow-50"
+                                : "border-gray-200 bg-gray-50"
                           }`}
                         >
                           <div className="flex items-center gap-2 text-sm">
@@ -226,10 +271,16 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                               onChange={(e) => {
                                 const newStartTime = e.target.value;
                                 const newSchedule = [...weeklySchedule];
-                                const dayIndex = weeklySchedule.findIndex((d) => d.day === dayEntry.day);
-                                newSchedule[dayIndex].availability.slots![slotIndex].startTime = newStartTime;
+                                const dayIndex = weeklySchedule.findIndex(
+                                  (d) => d.day === dayEntry.day,
+                                );
+                                newSchedule[dayIndex].availability.slots![
+                                  slotIndex
+                                ].startTime = newStartTime;
                                 if (newStartTime === slot.endTime) {
-                                  newSchedule[dayIndex].availability.slots![slotIndex].endTime = addHoursToTime(newStartTime, 1);
+                                  newSchedule[dayIndex].availability.slots![
+                                    slotIndex
+                                  ].endTime = addHoursToTime(newStartTime, 1);
                                 }
                                 setWeeklySchedule(newSchedule);
                               }}
@@ -247,7 +298,12 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                                 const newEndTime = e.target.value;
                                 if (newEndTime !== slot.startTime) {
                                   const newSchedule = [...weeklySchedule];
-                                  newSchedule[weeklySchedule.findIndex((d) => d.day === dayEntry.day)].availability.slots![slotIndex].endTime = newEndTime;
+                                  newSchedule[
+                                    weeklySchedule.findIndex(
+                                      (d) => d.day === dayEntry.day,
+                                    )
+                                  ].availability.slots![slotIndex].endTime =
+                                    newEndTime;
                                   setWeeklySchedule(newSchedule);
                                 }
                               }}
@@ -260,7 +316,11 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                             <button
                               onClick={() => {
                                 const newSchedule = [...weeklySchedule];
-                                newSchedule[weeklySchedule.findIndex((d) => d.day === dayEntry.day)].availability.slots!.splice(slotIndex, 1);
+                                newSchedule[
+                                  weeklySchedule.findIndex(
+                                    (d) => d.day === dayEntry.day,
+                                  )
+                                ].availability.slots!.splice(slotIndex, 1);
                                 setWeeklySchedule(newSchedule);
                               }}
                               className="rounded-full p-1 text-red-600 hover:bg-red-100"
@@ -283,7 +343,10 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                       );
                     })}
                     {dayErrors.map((error, index) => (
-                      <div key={index} className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+                      >
                         <span>⚠️</span>
                         <span>{error}</span>
                       </div>

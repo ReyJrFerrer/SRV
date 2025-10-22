@@ -76,7 +76,10 @@ const PackagesSection: React.FC<Props> = ({
             </h4>
             <div className="space-y-3">
               <div>
-                <label htmlFor="packageTitle" className="mb-1 block text-sm font-medium text-blue-700">
+                <label
+                  htmlFor="packageTitle"
+                  className="mb-1 block text-sm font-medium text-blue-700"
+                >
                   Title
                 </label>
                 <input
@@ -91,7 +94,10 @@ const PackagesSection: React.FC<Props> = ({
                 />
               </div>
               <div>
-                <label htmlFor="packageDescription" className="mb-1 block text-sm font-medium text-blue-700">
+                <label
+                  htmlFor="packageDescription"
+                  className="mb-1 block text-sm font-medium text-blue-700"
+                >
                   Description
                 </label>
                 <textarea
@@ -106,7 +112,10 @@ const PackagesSection: React.FC<Props> = ({
                 ></textarea>
               </div>
               <div>
-                <label htmlFor="packagePrice" className="mb-1 block text-sm font-medium text-blue-700">
+                <label
+                  htmlFor="packagePrice"
+                  className="mb-1 block text-sm font-medium text-blue-700"
+                >
                   Price (₱)
                 </label>
                 <input
@@ -135,7 +144,11 @@ const PackagesSection: React.FC<Props> = ({
                   className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                   disabled={packageFormLoading}
                 >
-                  {packageFormLoading ? "Saving..." : currentPackageId ? "Update Package" : "Create Package"}
+                  {packageFormLoading
+                    ? "Saving..."
+                    : currentPackageId
+                      ? "Update Package"
+                      : "Create Package"}
                 </button>
               </div>
             </div>
@@ -145,22 +158,37 @@ const PackagesSection: React.FC<Props> = ({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {packages.length > 0 ? (
             packages.map((pkg) => (
-              <div key={pkg.id} className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl">
+              <div
+                key={pkg.id}
+                className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
+              >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">{pkg.title}</h3>
-                    <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">{pkg.description}</p>
+                    <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
+                      {pkg.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                      {pkg.description}
+                    </p>
                   </div>
                   <div className="ml-4 flex-shrink-0 text-right">
-                    <div className="mb-1 text-xl font-bold text-blue-600">₱{pkg.price.toFixed(2)}</div>
-                    <div className="mb-1 text-xs text-gray-500">+ ₱{pkg.commissionFee.toFixed(2)} commission</div>
-                    <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">₱{(pkg.price + pkg.commissionFee).toFixed(2)} total</div>
+                    <div className="mb-1 text-xl font-bold text-blue-600">
+                      ₱{pkg.price.toFixed(2)}
+                    </div>
+                    <div className="mb-1 text-xs text-gray-500">
+                      + ₱{pkg.commissionFee.toFixed(2)} commission
+                    </div>
+                    <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
+                      ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
+                    </div>
                   </div>
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => (hasActiveBookings ? undefined : onEditPackage(pkg))}
+                    onClick={() =>
+                      hasActiveBookings ? undefined : onEditPackage(pkg)
+                    }
                     className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
                       hasActiveBookings || isAddingOrEditingPackage
                         ? "cursor-not-allowed bg-gray-100 text-gray-400"
@@ -172,7 +200,9 @@ const PackagesSection: React.FC<Props> = ({
                     Edit Package
                   </button>
                   <button
-                    onClick={() => (hasActiveBookings ? undefined : onDeletePackage(pkg.id))}
+                    onClick={() =>
+                      hasActiveBookings ? undefined : onDeletePackage(pkg.id)
+                    }
                     className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
                       hasActiveBookings || isAddingOrEditingPackage
                         ? "cursor-not-allowed bg-gray-100 text-gray-400"
@@ -192,8 +222,13 @@ const PackagesSection: React.FC<Props> = ({
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
                   <BriefcaseIcon className="h-8 w-8 text-blue-400" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">No packages available</h3>
-                <p className="mx-auto max-w-md text-gray-600">Packages help customers choose specific service options with different pricing tiers</p>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  No packages available
+                </h3>
+                <p className="mx-auto max-w-md text-gray-600">
+                  Packages help customers choose specific service options with
+                  different pricing tiers
+                </p>
               </div>
             </div>
           ) : null}

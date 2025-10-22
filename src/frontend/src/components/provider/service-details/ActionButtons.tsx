@@ -1,5 +1,9 @@
 import React from "react";
-import { LockClosedIcon, LockOpenIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  LockClosedIcon,
+  LockOpenIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import Tooltip from "./Tooltip";
 
 interface Props {
@@ -24,7 +28,9 @@ const ActionButtons: React.FC<Props> = ({
   return (
     <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
       <button
-        onClick={isUpdatingStatus || hasActiveBookings ? undefined : onToggleStatus}
+        onClick={
+          isUpdatingStatus || hasActiveBookings ? undefined : onToggleStatus
+        }
         disabled={isUpdatingStatus || hasActiveBookings}
         className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
           status === "Available"
@@ -39,14 +45,23 @@ const ActionButtons: React.FC<Props> = ({
         ) : (
           <LockOpenIcon className="h-6 w-6" />
         )}
-        {isUpdatingStatus ? "Updating..." : status === "Available" ? "Deactivate" : "Activate"}
+        {isUpdatingStatus
+          ? "Updating..."
+          : status === "Available"
+            ? "Deactivate"
+            : "Activate"}
       </button>
-      <Tooltip content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`} disabled={hasActiveBookings}>
+      <Tooltip
+        content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+        disabled={hasActiveBookings}
+      >
         <button
           onClick={hasActiveBookings ? undefined : onDeleteClick}
           disabled={isDeleting || hasActiveBookings}
           className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
-            hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-red-400 hover:text-white"
+            hasActiveBookings
+              ? "cursor-not-allowed opacity-60"
+              : "hover:bg-red-400 hover:text-white"
           }`}
           tabIndex={hasActiveBookings ? -1 : 0}
         >

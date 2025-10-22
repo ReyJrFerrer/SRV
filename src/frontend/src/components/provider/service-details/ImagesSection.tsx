@@ -1,5 +1,10 @@
 import React from "react";
-import { PhotoIcon, PencilIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  PhotoIcon,
+  PencilIcon,
+  DocumentIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import Tooltip from "./Tooltip";
 
 interface TempImage {
@@ -75,24 +80,39 @@ const ImagesSection: React.FC<Props> = ({
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {tempDisplayImages.length > 0 ? (
               tempDisplayImages.map((image, index) => (
-                <div key={index} className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm">
+                <div
+                  key={index}
+                  className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
+                >
                   {image.error ? (
                     <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
                       <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
                       <p className="mt-1">Failed to load</p>
                     </div>
                   ) : image.dataUrl ? (
-                    <img src={image.dataUrl} alt={`Service image ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                    <img
+                      src={image.dataUrl}
+                      alt={`Service image ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
                     </div>
                   )}
-                  <button onClick={() => onRemove(index)} className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600" aria-label="Remove image" type="button">
+                  <button
+                    onClick={() => onRemove(index)}
+                    className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                    aria-label="Remove image"
+                    type="button"
+                  >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
                   {image.isNew && (
-                    <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">NEW</div>
+                    <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                      NEW
+                    </div>
                   )}
                 </div>
               ))
@@ -106,16 +126,35 @@ const ImagesSection: React.FC<Props> = ({
               <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 text-blue-400 transition-colors hover:border-blue-400 hover:bg-blue-100">
                 <PhotoIcon className="mb-1 h-8 w-8" />
                 <span className="text-xs">Add Image</span>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={onUpload} disabled={uploadingImages} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={onUpload}
+                  disabled={uploadingImages}
+                />
               </label>
             )}
           </div>
-          {uploadError && <div className="mt-2 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{uploadError}</div>}
+          {uploadError && (
+            <div className="mt-2 rounded bg-red-100 px-3 py-2 text-sm text-red-700">
+              {uploadError}
+            </div>
+          )}
           <div className="mt-4 flex justify-end gap-2">
-            <button onClick={onCancel} className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50" disabled={uploadingImages}>
+            <button
+              onClick={onCancel}
+              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+              disabled={uploadingImages}
+            >
               Cancel
             </button>
-            <button onClick={onSave} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" disabled={uploadingImages}>
+            <button
+              onClick={onSave}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              disabled={uploadingImages}
+            >
               {uploadingImages ? "Saving..." : "Save"}
             </button>
           </div>
@@ -130,7 +169,9 @@ const ImagesSection: React.FC<Props> = ({
                 <button
                   key={index}
                   className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
-                  onClick={() => onPreview(url, isPdfFile(url) ? "pdf" : "image")}
+                  onClick={() =>
+                    onPreview(url, isPdfFile(url) ? "pdf" : "image")
+                  }
                   type="button"
                   tabIndex={0}
                   aria-label="Inspect image"
@@ -143,10 +184,17 @@ const ImagesSection: React.FC<Props> = ({
                   ) : isPdfFile(url) ? (
                     <div className="flex flex-col items-center justify-center">
                       <DocumentIcon className="h-12 w-12 text-red-500" />
-                      <span className="mt-1 text-xs text-blue-700">View PDF</span>
+                      <span className="mt-1 text-xs text-blue-700">
+                        View PDF
+                      </span>
                     </div>
                   ) : (
-                    <img src={url} alt={`Service image ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                    <img
+                      src={url}
+                      alt={`Service image ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
                   )}
                 </button>
               );

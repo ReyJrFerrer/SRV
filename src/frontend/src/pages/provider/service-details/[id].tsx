@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   useServiceManagement,
   EnhancedService,
-
 } from "../../../hooks/serviceManagement";
 import {
   useServiceImages,
@@ -32,7 +31,8 @@ import LocationAvailabilitySection from "../../../components/provider/service-de
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
-type WeeklyScheduleEntry = import("../../../components/provider/service-details").WeeklyScheduleEntry;
+type WeeklyScheduleEntry =
+  import("../../../components/provider/service-details").WeeklyScheduleEntry;
 
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -1011,7 +1011,11 @@ const ProviderServiceDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
-      <PreviewModal previewUrl={previewUrl} previewType={previewType} onClose={() => setPreviewUrl(null)} />
+      <PreviewModal
+        previewUrl={previewUrl}
+        previewType={previewType}
+        onClose={() => setPreviewUrl(null)}
+      />
 
       <DeleteConfirmDialog
         open={showDeleteConfirm}
