@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, Fragment, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
@@ -29,6 +29,9 @@ const OtpModal: React.FC<OtpModalProps> = ({
   const [shouldShowReload, setShouldShowReload] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [isVerified, setIsVerified] = useState(false);
+  const [isProcessingVerification, setIsProcessingVerification] =
+    useState(false);
+  const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Timer for resend cooldown
   useEffect(() => {
@@ -49,51 +52,95 @@ const OtpModal: React.FC<OtpModalProps> = ({
       setShouldShowReload(false);
       setResendTimer(60);
       setIsVerified(false);
+      setIsProcessingVerification(false);
+
+      // Clear any pending verification timeout
+      if (verificationTimeoutRef.current) {
+        clearTimeout(verificationTimeoutRef.current);
+        verificationTimeoutRef.current = null;
+      }
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (verificationTimeoutRef.current) {
+        clearTimeout(verificationTimeoutRef.current);
+      }
+    };
   }, [open]);
 
   const handleOtpSubmit = async (code: string) => {
     if (code.length !== 6) return;
 
-    setIsLoading(true);
-    setError(null);
-    setShouldShowReload(false);
+    // Prevent concurrent verification attempts
+    if (isProcessingVerification || isVerified) {
+      console.log("⏭️ Skipping duplicate verification attempt");
+      return;
+    }
 
-    try {
-      const result = await phoneVerificationService.verifyCode(code);
+    // Clear any pending verification timeout
+    if (verificationTimeoutRef.current) {
+      clearTimeout(verificationTimeoutRef.current);
+      verificationTimeoutRef.current = null;
+    }
 
-      if (result.success) {
-        setIsVerified(true);
-        // Show success state briefly before calling onVerified
-        setTimeout(() => {
-          onVerified();
-        }, 1500);
-      } else {
-        const errorMessage = result.error || "Invalid verification code";
+    // Debounce verification calls to prevent rapid-fire submissions
+    verificationTimeoutRef.current = setTimeout(async () => {
+      setIsProcessingVerification(true);
+      setIsLoading(true);
+      setError(null);
+      setShouldShowReload(false);
+
+      try {
+        const result = await phoneVerificationService.verifyCode(code);
+
+        if (result.success) {
+          // Clear any errors and show success
+          setError(null);
+          setIsVerified(true);
+
+          // Wait a moment to show success state before proceeding
+          setTimeout(() => {
+            onVerified();
+          }, 1500);
+        } else {
+          const errorMessage = result.error || "Invalid verification code";
+          setError(errorMessage);
+
+          // Check if error suggests reload
+          if (errorMessage.includes("reload the page")) {
+            setShouldShowReload(true);
+          }
+
+          // Clear OTP for session expired or too many attempts
+          if (
+            errorMessage.includes("expired") ||
+            errorMessage.includes("Too many failed attempts")
+          ) {
+            setOtpCode("");
+          }
+          // For simple invalid code, keep the input so user can correct it
+        }
+      } catch (error: any) {
+        const errorMessage = error.message || "Failed to verify code";
         setError(errorMessage);
 
-        // Check if error suggests reload
         if (errorMessage.includes("reload the page")) {
           setShouldShowReload(true);
         }
 
-        // Only clear OTP if it's not a simple invalid code error
-        if (!errorMessage.includes("attempts remaining")) {
+        // Only clear on serious errors
+        if (
+          errorMessage.includes("expired") ||
+          errorMessage.includes("Too many failed attempts")
+        ) {
           setOtpCode("");
         }
+      } finally {
+        setIsLoading(false);
+        setIsProcessingVerification(false);
       }
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to verify code";
-      setError(errorMessage);
-
-      if (errorMessage.includes("reload the page")) {
-        setShouldShowReload(true);
-      }
-
-      setOtpCode("");
-    } finally {
-      setIsLoading(false);
-    }
+    }, 300); // 300ms debounce
   };
 
   const handleResendCode = async () => {

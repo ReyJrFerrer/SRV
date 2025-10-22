@@ -5,11 +5,8 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 const ActiveServiceBanner: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    getActiveBookings,
-    getServiceDisplayName,
-    getPackageDisplayName,
-  } = useProviderBookingManagement();
+  const { getActiveBookings, getServiceDisplayName, getPackageDisplayName } =
+    useProviderBookingManagement();
 
   // Hide on active-service page itself
   if (location.pathname.startsWith("/provider/active-service/")) {
@@ -19,15 +16,32 @@ const ActiveServiceBanner: React.FC = () => {
   const activeBookings = getActiveBookings();
   if (!activeBookings || activeBookings.length === 0) return null;
 
+  // Remove desktop left offset on service details pages where no sidebar spacing is needed
+  const isServiceDetailsPage =
+    location.pathname.startsWith("/provider/service-details/") ||
+    location.pathname.startsWith("/provider/service-details") ||
+    location.pathname.startsWith("/provider/booking/");
+
   const booking = activeBookings[0];
-  const serviceName = getServiceDisplayName(booking) || booking.serviceName || "Service";
-  const packageName = getPackageDisplayName(booking) || booking.packageName || "Package";
-  const categoryName = booking.serviceDetails?.category?.name || booking.serviceDetails?.category?.slug || "Category";
-  const clientName = booking.clientName || booking.clientProfile?.name || "Client";
+  const serviceName =
+    getServiceDisplayName(booking) || booking.serviceName || "Service";
+  const packageName =
+    getPackageDisplayName(booking) || booking.packageName || "Package";
+  const categoryName =
+    booking.serviceDetails?.category?.name ||
+    booking.serviceDetails?.category?.slug ||
+    "Category";
+  const clientName =
+    booking.clientName || booking.clientProfile?.name || "Client";
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow">
+      <div
+        className={
+          `fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow ` +
+          (isServiceDetailsPage ? "" : "md:left-20")
+        }
+      >
         <button
           type="button"
           onClick={() => navigate(`/provider/active-service/${booking.id}`)}

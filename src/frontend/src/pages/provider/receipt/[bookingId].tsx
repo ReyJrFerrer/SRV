@@ -25,12 +25,8 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const {
-    getBookingById,
-    loading,
-    isProviderAuthenticated,
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { getBookingById, loading, checkCommissionValidation } =
+    useProviderBookingManagement();
 
   // Get booking data from hook
   const booking = useMemo(() => {
@@ -99,14 +95,6 @@ const ReceiptPage: React.FC = () => {
       alert("Web Share API not supported. You can copy the URL.");
     }
   };
-
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Maglogin bilang service provider upang makita ang page na ito.
-      </div>
-    );
-  }
 
   if (loading) {
     return (

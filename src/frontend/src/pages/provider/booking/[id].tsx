@@ -401,7 +401,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         return;
       }
     }
-    const scheduledDate = new Date(specificBooking.scheduledDate);
+    const scheduledDate = new Date(specificBooking.scheduledDate ?? Date.now());
     const success = await acceptBookingById(specificBooking.id, scheduledDate);
     if (success) {
       await refreshBookings();
