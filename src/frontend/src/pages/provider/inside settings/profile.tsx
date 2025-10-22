@@ -8,6 +8,7 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
   InformationCircleIcon,
+  ExclamationTriangleIcon, // Import the new icon
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../../components/provider/BottomNavigation"; // Changed to provider bottom nav
 import { useUserProfile } from "../../../hooks/useUserProfile";
@@ -402,11 +403,9 @@ const ProviderProfilePage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
@@ -427,7 +426,12 @@ const ProviderProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setName(profile.name);
-      setPhone(profile.phone || "");
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (error) {
+      setToast({ message: error, type: "error" });
     }
   }, [profile]);
 
@@ -443,7 +447,6 @@ const ProviderProfilePage: React.FC = () => {
 
   const handleSaveChanges = async () => {
     setNameError("");
-    setPhoneError("");
     setEditError("");
     let valid = true;
     const nameTrimmed = name.trim();
@@ -458,23 +461,11 @@ const ProviderProfilePage: React.FC = () => {
       setNameError("Each part of your name must be at least 2 characters.");
       valid = false;
     }
-    const phoneTrimmed = phone.trim();
-    const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
-    if (!phoneTrimmed) {
-      setPhoneError("Phone number is required.");
-      valid = false;
-    } else if (phoneDigits.length !== 11) {
-      setPhoneError("Phone number must be exactly 11 digits.");
-      valid = false;
-    } else if (!phoneDigits.startsWith("09")) {
-      setPhoneError("Phone number must start with '09'.");
-      valid = false;
-    }
     if (!valid) {
       setEditError("Please fix the errors above before saving.");
       return;
     }
-    const success = await updateProfile({ name, phone, imageFile });
+    const success = await updateProfile({ name, imageFile });
     if (success) {
       setIsEditing(false);
       setImageFile(null);
@@ -482,12 +473,14 @@ const ProviderProfilePage: React.FC = () => {
       refetchImage();
       setToast({ message: "Profile updated successfully!", type: "success" });
     }
+    // The error is now set inside useUserProfile and displayed via the `error` state
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setName(profile?.name || "");
-    setPhone(profile?.phone || "");
+    setNameError("");
+    setEditError("");
     setImageFile(null);
     setPreviewImage(null);
   };
@@ -588,31 +581,24 @@ const ProviderProfilePage: React.FC = () => {
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
                       )}
                     </div>
-                    <div>
+                    <div className="text-left">
                       <label
                         htmlFor="phone"
-                        className="block text-left text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium text-gray-700"
                       >
                         Phone Number
                       </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => {
-                          // Remove spaces from phone number input
-                          const phoneValue = e.target.value.replace(/\s/g, "");
-                          setPhone(phoneValue);
-                          if (phoneError) setPhoneError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {phoneError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {phoneError}
+                      <p className="mt-1 text-gray-800">
+                        {profile?.phone || "No phone number"}
+                      </p>
+                      <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                        <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                        <p className="text-xs text-blue-800">
+                          Your phone number is linked to your account for
+                          security and cannot be changed here. Please contact
+                          support for assistance if you need to update it.
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -721,19 +707,7 @@ const ProviderProfilePage: React.FC = () => {
                   <div className="flex h-48 w-48 items-center justify-center">
                     <div className="text-center">
                       <div className="mb-4 text-red-500">
-                        <svg
-                          className="mx-auto h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
-                        </svg>
+                        <ExclamationTriangleIcon className="mx-auto h-16 w-16" />
                       </div>
                       <p className="text-sm font-medium text-red-600">
                         {reputationError}
@@ -780,15 +754,7 @@ const ProviderProfilePage: React.FC = () => {
               )}
             </div>
           </div>
-          {editError && (
-            <p className="mt-4 text-center text-red-500">{editError}</p>
-          )}
-          {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-          {reputationError && !error && (
-            <p className="mt-4 text-center text-red-500">
-              Reputation: {reputationError}
-            </p>
-          )}
+       
         </div>
       </main>
       <div className="mt-8 block w-full px-4 lg:hidden">

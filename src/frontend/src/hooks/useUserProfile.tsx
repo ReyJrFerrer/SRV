@@ -68,8 +68,7 @@ export const useUserProfile = () => {
    * @returns A boolean indicating whether the update was successful.
    */
   const updateProfile = async (updatedData: {
-    name: string;
-    phone: string;
+    name: string; // Phone is no longer editable from the profile page
     imageFile?: File | null;
   }) => {
     if (!isAuthenticated) {
@@ -83,24 +82,29 @@ export const useUserProfile = () => {
     try {
       // Handle image upload first if provided
       if (updatedData.imageFile) {
-        const updatedProfileWithImage = await uploadImageToServer(
-          updatedData.imageFile,
-        );
-        if (updatedProfileWithImage) {
-          setProfile(updatedProfileWithImage);
+        try {
+          const updatedProfileWithImage = await uploadImageToServer(
+            updatedData.imageFile,
+          );
+          if (updatedProfileWithImage) {
+            setProfile(updatedProfileWithImage);
+          }
+        } catch (imageError) {
+          console.error("Error uploading profile image:", imageError);
+          throw new Error(
+            "Failed to upload image. It might be too large or in an unsupported format. Please try a different image.",
+          );
         }
       }
 
       // Update name and phone in backend if they're different from current profile
       const needsUpdate =
         profile &&
-        (updatedData.name !== profile.name ||
-          updatedData.phone !== profile.phone);
+        (updatedData.name !== profile.name);
 
       if (needsUpdate) {
         const result = await authCanisterService.updateProfile(
           updatedData.name,
-          updatedData.phone,
         );
 
         if (result) {
@@ -114,8 +118,8 @@ export const useUserProfile = () => {
       await fetchProfile();
       return true;
     } catch (err) {
+      console.error("Error updating profile:", err);
       const errorMessage = (err as Error).message;
-      //console.error("Error updating profile:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {
