@@ -69,6 +69,13 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
+  // Helper: determine if a nav item should be considered active for current path
+  const isRouteActive = (label: string, to: string) => {
+    // Profile should be active only on exact '/client/profile', not on nested pages like '/client/profile/reviews'
+    if (label === "Profile") return location.pathname === to;
+    return location.pathname.startsWith(to);
+  };
+
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
     {
@@ -139,7 +146,7 @@ const BottomNavigation: React.FC = () => {
       const initialStates: Record<string, string> = {};
       // Include main nav items
       navItems.forEach((item) => {
-        const isActive = location.pathname.startsWith(item.to);
+        const isActive = isRouteActive(item.label, item.to);
         initialStates[item.label] = getIconSrc(
           item.label,
           isActive ? "selected" : "default",
@@ -147,7 +154,7 @@ const BottomNavigation: React.FC = () => {
       });
       // Include bottom settings item
       {
-        const isActive = location.pathname.startsWith(settingsItem.to);
+        const isActive = isRouteActive(settingsItem.label, settingsItem.to);
         initialStates[settingsItem.label] = getIconSrc(
           settingsItem.label,
           isActive ? "selected" : "default",
@@ -162,7 +169,7 @@ const BottomNavigation: React.FC = () => {
     const newStates: Record<string, string> = {};
     // Update main nav items
     navItems.forEach((item) => {
-      const isActive = location.pathname.startsWith(item.to);
+      const isActive = isRouteActive(item.label, item.to);
       newStates[item.label] = getIconSrc(
         item.label,
         isActive ? "selected" : "default",
@@ -170,7 +177,7 @@ const BottomNavigation: React.FC = () => {
     });
     // Update bottom settings item
     {
-      const isActive = location.pathname.startsWith(settingsItem.to);
+      const isActive = isRouteActive(settingsItem.label, settingsItem.to);
       newStates[settingsItem.label] = getIconSrc(
         settingsItem.label,
         isActive ? "selected" : "default",
@@ -208,7 +215,7 @@ const BottomNavigation: React.FC = () => {
                 // On mobile, show Settings instead of Profile
                 const displayItem =
                   item.label === "Profile" ? settingsItem : item;
-                const isActive = location.pathname.startsWith(displayItem.to);
+                const isActive = isRouteActive(displayItem.label, displayItem.to);
                 if (
                   [
                     "Home",
@@ -341,7 +348,7 @@ const BottomNavigation: React.FC = () => {
         {/* Top section: main nav items (Profile in place of Settings) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.to);
+            const isActive = isRouteActive(item.label, item.to);
             const handleMouseEnter = () => {
               if (!isActive) {
                 setIconStates((prev) => ({
