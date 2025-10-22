@@ -139,7 +139,9 @@ const BottomNavigation: React.FC = () => {
       });
       // Include provider notifications (desktop-only button)
       {
-        const isActive = location.pathname.startsWith("/provider/notifications");
+        const isActive = location.pathname.startsWith(
+          "/provider/notifications",
+        );
         initialStates["Notifications"] = getIconSrc(
           "Notifications",
           isActive ? "selected" : "default",
@@ -392,7 +394,9 @@ const BottomNavigation: React.FC = () => {
                   />
                   <span
                     className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                      isActive ? "font-bold" : "opacity-90 group-hover:text-yellow-500"
+                      isActive
+                        ? "font-bold"
+                        : "opacity-90 group-hover:text-yellow-500"
                     }`}
                   >
                     {item.label}
@@ -408,7 +412,9 @@ const BottomNavigation: React.FC = () => {
           <Link
             to="/provider/notifications"
             className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
-              location.pathname.startsWith("/provider/notifications") ? "bg-gray-50" : ""
+              location.pathname.startsWith("/provider/notifications")
+                ? "bg-gray-50"
+                : ""
             }`}
             onMouseEnter={() => {
               if (!location.pathname.startsWith("/provider/notifications")) {
@@ -430,12 +436,16 @@ const BottomNavigation: React.FC = () => {
             <img
               src={iconStates["Notifications"]}
               alt="Notifications"
-              className="transition-all duration-300 ease-in-out h-6 w-6 group-hover:scale-105"
+              className="h-6 w-6 transition-all duration-300 ease-in-out group-hover:scale-105"
               draggable={false}
             />
-            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">Notifications</span>
+            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+              Notifications
+            </span>
             {unreadCount > 0 && (
-              <span className="absolute right-2 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">&nbsp;</span>
+              <span className="absolute right-2 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                &nbsp;
+              </span>
             )}
           </Link>
 
@@ -444,10 +454,16 @@ const BottomNavigation: React.FC = () => {
             key="Profile"
             to={navItems.find((i) => i.label === "Profile")!.to}
             className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
-              location.pathname.startsWith(navItems.find((i) => i.label === "Profile")!.to) ? "bg-gray-50" : ""
+              location.pathname.startsWith(
+                navItems.find((i) => i.label === "Profile")!.to,
+              )
+                ? "bg-gray-50"
+                : ""
             }`}
             onClick={(e) => {
-              const isActive = location.pathname.startsWith(navItems.find((i) => i.label === "Profile")!.to);
+              const isActive = location.pathname.startsWith(
+                navItems.find((i) => i.label === "Profile")!.to,
+              );
               if (isActive) {
                 e.preventDefault();
                 setTimeout(() => {
@@ -460,11 +476,17 @@ const BottomNavigation: React.FC = () => {
               src={stableProfileSrc}
               alt="Profile"
               className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                location.pathname.startsWith(navItems.find((i) => i.label === "Profile")!.to) ? "h-10 w-10 ring-2 ring-yellow-500" : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+                location.pathname.startsWith(
+                  navItems.find((i) => i.label === "Profile")!.to,
+                )
+                  ? "h-10 w-10 ring-2 ring-yellow-500"
+                  : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
               }`}
               draggable={false}
             />
-            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">Profile</span>
+            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+              Profile
+            </span>
           </Link>
         </div>
 
