@@ -8,6 +8,7 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useFeedback } from "../../../hooks/useFeedback";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // Ticket-compatible interfaces (same as client version)
 interface TicketCategory {
@@ -95,8 +96,8 @@ const ReportIssuePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-yellow-50 to-gray-100 p-4">
-      <div className="w-full max-w-2xl rounded-3xl border border-yellow-200 bg-white p-10 shadow-2xl">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-yellow-50 to-gray-100 p-4">
+      <div className="mx-auto w-full max-w-2xl flex-1 rounded-3xl border border-yellow-200 bg-white p-10 shadow-2xl">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-yellow-700 hover:text-yellow-900 focus:outline-none"
@@ -219,6 +220,7 @@ const ReportIssuePage: React.FC = () => {
           </button>
         </form>
       </div>
+      <BottomNavigation />
     </div>
   );
 };

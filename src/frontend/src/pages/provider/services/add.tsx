@@ -4,6 +4,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
@@ -1242,6 +1243,7 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
+      <BottomNavigation />
     </div>
   );
 };

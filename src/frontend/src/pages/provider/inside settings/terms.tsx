@@ -1,12 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 const TermsAndConditionsPage: React.FC = () => {
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-2xl rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <div className="mx-auto w-full max-w-2xl flex-1 rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
@@ -260,6 +261,7 @@ const TermsAndConditionsPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 };
