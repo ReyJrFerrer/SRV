@@ -126,9 +126,7 @@ const BottomNavigation: React.FC = () => {
         default:
           path = `${basePath}.svg`;
       }
-      if (label === "Ratings") {
-        path = `images/navigation icons/star${state === "selected" ? "-selected" : state === "hover" ? "-hover" : ""}.svg`;
-      }
+     
       // Encode to ensure spaces and special characters are handled in URLs
       return encodeURI(path);
     },
@@ -204,20 +202,22 @@ const BottomNavigation: React.FC = () => {
       <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
         <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
           <div className="grid w-full grid-cols-5 font-medium">
-            {navItems.map((item) => {
+            {navItems
+              .filter((it) => it.label !== "Ratings")
+              .map((item) => {
               // On mobile, show Settings instead of Profile
               const displayItem =
                 item.label === "Profile" ? settingsItem : item;
               const isActive = location.pathname.startsWith(displayItem.to);
-              if (
-                [
-                  "Home",
-                  "Booking",
-                  "Settings",
-                  "Notifications",
-                  "Chat",
-                ].includes(displayItem.label)
-              ) {
+                if (
+                  [
+                    "Home",
+                    "Booking",
+                    "Settings",
+                    "Notifications",
+                    "Chat",
+                  ].includes(displayItem.label)
+                ) {
                 const handleMouseEnter = () => {
                   if (!isActive) {
                     setIconStates((prev) => ({
