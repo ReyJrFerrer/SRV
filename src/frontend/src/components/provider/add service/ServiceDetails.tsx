@@ -361,7 +361,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             type="text" // Changed from "number" to "text" for stricter control
                             id={`pkgPrice-${pkg.id}`}
                             value={pkg.price}
-                            onChange={(e) => handlePriceChange(index, e.target.value)}
+                            onChange={(e) =>
+                              handlePriceChange(index, e.target.value)
+                            }
                             required
                             min="0"
                             className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${

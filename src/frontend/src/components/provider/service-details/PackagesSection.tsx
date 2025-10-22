@@ -103,84 +103,84 @@ const PackagesSection: React.FC<Props> = ({
               </div>
             ) : (
               <div className="space-y-3">
-              <div>
-                <label
-                  htmlFor="packageTitle"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="packageTitle"
-                  value={packageFormTitle}
-                  onChange={(e) => setPackageFormTitle(e.target.value)}
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., Basic Cleaning, Premium Tune-up"
-                  required
-                  disabled={packageFormLoading}
-                />
+                <div>
+                  <label
+                    htmlFor="packageTitle"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="packageTitle"
+                    value={packageFormTitle}
+                    onChange={(e) => setPackageFormTitle(e.target.value)}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="e.g., Basic Cleaning, Premium Tune-up"
+                    required
+                    disabled={packageFormLoading}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="packageDescription"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="packageDescription"
+                    value={packageFormDescription}
+                    onChange={(e) => setPackageFormDescription(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Brief description of what's included in this package"
+                    required
+                    disabled={packageFormLoading}
+                  ></textarea>
+                </div>
+                <div>
+                  <label
+                    htmlFor="packagePrice"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Price (₱)
+                  </label>
+                  <input
+                    type="text"
+                    id="packagePrice"
+                    value={packageFormPrice}
+                    onChange={(e) => handlePriceInputChange(e.target.value)}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="e.g., 500.00"
+                    required
+                    disabled={packageFormLoading}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={onCancelPackageEdit}
+                    className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                    disabled={packageFormLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onSavePackage}
+                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    disabled={packageFormLoading}
+                  >
+                    {packageFormLoading && (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    )}
+                    {packageFormLoading
+                      ? "Saving..."
+                      : currentPackageId
+                        ? "Update Package"
+                        : "Create Package"}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="packageDescription"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="packageDescription"
-                  value={packageFormDescription}
-                  onChange={(e) => setPackageFormDescription(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Brief description of what's included in this package"
-                  required
-                  disabled={packageFormLoading}
-                ></textarea>
-              </div>
-              <div>
-                <label
-                  htmlFor="packagePrice"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Price (₱)
-                </label>
-                <input
-                  type="text"
-                  id="packagePrice"
-                  value={packageFormPrice}
-                  onChange={(e) => handlePriceInputChange(e.target.value)}
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., 500.00"
-                  required
-                  disabled={packageFormLoading}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={onCancelPackageEdit}
-                  className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-                  disabled={packageFormLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={onSavePackage}
-                  className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                  disabled={packageFormLoading}
-                >
-                  {packageFormLoading && (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  )}
-                  {packageFormLoading
-                    ? "Saving..."
-                    : currentPackageId
-                      ? "Update Package"
-                      : "Create Package"}
-                </button>
-              </div>
-            </div>
             )}
           </div>
         )}
