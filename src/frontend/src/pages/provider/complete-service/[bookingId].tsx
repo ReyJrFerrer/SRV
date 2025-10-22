@@ -15,6 +15,7 @@ import {
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
@@ -269,7 +270,7 @@ const CompleteServicePage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center">
           <button
@@ -425,6 +426,7 @@ const CompleteServicePage: React.FC = () => {
           </div>
         </div>
       </main>
+      <BottomNavigation />
     </div>
   );
 };

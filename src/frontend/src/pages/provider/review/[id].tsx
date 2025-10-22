@@ -12,7 +12,7 @@ import {
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useBookingRating } from "../../../hooks/reviewManagement";
-import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 export default function ProviderReviewView() {
   const navigate = useNavigate();
@@ -217,9 +217,7 @@ export default function ProviderReviewView() {
           </div>
         </div>
 
-        <div className="md:hidden">
-          <BottomNavigationNextjs />
-        </div>
+  <BottomNavigation />
       </div>
     );
   }
@@ -398,9 +396,7 @@ export default function ProviderReviewView() {
           </div> */}
       </main>
 
-      <div className="md:hidden">
-        <BottomNavigationNextjs />
-      </div>
+  <BottomNavigation />
     </div>
   );
 }

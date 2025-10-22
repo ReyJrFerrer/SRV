@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import BottomNavigation from "../../components/provider/BottomNavigation";
 
 const PayoutSettingsPage: React.FC = () => {
   const { identity } = useAuth();
@@ -219,7 +220,7 @@ const PayoutSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
+  <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
         <div className="flex items-center justify-between px-4">
           <button
@@ -410,6 +411,7 @@ const PayoutSettingsPage: React.FC = () => {
           </div>
         </div>
       </main>
+  <BottomNavigation />
     </div>
   );
 };

@@ -24,6 +24,7 @@ import {
 } from "../../../hooks/useProviderBookingManagement";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import GStreetView from "../../../components/common/GStreetView";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // (Places library reserved for future use with Autocomplete if needed)
 import { useReputation } from "../../../hooks/useReputation";
@@ -1576,7 +1577,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </main>
 
-      <div></div>
+  <div></div>
+  <BottomNavigation />
     </div>
   );
 };
