@@ -78,6 +78,12 @@ const BottomNavigation: React.FC = () => {
       count: 0,
     },
     {
+      to: "/client/profile/reviews",
+      label: "Ratings",
+      icon: null,
+      count: 0,
+    },
+    {
       to: "/client/chat",
       label: "Chat",
       icon: null,
@@ -119,6 +125,9 @@ const BottomNavigation: React.FC = () => {
           break;
         default:
           path = `${basePath}.svg`;
+      }
+      if (label === "Ratings") {
+        path = `images/navigation icons/star${state === "selected" ? "-selected" : state === "hover" ? "-hover" : ""}.svg`;
       }
       // Encode to ensure spaces and special characters are handled in URLs
       return encodeURI(path);

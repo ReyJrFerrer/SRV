@@ -12,6 +12,7 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon, // Added for the switch button
   InformationCircleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
@@ -795,6 +796,21 @@ const ClientProfilePage: React.FC = () => {
                 {!isSwitchingRole && (
                   <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
                 )}
+              </button>
+            </div>
+            {/* Ratings & Reviews Button (between switch and logout) */}
+            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+              <button
+                onClick={() => navigate("/client/profile/reviews")}
+                className="group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors hover:bg-gray-50"
+              >
+                <div className="flex items-center">
+                  <StarIcon className="mr-4 h-6 w-6 text-yellow-500 group-hover:text-yellow-600" />
+                  <span className="text-md font-medium text-gray-800 group-hover:text-gray-900">
+                    Ratings & Reviews
+                  </span>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-gray-500 group-hover:text-gray-700" />
               </button>
             </div>
             {/* Desktop Logout Button (bottom of left column) */}
