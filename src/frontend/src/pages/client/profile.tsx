@@ -564,7 +564,8 @@ const ClientProfilePage: React.FC = () => {
       try {
         setRatingsError(null);
         setRatingsLoading(true);
-        const clientId = (profile as any)?.id || (profile as any)?.principal || "";
+        const clientId =
+          (profile as any)?.id || (profile as any)?.principal || "";
         if (!clientId) {
           setAvgRating(0);
           setReviewsCount(0);
@@ -952,7 +953,9 @@ const ClientProfilePage: React.FC = () => {
                 {/* Ratings Summary Card */}
                 <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
                   <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-yellow-700">Your Ratings</h4>
+                    <h4 className="text-lg font-bold text-yellow-700">
+                      Your Ratings
+                    </h4>
                     <StarIcon className="h-6 w-6 text-yellow-500" />
                   </div>
                   {ratingsLoading ? (
@@ -960,16 +963,26 @@ const ClientProfilePage: React.FC = () => {
                       Loading...
                     </div>
                   ) : ratingsError ? (
-                    <div className="py-4 text-sm text-red-500">{ratingsError}</div>
+                    <div className="py-4 text-sm text-red-500">
+                      {ratingsError}
+                    </div>
                   ) : (
                     <div className="flex items-end justify-between">
                       <div>
-                        <div className="text-3xl font-extrabold text-gray-900">{avgRating.toFixed(1)}</div>
-                        <div className="text-xs text-gray-500">Average rating</div>
+                        <div className="text-3xl font-extrabold text-gray-900">
+                          {avgRating.toFixed(1)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Average rating
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-bold text-gray-900">{reviewsCount}</div>
-                        <div className="text-xs text-gray-500">Reviews received</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {reviewsCount}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Reviews received
+                        </div>
                       </div>
                     </div>
                   )}
