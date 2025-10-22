@@ -215,7 +215,10 @@ const BottomNavigation: React.FC = () => {
                 // On mobile, show Settings instead of Profile
                 const displayItem =
                   item.label === "Profile" ? settingsItem : item;
-                const isActive = isRouteActive(displayItem.label, displayItem.to);
+                const isActive = isRouteActive(
+                  displayItem.label,
+                  displayItem.to,
+                );
                 if (
                   [
                     "Home",
