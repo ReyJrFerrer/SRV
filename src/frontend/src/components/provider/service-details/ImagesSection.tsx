@@ -28,6 +28,7 @@ interface Props {
   serviceImages?: ImageItem[];
   uploadError: string | null;
   uploadingImages: boolean;
+  savingImages: boolean;
   onToggleEdit: () => void;
   onCancel: () => void;
   onSave: () => void;
@@ -45,6 +46,7 @@ const ImagesSection: React.FC<Props> = ({
   serviceImages,
   uploadError,
   uploadingImages,
+  savingImages,
   onToggleEdit,
   onCancel,
   onSave,
@@ -75,7 +77,17 @@ const ImagesSection: React.FC<Props> = ({
         </Tooltip>
       </div>
 
-      {editImages ? (
+      {savingImages ? (
+        // Skeleton UI when saving
+        <div className="grid animate-pulse grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="aspect-video rounded-lg bg-blue-200/50"
+            ></div>
+          ))}
+        </div>
+      ) : editImages ? (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {tempDisplayImages.length > 0 ? (
@@ -145,17 +157,20 @@ const ImagesSection: React.FC<Props> = ({
           <div className="mt-4 flex justify-end gap-2">
             <button
               onClick={onCancel}
-              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-              disabled={uploadingImages}
+              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={uploadingImages || savingImages}
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              disabled={uploadingImages}
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={uploadingImages || savingImages}
             >
-              {uploadingImages ? "Saving..." : "Save"}
+              {(uploadingImages || savingImages) && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              )}
+              {uploadingImages || savingImages ? "Saving..." : "Save"}
             </button>
           </div>
         </>

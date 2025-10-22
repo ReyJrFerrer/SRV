@@ -166,6 +166,26 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handlePackageChange(index, field, value);
   };
 
+  // Modify the handlePackageInputChange function
+  const handlePriceChange = (index: number, value: string) => {
+    // Allow only numbers by stripping non-digit characters
+    let numericValue = value.replace(/[^0-9]/g, "");
+
+    // Prevent leading zeros, unless the value is "0" itself
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      numericValue = parseInt(numericValue, 10).toString();
+    }
+    // Prevent exceeding 1,000,000
+    if (parseInt(numericValue, 10) > 1000000) {
+      numericValue = "1000000";
+    }
+
+    if (numericValue === "NaN") {
+      numericValue = "";
+    }
+    handlePackageInputChange(index, "price", numericValue);
+  };
+
   return (
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -335,18 +355,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgPrice-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Price (PHP)<span className="text-red-500">*</span>
+                            Price (PHP) <span className="text-red-500">*</span>
                           </label>
                           <input
-                            type="number"
+                            type="text" // Changed from "number" to "text" for stricter control
                             id={`pkgPrice-${pkg.id}`}
                             value={pkg.price}
                             onChange={(e) =>
-                              handlePackageInputChange(
-                                index,
-                                "price",
-                                e.target.value,
-                              )
+                              handlePriceChange(index, e.target.value)
                             }
                             required
                             min="0"

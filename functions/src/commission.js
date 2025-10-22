@@ -10,7 +10,7 @@ const COMMISSION_TIERS = {
 };
 
 /**
- * Fee structure configuration for each tier - migrated from commission.mo
+ * Fee structure configuration for each tier
  */
 const TIER_STRUCTURES = {
   [COMMISSION_TIERS.TIER_A]: {
