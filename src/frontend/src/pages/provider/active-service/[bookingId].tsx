@@ -15,6 +15,7 @@ import {
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 const ActiveServicePage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,13 +30,8 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const {
-    getBookingById,
-    loading,
-    error,
-    isProviderAuthenticated,
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { getBookingById, loading, checkCommissionValidation } =
+    useProviderBookingManagement();
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
@@ -155,14 +151,6 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Please log in as a service provider to access this page.
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -171,13 +159,20 @@ const ActiveServicePage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Error: {error}
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+  //       Error: {error}
+  //     </div>
+  //   );
+  // }
+  // if (!isProviderAuthenticated()) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+  //       Please log in as a service provider to access this page.
+  //     </div>
+  //   );
+  // }
 
   if (!booking) {
     return (
@@ -198,11 +193,11 @@ const ActiveServicePage: React.FC = () => {
 
   // --- UI Section ---
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/provider/booking/${booking.id}`)}
             className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
@@ -349,6 +344,7 @@ const ActiveServicePage: React.FC = () => {
         </div>
       </main>
       <div className="lg:hidden"></div>
+      <BottomNavigation />
     </div>
   );
 };

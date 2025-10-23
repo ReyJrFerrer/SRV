@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -107,6 +108,7 @@ const HelpSupportPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 };

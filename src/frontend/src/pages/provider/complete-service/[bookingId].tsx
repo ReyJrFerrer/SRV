@@ -15,6 +15,7 @@ import {
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
@@ -214,7 +215,7 @@ const CompleteServicePage: React.FC = () => {
       if (success) {
         setError(null);
 
-        // Navigate to the receipt page with appropriate parameters
+        // Build receipt URL params
         const searchParams = new URLSearchParams({
           price: servicePrice.toFixed(2),
           paid: amountPaid.toFixed(2),
@@ -224,11 +225,11 @@ const CompleteServicePage: React.FC = () => {
               : booking.paymentMethod,
         });
 
-        // Add change for cash payments
         if (booking.paymentMethod === "CashOnHand") {
           searchParams.append("change", changeDue.toFixed(2));
         }
 
+        // Navigate to receipt first
         navigate(`/provider/receipt/${booking.id}?${searchParams.toString()}`);
       } else {
         setError("Failed to complete the booking. Please try again.");
@@ -242,15 +243,6 @@ const CompleteServicePage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Check authentication
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Please log in as a service provider to access this page.
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -268,8 +260,17 @@ const CompleteServicePage: React.FC = () => {
     );
   }
 
+  // Check authentication
+  if (!isProviderAuthenticated()) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+        Please log in as a service provider to access this page.
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center">
           <button
@@ -425,6 +426,7 @@ const CompleteServicePage: React.FC = () => {
           </div>
         </div>
       </main>
+      <BottomNavigation />
     </div>
   );
 };

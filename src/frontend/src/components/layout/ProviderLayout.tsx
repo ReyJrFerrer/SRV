@@ -1,10 +1,12 @@
 import { Outlet } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import ActiveServiceBanner from "../provider/ActiveServiceBanner";
 
 export default function ProviderLayout() {
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
       <div className="min-h-screen bg-gray-50">
+        <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}
         <main>
           <Outlet />

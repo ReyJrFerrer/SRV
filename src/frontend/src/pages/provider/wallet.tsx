@@ -243,6 +243,28 @@ const WalletPage: React.FC = () => {
     setTopUpAmount(amount.toString());
   };
 
+  const handleAmountInputChange = (value: string) => {
+    // Allow only numbers by stripping non-digit characters
+    let numericValue = value.replace(/[^0-9]/g, "");
+
+    // Prevent leading zeros, unless the value is "0" itself
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      numericValue = parseInt(numericValue, 10).toString();
+    }
+
+    // Prevent exceeding 50,000
+    if (parseInt(numericValue, 10) > 50000) {
+      numericValue = "50000";
+    }
+
+    // Handle empty or invalid parsing
+    if (numericValue === "NaN") {
+      numericValue = "";
+    }
+
+    setTopUpAmount(numericValue);
+  };
+
   const handleRefresh = async () => {
     try {
       // Check for any completed payments first
@@ -629,13 +651,11 @@ const WalletPage: React.FC = () => {
                     </span>
                     <input
                       id="topup-amount"
-                      type="number"
+                      type="text"
                       value={topUpAmount}
-                      onChange={(e) => setTopUpAmount(e.target.value)}
-                      placeholder="0.00"
+                      onChange={(e) => handleAmountInputChange(e.target.value)}
+                      placeholder="Enter amount"
                       min="100"
-                      max="50000"
-                      step="0.01"
                       className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>

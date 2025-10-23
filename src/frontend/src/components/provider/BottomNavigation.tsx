@@ -1,11 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
+import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useUserProfile } from "../../hooks/useUserProfile";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const { unreadChatCount } = useChatNotifications();
+  const { unreadCount } = useNotifications();
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
@@ -135,6 +137,16 @@ const BottomNavigation: React.FC = () => {
           isActive ? "selected" : "default",
         );
       });
+      // Include provider notifications (desktop-only button)
+      {
+        const isActive = location.pathname.startsWith(
+          "/provider/notifications",
+        );
+        initialStates["Notifications"] = getIconSrc(
+          "Notifications",
+          isActive ? "selected" : "default",
+        );
+      }
       // Include bottom settings item
       {
         const isActive = location.pathname.startsWith(settingsItem.to);
@@ -158,6 +170,14 @@ const BottomNavigation: React.FC = () => {
         isActive ? "selected" : "default",
       );
     });
+    // Update provider notifications icon state
+    {
+      const isActive = location.pathname.startsWith("/provider/notifications");
+      newStates["Notifications"] = getIconSrc(
+        "Notifications",
+        isActive ? "selected" : "default",
+      );
+    }
     // Update bottom settings item
     {
       const isActive = location.pathname.startsWith(settingsItem.to);
@@ -322,58 +342,48 @@ const BottomNavigation: React.FC = () => {
 
       {/* Desktop left sidebar */}
       <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
-        {/* Top section: main nav items (Profile in place of Settings) */}
+        {/* Top section: main nav items (Profile rendered separately so we can insert Notifications above it on desktop) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
-          {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.to);
-            const handleMouseEnter = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "hover"),
-                }));
-              }
-            };
+          {navItems
+            .filter((it) => it.label !== "Profile")
+            .map((item) => {
+              const isActive = location.pathname.startsWith(item.to);
+              const handleMouseEnter = () => {
+                if (!isActive) {
+                  setIconStates((prev) => ({
+                    ...prev,
+                    [item.label]: getIconSrc(item.label, "hover"),
+                  }));
+                }
+              };
 
-            const handleMouseLeave = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "default"),
-                }));
-              }
-            };
+              const handleMouseLeave = () => {
+                if (!isActive) {
+                  setIconStates((prev) => ({
+                    ...prev,
+                    [item.label]: getIconSrc(item.label, "default"),
+                  }));
+                }
+              };
 
-            return (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
-                  isActive ? "bg-gray-50" : ""
-                }`}
-                onClick={(e) => {
-                  if (isActive) {
-                    e.preventDefault();
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }, 120);
-                  }
-                }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              >
-                {item.label === "Profile" ? (
-                  <img
-                    src={stableProfileSrc}
-                    alt="Profile"
-                    className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                      isActive
-                        ? "h-10 w-10 ring-2 ring-yellow-500"
-                        : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
-                    }`}
-                    draggable={false}
-                  />
-                ) : (
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+                    isActive ? "bg-gray-50" : ""
+                  }`}
+                  onClick={(e) => {
+                    if (isActive) {
+                      e.preventDefault();
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }, 120);
+                    }
+                  }}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
                   <img
                     src={iconStates[item.label]}
                     alt={item.label}
@@ -382,22 +392,102 @@ const BottomNavigation: React.FC = () => {
                     }`}
                     draggable={false}
                   />
-                )}
-                <span
-                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                    isActive
-                      ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
-                  }`}
-                >
-                  {item.label}
-                </span>
-                {item.count > 0 && (
-                  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
-                )}
-              </Link>
-            );
-          })}
+                  <span
+                    className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
+                      isActive
+                        ? "font-bold"
+                        : "opacity-90 group-hover:text-yellow-500"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  {item.count > 0 && (
+                    <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  )}
+                </Link>
+              );
+            })}
+
+          {/* Desktop-only Notifications button placed above profile */}
+          <Link
+            to="/provider/notifications"
+            className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+              location.pathname.startsWith("/provider/notifications")
+                ? "bg-gray-50"
+                : ""
+            }`}
+            onMouseEnter={() => {
+              if (!location.pathname.startsWith("/provider/notifications")) {
+                setIconStates((prev) => ({
+                  ...prev,
+                  ["Notifications"]: getIconSrc("Notifications", "hover"),
+                }));
+              }
+            }}
+            onMouseLeave={() => {
+              if (!location.pathname.startsWith("/provider/notifications")) {
+                setIconStates((prev) => ({
+                  ...prev,
+                  ["Notifications"]: getIconSrc("Notifications", "default"),
+                }));
+              }
+            }}
+          >
+            <img
+              src={iconStates["Notifications"]}
+              alt="Notifications"
+              className="h-6 w-6 transition-all duration-300 ease-in-out group-hover:scale-105"
+              draggable={false}
+            />
+            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+              Notifications
+            </span>
+            {unreadCount > 0 && (
+              <span className="absolute right-2 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                &nbsp;
+              </span>
+            )}
+          </Link>
+
+          {/* Profile rendered last */}
+          <Link
+            key="Profile"
+            to={navItems.find((i) => i.label === "Profile")!.to}
+            className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+              location.pathname.startsWith(
+                navItems.find((i) => i.label === "Profile")!.to,
+              )
+                ? "bg-gray-50"
+                : ""
+            }`}
+            onClick={(e) => {
+              const isActive = location.pathname.startsWith(
+                navItems.find((i) => i.label === "Profile")!.to,
+              );
+              if (isActive) {
+                e.preventDefault();
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
+              }
+            }}
+          >
+            <img
+              src={stableProfileSrc}
+              alt="Profile"
+              className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
+                location.pathname.startsWith(
+                  navItems.find((i) => i.label === "Profile")!.to,
+                )
+                  ? "h-10 w-10 ring-2 ring-yellow-500"
+                  : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+              }`}
+              draggable={false}
+            />
+            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+              Profile
+            </span>
+          </Link>
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}

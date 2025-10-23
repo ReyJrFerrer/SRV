@@ -25,12 +25,8 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const {
-    getBookingById,
-    loading,
-    isProviderAuthenticated,
-    checkCommissionValidation,
-  } = useProviderBookingManagement();
+  const { getBookingById, loading, checkCommissionValidation } =
+    useProviderBookingManagement();
 
   // Get booking data from hook
   const booking = useMemo(() => {
@@ -78,8 +74,8 @@ const ReceiptPage: React.FC = () => {
     validateCommission();
   }, [booking, paymentMethod, checkCommissionValidation]);
 
-  const handleDone = () => {
-    navigate("/provider/bookings?tab=Completed");
+  const handleRateClient = () => {
+    if (bookingId) navigate(`/provider/rate-client/${bookingId}`);
   };
 
   const handlePrint = () => {
@@ -99,14 +95,6 @@ const ReceiptPage: React.FC = () => {
       alert("Web Share API not supported. You can copy the URL.");
     }
   };
-
-  if (!isProviderAuthenticated()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Maglogin bilang service provider upang makita ang page na ito.
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -129,8 +117,8 @@ const ReceiptPage: React.FC = () => {
     : new Date(booking.updatedAt);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 sm:py-12 print:bg-white">
-      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 sm:p-10 md:p-12 print:border print:border-gray-300 print:shadow-none">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 print:bg-white sm:py-12">
+      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 print:border print:border-gray-300 print:shadow-none sm:p-10 md:p-12">
         <div className="mb-8 flex flex-col items-center">
           <img
             src="/images/srv characters (SVG)/girl.svg"
@@ -243,7 +231,7 @@ const ReceiptPage: React.FC = () => {
           your transaction history.
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row print:hidden">
+        <div className="flex flex-col gap-3 print:hidden sm:flex-row">
           <button
             onClick={handlePrint}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -258,10 +246,10 @@ const ReceiptPage: React.FC = () => {
           </button>
         </div>
         <button
-          onClick={handleDone}
+          onClick={handleRateClient}
           className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
         >
-          Done
+          Proceed to Rate Client
         </button>
       </main>
     </div>

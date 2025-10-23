@@ -20,7 +20,9 @@ class PhoneVerificationService {
   private resendTimer: NodeJS.Timeout | null = null;
   private resendCooldown: number = 60; // seconds
   private attemptCount: number = 0;
-  private maxAttempts: number = 5; // Allow 5 attempts before requiring resend
+  private maxAttempts: number = 10; // Allow 10 attempts before requiring resend (be forgiving to users)
+  private isVerifying: boolean = false; // Prevent concurrent verification attempts
+  private isVerified: boolean = false; // Track if verification was successful
 
   /**
    * Initialize the phone verification service
@@ -47,6 +49,7 @@ class PhoneVerificationService {
 
       this.currentPhoneNumber = phoneNumber;
       this.attemptCount = 0; // Reset attempt count for new verification
+      this.isVerified = false; // Reset verification status
 
       // Setup reCAPTCHA
       await firebaseAuthService.setupRecaptcha(recaptchaContainerId);
@@ -78,63 +81,122 @@ class PhoneVerificationService {
    * Verify the OTP code
    */
   async verifyCode(otpCode: string): Promise<PhoneVerificationResult> {
+    // Prevent concurrent verification attempts
+    if (this.isVerifying) {
+      console.log(
+        "⏳ Verification already in progress, ignoring duplicate request",
+      );
+      return {
+        success: false,
+        phoneNumber: this.currentPhoneNumber,
+        error: "Verification in progress, please wait...",
+      };
+    }
+
+    // Prevent verification if already verified
+    if (this.isVerified) {
+      return {
+        success: true,
+        phoneNumber: this.currentPhoneNumber,
+      };
+    }
+
+    // Check if confirmation result is still valid
+    if (!this.confirmationResult) {
+      return {
+        success: false,
+        phoneNumber: this.currentPhoneNumber,
+        error: "Verification session expired. Please request a new code.",
+      };
+    }
+
+    // Validate OTP format
+    if (!otpCode || otpCode.length !== 6) {
+      return {
+        success: false,
+        phoneNumber: this.currentPhoneNumber,
+        error: "Please enter a valid 6-digit code",
+      };
+    }
+
+    // Check if max attempts already reached
+    if (this.attemptCount >= this.maxAttempts) {
+      this.confirmationResult = null;
+      return {
+        success: false,
+        phoneNumber: this.currentPhoneNumber,
+        error: "Too many failed attempts. Please request a new code.",
+      };
+    }
+
+    this.isVerifying = true;
+    this.attemptCount++;
+
     try {
-      if (!this.confirmationResult) {
-        throw new Error("No verification in progress");
-      }
-
-      if (!otpCode || otpCode.length !== 6) {
-        throw new Error("Please enter a valid 6-digit code");
-      }
-
-      this.attemptCount++;
-
       const isVerified = await firebaseAuthService.verifyOTP(
         this.confirmationResult,
         otpCode,
       );
 
       if (isVerified) {
+        this.isVerified = true;
+        this.confirmationResult = null;
         this.cleanup();
         return {
           success: true,
           phoneNumber: this.currentPhoneNumber,
         };
       } else {
-        throw new Error("Invalid verification code");
-      }
-    } catch (error: any) {
-      console.error("Error verifying code:", error);
-
-      // Check if error suggests reload
-      const shouldReload = (error as any).shouldReload;
-
-      // Don't invalidate confirmation result for invalid codes unless max attempts reached
-      if (
-        error.message?.includes("Invalid verification code") &&
-        this.attemptCount < this.maxAttempts
-      ) {
         return {
           success: false,
           phoneNumber: this.currentPhoneNumber,
-          error: `Invalid code. ${this.maxAttempts - this.attemptCount} attempts remaining.`,
+          error: "Invalid verification code",
+        };
+      }
+    } catch (error: any) {
+      // Immediately invalidate confirmation result for session-related errors
+      if (
+        error.code === "auth/invalid-verification-id" ||
+        error.message?.includes("Verification session expired")
+      ) {
+        console.log("🚫 Verification session invalidated");
+        this.confirmationResult = null;
+        return {
+          success: false,
+          phoneNumber: this.currentPhoneNumber,
+          error: "Verification session expired. Please request a new code.",
         };
       }
 
-      // For other errors or max attempts reached, suggest appropriate action
-      let errorMessage = error.message || "Invalid verification code";
+      // Check if error suggests reload
+      const shouldReload = (error as any).shouldReload;
       if (shouldReload) {
-        errorMessage = error.message;
-      } else if (this.attemptCount >= this.maxAttempts) {
-        errorMessage = "Too many failed attempts. Please request a new code.";
-        this.confirmationResult = null; // Invalidate current verification
+        this.confirmationResult = null;
+        return {
+          success: false,
+          phoneNumber: this.currentPhoneNumber,
+          error: error.message,
+        };
       }
 
-      return {
-        success: false,
-        phoneNumber: this.currentPhoneNumber,
-        error: errorMessage,
-      };
+      // Handle invalid code - allow retry
+      const attemptsLeft = this.maxAttempts - this.attemptCount;
+      if (attemptsLeft > 0) {
+        return {
+          success: false,
+          phoneNumber: this.currentPhoneNumber,
+          error: `Invalid code. Please try again.`,
+        };
+      } else {
+        this.confirmationResult = null;
+        return {
+          success: false,
+          phoneNumber: this.currentPhoneNumber,
+          error: "Too many failed attempts. Please request a new code.",
+        };
+      }
+    } finally {
+      this.isVerifying = false;
     }
   }
 
@@ -246,6 +308,7 @@ class PhoneVerificationService {
   private cleanup(): void {
     this.confirmationResult = null;
     this.attemptCount = 0;
+    this.isVerifying = false;
     this.clearResendTimer();
     firebaseAuthService.clearRecaptcha();
   }

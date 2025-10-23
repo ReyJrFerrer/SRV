@@ -15,10 +15,12 @@ import {
   StarIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import ClientReputationScore from "./booking-details/ClientReputationScore";
+import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { useEffect, useState } from "react";
+import { useEffect, useState, MouseEvent } from "react";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -45,6 +47,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+
+  // State for complete confirmation dialog
+  const [showCompleteConfirm, setShowCompleteConfirm] =
+    useState<boolean>(false);
+  const [isCompleting, setIsCompleting] = useState<boolean>(false);
 
   // Commission validation state for cash bookings
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -147,6 +154,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
+  const clientId =
+    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
 
   console.log("From Provider Booking Item Card", booking);
 
@@ -271,18 +280,28 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  const handleMarkAsCompleted = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleMarkAsCompleted = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (window.confirm("Mark this booking as completed?")) {
+    // Show the confirmation dialog instead of window.confirm
+    setShowCompleteConfirm(true);
+  };
+
+  // New function to handle the actual completion after confirmation
+  const handleConfirmComplete = async () => {
+    setIsCompleting(true);
+    try {
+      // The action is to navigate to the completion page
       navigate(`/provider/complete-service/${booking.id}`);
+    } finally {
+      // This will run before navigation completes
+      setIsCompleting(false);
+      setShowCompleteConfirm(false);
     }
   };
 
   // Navigate to directions page first; actual start initiated from there
-  const handleStartService = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleStartService = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     // commented for debugging
@@ -292,7 +311,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---
-  const handleChatClient = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleChatClient = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (!booking.clientId || !identity) return;
@@ -397,6 +416,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+            {/* Reputation and Rating row above date/time */}
+            {clientId && (
+              <div className="mb-1 flex items-center gap-2">
+                <ClientReputationScore clientId={clientId} />
+                <ClientRatingSummary clientId={clientId} />
+              </div>
+            )}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               {formatDateRange(
@@ -576,6 +602,37 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 disabled={isDeclinining}
               >
                 {isDeclinining ? "Declining..." : "Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Confirmation Dialog */}
+      {showCompleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-green-600">
+              Complete Booking?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to mark this booking with{" "}
+              <b>{clientName}</b> as completed?
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowCompleteConfirm(false)}
+                disabled={isCompleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
+                onClick={handleConfirmComplete}
+                disabled={isCompleting}
+              >
+                {isCompleting ? "Proceeding..." : "Confirm"}
               </button>
             </div>
           </div>

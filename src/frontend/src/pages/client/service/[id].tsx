@@ -1,42 +1,288 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-
-// Components
-import ServiceDetailPageComponent from "../../../components/client/ServiceDetailPageComponent";
+import {
+  StarIcon,
+  MapPinIcon,
+  CheckBadgeIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/solid";
+import useServiceById from "../../../hooks/serviceDetail";
+import { useServiceReviews } from "../../../hooks/reviewManagement";
+import { useChat } from "../../../hooks/useChat";
+import { useAuth } from "../../../context/AuthContext";
+import { useServiceImages } from "../../../hooks/useMediaLoader";
 import BottomNavigation from "../../../components/client/BottomNavigation";
+import {
+  ServicePackage,
+  serviceCanisterService,
+} from "../../../services/serviceCanisterService";
+import { useUserImage } from "../../../hooks/useMediaLoader";
+import ReputationScore from "../../../components/client/service-detail/ReputationScore";
+import ReviewsSection from "../../../components/client/service-detail/ReviewsSection";
+import ServiceGallerySection from "../../../components/client/service-detail/ServiceGallerySection";
+import CredentialsSection from "../../../components/client/service-detail/CredentialsSection";
+import AvailabilitySection, {
+  Availability,
+} from "../../../components/client/service-detail/AvailabilitySection";
 
-// Custom hooks
-import { useServiceDetail } from "../../../hooks/serviceDetail";
+// --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
+function formatTime12Hour(time: string): string {
+  if (!time) return "";
+  const [hourStr, minuteStr] = time.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  if (isNaN(hour) || isNaN(minute)) return time;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+}
 
-const ServiceDetailPage: React.FC = () => {
+const ClientServiceDetailsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id: serviceId } = useParams<{ id: string }>();
+  const { identity } = useAuth();
 
-  // Use our custom hook to fetch service details
-  const { service, error } = useServiceDetail(id as string);
+  const {
+    service,
+    loading: serviceLoading,
+    error: serviceError,
+  } = useServiceById(serviceId as string);
 
-  // Set document title
+  const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
+
+  // Load service gallery images for hero image (must be top-level)
+  const { images: heroImages } = useServiceImages(
+    service?.id,
+    service?.media || [],
+  );
+
+  const { conversations, createConversation, loading: chatLoading } = useChat();
+  const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
+
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
+  const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
+
   useEffect(() => {
-    const title = service
-      ? `${service.name} - ${service.title} | SRV Client`
-      : "Service Details | SRV Client";
-    document.title = title;
+    if (service) {
+      document.title = `${service.name} | SRV`;
+    }
   }, [service]);
 
-  const handleBackClick = () => {
-    navigate(-1);
+  // Refetch provider avatar if changed
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
+
+  // Subscribe to service packages with realtime updates
+  useEffect(() => {
+    if (!service?.id) {
+      setPackages([]);
+      setLoadingPackages(false);
+      return;
+    }
+
+    setLoadingPackages(true);
+
+    const unsubscribe = serviceCanisterService.subscribeToServicePackages(
+      service.id,
+      (packageData) => {
+        setPackages(packageData);
+        setLoadingPackages(false);
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [service?.id]);
+
+  const handleBookNow = () => {
+    if (!service) return;
+    navigate(`/client/book/${service.id}`);
   };
+
+  const isOwnService = Boolean(
+    identity &&
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
+  );
+
+  const handleChatProviderClick = async () => {
+    if (!service?.providerId) {
+      setChatErrorMessage("Provider information is missing.");
+      return;
+    }
+
+    if (!identity) {
+      setChatErrorMessage("You must be logged in to start a conversation.");
+      return;
+    }
+
+    setChatErrorMessage(null);
+
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === service.providerId) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === service.providerId),
+      );
+
+      if (existingConversation) {
+        navigate(`/client/chat/${service.providerId}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+            otherUserImage: service.providerAvatar,
+          },
+        });
+      } else {
+        const newConversation = await createConversation(
+          currentUserId,
+          service.providerId,
+        );
+
+        if (newConversation) {
+          navigate(`/client/chat/${service.providerId}`, {
+            state: {
+              conversationId: newConversation.id,
+              otherUserName: service.providerName,
+              otherUserImage: service.providerAvatar,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      setChatErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not start conversation. Please try again.",
+      );
+    }
+  };
+
+  if (serviceLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (serviceError || !service) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
+        <h1 className="mb-4 text-2xl font-bold text-red-600">
+          {serviceError ? "Error Loading Service" : "Service Not Found"}
+        </h1>
+        <button
+          onClick={() => navigate("/client/home")}
+          className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
+
+  const { providerName, name, category, location } = service;
+  const isVerified = service.isVerified;
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
+
+  let mappedAvailability:
+    | (Availability & { timeSlotsByDay?: Record<string, string[]> })
+    | undefined = undefined;
+  type TimeSlotObject = {
+    day?: string;
+    start?: string;
+    end?: string;
+  };
+
+  if (service.availability) {
+    const { schedule, timeSlots, isAvailableNow } = service.availability;
+    let availableDays: string[] = [];
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      availableDays = schedule
+        .map((s: any) => {
+          if (typeof s === "string") return s;
+          if (typeof s === "object" && s.day) return s.day;
+          return undefined;
+        })
+        .filter((d): d is string => typeof d === "string");
+    }
+    let timeSlotsByDay: Record<string, string[]> = {};
+    availableDays.forEach((day) => {
+      timeSlotsByDay[day] = [];
+    });
+    if (Array.isArray(timeSlots) && timeSlots.length > 0) {
+      timeSlots.forEach((slot: string | TimeSlotObject) => {
+        if (typeof slot === "string") {
+          let formattedSlot = slot;
+          if (!slot.includes("AM") && !slot.includes("PM")) {
+            const match = slot.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
+            if (match) {
+              const [, startHour, startMin, endHour, endMin] = match;
+              const startTime = `${startHour.padStart(2, "0")}:${startMin}`;
+              const endTime = `${endHour.padStart(2, "0")}:${endMin}`;
+              formattedSlot = `${formatTime12Hour(startTime)} - ${formatTime12Hour(endTime)}`;
+            }
+          }
+          availableDays.forEach((day) => {
+            if (!timeSlotsByDay[day].includes(formattedSlot)) {
+              timeSlotsByDay[day].push(formattedSlot);
+            }
+          });
+        } else if (
+          slot &&
+          typeof slot === "object" &&
+          "start" in slot &&
+          "end" in slot &&
+          slot.start &&
+          slot.end
+        ) {
+          const formattedSlot = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+          const day = slot.day || availableDays[0];
+          if (availableDays.includes(day)) {
+            if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
+            if (!timeSlotsByDay[day].includes(formattedSlot)) {
+              timeSlotsByDay[day].push(formattedSlot);
+            }
+          }
+        }
+      });
+    }
+
+    mappedAvailability = {
+      isAvailableNow,
+      availableDays,
+      timeSlotsByDay,
+    };
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Page Header */}
-      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
-          <button onClick={handleBackClick} className="mr-4 flex-shrink-0 p-1">
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 shadow-sm md:px-6 lg:px-8">
+        <div className="flex flex-grow items-center">
+          <button
+            onClick={handleBackClick}
+            className="mr-4 flex-shrink-0 rounded-full p-2 transition-colors duration-200 hover:bg-gray-100"
+          >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="flex-grow lg:flex lg:items-center lg:justify-between">
+            {/* <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 truncate">
+                {service?.title || 'Service Details'}
+              </h1> */}
             {/* Desktop breadcrumb */}
             <div className="hidden items-center space-x-2 text-sm text-gray-500 lg:flex">
               <span>Services</span>
@@ -47,23 +293,112 @@ const ServiceDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="scrollbar-hide flex-grow overflow-y-auto pb-20 lg:pb-0">
-        {error && (
-          <div className="mx-4 my-4 rounded border border-yellow-400 bg-yellow-100 px-4 py-3 text-yellow-700">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-        <ServiceDetailPageComponent />
-      </main>
-
-      {/* Bottom Navigation - Hidden on large screens */}
-      <div className="lg:hidden">
-        <BottomNavigation />
+        <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
+            <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
+            Offered
+          </h3>
+          {loadingPackages ? (
+            <div className="p-4 text-center text-gray-500">
+              Loading packages...
+            </div>
+          ) : packages.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className="md:flow-center group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
+                >
+                  <div className="flex flex-1 items-center gap-4">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <h4 className="truncate text-lg font-bold text-gray-900">
+                        {pkg.title}
+                      </h4>
+                      <p className="mt-1 break-words text-sm text-gray-600 md:line-clamp-2">
+                        {pkg.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
+                    <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
+                      ₱
+                      {Number(pkg.price + pkg.commissionFee).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      )}
+                    </span>
+                  </div>
+                  <span className="absolute right-0 top-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              No packages available for this service.
+            </div>
+          )}
+        </div>
+        <AvailabilitySection
+          availability={mappedAvailability}
+          isActive={service?.isActive}
+        />
+        <ServiceGallerySection
+          serviceId={service.id}
+          imageUrls={service.media || []}
+        />
+        <CredentialsSection isVerified={isVerified} />
+        <ReviewsSection serviceId={service.id} />
       </div>
+      <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3 md:bottom-0">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+          <button
+            onClick={handleChatProviderClick}
+            disabled={isOwnService}
+            className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
+            style={{ minWidth: 0, flexBasis: "32%" }}
+          >
+            {chatLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
+                <span className="text-base font-semibold">Creating Chat</span>
+              </>
+            ) : (
+              <span className="text-base font-semibold">Chat</span>
+            )}
+            {isOwnService && (
+              <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                You cannot chat with your own service.
+              </span>
+            )}
+          </button>
+          <div
+            className="group relative flex flex-grow justify-end"
+            style={{ flexBasis: "68%" }}
+          >
+            <button
+              onClick={handleBookNow}
+              disabled={
+                packages.length === 0 || isOwnService || !service.isActive
+              }
+              className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
+              style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
+            >
+              {service.isActive ? "Book Now" : "Service Unavailable"}
+              {isOwnService && (
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  You cannot book your own service.
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      <BottomNavigation />
     </div>
   );
 };
-export default ServiceDetailPage;
+
+export default ClientServiceDetailsPage;
