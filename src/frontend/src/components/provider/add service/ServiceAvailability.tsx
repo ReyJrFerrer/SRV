@@ -89,8 +89,9 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border pb-3 px-3 pt-10 shadow-sm lg:p-3 ${isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
-        }`}
+      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border px-3 pb-3 pt-10 shadow-sm lg:p-3 ${
+        isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
+      }`}
     >
       <button
         type="button"
@@ -101,32 +102,50 @@ const TimeSlotInput: React.FC<{
         <TrashIcon className="h-4 w-4" />
       </button>
 
-      <div className="flex w-full flex-col gap-2 lg:flex-row lg:justify-between lg:items-center">
-        <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-3 lg:w-auto">
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center lg:gap-3">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
             <span className="text-sm font-medium text-gray-600">Start:</span>
             <div className="flex gap-1 sm:gap-2">
               <select
                 value={slot.startHour}
-                onChange={(e) => onSlotChange(slot.id, "startHour", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startHour", e.target.value)
+                }
                 className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {hourOptions.map((h) => (<option key={h} value={h}>{h}</option>))}
+                {hourOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
               </select>
               <span className="flex items-center text-gray-400">:</span>
               <select
                 value={slot.startMinute}
-                onChange={(e) => onSlotChange(slot.id, "startMinute", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startMinute", e.target.value)
+                }
                 className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {minuteOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
+                {minuteOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
               <select
                 value={slot.startPeriod}
-                onChange={(e) => onSlotChange(slot.id, "startPeriod", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startPeriod", e.target.value)
+                }
                 className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {periodOptions.map((p) => (<option key={p} value={p}>{p}</option>))}
+                {periodOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -138,25 +157,43 @@ const TimeSlotInput: React.FC<{
             <div className="flex gap-1 sm:gap-2">
               <select
                 value={slot.endHour}
-                onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endHour", e.target.value)
+                }
                 className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {hourOptions.map((h) => (<option key={h} value={h}>{h}</option>))}
+                {hourOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
               </select>
               <span className="flex items-center text-gray-400">:</span>
               <select
                 value={slot.endMinute}
-                onChange={(e) => onSlotChange(slot.id, "endMinute", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endMinute", e.target.value)
+                }
                 className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {minuteOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
+                {minuteOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
               <select
                 value={slot.endPeriod}
-                onChange={(e) => onSlotChange(slot.id, "endPeriod", e.target.value)}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endPeriod", e.target.value)
+                }
                 className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
-                {periodOptions.map((p) => (<option key={p} value={p}>{p}</option>))}
+                {periodOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -513,10 +550,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   (day) => (
                     <label
                       key={day}
-                      className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-1 text-center shadow-sm transition ${formData.availabilitySchedule.includes(day as DayOfWeek)
-                        ? "border-blue-400 bg-blue-100"
-                        : "border-gray-200 bg-white hover:bg-blue-50"
-                        }`}
+                      className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-1 py-1 text-center shadow-sm transition ${
+                        formData.availabilitySchedule.includes(day as DayOfWeek)
+                          ? "border-blue-400 bg-blue-100"
+                          : "border-gray-200 bg-white hover:bg-blue-50"
+                      }`}
                     >
                       <input
                         type="checkbox"
@@ -540,10 +578,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 {["Saturday", "Sunday"].map((day) => (
                   <label
                     key={day}
-                    className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-2 py-2 text-center shadow-sm transition ${formData.availabilitySchedule.includes(day as DayOfWeek)
-                      ? "border-blue-400 bg-blue-100"
-                      : "border-gray-200 bg-white hover:bg-blue-50"
-                      }`}
+                    className={`flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border px-2 py-2 text-center shadow-sm transition ${
+                      formData.availabilitySchedule.includes(day as DayOfWeek)
+                        ? "border-blue-400 bg-blue-100"
+                        : "border-gray-200 bg-white hover:bg-blue-50"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -650,10 +689,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     {row.map((day) => (
                       <label
                         key={day}
-                        className={`flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border px-0 py-0 text-center shadow-sm transition ${formData.availabilitySchedule.includes(day)
-                          ? "border-blue-400 bg-blue-100"
-                          : "border-gray-200 bg-white hover:bg-blue-50"
-                          }`}
+                        className={`flex h-16 w-28 cursor-pointer flex-col items-center justify-center rounded-lg border px-0 py-0 text-center shadow-sm transition ${
+                          formData.availabilitySchedule.includes(day)
+                            ? "border-blue-400 bg-blue-100"
+                            : "border-gray-200 bg-white hover:bg-blue-50"
+                        }`}
                         style={{ minWidth: "6rem", minHeight: "4rem" }}
                       >
                         <input

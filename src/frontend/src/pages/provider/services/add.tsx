@@ -191,7 +191,7 @@ const AddServicePage: React.FC = () => {
         }),
       );
       setCertificationPreviews((prev) => [...prev, ...newPreviews]);
-    } catch { }
+    } catch {}
     e.target.value = "";
   };
 
@@ -592,7 +592,7 @@ const AddServicePage: React.FC = () => {
               : 14.676,
           longitude:
             formData.locationLongitude &&
-              formData.locationLongitude.trim() !== ""
+            formData.locationLongitude.trim() !== ""
               ? parseFloat(formData.locationLongitude)
               : 120.9822,
           address,
@@ -620,7 +620,7 @@ const AddServicePage: React.FC = () => {
               : 14.676,
           longitude:
             formData.locationLongitude &&
-              formData.locationLongitude.trim() !== ""
+            formData.locationLongitude.trim() !== ""
               ? parseFloat(formData.locationLongitude)
               : 120.9822,
           address,
@@ -641,10 +641,10 @@ const AddServicePage: React.FC = () => {
       }));
       let processedServiceImages:
         | Array<{
-          fileName: string;
-          contentType: string;
-          fileData: Uint8Array;
-        }>
+            fileName: string;
+            contentType: string;
+            fileData: Uint8Array;
+          }>
         | undefined;
       if (serviceImageFiles.length > 0) {
         try {
@@ -656,10 +656,10 @@ const AddServicePage: React.FC = () => {
       }
       let processedServiceCertificates:
         | Array<{
-          fileName: string;
-          contentType: string;
-          fileData: Uint8Array;
-        }>
+            fileName: string;
+            contentType: string;
+            fileData: Uint8Array;
+          }>
         | undefined;
       if (certificationFiles.length > 0) {
         try {
@@ -756,7 +756,7 @@ const AddServicePage: React.FC = () => {
   };
 
   // --- Placeholder for category request ---
-  const onRequestCategory = useCallback((_categoryName: string) => { }, []);
+  const onRequestCategory = useCallback((_categoryName: string) => {}, []);
 
   // --- Step Renderer ---
   const renderStep = () => {
@@ -999,8 +999,9 @@ const AddServicePage: React.FC = () => {
                   {formData.availabilitySchedule.length > 0 && (
                     <span className="mt-1 block text-sm text-gray-500">
                       {formData.useSameTimeForAllDays
-                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${formData.commonTimeSlots.length > 1 ? "s" : ""
-                        })`
+                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${
+                            formData.commonTimeSlots.length > 1 ? "s" : ""
+                          })`
                         : "Custom hours per day"}
                     </span>
                   )}
@@ -1051,54 +1052,54 @@ const AddServicePage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {serviceImageFiles.length > 0
                       ? serviceImageFiles.map((file, idx) => (
-                        <div
-                          key={file.name + idx}
-                          className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                        >
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Service Image ${idx + 1}`}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ))
+                          <div
+                            key={file.name + idx}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                          >
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Service Image ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))
                       : imagePreviews.map((previewUrl, idx) => (
-                        <div
-                          key={previewUrl}
-                          className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                        >
-                          <img
-                            src={previewUrl}
-                            alt={`Service Image ${idx + 1}`}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ))}
+                          <div
+                            key={previewUrl}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                          >
+                            <img
+                              src={previewUrl}
+                              alt={`Service Image ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
                   </div>
                 </div>
               )}
               {/* Certifications Preview */}
               {(certificationFiles?.length > 0 ||
                 certificationPreviews?.length > 0) && (
-                  <div className="mt-10">
-                    <div className="mb-2 flex items-center gap-2">
-                      <svg
-                        className="h-5 w-5 text-yellow-500"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
-                      </svg>
-                      <h3 className="font-semibold text-yellow-700">
-                        Certifications
-                      </h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                      {certificationFiles && certificationFiles.length > 0
-                        ? certificationFiles.map((file, idx) => {
+                <div className="mt-10">
+                  <div className="mb-2 flex items-center gap-2">
+                    <svg
+                      className="h-5 w-5 text-yellow-500"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
+                    </svg>
+                    <h3 className="font-semibold text-yellow-700">
+                      Certifications
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {certificationFiles && certificationFiles.length > 0
+                      ? certificationFiles.map((file, idx) => {
                           const isPdf =
                             file.type === "application/pdf" ||
                             file.name.endsWith(".pdf");
@@ -1129,7 +1130,7 @@ const AddServicePage: React.FC = () => {
                             </div>
                           );
                         })
-                        : certificationPreviews?.map((previewUrl, idx) => (
+                      : certificationPreviews?.map((previewUrl, idx) => (
                           <div
                             key={previewUrl}
                             className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
@@ -1154,9 +1155,9 @@ const AddServicePage: React.FC = () => {
                             )}
                           </div>
                         ))}
-                    </div>
                   </div>
-                )}
+                </div>
+              )}
               {/* Error Display */}
               {validationErrors.general && (
                 <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4">
@@ -1198,7 +1199,7 @@ const AddServicePage: React.FC = () => {
         </div>
       </header>
       {/* Main Content */}
-      <main className="container mx-auto flex-grow px-4 pt-4 pb-0 sm:p-6">
+      <main className="container mx-auto flex-grow px-4 pb-0 pt-4 sm:p-6">
         <div className="mt-6 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>

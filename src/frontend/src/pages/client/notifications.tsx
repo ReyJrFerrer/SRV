@@ -147,13 +147,15 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${notification.href
+      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
+        notification.href
           ? "cursor-pointer hover:border-blue-200"
           : "cursor-default"
-        } ${!notification.read
+      } ${
+        !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
-        }`}
+      }`}
     >
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />

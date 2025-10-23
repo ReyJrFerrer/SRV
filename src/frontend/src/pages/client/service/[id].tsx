@@ -32,11 +32,8 @@ const ServiceDetailPage: React.FC = () => {
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Page Header */}
       <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 lg:pl-24 md:pl-24">
-          <button
-            onClick={handleBackClick}
-            className="mr-4 flex-shrink-0 p-1"
-          >
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
+          <button onClick={handleBackClick} className="mr-4 flex-shrink-0 p-1">
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="flex-grow lg:flex lg:items-center lg:justify-between">

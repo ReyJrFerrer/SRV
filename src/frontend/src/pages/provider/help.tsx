@@ -59,7 +59,7 @@ const HelpSupportPage: React.FC = () => {
               Follow us on Social Media
             </h2>
             {/* 👇 KEY CHANGE HERE: flex-col for mobile, gap-4 for vertical spacing, md:flex-row to go back to horizontal on desktop */}
-            <div className="flex flex-col gap-4 items-start md:flex-row md:justify-center md:gap-6">
+            <div className="flex flex-col items-start gap-4 md:flex-row md:justify-center md:gap-6">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"

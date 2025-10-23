@@ -126,17 +126,18 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
                   style={{ width: "56px" }}
                 >
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border-4 shadow-lg transition-all duration-300 sm:h-12 sm:w-12 ${isAllCompleted
-                      ? "border-yellow-400 bg-yellow-400 text-white"
-                      : isCompleted
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-4 shadow-lg transition-all duration-300 sm:h-12 sm:w-12 ${
+                      isAllCompleted
                         ? "border-yellow-400 bg-yellow-400 text-white"
-                        : isActive
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-300 bg-gray-100 text-gray-400"
-                      } `}
+                        : isCompleted
+                          ? "border-yellow-400 bg-yellow-400 text-white"
+                          : isActive
+                            ? "border-blue-600 bg-blue-600 text-white"
+                            : "border-gray-300 bg-gray-100 text-gray-400"
+                    } `}
                   >
                     {(isAllCompleted && isLast) ||
-                      (isCompleted && index !== 3) ? (
+                    (isCompleted && index !== 3) ? (
                       <CheckCircleIcon className="h-5 w-5 text-white sm:h-7 sm:w-7" />
                     ) : (
                       <span className="text-base font-bold sm:text-lg">
@@ -145,14 +146,15 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
                     )}
                   </div>
                   <p
-                    className={`mt-2 text-xs font-semibold sm:mt-3 sm:text-sm ${isAllCompleted
-                      ? "text-yellow-600"
-                      : isCompleted
+                    className={`mt-2 text-xs font-semibold sm:mt-3 sm:text-sm ${
+                      isAllCompleted
                         ? "text-yellow-600"
-                        : isActive
-                          ? "text-blue-700"
-                          : "text-gray-400"
-                      } `}
+                        : isCompleted
+                          ? "text-yellow-600"
+                          : isActive
+                            ? "text-blue-700"
+                            : "text-gray-400"
+                    } `}
                   >
                     {status === "InProgress" ? "Current" : status}
                   </p>
@@ -160,14 +162,15 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
                 {index < statuses.length - 1 && (
                   <div className="flex min-w-[16px] flex-1 items-center sm:min-w-[40px]">
                     <div
-                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-2 ${isAllCompleted
-                        ? "bg-yellow-400"
-                        : index < currentIndex - 1
+                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-2 ${
+                        isAllCompleted
                           ? "bg-yellow-400"
-                          : index === currentIndex - 1
-                            ? "bg-blue-600"
-                            : "bg-gray-200"
-                        } `}
+                          : index < currentIndex - 1
+                            ? "bg-yellow-400"
+                            : index === currentIndex - 1
+                              ? "bg-blue-600"
+                              : "bg-gray-200"
+                      } `}
                     ></div>
                   </div>
                 )}
@@ -561,7 +564,7 @@ const BookingDetailsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 lg:pl-24 md:pl-24">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
             className="mr-4 flex-shrink-0 rounded-full hover:bg-gray-100"
@@ -569,18 +572,18 @@ const BookingDetailsPage: React.FC = () => {
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="flex-grow lg:hidden"></div>
-          <h1 className="flex-grow text-2xl font-extrabold tracking-tight text-black text-center lg:text-left lg:ml-4">
+          <h1 className="flex-grow text-center text-2xl font-extrabold tracking-tight text-black lg:ml-4 lg:text-left">
             Booking Details
           </h1>
           <div className="flex-grow lg:hidden"></div>
           <div className="hidden lg:flex-grow"></div>
-          <div className="flex-shrink-0 w-6 lg:hidden"></div>
+          <div className="w-6 flex-shrink-0 lg:hidden"></div>
         </div>
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         <div className="mt-10 pt-10">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7 relative">
+          <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
             <span
               className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
               aria-label="Booking status"
@@ -588,9 +591,10 @@ const BookingDetailsPage: React.FC = () => {
               {status?.replace("_", " ") || "Unknown"}
             </span>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
-              <div className="lg:col-span-2 border-r-0 border-gray-200 pr-0 lg:border-r lg:pr-8">
+              <div className="border-r-0 border-gray-200 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
                 <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-                  <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
+                  <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider
+                  Details
                 </h3>
                 <div className="flex items-center gap-5">
                   <div className="flex-shrink-0">
@@ -612,7 +616,9 @@ const BookingDetailsPage: React.FC = () => {
                     <div className="mt-2 flex flex-col items-start gap-1">
                       <div className="flex items-center gap-2">
                         {loadingStats ? (
-                          <p className="text-sm text-gray-400">Loading reviews...</p>
+                          <p className="text-sm text-gray-400">
+                            Loading reviews...
+                          </p>
                         ) : averageRating != null && reviewCount != null ? (
                           <>
                             <div className="flex items-center text-sm font-bold text-yellow-500">
@@ -625,16 +631,19 @@ const BookingDetailsPage: React.FC = () => {
                             </span>
                           </>
                         ) : (
-                          <p className="text-sm text-gray-400">No reviews yet</p>
+                          <p className="text-sm text-gray-400">
+                            No reviews yet
+                          </p>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="lg:col-span-3 lg:pl-8 pt-6 lg:pt-0">
+              <div className="pt-6 lg:col-span-3 lg:pl-8 lg:pt-0">
                 <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
-                  <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service Details
+                  <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
+                  Details
                 </h3>
                 <div className="space-y-3 text-base">
                   <div className="flex items-start">
@@ -669,9 +678,9 @@ const BookingDetailsPage: React.FC = () => {
                       <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                       <span>
                         <strong>Payment:</strong> ₱
-                        {(price + commissionValidation.estimatedCommission).toFixed(
-                          2,
-                        )}{" "}
+                        {(
+                          price + commissionValidation.estimatedCommission
+                        ).toFixed(2)}{" "}
                         (Cash)
                       </span>
                     </div>

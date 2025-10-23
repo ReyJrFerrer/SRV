@@ -548,8 +548,8 @@ const ServiceDetailPage: React.FC = () => {
   // Check if current user is the service provider (to prevent self-booking)
   const isOwnService = Boolean(
     identity &&
-    service &&
-    identity.getPrincipal().toString() === service.providerId,
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -940,7 +940,7 @@ const ServiceDetailPage: React.FC = () => {
       </div>
 
       {/* Main content (centered card layout) */}
-      <div className="relative z-10 -mt-30 p-4">
+      <div className="-mt-30 relative z-10 p-4">
         {/* Chat error message (top of card) */}
         {chatErrorMessage && (
           <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -953,8 +953,8 @@ const ServiceDetailPage: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="mt-6 w-full max-w-[800px] mx-auto lg:mt-0">
-          <div className="flex h-auto flex-col gap-4 rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl items-center backdrop-blur-md lg:flex-row lg:gap-8 md:flex-row">
+        <div className="mx-auto mt-6 w-full max-w-[800px] lg:mt-0">
+          <div className="flex h-auto flex-col items-center gap-4 rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md md:flex-row lg:flex-row lg:gap-8">
             {/* Left Column: Provider Info */}
             <div className="flex flex-1 flex-col items-center justify-center lg:border-r lg:border-gray-200 lg:pr-8">
               <div
@@ -971,9 +971,9 @@ const ServiceDetailPage: React.FC = () => {
                 <img
                   src={
                     userImageUrl &&
-                      userImageUrl !== "/default-provider.svg" &&
-                      userImageUrl !== "" &&
-                      userImageUrl !== undefined
+                    userImageUrl !== "/default-provider.svg" &&
+                    userImageUrl !== "" &&
+                    userImageUrl !== undefined
                       ? userImageUrl
                       : "/default-provider.svg"
                   }
@@ -1108,7 +1108,7 @@ const ServiceDetailPage: React.FC = () => {
         <ReviewsSection serviceId={service.id} />
       </div>
       {/* --- Sticky Footer for Actions (bottom of page) --- */}
-      <div className="shadow-t-lg fixed bottom-0 left-0 z-40 w-full border-t border-gray-200 bg-white p-3  md:pb-3 pb-20">
+      <div className="shadow-t-lg fixed bottom-0 left-0 z-40 w-full border-t border-gray-200 bg-white p-3  pb-20 md:pb-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           {/* Chat button (left, less wide) */}
           <button

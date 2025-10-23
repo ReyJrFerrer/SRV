@@ -428,12 +428,13 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                     return (
                       <div
                         key={slotIndex}
-                        className={`rounded-lg border p-3 ${isSameTime || isStartAfterEnd
-                          ? "border-red-200 bg-red-50"
-                          : hasErrors
-                            ? "border-yellow-200 bg-yellow-50"
-                            : "border-gray-200 bg-gray-50"
-                          }`}
+                        className={`rounded-lg border p-3 ${
+                          isSameTime || isStartAfterEnd
+                            ? "border-red-200 bg-red-50"
+                            : hasErrors
+                              ? "border-yellow-200 bg-yellow-50"
+                              : "border-gray-200 bg-gray-50"
+                        }`}
                       >
                         <div className="flex items-center gap-2 text-sm">
                           <input
@@ -460,10 +461,11 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
 
                               setWeeklySchedule(newSchedule);
                             }}
-                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${isSameTime || isStartAfterEnd
-                              ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                              : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
-                              }`}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
                           />
                           <span className="text-gray-500">to</span>
                           <input
@@ -483,10 +485,11 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                                 setWeeklySchedule(newSchedule);
                               }
                             }}
-                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${isSameTime || isStartAfterEnd
-                              ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                              : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
-                              }`}
+                            className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                              isSameTime || isStartAfterEnd
+                                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                            }`}
                           />
                           <button
                             onClick={() => {
@@ -868,14 +871,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setService((prev) =>
         prev
           ? {
-            ...prev,
-            title: editedTitle,
-            category: {
-              ...prev.category,
-              id: editedCategory,
-              name: selectedCategory?.name || "Unknown Category",
-            },
-          }
+              ...prev,
+              title: editedTitle,
+              category: {
+                ...prev.category,
+                id: editedCategory,
+                name: selectedCategory?.name || "Unknown Category",
+              },
+            }
           : prev,
       );
       setEditTitleCategory(false);
@@ -1218,7 +1221,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               reader.readAsDataURL(file);
             });
           }
-        } catch (error) { }
+        } catch (error) {}
 
         return {
           url: tempUrl,
@@ -1611,7 +1614,8 @@ const ProviderServiceDetailPage: React.FC = () => {
             <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
           </button>
           <h1 className="ml-4 text-xl font-bold text-gray-900">
-            Service Details</h1>
+            Service Details
+          </h1>
           <div className="w-8"></div>
         </div>
       </header>
@@ -1650,8 +1654,8 @@ const ProviderServiceDetailPage: React.FC = () => {
           {/* Hero Image */}
           <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
             {serviceImages &&
-              serviceImages.length > 0 &&
-              serviceImages[0].dataUrl ? (
+            serviceImages.length > 0 &&
+            serviceImages[0].dataUrl ? (
               <img
                 src={serviceImages[0].dataUrl}
                 alt="Service Hero"
@@ -1708,10 +1712,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                             ? undefined
                             : handleEditTitleCategory
                         }
-                        className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings
-                          ? "cursor-not-allowed opacity-50"
-                          : ""
-                          }`}
+                        className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                          hasActiveBookings
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        }`}
                         aria-label="Edit title and category"
                         disabled={hasActiveBookings}
                       >
@@ -1731,10 +1736,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                 </h2>
                 {/* Availability note */}
                 <span
-                  className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${service.status === "Available"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-500"
-                    }`}
+                  className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                    service.status === "Available"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
                   title={
                     service.status === "Available"
                       ? "Service is available"
@@ -1751,8 +1757,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                     onClick={
                       hasActiveBookings ? undefined : handleEditTitleCategory
                     }
-                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                      }`}
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                    }`}
                     aria-label="Edit title and category"
                     disabled={hasActiveBookings}
                   >
@@ -1846,8 +1853,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                         ? undefined
                         : handleEditLocationAvailability
                     }
-                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                      }`}
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                    }`}
                     aria-label="Edit location and availability"
                     disabled={hasActiveBookings}
                   >
@@ -1943,7 +1951,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                                 {entry.day}
                               </span>
                               {entry.availability.slots &&
-                                entry.availability.slots.length > 0 ? (
+                              entry.availability.slots.length > 0 ? (
                                 <ul className="ml-1 space-y-1">
                                   {entry.availability.slots.map((slot, idx) => (
                                     <li
@@ -1987,8 +1995,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                   >
                     <button
                       onClick={hasActiveBookings ? undefined : handleAddPackage}
-                      className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                        }`}
+                      className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
+                        hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                      }`}
                       disabled={hasActiveBookings}
                     >
                       <PlusIcon className="mr-1 h-4 w-4" />
@@ -2090,95 +2099,97 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {packages.length > 0
                     ? packages.map((pkg) => (
-                      <div
-                        key={pkg.id}
-                        className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
-                      >
-                        {/* Header with title and pricing */}
-                        <div className="mb-4 flex items-start justify-between">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
-                              {pkg.title}
+                        <div
+                          key={pkg.id}
+                          className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
+                        >
+                          {/* Header with title and pricing */}
+                          <div className="mb-4 flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
+                                {pkg.title}
+                              </h3>
+                              <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                                {pkg.description}
+                              </p>
+                            </div>
+
+                            {/* Pricing section */}
+                            <div className="ml-4 flex-shrink-0 text-right">
+                              <div className="mb-1 text-xl font-bold text-blue-600">
+                                ₱{pkg.price.toFixed(2)}
+                              </div>
+                              <div className="mb-1 text-xs text-gray-500">
+                                + ₱{pkg.commissionFee.toFixed(2)} commission
+                              </div>
+                              <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
+                                ₱{(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
+                                total
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Divider */}
+                          <div className="my-4 border-t border-gray-100"></div>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-3">
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleEditPackage(pkg)
+                              }
+                              className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                              }`}
+                              aria-label={`Edit ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
+                            >
+                              Edit Package
+                            </button>
+
+                            <button
+                              onClick={
+                                hasActiveBookings
+                                  ? undefined
+                                  : () => handleDeletePackage(pkg.id)
+                              }
+                              className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                                hasActiveBookings || isAddingOrEditingPackage
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                  : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                              }`}
+                              aria-label={`Delete ${pkg.title}`}
+                              disabled={
+                                hasActiveBookings || isAddingOrEditingPackage
+                              }
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    : !isAddingOrEditingPackage && (
+                        <div className="col-span-full">
+                          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                              <BriefcaseIcon className="h-8 w-8 text-blue-400" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                              No packages available
                             </h3>
-                            <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
-                              {pkg.description}
+                            <p className="mx-auto max-w-md text-gray-600">
+                              Packages help customers choose specific service
+                              options with different pricing tiers
                             </p>
                           </div>
-
-                          {/* Pricing section */}
-                          <div className="ml-4 flex-shrink-0 text-right">
-                            <div className="mb-1 text-xl font-bold text-blue-600">
-                              ₱{pkg.price.toFixed(2)}
-                            </div>
-                            <div className="mb-1 text-xs text-gray-500">
-                              + ₱{pkg.commissionFee.toFixed(2)} commission
-                            </div>
-                            <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
-                              ₱{(pkg.price + pkg.commissionFee).toFixed(2)}{" "}
-                              total
-                            </div>
-                          </div>
                         </div>
-
-                        {/* Divider */}
-                        <div className="my-4 border-t border-gray-100"></div>
-
-                        {/* Action buttons */}
-                        <div className="flex gap-3">
-                          <button
-                            onClick={
-                              hasActiveBookings
-                                ? undefined
-                                : () => handleEditPackage(pkg)
-                            }
-                            className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${hasActiveBookings || isAddingOrEditingPackage
-                              ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                              : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
-                              }`}
-                            aria-label={`Edit ${pkg.title}`}
-                            disabled={
-                              hasActiveBookings || isAddingOrEditingPackage
-                            }
-                          >
-                            Edit Package
-                          </button>
-
-                          <button
-                            onClick={
-                              hasActiveBookings
-                                ? undefined
-                                : () => handleDeletePackage(pkg.id)
-                            }
-                            className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${hasActiveBookings || isAddingOrEditingPackage
-                              ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                              : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                              }`}
-                            aria-label={`Delete ${pkg.title}`}
-                            disabled={
-                              hasActiveBookings || isAddingOrEditingPackage
-                            }
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                    : !isAddingOrEditingPackage && (
-                      <div className="col-span-full">
-                        <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-                            <BriefcaseIcon className="h-8 w-8 text-blue-400" />
-                          </div>
-                          <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                            No packages available
-                          </h3>
-                          <p className="mx-auto max-w-md text-gray-600">
-                            Packages help customers choose specific service
-                            options with different pricing tiers
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                      )}
                 </div>
               </div>
             </section>
@@ -2201,8 +2212,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                     onClick={
                       hasActiveBookings ? undefined : handleEditCertifications
                     }
-                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "opaWcity-50 cursor-not-allowed" : ""
-                      }`}
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "opaWcity-50 cursor-not-allowed" : ""
+                    }`}
                     aria-label="Edit certifications"
                     disabled={hasActiveBookings}
                   >
@@ -2233,8 +2245,8 @@ const ProviderServiceDetailPage: React.FC = () => {
                               loading="lazy"
                             />
                           ) : certificate.fileName
-                            ?.toLowerCase()
-                            .endsWith(".pdf") ? (
+                              ?.toLowerCase()
+                              .endsWith(".pdf") ? (
                             <div className="flex h-full w-full items-center justify-center bg-red-50">
                               <div className="text-center">
                                 <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
@@ -2377,8 +2389,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                 >
                   <button
                     onClick={hasActiveBookings ? undefined : handleEditImages}
-                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                      }`}
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                    }`}
                     aria-label="Edit images"
                     disabled={hasActiveBookings}
                   >
@@ -2536,10 +2549,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                 : handleStatusToggle
             }
             disabled={isUpdatingStatus || hasActiveBookings}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${service.status === "Available"
-              ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
-              : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
-              }`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+              service.status === "Available"
+                ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
+                : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
+            }`}
           >
             {isUpdatingStatus ? (
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-blue-100" />
@@ -2563,10 +2577,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                 hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
               }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${hasActiveBookings
-                ? "cursor-not-allowed opacity-60"
-                : "hover:bg-red-400 hover:text-white"
-                }`}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
+                hasActiveBookings
+                  ? "cursor-not-allowed opacity-60"
+                  : "hover:bg-red-400 hover:text-white"
+              }`}
               tabIndex={hasActiveBookings ? -1 : 0}
             >
               <TrashIcon className="h-6 w-6" />

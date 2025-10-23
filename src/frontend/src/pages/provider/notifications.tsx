@@ -137,11 +137,13 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-start space-x-4 p-4 transition-colors duration-200 ${notification.href ? "cursor-pointer" : "cursor-default"
-        } ${!notification.read
+      className={`flex items-start space-x-4 p-4 transition-colors duration-200 ${
+        notification.href ? "cursor-pointer" : "cursor-default"
+      } ${
+        !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
-        }`}
+      }`}
     >
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
