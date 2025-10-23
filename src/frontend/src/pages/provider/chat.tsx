@@ -52,9 +52,9 @@ const ProviderChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="flex items-center justify-center">
-          <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Messages
           </h1>
           {/* Add a button for starting a new chat in the future */}
@@ -111,9 +111,8 @@ const ProviderChatPage: React.FC = () => {
                           otherUserImageUrl,
                         )
                       }
-                      className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
-                        unreadCount > 0 ? "bg-blue-50/60" : ""
-                      }`}
+                      className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${unreadCount > 0 ? "bg-blue-50/60" : ""
+                        }`}
                     >
                       <div className="relative h-14 w-14 flex-shrink-0">
                         <ProfileImage

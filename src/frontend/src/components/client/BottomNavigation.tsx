@@ -408,7 +408,7 @@ const BottomNavigation: React.FC = () => {
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mb-4 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-2">
+        <div className="mb-4 mt-auto flex w-full flex-col items-center border-gray-100 pt-2">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);

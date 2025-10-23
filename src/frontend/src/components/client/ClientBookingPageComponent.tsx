@@ -66,11 +66,10 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   // isProviderOnboarded = false,
 }) => (
   <div
-    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-      highlight
-        ? "border-2 border-red-500 ring-2 ring-red-200"
-        : "border border-gray-100"
-    }`}
+    className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlight
+      ? "border-2 border-red-500 ring-2 ring-red-200"
+      : "border border-gray-100"
+      }`}
   >
     <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -79,11 +78,10 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     <div className="space-y-3">
       <div
         onClick={() => setPaymentMethod("CashOnHand")}
-        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
-          paymentMethod === "CashOnHand"
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300"
-        }`}
+        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${paymentMethod === "CashOnHand"
+          ? "border-blue-500 bg-blue-50"
+          : "border-gray-300"
+          }`}
       >
         <div className="flex items-center">
           <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-500" />
@@ -104,9 +102,8 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             value={amountPaid}
             onChange={handleAmountChange}
             placeholder={`e.g., ${totalPrice.toFixed(2)}`}
-            className={`mt-1 w-full rounded-md border p-2 ${
-              paymentError ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`mt-1 w-full rounded-md border p-2 ${paymentError ? "border-red-500" : "border-gray-300"
+              }`}
           />
           {paymentError && amountPaid && (
             <p className="mt-1 flex items-center text-xs text-red-600">
@@ -574,14 +571,14 @@ const ClientBookingPageComponent: React.FC = () => {
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate(),
-              9, // Use 9 AM instead of noon to avoid any timezone edge cases
-              0,
-              0,
-              0,
-            )
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            9, // Use 9 AM instead of noon to avoid any timezone edge cases
+            0,
+            0,
+            0,
+          )
           : selectedDate;
 
       if (!dateToCheck) {
@@ -1187,7 +1184,7 @@ const ClientBookingPageComponent: React.FC = () => {
         if (!paymentResult.success) {
           setFormError(
             paymentResult.error ||
-              "Failed to create payment invoice. Please try again.",
+            "Failed to create payment invoice. Please try again.",
           );
           return;
         }
@@ -1219,11 +1216,11 @@ const ClientBookingPageComponent: React.FC = () => {
           providerName: providerProfile?.name,
           date: finalScheduledDate
             ? finalScheduledDate.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),
@@ -1328,11 +1325,11 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Render: Booking Page Layout ---
   // Loading, error, and not found states
   if (loading)
-    return <div className="p-10 text-center">Loading service details...</div>;
+    return <div className="p-10 pt-20 text-center">Loading service details...</div>;
   if (error)
-    return <div className="p-10 text-center text-red-500">{String(error)}</div>;
+    return <div className="p-10 pt-20 text-center text-red-500">{String(error)}</div>;
   if (!service)
-    return <div className="p-10 text-center">Service not found.</div>;
+    return <div className="p-10 pt-20 text-center">Service not found.</div>;
   // Helper: Convert day index to name (for calendar)
   const dayIndexToName = (dayIndex: number): string => {
     const days = [
@@ -1376,17 +1373,16 @@ const ClientBookingPageComponent: React.FC = () => {
       `}
       </style>
       <div className="flex-grow pb-36 md:pb-28">
-        <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
+        <div className="mt-10 mx-auto max-w-5xl px-2 py-8 md:px-0">
           <div className="md:flex md:gap-x-8">
             <div className="space-y-6 md:w-1/2">
               {/* --- Highlight Select Package Section (STAYS) --- */}
               <div
                 ref={packageSectionRef}
-                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-                  highlightInput === "package"
-                    ? "border-2 border-red-500 ring-2 ring-red-200"
-                    : "border-blue-100"
-                }`}
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "package"
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : "border-blue-100"
+                  }`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1505,9 +1501,9 @@ const ClientBookingPageComponent: React.FC = () => {
                       value={
                         mapLocation
                           ? {
-                              ...mapLocation,
-                              address: mapLocation.address ?? "",
-                            }
+                            ...mapLocation,
+                            address: mapLocation.address ?? "",
+                          }
                           : null
                       }
                       onChange={(loc: any) => {
@@ -1642,8 +1638,8 @@ const ClientBookingPageComponent: React.FC = () => {
                               locationLoading
                                 ? "Detecting..."
                                 : (displayMunicipality || "")
-                                      .trim()
-                                      .toLowerCase() === "baguio"
+                                  .trim()
+                                  .toLowerCase() === "baguio"
                                   ? "Baguio City"
                                   : displayMunicipality || ""
                             }
@@ -1662,7 +1658,7 @@ const ClientBookingPageComponent: React.FC = () => {
                               locationLoading
                                 ? "Detecting..."
                                 : displayProvince ===
-                                    "Cordillera Administrative Region"
+                                  "Cordillera Administrative Region"
                                   ? "Benguet"
                                   : displayProvince || ""
                             }
@@ -1678,11 +1674,10 @@ const ClientBookingPageComponent: React.FC = () => {
                       ref={barangayRef}
                       value={selectedBarangay}
                       onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                        }`}
                     >
                       <option value="" disabled>
                         Select Barangay *
@@ -1692,7 +1687,7 @@ const ClientBookingPageComponent: React.FC = () => {
                           (b) =>
                             b &&
                             b.trim().toLowerCase().replace(/\s+/g, "") !==
-                              "others",
+                            "others",
                         )
                         .map((barangay, idx) => (
                           <option key={idx} value={barangay}>
@@ -1708,14 +1703,13 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
                               otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : "border-blue-400"
+                          }`}
                         minLength={3}
                         maxLength={20}
                         required
@@ -1727,18 +1721,16 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Street Name *"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "street" ||
+                          (street &&
+                            (street.trim().length < 3 ||
+                              street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
@@ -1749,17 +1741,15 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "houseNumber" ||
+                          (houseNumber &&
+                            (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!street}
                       maxLength={15}
                     />
@@ -1830,11 +1820,10 @@ const ClientBookingPageComponent: React.FC = () => {
                       ref={barangayRef}
                       value={selectedBarangay}
                       onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-                        highlightInput === "barangay"
-                          ? "border-2 border-red-500 ring-2 ring-red-200"
-                          : ""
-                      }`}
+                      className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+                        ? "border-2 border-red-500 ring-2 ring-red-200"
+                        : ""
+                        }`}
                       disabled={!manualCity}
                     >
                       <option value="" disabled>
@@ -1854,14 +1843,13 @@ const ClientBookingPageComponent: React.FC = () => {
                         placeholder="Enter your Barangay *"
                         value={otherBarangay}
                         onChange={(e) => setOtherBarangay(e.target.value)}
-                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                          highlightInput === "otherBarangay" ||
+                        className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                           (otherBarangay &&
                             (otherBarangay.trim().length < 3 ||
                               otherBarangay.trim().length > 20))
-                            ? "border-2 border-red-500 ring-2 ring-red-200"
-                            : "border-blue-400"
-                        }`}
+                          ? "border-2 border-red-500 ring-2 ring-red-200"
+                          : "border-blue-400"
+                          }`}
                         minLength={3}
                         maxLength={20}
                         required
@@ -1873,18 +1861,16 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="Street Name *"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !selectedBarangay
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "street" ||
-                        (street &&
-                          (street.trim().length < 3 ||
-                            street.trim().length > 20))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "street" ||
+                          (street &&
+                            (street.trim().length < 3 ||
+                              street.trim().length > 20))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!selectedBarangay}
                       minLength={3}
                       maxLength={20}
@@ -1895,17 +1881,15 @@ const ClientBookingPageComponent: React.FC = () => {
                       placeholder="House/Unit No. *"
                       value={houseNumber}
                       onChange={(e) => setHouseNumber(e.target.value)}
-                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-                        !street
-                          ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                          : "border-gray-300 bg-white text-gray-700"
-                      } ${
-                        highlightInput === "houseNumber" ||
-                        (houseNumber &&
-                          (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                      className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700"
+                        } ${highlightInput === "houseNumber" ||
+                          (houseNumber &&
+                            (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                           ? "border-2 border-red-500 ring-2 ring-red-200"
                           : ""
-                      }`}
+                        }`}
                       disabled={!street}
                       maxLength={15}
                     />
@@ -1925,12 +1909,11 @@ const ClientBookingPageComponent: React.FC = () => {
               {/* --- Highlight Booking Schedule Section (STAYS) --- */}
               <div
                 ref={bookingSectionRef}
-                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-                  highlightInput === "bookingOption" ||
+                className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlightInput === "bookingOption" ||
                   highlightInput === "selectedTime"
-                    ? "border-2 border-red-500 ring-2 ring-red-200"
-                    : "border-yellow-100"
-                }`}
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : "border-yellow-100"
+                  }`}
               >
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -1938,13 +1921,12 @@ const ClientBookingPageComponent: React.FC = () => {
                 </h3>
                 <div className="mb-4 flex gap-3">
                   <button
-                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
-                      !isSameDayAvailable
-                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                        : bookingOption === "sameday"
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
-                    }`}
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${!isSameDayAvailable
+                      ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                      : bookingOption === "sameday"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                      }`}
                     onClick={() =>
                       isSameDayAvailable && handleBookingOptionChange("sameday")
                     }
@@ -1963,11 +1945,10 @@ const ClientBookingPageComponent: React.FC = () => {
                     )}
                   </button>
                   <button
-                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
-                      bookingOption === "scheduled"
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
-                    }`}
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${bookingOption === "scheduled"
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                      }`}
                     onClick={() => handleBookingOptionChange("scheduled")}
                   >
                     <div className="text-base font-semibold">Scheduled</div>
@@ -2042,15 +2023,14 @@ const ClientBookingPageComponent: React.FC = () => {
                                     setSelectedTime(time)
                                   }
                                   disabled={!isSlotAvailable || isUserBooked}
-                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                    !isSlotAvailable || isUserBooked
-                                      ? isUserBooked
-                                        ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
-                                        : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-                                      : selectedTime === time
-                                        ? "border-blue-600 bg-blue-600 text-white"
-                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${!isSlotAvailable || isUserBooked
+                                    ? isUserBooked
+                                      ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                      : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                    : selectedTime === time
+                                      ? "border-blue-600 bg-blue-600 text-white"
+                                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
                                   title={
                                     !isSlotAvailable || isUserBooked
                                       ? unavailableReason
@@ -2094,10 +2074,10 @@ const ClientBookingPageComponent: React.FC = () => {
                           const dayName = dayIndexToName(date.getDay());
                           return service.weeklySchedule
                             ? service.weeklySchedule.some(
-                                (s) =>
-                                  s.day === dayName &&
-                                  s.availability.isAvailable,
-                              )
+                              (s) =>
+                                s.day === dayName &&
+                                s.availability.isAvailable,
+                            )
                             : false;
                         }}
                         inline
@@ -2166,10 +2146,10 @@ const ClientBookingPageComponent: React.FC = () => {
                           const dayName = dayIndexToName(date.getDay());
                           const isAvailable = service.weeklySchedule
                             ? service.weeklySchedule.some(
-                                (s) =>
-                                  s.day === dayName &&
-                                  s.availability.isAvailable,
-                              )
+                              (s) =>
+                                s.day === dayName &&
+                                s.availability.isAvailable,
+                            )
                             : false;
                           return [
                             "transition-colors duration-150",
@@ -2231,15 +2211,14 @@ const ClientBookingPageComponent: React.FC = () => {
                                       setSelectedTime(time)
                                     }
                                     disabled={!isSlotAvailable || isUserBooked}
-                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                      !isSlotAvailable || isUserBooked
-                                        ? isUserBooked
-                                          ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
-                                          : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-                                        : selectedTime === time
-                                          ? "border-blue-600 bg-blue-600 text-white"
-                                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                                    }`}
+                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${!isSlotAvailable || isUserBooked
+                                      ? isUserBooked
+                                        ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
+                                        : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                      : selectedTime === time
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                      }`}
                                     title={
                                       !isSlotAvailable || isUserBooked
                                         ? unavailableReason
@@ -2326,7 +2305,7 @@ const ClientBookingPageComponent: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 z-20 border-t bg-white/80 p-4 shadow-xl backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white p-4 shadow-2xl md:sticky">
         <div className="mx-auto max-w-md">
           {formError && (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-center text-base text-red-700 shadow-sm">
@@ -2335,7 +2314,8 @@ const ClientBookingPageComponent: React.FC = () => {
           )}
           <button
             onClick={handleConfirmBooking}
-            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-8 py-4 text-lg font-bold text-white shadow-lg transition-colors hover:from-yellow-400 hover:to-blue-600 disabled:bg-gray-300 disabled:text-gray-400"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-8 py-4 text-lg font-bold text-white shadow-lg transition-colors hover:from-yellow-400 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting && (
               <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>

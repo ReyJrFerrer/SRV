@@ -342,7 +342,7 @@ const MyBookingsPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="mt-4 rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
+            <div className=" rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
               <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <p className="text-lg text-gray-500">
                 No bookings found with the current filters.

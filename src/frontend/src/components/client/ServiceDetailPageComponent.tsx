@@ -548,8 +548,8 @@ const ServiceDetailPage: React.FC = () => {
   // Check if current user is the service provider (to prevent self-booking)
   const isOwnService = Boolean(
     identity &&
-      service &&
-      identity.getPrincipal().toString() === service.providerId,
+    service &&
+    identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -940,7 +940,7 @@ const ServiceDetailPage: React.FC = () => {
       </div>
 
       {/* Main content (centered card layout) */}
-      <div className="relative z-10 -mt-24 p-4">
+      <div className="relative z-10 -mt-30 p-4">
         {/* Chat error message (top of card) */}
         {chatErrorMessage && (
           <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -953,69 +953,70 @@ const ServiceDetailPage: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
-          {/* --- Left Column: Provider Info Card --- */}
-          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex flex-col items-center">
-                  <div
-                    className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
-                    style={{
-                      width: "96px",
-                      height: "96px",
-                      minWidth: "96px",
-                      minHeight: "96px",
-                      maxWidth: "104px",
-                      maxHeight: "104px",
-                    }}
-                  >
-                    <img
-                      src={
-                        userImageUrl &&
-                        userImageUrl !== "/default-provider.svg" &&
-                        userImageUrl !== "" &&
-                        userImageUrl !== undefined
-                          ? userImageUrl
-                          : "/default-provider.svg"
-                      }
-                      alt={providerName}
-                      className="h-full w-full rounded-full object-cover"
-                      style={{ borderRadius: "50%" }}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/default-provider.svg";
-                      }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center">
-                    <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
-                      {providerName}
-                    </h2>
-                    {service.isActive && (
-                      <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-1 flex w-full flex-col items-center gap-0">
-                  <ReputationScore providerId={service.providerId} />
-                  {isVerified === true && (
-                    <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
-                      <CheckBadgeIcon className="mr-2 h-5 w-5" />
-                      <span>This service provider is verified.</span>
-                    </span>
-                  )}
-                </div>
+        <div className="mt-6 w-full max-w-[800px] mx-auto lg:mt-0">
+          <div className="flex h-auto flex-col gap-4 rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl items-center backdrop-blur-md lg:flex-row lg:gap-8 md:flex-row">
+            {/* Left Column: Provider Info */}
+            <div className="flex flex-1 flex-col items-center justify-center lg:border-r lg:border-gray-200 lg:pr-8">
+              <div
+                className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
+                style={{
+                  width: "96px",
+                  height: "96px",
+                  minWidth: "96px",
+                  minHeight: "96px",
+                  maxWidth: "104px",
+                  maxHeight: "104px",
+                }}
+              >
+                <img
+                  src={
+                    userImageUrl &&
+                      userImageUrl !== "/default-provider.svg" &&
+                      userImageUrl !== "" &&
+                      userImageUrl !== undefined
+                      ? userImageUrl
+                      : "/default-provider.svg"
+                  }
+                  alt={providerName}
+                  className="h-full w-full rounded-full object-cover"
+                  style={{ borderRadius: "50%" }}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/default-provider.svg";
+                  }}
+                />
+              </div>
+
+              <div className="mt-2 flex items-center">
+                <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
+                  {providerName}
+                </h2>
+                {service.isActive && (
+                  <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                )}
+              </div>
+
+              <div className="mt-1 flex w-full flex-col items-center gap-0">
+                <ReputationScore providerId={service.providerId} />
+                {isVerified === true && (
+                  <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
+                    <CheckBadgeIcon className="mr-2 h-5 w-5" />
+                    <span>This service provider is verified.</span>
+                  </span>
+                )}
               </div>
             </div>
-          </div>
-          {/* --- Right Column: Service Info Card --- */}
-          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border-white bg-white p-8 shadow-2xl">
+
+            {/* Divider (mobile only) */}
+            <div className="border-t border-gray-200 lg:hidden"></div>
+
+            {/* Right Column: Service Information */}
+            <div className="flex flex-1 flex-col items-center justify-center text-center lg:pl-8">
               <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm">
                 {name}
               </h1>
-              <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
+
+              <p className="mb-3 flex items-center gap-2 text-lg font-semibold text-yellow-700">
                 {category?.slug ? (
                   <img
                     src={`/images/categories/${category.slug}.svg`}
@@ -1029,11 +1030,13 @@ const ServiceDetailPage: React.FC = () => {
                 ) : null}
                 {category?.name ?? "General"}
               </p>
-              <div className="mb-4 flex items-center text-base text-gray-600">
+
+              <div className="mb-3 flex items-center justify-center text-base text-gray-600">
                 <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
                 <span>{location?.address || "Baguio City"}</span>
               </div>
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
+
+              <div className="flex flex-wrap items-center justify-center gap-2 text-base text-gray-600">
                 <span className="flex items-center">
                   <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
                   <span className="text-lg font-bold">
@@ -1105,7 +1108,7 @@ const ServiceDetailPage: React.FC = () => {
         <ReviewsSection serviceId={service.id} />
       </div>
       {/* --- Sticky Footer for Actions (bottom of page) --- */}
-      <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
+      <div className="shadow-t-lg fixed bottom-0 left-0 z-40 w-full border-t border-gray-200 bg-white p-3  md:pb-3 pb-20">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           {/* Chat button (left, less wide) */}
           <button

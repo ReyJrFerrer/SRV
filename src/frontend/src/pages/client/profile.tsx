@@ -623,7 +623,7 @@ const ClientProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       {toast && (
         <Toast
           message={toast.message}
@@ -631,15 +631,20 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">My Profile</h1>
+          <div className="flex-grow lg:hidden"></div>
+          <h1 className="ml-0 text-2xl font-extrabold tracking-tight text-black lg:ml-4">
+            My Profile
+          </h1>
+          <div className="flex-grow lg:hidden"></div>
+          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
 
@@ -773,19 +778,17 @@ const ClientProfilePage: React.FC = () => {
               <button
                 onClick={handleSwitchToProvider}
                 disabled={isSwitchingRole}
-                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                  isSwitchingRole
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-blue-600"
-                }`}
+                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${isSwitchingRole
+                  ? "cursor-not-allowed opacity-50"
+                  : "hover:bg-blue-600"
+                  }`}
               >
                 <div className="flex items-center">
                   <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-6 w-6 ${
-                      isSwitchingRole
-                        ? "animate-spin text-blue-600"
-                        : "text-black group-hover:text-white"
-                    }`}
+                    className={`mr-4 h-6 w-6 ${isSwitchingRole
+                      ? "animate-spin text-blue-600"
+                      : "text-black group-hover:text-white"
+                      }`}
                   />
                   <span className="text-md font-medium text-gray-800 group-hover:text-white">
                     {isSwitchingRole
@@ -810,7 +813,7 @@ const ClientProfilePage: React.FC = () => {
           </div>
 
           {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
+          <div className="mt-1 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
                 <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
@@ -924,16 +927,6 @@ const ClientProfilePage: React.FC = () => {
           {/* End grid container */}
         </div>
       </main>
-      {/* Mobile Logout Button (bottom of page, only on mobile) */}
-      <div className="mt-8 block w-full px-4 lg:hidden">
-        <button
-          onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-        >
-          Log Out
-        </button>
-      </div>
-      {/* Bottom navigation bar (always visible) */}
       <BottomNavigation />
     </div>
   );

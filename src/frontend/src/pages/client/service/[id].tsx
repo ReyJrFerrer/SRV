@@ -31,18 +31,15 @@ const ServiceDetailPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Page Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 shadow-sm md:px-6 lg:px-8">
-        <div className="flex flex-grow items-center">
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 lg:pl-24 md:pl-24">
           <button
             onClick={handleBackClick}
-            className="mr-4 flex-shrink-0 rounded-full p-2 transition-colors duration-200 hover:bg-gray-100"
+            className="mr-4 flex-shrink-0 p-1"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="flex-grow lg:flex lg:items-center lg:justify-between">
-            {/* <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 truncate">
-                {service?.title || 'Service Details'}
-              </h1> */}
             {/* Desktop breadcrumb */}
             <div className="hidden items-center space-x-2 text-sm text-gray-500 lg:flex">
               <span>Services</span>

@@ -147,15 +147,13 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
-        notification.href
+      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${notification.href
           ? "cursor-pointer hover:border-blue-200"
           : "cursor-default"
-      } ${
-        !notification.read
+        } ${!notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
-      }`}
+        }`}
     >
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
@@ -230,7 +228,7 @@ const NotificationsPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div
-          className={`mx-auto flex max-w-3xl items-center px-4 py-4 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
         >
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Notifications

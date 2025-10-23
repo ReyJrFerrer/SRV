@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ClientBookingPageComponent from "../../../components/client/ClientBookingPageComponent";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const BookingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,19 +25,22 @@ const BookingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between px-4 py-3">
+      <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6">
           <button
             onClick={() => navigate(-1)}
-            className="text-2xl text-gray-600 hover:text-gray-800"
+            className="mr-4 flex-shrink-0 text-gray-600 hover:text-gray-800"
           >
-            ←
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="text-lg font-medium text-gray-900">Book Service</h1>
-          <div className="w-8"></div> {/* Spacer for centering */}
+          <div className="flex-grow lg:hidden"></div>
+          <h1 className="flex-grow text-2xl font-extrabold tracking-tight text-black sm:text-left">
+            Book Service
+          </h1>
+          <div className="flex-grow lg:hidden"></div>
+          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="flex-1">
         <ClientBookingPageComponent />
