@@ -27,14 +27,14 @@ export function useClientRating(_bookingId?: string) {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Call the Firebase Cloud Function to submit provider review
         await reviewCanisterService.submitProviderReview(
           bookingId,
           input.rating,
           input.comment || "",
         );
-        
+
         return true;
       } catch (err) {
         const errorMessage =
@@ -52,21 +52,19 @@ export function useClientRating(_bookingId?: string) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get reviews for a specific booking
       const reviews = await reviewCanisterService.getBookingReviews(bookingId);
-      
+
       // Filter only provider-to-client reviews
-      const providerReviews = reviews.filter(
-        (review) => review.id.startsWith("provider-"),
+      const providerReviews = reviews.filter((review) =>
+        review.id.startsWith("provider-"),
       );
-      
+
       return providerReviews as ClientReview[];
     } catch (err) {
       const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to fetch booking reviews";
+        err instanceof Error ? err.message : "Failed to fetch booking reviews";
       setError(errorMessage);
       return [] as ClientReview[];
     } finally {
@@ -78,11 +76,11 @@ export function useClientRating(_bookingId?: string) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get provider reviews for this client
       const reviews =
         await reviewCanisterService.getClientProviderReviews(clientId);
-      
+
       return reviews as ClientReview[];
     } catch (err) {
       const errorMessage =
