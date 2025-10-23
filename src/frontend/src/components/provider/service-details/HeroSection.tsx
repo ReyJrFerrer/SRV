@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeftIcon, PencilIcon, TagIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, TagIcon } from "@heroicons/react/24/solid";
 import Tooltip from "./Tooltip";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 
@@ -23,7 +23,6 @@ interface Props {
 }
 
 const HeroSection: React.FC<Props> = ({
-  onBack,
   service,
   serviceImages,
   hasActiveBookings,
@@ -42,21 +41,7 @@ const HeroSection: React.FC<Props> = ({
 }) => {
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-8">
-          <button
-            onClick={onBack}
-            className="rounded-full p-2 transition-colors hover:bg-blue-100"
-            aria-label="Go to home"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
-          </button>
-          <h1 className="text-2xl font-bold text-black">Service Details</h1>
-          <div className="w-8"></div>
-        </div>
-      </header>
-
-      <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+        <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
         <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
           {serviceImages &&
           serviceImages.length > 0 &&
@@ -112,7 +97,7 @@ const HeroSection: React.FC<Props> = ({
                     )}
                     <Tooltip
                       content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                      disabled={hasActiveBookings}
+                      showWhenDisabled={hasActiveBookings}
                     >
                       <button
                         onClick={hasActiveBookings ? undefined : onEdit}
@@ -145,7 +130,7 @@ const HeroSection: React.FC<Props> = ({
                 </span>
                 <Tooltip
                   content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                  disabled={hasActiveBookings}
+                  showWhenDisabled={hasActiveBookings}
                 >
                   <button
                     onClick={hasActiveBookings ? undefined : onEdit}
@@ -169,6 +154,7 @@ const HeroSection: React.FC<Props> = ({
                     onChange={(e) => setEditedTitle(e.target.value)}
                     className="w-full rounded-lg border border-blue-200 bg-white/80 px-4 py-2 text-2xl font-bold text-blue-900 focus:border-blue-500 focus:ring-blue-500"
                     placeholder="Service Title"
+                    maxLength={40}
                   />
                   <select
                     value={editedCategory}
@@ -223,7 +209,7 @@ const HeroSection: React.FC<Props> = ({
             />
           </div>
         </div>
-      </section>
+        </section>
     </>
   );
 };

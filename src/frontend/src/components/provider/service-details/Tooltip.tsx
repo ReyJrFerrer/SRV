@@ -3,11 +3,15 @@ import React from "react";
 interface TooltipProps {
   children: React.ReactNode;
   content: string;
-  disabled?: boolean;
+  showWhenDisabled?: boolean;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ children, content, disabled }) => {
-  if (disabled) {
+const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
+  showWhenDisabled = false,
+}) => {
+  if (showWhenDisabled) {
     return (
       <div className="group relative">
         {children}

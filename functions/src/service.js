@@ -33,6 +33,9 @@ const MIN_PRICE = 1;
 const MAX_PRICE = 1000000;
 const MAX_SERVICE_IMAGES = 5;
 const MAX_SERVICE_CERTIFICATES = 10;
+const MIN_PACKAGE_TITLE_LENGTH = 1;
+const MAX_PACKAGE_TITLE_LENGTH = 40;
+
 
 /**
  * Calculate distance between two locations using Haversine formula
@@ -80,7 +83,7 @@ function validateTitle(title) {
 }
 
 /**
- * Validate service description length
+ * Validate package description length
  * @param {string} description - Service description
  * @return {boolean} True if valid
  */
@@ -89,6 +92,19 @@ function validateDescription(description) {
     description &&
     description.length >= MIN_DESCRIPTION_LENGTH &&
     description.length <= MAX_DESCRIPTION_LENGTH
+  );
+}
+
+/**
+ * Validate package title length
+ * @param {string} packageTitle - Package title
+ * @return {boolean} True if valid
+ */
+function validatePackageTitle(packageTitle) {
+  return (
+    packageTitle &&
+    packageTitle.length >= MIN_PACKAGE_TITLE_LENGTH &&
+    packageTitle.length <= MAX_PACKAGE_TITLE_LENGTH
   );
 }
 
@@ -1588,6 +1604,31 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
         "permission-denied",
         "Only the service provider can create packages",
       );
+    }
+
+    // Validate input
+    console.log("🔍 Starting validation...");
+    console.log("🔍 Title validation - Min:", MIN_PACKAGE_TITLE_LENGTH, "Max:",
+      MAX_PACKAGE_TITLE_LENGTH);
+
+    const titleValid = validatePackageTitle(title);
+    console.log("📝 Package validation result:", titleValid);
+    if (!titleValid) {
+      console.log("❌ Title validation failed for:", title);
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Package title must be between ${MIN_PACKAGE_TITLE_LENGTH} and 
+        ${MAX_PACKAGE_TITLE_LENGTH} characters`);
+    }
+
+    const descValid = validateDescription(description);
+    console.log("📝 Description validation result:", descValid);
+    if (!descValid) {
+      console.log("❌ Description validation failed for:", description);
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Package description must be between 
+        ${MIN_DESCRIPTION_LENGTH} and ${MAX_DESCRIPTION_LENGTH} characters`);
     }
 
     // Validate price

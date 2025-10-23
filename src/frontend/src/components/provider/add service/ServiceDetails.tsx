@@ -218,6 +218,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       : "border-gray-300 bg-gray-50 focus:border-blue-500"
                   }`}
                   placeholder="e.g., Professional Hair Styling"
+                  maxLength={40}
                 />
                 {validationErrors.serviceOfferingTitle && !hideTitleError && (
                   <p className="text-sm text-red-600">
@@ -341,6 +342,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-400 bg-red-50 focus:border-red-500"
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
+                            maxLength={40}
                           />
                           {pkgError &&
                             pkgError.name &&
@@ -409,6 +411,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                             placeholder="Describe what's included in this package."
+                            maxLength={100}
                           />
                           {pkgError &&
                             pkgError.description &&
@@ -425,11 +428,16 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               </div>
               <button
                 type="button"
-                onClick={addPackage}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-500 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                onClick={formData.servicePackages.length < 5 ? addPackage : undefined}
+                disabled={formData.servicePackages.length >= 5}
+                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-base font-semibold transition-colors ${
+                  formData.servicePackages.length >= 5
+                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
+                    : "border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                }`}
               >
                 <PlusCircleIcon className="h-5 w-5" />
-                Add Package
+                {formData.servicePackages.length >= 5 ? "Maximum 5 packages" : "Add Package"}
               </button>
               {validationErrors.servicePackages && !hidePackagesError && (
                 <p className="mt-2 text-sm text-red-600">

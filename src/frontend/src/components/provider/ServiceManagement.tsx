@@ -223,14 +223,27 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>
-        <Link
-          to="/provider/services/add"
-          className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-          aria-label="Add new service"
+        <Tooltip
+          content="You have reached the maximum of 5 services."
+          disabled={services.length < 5}
         >
-          <PlusIcon className="h-5 w-5" />
-          <span className="ml-1 hidden sm:inline">Add new service</span>
-        </Link>
+          <Link
+            to="/provider/services/add"
+            onClick={(e) => {
+              if (services.length >= 5) {
+                e.preventDefault();
+                toast.error("You can only have a maximum of 5 services.");
+              }
+            }}
+            className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+              services.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+            }`}
+            aria-label="Add new service"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span className="ml-1 hidden sm:inline">Add new service</span>
+          </Link>
+        </Tooltip>
       </div>
       {/* Add space between the label and the listings */}
       <div className="mb-6" />

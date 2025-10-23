@@ -71,18 +71,32 @@ const PackagesSection: React.FC<Props> = ({
         </h3>
         {!isAddingOrEditingPackage && (
           <Tooltip
-            content={`Cannot add/edit packages with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-            disabled={hasActiveBookings}
+            content={
+              hasActiveBookings
+                ? `Cannot add packages with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`
+                : packages.length >= 5
+                  ? "Maximum of 5 packages reached."
+                  : "Add a new package"
+            }
+            showWhenDisabled={hasActiveBookings || packages.length >= 5}
           >
             <button
-              onClick={hasActiveBookings ? undefined : onAddPackage}
+              onClick={
+                hasActiveBookings || packages.length >= 5
+                  ? undefined
+                  : onAddPackage
+              }
               className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
-                hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                hasActiveBookings || packages.length >= 5
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
-              disabled={hasActiveBookings}
+              disabled={hasActiveBookings || packages.length >= 5}
             >
               <PlusIcon className="mr-1 h-4 w-4" />
-              <span className="hidden sm:inline">Add Package</span>
+              <span className="hidden sm:inline">
+                {packages.length >= 5 ? "Limit Reached" : "Add Package"}
+              </span>
             </button>
           </Tooltip>
         )}
@@ -118,6 +132,7 @@ const PackagesSection: React.FC<Props> = ({
                     className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                     placeholder="e.g., Basic Cleaning, Premium Tune-up"
                     required
+                    maxLength={40}
                     disabled={packageFormLoading}
                   />
                 </div>
@@ -136,6 +151,7 @@ const PackagesSection: React.FC<Props> = ({
                     className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                     placeholder="Brief description of what's included in this package"
                     required
+                    maxLength={100}
                     disabled={packageFormLoading}
                   ></textarea>
                 </div>
@@ -215,34 +231,55 @@ const PackagesSection: React.FC<Props> = ({
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() =>
-                      hasActiveBookings ? undefined : onEditPackage(pkg)
-                    }
-                    className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                      hasActiveBookings || isAddingOrEditingPackage
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
-                    }`}
-                    aria-label={`Edit ${pkg.title}`}
-                    disabled={hasActiveBookings || isAddingOrEditingPackage}
+                  <Tooltip
+                    content="Cannot edit when another package form is open."
+                    showWhenDisabled={isAddingOrEditingPackage}
                   >
-                    Edit Package
-                  </button>
-                  <button
-                    onClick={() =>
-                      hasActiveBookings ? undefined : onDeletePackage(pkg.id)
-                    }
-                    className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                      hasActiveBookings || isAddingOrEditingPackage
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                    }`}
-                    aria-label={`Delete ${pkg.title}`}
-                    disabled={hasActiveBookings || isAddingOrEditingPackage}
+                    <button
+                      onClick={() =>
+                        hasActiveBookings ? undefined : onEditPackage(pkg)
+                      }
+                      className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                        hasActiveBookings || isAddingOrEditingPackage
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                      }`}
+                      aria-label={`Edit ${pkg.title}`}
+                      disabled={hasActiveBookings || isAddingOrEditingPackage}
+                    >
+                      Edit Package
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    content="A service must have at least one package."
+                    showWhenDisabled={packages.length <= 1}
                   >
-                    Delete
-                  </button>
+                    {/* The Tooltip needs a div wrapper for disabled buttons to work correctly */}
+                    <div className="flex-1">
+                      <button
+                        onClick={() =>
+                          hasActiveBookings || packages.length <= 1
+                            ? undefined
+                            : onDeletePackage(pkg.id)
+                        }
+                        className={`w-full rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                          hasActiveBookings ||
+                          isAddingOrEditingPackage ||
+                          packages.length <= 1
+                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                            : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                        }`}
+                        aria-label={`Delete ${pkg.title}`}
+                        disabled={
+                          hasActiveBookings ||
+                          isAddingOrEditingPackage ||
+                          packages.length <= 1
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </Tooltip>
                 </div>
               </div>
             ))
