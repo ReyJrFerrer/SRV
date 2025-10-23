@@ -940,7 +940,7 @@ const AddServicePage: React.FC = () => {
                             key={pkg.id}
                             className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
                           >
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium text-blue-900">
                                 {pkg.name}
                               </p>

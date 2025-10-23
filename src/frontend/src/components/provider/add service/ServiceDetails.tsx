@@ -428,7 +428,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               </div>
               <button
                 type="button"
-                onClick={formData.servicePackages.length < 5 ? addPackage : undefined}
+                onClick={
+                  formData.servicePackages.length < 5 ? addPackage : undefined
+                }
                 disabled={formData.servicePackages.length >= 5}
                 className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-base font-semibold transition-colors ${
                   formData.servicePackages.length >= 5
@@ -437,7 +439,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 }`}
               >
                 <PlusCircleIcon className="h-5 w-5" />
-                {formData.servicePackages.length >= 5 ? "Maximum 5 packages" : "Add Package"}
+                {formData.servicePackages.length >= 5
+                  ? "Maximum 5 packages"
+                  : "Add Package"}
               </button>
               {validationErrors.servicePackages && !hidePackagesError && (
                 <p className="mt-2 text-sm text-red-600">

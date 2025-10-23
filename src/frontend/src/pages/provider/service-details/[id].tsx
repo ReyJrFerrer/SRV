@@ -31,7 +31,7 @@ import HeroSection from "../../../components/provider/service-details/HeroSectio
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import { ArrowLeftIcon, } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =
@@ -963,7 +963,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       setIsDeletingPackage(true);
       await deletePackage(packageToDelete.id);
-      setPackages((prev) => prev.filter((pkg) => pkg.id !== packageToDelete.id));
+      setPackages((prev) =>
+        prev.filter((pkg) => pkg.id !== packageToDelete.id),
+      );
       toast.success("Package deleted!");
       setShowDeletePackageConfirm(false);
       setPackageToDelete(null);
@@ -1054,7 +1056,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
@@ -1083,43 +1084,40 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-              <div className="container mx-auto flex items-center justify-between px-6 py-8">
-                <button
-                  onClick={() => navigate(`/provider/home`)}
-                  className="rounded-full p-2 transition-colors hover:bg-blue-100"
-                  aria-label="Go to home"
-                >
-                  <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
-                </button>
-                <h1 className="text-2xl font-bold text-black">Service Details</h1>
-                <div className="w-8"></div>
-              </div>
-        </header>
-
-
+      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
+        <div className="container mx-auto flex items-center justify-between px-6 py-8">
+          <button
+            onClick={() => navigate(`/provider/home`)}
+            className="rounded-full p-2 transition-colors hover:bg-blue-100"
+            aria-label="Go to home"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
+          </button>
+          <h1 className="text-2xl font-bold text-black">Service Details</h1>
+          <div className="w-8"></div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
-
-      <HeroSection
-        onBack={() => navigate("/provider/home")}
-        service={service}
-        serviceImages={serviceImages}
-        hasActiveBookings={hasActiveBookings}
-        activeBookingsCount={activeBookingsCount}
-        editTitleCategory={editTitleCategory}
-        editedTitle={editedTitle}
-        editedCategory={editedCategory}
-        categories={categories}
-        categoriesLoading={categoriesLoading}
-        savingTitleCategory={savingTitleCategory}
-        setEditedTitle={setEditedTitle}
-        setEditedCategory={setEditedCategory}
-        onEdit={handleEditTitleCategory}
-        onSave={handleSaveTitleCategory}
-        onCancel={handleCancelTitleCategory}
-      />
+        <HeroSection
+          onBack={() => navigate("/provider/home")}
+          service={service}
+          serviceImages={serviceImages}
+          hasActiveBookings={hasActiveBookings}
+          activeBookingsCount={activeBookingsCount}
+          editTitleCategory={editTitleCategory}
+          editedTitle={editedTitle}
+          editedCategory={editedCategory}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          savingTitleCategory={savingTitleCategory}
+          setEditedTitle={setEditedTitle}
+          setEditedCategory={setEditedCategory}
+          onEdit={handleEditTitleCategory}
+          onSave={handleSaveTitleCategory}
+          onCancel={handleCancelTitleCategory}
+        />
         {/* Active Bookings Warning */}
         {hasActiveBookings && (
           <ActiveBookingsWarning activeBookingsCount={activeBookingsCount} />
