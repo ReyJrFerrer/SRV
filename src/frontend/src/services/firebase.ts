@@ -3,11 +3,8 @@
  * Handles HTTP requests to Firebase Cloud Functions for payment operations
  */
 
-const FIREBASE_PROJECT_ID = "devsrv-rey";
-const FIREBASE_REGION = "us-central1";
-
-// Use local emulator in development, production URL in production
-const BASE_URL = `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
 export interface DirectPaymentRequest {
   bookingId: string;
@@ -93,25 +90,14 @@ export async function createDirectPayment(
   request: DirectPaymentRequest,
 ): Promise<PaymentResponse> {
   try {
-    const response = await fetch(
-      `https://createdirectpayment-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: request,
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const createDirectPaymentFn = httpsCallable<
+      DirectPaymentRequest,
+      PaymentResponse
+    >(functions, "createDirectPayment");
+    
+    const result = await createDirectPaymentFn(request);
+    return result.data;
   } catch (error: any) {
     console.error("Error creating direct payment:", error);
     return {
@@ -128,25 +114,14 @@ export async function createTopupInvoice(
   request: TopupInvoiceRequest,
 ): Promise<PaymentResponse> {
   try {
-    const response = await fetch(
-      `https://createtopupinvoice-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: request,
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const createTopupInvoiceFn = httpsCallable<
+      TopupInvoiceRequest,
+      PaymentResponse
+    >(functions, "createTopupInvoice");
+    
+    const result = await createTopupInvoiceFn(request);
+    return result.data;
   } catch (error: any) {
     console.error("Error creating topup invoice:", error);
     return {
@@ -196,25 +171,14 @@ export async function onboardProvider(
   request: OnboardProviderRequest,
 ): Promise<ProviderOnboardingResponse> {
   try {
-    const response = await fetch(
-      `https://onboardprovider-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: request,
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const onboardProviderFn = httpsCallable<
+      OnboardProviderRequest,
+      ProviderOnboardingResponse
+    >(functions, "onboardProvider");
+    
+    const result = await onboardProviderFn(request);
+    return result.data;
   } catch (error: any) {
     console.error("Error onboarding provider:", error);
     return {
@@ -234,25 +198,14 @@ export async function checkProviderOnboarding(
   providerId: string,
 ): Promise<boolean> {
   try {
-    const response = await fetch(
-      `https://checkprovideronboarding-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: { providerId },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const onboardingResult = result.result || result;
+    const functions = getFirebaseFunctions();
+    const checkProviderOnboardingFn = httpsCallable<
+      { providerId: string },
+      ProviderOnboardingResponse
+    >(functions, "checkProviderOnboarding");
+    
+    const result = await checkProviderOnboardingFn({ providerId });
+    const onboardingResult = result.data;
 
     if (!onboardingResult.success) {
       console.error(
@@ -283,22 +236,14 @@ export async function getProviderOnboardingDetails(
   providerId: string,
 ): Promise<ProviderOnboardingResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/checkProviderOnboarding`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: { providerId },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const checkProviderOnboardingFn = httpsCallable<
+      { providerId: string },
+      ProviderOnboardingResponse
+    >(functions, "checkProviderOnboarding");
+    
+    const result = await checkProviderOnboardingFn({ providerId });
+    return result.data;
   } catch (error: any) {
     console.error("Error getting provider onboarding details:", error);
     return {
@@ -318,25 +263,14 @@ export async function getPaymentData(
   invoiceId: string,
 ): Promise<PaymentDataResponse> {
   try {
-    const response = await fetch(
-      `https://getpaymentdata-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: { invoiceId },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const getPaymentDataFn = httpsCallable<
+      { invoiceId: string },
+      PaymentDataResponse
+    >(functions, "getPaymentData");
+    
+    const result = await getPaymentDataFn({ invoiceId });
+    return result.data;
   } catch (error: any) {
     console.error("Error getting payment data:", error);
     return {
@@ -406,25 +340,15 @@ export async function checkInvoiceStatus(
   invoiceId: string,
 ): Promise<InvoiceStatusResponse> {
   try {
-    const response = await fetch(
-      `https://checkinvoicestatus-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: { invoiceId },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const checkInvoiceStatusFn = httpsCallable<
+      { invoiceId: string },
+      InvoiceStatusResponse
+    >(functions, "checkInvoiceStatus");
+    
+    const result = await checkInvoiceStatusFn({ invoiceId });
+    console.log("From wallet",result);
+    return result.data;
   } catch (error: any) {
     console.error("Error checking invoice status:", error);
     return {
@@ -444,41 +368,15 @@ export async function releaseHeldPayment(
   try {
     console.log("🔄 Releasing held payment:", request);
 
-    const response = await fetch(
-      `https://releaseheldpayment-s4ulenxusq-uc.a.run.app`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: request, // Wrap in data object to match other functions
-        }),
-      },
-    );
-
-    console.log("📡 Response status:", response.status);
-
-    if (!response.ok) {
-      // Try to get error details from response
-      let errorDetails;
-      try {
-        errorDetails = await response.json();
-        console.error("❌ Server error response:", errorDetails);
-      } catch (e) {
-        console.error("❌ Failed to parse error response");
-      }
-
-      throw new Error(
-        `HTTP error! status: ${response.status}${
-          errorDetails?.error ? ` - ${errorDetails.error}` : ""
-        }${errorDetails?.details ? ` (${errorDetails.details})` : ""}`,
-      );
-    }
-
-    const result = await response.json();
-    console.log("✅ Payment release response:", result);
-    return result.result || result;
+    const functions = getFirebaseFunctions();
+    const releaseHeldPaymentFn = httpsCallable<
+      ReleasePaymentRequest,
+      ReleasePaymentResponse
+    >(functions, "releaseHeldPayment");
+    
+    const result = await releaseHeldPaymentFn(request);
+    console.log("✅ Payment release response:", result.data);
+    return result.data;
   } catch (error: any) {
     console.error("❌ Error releasing held payment:", error);
     return {

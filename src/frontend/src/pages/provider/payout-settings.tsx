@@ -176,11 +176,11 @@ const PayoutSettingsPage: React.FC = () => {
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
           <div className="flex items-center justify-between px-4">
             <button
-              onClick={() => navigate("/provider/settings")}
+              onClick={() => navigate("/provider/home")}
               className="flex items-center text-blue-600 hover:text-blue-700"
             >
               <ArrowLeftIcon className="mr-2 h-5 w-5" />
-              Back to Settings
+              Back
             </button>
             <h1 className="text-xl font-extrabold text-black">
               Complete Onboarding
@@ -224,7 +224,7 @@ const PayoutSettingsPage: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
         <div className="flex items-center justify-between px-4">
           <button
-            onClick={() => navigate("/provider/settings")}
+            onClick={() => navigate("/provider/home")}
             className="flex items-center text-blue-600 hover:text-blue-700"
           >
             <ArrowLeftIcon className="mr-2 h-5 w-5" />
