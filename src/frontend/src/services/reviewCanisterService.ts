@@ -668,6 +668,98 @@ export const reviewCanisterService = {
       throw new Error(`Failed to initialize static reviews: ${error}`);
     }
   },
+
+  /**
+   * Submit a provider review for a client
+   * This allows providers to rate clients after service completion
+   */
+  async submitProviderReview(
+    bookingId: string,
+    rating: number,
+    comment: string,
+  ): Promise<Review> {
+    console.log(
+      "🚀 [reviewCanisterService] submitProviderReview called with:",
+      {
+        bookingId,
+        rating,
+        comment,
+      },
+    );
+    try {
+      const submitProviderReviewFn = httpsCallable(
+        functions,
+        "submitProviderReview",
+      );
+
+      const result = await submitProviderReviewFn({
+        data: { bookingId, rating, comment },
+      });
+
+      console.log(
+        "✅ [reviewCanisterService] submitProviderReview raw result:",
+        result,
+      );
+      const responseData = result.data as { success: boolean; data: Review };
+      console.log(
+        "✅ [reviewCanisterService] submitProviderReview extracted data:",
+        responseData,
+      );
+      return responseData.data;
+    } catch (error) {
+      console.error(
+        "❌ [reviewCanisterService] Error submitting provider review:",
+        error,
+      );
+      throw new Error(`Failed to submit provider review: ${error}`);
+    }
+  },
+
+  /**
+   * Get provider reviews for a specific client
+   * Shows what providers have said about a client
+   */
+  async getClientProviderReviews(
+    clientId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<Review[]> {
+    console.log(
+      "🚀 [reviewCanisterService] getClientProviderReviews called with:",
+      {
+        clientId,
+        limit,
+        offset,
+      },
+    );
+    try {
+      const getClientProviderReviewsFn = httpsCallable(
+        functions,
+        "getClientProviderReviews",
+      );
+
+      const result = await getClientProviderReviewsFn({
+        data: { clientId, limit, offset },
+      });
+
+      console.log(
+        "✅ [reviewCanisterService] getClientProviderReviews raw result:",
+        result,
+      );
+      const responseData = result.data as { success: boolean; data: Review[] };
+      console.log(
+        "✅ [reviewCanisterService] getClientProviderReviews extracted data:",
+        responseData,
+      );
+      return responseData.data || [];
+    } catch (error) {
+      console.error(
+        "❌ [reviewCanisterService] Error getting client provider reviews:",
+        error,
+      );
+      return []; // Return empty array on error to prevent .map() issues
+    }
+  },
 };
 
 // Firebase functions don't require actor management or reset functionality
