@@ -291,7 +291,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                       <StarIcon className="h-5 w-5 text-yellow-400" />
                       <span className="font-semibold text-blue-900">
                         {service.averageRating || "0"} / 5{" "}
-                        <span className="text-gray-500">({service.reviewCount})</span>
+                        <span className="text-gray-500">
+                          ({service.reviewCount})
+                        </span>
                       </span>
                     </div>
                   </div>
@@ -374,7 +376,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           )}
         </>
       ) : (
-        <div className="py-12 text-center text-gray-400">No services found.</div>
+        <div className="py-12 text-center text-gray-400">
+          No services found.
+        </div>
       )}
     </>
   );

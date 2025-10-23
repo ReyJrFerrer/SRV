@@ -43,7 +43,7 @@ const Tooltip: React.FC<TooltipProps> = ({
             <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
           )}
           {side === "bottom" && (
-            <div className="absolute left-1/2 bottom-full -translate-x-1/2 border-4 border-transparent border-b-gray-800" />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800" />
           )}
           {side === "left" && (
             <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-800" />

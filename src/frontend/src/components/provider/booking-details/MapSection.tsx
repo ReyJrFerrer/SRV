@@ -38,25 +38,37 @@ const MapSection: React.FC<Props> = ({
         <MapPinIcon className="h-5 w-5 text-blue-500" /> Service Location
       </h3>
       <p className="mb-2 text-xs text-gray-500">
-        Interactive map centered on the client's provided location. Use the navigation button to open directions in Google Maps.
+        Interactive map centered on the client's provided location. Use the
+        navigation button to open directions in Google Maps.
       </p>
       {!mapsReady && (
         <div className="relative mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
           {(() => {
-            const coord = resolvedCoords || (hasExplicitCoords ? clientLocation : null);
-            const staticKey = mapsApiKey === "REPLACE_WITH_KEY" ? null : mapsApiKey;
+            const coord =
+              resolvedCoords || (hasExplicitCoords ? clientLocation : null);
+            const staticKey =
+              mapsApiKey === "REPLACE_WITH_KEY" ? null : mapsApiKey;
             const staticUrl =
               coord && staticKey
                 ? `https://maps.googleapis.com/maps/api/staticmap?center=${coord.lat},${coord.lng}&zoom=15&size=640x300&maptype=roadmap&markers=color:red%7C${coord.lat},${coord.lng}&key=${staticKey}`
                 : null;
             return staticUrl ? (
-              <img src={staticUrl} alt="Map preview" className="h-64 w-full object-cover" loading="lazy" />
+              <img
+                src={staticUrl}
+                alt="Map preview"
+                className="h-64 w-full object-cover"
+                loading="lazy"
+              />
             ) : (
-              <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">Loading map script...</div>
+              <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">
+                Loading map script...
+              </div>
             );
           })()}
           <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] font-medium leading-tight text-white">
-            {bookingLocation !== "Location not specified" ? bookingLocation : displayAddress || preciseAddress || "Location pending"}
+            {bookingLocation !== "Location not specified"
+              ? bookingLocation
+              : displayAddress || preciseAddress || "Location pending"}
           </div>
         </div>
       )}
@@ -64,7 +76,12 @@ const MapSection: React.FC<Props> = ({
         <div>
           <div
             className="relative"
-            style={{ width: "100%", height: "260px", borderRadius: "12px", overflow: "hidden" }}
+            style={{
+              width: "100%",
+              height: "260px",
+              borderRadius: "12px",
+              overflow: "hidden",
+            }}
           >
             <Map
               center={resolvedCoords || clientLocation}
@@ -104,17 +121,25 @@ const MapSection: React.FC<Props> = ({
           <div className="mt-2 rounded bg-gray-900/70 px-3 py-1 text-[11px] leading-snug text-gray-100">
             {bookingLocation !== "Location not specified"
               ? bookingLocation
-              : displayAddress || preciseAddress || geocodedAddress || "Location not specified"}
+              : displayAddress ||
+                preciseAddress ||
+                geocodedAddress ||
+                "Location not specified"}
           </div>
           {!hasExplicitCoords && geocodeStatus === "pending" && (
-            <p className="mt-2 text-xs text-gray-500">Resolving location on map...</p>
+            <p className="mt-2 text-xs text-gray-500">
+              Resolving location on map...
+            </p>
           )}
           {!hasExplicitCoords && geocodeStatus === "failed" && (
-            <p className="mt-2 text-xs text-red-500">Could not resolve the address to coordinates.</p>
+            <p className="mt-2 text-xs text-red-500">
+              Could not resolve the address to coordinates.
+            </p>
           )}
           {mapsApiKey === "REPLACE_WITH_KEY" && (
             <p className="mt-2 text-xs text-orange-600">
-              Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for full accuracy.
+              Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for full
+              accuracy.
             </p>
           )}
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -130,7 +155,9 @@ const MapSection: React.FC<Props> = ({
               <button
                 onClick={() => {
                   const c = resolvedCoords || clientLocation;
-                  navigator.clipboard.writeText(`${c.lat},${c.lng}`).catch(() => {});
+                  navigator.clipboard
+                    .writeText(`${c.lat},${c.lng}`)
+                    .catch(() => {});
                 }}
                 className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
               >
@@ -150,13 +177,19 @@ const MapSection: React.FC<Props> = ({
                   onClick={() => setShowStreetView(false)}
                   aria-label="Close Street View"
                 >
-                  <span className="text-xl font-bold text-gray-700">&times;</span>
+                  <span className="text-xl font-bold text-gray-700">
+                    &times;
+                  </span>
                 </button>
                 <div className="h-full w-full">
                   <GStreetView
                     position={resolvedCoords || clientLocation}
                     pov={{ heading: 0, pitch: 0 }}
-                    options={{ addressControl: true, linksControl: true, panControl: true }}
+                    options={{
+                      addressControl: true,
+                      linksControl: true,
+                      panControl: true,
+                    }}
                     style={{ width: "100%", height: "100%" }}
                   />
                 </div>
@@ -165,7 +198,9 @@ const MapSection: React.FC<Props> = ({
           )}
         </div>
       ) : (
-        <div className="flex h-48 items-center justify-center text-sm text-gray-500">Loading map...</div>
+        <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+          Loading map...
+        </div>
       )}
     </section>
   );

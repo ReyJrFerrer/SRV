@@ -38,23 +38,51 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
   if (currentStep === -1) {
     return (
       <section className="my-4 flex flex-col rounded-2xl bg-white p-4 shadow">
-        <h3 className="mb-3 mr-10 w-full text-left text-lg font-bold text-blue-700">Progress Tracker</h3>
-        <div className="flex items-center justify-center rounded-lg bg-red-50 px-4 py-3 font-semibold text-red-700">Booking {status}</div>
+        <h3 className="mb-3 mr-10 w-full text-left text-lg font-bold text-blue-700">
+          Progress Tracker
+        </h3>
+        <div className="flex items-center justify-center rounded-lg bg-red-50 px-4 py-3 font-semibold text-red-700">
+          Booking {status}
+        </div>
       </section>
     );
   }
 
   const getStepCircle = (idx: number) => {
     if (normalizedStatus === "completed") {
-      return { bg: "bg-blue-500 border-blue-500 text-white", icon: <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" /> };
+      return {
+        bg: "bg-blue-500 border-blue-500 text-white",
+        icon: (
+          <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" />
+        ),
+      };
     }
     if (idx < currentStep) {
-      return { bg: "bg-blue-500 border-blue-500 text-white", icon: <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" /> };
+      return {
+        bg: "bg-blue-500 border-blue-500 text-white",
+        icon: (
+          <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" />
+        ),
+      };
     }
     if (idx === currentStep) {
-      return { bg: "bg-yellow-400 border-yellow-400 text-white", icon: <span className="text-lg font-bold text-white md:text-2xl">{idx + 1}</span> };
+      return {
+        bg: "bg-yellow-400 border-yellow-400 text-white",
+        icon: (
+          <span className="text-lg font-bold text-white md:text-2xl">
+            {idx + 1}
+          </span>
+        ),
+      };
     }
-    return { bg: "bg-white border-yellow-500 text-yellow-500", icon: <span className="text-lg font-bold text-yellow-500 md:text-2xl">{idx + 1}</span> };
+    return {
+      bg: "bg-white border-yellow-500 text-yellow-500",
+      icon: (
+        <span className="text-lg font-bold text-yellow-500 md:text-2xl">
+          {idx + 1}
+        </span>
+      ),
+    };
   };
 
   const getLineColor = (idx: number) => {
@@ -72,7 +100,9 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
 
   return (
     <section className="my-4 flex flex-col items-center rounded-2xl bg-white p-4 shadow">
-      <h3 className="mb-3 ml-5 mt-1 w-full text-left text-lg font-bold text-blue-700">Progress Tracker</h3>
+      <h3 className="mb-3 ml-5 mt-1 w-full text-left text-lg font-bold text-blue-700">
+        Progress Tracker
+      </h3>
       <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">
         {steps.map((step, idx) => {
           const { bg, icon } = getStepCircle(idx);
@@ -80,13 +110,21 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
           return (
             <React.Fragment key={step.key}>
               <div className="flex flex-col items-center">
-                <div className={`flex items-center justify-center rounded-full border-2 ${bg} h-10 w-10 transition-colors duration-200 md:h-14 md:w-14`}>
+                <div
+                  className={`flex items-center justify-center rounded-full border-2 ${bg} h-10 w-10 transition-colors duration-200 md:h-14 md:w-14`}
+                >
                   {icon}
                 </div>
-                <span className={`mt-1 text-xs font-medium md:text-base ${labelColor} transition-colors duration-200`}>{step.label}</span>
+                <span
+                  className={`mt-1 text-xs font-medium md:text-base ${labelColor} transition-colors duration-200`}
+                >
+                  {step.label}
+                </span>
               </div>
               {idx < steps.length - 1 && (
-                <div className={`h-1 w-8 sm:w-16 md:w-32 ${getLineColor(idx)} transition-colors duration-200`} />
+                <div
+                  className={`h-1 w-8 sm:w-16 md:w-32 ${getLineColor(idx)} transition-colors duration-200`}
+                />
               )}
             </React.Fragment>
           );

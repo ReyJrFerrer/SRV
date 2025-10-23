@@ -21,7 +21,6 @@ import CommissionInfo from "../../../components/provider/booking-details/Commiss
 import DeclineConfirmDialog from "../../../components/provider/booking-details/DeclineConfirmDialog";
 import ActionButtons from "../../../components/provider/booking-details/ActionButtons";
 
-
 // BookingProgressSection moved to components
 
 const ProviderBookingDetailsPage: React.FC = () => {
@@ -705,7 +704,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         onConfirm={handleConfirmDecline}
       />
 
-  {/* Header */}
+      {/* Header */}
       <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center px-4 py-3">
           <button
@@ -745,19 +744,26 @@ const ProviderBookingDetailsPage: React.FC = () => {
             geocodedAddress={geocodedAddress}
             hasExplicitCoords={hasExplicitCoords}
             clientLocation={clientLocation}
-            price={price !== undefined ? price + commissionValidation.estimatedCommission : undefined}
+            price={
+              price !== undefined
+                ? price + commissionValidation.estimatedCommission
+                : undefined
+            }
             amountToPay={amountToPay}
             duration={duration}
             formatDateRange={formatDateRange}
           />
         </div>
 
-  {/* Booking Progress Section */}
-  <BookingProgressSection status={specificBooking?.status} />
+        {/* Booking Progress Section */}
+        <BookingProgressSection status={specificBooking?.status} />
 
         {/* Commission Validation Section for Cash Bookings */}
         <CommissionInfo
-          show={Boolean(specificBooking?.paymentMethod === "CashOnHand" && specificBooking?.canAccept)}
+          show={Boolean(
+            specificBooking?.paymentMethod === "CashOnHand" &&
+              specificBooking?.canAccept,
+          )}
           commissionValidation={commissionValidation}
         />
 

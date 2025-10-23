@@ -19,7 +19,10 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
         const count = Array.isArray(reviews) ? reviews.length : 0;
         setReviewsCount(count);
         if (count > 0) {
-          const sum = (reviews as any[]).reduce((acc, r) => acc + (Number(r?.rating) || 0), 0);
+          const sum = (reviews as any[]).reduce(
+            (acc, r) => acc + (Number(r?.rating) || 0),
+            0,
+          );
           setAvgRating(Math.round((sum / count) * 10) / 10);
         } else {
           setAvgRating(null);
@@ -33,7 +36,9 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
       }
     };
     if (clientId) load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [clientId, getClientReviewsByUser]);
 
   const renderStars = (rating: number) => {
@@ -45,7 +50,7 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
           <StarIcon key={i} className="h-4 w-4 text-yellow-400" />
         ) : (
           <StarIconOutline key={i} className="h-4 w-4 text-yellow-400" />
-        )
+        ),
       );
     }
     return stars;
@@ -62,7 +67,9 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
 
   return (
     <span className="flex items-center rounded-lg px-3 py-1 text-sm font-medium text-gray-700">
-      <span className="mr-2 flex items-center">{renderStars(typeof avgRating === "number" ? avgRating : 0)}</span>
+      <span className="mr-2 flex items-center">
+        {renderStars(typeof avgRating === "number" ? avgRating : 0)}
+      </span>
       {typeof avgRating === "number" ? (
         <>
           <span className="mr-1">{avgRating}</span>
