@@ -97,7 +97,7 @@ const WalletPage: React.FC = () => {
     const checkOnboardingStatus = async () => {
       try {
         const profile = await authCanisterService.getMyProfile();
-        console.log("Profile onboarding check", profile)
+        console.log("Profile onboarding check", profile);
         if (profile && !profile.isOnboarded) {
           setShowOnboardingModal(true);
         }

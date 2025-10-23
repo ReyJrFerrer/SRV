@@ -95,7 +95,7 @@ export async function createDirectPayment(
       DirectPaymentRequest,
       PaymentResponse
     >(functions, "createDirectPayment");
-    
+
     const result = await createDirectPaymentFn(request);
     return result.data;
   } catch (error: any) {
@@ -119,7 +119,7 @@ export async function createTopupInvoice(
       TopupInvoiceRequest,
       PaymentResponse
     >(functions, "createTopupInvoice");
-    
+
     const result = await createTopupInvoiceFn(request);
     return result.data;
   } catch (error: any) {
@@ -176,7 +176,7 @@ export async function onboardProvider(
       OnboardProviderRequest,
       ProviderOnboardingResponse
     >(functions, "onboardProvider");
-    
+
     const result = await onboardProviderFn(request);
     return result.data;
   } catch (error: any) {
@@ -203,7 +203,7 @@ export async function checkProviderOnboarding(
       { providerId: string },
       ProviderOnboardingResponse
     >(functions, "checkProviderOnboarding");
-    
+
     const result = await checkProviderOnboardingFn({ providerId });
     const onboardingResult = result.data;
 
@@ -241,7 +241,7 @@ export async function getProviderOnboardingDetails(
       { providerId: string },
       ProviderOnboardingResponse
     >(functions, "checkProviderOnboarding");
-    
+
     const result = await checkProviderOnboardingFn({ providerId });
     return result.data;
   } catch (error: any) {
@@ -268,7 +268,7 @@ export async function getPaymentData(
       { invoiceId: string },
       PaymentDataResponse
     >(functions, "getPaymentData");
-    
+
     const result = await getPaymentDataFn({ invoiceId });
     return result.data;
   } catch (error: any) {
@@ -345,9 +345,9 @@ export async function checkInvoiceStatus(
       { invoiceId: string },
       InvoiceStatusResponse
     >(functions, "checkInvoiceStatus");
-    
+
     const result = await checkInvoiceStatusFn({ invoiceId });
-    console.log("From wallet",result);
+    console.log("From wallet", result);
     return result.data;
   } catch (error: any) {
     console.error("Error checking invoice status:", error);
@@ -373,7 +373,7 @@ export async function releaseHeldPayment(
       ReleasePaymentRequest,
       ReleasePaymentResponse
     >(functions, "releaseHeldPayment");
-    
+
     const result = await releaseHeldPaymentFn(request);
     console.log("✅ Payment release response:", result.data);
     return result.data;
