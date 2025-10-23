@@ -5,7 +5,7 @@ import {
   HomeIcon,
   PencilIcon,
 } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 import AvailabilityEditor, { WeeklyScheduleEntry } from "./AvailabilityEditor";
 import { formatTime } from "./timeUtils";
 import phLocations from "../../../data/ph_locations.json";
@@ -104,7 +104,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
         </h3>
         <Tooltip
           content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-          disabled={hasActiveBookings}
+          showWhenDisabled={hasActiveBookings}
         >
           <button
             onClick={hasActiveBookings ? undefined : onEdit}

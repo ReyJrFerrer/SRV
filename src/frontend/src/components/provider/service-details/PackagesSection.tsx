@@ -1,6 +1,6 @@
 import React from "react";
 import { BriefcaseIcon, PlusIcon } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 import { ServicePackage } from "../../../services/serviceCanisterService";
 
 interface Props {

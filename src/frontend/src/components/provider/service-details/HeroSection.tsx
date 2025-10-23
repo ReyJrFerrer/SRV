@@ -1,6 +1,6 @@
 import React from "react";
 import { PencilIcon, TagIcon } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 
 interface Props {

@@ -5,7 +5,7 @@ import {
   PencilIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 
 interface TempCert {
   url: string;
@@ -65,7 +65,7 @@ const CertificationsSection: React.FC<Props> = ({
         </h3>
         <Tooltip
           content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-          disabled={hasActiveBookings}
+          showWhenDisabled={hasActiveBookings}
         >
           <button
             onClick={hasActiveBookings ? undefined : onToggleEdit}
