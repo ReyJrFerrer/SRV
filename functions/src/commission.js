@@ -10,21 +10,21 @@ const COMMISSION_TIERS = {
 };
 
 /**
- * Fee structure configuration for each tier - migrated from commission.mo
+ * Fee structure configuration for each tier
  */
 const TIER_STRUCTURES = {
   [COMMISSION_TIERS.TIER_A]: {
-    baseFee: 50, // ₱50 minimum commission
+    baseFee: 15, // ₱15 minimum commission
     breakpoints: [500, 2000, 8000, 20000], // ₱500, ₱2K, ₱8K, ₱20K
     rates: [0.10, 0.08, 0.07, 0.06, 0.05], // 10%, 8%, 7%, 6%, 5%
   },
   [COMMISSION_TIERS.TIER_B]: {
-    baseFee: 35, // ₱35 minimum commission
+    baseFee: 15, // ₱15 minimum commission
     breakpoints: [300, 1500, 6000, 15000], // ₱300, ₱1.5K, ₱6K, ₱15K
     rates: [0.08, 0.06, 0.05, 0.04, 0.03], // 8%, 6%, 5%, 4%, 3%
   },
   [COMMISSION_TIERS.TIER_C]: {
-    baseFee: 25, // ₱25 minimum commission
+    baseFee: 15, // ₱15 minimum commission
     breakpoints: [200, 1000, 4000, 12000], // ₱200, ₱1K, ₱4K, ₱12K
     rates: [0.06, 0.04, 0.035, 0.025, 0.02], // 6%, 4%, 3.5%, 2.5%, 2%
   },
@@ -188,15 +188,15 @@ exports.getCommissionBreakdown = functions.https.onCall(async (data, _context) =
     switch (tier) {
     case COMMISSION_TIERS.TIER_A:
       breakdown =
-      "Premium: ₱50 base | 10% up to ₱500 | 8% ₱501-₱2K | 7% ₱2K-₱8K | 6% ₱8K-₱20K | 5% above ₱20K";
+      "Premium: ₱15 base | 10% up to ₱500 | 8% ₱501-₱2K | 7% ₱2K-₱8K | 6% ₱8K-₱20K | 5% above ₱20K";
       break;
     case COMMISSION_TIERS.TIER_B:
       breakdown =
-"Standard: ₱35 base | 8% up to ₱300 | 6% ₱301-₱1.5K | 5% ₱1.5K-₱6K | 4% ₱6K-₱15K | 3% above ₱15K";
+"Standard: ₱15 base | 8% up to ₱300 | 6% ₱301-₱1.5K | 5% ₱1.5K-₱6K | 4% ₱6K-₱15K | 3% above ₱15K";
       break;
     case COMMISSION_TIERS.TIER_C:
       breakdown =
-"Basic: ₱25 base | 6% up to ₱200 | 4% ₱201-₱1K | 3.5% ₱1K-₱4K | 2.5% ₱4K-₱12K | 2% above ₱12K";
+"Basic: ₱15 base | 6% up to ₱200 | 4% ₱201-₱1K | 3.5% ₱1K-₱4K | 2.5% ₱4K-₱12K | 2% above ₱12K";
       break;
     default:
       breakdown = "Standard tier breakdown";

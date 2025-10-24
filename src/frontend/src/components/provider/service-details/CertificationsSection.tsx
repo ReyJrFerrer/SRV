@@ -5,7 +5,7 @@ import {
   PencilIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 
 interface TempCert {
   url: string;
@@ -29,6 +29,7 @@ interface Props {
   serviceCertificates?: CertItem[];
   certificateUploadError: string | null;
   uploadingCertificates: boolean;
+  savingCertifications: boolean;
   onToggleEdit: () => void;
   onCancel: () => void;
   onSave: () => void;
@@ -46,6 +47,7 @@ const CertificationsSection: React.FC<Props> = ({
   serviceCertificates,
   certificateUploadError,
   uploadingCertificates,
+  savingCertifications,
   onToggleEdit,
   onCancel,
   onSave,
@@ -63,7 +65,7 @@ const CertificationsSection: React.FC<Props> = ({
         </h3>
         <Tooltip
           content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-          disabled={hasActiveBookings}
+          showWhenDisabled={hasActiveBookings}
         >
           <button
             onClick={hasActiveBookings ? undefined : onToggleEdit}
@@ -76,7 +78,17 @@ const CertificationsSection: React.FC<Props> = ({
         </Tooltip>
       </div>
 
-      {editCertifications ? (
+      {savingCertifications ? (
+        // Skeleton UI when saving
+        <div className="grid animate-pulse grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="aspect-video rounded-lg bg-blue-200/50"
+            ></div>
+          ))}
+        </div>
+      ) : editCertifications ? (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {tempDisplayCertificates.length > 0 ? (
@@ -155,17 +167,22 @@ const CertificationsSection: React.FC<Props> = ({
           <div className="mt-4 flex justify-end gap-2">
             <button
               onClick={onCancel}
-              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-              disabled={uploadingCertificates}
+              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={uploadingCertificates || savingCertifications}
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              disabled={uploadingCertificates}
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={uploadingCertificates || savingCertifications}
             >
-              {uploadingCertificates ? "Saving..." : "Save"}
+              {(uploadingCertificates || savingCertifications) && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              )}
+              {uploadingCertificates || savingCertifications
+                ? "Saving..."
+                : "Save"}
             </button>
           </div>
         </>

@@ -215,7 +215,7 @@ const CompleteServicePage: React.FC = () => {
       if (success) {
         setError(null);
 
-        // Navigate to the receipt page with appropriate parameters
+        // Build receipt URL params
         const searchParams = new URLSearchParams({
           price: servicePrice.toFixed(2),
           paid: amountPaid.toFixed(2),
@@ -225,11 +225,11 @@ const CompleteServicePage: React.FC = () => {
               : booking.paymentMethod,
         });
 
-        // Add change for cash payments
         if (booking.paymentMethod === "CashOnHand") {
           searchParams.append("change", changeDue.toFixed(2));
         }
 
+        // Navigate to receipt first
         navigate(`/provider/receipt/${booking.id}?${searchParams.toString()}`);
       } else {
         setError("Failed to complete the booking. Please try again.");

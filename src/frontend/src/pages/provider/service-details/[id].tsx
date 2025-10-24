@@ -23,6 +23,7 @@ import { validateTimeSlots } from "../../../components/provider/service-details"
 import ActiveBookingsWarning from "../../../components/provider/service-details/ActiveBookingsWarning";
 import PreviewModal from "../../../components/provider/service-details/PreviewModal";
 import DeleteConfirmDialog from "../../../components/provider/service-details/DeleteConfirmDialog";
+import DeletePackageConfirmDialog from "../../../components/provider/service-details/DeletePackageConfirmDialog";
 import PackagesSection from "../../../components/provider/service-details/PackagesSection";
 import CertificationsSection from "../../../components/provider/service-details/CertificationsSection";
 import ImagesSection from "../../../components/provider/service-details/ImagesSection";
@@ -30,6 +31,7 @@ import HeroSection from "../../../components/provider/service-details/HeroSectio
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =
@@ -89,6 +91,13 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   // State for delete confirmation dialog
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeletePackageConfirm, setShowDeletePackageConfirm] =
+    useState(false);
+  const [packageToDelete, setPackageToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeletingPackage, setIsDeletingPackage] = useState(false);
 
   // --- State for Edit Modes ---
   const [editTitleCategory, setEditTitleCategory] = useState(false);
@@ -106,6 +115,13 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [certificateUploadError, setCertificateUploadError] = useState<
     string | null
   >(null);
+
+  // Section loading states
+  const [savingTitleCategory, setSavingTitleCategory] = useState(false);
+  const [savingLocationAvailability, setSavingLocationAvailability] =
+    useState(false);
+  const [savingImages, setSavingImages] = useState(false);
+  const [savingCertifications, setSavingCertifications] = useState(false);
 
   // Temporary display state for immediate UI feedback
   const [tempDisplayImages, setTempDisplayImages] = useState<
@@ -339,11 +355,16 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Service title cannot be empty.");
       return;
     }
+    if (editedTitle.trim().length > 40) {
+      toast.error("Service title must not exceed 40 characters.");
+      return;
+    }
     if (!editedCategory.trim()) {
       toast.error("Service category cannot be empty.");
       return;
     }
 
+    setSavingTitleCategory(true);
     try {
       const selectedCategory = categories.find(
         (cat) => cat.id === editedCategory,
@@ -372,7 +393,12 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditTitleCategory(false);
       toast.success("Service title and category updated!");
     } catch (err) {
-      toast.error("Failed to update title or category. Please try again.");
+      console.error("Error saving title/category:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred.";
+      toast.error(`Failed to update: ${errorMessage}`);
+    } finally {
+      setSavingTitleCategory(false);
     }
   };
 
@@ -420,6 +446,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
     }
 
+    setSavingLocationAvailability(true);
     try {
       // Create updated location object
       const updatedLocation: Location = {
@@ -454,6 +481,8 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error(
         "Failed to update location or availability. Please try again.",
       );
+    } finally {
+      setSavingLocationAvailability(false);
     }
   };
 
@@ -566,6 +595,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     setUploadingImages(true);
+    setSavingImages(true);
     setUploadError(null);
 
     try {
@@ -606,6 +636,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Failed to update images.");
     } finally {
       setUploadingImages(false);
+      setSavingImages(false);
     }
   };
 
@@ -773,6 +804,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
 
     setUploadingCertificates(true);
+    setSavingCertifications(true);
     setCertificateUploadError(null);
 
     try {
@@ -818,6 +850,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       toast.error("Failed to update certifications.");
     } finally {
       setUploadingCertificates(false);
+      setSavingCertifications(false);
     }
   };
 
@@ -915,15 +948,31 @@ const ProviderServiceDetailPage: React.FC = () => {
   const handleDeletePackage = async (packageId: string) => {
     if (!service) return;
 
+    // Find the package to get its title
+    const pkg = packages.find((p) => p.id === packageId);
+    if (!pkg) return;
+
+    // Set the package to delete and show confirmation dialog
+    setPackageToDelete({ id: packageId, title: pkg.title });
+    setShowDeletePackageConfirm(true);
+  };
+
+  const confirmDeletePackage = async () => {
+    if (!service || !packageToDelete) return;
+
     try {
-      setLoading(true); // Indicate deleting
-      await deletePackage(packageId);
-      setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
+      setIsDeletingPackage(true);
+      await deletePackage(packageToDelete.id);
+      setPackages((prev) =>
+        prev.filter((pkg) => pkg.id !== packageToDelete.id),
+      );
       toast.success("Package deleted!");
+      setShowDeletePackageConfirm(false);
+      setPackageToDelete(null);
     } catch (err) {
       toast.error("Failed to delete package. Please try again.");
     } finally {
-      setLoading(false);
+      setIsDeletingPackage(false);
     }
   };
 
@@ -1007,8 +1056,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
-  //
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
@@ -1025,26 +1072,52 @@ const ProviderServiceDetailPage: React.FC = () => {
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteService}
       />
-      <HeroSection
-        onBack={() => navigate("/provider/home")}
-        service={service}
-        serviceImages={serviceImages}
-        hasActiveBookings={hasActiveBookings}
-        activeBookingsCount={activeBookingsCount}
-        editTitleCategory={editTitleCategory}
-        editedTitle={editedTitle}
-        editedCategory={editedCategory}
-        categories={categories}
-        categoriesLoading={categoriesLoading}
-        setEditedTitle={setEditedTitle}
-        setEditedCategory={setEditedCategory}
-        onEdit={handleEditTitleCategory}
-        onSave={handleSaveTitleCategory}
-        onCancel={handleCancelTitleCategory}
+
+      <DeletePackageConfirmDialog
+        open={showDeletePackageConfirm}
+        packageTitle={packageToDelete?.title}
+        isDeleting={isDeletingPackage}
+        onCancel={() => {
+          setShowDeletePackageConfirm(false);
+          setPackageToDelete(null);
+        }}
+        onConfirm={confirmDeletePackage}
       />
+
+      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
+        <div className="container mx-auto flex items-center justify-between px-6 py-8">
+          <button
+            onClick={() => navigate(`/provider/home`)}
+            className="rounded-full p-2 transition-colors hover:bg-blue-100"
+            aria-label="Go to home"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
+          </button>
+          <h1 className="text-2xl font-bold text-black">Service Details</h1>
+          <div className="w-8"></div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
+        <HeroSection
+          onBack={() => navigate("/provider/home")}
+          service={service}
+          serviceImages={serviceImages}
+          hasActiveBookings={hasActiveBookings}
+          activeBookingsCount={activeBookingsCount}
+          editTitleCategory={editTitleCategory}
+          editedTitle={editedTitle}
+          editedCategory={editedCategory}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          savingTitleCategory={savingTitleCategory}
+          setEditedTitle={setEditedTitle}
+          setEditedCategory={setEditedCategory}
+          onEdit={handleEditTitleCategory}
+          onSave={handleSaveTitleCategory}
+          onCancel={handleCancelTitleCategory}
+        />
         {/* Active Bookings Warning */}
         {hasActiveBookings && (
           <ActiveBookingsWarning activeBookingsCount={activeBookingsCount} />
@@ -1064,6 +1137,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               setEditedState={setEditedState}
               editedWeeklySchedule={editedWeeklySchedule as any}
               setEditedWeeklySchedule={setEditedWeeklySchedule as any}
+              savingLocationAvailability={savingLocationAvailability}
               onEdit={handleEditLocationAvailability}
               onCancel={handleCancelLocationAvailability}
               onSave={handleSaveLocationAvailability}
@@ -1101,6 +1175,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               serviceCertificates={serviceCertificates}
               certificateUploadError={certificateUploadError}
               uploadingCertificates={uploadingCertificates}
+              savingCertifications={savingCertifications}
               onToggleEdit={handleEditCertifications}
               onCancel={handleCancelCertifications}
               onSave={handleSaveCertifications}
@@ -1121,6 +1196,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               serviceImages={serviceImages}
               uploadError={uploadError}
               uploadingImages={uploadingImages}
+              savingImages={savingImages}
               onToggleEdit={handleEditImages}
               onCancel={handleCancelImages}
               onSave={handleSaveImages}

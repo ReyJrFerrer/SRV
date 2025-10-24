@@ -51,9 +51,9 @@ interface ValidationErrors {
 // Backend validation constants
 const VALIDATION_LIMITS = {
   MIN_TITLE_LENGTH: 3,
-  MAX_TITLE_LENGTH: 100,
+  MAX_TITLE_LENGTH: 40,
   MIN_DESCRIPTION_LENGTH: 3,
-  MAX_DESCRIPTION_LENGTH: 1000,
+  MAX_DESCRIPTION_LENGTH: 100,
   MIN_PRICE: 1,
   MAX_PRICE: 1_000_000,
 };
@@ -940,7 +940,7 @@ const AddServicePage: React.FC = () => {
                             key={pkg.id}
                             className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
                           >
-                            <div className="flex-1">
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium text-blue-900">
                                 {pkg.name}
                               </p>

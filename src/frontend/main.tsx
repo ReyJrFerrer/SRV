@@ -41,6 +41,7 @@ import ClientBookService from "./src/pages/client/book/[id]";
 import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
 import ClientProfilePage from "./src/pages/client/profile";
+import ClientProfileReviews from "./src/pages/client/profile/reviews";
 import SettingsPageC from "./src/pages/client/settings";
 import TermsAndConditionsPage from "./src/pages/terms";
 import ReportIssuePage from "./src/pages/report";
@@ -69,6 +70,7 @@ import ProviderReceipt from "./src/pages/provider/receipt/[bookingId]";
 import ProviderDirectionsPage from "./src/pages/provider/directions/[bookingId]";
 
 // Provider Review
+import ProviderRateClientPage from "./src/pages/provider/rate-client/[bookingId]";
 import ProviderReview from "./src/pages/provider/review/[id]";
 
 // Context
@@ -121,6 +123,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 <Route path="chat/:providerId" element={<ConversationPage />} />
                 <Route path="settings" element={<SettingsPageC />} />
                 <Route path="profile" element={<ClientProfilePage />} />
+                <Route
+                  path="profile/reviews"
+                  element={<ClientProfileReviews />}
+                />
                 <Route path="search-results" element={<SearchResults />} />
                 <Route path="terms" element={<TermsAndConditionsPage />} />
                 <Route path="report" element={<ReportIssuePage />} />
@@ -210,6 +216,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 <Route
                   path="receipt/:bookingId"
                   element={<ProviderReceipt />}
+                />
+
+                {/* Rate Client after receipt */}
+                <Route
+                  path="rate-client/:bookingId"
+                  element={<ProviderRateClientPage />}
                 />
 
                 {/* Review Routes */}

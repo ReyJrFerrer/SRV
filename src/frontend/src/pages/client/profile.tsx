@@ -12,12 +12,14 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon, // Added for the switch button
   InformationCircleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
+import useClientRating from "../../hooks/useClientRating";
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
@@ -536,6 +538,13 @@ const ClientProfilePage: React.FC = () => {
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
+  // Ratings summary state (average + count)
+  const { getClientReviewsByUser } = useClientRating();
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
+
   // Set page title on mount
   useEffect(() => {
     document.title = "My Profile | SRV";
@@ -548,6 +557,37 @@ const ClientProfilePage: React.FC = () => {
       setPhone(profile.phone || "");
     }
   }, [profile]);
+
+  // Fetch ratings summary for this user when profile is available
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setRatingsError(null);
+        setRatingsLoading(true);
+        const clientId =
+          (profile as any)?.id || (profile as any)?.principal || "";
+        if (!clientId) {
+          setAvgRating(0);
+          setReviewsCount(0);
+          return;
+        }
+        const reviews = await getClientReviewsByUser(clientId);
+        const count = reviews.length;
+        const avg = count
+          ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / count
+          : 0;
+        setReviewsCount(count);
+        setAvgRating(Number(avg.toFixed(1)));
+      } catch (e) {
+        setRatingsError("Failed to load ratings");
+        setAvgRating(0);
+        setReviewsCount(0);
+      } finally {
+        setRatingsLoading(false);
+      }
+    };
+    fetchSummary();
+  }, [profile, getClientReviewsByUser]);
 
   // Handlers for profile editing, image upload, and role switching
   const handleImageUploadClick = () => fileInputRef.current?.click();
@@ -593,7 +633,10 @@ const ClientProfilePage: React.FC = () => {
       setEditError("Please fix the errors above before saving.");
       return;
     }
-    const success = await updateProfile({ name, phone, imageFile });
+    // updateProfile currently expects { name, imageFile } — omit phone here to match the declared type
+    // If phone must be updated, add a dedicated phone update function in the hook (recommended),
+    // or update the hook's type to accept phone as well.
+    const success = await updateProfile({ name, imageFile });
     if (success) {
       setIsEditing(false);
       setImageFile(null);
@@ -797,6 +840,7 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </button>
             </div>
+            {/* Ratings button moved into right column summary */}
             {/* Desktop Logout Button (bottom of left column) */}
             <div className="hidden lg:block">
               <button
@@ -905,8 +949,55 @@ const ClientProfilePage: React.FC = () => {
                 </div>
               )}
               {/* Client statistics (bottom of right column) */}
-              <div className="mt-8 border-t border-gray-200 pt-8">
-                <ClientStats />
+              <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
+                {/* Ratings Summary Card */}
+                <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h4 className="text-lg font-bold text-yellow-700">
+                      Your Ratings
+                    </h4>
+                    <StarIcon className="h-6 w-6 text-yellow-500" />
+                  </div>
+                  {ratingsLoading ? (
+                    <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                      Loading...
+                    </div>
+                  ) : ratingsError ? (
+                    <div className="py-4 text-sm text-red-500">
+                      {ratingsError}
+                    </div>
+                  ) : (
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <div className="text-3xl font-extrabold text-gray-900">
+                          {avgRating.toFixed(1)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Average rating
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-gray-900">
+                          {reviewsCount}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Reviews received
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => navigate("/client/profile/reviews")}
+                    className="mt-5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                  >
+                    View Reviews & Ratings
+                  </button>
+                </div>
+
+                {/* Booking & Activity Summary below ratings */}
+                <div>
+                  <ClientStats />
+                </div>
               </div>
             </div>
           </div>

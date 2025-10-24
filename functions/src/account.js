@@ -182,6 +182,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
     isActive: true,
     reputationScore: 0,
     totalEarnings: 0,
+    isOnboarded: false, // Provider onboarding status for payment functionality
   };
 
   await userRef.set(newProfile);
@@ -246,7 +247,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
   }
 
   const principalId = auth.uid;
-  const {name, phone} = actualData;
+  const {name} = actualData;
 
   // Validate inputs if provided
   if (name !== undefined && !validateName(name)) {
@@ -254,22 +255,6 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
       "invalid-argument",
       `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
     );
-  }
-
-  if (phone !== undefined) {
-    if (!validatePhone(phone)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid phone format",
-      );
-    }
-
-    if (await isPhoneTaken(phone, principalId)) {
-      throw new functions.https.HttpsError(
-        "already-exists",
-        "Phone number is already registered",
-      );
-    }
   }
 
   // Get existing profile
@@ -291,10 +276,6 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
 
   if (name !== undefined) {
     updateData.name = name;
-  }
-
-  if (phone !== undefined) {
-    updateData.phone = phone;
   }
 
   await userRef.update(updateData);

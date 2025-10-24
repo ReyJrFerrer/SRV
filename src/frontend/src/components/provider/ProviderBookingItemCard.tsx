@@ -15,6 +15,8 @@ import {
   StarIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import ClientReputationScore from "./booking-details/ClientReputationScore";
+import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
@@ -152,6 +154,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
+  const clientId =
+    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
 
   console.log("From Provider Booking Item Card", booking);
 
@@ -412,6 +416,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+            {/* Reputation and Rating row above date/time */}
+            {clientId && (
+              <div className="mb-1 flex items-center gap-2">
+                <ClientReputationScore clientId={clientId} />
+                <ClientRatingSummary clientId={clientId} />
+              </div>
+            )}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               {formatDateRange(

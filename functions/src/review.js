@@ -998,3 +998,198 @@ exports.getServiceReviews = functions.https.onCall(async (data, _context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+/**
+ * Submit a provider review for a client
+ * This allows providers to rate clients after service completion
+ */
+exports.submitProviderReview = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data.data || data;
+  const {bookingId, rating, comment = ""} = payload;
+  console.log("Submit Provider Review Payload", payload);
+
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  // Input validation
+  if (!bookingId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Booking ID is required",
+    );
+  }
+
+  if (!isValidRating(rating)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Invalid rating. Must be between ${MIN_RATING} and ${MAX_RATING}`,
+    );
+  }
+
+  if (comment.length > MAX_COMMENT_LENGTH) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Comment too long. Maximum ${MAX_COMMENT_LENGTH} characters allowed`,
+    );
+  }
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      // Get the booking
+      const bookingRef = db.collection("bookings").doc(bookingId);
+      const bookingSnap = await transaction.get(bookingRef);
+
+      if (!bookingSnap.exists) {
+        throw new functions.https.HttpsError(
+          "not-found",
+          "Booking not found",
+        );
+      }
+
+      const booking = bookingSnap.data();
+
+      // Verify the authenticated user is the provider
+      if (booking.providerId !== authInfo.uid) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Only the service provider can review the client",
+        );
+      }
+
+      // Verify booking is completed
+      if (booking.status !== "Completed") {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Can only review completed bookings",
+        );
+      }
+
+      // Check if within review window
+      if (!isWithinReviewWindow(booking.completedDate)) {
+        throw new functions.https.HttpsError(
+          "deadline-exceeded",
+          `Review window has expired. Reviews must be submitted within 
+          ${REVIEW_WINDOW_DAYS} days of service completion`,
+        );
+      }
+
+      // Check if provider already reviewed this client for this booking
+      const existingReviewsSnap = await db
+        .collection("providerReviews")
+        .where("bookingId", "==", bookingId)
+        .where("providerId", "==", authInfo.uid)
+        .get();
+
+      if (!existingReviewsSnap.empty) {
+        throw new functions.https.HttpsError(
+          "already-exists",
+          "You have already reviewed this client for this booking",
+        );
+      }
+
+      // Create the provider review
+      const reviewId = generateId();
+      const now = new Date().toISOString();
+      const qualityScore = calculateQualityScore({rating, comment});
+
+      const providerReview = {
+        id: reviewId,
+        bookingId: bookingId,
+        clientId: booking.clientId, // Client being reviewed
+        providerId: authInfo.uid, // Provider doing the review
+        serviceId: booking.serviceId,
+        rating: rating,
+        comment: comment,
+        createdAt: now,
+        updatedAt: now,
+        status: "Visible",
+        qualityScore: qualityScore,
+        reviewType: "ProviderToClient", // Distinguish from client-to-provider reviews
+      };
+
+      // Save to providerReviews collection
+      const reviewRef = db.collection("providerReviews").doc(reviewId);
+      transaction.set(reviewRef, providerReview);
+
+      // Update booking to mark that provider has reviewed
+      transaction.update(bookingRef, {
+        providerReviewSubmitted: true,
+        updatedAt: now,
+      });
+
+      return {
+        success: true,
+        message: "Provider review submitted successfully",
+        data: providerReview,
+      };
+    });
+
+    // Process review for client reputation with AI sentiment analysis
+    console.log(
+      `🌟 [submitProviderReview] Processing provider review for ` +
+      `client reputation with AI`,
+    );
+    await processReviewForReputationInternal(result.data, true);
+    console.log(
+      `✅ [submitProviderReview] Provider review processed ` +
+      `for reputation successfully`,
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error in submitProviderReview:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get provider reviews for a specific client
+ * Shows what providers have said about a client
+ */
+exports.getClientProviderReviews = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data.data || data;
+  const {clientId, limit = 20, offset = 0} = payload;
+
+  if (!clientId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Client ID is required",
+    );
+  }
+
+  // Convert limit and offset to integers
+  const limitInt = parseInt(limit) || 20;
+  const offsetInt = parseInt(offset) || 0;
+
+  try {
+    const reviewsSnap = await db
+      .collection("providerReviews")
+      .where("clientId", "==", clientId)
+      .where("status", "==", "Visible")
+      .orderBy("createdAt", "desc")
+      .limit(limitInt)
+      .offset(offsetInt)
+      .get();
+
+    const reviews = [];
+    reviewsSnap.forEach((doc) => {
+      reviews.push(doc.data());
+    });
+
+    return {success: true, data: reviews};
+  } catch (error) {
+    console.error("Error in getClientProviderReviews:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});

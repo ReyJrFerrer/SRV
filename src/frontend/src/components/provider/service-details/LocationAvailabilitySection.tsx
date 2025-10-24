@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   MapPinIcon,
   CalendarDaysIcon,
   HomeIcon,
   PencilIcon,
 } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 import AvailabilityEditor, { WeeklyScheduleEntry } from "./AvailabilityEditor";
 import { formatTime } from "./timeUtils";
+import phLocations from "../../../data/ph_locations.json";
 
 interface Props {
   editLocationAvailability: boolean;
@@ -19,6 +20,7 @@ interface Props {
   setEditedState: (v: string) => void;
   editedWeeklySchedule: WeeklyScheduleEntry[];
   setEditedWeeklySchedule: (v: WeeklyScheduleEntry[]) => void;
+  savingLocationAvailability: boolean;
   onEdit: () => void;
   onCancel: () => void;
   onSave: () => void;
@@ -35,6 +37,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
   setEditedState,
   editedWeeklySchedule,
   setEditedWeeklySchedule,
+  savingLocationAvailability,
   onEdit,
   onCancel,
   onSave,
@@ -50,6 +53,48 @@ const LocationAvailabilitySection: React.FC<Props> = ({
     Saturday: 6,
   };
 
+  // State for managing city options based on selected province
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
+
+  // Update city options when province changes
+  useEffect(() => {
+    if (editedState) {
+      const provinceObj = phLocations.provinces.find(
+        (prov: any) => prov.name === editedState,
+      );
+      if (provinceObj) {
+        setCityOptions(provinceObj.municipalities.map((m: any) => m.name));
+      } else {
+        setCityOptions([]);
+      }
+    } else {
+      setCityOptions([]);
+    }
+  }, [editedState]);
+
+  // Initialize city options when entering edit mode
+  useEffect(() => {
+    if (editLocationAvailability && editedState) {
+      const provinceObj = phLocations.provinces.find(
+        (prov: any) => prov.name === editedState,
+      );
+      if (provinceObj) {
+        setCityOptions(provinceObj.municipalities.map((m: any) => m.name));
+      }
+    }
+  }, [editLocationAvailability, editedState]);
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const province = e.target.value;
+    setEditedState(province);
+    setEditedCity(""); // Reset city when province changes
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    setEditedCity(city);
+  };
+
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
       <div className="flex items-center justify-between border-b pb-3">
@@ -59,7 +104,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
         </h3>
         <Tooltip
           content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-          disabled={hasActiveBookings}
+          showWhenDisabled={hasActiveBookings}
         >
           <button
             onClick={hasActiveBookings ? undefined : onEdit}
@@ -72,32 +117,52 @@ const LocationAvailabilitySection: React.FC<Props> = ({
         </Tooltip>
       </div>
 
-      {editLocationAvailability ? (
+      {savingLocationAvailability ? (
+        // Skeleton UI when saving
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
+          <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
+          <div className="h-32 w-full rounded-lg bg-blue-200/50"></div>
+        </div>
+      ) : editLocationAvailability ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold text-blue-700">
-                City/Municipality
+                Province
+                <span className="ml-1 text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={editedCity}
-                onChange={(e) => setEditedCity(e.target.value)}
+              <select
+                value={editedState}
+                onChange={handleProvinceChange}
                 className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="City or Municipality"
-              />
+              >
+                <option value="">Select Province</option>
+                {phLocations.provinces.map((prov: any) => (
+                  <option key={prov.name} value={prov.name}>
+                    {prov.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-blue-700">
-                Province
+                City/Municipality
+                <span className="ml-1 text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={editedState}
-                onChange={(e) => setEditedState(e.target.value)}
-                className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Province"
-              />
+              <select
+                value={editedCity}
+                onChange={handleCityChange}
+                disabled={!editedState}
+                className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select City / Municipality</option>
+                {cityOptions.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div>
@@ -113,15 +178,20 @@ const LocationAvailabilitySection: React.FC<Props> = ({
           <div className="flex justify-end gap-2">
             <button
               onClick={onCancel}
-              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={savingLocationAvailability}
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={savingLocationAvailability}
             >
-              Save
+              {savingLocationAvailability && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              )}
+              {savingLocationAvailability ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

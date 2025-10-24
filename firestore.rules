@@ -33,9 +33,16 @@ service cloud.firestore {
     }
     // Messages can only be accessed by conversation participants or admins.
     match /messages/{messageId} {
-        allow read: if request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || request.auth.token.isAdmin == true;
-        allow create: if request.auth != null;
-        allow update: if request.auth.uid == resource.data.receiverId; // Only receiver can update (mark as read)
+        allow read: if request.auth != null && (
+          (resource.data.keys().hasAll(['senderId']) && request.auth.uid == resource.data.senderId) ||
+          (resource.data.keys().hasAll(['receiverId']) && request.auth.uid == resource.data.receiverId) ||
+          request.auth.token.isAdmin == true
+        );
+        allow create: if request.auth != null && 
+          request.resource.data.keys().hasAll(['senderId', 'receiverId', 'conversationId', 'content', 'createdAt']);
+        allow update: if request.auth != null && 
+          resource.data.keys().hasAll(['receiverId']) && 
+          request.auth.uid == resource.data.receiverId; // Only receiver can update (mark as read)
         allow delete: if false; // Messages cannot be deleted
     }
     // Notifications can only be read by the user they belong to or admins.

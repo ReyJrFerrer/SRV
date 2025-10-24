@@ -69,11 +69,24 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
+  // Helper: determine if a nav item should be considered active for current path
+  const isRouteActive = (label: string, to: string) => {
+    // Profile should be active only on exact '/client/profile', not on nested pages like '/client/profile/reviews'
+    if (label === "Profile") return location.pathname === to;
+    return location.pathname.startsWith(to);
+  };
+
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
     {
       to: "/client/booking",
       label: "Booking",
+      icon: null,
+      count: 0,
+    },
+    {
+      to: "/client/profile/reviews",
+      label: "Ratings",
       icon: null,
       count: 0,
     },
@@ -120,6 +133,7 @@ const BottomNavigation: React.FC = () => {
         default:
           path = `${basePath}.svg`;
       }
+
       // Encode to ensure spaces and special characters are handled in URLs
       return encodeURI(path);
     },
@@ -132,7 +146,7 @@ const BottomNavigation: React.FC = () => {
       const initialStates: Record<string, string> = {};
       // Include main nav items
       navItems.forEach((item) => {
-        const isActive = location.pathname.startsWith(item.to);
+        const isActive = isRouteActive(item.label, item.to);
         initialStates[item.label] = getIconSrc(
           item.label,
           isActive ? "selected" : "default",
@@ -140,7 +154,7 @@ const BottomNavigation: React.FC = () => {
       });
       // Include bottom settings item
       {
-        const isActive = location.pathname.startsWith(settingsItem.to);
+        const isActive = isRouteActive(settingsItem.label, settingsItem.to);
         initialStates[settingsItem.label] = getIconSrc(
           settingsItem.label,
           isActive ? "selected" : "default",
@@ -155,7 +169,7 @@ const BottomNavigation: React.FC = () => {
     const newStates: Record<string, string> = {};
     // Update main nav items
     navItems.forEach((item) => {
-      const isActive = location.pathname.startsWith(item.to);
+      const isActive = isRouteActive(item.label, item.to);
       newStates[item.label] = getIconSrc(
         item.label,
         isActive ? "selected" : "default",
@@ -163,7 +177,7 @@ const BottomNavigation: React.FC = () => {
     });
     // Update bottom settings item
     {
-      const isActive = location.pathname.startsWith(settingsItem.to);
+      const isActive = isRouteActive(settingsItem.label, settingsItem.to);
       newStates[settingsItem.label] = getIconSrc(
         settingsItem.label,
         isActive ? "selected" : "default",
@@ -195,49 +209,111 @@ const BottomNavigation: React.FC = () => {
       <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
         <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
           <div className="grid w-full grid-cols-5 font-medium">
-            {navItems.map((item) => {
-              // On mobile, show Settings instead of Profile
-              const displayItem =
-                item.label === "Profile" ? settingsItem : item;
-              const isActive = location.pathname.startsWith(displayItem.to);
-              if (
-                [
-                  "Home",
-                  "Booking",
-                  "Settings",
-                  "Notifications",
-                  "Chat",
-                ].includes(displayItem.label)
-              ) {
-                const handleMouseEnter = () => {
-                  if (!isActive) {
-                    setIconStates((prev) => ({
-                      ...prev,
-                      [displayItem.label]: getIconSrc(
-                        displayItem.label,
-                        "hover",
-                      ),
-                    }));
-                  }
-                };
+            {navItems
+              .filter((it) => it.label !== "Ratings")
+              .map((item) => {
+                // On mobile, show Settings instead of Profile
+                const displayItem =
+                  item.label === "Profile" ? settingsItem : item;
+                const isActive = isRouteActive(
+                  displayItem.label,
+                  displayItem.to,
+                );
+                if (
+                  [
+                    "Home",
+                    "Booking",
+                    "Settings",
+                    "Notifications",
+                    "Chat",
+                  ].includes(displayItem.label)
+                ) {
+                  const handleMouseEnter = () => {
+                    if (!isActive) {
+                      setIconStates((prev) => ({
+                        ...prev,
+                        [displayItem.label]: getIconSrc(
+                          displayItem.label,
+                          "hover",
+                        ),
+                      }));
+                    }
+                  };
 
-                const handleMouseLeave = () => {
-                  if (!isActive) {
-                    setIconStates((prev) => ({
-                      ...prev,
-                      [displayItem.label]: getIconSrc(
-                        displayItem.label,
-                        "default",
-                      ),
-                    }));
-                  }
-                };
+                  const handleMouseLeave = () => {
+                    if (!isActive) {
+                      setIconStates((prev) => ({
+                        ...prev,
+                        [displayItem.label]: getIconSrc(
+                          displayItem.label,
+                          "default",
+                        ),
+                      }));
+                    }
+                  };
 
+                  return (
+                    <Link
+                      key={displayItem.label}
+                      to={displayItem.to}
+                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                      onClick={(e) => {
+                        if (isActive) {
+                          e.preventDefault();
+                          setTimeout(() => {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }, 120);
+                        }
+                      }}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <div
+                        className={
+                          isActive
+                            ? "flex w-full flex-1 items-center justify-center"
+                            : "flex w-full items-center justify-center"
+                        }
+                      >
+                        <img
+                          src={iconStates[displayItem.label]}
+                          alt={displayItem.label}
+                          className={`transition-all duration-300 ease-in-out ${
+                            isActive
+                              ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
+                              : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
+                          }`}
+                          style={{
+                            margin: "0 auto",
+                            pointerEvents: "none",
+                          }}
+                          draggable={false}
+                        />
+                      </div>
+                      <span
+                        className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
+                          isActive
+                            ? "scale-105 font-bold text-blue-900"
+                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                        }`}
+                        style={{
+                          opacity: isActive ? 1 : 0.9,
+                          transform: isActive ? "scale(1.05)" : undefined,
+                        }}
+                      >
+                        {displayItem.label}
+                      </span>
+                      {item.count > 0 && (
+                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      )}
+                    </Link>
+                  );
+                }
                 return (
                   <Link
                     key={displayItem.label}
                     to={displayItem.to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                     onClick={(e) => {
                       if (isActive) {
                         e.preventDefault();
@@ -246,36 +322,12 @@ const BottomNavigation: React.FC = () => {
                         }, 120);
                       }
                     }}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
                   >
-                    <div
-                      className={
-                        isActive
-                          ? "flex w-full flex-1 items-center justify-center"
-                          : "flex w-full items-center justify-center"
-                      }
-                    >
-                      <img
-                        src={iconStates[displayItem.label]}
-                        alt={displayItem.label}
-                        className={`transition-all duration-300 ease-in-out ${
-                          isActive
-                            ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
-                            : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
-                        }`}
-                        style={{
-                          margin: "0 auto",
-                          pointerEvents: "none",
-                        }}
-                        draggable={false}
-                      />
-                    </div>
                     <span
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                         isActive
                           ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                          : "text-gray-500 group-hover:scale-105 group-hover:text-yellow-500"
                       }`}
                       style={{
                         opacity: isActive ? 1 : 0.9,
@@ -289,40 +341,7 @@ const BottomNavigation: React.FC = () => {
                     )}
                   </Link>
                 );
-              }
-              return (
-                <Link
-                  key={displayItem.label}
-                  to={displayItem.to}
-                  className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                  onClick={(e) => {
-                    if (isActive) {
-                      e.preventDefault();
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 120);
-                    }
-                  }}
-                >
-                  <span
-                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                      isActive
-                        ? "scale-105 font-bold text-blue-900"
-                        : "text-gray-500 group-hover:scale-105 group-hover:text-yellow-500"
-                    }`}
-                    style={{
-                      opacity: isActive ? 1 : 0.9,
-                      transform: isActive ? "scale(1.05)" : undefined,
-                    }}
-                  >
-                    {displayItem.label}
-                  </span>
-                  {item.count > 0 && (
-                    <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                  )}
-                </Link>
-              );
-            })}
+              })}
           </div>
         </nav>
       </div>
@@ -332,7 +351,7 @@ const BottomNavigation: React.FC = () => {
         {/* Top section: main nav items (Profile in place of Settings) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.to);
+            const isActive = isRouteActive(item.label, item.to);
             const handleMouseEnter = () => {
               if (!isActive) {
                 setIconStates((prev) => ({

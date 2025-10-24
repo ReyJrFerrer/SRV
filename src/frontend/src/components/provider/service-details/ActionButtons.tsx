@@ -4,7 +4,7 @@ import {
   LockOpenIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 
 interface Props {
   status: "Available" | "Unavailable" | string;
@@ -53,7 +53,7 @@ const ActionButtons: React.FC<Props> = ({
       </button>
       <Tooltip
         content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-        disabled={hasActiveBookings}
+        showWhenDisabled={hasActiveBookings}
       >
         <button
           onClick={hasActiveBookings ? undefined : onDeleteClick}

@@ -1,6 +1,6 @@
 import React from "react";
 import { BriefcaseIcon, PlusIcon } from "@heroicons/react/24/solid";
-import Tooltip from "./Tooltip";
+import Tooltip from "../../common/Tooltip";
 import { ServicePackage } from "../../../services/serviceCanisterService";
 
 interface Props {
@@ -42,6 +42,26 @@ const PackagesSection: React.FC<Props> = ({
   setPackageFormDescription,
   setPackageFormPrice,
 }) => {
+  const handlePriceInputChange = (value: string) => {
+    // Allow only numbers by stripping non-digit characters
+    let numericValue = value.replace(/[^0-9]/g, "");
+
+    // Prevent leading zeros, unless the value is "0" itself
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      numericValue = parseInt(numericValue, 10).toString();
+    }
+
+    // Prevent exceeding 1,000,000
+    if (parseInt(numericValue, 10) > 1000000) {
+      numericValue = "1000000";
+    }
+
+    // Handle empty or invalid parsing
+    if (numericValue === "NaN") {
+      numericValue = "";
+    }
+    setPackageFormPrice(numericValue);
+  };
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
       <div className="flex items-center justify-between border-b pb-3">
@@ -51,18 +71,32 @@ const PackagesSection: React.FC<Props> = ({
         </h3>
         {!isAddingOrEditingPackage && (
           <Tooltip
-            content={`Cannot add/edit packages with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-            disabled={hasActiveBookings}
+            content={
+              hasActiveBookings
+                ? `Cannot add packages with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`
+                : packages.length >= 5
+                  ? "Maximum of 5 packages reached."
+                  : "Add a new package"
+            }
+            showWhenDisabled={hasActiveBookings || packages.length >= 5}
           >
             <button
-              onClick={hasActiveBookings ? undefined : onAddPackage}
+              onClick={
+                hasActiveBookings || packages.length >= 5
+                  ? undefined
+                  : onAddPackage
+              }
               className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
-                hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                hasActiveBookings || packages.length >= 5
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
-              disabled={hasActiveBookings}
+              disabled={hasActiveBookings || packages.length >= 5}
             >
               <PlusIcon className="mr-1 h-4 w-4" />
-              <span className="hidden sm:inline">Add Package</span>
+              <span className="hidden sm:inline">
+                {packages.length >= 5 ? "Limit Reached" : "Add Package"}
+              </span>
             </button>
           </Tooltip>
         )}
@@ -74,84 +108,96 @@ const PackagesSection: React.FC<Props> = ({
             <h4 className="mb-3 text-lg font-semibold text-blue-800">
               {currentPackageId ? "Edit Package" : "Add New Package"}
             </h4>
-            <div className="space-y-3">
-              <div>
-                <label
-                  htmlFor="packageTitle"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="packageTitle"
-                  value={packageFormTitle}
-                  onChange={(e) => setPackageFormTitle(e.target.value)}
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., Basic Cleaning, Premium Tune-up"
-                  required
-                  disabled={packageFormLoading}
-                />
+            {packageFormLoading ? (
+              // Skeleton UI when saving package
+              <div className="animate-pulse space-y-3">
+                <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
+                <div className="h-24 w-full rounded-lg bg-blue-200/50"></div>
+                <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
               </div>
-              <div>
-                <label
-                  htmlFor="packageDescription"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="packageDescription"
-                  value={packageFormDescription}
-                  onChange={(e) => setPackageFormDescription(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Brief description of what's included in this package"
-                  required
-                  disabled={packageFormLoading}
-                ></textarea>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="packageTitle"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="packageTitle"
+                    value={packageFormTitle}
+                    onChange={(e) => setPackageFormTitle(e.target.value)}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="e.g., Basic Cleaning, Premium Tune-up"
+                    required
+                    maxLength={40}
+                    disabled={packageFormLoading}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="packageDescription"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="packageDescription"
+                    value={packageFormDescription}
+                    onChange={(e) => setPackageFormDescription(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Brief description of what's included in this package"
+                    required
+                    maxLength={100}
+                    disabled={packageFormLoading}
+                  ></textarea>
+                </div>
+                <div>
+                  <label
+                    htmlFor="packagePrice"
+                    className="mb-1 block text-sm font-medium text-blue-700"
+                  >
+                    Price (₱)
+                  </label>
+                  <input
+                    type="text"
+                    id="packagePrice"
+                    value={packageFormPrice}
+                    onChange={(e) => handlePriceInputChange(e.target.value)}
+                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="e.g., 500.00"
+                    required
+                    disabled={packageFormLoading}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={onCancelPackageEdit}
+                    className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                    disabled={packageFormLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onSavePackage}
+                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    disabled={packageFormLoading}
+                  >
+                    {packageFormLoading && (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    )}
+                    {packageFormLoading
+                      ? "Saving..."
+                      : currentPackageId
+                        ? "Update Package"
+                        : "Create Package"}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="packagePrice"
-                  className="mb-1 block text-sm font-medium text-blue-700"
-                >
-                  Price (₱)
-                </label>
-                <input
-                  type="number"
-                  id="packagePrice"
-                  value={packageFormPrice}
-                  onChange={(e) => setPackageFormPrice(e.target.value)}
-                  min="0.01"
-                  step="0.01"
-                  className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., 500.00"
-                  required
-                  disabled={packageFormLoading}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={onCancelPackageEdit}
-                  className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-                  disabled={packageFormLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={onSavePackage}
-                  className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                  disabled={packageFormLoading}
-                >
-                  {packageFormLoading
-                    ? "Saving..."
-                    : currentPackageId
-                      ? "Update Package"
-                      : "Create Package"}
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -185,34 +231,55 @@ const PackagesSection: React.FC<Props> = ({
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() =>
-                      hasActiveBookings ? undefined : onEditPackage(pkg)
-                    }
-                    className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                      hasActiveBookings || isAddingOrEditingPackage
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
-                    }`}
-                    aria-label={`Edit ${pkg.title}`}
-                    disabled={hasActiveBookings || isAddingOrEditingPackage}
+                  <Tooltip
+                    content="Cannot edit when another package form is open."
+                    showWhenDisabled={isAddingOrEditingPackage}
                   >
-                    Edit Package
-                  </button>
-                  <button
-                    onClick={() =>
-                      hasActiveBookings ? undefined : onDeletePackage(pkg.id)
-                    }
-                    className={`rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                      hasActiveBookings || isAddingOrEditingPackage
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                    }`}
-                    aria-label={`Delete ${pkg.title}`}
-                    disabled={hasActiveBookings || isAddingOrEditingPackage}
+                    <button
+                      onClick={() =>
+                        hasActiveBookings ? undefined : onEditPackage(pkg)
+                      }
+                      className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                        hasActiveBookings || isAddingOrEditingPackage
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                      }`}
+                      aria-label={`Edit ${pkg.title}`}
+                      disabled={hasActiveBookings || isAddingOrEditingPackage}
+                    >
+                      Edit Package
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    content="A service must have at least one package."
+                    showWhenDisabled={packages.length <= 1}
                   >
-                    Delete
-                  </button>
+                    {/* The Tooltip needs a div wrapper for disabled buttons to work correctly */}
+                    <div className="flex-1">
+                      <button
+                        onClick={() =>
+                          hasActiveBookings || packages.length <= 1
+                            ? undefined
+                            : onDeletePackage(pkg.id)
+                        }
+                        className={`w-full rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                          hasActiveBookings ||
+                          isAddingOrEditingPackage ||
+                          packages.length <= 1
+                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                            : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                        }`}
+                        aria-label={`Delete ${pkg.title}`}
+                        disabled={
+                          hasActiveBookings ||
+                          isAddingOrEditingPackage ||
+                          packages.length <= 1
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </Tooltip>
                 </div>
               </div>
             ))

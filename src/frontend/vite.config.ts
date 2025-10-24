@@ -76,6 +76,22 @@ export default defineConfig({
     tailwindcss(),
     environment("all", { prefix: "CANISTER_" }),
     environment("all", { prefix: "DFX_" }),
+    {
+      name: "configure-service-worker",
+      configureServer(server) {
+        // Serve service workers with correct MIME type
+        server.middlewares.use((req, res, next) => {
+          if (req.url === "/sw.js" || req.url === "/firebase-messaging-sw.js") {
+            res.setHeader(
+              "Content-Type",
+              "application/javascript; charset=utf-8",
+            );
+            res.setHeader("Service-Worker-Allowed", "/");
+          }
+          next();
+        });
+      },
+    },
   ],
   resolve: {
     alias: [
