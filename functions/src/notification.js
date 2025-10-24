@@ -822,15 +822,55 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
 
   try {
     console.log(`📝 [storeFCMToken] Storing FCM token for user ${authInfo.uid}...`);
-    await db.collection("users").doc(authInfo.uid).update({
-      fcmToken,
-      fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
-    });
+
+    const userRef = db.collection("users").doc(authInfo.uid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      // User document doesn't exist, create it with the token
+      console.log(`📝 [storeFCMToken] Creating user document with FCM token...`);
+      await userRef.set({
+        fcmToken,
+        fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+      }, {merge: true});
+    } else {
+      // User document exists, check if token is different
+      const existingToken = userDoc.data().fcmToken;
+
+      if (existingToken === fcmToken) {
+        console.log(`📝 [storeFCMToken] Token unchanged, skipping update.`);
+        return {success: true, message: "Token already registered"};
+      }
+
+      // Token is different, update it
+      console.log(`📝 [storeFCMToken] Updating FCM token (old token will be replaced)...`);
+      await userRef.update({
+        fcmToken,
+        fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+      });
+    }
 
     console.log("✅ [storeFCMToken] Function finished successfully.");
     return {success: true};
   } catch (error) {
     console.error("Error in storeFCMToken:", error);
+
+    // Handle specific Firestore errors
+    if (error.code === "not-found") {
+      // Document doesn't exist, create it
+      try {
+        await db.collection("users").doc(authInfo.uid).set({
+          fcmToken,
+          fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        console.log("✅ [storeFCMToken] Created user document with token.");
+        return {success: true};
+      } catch (createError) {
+        console.error("Error creating user document:", createError);
+        throw new functions.https.HttpsError("internal", createError.message);
+      }
+    }
+
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -855,6 +895,16 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
 
   try {
     console.log(`📝 [removeFCMToken] Removing FCM token for user ${authInfo.uid}...`);
+
+    // Check if document exists first
+    const userDoc = await db.collection("users").doc(authInfo.uid).get();
+
+    if (!userDoc.exists) {
+      console.log("⚠️ [removeFCMToken] User document doesn't exist, nothing to remove.");
+      return {success: true, message: "No token to remove"};
+    }
+
+    // Only update if document exists
     await db.collection("users").doc(authInfo.uid).update({
       fcmToken: FieldValue.delete(),
       fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
@@ -864,6 +914,13 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
     return {success: true};
   } catch (error) {
     console.error("Error in removeFCMToken:", error);
+
+    // Handle NOT_FOUND error gracefully
+    if (error.code === 5 || error.code === "not-found") {
+      console.log("⚠️ [removeFCMToken] Document not found, treating as success.");
+      return {success: true, message: "No token to remove"};
+    }
+
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

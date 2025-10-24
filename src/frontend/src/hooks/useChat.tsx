@@ -131,44 +131,48 @@ export const useChat = () => {
   /**
    * Adapt backend message format to frontend format
    */
-  const adaptBackendMessage = useCallback((backendMessage: any): FrontendMessage => {
-    const getMessageType = (type: any): "Text" | "File" => {
-      if (type?.Text !== undefined) return "Text";
-      if (type?.File !== undefined) return "File";
-      return "Text";
-    };
+  const adaptBackendMessage = useCallback(
+    (backendMessage: any): FrontendMessage => {
+      const getMessageType = (type: any): "Text" | "File" => {
+        if (type?.Text !== undefined) return "Text";
+        if (type?.File !== undefined) return "File";
+        return "Text";
+      };
 
-    const getMessageStatus = (status: any): "Sent" | "Delivered" | "Read" => {
-      if (status?.Sent !== undefined) return "Sent";
-      if (status?.Delivered !== undefined) return "Delivered";
-      if (status?.Read !== undefined) return "Read";
-      return "Sent";
-    };
+      const getMessageStatus = (status: any): "Sent" | "Delivered" | "Read" => {
+        if (status?.Sent !== undefined) return "Sent";
+        if (status?.Delivered !== undefined) return "Delivered";
+        if (status?.Read !== undefined) return "Read";
+        return "Sent";
+      };
 
-    return {
-      id: backendMessage.id,
-      conversationId: backendMessage.conversationId,
-      senderId: backendMessage.senderId,
-      receiverId: backendMessage.receiverId,
-      messageType: getMessageType(backendMessage.messageType),
-      content: backendMessage.content?.encryptedText || backendMessage.content,
-      attachment:
-        backendMessage.attachment && backendMessage.attachment.length > 0
-          ? {
-              fileName: backendMessage.attachment[0].fileName,
-              fileSize: Number(backendMessage.attachment[0].fileSize),
-              fileType: backendMessage.attachment[0].fileType,
-              fileUrl: backendMessage.attachment[0].fileUrl,
-            }
-          : undefined,
-      status: getMessageStatus(backendMessage.status),
-      createdAt: backendMessage.createdAt,
-      readAt:
-        backendMessage.readAt && backendMessage.readAt.length > 0
-          ? backendMessage.readAt[0]
-          : undefined,
-    };
-  }, []);
+      return {
+        id: backendMessage.id,
+        conversationId: backendMessage.conversationId,
+        senderId: backendMessage.senderId,
+        receiverId: backendMessage.receiverId,
+        messageType: getMessageType(backendMessage.messageType),
+        content:
+          backendMessage.content?.encryptedText || backendMessage.content,
+        attachment:
+          backendMessage.attachment && backendMessage.attachment.length > 0
+            ? {
+                fileName: backendMessage.attachment[0].fileName,
+                fileSize: Number(backendMessage.attachment[0].fileSize),
+                fileType: backendMessage.attachment[0].fileType,
+                fileUrl: backendMessage.attachment[0].fileUrl,
+              }
+            : undefined,
+        status: getMessageStatus(backendMessage.status),
+        createdAt: backendMessage.createdAt,
+        readAt:
+          backendMessage.readAt && backendMessage.readAt.length > 0
+            ? backendMessage.readAt[0]
+            : undefined,
+      };
+    },
+    [],
+  );
 
   /**
    * Setup real-time listener for conversations
@@ -189,22 +193,26 @@ export const useChat = () => {
     setLoading(true);
     setError(null);
 
-    conversationsUnsubscribe.current = chatCanisterService.subscribeToConversationSummaries(
-      userId,
-      async (summaries) => {
-        console.log(`✅ [useChat] Real-time update: ${summaries.length} conversations`);
-        
-        // Enhance conversations with user names
-        const enhancedConversations = await enhanceConversationsWithNames(summaries);
-        setConversations(enhancedConversations);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("❌ [useChat] Error in conversations listener:", error);
-        setError("Could not load conversations.");
-        setLoading(false);
-      },
-    );
+    conversationsUnsubscribe.current =
+      chatCanisterService.subscribeToConversationSummaries(
+        userId,
+        async (summaries) => {
+          console.log(
+            `✅ [useChat] Real-time update: ${summaries.length} conversations`,
+          );
+
+          // Enhance conversations with user names
+          const enhancedConversations =
+            await enhanceConversationsWithNames(summaries);
+          setConversations(enhancedConversations);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("❌ [useChat] Error in conversations listener:", error);
+          setError("Could not load conversations.");
+          setLoading(false);
+        },
+      );
   }, [isAuthenticated, identity, enhanceConversationsWithNames]);
 
   /**
@@ -254,22 +262,22 @@ export const useChat = () => {
       setError(null);
 
       try {
-        // Fetch conversation details
-        const conversation =
-          await chatCanisterService.getConversation(conversationId);
-        setCurrentConversation(conversation);
-
         // Cleanup existing messages listener
         if (messagesUnsubscribe.current) {
           messagesUnsubscribe.current();
         }
 
         // Setup real-time listener for messages
-        console.log("🔔 [useChat] Setting up messages listener for:", conversationId);
+        console.log(
+          "🔔 [useChat] Setting up messages listener for:",
+          conversationId,
+        );
         messagesUnsubscribe.current = chatCanisterService.subscribeToMessages(
           conversationId,
           (rawMessages) => {
-            console.log(`✅ [useChat] Real-time update: ${rawMessages.length} messages`);
+            console.log(
+              `✅ [useChat] Real-time update: ${rawMessages.length} messages`,
+            );
             // Adapt messages to frontend format
             const adaptedMessages = rawMessages.map(adaptBackendMessage);
             setMessages(adaptedMessages);
@@ -281,6 +289,11 @@ export const useChat = () => {
             setLoading(false);
           },
         );
+
+        // Fetch conversation details after setting up listener
+        const conversation =
+          await chatCanisterService.getConversation(conversationId);
+        setCurrentConversation(conversation);
 
         // Mark messages as read
         await chatCanisterService.markMessagesAsRead(conversationId);
@@ -458,7 +471,13 @@ export const useChat = () => {
     return () => {
       cleanupListeners();
     };
-  }, [isAuthenticated, identity, setupConversationsListener, cleanupListeners, clearCurrentConversation]);
+  }, [
+    isAuthenticated,
+    identity,
+    setupConversationsListener,
+    cleanupListeners,
+    clearCurrentConversation,
+  ]);
 
   return {
     // State

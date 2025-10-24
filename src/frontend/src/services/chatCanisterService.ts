@@ -613,7 +613,10 @@ export const chatCanisterService = {
 
       const unsubscribe = onSnapshot(lastMessageQuery, (snapshot) => {
         if (!snapshot.empty) {
-          const lastMessage = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+          const lastMessage = {
+            id: snapshot.docs[0].id,
+            ...snapshot.docs[0].data(),
+          };
           lastMessageMap.set(conversationId, lastMessage);
         } else {
           lastMessageMap.delete(conversationId);
