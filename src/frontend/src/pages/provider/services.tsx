@@ -142,7 +142,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors  ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors  ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -161,17 +161,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               updatingId === service.id || hasActiveBookings(service.id)
             }
           >
-            {isActive ? (
-              <>
-                <LockClosedIcon className="h-5 w-5" />
-                <h5 className="text-md">Deactivate</h5>
-              </>
-            ) : (
-              <>
-                <LockOpenIcon className="h-6 w-6" />
-                <h5 className="text-md">Activate</h5>
-              </>
-            )}
+
+              {isActive ? (
+                <>
+                  <LockClosedIcon className="h-5 w-5" />
+                  <h5 className="text-lg">Deactivate</h5>
+                </>
+              ) : (
+                <>
+                  <LockOpenIcon className="h-5 w-5" />
+                 <h5 className="text-lg">Activate</h5>
+                </>
+              )}
+           
           </button>
         </Tooltip>
 
@@ -183,7 +185,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600 ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -199,7 +201,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             }
           >
             <TrashIcon className="h-5 w-5" />
-            Delete
+            <h5 className="text-lg">Delete</h5>
           </button>
         </Tooltip>
       </div>

@@ -284,7 +284,10 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   )}
 
                   <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-                    <h4 className="mb-0 w-full break-words text-center text-lg font-bold text-blue-900 line-clamp-2" style={{ wordBreak: 'break-word' }}>
+                    <h4
+                      className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
+                      style={{ wordBreak: "break-word" }}
+                    >
                       {service.title}
                     </h4>
                     <div className="flex items-center justify-center gap-2">
