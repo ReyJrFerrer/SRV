@@ -56,7 +56,7 @@ const CancelWithReasonButton: React.FC<CancelWithReasonButtonProps> = ({
           setOpen(true);
         }}
       >
-  {buttonText}
+        {buttonText}
       </button>
       {open && (
         <div
@@ -69,7 +69,9 @@ const CancelWithReasonButton: React.FC<CancelWithReasonButtonProps> = ({
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="mb-2 text-lg font-bold text-red-700">{confirmTitle}</h3>
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              {confirmTitle}
+            </h3>
             <p className="mb-3 text-sm text-gray-700">{confirmDescription}</p>
             <label
               htmlFor="cancel-reason"

@@ -73,7 +73,7 @@ const ConversationPage: React.FC = () => {
   useEffect(() => {
     const conversationId = location.state?.conversationId || providerId;
     if (conversationId && identity) {
-  loadConversation(conversationId);
+      loadConversation(conversationId);
     }
   }, [providerId, location.state?.conversationId, identity, loadConversation]);
 

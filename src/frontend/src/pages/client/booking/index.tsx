@@ -185,7 +185,7 @@ const MyBookingsPage: React.FC = () => {
   };
 
   const handleCancelBookingOnListPage = async (bookingId: string) => {
-  await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
+    await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
   };
 
   // Cancellation confirmation UI moved into reusable button inside the card
@@ -336,7 +336,7 @@ const MyBookingsPage: React.FC = () => {
         </div>
       </div>
 
-  {/* Cancel dialog handled at card-level via CancelWithReasonButton */}
+      {/* Cancel dialog handled at card-level via CancelWithReasonButton */}
 
       <Toaster position="top-center" richColors />
     </>

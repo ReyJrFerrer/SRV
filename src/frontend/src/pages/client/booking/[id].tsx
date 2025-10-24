@@ -759,7 +759,7 @@ const BookingDetailsPage: React.FC = () => {
         <BottomNavigation />
       </div>
 
-  {/* Cancel dialog handled via CancelWithReasonButton */}
+      {/* Cancel dialog handled via CancelWithReasonButton */}
 
       <Toaster position="top-center" richColors />
     </div>

@@ -115,9 +115,9 @@ const ActiveServicePage: React.FC = () => {
         toast.error("Failed to submit complaint to admin.");
         return;
       }
-  // Actually cancel the booking
-  await bookingCanisterService.cancelBooking(booking.id);
-  toast.success("Complaint filed and booking cancelled.");
+      // Actually cancel the booking
+      await bookingCanisterService.cancelBooking(booking.id);
+      toast.success("Complaint filed and booking cancelled.");
       navigate("/provider/bookings");
     } catch (err) {
       toast.error("Unable to cancel active service. Please try again.");

@@ -434,9 +434,11 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             {canCancel && (
               <CancelWithReasonButton
                 buttonText={
-                  <span className="flex items-center">
-                    <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
-                  </span> as unknown as string
+                  (
+                    <span className="flex items-center">
+                      <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
+                    </span>
+                  ) as unknown as string
                 }
                 className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
                 onSubmit={handleCancel}
@@ -492,7 +494,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         </div>
       </div>
 
-  {/* Cancel modal handled by reusable component */}
+      {/* Cancel modal handled by reusable component */}
     </Link>
   );
 };

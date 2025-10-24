@@ -698,7 +698,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         clientName={specificBooking?.clientName || "this client"}
         isDeclinining={isDeclinining}
         onCancel={() => setShowDeclineConfirm(false)}
-  onConfirm={handleConfirmDecline}
+        onConfirm={handleConfirmDecline}
       />
 
       {/* Header */}

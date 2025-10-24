@@ -50,7 +50,7 @@ const ConversationPage: React.FC = () => {
     const conversationId = location.state?.conversationId || clientId;
     if (conversationId && identity) {
       // Use non-silent load for initial conversation loading
-  loadConversation(conversationId);
+      loadConversation(conversationId);
     }
   }, [clientId, location.state?.conversationId, identity, loadConversation]);
 

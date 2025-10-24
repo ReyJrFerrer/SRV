@@ -323,14 +323,18 @@ const ReportIssuePage: React.FC = () => {
                 </div>
               )}
               {uploading && (
-                <div className="mt-3 text-sm text-yellow-700">Uploading screenshots...</div>
+                <div className="mt-3 text-sm text-yellow-700">
+                  Uploading screenshots...
+                </div>
               )}
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={!title.trim() || !description.trim() || submitting || uploading}
+            disabled={
+              !title.trim() || !description.trim() || submitting || uploading
+            }
             className="w-full rounded-lg bg-yellow-200 px-6 py-3 text-lg font-semibold text-black shadow transition-colors hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting || uploading ? "Submitting..." : "Submit Report"}
