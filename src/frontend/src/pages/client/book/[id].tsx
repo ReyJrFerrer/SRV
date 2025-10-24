@@ -1159,7 +1159,7 @@ const BookingPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <StickyConfirmBar 
+          <StickyConfirmBar
             formError={formError}
             isSubmitting={isSubmitting}
             onConfirm={handleConfirmBooking}
