@@ -26,6 +26,7 @@ import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../../context/AuthContext"; // Import auth context
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
 // Reputation Score Component (from ServiceDetailPageComponent.tsx)
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -199,8 +200,7 @@ const BookingDetailsPage: React.FC = () => {
   const { identity } = useAuth();
   const { conversations, loading: chatLoading, createConversation } = useChat(); // Add the useChat hook
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  // Cancel dialog is handled via reusable component
 
   // Commission validation hook and state
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -216,7 +216,6 @@ const BookingDetailsPage: React.FC = () => {
     loading: hookLoading,
     refreshBookings,
     clearError,
-    isOperationInProgress,
   } = useBookingManagement();
 
   // Call useUserImage hook early to avoid conditional hook calls
@@ -335,26 +334,10 @@ const BookingDetailsPage: React.FC = () => {
     refreshBookings();
   };
 
-  const handleCancelBooking = async () => {
+  const handleCancelWithReason = async (_reason: string) => {
     if (!specificBooking) return;
-    // Show confirmation dialog instead of alert
-    setShowCancelConfirm(true);
-  };
-
-  // New function to handle the actual cancellation after confirmation
-  const handleConfirmCancellation = async () => {
-    if (!specificBooking) return;
-
-    setIsCancelling(true);
-    try {
-      await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
-      toast.success("Booking has been cancelled.");
-      setShowCancelConfirm(false);
-    } catch (error) {
-      toast.error("Failed to cancel booking. Please try again.");
-    } finally {
-      setIsCancelling(false);
-    }
+    await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
+    toast.success("Booking has been cancelled.");
   };
 
   const handleChatWithProvider = async () => {
@@ -735,16 +718,20 @@ const BookingDetailsPage: React.FC = () => {
           </button>
 
           {canCancel && (
-            <button
-              onClick={handleCancelBooking}
-              disabled={isOperationInProgress(`update-${id}`)}
+            <CancelWithReasonButton
+              buttonText={
+                <span className="flex items-center">
+                  <XCircleIcon className="mr-2 h-5 w-5" /> Cancel
+                </span>
+              }
               className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
-            >
-              <XCircleIcon className="mr-2 h-5 w-5" />
-              {isOperationInProgress(`update-${id}`)
-                ? "Cancelling..."
-                : "Cancel"}
-            </button>
+              onSubmit={handleCancelWithReason}
+              confirmTitle="Cancel Booking?"
+              confirmDescription="Please let us know why you're cancelling this booking."
+              textareaLabel="Reason for cancellation"
+              submitText="Submit"
+              cancelText="Cancel"
+            />
           )}
 
           {reviewButtonContent &&
@@ -772,36 +759,7 @@ const BookingDetailsPage: React.FC = () => {
         <BottomNavigation />
       </div>
 
-      {/* Cancel Booking Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Cancel Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone and you may be charged a cancellation fee.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={isCancelling}
-              >
-                Keep Booking
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmCancellation}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Cancel Booking"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  {/* Cancel dialog handled via CancelWithReasonButton */}
 
       <Toaster position="top-center" richColors />
     </div>

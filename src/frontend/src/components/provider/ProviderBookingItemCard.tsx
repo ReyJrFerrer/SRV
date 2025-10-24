@@ -12,7 +12,6 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   ArrowPathIcon,
-  StarIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import ClientReputationScore from "./booking-details/ClientReputationScore";
@@ -21,6 +20,9 @@ import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useEffect, useState, MouseEvent } from "react";
+import CancelWithReasonButton from "../common/CancelWithReasonButton";
+import { bookingCanisterService } from "../../services/bookingCanisterService";
+import { toast } from "sonner";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -47,6 +49,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+  const [declineReason, setDeclineReason] = useState<string>("");
+  const [declineError, setDeclineError] = useState<string | null>(null);
 
   // State for complete confirmation dialog
   const [showCompleteConfirm, setShowCompleteConfirm] =
@@ -265,11 +269,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // New function to handle the actual decline after confirmation
   const handleConfirmDecline = async () => {
+    if (!declineReason.trim()) {
+      setDeclineError("Please provide a reason for declining.");
+      return;
+    }
     setIsDeclinining(true);
     try {
       const success = await declineBookingById(
         booking.id,
-        "Declined by provider",
+        declineReason.trim(),
       );
       if (success) {
         navigate(`../../provider/home`);
@@ -277,6 +285,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     } finally {
       setIsDeclinining(false);
       setShowDeclineConfirm(false);
+      setDeclineReason("");
+      setDeclineError(null);
     }
   };
 
@@ -285,6 +295,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.stopPropagation();
     // Show the confirmation dialog instead of window.confirm
     setShowCompleteConfirm(true);
+  };
+
+  // Provider-side cancel for accepted/confirmed bookings
+  const handleCancelAccepted = async (_reason: string) => {
+    try {
+      await bookingCanisterService.cancelBooking(booking.id);
+      toast.success("Booking has been cancelled.");
+      navigate(`/provider/bookings`);
+    } catch (error) {
+      toast.error("Failed to cancel booking. Please try again.");
+      throw error;
+    }
   };
 
   // New function to handle the actual completion after confirmation
@@ -366,6 +388,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const canComplete = booking.canComplete;
   const isCompleted = status === "Completed";
   const isInProgress = status === "InProgress";
+  const isAccepted = status === "Accepted";
 
   // --- Helper: Check if booking is scheduled for a future date ---
   const isScheduledForFuture = (() => {
@@ -508,7 +531,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               </button>
             </div>
           )}
-          {(canStart || canComplete || isCompleted) && (
+          {(canStart || canComplete || isCompleted || isAccepted || isInProgress) && (
             <div className="flex w-full flex-wrap gap-2">
               <button
                 onClick={handleChatClient}
@@ -553,17 +576,33 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     : "Mark Completed"}
                 </button>
               )}
-              {isCompleted && (
+              {/* Cancel button additions */}
+              {isAccepted && (
+                <CancelWithReasonButton
+                  buttonText={
+                    <span className="flex items-center">
+                      <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
+                    </span>
+                  }
+                  className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
+                  confirmTitle="Cancel Booking?"
+                  confirmDescription="Please provide a reason for cancelling this booking."
+                  textareaLabel="Reason for cancellation"
+                  submitText="Submit"
+                  cancelText="Back"
+                  onSubmit={handleCancelAccepted}
+                />
+              )}
+              {isInProgress && (
                 <button
-                  type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    navigate(`/provider/review/${booking?.id}`);
+                    navigate(`/provider/active-service/${booking.id}`);
                   }}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+                  className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700"
                 >
-                  <StarIcon className="mr-1 h-4 w-4" />
-                  View My Reviews
+                  <XCircleIcon className="mr-1 h-4 w-4" /> Cancel Service
                 </button>
               )}
             </div>
@@ -578,30 +617,47 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     <>
       {/* Decline Confirmation Dialog */}
       {showDeclineConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Decline Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to decline this booking from{" "}
-              <b>{clientName}</b>? This action cannot be undone and the client
-              will be notified.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">Decline Booking?</h3>
+            <p className="mb-3 text-sm text-gray-700">
+              Please provide a brief reason for declining this booking from <b>{clientName}</b>.
             </p>
-            <div className="flex gap-2">
+            <label htmlFor="decline-reason" className="mb-1 block text-sm font-semibold text-gray-700">Reason for declining</label>
+            <textarea
+              id="decline-reason"
+              className="mb-1 min-h-[96px] w-full resize-none rounded-lg border border-gray-300 p-3 text-sm shadow focus:outline-none focus:ring-2 focus:ring-red-400"
+              value={declineReason}
+              onChange={(e) => {
+                setDeclineReason(e.target.value);
+                if (declineError) setDeclineError(null);
+              }}
+              maxLength={500}
+              placeholder="Type your reason here (required)"
+              disabled={isDeclinining}
+            />
+            <div className="mb-3 text-right text-xs text-gray-500">{declineReason.length}/500</div>
+            {declineError && (
+              <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{declineError}</div>
+            )}
+            <div className="mt-2 flex gap-2">
               <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowDeclineConfirm(false)}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60"
+                onClick={() => {
+                  setShowDeclineConfirm(false);
+                  setDeclineReason("");
+                  setDeclineError(null);
+                }}
                 disabled={isDeclinining}
               >
                 Cancel
               </button>
               <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
                 onClick={handleConfirmDecline}
                 disabled={isDeclinining}
               >
-                {isDeclinining ? "Declining..." : "Decline"}
+                {isDeclinining ? "Submitting..." : "Submit"}
               </button>
             </div>
           </div>
