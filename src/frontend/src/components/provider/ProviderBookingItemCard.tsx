@@ -323,13 +323,20 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // Navigate to directions page first; actual start initiated from there
-  const handleStartService = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // commented for debugging
-    // navigate(`/provider/directions/${booking.id}`);
-    startBookingById(booking.id);
-    navigate(`/provider/active-service/${booking.id}`);
+   const handleStartService = async () => {
+    if (!booking) return;
+
+    // Check the locationDetection flag
+    const locationDetection = (booking as any).locationDetection;
+
+    if (locationDetection === "automatic") {
+      // If location was detected automatically (via GPS/maps), navigate to directions page
+      navigate(`/provider/directions/${booking.id}`);
+    } else {
+      // If location was manually entered, start the booking directly
+      startBookingById(booking.id);
+      navigate(`/provider/active-service/${booking.id}`);
+    }
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---
@@ -730,3 +737,4 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 };
 
 export default ProviderBookingItemCard;
+
