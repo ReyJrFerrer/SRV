@@ -15,6 +15,7 @@ import {
 } from "../../../services/firebase";
 import { useAuth } from "../../../context/AuthContext";
 import { useLocationStore } from "../../../store/locationStore";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import PaymentSection from "../../../components/client/booking/PaymentSection";
 import PackagesSection from "../../../components/client/booking/PackagesSection";
 import ScheduleSection from "../../../components/client/booking/ScheduleSection";
@@ -1042,8 +1043,24 @@ const BookingPage: React.FC = () => {
           .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) { background-color: #dbeafe; color: #1e40af; }
           .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
         `}</style>
+          <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+            <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6">
+              <button
+                onClick={() => navigate(-1)}
+                className="mr-4 flex-shrink-0 text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+              </button>
+              <div className="flex-grow lg:hidden"></div>
+              <h1 className="flex-grow text-2xl font-extrabold tracking-tight text-black sm:text-left">
+                Book Service
+              </h1>
+              <div className="flex-grow lg:hidden"></div>
+              <div className="hidden lg:flex-grow"></div>
+            </div>
+          </header>
           <div className="flex-grow pb-2 md:pb-28">
-            <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
+            <div className="mx-auto max-w-5xl px-2 py-20 md:px-0">
               <div className="md:flex md:gap-x-8">
                 <div className="space-y-6 md:w-1/2">
                   <PackagesSection
@@ -1149,21 +1166,24 @@ const BookingPage: React.FC = () => {
                       />
                     </div>
                   </div>
-
-                  <NotesSection
-                    notes={notes}
-                    onChange={handleNotesChange}
-                    limit={NOTES_CHAR_LIMIT}
+                  <div className="mb-6">
+                    <NotesSection
+                      notes={notes}
+                      onChange={handleNotesChange}
+                      limit={NOTES_CHAR_LIMIT}
+                    />
+                  </div>
+                </div>
+                <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
+                  <StickyConfirmBar
+                    formError={formError}
+                    isSubmitting={isSubmitting}
+                    onConfirm={handleConfirmBooking}
                   />
                 </div>
               </div>
             </div>
           </div>
-          <StickyConfirmBar
-            formError={formError}
-            isSubmitting={isSubmitting}
-            onConfirm={handleConfirmBooking}
-          />
         </div>
       </main>
     </div>

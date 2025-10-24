@@ -400,14 +400,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // --- Reusable Booking Card Content Component ---
   const BookingCardContent = ({ showDurationInDetails = true }) => (
-    <div className="md:flex">
-      {/* Provider Profile Image */}
-      <div className="md:flex-shrink-0">
-        <div className="relative h-48 w-full object-cover md:w-48">
+    <div className="rounded-lg bg-white shadow-lg md:flex">
+      {/* Provider Profile Image Section (Vertically Centered) */}
+      <div className="flex items-center md:flex-shrink-0">
+        <div className="relative h-48 w-full md:w-48">
           <img
             src={serviceImage || "/default-client.svg"}
             alt={clientName}
-            className="h-full w-full object-cover"
+            className="h-full w-full rounded-t-lg object-cover md:rounded-l-lg md:rounded-t-none"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-client.svg";
             }}
@@ -415,13 +415,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         </div>
       </div>
 
-      {/* Booking Details */}
+      {/* Booking Details and Actions Section */}
       <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+        {/* Booking Information */}
         <div>
           <div className="flex items-start justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
               {serviceTitle}
             </p>
+
             {/* Booking status badge */}
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
@@ -438,14 +440,17 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           </h3>
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
+          {/* Details List */}
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-            {/* Reputation and Rating row above date/time */}
+            {/* REPUTATION AND RATING: MOBILE COLUMN, WEB ROW */}
             {clientId && (
-              <div className="mb-1 flex items-center gap-2">
+              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
                 <ClientReputationScore clientId={clientId} />
                 <ClientRatingSummary clientId={clientId} />
               </div>
             )}
+
+            {/* Date/Time */}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               {formatDateRange(
@@ -454,39 +459,46 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               )}
             </p>
 
+            {/* Location */}
             <p className="flex items-center">
               <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               <span className="truncate">{locationAddress}</span>
             </p>
 
-            {price !== undefined && (
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Price: ₱{price.toFixed(2)}
-                </span>
-              </p>
+            {/* Price/Payment Details */}
+            {(price !== undefined || amountToPay !== undefined) && (
+              <>
+                {price !== undefined && (
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-semibold text-green-600">
+                      Price: ₱{price.toFixed(2)}
+                    </span>
+                  </p>
+                )}
+                {amountToPay !== undefined && (
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-semibold text-green-600">
+                      Client's amount to pay: ₱{amountToPay.toFixed(2)}
+                    </span>
+                  </p>
+                )}
+              </>
             )}
 
-            {amountToPay !== undefined && (
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Client's amount to pay: ₱{amountToPay.toFixed(2)}
-                </span>
-              </p>
-            )}
-
+            {/* Payment Method */}
             <p className="flex items-center">
               <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               <span className="font-semibold text-green-600">
-                Client's payment method:{" "}
+                Payment:{" "}
                 {booking.paymentMethod === "CashOnHand"
                   ? "Cash on Hand"
                   : booking.paymentMethod}
               </span>
             </p>
 
+            {/* Duration */}
             {showDurationInDetails && duration !== "N/A" && (
               <p className="flex items-center">
                 <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
@@ -494,20 +506,24 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               </p>
             )}
           </div>
+
+          {/* Booking Notes */}
           {notes && (
             <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
               <strong>Booking Notes:</strong> {notes}
             </div>
           )}
         </div>
+
         {/* Action Buttons Section */}
         <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+          {/* Accept/Decline Actions */}
           {canAcceptOrDecline && (
             <div className="flex w-full flex-wrap gap-2">
               <button
                 onClick={handleReject}
                 disabled={isBookingActionInProgress(booking.id, "decline")}
-                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
               >
                 <XCircleIcon className="mr-1 h-4 w-4" />
                 {isBookingActionInProgress(booking.id, "decline")
@@ -520,7 +536,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   isBookingActionInProgress(booking.id, "accept") ||
                   commissionValidation.hasInsufficientBalance
                 }
-                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 disabled:opacity-50"
               >
                 <CheckCircleIcon className="mr-1 h-4 w-4" />
                 {isBookingActionInProgress(booking.id, "accept")
@@ -539,19 +555,20 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             <div className="flex w-full flex-wrap gap-2">
               <button
                 onClick={handleChatClient}
-                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100"
               >
                 <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
                 Chat {booking.clientName?.split(" ")[0] || "Client"}
               </button>
+
               {canStart && (
                 <button
                   onClick={handleStartService}
                   disabled={
                     isBookingActionInProgress(booking.id, "start") ||
-                    isScheduledForFuture // <-- lock if scheduled for future
+                    isScheduledForFuture
                   }
-                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
+                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 ${
                     isScheduledForFuture ? "cursor-not-allowed opacity-60" : ""
                   }`}
                   title={
@@ -568,11 +585,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                       : "Start Service"}
                 </button>
               )}
+
               {canComplete && (
                 <button
                   onClick={handleMarkAsCompleted}
                   disabled={isBookingActionInProgress(booking.id, "complete")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 disabled:opacity-50"
                 >
                   <CheckCircleIcon className="mr-1 h-4 w-4" />
                   {isBookingActionInProgress(booking.id, "complete")

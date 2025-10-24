@@ -49,7 +49,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
   return (
     <div className="min-w-[320px] flex-1 rounded-2xl bg-white p-6 shadow-lg">
       <h3 className="mb-3 text-lg font-bold text-blue-700">Service Section</h3>
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 flex items-start gap-2 lg:items-center">
         <BriefcaseIcon className="h-5 w-5 text-blue-500" />
         <span className="font-medium text-gray-700">
           Service:{" "}
@@ -57,7 +57,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         </span>
       </div>
       {packageTitle && (
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-2 flex items-start gap-2 lg:items-center">
           <ClipboardDocumentListIcon className="h-5 w-5 text-blue-500" />
           <span className="font-medium text-gray-700">
             Package:{" "}
@@ -65,7 +65,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
           </span>
         </div>
       )}
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 flex items-start gap-2 lg:items-center">
         <CalendarDaysIcon className="h-5 w-5 text-blue-500" />
         <span className="font-medium text-gray-700">
           Date:{" "}
@@ -115,7 +115,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         </div>
       </div>
       {price !== undefined && (
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-2 flex items-start gap-2 lg:items-center">
           <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
           <span className="font-medium text-gray-700">
             Price:{" "}
@@ -125,7 +125,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
           </span>
         </div>
       )}
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 flex items-start gap-2 lg:items-center">
         <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
         <span className="font-medium text-gray-700">
           Client's amount to pay:{" "}
@@ -135,7 +135,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         </span>
       </div>
       {duration !== "N/A" && (
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-2 flex items-start gap-2 lg:items-center">
           <ClockIcon className="h-5 w-5 text-blue-500" />
           <span className="font-medium text-gray-700">
             Duration:{" "}
