@@ -522,7 +522,7 @@ const ClientProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   // Error states for validation
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
@@ -751,31 +751,24 @@ const ClientProfilePage: React.FC = () => {
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
                       )}
                     </div>
-                    <div>
+                   <div className="text-left">
                       <label
                         htmlFor="phone"
-                        className="block text-left text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium text-gray-700"
                       >
                         Phone Number
                       </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => {
-                          // Remove spaces from phone number input
-                          const phoneValue = e.target.value.replace(/\s/g, "");
-                          setPhone(phoneValue);
-                          if (phoneError) setPhoneError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {phoneError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {phoneError}
+                      <p className="mt-1 text-gray-800">
+                        {profile?.phone || "No phone number"}
+                      </p>
+                      <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                        <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                        <p className="text-xs text-blue-800">
+                          Your phone number is linked to your account for
+                          security and cannot be changed here. Please contact
+                          support for assistance if you need to update it.
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1079,3 +1072,4 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
 };
 
 export default ClientProfilePage;
+
