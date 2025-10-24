@@ -116,7 +116,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       {/* Service Name */}
-      <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
+      <h4 className="mb-0 w-full break-words text-center text-xl font-bold text-blue-900 line-clamp-2" style={{ wordBreak: 'break-word' }}>
         {service.title}
       </h4>
 
@@ -132,7 +132,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       {/* Activate/Deactivate Button */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
         <Tooltip
           content={`Cannot ${
             isActive ? "deactivate" : "activate"
@@ -142,7 +142,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors  ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -164,12 +164,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {isActive ? (
               <>
                 <LockClosedIcon className="h-5 w-5" />
-                Deactivate
+                <h5 className="text-md">Deactivate</h5>
               </>
             ) : (
               <>
-                <LockOpenIcon className="h-5 w-5" />
-                Activate
+                <LockOpenIcon className="h-6 w-6" />
+                <h5 className="text-md">Activate</h5>
               </>
             )}
           </button>
@@ -183,7 +183,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
+            className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -373,14 +373,24 @@ const MyServicesPage: React.FC = () => {
             My Services
           </h1>
           <div className="flex flex-1 justify-end">
-            <Link
-              to="/provider/services/add"
-              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-              aria-label="Add new service"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span className="ml-1 hidden sm:inline">Add new service</span>
-            </Link>
+            
+              <Link
+                to="/provider/services/add"
+                onClick={(e) => {
+                  if (userServices.length >= 5) {
+                    e.preventDefault();
+                    toast.error("You can only have a maximum of 5 services.");
+                  }
+                }}
+                className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+                  userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+                }`}
+                aria-label="Add new service"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span className="ml-1 hidden sm:inline">Add new service</span>
+              </Link>
+       
           </div>
         </div>
       </header>
@@ -423,13 +433,26 @@ const MyServicesPage: React.FC = () => {
               <p className="mb-2 text-lg">
                 You haven't listed any services yet.
               </p>
-              <Link
-                to="/provider/services/add"
-                className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700"
+              <Tooltip
+                content="You have reached the maximum of 5 services."
+                showWhenDisabled={userServices.length >= 5}
               >
-                <PlusIcon className="mr-2 h-5 w-5" />
-                Add your first service
-              </Link>
+                <Link
+                  to="/provider/services/add"
+                  onClick={(e) => {
+                    if (userServices.length >= 5) {
+                      e.preventDefault();
+                      toast.error("You can only have a maximum of 5 services.");
+                    }
+                  }}
+                  className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
+                    userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                >
+                  <PlusIcon className="mr-2 h-5 w-5" />
+                  Add your first service
+                </Link>
+              </Tooltip>
             </div>
           )}
         </div>

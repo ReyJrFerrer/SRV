@@ -284,7 +284,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   )}
 
                   <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-                    <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
+                    <h4 className="mb-0 w-full break-words text-center text-lg font-bold text-blue-900 line-clamp-2" style={{ wordBreak: 'break-word' }}>
                       {service.title}
                     </h4>
                     <div className="flex items-center justify-center gap-2">
@@ -299,64 +299,60 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="relative z-10 mt-4 flex w-full gap-2">
-                    <div className="flex-1">
-                      <Tooltip
-                        content={`Cannot ${
-                          isActive ? "deactivate" : "activate"
-                        } service with ${activeCount} active booking${plural}`}
-                        showWhenDisabled={hasActiveBookings(service.id)}
-                      >
-                        <button
-                          type="button"
-                          className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          } ${
-                            isActive
-                              ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                              : "bg-green-500 text-white hover:bg-green-600"
-                          }`}
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              await handleToggleActive(service.id, isActive);
-                            }
-                          }}
-                          disabled={hasActiveBookings(service.id)}
-                        >
-                          {isActive ? "Deactivate" : "Activate"}
-                        </button>
-                      </Tooltip>
-                    </div>
-                    <div className="flex-1">
-                      <Tooltip
-                        content={`Cannot delete service with ${activeCount} active booking${plural}`}
-                        showWhenDisabled={hasActiveBookings(service.id)}
-                      >
-                        <button
-                          type="button"
-                          className={`w-full rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              setDeleteConfirmId(service.id);
-                            }
-                          }}
-                          disabled={
-                            deletingId === service.id ||
-                            hasActiveBookings(service.id)
+                  <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
+                    <Tooltip
+                      content={`Cannot ${
+                        isActive ? "deactivate" : "activate"
+                      } service with ${activeCount} active booking${plural}`}
+                      showWhenDisabled={hasActiveBookings(service.id)}
+                    >
+                      <button
+                        type="button"
+                        className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
+                          hasActiveBookings(service.id)
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        } ${
+                          isActive
+                            ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                            : "bg-green-500 text-white hover:bg-green-600"
+                        }`}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!hasActiveBookings(service.id)) {
+                            await handleToggleActive(service.id, isActive);
                           }
-                        >
-                          Delete
-                        </button>
-                      </Tooltip>
-                    </div>
+                        }}
+                        disabled={hasActiveBookings(service.id)}
+                      >
+                        {isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </Tooltip>
+                    <Tooltip
+                      content={`Cannot delete service with ${activeCount} active booking${plural}`}
+                      showWhenDisabled={hasActiveBookings(service.id)}
+                    >
+                      <button
+                        type="button"
+                        className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
+                          hasActiveBookings(service.id)
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!hasActiveBookings(service.id)) {
+                            setDeleteConfirmId(service.id);
+                          }
+                        }}
+                        disabled={
+                          deletingId === service.id ||
+                          hasActiveBookings(service.id)
+                        }
+                      >
+                        Delete
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               );
