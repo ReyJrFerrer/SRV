@@ -30,7 +30,7 @@ const BookingConfirmationPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-4 py-3">
+      <header className="flex-grow max-w-4xl border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
         <h1 className="text-center text-lg font-semibold text-gray-900">
           Booking Request Sent!
         </h1>

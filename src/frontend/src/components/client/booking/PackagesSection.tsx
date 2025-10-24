@@ -38,7 +38,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     {packages.map((pkg) => (
       <label
         key={pkg.id}
-        className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl p-3 transition hover:bg-blue-50"
+        className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl bg-blue-50 p-3 transition hover:bg-blue-100 md:bg-blue-50"
       >
         <input
           type="checkbox"

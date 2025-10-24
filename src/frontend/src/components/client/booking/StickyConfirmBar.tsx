@@ -12,7 +12,6 @@ const StickyConfirmBar: React.FC<StickyConfirmBarProps> = ({
   isSubmitting,
   onConfirm,
 }) => (
-  <div className="sticky bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
     <div className="mx-auto max-w-md">
       {formError && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-center text-base text-red-700 shadow-sm">
@@ -29,7 +28,6 @@ const StickyConfirmBar: React.FC<StickyConfirmBarProps> = ({
         {isSubmitting ? "Submitting..." : "Confirm Booking"}
       </button>
     </div>
-  </div>
 );
 
 export default StickyConfirmBar;

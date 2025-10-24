@@ -88,7 +88,7 @@ const MyBookingsPage: React.FC = () => {
         ALL: [],
         PENDING: ["Requested", "Pending"],
         CONFIRMED: ["Accepted", "Confirmed"],
-        IN_PROGRESS: ["InProgress", "In_Progress"],
+        IN_PROGRESS: ["In Progress", "In_Progress"],
         COMPLETED: ["Completed"],
         CANCELLED: ["Cancelled", "Declined"],
       };
@@ -171,7 +171,7 @@ const MyBookingsPage: React.FC = () => {
       ALL: [],
       PENDING: ["Requested", "Pending"],
       CONFIRMED: ["Accepted", "Confirmed"],
-      IN_PROGRESS: ["InProgress", "In_Progress"],
+      IN_PROGRESS: ["In Progress", "In_Progress"],
       COMPLETED: ["Completed"],
       CANCELLED: ["Cancelled", "Declined"],
     };
