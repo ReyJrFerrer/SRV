@@ -107,8 +107,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-    service &&
-    identity.getPrincipal().toString() === service.providerId,
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -324,9 +324,9 @@ const ClientServiceDetailsPage: React.FC = () => {
                       <img
                         src={
                           userImageUrl &&
-                            userImageUrl !== "/default-provider.svg" &&
-                            userImageUrl !== "" &&
-                            userImageUrl !== undefined
+                          userImageUrl !== "/default-provider.svg" &&
+                          userImageUrl !== "" &&
+                          userImageUrl !== undefined
                             ? userImageUrl
                             : "/default-provider.svg"
                         }
@@ -360,12 +360,10 @@ const ClientServiceDetailsPage: React.FC = () => {
                 </div>
               </div>
 
-
               <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
 
-
               <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
-                <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm text-center lg:text-left">
+                <h1 className="mb-2 text-center text-3xl font-extrabold text-gray-900 drop-shadow-sm lg:text-left">
                   {name}
                 </h1>
                 <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
@@ -399,8 +397,6 @@ const ClientServiceDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-
 
         <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl backdrop-blur-md">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
