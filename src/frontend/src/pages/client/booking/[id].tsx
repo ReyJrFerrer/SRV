@@ -577,7 +577,6 @@ const BookingDetailsPage: React.FC = () => {
           </h1>
           <div className="flex-grow lg:hidden"></div>
           <div className="hidden lg:flex-grow"></div>
-          <div className="w-6 flex-shrink-0 lg:hidden"></div>
         </div>
       </header>
 
