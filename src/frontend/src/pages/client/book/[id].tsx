@@ -1159,9 +1159,6 @@ const BookingPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="sticky bottom-0 z-10 w-full border-t bg-white py-3 shadow-md md:py-4">
-            
-          </div>
           <StickyConfirmBar 
             formError={formError}
             isSubmitting={isSubmitting}
