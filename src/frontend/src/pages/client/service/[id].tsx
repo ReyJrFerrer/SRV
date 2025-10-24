@@ -107,8 +107,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-    service &&
-    identity.getPrincipal().toString() === service.providerId,
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -319,9 +319,9 @@ const ClientServiceDetailsPage: React.FC = () => {
                     <img
                       src={
                         userImageUrl &&
-                          userImageUrl !== "/default-provider.svg" &&
-                          userImageUrl !== "" &&
-                          userImageUrl !== undefined
+                        userImageUrl !== "/default-provider.svg" &&
+                        userImageUrl !== "" &&
+                        userImageUrl !== undefined
                           ? userImageUrl
                           : "/default-provider.svg"
                       }
@@ -390,7 +390,7 @@ const ClientServiceDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl backdrop-blur-md">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
             <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
