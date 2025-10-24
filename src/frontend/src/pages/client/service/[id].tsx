@@ -107,8 +107,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-      service &&
-      identity.getPrincipal().toString() === service.providerId,
+    service &&
+    identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -269,31 +269,129 @@ const ClientServiceDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      {/* Page Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 shadow-sm md:px-6 lg:px-8">
-        <div className="flex flex-grow items-center">
-          <button
-            onClick={handleBackClick}
-            className="mr-4 flex-shrink-0 rounded-full p-2 transition-colors duration-200 hover:bg-gray-100"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <div className="flex-grow lg:flex lg:items-center lg:justify-between">
-            {/* <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 truncate">
-                {service?.title || 'Service Details'}
-              </h1> */}
-            {/* Desktop breadcrumb */}
-            <div className="hidden items-center space-x-2 text-sm text-gray-500 lg:flex">
-              <span>Services</span>
-              <span>/</span>
-              <span className="font-medium text-gray-800">
-                {service?.category?.name || "Category"}
-              </span>
+    <div className="min-h-screen bg-gray-50 pb-40">
+      <div className="relative h-60 w-full">
+        <img
+          src={
+            heroImages && heroImages.length > 0 && heroImages[0].dataUrl
+              ? heroImages[0].dataUrl
+              : service?.category?.slug
+                ? `/images/ai-sp/${service.category.slug}.svg`
+                : "/default-provider.svg"
+          }
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/default-provider.svg";
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 -mt-24 p-4">
+        {chatErrorMessage && (
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <span className="block sm:inline">{chatErrorMessage}</span>
+            <button
+              onClick={() => setChatErrorMessage(null)}
+              className="float-right ml-4 text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
+          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
+            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
+                    style={{
+                      width: "96px",
+                      height: "96px",
+                      minWidth: "96px",
+                      minHeight: "96px",
+                      maxWidth: "104px",
+                      maxHeight: "104px",
+                    }}
+                  >
+                    <img
+                      src={
+                        userImageUrl &&
+                          userImageUrl !== "/default-provider.svg" &&
+                          userImageUrl !== "" &&
+                          userImageUrl !== undefined
+                          ? userImageUrl
+                          : "/default-provider.svg"
+                      }
+                      alt={providerName}
+                      className="h-full w-full rounded-full object-cover"
+                      style={{ borderRadius: "50%" }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/default-provider.svg";
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center">
+                    <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
+                      {providerName}
+                    </h2>
+                    {service.isActive && (
+                      <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-1 flex w-full flex-col items-center gap-0">
+                  <ReputationScore providerId={service.providerId} />
+                  {isVerified === true && (
+                    <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
+                      <CheckBadgeIcon className="mr-2 h-5 w-5" />
+                      <span>This service provider is verified.</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
+            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border-white bg-white p-8 shadow-2xl">
+              <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm">
+                {name}
+              </h1>
+              <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
+                {category?.slug ? (
+                  <img
+                    src={`/images/categories/${category.slug}.svg`}
+                    alt={category.name || "Category"}
+                    className="h-6 w-6 object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/images/categories/others.svg";
+                    }}
+                  />
+                ) : null}
+                {category?.name ?? "General"}
+              </p>
+              <div className="mb-4 flex items-center text-base text-gray-600">
+                <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
+                <span>{location?.address || "Baguio City"}</span>
+              </div>
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
+                <span className="flex items-center">
+                  <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
+                  <span className="text-lg font-bold">
+                    {averageRating.toFixed(1)}
+                  </span>
+                  <span className="ml-1">({reviewCount} reviews)</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+        
+        <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl backdrop-blur-md">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
             <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
             Offered

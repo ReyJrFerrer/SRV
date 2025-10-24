@@ -6,7 +6,21 @@ import React, {
   useCallback,
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import ClientBookingPageComponent from "../../../components/client/ClientBookingPageComponent";
+import useBookRequest, { BookingRequest } from "../../../hooks/bookRequest";
+import useBookingManagement from "../../../hooks/bookingManagement";
+import phLocations from "../../../data/ph_locations.json";
+import {
+  createDirectPayment,
+  checkProviderOnboarding,
+} from "../../../services/firebase";
+import { useAuth } from "../../../context/AuthContext";
+import { useLocationStore } from "../../../store/locationStore";
+import PaymentSection from "../../../components/client/booking/PaymentSection";
+import PackagesSection from "../../../components/client/booking/PackagesSection";
+import ScheduleSection from "../../../components/client/booking/ScheduleSection";
+import ServiceLocationSection from "../../../components/client/booking/ServiceLocationSection";
+import NotesSection from "../../../components/client/booking/NotesSection";
+import StickyConfirmBar from "../../../components/client/booking/StickyConfirmBar";
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -1014,21 +1028,19 @@ const BookingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="mr-4 flex-shrink-0 text-gray-600 hover:text-gray-800"
+            className="text-2xl text-gray-600 hover:text-gray-800"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            ←
           </button>
           <h1 className="text-lg font-medium text-gray-900">Book Service</h1>
-          <div className="w-8"></div> {/* Spacer for centering */}
+          <div className="w-8"></div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1">
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
           <style>{`
