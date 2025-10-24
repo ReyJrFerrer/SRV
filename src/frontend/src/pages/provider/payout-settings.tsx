@@ -179,7 +179,7 @@ const PayoutSettingsPage: React.FC = () => {
               onClick={() => navigate("/provider/settings")}
               className="absolute left-4 flex items-center "
             >
-              <ArrowLeftIcon className="mr-2 h-6 w-6 text-gray-700"/>
+              <ArrowLeftIcon className="mr-2 h-6 w-6 text-gray-700" />
             </button>
             <h1 className="text-xl font-extrabold text-black">
               Complete Onboarding

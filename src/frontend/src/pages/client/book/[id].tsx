@@ -23,7 +23,6 @@ import ServiceLocationSection from "../../../components/client/booking/ServiceLo
 import NotesSection from "../../../components/client/booking/NotesSection";
 import StickyConfirmBar from "../../../components/client/booking/StickyConfirmBar";
 
-
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
@@ -374,14 +373,14 @@ const BookingPage: React.FC = () => {
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
-            9,
-            0,
-            0,
-            0,
-          )
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              9,
+              0,
+              0,
+              0,
+            )
           : selectedDate;
       if (!dateToCheck) {
         setCheckingSlots(false);
@@ -955,7 +954,7 @@ const BookingPage: React.FC = () => {
         if (!paymentResult.success) {
           setFormError(
             paymentResult.error ||
-            "Failed to create payment invoice. Please try again.",
+              "Failed to create payment invoice. Please try again.",
           );
           return;
         }
@@ -980,11 +979,11 @@ const BookingPage: React.FC = () => {
           providerName: providerProfile?.name,
           date: finalScheduledDate
             ? finalScheduledDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),
@@ -1168,7 +1167,6 @@ const BookingPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-
                     <NotesSection
                       notes={notes}
                       onChange={handleNotesChange}

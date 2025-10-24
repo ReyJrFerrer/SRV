@@ -390,7 +390,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
         }
       }
-    } catch { }
+    } catch {}
     return { lat: 16.413, lng: 120.5914 }; // fallback
   }, [specificBooking]);
 
@@ -449,7 +449,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache));
-    } catch { }
+    } catch {}
   };
   const normalizeAddr = (addr: string) => addr.trim().toLowerCase();
   const getCachedCoords = (
@@ -762,7 +762,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         <CommissionInfo
           show={Boolean(
             specificBooking?.paymentMethod === "CashOnHand" &&
-            specificBooking?.canAccept,
+              specificBooking?.canAccept,
           )}
           commissionValidation={commissionValidation}
         />

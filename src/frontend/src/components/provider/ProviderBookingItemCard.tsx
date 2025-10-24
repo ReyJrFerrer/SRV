@@ -377,15 +377,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // --- Reusable Booking Card Content Component ---
   const BookingCardContent = ({ showDurationInDetails = true }) => (
-    <div className="md:flex bg-white rounded-lg shadow-lg">
-
+    <div className="rounded-lg bg-white shadow-lg md:flex">
       {/* Provider Profile Image Section (Vertically Centered) */}
-      <div className="md:flex-shrink-0 flex items-center">
+      <div className="flex items-center md:flex-shrink-0">
         <div className="relative h-48 w-full md:w-48">
           <img
             src={serviceImage || "/default-client.svg"}
             alt={clientName}
-            className="h-full w-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+            className="h-full w-full rounded-t-lg object-cover md:rounded-l-lg md:rounded-t-none"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-client.svg";
             }}
@@ -395,7 +394,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
       {/* Booking Details and Actions Section */}
       <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-
         {/* Booking Information */}
         <div>
           <div className="flex items-start justify-between">
@@ -421,10 +419,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
           {/* Details List */}
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-
             {/* REPUTATION AND RATING: MOBILE COLUMN, WEB ROW */}
             {clientId && (
-              <div className="mb-1.5 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
                 <ClientReputationScore clientId={clientId} />
                 <ClientRatingSummary clientId={clientId} />
               </div>
@@ -433,7 +430,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             {/* Date/Time */}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-              {formatDateRange(booking.requestedDate, booking.scheduledDate || "hello")}
+              {formatDateRange(
+                booking.requestedDate,
+                booking.scheduledDate || "hello",
+              )}
             </p>
 
             {/* Location */}
@@ -468,7 +468,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             <p className="flex items-center">
               <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               <span className="font-semibold text-green-600">
-                Payment: {booking.paymentMethod === "CashOnHand" ? "Cash on Hand" : booking.paymentMethod}
+                Payment:{" "}
+                {booking.paymentMethod === "CashOnHand"
+                  ? "Cash on Hand"
+                  : booking.paymentMethod}
               </span>
             </p>
 
@@ -491,7 +494,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
         {/* Action Buttons Section */}
         <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-
           {/* Accept/Decline Actions */}
           {canAcceptOrDecline && (
             <div className="flex w-full flex-wrap gap-2">
@@ -501,11 +503,16 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
               >
                 <XCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "decline") ? "Declining..." : "Decline"}
+                {isBookingActionInProgress(booking.id, "decline")
+                  ? "Declining..."
+                  : "Decline"}
               </button>
               <button
                 onClick={handleAccept}
-                disabled={isBookingActionInProgress(booking.id, "accept") || commissionValidation.hasInsufficientBalance}
+                disabled={
+                  isBookingActionInProgress(booking.id, "accept") ||
+                  commissionValidation.hasInsufficientBalance
+                }
                 className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 disabled:opacity-50"
               >
                 <CheckCircleIcon className="mr-1 h-4 w-4" />
@@ -521,7 +528,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           {/* In-Progress/Completed Actions */}
           {(canStart || canComplete || isCompleted) && (
             <div className="flex w-full flex-wrap gap-2">
-
               <button
                 onClick={handleChatClient}
                 className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100"
@@ -533,10 +539,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               {canStart && (
                 <button
                   onClick={handleStartService}
-                  disabled={isBookingActionInProgress(booking.id, "start") || isScheduledForFuture}
-                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 ${isScheduledForFuture ? "cursor-not-allowed opacity-60" : ""
-                    }`}
-                  title={isScheduledForFuture ? "You can only start the service on the scheduled date." : undefined}
+                  disabled={
+                    isBookingActionInProgress(booking.id, "start") ||
+                    isScheduledForFuture
+                  }
+                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 ${
+                    isScheduledForFuture ? "cursor-not-allowed opacity-60" : ""
+                  }`}
+                  title={
+                    isScheduledForFuture
+                      ? "You can only start the service on the scheduled date."
+                      : undefined
+                  }
                 >
                   <ArrowPathIcon className="mr-1 h-4 w-4" />
                   {isBookingActionInProgress(booking.id, "start")
@@ -554,7 +568,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 disabled:opacity-50"
                 >
                   <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "complete") ? "Completing..." : "Mark Completed"}
+                  {isBookingActionInProgress(booking.id, "complete")
+                    ? "Completing..."
+                    : "Mark Completed"}
                 </button>
               )}
 

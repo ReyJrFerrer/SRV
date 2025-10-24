@@ -285,7 +285,7 @@ const CompleteServicePage: React.FC = () => {
           </h1>
         </div>
       </header>
-      
+
       <main className="container mx-auto flex flex-grow items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
           <div className="flex flex-col items-center">
@@ -382,21 +382,21 @@ const CompleteServicePage: React.FC = () => {
               {/* Digital Payment Information */}
               {(booking.paymentMethod === "GCash" ||
                 booking.paymentMethod === "SRVWallet") && (
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">
-                        Payment Already Processed
-                      </span>
-                    </div>
-                    <p className="text-sm text-green-600">
-                      The client has already paid ₱{servicePrice.toFixed(2)} via{" "}
-                      {booking.paymentMethod}. Completing this service will
-                      automatically release the payment to you after commission
-                      deduction.
-                    </p>
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      Payment Already Processed
+                    </span>
                   </div>
-                )}
+                  <p className="text-sm text-green-600">
+                    The client has already paid ₱{servicePrice.toFixed(2)} via{" "}
+                    {booking.paymentMethod}. Completing this service will
+                    automatically release the payment to you after commission
+                    deduction.
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <p className="text-center text-sm text-red-600">{error}</p>

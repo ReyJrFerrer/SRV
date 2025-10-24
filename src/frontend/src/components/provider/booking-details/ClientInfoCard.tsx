@@ -18,10 +18,8 @@ const ClientInfoCard: React.FC<Props> = ({
 }) => {
   return (
     <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
-
       {/* Header Section */}
       <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 p-8">
-
         {/* Profile Image */}
         <img
           src={providerImage}
@@ -33,13 +31,10 @@ const ClientInfoCard: React.FC<Props> = ({
         />
 
         {/* Client Name */}
-        <h2 className="text-2xl font-bold text-slate-800 mt-2">
-          {clientName}
-        </h2>
+        <h2 className="mt-2 text-2xl font-bold text-slate-800">{clientName}</h2>
 
         {/* Reputation and Contact (Side-by-Side) */}
-        <div className="flex w-full justify-center items-center gap-4 mt-2">
-
+        <div className="mt-2 flex w-full items-center justify-center gap-4">
           {/* Reputation Score */}
           {clientId && <ClientReputationScore clientId={clientId} />}
 
@@ -50,16 +45,14 @@ const ClientInfoCard: React.FC<Props> = ({
               <span>{clientContact}</span>
             </div>
           )}
-
         </div>
 
         {/* Rating Summary (Bottom) */}
         {clientId && (
-          <div className="mt-2 pt-2 border-t border-blue-200">
+          <div className="mt-2 border-t border-blue-200 pt-2">
             <ClientRatingSummary clientId={clientId} />
           </div>
         )}
-
       </div>
     </div>
   );
