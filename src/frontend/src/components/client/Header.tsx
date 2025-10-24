@@ -339,7 +339,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       setPlaceholder(
         searchPlaceholders[
           Math.floor(Math.random() * searchPlaceholders.length)
-        ]
+        ],
       );
     }
   }, [locationLoading, isAuthLoading, locationStatus]);
@@ -475,7 +475,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </div>
           {(locationStatus === "denied" || locationStatus === "not_set") && (
             <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-              Location access is off. Some features are limited. 
+              Location access is off. Some features are limited.
             </div>
           )}
           {/* --- Search Bar for Service Queries --- */}

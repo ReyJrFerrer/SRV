@@ -218,7 +218,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 onChange={handleProvinceChange}
               >
                 <option value="">Select Province</option>
-                {phLocations && Array.isArray(phLocations.provinces) &&
+                {phLocations &&
+                  Array.isArray(phLocations.provinces) &&
                   phLocations.provinces.map((prov: any) => (
                     <option key={prov.name} value={prov.name}>
                       {prov.name}

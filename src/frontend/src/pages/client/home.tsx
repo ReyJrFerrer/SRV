@@ -40,13 +40,15 @@ const ClientHomePage: React.FC = () => {
   const { switchRole } = useUserProfile();
 
   // --- Dismissible location overlay state ---
-  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem("dismissedLocationBlock") === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
+    () => {
+      try {
+        return sessionStorage.getItem("dismissedLocationBlock") === "1";
+      } catch {
+        return false;
+      }
+    },
+  );
 
   // --- Effect: Set page title on mount ---
   useEffect(() => {

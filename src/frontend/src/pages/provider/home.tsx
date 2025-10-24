@@ -20,13 +20,15 @@ const ProviderHomePage: React.FC = () => {
   const { locationStatus } = useLocationStore();
 
   // --- Dismissible location overlay state (must be declared unconditionally) ---
-  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem("providerDismissedLocationBlock") === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
+    () => {
+      try {
+        return sessionStorage.getItem("providerDismissedLocationBlock") === "1";
+      } catch {
+        return false;
+      }
+    },
+  );
 
   // Use the service management hook
   const {
@@ -232,7 +234,10 @@ const ProviderHomePage: React.FC = () => {
                 onClick={() => {
                   setDismissedLocationBlock(true);
                   try {
-                    sessionStorage.setItem("providerDismissedLocationBlock", "1");
+                    sessionStorage.setItem(
+                      "providerDismissedLocationBlock",
+                      "1",
+                    );
                   } catch {}
                 }}
               >

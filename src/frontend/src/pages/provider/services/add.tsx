@@ -467,9 +467,13 @@ const AddServicePage: React.FC = () => {
         // Accept either GPS coordinates OR a complete manual address
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
-        const hasManualProvince = !!(formData.locationProvince || "").toString().trim();
-        const hasManualCity = !!(formData.locationMunicipalityCity || "").toString().trim();
-  // Only province and city are required for manual input in this flow
+        const hasManualProvince = !!(formData.locationProvince || "")
+          .toString()
+          .trim();
+        const hasManualCity = !!(formData.locationMunicipalityCity || "")
+          .toString()
+          .trim();
+        // Only province and city are required for manual input in this flow
 
         if (!hasGPSCoordinates) {
           // When GPS is unavailable, require only Province and Municipality/City

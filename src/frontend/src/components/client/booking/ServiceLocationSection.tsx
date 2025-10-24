@@ -185,7 +185,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             </div>
           ) : (
             <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
-              Location permission is not enabled. Use the manual address form below or enable location.
+              Location permission is not enabled. Use the manual address form
+              below or enable location.
               <div className="mt-2">
                 <button
                   type="button"
@@ -472,7 +473,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 <option value="" disabled>
                   Select Province
                 </option>
-                {phLocations && Array.isArray((phLocations as any).provinces) &&
+                {phLocations &&
+                  Array.isArray((phLocations as any).provinces) &&
                   (phLocations as any).provinces.map((prov: any) => (
                     <option key={prov.name} value={prov.name}>
                       {prov.name}
@@ -493,17 +495,22 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 <option value="" disabled>
                   Select City/Municipality
                 </option>
-                {manualProvince && phLocations && Array.isArray((phLocations as any).provinces) && (() => {
-                  const prov = (phLocations as any).provinces.find((p: any) => p.name === manualProvince);
-                  if (prov && Array.isArray(prov.municipalities)) {
-                    return prov.municipalities.map((m: any) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ));
-                  }
-                  return null;
-                })()}
+                {manualProvince &&
+                  phLocations &&
+                  Array.isArray((phLocations as any).provinces) &&
+                  (() => {
+                    const prov = (phLocations as any).provinces.find(
+                      (p: any) => p.name === manualProvince,
+                    );
+                    if (prov && Array.isArray(prov.municipalities)) {
+                      return prov.municipalities.map((m: any) => (
+                        <option key={m.name} value={m.name}>
+                          {m.name}
+                        </option>
+                      ));
+                    }
+                    return null;
+                  })()}
               </select>
             </div>
           </div>
