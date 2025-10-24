@@ -116,7 +116,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       {/* Service Name */}
-      <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
+      <h4
+        className="mb-0 line-clamp-2 w-full break-words text-center text-xl font-bold text-blue-900"
+        style={{ wordBreak: "break-word" }}
+      >
         {service.title}
       </h4>
 
@@ -164,12 +167,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {isActive ? (
               <>
                 <LockClosedIcon className="h-5 w-5" />
-                Deactivate
+                <h5 className="text-lg">Deactivate</h5>
               </>
             ) : (
               <>
                 <LockOpenIcon className="h-5 w-5" />
-                Activate
+                <h5 className="text-lg">Activate</h5>
               </>
             )}
           </button>
@@ -375,7 +378,15 @@ const MyServicesPage: React.FC = () => {
           <div className="flex flex-1 justify-end">
             <Link
               to="/provider/services/add"
-              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+              onClick={(e) => {
+                if (userServices.length >= 5) {
+                  e.preventDefault();
+                  toast.error("You can only have a maximum of 5 services.");
+                }
+              }}
+              className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+                userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+              }`}
               aria-label="Add new service"
             >
               <PlusIcon className="h-5 w-5" />
@@ -423,13 +434,28 @@ const MyServicesPage: React.FC = () => {
               <p className="mb-2 text-lg">
                 You haven't listed any services yet.
               </p>
-              <Link
-                to="/provider/services/add"
-                className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700"
+              <Tooltip
+                content="You have reached the maximum of 5 services."
+                showWhenDisabled={userServices.length >= 5}
               >
-                <PlusIcon className="mr-2 h-5 w-5" />
-                Add your first service
-              </Link>
+                <Link
+                  to="/provider/services/add"
+                  onClick={(e) => {
+                    if (userServices.length >= 5) {
+                      e.preventDefault();
+                      toast.error("You can only have a maximum of 5 services.");
+                    }
+                  }}
+                  className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
+                    userServices.length >= 5
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
+                  }`}
+                >
+                  <PlusIcon className="mr-2 h-5 w-5" />
+                  Add your first service
+                </Link>
+              </Tooltip>
             </div>
           )}
         </div>
