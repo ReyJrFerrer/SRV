@@ -464,23 +464,19 @@ const AddServicePage: React.FC = () => {
         }
         break;
       case 3: // Location
+        // Accept either GPS coordinates OR a complete manual address
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
+        const hasManualProvince = !!(formData.locationProvince || "").toString().trim();
+        const hasManualCity = !!(formData.locationMunicipalityCity || "").toString().trim();
+  // Only province and city are required for manual input in this flow
+
         if (!hasGPSCoordinates) {
-          errors.locationMunicipalityCity =
-            "Still detecting your location, please wait";
-        } else if (!hasGPSCoordinates) {
-          if (!formData.locationProvince.trim()) {
+          // When GPS is unavailable, require only Province and Municipality/City
+          if (!hasManualProvince) {
             errors.locationMunicipalityCity = "Province is required";
-          } else if (!formData.locationMunicipalityCity.trim()) {
+          } else if (!hasManualCity) {
             errors.locationMunicipalityCity = "Municipality/City is required";
-          } else if (!formData.locationBarangay.trim()) {
-            errors.locationMunicipalityCity = "Barangay is required";
-          } else if (!formData.locationStreet.trim()) {
-            errors.locationMunicipalityCity = "Street name is required";
-          } else if (!formData.locationHouseNumber.trim()) {
-            errors.locationMunicipalityCity =
-              "House number/building is required";
           }
         }
         break;

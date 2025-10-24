@@ -154,6 +154,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userAddress,
     userProvince,
     locationLoading,
+    locationStatus,
   } = useLocationStore();
 
   // Get requestLocation function separately to avoid dependency issues
@@ -215,6 +216,12 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       /* ignore */
     }
   }, []);
+
+  // When locationStatus changes to denied/unsupported, reflect in gmapsStatus
+  useEffect(() => {
+    if (locationStatus === "denied") setGmapsStatus("denied");
+    if (locationStatus === "unsupported") setGmapsStatus("unsupported");
+  }, [locationStatus]);
 
   // --- API Key Definition ---
   // Root APIProvider supplies the key; keep placeholder only if needed elsewhere
@@ -324,14 +331,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
-    if (!locationLoading && !isAuthLoading) {
+    if (
+      !locationLoading &&
+      !isAuthLoading &&
+      (locationStatus === "allowed" || locationStatus === "unsupported")
+    ) {
       setPlaceholder(
         searchPlaceholders[
           Math.floor(Math.random() * searchPlaceholders.length)
-        ],
+        ]
       );
     }
-  }, [locationLoading, isAuthLoading]);
+  }, [locationLoading, isAuthLoading, locationStatus]);
 
   // --- Handler: go to profile page ---
   const handleProfileClick = () => {
@@ -462,6 +473,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               )}
             </div>
           </div>
+          {(locationStatus === "denied" || locationStatus === "not_set") && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+              Location access is off. Some features are limited. 
+            </div>
+          )}
           {/* --- Search Bar for Service Queries --- */}
           <form
             className="mt-4 w-full"

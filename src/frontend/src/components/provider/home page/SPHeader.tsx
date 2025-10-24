@@ -148,6 +148,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userProvince,
     locationLoading,
     requestLocation,
+    locationStatus,
   } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const [showMap, setShowMap] = useState(false);
@@ -375,6 +376,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               )}
             </div>
           </div>
+          {(locationStatus === "denied" || locationStatus === "not_set") && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+              Location access is off. Some features are limited. 
+            </div>
+          )}
         </div>
       </header>
       {/* --- Map Modal for Location Display --- */}

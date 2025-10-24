@@ -39,6 +39,15 @@ const ClientHomePage: React.FC = () => {
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
 
+  // --- Dismissible location overlay state ---
+  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("dismissedLocationBlock") === "1";
+    } catch {
+      return false;
+    }
+  });
+
   // --- Effect: Set page title on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
@@ -149,10 +158,23 @@ const ClientHomePage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* Show location blocked message if location is denied */}
-      {locationStatus === "denied" && (
+      {/* Show location blocked message if location is denied (dismissible) */}
+      {locationStatus === "denied" && !dismissedLocationBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+            {/* Close button */}
+            <button
+              aria-label="Close"
+              className="absolute right-3 top-3 rounded-full border border-gray-300 bg-gray-100 px-2 py-1 text-gray-700 hover:bg-gray-200"
+              onClick={() => {
+                setDismissedLocationBlock(true);
+                try {
+                  sessionStorage.setItem("dismissedLocationBlock", "1");
+                } catch {}
+              }}
+            >
+              ×
+            </button>
             {/* Computer guy character at the top */}
             <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
               <img
@@ -452,12 +474,25 @@ const ClientHomePage: React.FC = () => {
                   </details>
                 </div>
               </div>
-              <button
-                className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
-                onClick={() => window.location.reload()}
-              >
-                Reload
-              </button>
+              <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button
+                  className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload
+                </button>
+                <button
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    setDismissedLocationBlock(true);
+                    try {
+                      sessionStorage.setItem("dismissedLocationBlock", "1");
+                    } catch {}
+                  }}
+                >
+                  Continue without location
+                </button>
+              </div>
             </div>
           </div>
         </div>
