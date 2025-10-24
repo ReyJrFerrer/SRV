@@ -30,7 +30,6 @@ export const useChat = () => {
     useState<FrontendConversation | null>(null);
   const [messages, setMessages] = useState<FrontendMessage[]>([]);
   const [loading, setLoading] = useState(false); // For initial loads only
-  const [backgroundLoading, setBackgroundLoading] = useState(false); // For silent updates
   const [error, setError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -39,9 +38,9 @@ export const useChat = () => {
     new Map(),
   );
 
-  // Auto-refresh interval
-  const refreshInterval = useRef<NodeJS.Timeout | null>(null);
-  const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+  // Real-time listener unsubscribe functions
+  const conversationsUnsubscribe = useRef<(() => void) | null>(null);
+  const messagesUnsubscribe = useRef<(() => void) | null>(null);
 
   /**
    * Get user name from cache or fetch from auth service
@@ -130,46 +129,83 @@ export const useChat = () => {
   );
 
   /**
-   * Fetch all conversations for the current user
-   * @param silent Whether to perform a silent background update
+   * Adapt backend message format to frontend format
    */
-  const fetchConversations = useCallback(
-    async (silent: boolean = false) => {
-      if (!isAuthenticated || !identity) {
-        setConversations([]);
-        return;
-      }
+  const adaptBackendMessage = useCallback((backendMessage: any): FrontendMessage => {
+    const getMessageType = (type: any): "Text" | "File" => {
+      if (type?.Text !== undefined) return "Text";
+      if (type?.File !== undefined) return "File";
+      return "Text";
+    };
 
-      if (silent) {
-        setBackgroundLoading(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
+    const getMessageStatus = (status: any): "Sent" | "Delivered" | "Read" => {
+      if (status?.Sent !== undefined) return "Sent";
+      if (status?.Delivered !== undefined) return "Delivered";
+      if (status?.Read !== undefined) return "Read";
+      return "Sent";
+    };
 
-      try {
-        const fetchedConversations =
-          await chatCanisterService.getMyConversations();
+    return {
+      id: backendMessage.id,
+      conversationId: backendMessage.conversationId,
+      senderId: backendMessage.senderId,
+      receiverId: backendMessage.receiverId,
+      messageType: getMessageType(backendMessage.messageType),
+      content: backendMessage.content?.encryptedText || backendMessage.content,
+      attachment:
+        backendMessage.attachment && backendMessage.attachment.length > 0
+          ? {
+              fileName: backendMessage.attachment[0].fileName,
+              fileSize: Number(backendMessage.attachment[0].fileSize),
+              fileType: backendMessage.attachment[0].fileType,
+              fileUrl: backendMessage.attachment[0].fileUrl,
+            }
+          : undefined,
+      status: getMessageStatus(backendMessage.status),
+      createdAt: backendMessage.createdAt,
+      readAt:
+        backendMessage.readAt && backendMessage.readAt.length > 0
+          ? backendMessage.readAt[0]
+          : undefined,
+    };
+  }, []);
 
+  /**
+   * Setup real-time listener for conversations
+   */
+  const setupConversationsListener = useCallback(() => {
+    if (!isAuthenticated || !identity) {
+      return;
+    }
+
+    const userId = identity.getPrincipal().toString();
+    console.log("🔔 [useChat] Setting up conversations listener for:", userId);
+
+    // Cleanup existing listener
+    if (conversationsUnsubscribe.current) {
+      conversationsUnsubscribe.current();
+    }
+
+    setLoading(true);
+    setError(null);
+
+    conversationsUnsubscribe.current = chatCanisterService.subscribeToConversationSummaries(
+      userId,
+      async (summaries) => {
+        console.log(`✅ [useChat] Real-time update: ${summaries.length} conversations`);
+        
         // Enhance conversations with user names
-        const enhancedConversations =
-          await enhanceConversationsWithNames(fetchedConversations);
+        const enhancedConversations = await enhanceConversationsWithNames(summaries);
         setConversations(enhancedConversations);
-      } catch (err) {
-        //console.error("Failed to fetch conversations:", err);
-        if (!silent) {
-          setError("Could not load conversations.");
-        }
-      } finally {
-        if (silent) {
-          setBackgroundLoading(false);
-        } else {
-          setLoading(false);
-        }
-      }
-    },
-    [isAuthenticated, identity, enhanceConversationsWithNames],
-  );
+        setLoading(false);
+      },
+      (error) => {
+        console.error("❌ [useChat] Error in conversations listener:", error);
+        setError("Could not load conversations.");
+        setLoading(false);
+      },
+    );
+  }, [isAuthenticated, identity, enhanceConversationsWithNames]);
 
   /**
    * Fetch messages for a specific conversation
@@ -203,23 +239,18 @@ export const useChat = () => {
   );
 
   /**
-   * Load messages for the current conversation
+   * Load messages for the current conversation with real-time listener
    * @param conversationId The ID of the conversation
-   * @param silent Whether to perform a silent background update
    */
   const loadConversation = useCallback(
-    async (conversationId: string, silent: boolean = false) => {
+    async (conversationId: string) => {
       if (!isAuthenticated || !identity) {
         setCurrentConversation(null);
         setMessages([]);
         return;
       }
 
-      if (silent) {
-        setBackgroundLoading(true);
-      } else {
-        setLoading(true);
-      }
+      setLoading(true);
       setError(null);
 
       try {
@@ -228,29 +259,38 @@ export const useChat = () => {
           await chatCanisterService.getConversation(conversationId);
         setCurrentConversation(conversation);
 
-        // Fetch messages for this conversation
-        const messagePage = await fetchMessages(conversationId);
-        setMessages(messagePage.messages);
+        // Cleanup existing messages listener
+        if (messagesUnsubscribe.current) {
+          messagesUnsubscribe.current();
+        }
+
+        // Setup real-time listener for messages
+        console.log("🔔 [useChat] Setting up messages listener for:", conversationId);
+        messagesUnsubscribe.current = chatCanisterService.subscribeToMessages(
+          conversationId,
+          (rawMessages) => {
+            console.log(`✅ [useChat] Real-time update: ${rawMessages.length} messages`);
+            // Adapt messages to frontend format
+            const adaptedMessages = rawMessages.map(adaptBackendMessage);
+            setMessages(adaptedMessages);
+            setLoading(false);
+          },
+          (error) => {
+            console.error("❌ [useChat] Error in messages listener:", error);
+            setError("Could not load messages.");
+            setLoading(false);
+          },
+        );
 
         // Mark messages as read
         await chatCanisterService.markMessagesAsRead(conversationId);
-
-        // Refresh conversations to update unread counts (silently)
-        await fetchConversations(true);
       } catch (err) {
-        //console.error("Failed to load conversation:", err);
-        if (!silent) {
-          setError("Could not load conversation.");
-        }
-      } finally {
-        if (silent) {
-          setBackgroundLoading(false);
-        } else {
-          setLoading(false);
-        }
+        console.error("Failed to load conversation:", err);
+        setError("Could not load conversation.");
+        setLoading(false);
       }
     },
-    [isAuthenticated, identity, fetchMessages, fetchConversations],
+    [isAuthenticated, identity, adaptBackendMessage],
   );
 
   /**
@@ -284,11 +324,8 @@ export const useChat = () => {
         );
 
         if (newMessage) {
-          // Add the new message to the local state immediately for better UX
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-          // Refresh conversations to update last message and timestamps (silently)
-          await fetchConversations(true);
+          // Real-time listener will automatically update the messages
+          // No need to manually update state
         }
 
         return newMessage;
@@ -302,7 +339,7 @@ export const useChat = () => {
         setSendingMessage(false);
       }
     },
-    [isAuthenticated, identity, currentConversation, fetchConversations],
+    [isAuthenticated, identity, currentConversation],
   );
 
   /**
@@ -327,8 +364,8 @@ export const useChat = () => {
         );
 
         if (newConversation) {
-          // Refresh conversations to include the new one (silently)
-          await fetchConversations(true);
+          // Real-time listener will automatically add the new conversation
+          // No need to manually refresh
         }
 
         return newConversation;
@@ -340,7 +377,7 @@ export const useChat = () => {
         setLoading(false);
       }
     },
-    [isAuthenticated, identity, fetchConversations],
+    [isAuthenticated, identity],
   );
 
   /**
@@ -355,13 +392,12 @@ export const useChat = () => {
 
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
-        // Refresh conversations to update unread counts (silently)
-        await fetchConversations(true);
+        // Real-time listener will automatically update unread counts
       } catch (err) {
-        //console.error("Failed to mark messages as read:", err);
+        console.error("Failed to mark messages as read:", err);
       }
     },
-    [isAuthenticated, identity, fetchConversations],
+    [isAuthenticated, identity],
   );
 
   /**
@@ -380,41 +416,17 @@ export const useChat = () => {
   }, [conversations, identity]);
 
   /**
-   * Start auto-refresh for real-time updates
+   * Cleanup all real-time listeners
    */
-  const startAutoRefresh = useCallback(() => {
-    if (refreshInterval.current) {
-      clearInterval(refreshInterval.current);
+  const cleanupListeners = useCallback(() => {
+    console.log("🔕 [useChat] Cleaning up all listeners");
+    if (conversationsUnsubscribe.current) {
+      conversationsUnsubscribe.current();
+      conversationsUnsubscribe.current = null;
     }
-
-    refreshInterval.current = setInterval(() => {
-      if (isAuthenticated && identity) {
-        // Silently refresh conversations
-        fetchConversations(true).catch;
-
-        // If we have a current conversation, silently refresh its messages
-        if (currentConversation) {
-          fetchMessages(currentConversation.id).then((messagePage) => {
-            setMessages(messagePage.messages);
-          }).catch;
-        }
-      }
-    }, AUTO_REFRESH_INTERVAL);
-  }, [
-    isAuthenticated,
-    identity,
-    currentConversation,
-    fetchConversations,
-    fetchMessages,
-  ]);
-
-  /**
-   * Stop auto-refresh
-   */
-  const stopAutoRefresh = useCallback(() => {
-    if (refreshInterval.current) {
-      clearInterval(refreshInterval.current);
-      refreshInterval.current = null;
+    if (messagesUnsubscribe.current) {
+      messagesUnsubscribe.current();
+      messagesUnsubscribe.current = null;
     }
   }, []);
 
@@ -422,43 +434,31 @@ export const useChat = () => {
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(() => {
+    // Cleanup messages listener
+    if (messagesUnsubscribe.current) {
+      messagesUnsubscribe.current();
+      messagesUnsubscribe.current = null;
+    }
     setCurrentConversation(null);
     setMessages([]);
     setError(null);
   }, []);
 
-  // Initialize and fetch conversations on auth state change
+  // Setup real-time listeners on auth state change
   useEffect(() => {
     if (isAuthenticated && identity) {
-      fetchConversations(false); // Initial load with loading state
-      startAutoRefresh();
+      setupConversationsListener();
     } else {
+      cleanupListeners();
       setConversations([]);
       clearCurrentConversation();
-      stopAutoRefresh();
     }
 
     // Cleanup on unmount or auth change
     return () => {
-      stopAutoRefresh();
+      cleanupListeners();
     };
-  }, [
-    isAuthenticated,
-    identity,
-    fetchConversations,
-    startAutoRefresh,
-    clearCurrentConversation,
-    stopAutoRefresh,
-  ]);
-
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (refreshInterval.current) {
-        clearInterval(refreshInterval.current);
-      }
-    };
-  }, []);
+  }, [isAuthenticated, identity, setupConversationsListener, cleanupListeners, clearCurrentConversation]);
 
   return {
     // State
@@ -466,12 +466,10 @@ export const useChat = () => {
     currentConversation,
     messages,
     loading, // Only shows for initial loads
-    backgroundLoading, // Shows for silent background updates
     error,
     sendingMessage,
 
     // Actions
-    fetchConversations,
     loadConversation,
     sendMessage,
     createConversation,
@@ -482,10 +480,6 @@ export const useChat = () => {
     getUnreadCount,
     fetchMessages,
     getUserName,
-
-    // Auto-refresh controls
-    startAutoRefresh,
-    stopAutoRefresh,
   };
 };
 
