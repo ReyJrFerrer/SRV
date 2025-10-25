@@ -5,6 +5,7 @@ import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";
 import { StarIcon } from "@heroicons/react/24/solid";
+import { useAuth } from "../../../context/AuthContext";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   label,
@@ -28,28 +29,32 @@ const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
 
 const ReviewsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { firebaseUser } = useAuth();
   const { getClientReviewsByUser, loading } = useClientRating();
   const [reviews, setReviews] = useState<ClientReview[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "My Reviews | SRV Client";
+    document.title = "Reviews About Me | SRV Client";
   }, []);
 
   useEffect(() => {
     const load = async () => {
       try {
         setError(null);
-        // TODO: replace with actual current user ID from auth/profile context
-        const currentUserId = "me";
-        const data = await getClientReviewsByUser(currentUserId);
+        if (!firebaseUser?.uid) {
+          setError("Please sign in to view your reviews.");
+          return;
+        }
+        // This will fetch reviews that providers have left about this client
+        const data = await getClientReviewsByUser(firebaseUser.uid);
         setReviews(data);
       } catch (e) {
         setError("Failed to load reviews.");
       }
     };
     load();
-  }, [getClientReviewsByUser]);
+  }, [getClientReviewsByUser, firebaseUser]);
 
   const stats = useMemo(() => {
     const total = reviews.length;

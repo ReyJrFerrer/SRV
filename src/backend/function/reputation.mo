@@ -699,12 +699,62 @@ persistent actor ReputationCanister {
         // 3. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 4. Update client reputation (reviewer) with provided data
+        // 4. Update client reputation (the reviewer) to track their trustworthiness
         ignore await updateUserReputation(
             review.clientId,
             clientCompletedBookings,
             clientAverageRating,
             clientAccountAge
+        );
+        
+        // 5. Return updated review with status and quality score
+        let updatedReview : Review = {
+            id = review.id;
+            bookingId = review.bookingId;
+            clientId = review.clientId;
+            providerId = review.providerId;
+            serviceId = review.serviceId;
+            rating = review.rating;
+            comment = review.comment;
+            status = if (shouldHide) { #Hidden } else if (flags.size() > 0) { #Flagged } else { #Visible };
+            qualityScore = ?qualityScore;
+            createdAt = review.createdAt;
+            updatedAt = Time.now();
+        };
+        
+        return #ok(updatedReview);
+    };
+
+    // Process a provider-to-client review and update provider reputation
+    // This is used when providers rate clients after service completion
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(_msg) func processProviderReview(
+        review : Review,
+        providerCompletedBookings : Nat,
+        providerAverageRating : ?Float,
+        providerAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
+
+        // 1. Analyze review for flags
+        let flags = analyzeReview(review);
+        
+        // 2. Calculate quality score (0.0 - 1.0)
+        let qualityScore : Float = Float.max(0.0, Float.min(1.0, 1.0 - (Float.fromInt(flags.size()) * 0.25)));
+        
+        // 3. Determine if review should be hidden
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+        
+        // 4. Update provider reputation (the reviewer) to track their trustworthiness
+        ignore await updateProviderReputation(
+            review.providerId,
+            providerCompletedBookings,
+            providerAverageRating,
+            providerAccountAge
         );
         
         // 5. Return updated review with status and quality score
@@ -769,7 +819,7 @@ persistent actor ReputationCanister {
     // Process a new review with LLM sentiment analysis
     // Accepts additional data needed for reputation calculation
     // Secured for Firebase service agent only
-    public shared(msg) func processReviewWithLLM(
+    public shared(_msg) func processReviewWithLLM(
         review : Review,
         clientCompletedBookings : Nat,
         clientAverageRating : ?Float,
@@ -792,12 +842,65 @@ persistent actor ReputationCanister {
         // 4. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 5. Update client reputation (reviewer) with provided data
+        // 5. Update client reputation (the reviewer) to track their trustworthiness
         ignore await updateUserReputation(
             review.clientId,
             clientCompletedBookings,
             clientAverageRating,
             clientAccountAge
+        );
+        
+        // 6. Return updated review with status and quality score
+        let updatedReview : Review = {
+            id = review.id;
+            bookingId = review.bookingId;
+            clientId = review.clientId;
+            providerId = review.providerId;
+            serviceId = review.serviceId;
+            rating = review.rating;
+            comment = review.comment;
+            status = if (shouldHide) { #Hidden } else if (flags.size() > 0) { #Flagged } else { #Visible };
+            qualityScore = ?qualityScore;
+            createdAt = review.createdAt;
+            updatedAt = Time.now();
+        };
+        
+        return #ok(updatedReview);
+    };
+
+    // Process a provider-to-client review with LLM sentiment analysis
+    // This is used when providers rate clients after service completion
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(_msg) func processProviderReviewWithLLM(
+        review : Review,
+        providerCompletedBookings : Nat,
+        providerAverageRating : ?Float,
+        providerAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
+
+        // 1. Analyze sentiment with LLM
+        let llmSentimentScore = await analyzeSentimentWithLLM(review);
+        
+        // 2. Analyze review for flags (enhanced with LLM sentiment)
+        let flags = analyzeReviewWithLLMSentiment(review, llmSentimentScore);
+        
+        // 3. Calculate quality score incorporating LLM sentiment
+        let qualityScore : Float = calculateReviewQualityWithLLM(review, llmSentimentScore, flags);
+        
+        // 4. Determine if review should be hidden
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+        
+        // 5. Update provider reputation (the reviewer) to track their trustworthiness
+        ignore await updateProviderReputation(
+            review.providerId,
+            providerCompletedBookings,
+            providerAverageRating,
+            providerAccountAge
         );
         
         // 6. Return updated review with status and quality score

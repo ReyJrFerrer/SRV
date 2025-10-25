@@ -187,6 +187,8 @@ const {
   flagReview,
   getProviderReviews,
   getServiceReviews,
+  submitProviderReview,
+  getClientProviderReviews,
 } = require("./src/review");
 
 // Import Feedback Management functions
@@ -363,6 +365,9 @@ exports.getReviewStatistics = getReviewStatistics;
 exports.flagReview = flagReview;
 exports.getProviderReviews = getProviderReviews;
 exports.getServiceReviews = getServiceReviews;
+exports.submitProviderReview = submitProviderReview;
+exports.getClientProviderReviews = getClientProviderReviews;
+
 
 // Export Feedback Management Functions
 exports.submitFeedback = submitFeedback;

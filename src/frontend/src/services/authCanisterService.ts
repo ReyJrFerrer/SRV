@@ -24,6 +24,7 @@ export interface FrontendProfile {
   createdAt: Date;
   updatedAt: Date;
   locked?: boolean; // Account suspension status
+  isOnboarded?: boolean; // Provider onboarding status for payment functionality
 }
 
 /**
@@ -48,6 +49,7 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
     createdAt: new Date(firestoreProfile.createdAt),
     updatedAt: new Date(firestoreProfile.updatedAt),
     locked: firestoreProfile.locked || false, // Default to false if not specified
+    isOnboarded: firestoreProfile.isOnboarded || false, // Default to false if not specified
   };
 }
 
