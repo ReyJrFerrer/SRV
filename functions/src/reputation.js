@@ -138,6 +138,16 @@ function getManualReputationIdl() {
         [ReviewResult],
         [],
       ),
+      processProviderReview: IDL.Func(
+        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [ReviewResult],
+        [],
+      ),
+      processProviderReviewWithLLM: IDL.Func(
+        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [ReviewResult],
+        [],
+      ),
       getReputationScore: IDL.Func([IDL.Principal], [ReputationResult], ["query"]),
     });
   };
@@ -586,83 +596,95 @@ async function processReviewForReputationInternal(review, useLLM = false) {
   });
 
   if (!review || !review.id) {
-    throw new Error("Review object is required");
+    throw new Error("Review object with ID is required");
   }
 
   try {
-    // 1. Fetch client data from Firestore
-    console.log(`📊 Fetching client data for ${review.clientId}`);
-    const clientData = await fetchUserData(review.clientId);
-
-    // 2. Get the reputation actor
     const reputationActor = await createReputationActor();
 
-    // 3. Prepare review object for canister
-    const reviewForCanister = {
+    // Check if this is a provider-to-client review
+    const isProviderReview = review.reviewType === "ProviderToClient";
+
+    // Fetch appropriate user data based on review type
+    let clientData;
+    let providerData;
+
+    if (isProviderReview) {
+      // For provider reviews, we need provider data (the reviewer)
+      providerData = await fetchProviderData(review.providerId);
+    } else {
+      // For regular reviews, we need client data (the reviewer)
+      clientData = await fetchUserData(review.clientId);
+    }
+
+    // Prepare review for IC canister
+    const icReview = {
       id: review.id,
       bookingId: review.bookingId,
       clientId: Principal.fromText(review.clientId),
       providerId: Principal.fromText(review.providerId),
       serviceId: review.serviceId,
-      rating: review.rating,
-      comment: review.comment || "",
-      status: review.status === "Hidden" ? {Hidden: null} :
-        review.status === "Flagged" ? {Flagged: null} :
-          {Visible: null},
+      rating: BigInt(review.rating),
+      comment: review.comment,
+      status: {Visible: null},
       qualityScore: review.qualityScore ? [review.qualityScore] : [],
       createdAt: isoToNanoseconds(review.createdAt),
-      updatedAt: isoToNanoseconds(review.updatedAt || review.createdAt),
+      updatedAt: isoToNanoseconds(review.updatedAt),
     };
 
-    console.log(`📞 Calling reputation canister to process review ${review.id}`, {
-      useLLM,
-      clientCompletedBookings: clientData.completedBookings,
-    });
-
-    // 4. Call appropriate canister function
-    const result = useLLM ?
-      await reputationActor.processReviewWithLLM(
-        reviewForCanister,
-        clientData.completedBookings,
-        clientData.averageRating ? [clientData.averageRating] : [],
-        clientData.accountAge,
-      ) :
-      await reputationActor.processReview(
-        reviewForCanister,
-        clientData.completedBookings,
-        clientData.averageRating ? [clientData.averageRating] : [],
-        clientData.accountAge,
-      );
+    // Process review with or without LLM based on flag
+    let result;
+    if (useLLM) {
+      if (isProviderReview) {
+        // Process provider review - updates provider's reputation (the reviewer)
+        // This tracks if the provider is trustworthy when rating clients
+        result = await reputationActor.processProviderReviewWithLLM(
+          icReview,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
+        );
+      } else {
+        // Process regular review (client rating provider)
+        // Updates client's reputation (the reviewer)
+        result = await reputationActor.processReviewWithLLM(
+          icReview,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
+        );
+      }
+    } else {
+      if (isProviderReview) {
+        // Process provider review - updates provider's reputation (the reviewer)
+        // This tracks if the provider is trustworthy when rating clients
+        result = await reputationActor.processProviderReview(
+          icReview,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
+        );
+      } else {
+        // Process regular review (client rating provider)
+        // Updates client's reputation (the reviewer)
+        result = await reputationActor.processReview(
+          icReview,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
+        );
+      }
+    }
 
     if ("ok" in result) {
-      console.log(`✅ Review processed successfully for reputation: ${review.id}`);
-
-      // 5. Also update provider reputation separately
-      console.log(`📞 Updating provider reputation for ${review.providerId}`);
-      const providerData = await fetchProviderData(review.providerId);
-
-      const providerResult = await reputationActor.updateProviderReputation(
-        Principal.fromText(review.providerId),
-        providerData.completedBookings,
-        providerData.averageRating ? [providerData.averageRating] : [],
-        providerData.accountAge,
-      );
-
-      if ("ok" in providerResult) {
-        console.log(`✅ Provider reputation updated for ${review.providerId}`);
-      }
-
-      return {
-        success: true,
-        data: result.ok,
-        message: "Review processed and reputations updated successfully",
-      };
+      console.log("✅ Review processed successfully:", result.ok);
+      return {success: true, data: result.ok};
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
-      throw new Error(result.err);
+      console.error("❌ Review processing failed:", result.err);
+      throw new Error(`Failed to process review: ${result.err}`);
     }
   } catch (error) {
-    console.error("Error processing review for reputation:", error);
+    console.error("❌ Error in processReviewForReputationInternal:", error);
     throw error;
   }
 }

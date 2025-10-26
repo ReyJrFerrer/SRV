@@ -182,6 +182,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
     isActive: true,
     reputationScore: 0,
     totalEarnings: 0,
+    isOnboarded: false, // Provider onboarding status for payment functionality
   };
 
   await userRef.set(newProfile);
