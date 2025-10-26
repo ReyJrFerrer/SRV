@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
+const {deductReputationForCancellationInternal} = require("./reputation");
 
 // Import notification system from notification.js
 const {
@@ -1335,6 +1336,20 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Cancelled`,
       );
+    }
+
+    // Only deduct reputation if client is cancelling an accepted booking
+    if (authInfo.uid === booking.clientId && booking.status === "Accepted") {
+      try {
+        console.log(`⚠️ [cancelBooking] Deducting reputation points for client 
+          ${booking.clientId} for cancellation.`);
+        await deductReputationForCancellationInternal(booking.clientId);
+        console.log(`✅ [cancelBooking] Successfully deducted reputation points for client 
+          ${booking.clientId}.`);
+      } catch (error) {
+        console.error(`❌ [cancelBooking] Failed to deduct reputation points:`, error);
+        // Don't fail the cancellation if reputation update fails, just log it
+      }
     }
 
     const updatedBooking = {

@@ -149,6 +149,11 @@ function getManualReputationIdl() {
         [],
       ),
       getReputationScore: IDL.Func([IDL.Principal], [ReputationResult], ["query"]),
+      deductReputationForCancellation: IDL.Func(
+        [IDL.Principal],
+        [ReputationResult],
+        [],
+      ),
     });
   };
 }
@@ -748,6 +753,67 @@ exports.updateProviderReputation = functions.https.onCall(async (data, _context)
 
 // Export the internal function for use by other cloud functions
 exports.updateProviderReputationInternal = updateProviderReputationInternal;
+
+/**
+ * Deduct reputation points for a user who cancelled a booking
+ * @param {string} userId - The ID of the user who cancelled the booking
+ * @returns {Promise<Object>} Result of the reputation deduction
+ */
+const deductReputationForCancellationInternal = async (userId) => {
+  try {
+    const actor = await createReputationActor();
+    const result = await actor.deductReputationForCancellation(Principal.fromText(userId));
+
+    if ("ok" in result) {
+      return {
+        success: true,
+        data: {
+          userId: result.ok.userId.toString(),
+          trustScore: result.ok.trustScore,
+          trustLevel: result.ok.trustLevel,
+          lastUpdated: new Date(Number(result.ok.lastUpdated / BigInt(1000000))).toISOString(),
+        },
+      };
+    } else {
+      throw new Error(result.err || "Failed to deduct reputation points");
+    }
+  } catch (error) {
+    console.error("Error in deductReputationForCancellationInternal:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deduct reputation points for a user who cancelled a booking
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    const result = await deductReputationForCancellationInternal(userId);
+    return {success: true, data: result};
+  } catch (error) {
+    console.error("Error deducting reputation for cancellation:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Failed to deduct reputation points",
+      error,
+    );
+  }
+});
+
+// Export the internal function for use in other cloud functions
+exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
 
 /**
  * Process a review and update reputations for both client and provider
