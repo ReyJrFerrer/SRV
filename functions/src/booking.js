@@ -19,6 +19,7 @@ const {
 const {
   updateUserReputationInternal,
   updateProviderReputationInternal,
+  checkUserReputationInternal,
 } = require("./reputation");
 
 // Import wallet internal functions for commission handling
@@ -436,19 +437,19 @@ async function cancelConflictingBookings(
  */
 exports.createBooking = functions.https.onCall(async (data, context) => {
   console.log("🚀 [createBooking] called");
-  const safeDataForLog = {
-    serviceId: data.data?.serviceId,
-    providerId: data.data?.providerId,
-    price: data.data?.price,
-    location: data.data?.location ? "Present" : "Missing",
-    requestedDate: data.data?.requestedDate,
-    scheduledDate: data.data?.scheduledDate,
-    paymentMethod: data.data?.paymentMethod,
-    servicePackageIds: data.data?.servicePackageIds,
-    notes: data.data?.notes,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log("📦 [createBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
+  // const safeDataForLog = {
+  //   serviceId: data.data?.serviceId,
+  //   providerId: data.data?.providerId,
+  //   price: data.data?.price,
+  //   location: data.data?.location ? "Present" : "Missing",
+  //   requestedDate: data.data?.requestedDate,
+  //   scheduledDate: data.data?.scheduledDate,
+  //   paymentMethod: data.data?.paymentMethod,
+  //   servicePackageIds: data.data?.servicePackageIds,
+  //   notes: data.data?.notes,
+  //   auth: data.auth ? "Present" : "Missing",
+  // };
+  // console.log("📦 [createBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -468,7 +469,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [createBooking] Auth info:", authInfo);
+  // console.log("🔐 [createBooking] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -488,6 +489,51 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Check client's reputation
+    const clientReputation = await checkUserReputationInternal(authInfo.uid);
+    console.log("[createBooking] Reputation check result:", clientReputation);
+    if (!clientReputation.success || !clientReputation.data) {
+      console.error("❌ [createBooking] Failed to verify client reputation:",
+        clientReputation.error);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Unable to verify client reputation. Please try again later.",
+      );
+    }
+
+    if (clientReputation.data.trustScore <= 5) {
+      console.error(`❌ [createBooking] Client ${authInfo.uid} has insufficient ` +
+        `reputation score: ${clientReputation.data.trustScore}`);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        `Your reputation score (${clientReputation.data.trustScore}) is too ` +
+          "low to create a booking. Please contact support if you believe " +
+          "this is an error.",
+      );
+    }
+
+    // Check provider's reputation
+    const providerReputation = await checkUserReputationInternal(providerId);
+    console.log("[createBooking] Reputation check result:", providerReputation);
+    if (!providerReputation.success || !providerReputation.data) {
+      console.error("❌ [createBooking] Failed to verify provider reputation:",
+        providerReputation.error);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Unable to verify provider reputation. Please try again later.",
+      );
+    }
+
+    if (providerReputation.data.trustScore <= 5) {
+      console.error(`❌ [createBooking] Provider ${providerId} has insufficient ` +
+        `reputation score: ${providerReputation.data.trustScore}`);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This provider is currently not accepting new bookings due to " +
+          "reputation issues. Please try another provider.",
+      );
+    }
+
     // Validate service exists and belongs to provider
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
@@ -496,8 +542,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     }
 
     const service = serviceDoc.data();
-    console.log(`[createBooking] Fetched service data for serviceId ${serviceId}:`,
-      JSON.stringify(service, null, 2));
+    // console.log(`[createBooking] Fetched service data for serviceId ${serviceId}:`,
+    //   JSON.stringify(service, null, 2));
 
     if (service.providerId !== providerId) {
       console.error(`❌ [createBooking] 
@@ -524,7 +570,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
     if (servicePackageIds.length > 0) {
       for (const packageId of servicePackageIds) {
-        console.log(`📦 [createBooking] Validating package ${packageId}...`);
+        // console.log(`📦 [createBooking] Validating package ${packageId}...`);
 
         const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
@@ -608,8 +654,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       updatedAt: now,
     };
 
-    console.log("📝 [createBooking] Creating new booking object:"
-      , JSON.stringify(newBooking, null, 2));
+    // console.log("📝 [createBooking] Creating new booking object:"
+    //   , JSON.stringify(newBooking, null, 2));
     // Use Firestore transaction for atomic booking creation
     await db.runTransaction(async (transaction) => {
       transaction.set(db.collection("bookings").doc(bookingId), newBooking);

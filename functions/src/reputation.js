@@ -923,3 +923,115 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
     };
   }
 });
+
+/**
+ * Internal function to check the user reputation
+ * Can be called directly from other cloud functions
+ * @param {string} userId -  User principal as text
+ * @return {Promise<Object>} Result object
+ */
+async function checkUserReputationInternal(userId) {
+  try {
+    // Check in IC canister
+    console.log(`📞 [checkUserReputationInternal] Checking User Reputation 
+      for ${userId}`);
+    const reputationActor = await createReputationActor();
+    const principal = Principal.fromText(userId);
+
+    const result = await reputationActor.getReputationScore(principal);
+
+    console.log("Reputation result", result);
+
+    if ("ok" in result) {
+      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
+      return {
+        success: true,
+        data: {
+          trustScore: Number(result.ok.trustScore),
+          trustLevel: result.ok.trustLevel?.toString(),
+          completedBookings: Number(result.ok.completedBookings),
+        },
+      };
+    } else {
+      console.error(`❌ Error from canister: ${result.err}`);
+      return {
+        success: false,
+        error: result.err || "Failed to get reputation from canister",
+        data: {
+          trustScore: 50,
+          trustLevel: "New",
+          completedBookings: 0,
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Error in checkUserReputationInternal:", error);
+    return {
+      success: false,
+      error: error.message || "Error checking reputation",
+      data: {
+        trustScore: 50,
+        trustLevel: "New",
+        completedBookings: 0,
+      },
+    };
+  }
+}
+
+exports.checkUserReputationInternal = checkUserReputationInternal;
+
+
+exports.checkUserReputation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  console.log("🔄 Get Reputation Score Payload:", {userId});
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    // Check reputation score in the canister
+    console.log(`📞 Checking User Reputation in IC canister for ${userId}`);
+    const reputationActor = await createReputationActor();
+    const principal = Principal.fromText(userId);
+
+    const result = await reputationActor.getReputationScore(principal);
+
+    if ("ok" in result) {
+      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
+      return {
+        success: true,
+        data: result.ok,
+      };
+    } else {
+      console.error(`❌ Error from canister: ${result.err}`);
+      // Return default reputation instead of throwing error
+      return {
+        success: true,
+        data: {
+          trustScore: 50,
+          trustLevel: "New",
+          completedBookings: 0,
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Error getting reputation score:", error);
+    // Return default reputation instead of throwing error
+    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
+    return {
+      success: true,
+      data: {
+        trustScore: 50,
+        trustLevel: "New",
+        completedBookings: 0,
+      },
+    };
+  }
+});
