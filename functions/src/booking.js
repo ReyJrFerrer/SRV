@@ -1336,7 +1336,16 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
   const safeDataForLog = {bookingId: data.data?.bookingId};
   console.log("📦 [cancelBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const {bookingId, cancelReason} = payload;
+
+  if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
+    console.error(`❌ [cancelBooking] Validation failed: 
+      cancelReason is required and cannot be empty.`);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "A reason for cancellation is required",
+    );
+  }
 
   const authInfo = getAuthInfo(context, data);
   console.log("🔐 [cancelBooking] Auth info:", authInfo);
@@ -1401,6 +1410,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     const updatedBooking = {
       ...booking,
       status: "Cancelled",
+      cancelReason: cancelReason.trim(),
+      cancelledBy: authInfo.uid,
+      cancelledAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1409,6 +1421,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Cancelled",
+        cancelReason: cancelReason.trim(),
+        cancelledBy: authInfo.uid,
+        cancelledAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
     });
@@ -1452,7 +1467,10 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         serviceId: booking.serviceId,
         serviceName,
         cancelledBy: authInfo.uid,
+        cancelReason: cancelReason.trim(),
         senderName: cancellerName,
+        message: `${cancellerName} has cancelled the booking for "${serviceName}". ` +
+                `Reason: ${cancelReason.trim()}`,
       },
     );
 

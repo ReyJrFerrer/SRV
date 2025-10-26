@@ -598,7 +598,7 @@ export const useBookingManagement = (): BookingManagementHook => {
 
   // Booking status management
   const updateBookingStatus = useCallback(
-    async (bookingId: string, newStatus: BookingStatus) => {
+    async (bookingId: string, newStatus: BookingStatus, cancelReason?: string) => {
       try {
         setLoadingState(`update-${bookingId}`, true);
         clearError();
@@ -607,8 +607,11 @@ export const useBookingManagement = (): BookingManagementHook => {
 
         switch (newStatus) {
           case "Cancelled":
+            if (!cancelReason) {
+              throw new Error("A reason for cancellation is required");
+            }
             updatedBooking =
-              await bookingCanisterService.cancelBooking(bookingId);
+              await bookingCanisterService.cancelBooking(bookingId, cancelReason);
             break;
           case "Accepted":
             updatedBooking = await bookingCanisterService.acceptBooking(

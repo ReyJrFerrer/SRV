@@ -230,7 +230,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       } else if (onCancelBooking) {
         onCancelBooking(booking.id);
       } else {
-        // No handler provided; show a toast only
         toast.success("Booking has been cancelled.");
       }
     } catch (error) {

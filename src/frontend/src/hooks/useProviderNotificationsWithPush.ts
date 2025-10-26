@@ -247,7 +247,7 @@ export const useProviderNotificationsWithPush = () => {
       );
 
       if (uncoveredBookings.length > 0) {
-        // 4. Service completion reminders (for InProgress bookings)
+        // 1. Service completion reminders (for InProgress bookings)
         const serviceReminders = uncoveredBookings
           .filter((booking) => booking.status === "InProgress")
           .map((booking) => ({
@@ -261,7 +261,21 @@ export const useProviderNotificationsWithPush = () => {
             bookingId: booking.id,
           }));
 
-        additionalNotifications.push(...serviceReminders);
+        // 2. Review reminders for completed but unreviewed bookings
+        const reviewReminderNotifications = uncoveredBookings
+          .filter((booking) => booking.status === "Completed")
+          .map((booking) => ({
+            id: `frontend-review-${booking.id}-${Date.now()}`,
+            message: `Rate your experience with ${booking.clientName} for "${booking.serviceName}"`,
+            type: "review_request" as const,
+            timestamp: new Date(booking.completedDate || Date.now()).toISOString(),
+            read: false,
+            href: `/provider/rate-client/${booking.id}`,
+            clientName: booking.clientName,
+            bookingId: booking.id,
+          }));
+
+        additionalNotifications.push(...serviceReminders, ...reviewReminderNotifications);
       }
 
       // Combine canister notifications with additional frontend-generated ones
