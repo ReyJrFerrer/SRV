@@ -11,6 +11,7 @@ import { useServiceReviews } from "../../../hooks/reviewManagement";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceImages } from "../../../hooks/useMediaLoader";
+import { useReputation } from "../../../hooks/useReputation";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import {
   ServicePackage,
@@ -63,6 +64,53 @@ const ClientServiceDetailsPage: React.FC = () => {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
+  const [isCheckingReputation, setIsCheckingReputation] = useState(false);
+  const [reputationError, setReputationError] = useState<string | null>(null);
+  const [hasSufficientReputation, setHasSufficientReputation] = useState(true);
+  const { fetchUserReputation } = useReputation();
+
+  // Check reputations when service and identity are available
+  useEffect(() => {
+    const checkReputations = async () => {
+      if (!service?.providerId || !identity) {
+        setHasSufficientReputation(true);
+        return;
+      }
+
+      try {
+        setIsCheckingReputation(true);
+        setReputationError(null);
+
+        // Get current user's reputation
+        const currentUserRep = await fetchUserReputation(identity.getPrincipal().toString());
+        // Get provider's reputation
+        const providerRep = await fetchUserReputation(service.providerId);
+
+        // Check if both reputations are sufficient (>= 5)
+        const isCurrentUserEligible = currentUserRep && currentUserRep.trustScore >= 5;
+        const isProviderEligible = providerRep && providerRep.trustScore >= 5;
+
+        if (!isCurrentUserEligible || !isProviderEligible) {
+          if (!isCurrentUserEligible) {
+            setReputationError("Your reputation score is too low to book this service. Please complete your profile and earn more positive reviews.");
+          } else if (!isProviderEligible) {
+            setReputationError("This service provider's reputation score is currently too low to accept new bookings.");
+          }
+          setHasSufficientReputation(false);
+        } else {
+          setHasSufficientReputation(true);
+        }
+      } catch (error) {
+        console.error("Error checking reputations:", error);
+        setReputationError("Unable to verify reputation requirements. Please try again later.");
+        setHasSufficientReputation(false);
+      } finally {
+        setIsCheckingReputation(false);
+      }
+    };
+
+    checkReputations();
+  }, [service, identity, fetchUserReputation]);
 
   useEffect(() => {
     if (service) {
@@ -461,7 +509,8 @@ const ClientServiceDetailsPage: React.FC = () => {
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <button
             onClick={handleChatProviderClick}
-            disabled={isOwnService}
+            disabled={isOwnService  || !hasSufficientReputation ||
+                isCheckingReputation}
             className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
             style={{ minWidth: 0, flexBasis: "32%" }}
           >
@@ -486,15 +535,24 @@ const ClientServiceDetailsPage: React.FC = () => {
             <button
               onClick={handleBookNow}
               disabled={
-                packages.length === 0 || isOwnService || !service.isActive
+                packages.length === 0 || 
+                isOwnService || 
+                !service.isActive || 
+                !hasSufficientReputation ||
+                isCheckingReputation
               }
               className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
               style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
-              {service.isActive ? "Book Now" : "Service Unavailable"}
+              {isCheckingReputation ? "Checking..." : service.isActive ? (hasSufficientReputation ? "Book Now" : "Reputation Too Low") : "Service Unavailable"}
               {isOwnService && (
                 <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   You cannot book your own service.
+                </span>
+              )}
+              {reputationError && (
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-red-100 px-3 py-2 text-xs font-semibold text-red-800 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  {reputationError}
                 </span>
               )}
             </button>
