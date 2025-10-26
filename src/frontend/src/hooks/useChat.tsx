@@ -5,8 +5,26 @@ import chatCanisterService, {
   FrontendMessage,
   FrontendConversation,
   FrontendMessagePage,
+  AsyncUnsubscribe,
 } from "../services/chatCanisterService";
 import { authCanisterService } from "../services/authCanisterService";
+
+/**
+ * Custom hook to track if component is still mounted
+ * Prevents state updates after component unmount
+ */
+const useIsMounted = () => {
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
+  return isMountedRef;
+};
 
 // Enhanced conversation summary with user name and profile image URL
 export interface EnhancedConversationSummary
@@ -21,6 +39,7 @@ export interface EnhancedConversationSummary
  */
 export const useChat = () => {
   const { isAuthenticated, identity } = useAuth();
+  const isMountedRef = useIsMounted();
 
   // State management
   const [conversations, setConversations] = useState<
@@ -38,9 +57,9 @@ export const useChat = () => {
     new Map(),
   );
 
-  // Real-time listener unsubscribe functions
-  const conversationsUnsubscribe = useRef<(() => void) | null>(null);
-  const messagesUnsubscribe = useRef<(() => void) | null>(null);
+  // Real-time listener unsubscribe functions (now async)
+  const conversationsUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
+  const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
 
   /**
    * Get user name from cache or fetch from auth service
@@ -177,8 +196,8 @@ export const useChat = () => {
   /**
    * Setup real-time listener for conversations
    */
-  const setupConversationsListener = useCallback(() => {
-    if (!isAuthenticated || !identity) {
+  const setupConversationsListener = useCallback(async () => {
+    if (!isAuthenticated || !identity || !isMountedRef.current) {
       return;
     }
 
@@ -187,33 +206,66 @@ export const useChat = () => {
 
     // Cleanup existing listener
     if (conversationsUnsubscribe.current) {
-      conversationsUnsubscribe.current();
+      console.log("🔄 [useChat] Cleaning up existing conversations listener");
+      try {
+        await conversationsUnsubscribe.current();
+      } catch (error) {
+        console.error("❌ [useChat] Error cleaning up listener:", error);
+      }
+      conversationsUnsubscribe.current = null;
     }
 
+    if (!isMountedRef.current) return;
+    
     setLoading(true);
     setError(null);
 
-    conversationsUnsubscribe.current =
-      chatCanisterService.subscribeToConversationSummaries(
-        userId,
-        async (summaries) => {
-          console.log(
-            `✅ [useChat] Real-time update: ${summaries.length} conversations`,
-          );
+    try {
+      conversationsUnsubscribe.current =
+        await chatCanisterService.subscribeToConversationSummaries(
+          userId,
+          async (summaries) => {
+            if (!isMountedRef.current) return;
+            
+            console.log(
+              `✅ [useChat] Real-time update: ${summaries.length} conversations`,
+            );
 
-          // Enhance conversations with user names
-          const enhancedConversations =
-            await enhanceConversationsWithNames(summaries);
-          setConversations(enhancedConversations);
-          setLoading(false);
-        },
-        (error) => {
-          console.error("❌ [useChat] Error in conversations listener:", error);
-          setError("Could not load conversations.");
-          setLoading(false);
-        },
-      );
-  }, [isAuthenticated, identity, enhanceConversationsWithNames]);
+            try {
+              // Enhance conversations with user names
+              const enhancedConversations =
+                await enhanceConversationsWithNames(summaries);
+              
+              if (isMountedRef.current) {
+                setConversations(enhancedConversations);
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error("❌ [useChat] Error enhancing conversations:", error);
+              if (isMountedRef.current) {
+                setError("Could not load conversations.");
+                setLoading(false);
+              }
+            }
+          },
+          (error) => {
+            if (!isMountedRef.current) return;
+            
+            console.error("❌ [useChat] Error in conversations listener:", error);
+            if (isMountedRef.current) {
+              setError("Could not load conversations.");
+              setLoading(false);
+            }
+          },
+        );
+    } catch (error) {
+      console.error("❌ [useChat] Error setting up conversations listener:", error);
+      if (isMountedRef.current) {
+        setError("Could not set up conversations listener.");
+        setLoading(false);
+      }
+    }
+  }, [isAuthenticated, identity, enhanceConversationsWithNames, isMountedRef]);
 
   /**
    * Fetch messages for a specific conversation
@@ -253,57 +305,93 @@ export const useChat = () => {
   const loadConversation = useCallback(
     async (conversationId: string) => {
       if (!isAuthenticated || !identity) {
-        setCurrentConversation(null);
-        setMessages([]);
+        if (isMountedRef.current) {
+          setCurrentConversation(null);
+          setMessages([]);
+        }
         return;
       }
 
+      if (!isMountedRef.current) return;
+      
       setLoading(true);
       setError(null);
 
       try {
         // Cleanup existing messages listener
         if (messagesUnsubscribe.current) {
-          messagesUnsubscribe.current();
+          console.log("🔄 [useChat] Cleaning up existing messages listener");
+          try {
+            await messagesUnsubscribe.current();
+          } catch (error) {
+            console.error("❌ [useChat] Error cleaning up messages listener:", error);
+          }
+          messagesUnsubscribe.current = null;
         }
+
+        if (!isMountedRef.current) return;
 
         // Setup real-time listener for messages
         console.log(
           "🔔 [useChat] Setting up messages listener for:",
           conversationId,
         );
-        messagesUnsubscribe.current = chatCanisterService.subscribeToMessages(
+        messagesUnsubscribe.current = await chatCanisterService.subscribeToMessages(
           conversationId,
           (rawMessages) => {
+            if (!isMountedRef.current) return;
+            
             console.log(
               `✅ [useChat] Real-time update: ${rawMessages.length} messages`,
             );
-            // Adapt messages to frontend format
-            const adaptedMessages = rawMessages.map(adaptBackendMessage);
-            setMessages(adaptedMessages);
-            setLoading(false);
+            
+            try {
+              // Adapt messages to frontend format
+              const adaptedMessages = rawMessages.map(adaptBackendMessage);
+              if (isMountedRef.current) {
+                setMessages(adaptedMessages);
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error("❌ [useChat] Error adapting messages:", error);
+              if (isMountedRef.current) {
+                setError("Could not process messages.");
+                setLoading(false);
+              }
+            }
           },
           (error) => {
+            if (!isMountedRef.current) return;
+            
             console.error("❌ [useChat] Error in messages listener:", error);
-            setError("Could not load messages.");
-            setLoading(false);
+            if (isMountedRef.current) {
+              setError("Could not load messages.");
+              setLoading(false);
+            }
           },
         );
 
         // Fetch conversation details after setting up listener
         const conversation =
           await chatCanisterService.getConversation(conversationId);
-        setCurrentConversation(conversation);
+        
+        if (isMountedRef.current) {
+          setCurrentConversation(conversation);
+        }
 
         // Mark messages as read
-        await chatCanisterService.markMessagesAsRead(conversationId);
+        if (isMountedRef.current) {
+          await chatCanisterService.markMessagesAsRead(conversationId);
+        }
       } catch (err) {
         console.error("Failed to load conversation:", err);
-        setError("Could not load conversation.");
-        setLoading(false);
+        if (isMountedRef.current) {
+          setError("Could not load conversation.");
+          setLoading(false);
+        }
       }
     },
-    [isAuthenticated, identity, adaptBackendMessage],
+    [isAuthenticated, identity, adaptBackendMessage, isMountedRef],
   );
 
   /**
@@ -431,44 +519,66 @@ export const useChat = () => {
   /**
    * Cleanup all real-time listeners
    */
-  const cleanupListeners = useCallback(() => {
+  const cleanupListeners = useCallback(async () => {
     console.log("🔕 [useChat] Cleaning up all listeners");
-    if (conversationsUnsubscribe.current) {
-      conversationsUnsubscribe.current();
-      conversationsUnsubscribe.current = null;
+    
+    try {
+      if (conversationsUnsubscribe.current) {
+        await conversationsUnsubscribe.current();
+        conversationsUnsubscribe.current = null;
+      }
+    } catch (error) {
+      console.error("❌ [useChat] Error cleaning up conversations listener:", error);
     }
-    if (messagesUnsubscribe.current) {
-      messagesUnsubscribe.current();
-      messagesUnsubscribe.current = null;
+    
+    try {
+      if (messagesUnsubscribe.current) {
+        await messagesUnsubscribe.current();
+        messagesUnsubscribe.current = null;
+      }
+    } catch (error) {
+      console.error("❌ [useChat] Error cleaning up messages listener:", error);
     }
   }, []);
 
   /**
    * Clear current conversation and messages
    */
-  const clearCurrentConversation = useCallback(() => {
+  const clearCurrentConversation = useCallback(async () => {
     // Cleanup messages listener
-    if (messagesUnsubscribe.current) {
-      messagesUnsubscribe.current();
-      messagesUnsubscribe.current = null;
+    try {
+      if (messagesUnsubscribe.current) {
+        await messagesUnsubscribe.current();
+        messagesUnsubscribe.current = null;
+      }
+    } catch (error) {
+      console.error("❌ [useChat] Error cleaning up messages listener:", error);
     }
-    setCurrentConversation(null);
-    setMessages([]);
-    setError(null);
-  }, []);
+    
+    if (isMountedRef.current) {
+      setCurrentConversation(null);
+      setMessages([]);
+      setError(null);
+    }
+  }, [isMountedRef]);
 
   // Setup real-time listeners on auth state change
   useEffect(() => {
-    if (isAuthenticated && identity) {
+    console.log("🔄 [useChat] Auth state changed, updating listeners");
+    
+    if (isAuthenticated && identity && isMountedRef.current) {
       setupConversationsListener();
     } else {
       cleanupListeners();
-      setConversations([]);
+      if (isMountedRef.current) {
+        setConversations([]);
+      }
       clearCurrentConversation();
     }
 
     // Cleanup on unmount or auth change
     return () => {
+      console.log("🔕 [useChat] Cleaning up listeners (unmount or auth change)");
       cleanupListeners();
     };
   }, [
@@ -477,6 +587,7 @@ export const useChat = () => {
     setupConversationsListener,
     cleanupListeners,
     clearCurrentConversation,
+    isMountedRef,
   ]);
 
   return {
