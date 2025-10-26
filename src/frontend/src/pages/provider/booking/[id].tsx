@@ -702,16 +702,16 @@ const ProviderBookingDetailsPage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
-        <div className="container mx-auto flex items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate("/provider/bookings")}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
             aria-label="Back"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="m-2 p-2 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Booking Details
           </h1>
         </div>

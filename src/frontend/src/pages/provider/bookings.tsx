@@ -278,7 +278,7 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+        <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center justify-center">
             <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
               My Bookings
@@ -286,7 +286,7 @@ const ProviderBookingsPage: React.FC = () => {
           </div>
         </header>
 
-        <div className="sticky top-[64px] z-10 bg-white px-4 pb-2 pt-4">
+        <div className="sticky top-[64px] z-10 bg-white px-4 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -345,7 +345,7 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           </div>
           <div className="w-full overflow-x-auto">
-            <nav className="flex px-4 pb-2 text-sm">
+            <nav className="flex px-4 pb-4 text-sm">
               <div className="flex w-full min-w-max justify-between space-x-2">
                 {TAB_ITEMS.map((tab) => (
                   <button

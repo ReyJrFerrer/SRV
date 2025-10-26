@@ -14,6 +14,54 @@ import {
 // Initialize Firebase
 const { functions, firestore } = initializeFirebase();
 
+// Custom type for async unsubscribe functions
+export type AsyncUnsubscribe = () => Promise<void>;
+
+// Listener state management to prevent overlapping subscriptions
+const activeListeners = new Map<
+  string,
+  {
+    unsubscribe: Unsubscribe;
+    isTerminating: boolean;
+  }
+>();
+
+// Helper to safely unsubscribe a listener
+const safeUnsubscribe = async (
+  listenerId: string,
+  delayMs: number = 100,
+): Promise<void> => {
+  const listener = activeListeners.get(listenerId);
+  if (!listener) return;
+
+  if (listener.isTerminating) {
+    console.log(
+      `⏳ [chatCanisterService] Listener ${listenerId} already terminating`,
+    );
+    return;
+  }
+
+  listener.isTerminating = true;
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      try {
+        listener.unsubscribe();
+        activeListeners.delete(listenerId);
+        console.log(
+          `✅ [chatCanisterService] Listener ${listenerId} cleaned up`,
+        );
+      } catch (error) {
+        console.error(
+          `❌ [chatCanisterService] Error cleaning up listener ${listenerId}:`,
+          error,
+        );
+      }
+      resolve();
+    }, delayMs);
+  });
+};
+
 // Frontend-compatible interfaces
 export interface FrontendMessage {
   id: string;
@@ -401,22 +449,87 @@ export const chatCanisterService = {
    * @param onUpdate Callback function to handle conversation updates
    * @returns Unsubscribe function to stop listening
    */
-  subscribeToConversations(
+  async subscribeToConversations(
     userId: string,
     onUpdate: (conversations: any[]) => void,
     onError?: (error: Error) => void,
-  ): Unsubscribe {
+  ): Promise<AsyncUnsubscribe> {
+    const clientListenerId = `conversations-client-${userId}`;
+    const providerListenerId = `conversations-provider-${userId}`;
+
+    // Clean up existing listeners
+    await Promise.all([
+      safeUnsubscribe(clientListenerId),
+      safeUnsubscribe(providerListenerId),
+    ]);
+
     console.log(
       "🔔 [chatCanisterService] Setting up real-time listener for conversations:",
       userId,
     );
 
+    let unsubscribed = false;
+    const conversationMap = new Map<string, any>();
+
     try {
+      const updateConversations = () => {
+        if (!unsubscribed) {
+          try {
+            const allConversations = Array.from(conversationMap.values());
+            onUpdate(allConversations);
+          } catch (error) {
+            console.error(
+              "❌ [chatCanisterService] Error in updateConversations callback:",
+              error,
+            );
+          }
+        }
+      };
+
       // Query for conversations where user is client
       const clientQuery = query(
         collection(firestore, "conversations"),
         where("clientId", "==", userId),
       );
+
+      // Listen to client conversations
+      const clientUnsubscribe = onSnapshot(
+        clientQuery,
+        (snapshot) => {
+          if (unsubscribed) return;
+
+          try {
+            snapshot.docChanges().forEach((change) => {
+              const docData = { id: change.doc.id, ...change.doc.data() };
+              if (change.type === "added" || change.type === "modified") {
+                conversationMap.set(change.doc.id, docData);
+              } else if (change.type === "removed") {
+                conversationMap.delete(change.doc.id);
+              }
+            });
+            updateConversations();
+          } catch (error) {
+            console.error(
+              "❌ [chatCanisterService] Error processing client conversations snapshot:",
+              error,
+            );
+          }
+        },
+        (error) => {
+          if (unsubscribed) return;
+          console.error(
+            "❌ [chatCanisterService] Error in client conversations listener:",
+            error,
+          );
+          if (onError && !unsubscribed) onError(error as Error);
+        },
+      );
+
+      // Register client listener
+      activeListeners.set(clientListenerId, {
+        unsubscribe: clientUnsubscribe,
+        isTerminating: false,
+      });
 
       // Query for conversations where user is provider
       const providerQuery = query(
@@ -424,72 +537,58 @@ export const chatCanisterService = {
         where("providerId", "==", userId),
       );
 
-      const conversationMap = new Map<string, any>();
-      let clientUnsubscribe: Unsubscribe | null = null;
-      let providerUnsubscribe: Unsubscribe | null = null;
-      let unsubscribed = false;
-
-      const updateConversations = () => {
-        if (!unsubscribed) {
-          const allConversations = Array.from(conversationMap.values());
-          onUpdate(allConversations);
-        }
-      };
-
-      // Listen to client conversations
-      clientUnsubscribe = onSnapshot(
-        clientQuery,
-        (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            const docData = { id: change.doc.id, ...change.doc.data() };
-            if (change.type === "added" || change.type === "modified") {
-              conversationMap.set(change.doc.id, docData);
-            } else if (change.type === "removed") {
-              conversationMap.delete(change.doc.id);
-            }
-          });
-          updateConversations();
-        },
-        (error) => {
-          console.error(
-            "❌ [chatCanisterService] Error in client conversations listener:",
-            error,
-          );
-          if (onError) onError(error as Error);
-        },
-      );
-
       // Listen to provider conversations
-      providerUnsubscribe = onSnapshot(
+      const providerUnsubscribe = onSnapshot(
         providerQuery,
         (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            const docData = { id: change.doc.id, ...change.doc.data() };
-            if (change.type === "added" || change.type === "modified") {
-              conversationMap.set(change.doc.id, docData);
-            } else if (change.type === "removed") {
-              conversationMap.delete(change.doc.id);
-            }
-          });
-          updateConversations();
+          if (unsubscribed) return;
+
+          try {
+            snapshot.docChanges().forEach((change) => {
+              const docData = { id: change.doc.id, ...change.doc.data() };
+              if (change.type === "added" || change.type === "modified") {
+                conversationMap.set(change.doc.id, docData);
+              } else if (change.type === "removed") {
+                conversationMap.delete(change.doc.id);
+              }
+            });
+            updateConversations();
+          } catch (error) {
+            console.error(
+              "❌ [chatCanisterService] Error processing provider conversations snapshot:",
+              error,
+            );
+          }
         },
         (error) => {
+          if (unsubscribed) return;
           console.error(
             "❌ [chatCanisterService] Error in provider conversations listener:",
             error,
           );
-          if (onError) onError(error as Error);
+          if (onError && !unsubscribed) onError(error as Error);
         },
       );
 
+      // Register provider listener
+      activeListeners.set(providerListenerId, {
+        unsubscribe: providerUnsubscribe,
+        isTerminating: false,
+      });
+
       // Return combined unsubscribe function
-      return () => {
+      return async () => {
+        if (unsubscribed) return;
+
         console.log(
           "🔕 [chatCanisterService] Unsubscribing from conversations listener",
         );
         unsubscribed = true;
-        if (clientUnsubscribe) clientUnsubscribe();
-        if (providerUnsubscribe) providerUnsubscribe();
+
+        await Promise.all([
+          safeUnsubscribe(clientListenerId),
+          safeUnsubscribe(providerListenerId),
+        ]);
       };
     } catch (error) {
       console.error(
@@ -497,7 +596,7 @@ export const chatCanisterService = {
         error,
       );
       if (onError) onError(error as Error);
-      return () => {}; // Return no-op unsubscribe
+      return async () => {}; // Return no-op unsubscribe
     }
   },
 
@@ -508,16 +607,23 @@ export const chatCanisterService = {
    * @param messageLimit Maximum number of messages to listen to (default: 50)
    * @returns Unsubscribe function to stop listening
    */
-  subscribeToMessages(
+  async subscribeToMessages(
     conversationId: string,
     onUpdate: (messages: any[]) => void,
     onError?: (error: Error) => void,
     messageLimit: number = 50,
-  ): Unsubscribe {
+  ): Promise<AsyncUnsubscribe> {
+    const listenerId = `messages-${conversationId}`;
+
+    // Clean up existing listener for this conversation
+    await safeUnsubscribe(listenerId);
+
     console.log(
-      "🔔 [chatCanisterService] Setting up real-time listener for messages in conversation:",
+      "🔔 [chatCanisterService] Setting up real-time listener for messages:",
       conversationId,
     );
+
+    let unsubscribed = false;
 
     try {
       const messagesQuery = query(
@@ -527,32 +633,55 @@ export const chatCanisterService = {
         firestoreLimit(messageLimit),
       );
 
-      const unsubscribe = onSnapshot(
+      const firestoreUnsubscribe = onSnapshot(
         messagesQuery,
         (snapshot) => {
-          const messages = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          console.log(
-            `✅ [chatCanisterService] Real-time update: ${messages.length} messages in conversation ${conversationId}`,
-          );
-          onUpdate(messages);
+          if (unsubscribed) return;
+
+          try {
+            const messages = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            console.log(
+              `✅ [chatCanisterService] Real-time update: ${messages.length} messages`,
+            );
+            if (!unsubscribed) {
+              onUpdate(messages);
+            }
+          } catch (error) {
+            console.error(
+              "❌ [chatCanisterService] Error processing messages snapshot:",
+              error,
+            );
+          }
         },
         (error) => {
+          if (unsubscribed) return;
           console.error(
             "❌ [chatCanisterService] Error in messages listener:",
             error,
           );
-          if (onError) onError(error as Error);
+          if (onError && !unsubscribed) onError(error as Error);
         },
       );
 
-      return () => {
+      // Register the listener
+      activeListeners.set(listenerId, {
+        unsubscribe: firestoreUnsubscribe,
+        isTerminating: false,
+      });
+
+      // Return cleanup function
+      return async () => {
+        if (unsubscribed) return;
+
         console.log(
-          "🔕 [chatCanisterService] Unsubscribing from messages listener",
+          "🔕 [chatCanisterService] Unsubscribing from messages listener:",
+          conversationId,
         );
-        unsubscribe();
+        unsubscribed = true;
+        await safeUnsubscribe(listenerId);
       };
     } catch (error) {
       console.error(
@@ -560,7 +689,7 @@ export const chatCanisterService = {
         error,
       );
       if (onError) onError(error as Error);
-      return () => {}; // Return no-op unsubscribe
+      return async () => {}; // Return no-op unsubscribe
     }
   },
 
@@ -570,103 +699,195 @@ export const chatCanisterService = {
    * @param onUpdate Callback function to handle conversation summary updates
    * @returns Unsubscribe function to stop listening
    */
-  subscribeToConversationSummaries(
+  async subscribeToConversationSummaries(
     userId: string,
     onUpdate: (summaries: any[]) => void,
     onError?: (error: Error) => void,
-  ): Unsubscribe {
+  ): Promise<AsyncUnsubscribe> {
     console.log(
       "🔔 [chatCanisterService] Setting up real-time listener for conversation summaries:",
       userId,
     );
 
+    let unsubscribed = false;
     const conversationMap = new Map<string, any>();
     const lastMessageMap = new Map<string, any>();
     let messageUnsubscribers = new Map<string, Unsubscribe>();
+    let conversationsUnsubscribe: AsyncUnsubscribe | null = null;
 
     const updateSummaries = () => {
-      const summaries = Array.from(conversationMap.values()).map((conv) => ({
-        conversation: conv,
-        lastMessage: lastMessageMap.has(conv.id)
-          ? [lastMessageMap.get(conv.id)]
-          : [],
-      }));
+      if (unsubscribed) return;
 
-      // Sort by last message time (most recent first)
-      summaries.sort((a, b) => {
-        const timeA = a.conversation.lastMessageAt || a.conversation.createdAt;
-        const timeB = b.conversation.lastMessageAt || b.conversation.createdAt;
-        return new Date(timeB).getTime() - new Date(timeA).getTime();
-      });
+      try {
+        const summaries = Array.from(conversationMap.values()).map((conv) => ({
+          conversation: conv,
+          lastMessage: lastMessageMap.has(conv.id)
+            ? [lastMessageMap.get(conv.id)]
+            : [],
+        }));
 
-      onUpdate(summaries);
+        // Sort by last message time (most recent first)
+        summaries.sort((a, b) => {
+          const timeA =
+            a.conversation.lastMessageAt || a.conversation.createdAt;
+          const timeB =
+            b.conversation.lastMessageAt || b.conversation.createdAt;
+          return new Date(timeB).getTime() - new Date(timeA).getTime();
+        });
+
+        if (!unsubscribed) {
+          onUpdate(summaries);
+        }
+      } catch (error) {
+        console.error(
+          "❌ [chatCanisterService] Error in updateSummaries:",
+          error,
+        );
+      }
     };
 
     // Subscribe to each conversation's last message
     const subscribeToLastMessage = (conversationId: string) => {
-      const lastMessageQuery = query(
-        collection(firestore, "messages"),
-        where("conversationId", "==", conversationId),
-        orderBy("createdAt", "desc"),
-        firestoreLimit(1),
-      );
+      if (unsubscribed) return;
 
-      const unsubscribe = onSnapshot(lastMessageQuery, (snapshot) => {
-        if (!snapshot.empty) {
-          const lastMessage = {
-            id: snapshot.docs[0].id,
-            ...snapshot.docs[0].data(),
-          };
-          lastMessageMap.set(conversationId, lastMessage);
-        } else {
-          lastMessageMap.delete(conversationId);
-        }
-        updateSummaries();
-      });
+      try {
+        const lastMessageQuery = query(
+          collection(firestore, "messages"),
+          where("conversationId", "==", conversationId),
+          orderBy("createdAt", "desc"),
+          firestoreLimit(1),
+        );
 
-      messageUnsubscribers.set(conversationId, unsubscribe);
+        const unsubscribe = onSnapshot(
+          lastMessageQuery,
+          (snapshot) => {
+            if (unsubscribed) return;
+
+            try {
+              if (!snapshot.empty) {
+                const lastMessage = {
+                  id: snapshot.docs[0].id,
+                  ...snapshot.docs[0].data(),
+                };
+                lastMessageMap.set(conversationId, lastMessage);
+              } else {
+                lastMessageMap.delete(conversationId);
+              }
+              updateSummaries();
+            } catch (error) {
+              console.error(
+                "❌ [chatCanisterService] Error processing last message snapshot:",
+                error,
+              );
+            }
+          },
+          (error) => {
+            if (unsubscribed) return;
+            console.error(
+              "❌ [chatCanisterService] Error in last message listener:",
+              error,
+            );
+          },
+        );
+
+        messageUnsubscribers.set(conversationId, unsubscribe);
+      } catch (error) {
+        console.error(
+          "❌ [chatCanisterService] Error subscribing to last message:",
+          error,
+        );
+      }
     };
 
     // Main conversations listener
-    const conversationsUnsubscribe = this.subscribeToConversations(
-      userId,
-      (conversations) => {
-        // Update conversation map
-        conversations.forEach((conv) => {
-          conversationMap.set(conv.id, conv);
+    try {
+      conversationsUnsubscribe = await this.subscribeToConversations(
+        userId,
+        (conversations) => {
+          if (unsubscribed) return;
 
-          // Subscribe to last message if not already subscribed
-          if (!messageUnsubscribers.has(conv.id)) {
-            subscribeToLastMessage(conv.id);
+          try {
+            // Update conversation map
+            conversations.forEach((conv) => {
+              conversationMap.set(conv.id, conv);
+
+              // Subscribe to last message if not already subscribed
+              if (!messageUnsubscribers.has(conv.id) && !unsubscribed) {
+                subscribeToLastMessage(conv.id);
+              }
+            });
+
+            // Clean up removed conversations
+            conversationMap.forEach((_, convId) => {
+              if (!conversations.find((c) => c.id === convId)) {
+                conversationMap.delete(convId);
+                lastMessageMap.delete(convId);
+                const unsub = messageUnsubscribers.get(convId);
+                if (unsub) {
+                  try {
+                    unsub();
+                  } catch (error) {
+                    console.error(
+                      "❌ [chatCanisterService] Error unsubscribing message listener:",
+                      error,
+                    );
+                  }
+                  messageUnsubscribers.delete(convId);
+                }
+              }
+            });
+
+            updateSummaries();
+          } catch (error) {
+            console.error(
+              "❌ [chatCanisterService] Error processing conversations update:",
+              error,
+            );
           }
-        });
-
-        // Clean up removed conversations
-        conversationMap.forEach((_, convId) => {
-          if (!conversations.find((c) => c.id === convId)) {
-            conversationMap.delete(convId);
-            lastMessageMap.delete(convId);
-            const unsub = messageUnsubscribers.get(convId);
-            if (unsub) {
-              unsub();
-              messageUnsubscribers.delete(convId);
-            }
-          }
-        });
-
-        updateSummaries();
-      },
-      onError,
-    );
+        },
+        onError,
+      );
+    } catch (error) {
+      console.error(
+        "❌ [chatCanisterService] Error setting up conversation summaries listener:",
+        error,
+      );
+      if (onError) onError(error as Error);
+      return async () => {}; // Return no-op unsubscribe
+    }
 
     // Return combined unsubscribe function
-    return () => {
+    return async () => {
+      if (unsubscribed) return; // Prevent double unsubscribe
+
       console.log(
         "🔕 [chatCanisterService] Unsubscribing from conversation summaries listener",
       );
-      conversationsUnsubscribe();
-      messageUnsubscribers.forEach((unsub) => unsub());
-      messageUnsubscribers.clear();
+      unsubscribed = true;
+
+      try {
+        if (conversationsUnsubscribe) {
+          await conversationsUnsubscribe();
+          conversationsUnsubscribe = null;
+        }
+
+        messageUnsubscribers.forEach((unsub, convId) => {
+          try {
+            unsub();
+          } catch (error) {
+            console.error(
+              `❌ [chatCanisterService] Error unsubscribing message listener for ${convId}:`,
+              error,
+            );
+          }
+        });
+        messageUnsubscribers.clear();
+      } catch (error) {
+        console.error(
+          "❌ [chatCanisterService] Error during conversation summaries unsubscribe:",
+          error,
+        );
+      }
     };
   },
 };

@@ -174,7 +174,7 @@ const PayoutSettingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-100">
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-          <div className="flex items-center justify-between px-4">
+          <div className="relative flex items-center justify-center px-4">
             <button
               onClick={() => navigate("/provider/home")}
               className="flex items-center text-blue-600 hover:text-blue-700"
@@ -185,7 +185,7 @@ const PayoutSettingsPage: React.FC = () => {
             <h1 className="text-xl font-extrabold text-black">
               Complete Onboarding
             </h1>
-            <div className="w-20" /> {/* Spacer */}
+            <div className="absolute right-4 w-20" />
           </div>
         </header>
 
@@ -220,15 +220,14 @@ const PayoutSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between px-4">
           <button
             onClick={() => navigate("/provider/home")}
             className="flex items-center text-blue-600 hover:text-blue-700"
           >
             <ArrowLeftIcon className="mr-2 h-5 w-5" />
-            Back
           </button>
           <h1 className="text-xl font-extrabold text-black">
             Complete Onboarding

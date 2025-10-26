@@ -391,9 +391,9 @@ async function cancelConflictingBookings(
       });
 
       // Send notification to the client
-      const notificationMessage = `We're sorry, but the provider chose another ` +
-        `booking for "${serviceName}". Your booking has been automatically cancelled. ` +
-        `Would you like to book another time?`;
+      const notificationMessage = `Your booking request for "${serviceName}" 
+      was not selected by the provider for this time slot and has been automatically cancelled. 
+      Please feel free to book another time.`;
 
       notificationPromises.push(
         createNotification(
@@ -2446,7 +2446,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
     console.log(`📝 [cancelMissedBookings] Looking for bookings with a scheduledDate ` +
       `(end time) before the current time: ${now.toISOString()}...`);
 
-    // Find all "Accepted" bookings whose scheduled date (end time) has passed by more than 1 hour
+    // Find all "Accepted" bookings whose scheduled date (end time) has passed
     const missedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("scheduledDate", "<=", now.toISOString())
@@ -2490,9 +2490,9 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
       });
 
       // Send notification to the client
-      const notificationMessage = `We're sorry, but the service provider did not show up ` +
-        `for your scheduled booking "${serviceName}". The time slot has passed and the booking ` +
-        `has been automatically cancelled. Would you like to look for another service provider?`;
+      const notificationMessage = `Your booking for "${serviceName}" was automatically 
+      cancelled because the provider did not start the service within the scheduled time. 
+      Please feel free to book with another provider.`;
 
       notificationPromises.push(
         createNotification(
