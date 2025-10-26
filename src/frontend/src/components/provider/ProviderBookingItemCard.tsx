@@ -323,7 +323,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // Navigate to directions page first; actual start initiated from there
-   const handleStartService = async () => {
+  const handleStartService = async () => {
     if (!booking) return;
 
     // Check the locationDetection flag
@@ -755,4 +755,3 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 };
 
 export default ProviderBookingItemCard;
-

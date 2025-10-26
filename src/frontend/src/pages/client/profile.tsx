@@ -756,7 +756,7 @@ const ClientProfilePage: React.FC = () => {
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
                       )}
                     </div>
-                   <div className="text-left">
+                    <div className="text-left">
                       <label
                         htmlFor="phone"
                         className="block text-sm font-medium text-gray-700"
@@ -1067,4 +1067,3 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
 };
 
 export default ClientProfilePage;
-
