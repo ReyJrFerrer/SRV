@@ -34,6 +34,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   const [locationInputMode, setLocationInputMode] = useState<
     "detected" | "manual"
   >("detected");
+
+  // Auto-switch to manual mode if location is blocked
+  useEffect(() => {
+    if (locationStatus === "denied") {
+      setLocationInputMode("manual");
+    }
+  }, [locationStatus]);
   const [manualProvince, setManualProvince] = useState<string>("");
   const [manualCity, setManualCity] = useState<string>("");
   const [manualCityOptions, setManualCityOptions] = useState<string[]>([]);
@@ -49,10 +56,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
       locationMunicipalityCity: "",
     }));
     // Find province in phLocations
-    const provinceObj = phLocations.provinces.find(
-      (prov: any) => prov.name === province,
-    );
-    if (provinceObj) {
+    let provinceObj;
+    if (phLocations && Array.isArray(phLocations.provinces)) {
+      provinceObj = phLocations.provinces.find(
+        (prov: any) => prov.name === province,
+      );
+    }
+    if (provinceObj && Array.isArray(provinceObj.municipalities)) {
       setManualCityOptions(provinceObj.municipalities.map((m: any) => m.name));
     } else {
       setManualCityOptions([]);
@@ -208,11 +218,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 onChange={handleProvinceChange}
               >
                 <option value="">Select Province</option>
-                {phLocations.provinces.map((prov: any) => (
-                  <option key={prov.name} value={prov.name}>
-                    {prov.name}
-                  </option>
-                ))}
+                {phLocations &&
+                  Array.isArray(phLocations.provinces) &&
+                  phLocations.provinces.map((prov: any) => (
+                    <option key={prov.name} value={prov.name}>
+                      {prov.name}
+                    </option>
+                  ))}
               </select>
 
               <label className="text-sm font-medium text-blue-700">

@@ -8,14 +8,14 @@ const HelpSupportPage: React.FC = () => {
 
   const goToReportPage = () => navigate("/client/report");
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="mx-auto w-full max-w-xl flex-1 rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <span className="font-medium"></span>
         </button>
         <div className="mb-8 flex flex-col items-center">
           <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
@@ -55,11 +55,12 @@ const HelpSupportPage: React.FC = () => {
               community for tips and peer support (coming soon).
             </li>
           </ul>
-          <div className="mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <h2 className="mb-2 text-lg font-bold text-yellow-700">
               Follow us on Social Media
             </h2>
-            <div className="flex justify-center gap-6">
+            {/* 👇 KEY CHANGE HERE: flex-col for mobile, gap-4 for vertical spacing, md:flex-row to go back to horizontal on desktop */}
+            <div className="flex flex-col items-start gap-4 md:flex-row md:justify-center md:gap-6">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"

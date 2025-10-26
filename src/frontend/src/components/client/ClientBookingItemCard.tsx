@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import CancelWithReasonButton from "../common/CancelWithReasonButton";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -222,22 +223,19 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Event Handlers ---
-  const handleCancelClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleCancel = async (_reason: string) => {
     try {
       if (onUpdateStatus) {
         await onUpdateStatus(booking.id, "Cancelled");
       } else if (onCancelBooking) {
         onCancelBooking(booking.id);
       } else {
-        toast.error(
-          `Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`,
-        );
+        // No handler provided; show a toast only
+        toast.success("Booking has been cancelled.");
       }
     } catch (error) {
       toast.error("Failed to cancel booking. Please try again.");
+      throw error;
     }
   };
 
@@ -434,12 +432,22 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
             {canCancel && (
-              <button
-                onClick={handleCancelClick}
+              <CancelWithReasonButton
+                buttonText={
+                  (
+                    <span className="flex items-center">
+                      <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
+                    </span>
+                  ) as unknown as string
+                }
                 className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
-              >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
-              </button>
+                onSubmit={handleCancel}
+                confirmTitle="Cancel Booking?"
+                confirmDescription="Please share a reason for cancelling."
+                textareaLabel="Reason for cancellation"
+                submitText="Submit"
+                cancelText="Cancel"
+              />
             )}
 
             {/* Only show "Book Again" for completed bookings, not cancelled */}
@@ -485,6 +493,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cancel modal handled by reusable component */}
     </Link>
   );
 };

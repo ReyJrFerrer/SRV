@@ -16,7 +16,6 @@ const ConversationPage: React.FC = () => {
   const {
     currentConversation,
     messages,
-    backgroundLoading, // Add backgroundLoading state
     error,
     sendMessage,
     loadConversation,
@@ -51,7 +50,7 @@ const ConversationPage: React.FC = () => {
     const conversationId = location.state?.conversationId || clientId;
     if (conversationId && identity) {
       // Use non-silent load for initial conversation loading
-      loadConversation(conversationId, false);
+      loadConversation(conversationId);
     }
   }, [clientId, location.state?.conversationId, identity, loadConversation]);
 
@@ -206,12 +205,6 @@ const ConversationPage: React.FC = () => {
             </h1>
             <p className="flex items-center text-xs text-gray-500">
               {currentConversation ? "Active" : "Loading..."}
-              {backgroundLoading && (
-                <span className="ml-2 flex items-center">
-                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500"></span>
-                  <span className="ml-1">Updating...</span>
-                </span>
-              )}
             </p>
           </div>
         </div>

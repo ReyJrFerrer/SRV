@@ -300,97 +300,105 @@ const ClientServiceDetailsPage: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
-          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex flex-col items-center">
-                  <div
-                    className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
-                    style={{
-                      width: "96px",
-                      height: "96px",
-                      minWidth: "96px",
-                      minHeight: "96px",
-                      maxWidth: "104px",
-                      maxHeight: "104px",
-                    }}
-                  >
-                    <img
-                      src={
-                        userImageUrl &&
-                        userImageUrl !== "/default-provider.svg" &&
-                        userImageUrl !== "" &&
-                        userImageUrl !== undefined
-                          ? userImageUrl
-                          : "/default-provider.svg"
-                      }
-                      alt={providerName}
-                      className="h-full w-full rounded-full object-cover"
-                      style={{ borderRadius: "50%" }}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/default-provider.svg";
+        <div className="mx-auto mt-6 w-full max-w-5xl">
+          {/* --- This is the new single card wrapper --- */}
+          {/* It uses your styles: rounded-3xl, bg-white/70, backdrop-blur-md */}
+          <div className="rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
+            {/* --- This grid controls the layout --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
+              {/* --- Column 1: Provider Info --- */}
+              <div className="flex flex-col justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        minWidth: "96px",
+                        minHeight: "96px",
+                        maxWidth: "104px",
+                        maxHeight: "104px",
                       }}
-                    />
+                    >
+                      <img
+                        src={
+                          userImageUrl &&
+                          userImageUrl !== "/default-provider.svg" &&
+                          userImageUrl !== "" &&
+                          userImageUrl !== undefined
+                            ? userImageUrl
+                            : "/default-provider.svg"
+                        }
+                        alt={providerName}
+                        className="h-full w-full rounded-full object-cover"
+                        style={{ borderRadius: "50%" }}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/default-provider.svg";
+                        }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center">
+                      <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
+                        {providerName}
+                      </h2>
+                      {service.isActive && (
+                        <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-2 flex items-center">
-                    <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
-                      {providerName}
-                    </h2>
-                    {service.isActive && (
-                      <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                  <div className="mt-1 flex w-full flex-col items-center gap-0">
+                    <ReputationScore providerId={service.providerId} />
+                    {isVerified === true && (
+                      <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
+                        <CheckBadgeIcon className="mr-2 h-5 w-5" />
+                        <span>This service provider is verified.</span>
+                      </span>
                     )}
                   </div>
                 </div>
-                <div className="mt-1 flex w-full flex-col items-center gap-0">
-                  <ReputationScore providerId={service.providerId} />
-                  {isVerified === true && (
-                    <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
-                      <CheckBadgeIcon className="mr-2 h-5 w-5" />
-                      <span>This service provider is verified.</span>
-                    </span>
-                  )}
+              </div>
+
+              <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
+
+              <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
+                <h1 className="mb-2 text-center text-3xl font-extrabold text-gray-900 drop-shadow-sm lg:text-left">
+                  {name}
+                </h1>
+                <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
+                  {category?.slug ? (
+                    <img
+                      src={`/images/categories/${category.slug}.svg`}
+                      alt={category.name || "Category"}
+                      className="h-6 w-6 object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "/images/categories/others.svg";
+                      }}
+                    />
+                  ) : null}
+                  {category?.name ?? "General"}
+                </p>
+                <div className="mb-2 flex items-center text-base text-gray-600">
+                  <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
+                  <span>{location?.address || "Baguio City"}</span>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border-white bg-white p-8 shadow-2xl">
-              <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm">
-                {name}
-              </h1>
-              <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
-                {category?.slug ? (
-                  <img
-                    src={`/images/categories/${category.slug}.svg`}
-                    alt={category.name || "Category"}
-                    className="h-6 w-6 object-contain"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        "/images/categories/others.svg";
-                    }}
-                  />
-                ) : null}
-                {category?.name ?? "General"}
-              </p>
-              <div className="mb-4 flex items-center text-base text-gray-600">
-                <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
-                <span>{location?.address || "Baguio City"}</span>
-              </div>
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
-                <span className="flex items-center">
-                  <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
-                  <span className="text-lg font-bold">
-                    {averageRating.toFixed(1)}
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
+                  <span className="flex items-center">
+                    <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
+                    <span className="text-lg font-bold">
+                      {averageRating.toFixed(1)}
+                    </span>
+                    <span className="ml-1">({reviewCount} reviews)</span>
                   </span>
-                  <span className="ml-1">({reviewCount} reviews)</span>
-                </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+
+        <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl backdrop-blur-md">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
             <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
             Offered

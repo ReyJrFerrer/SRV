@@ -89,117 +89,124 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`mb-2 flex flex-col gap-2 rounded-lg border p-3 shadow-sm ${
+      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border px-3 pb-3 pt-10 shadow-sm lg:p-3 ${
         isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
       }`}
     >
-      <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
-        {/* Start Time */}
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <span className="text-sm font-medium text-gray-600">Start:</span>
-          <div className="flex gap-1 sm:gap-2">
-            <select
-              value={slot.startHour}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startHour", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {hourOptions.map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-            <span className="flex items-center text-gray-400">:</span>
-            <select
-              value={slot.startMinute}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startMinute", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {minuteOptions.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <select
-              value={slot.startPeriod}
-              onChange={(e) =>
-                onSlotChange(slot.id, "startPeriod", e.target.value)
-              }
-              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {periodOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* "to" separator - more compact */}
-        <div className="flex items-center justify-center lg:px-2">
-          <span className="text-sm font-medium text-gray-500">to</span>
-        </div>
-
-        {/* End Time */}
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <span className="text-sm font-medium text-gray-600">End:</span>
-          <div className="flex gap-1 sm:gap-2">
-            <select
-              value={slot.endHour}
-              onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {hourOptions.map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-            <span className="flex items-center text-gray-400">:</span>
-            <select
-              value={slot.endMinute}
-              onChange={(e) =>
-                onSlotChange(slot.id, "endMinute", e.target.value)
-              }
-              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {minuteOptions.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <select
-              value={slot.endPeriod}
-              onChange={(e) =>
-                onSlotChange(slot.id, "endPeriod", e.target.value)
-              }
-              className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {periodOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-      {/* Delete button */}
       <button
         type="button"
         onClick={() => onRemoveSlot(slot.id)}
-        className="mt-3 self-center rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:ml-auto lg:mt-0"
+        className="absolute right-3 top-3 rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:hidden"
         title="Remove time slot"
       >
         <TrashIcon className="h-4 w-4" />
       </button>
+
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center lg:gap-3">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <span className="text-sm font-medium text-gray-600">Start:</span>
+            <div className="flex gap-1 sm:gap-2">
+              <select
+                value={slot.startHour}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startHour", e.target.value)
+                }
+                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {hourOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <span className="flex items-center text-gray-400">:</span>
+              <select
+                value={slot.startMinute}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startMinute", e.target.value)
+                }
+                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {minuteOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={slot.startPeriod}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "startPeriod", e.target.value)
+                }
+                className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {periodOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="hidden items-center justify-center px-2 lg:flex">
+            <span className="text-sm font-medium text-gray-500">to</span>
+          </div>
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <span className="text-sm font-medium text-gray-600">End:</span>
+            <div className="flex gap-1 sm:gap-2">
+              <select
+                value={slot.endHour}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endHour", e.target.value)
+                }
+                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {hourOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <span className="flex items-center text-gray-400">:</span>
+              <select
+                value={slot.endMinute}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endMinute", e.target.value)
+                }
+                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {minuteOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={slot.endPeriod}
+                onChange={(e) =>
+                  onSlotChange(slot.id, "endPeriod", e.target.value)
+                }
+                className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {periodOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemoveSlot(slot.id)}
+          className="hidden rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 lg:flex"
+          title="Remove time slot"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 };
@@ -474,8 +481,8 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
           <div>
             {/* Mobile View (lg and below) */}
             <div className="space-y-3 lg:hidden">
-              {/* Row 1: Weekends, Weekdays */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                {/* 1. Weekends */}
                 <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
                   <input
                     type="checkbox"
@@ -494,6 +501,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   </span>
                 </label>
 
+                {/* 2. Weekdays */}
                 <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
                   <input
                     type="checkbox"
@@ -517,10 +525,8 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     Weekdays
                   </span>
                 </label>
-              </div>
 
-              {/* Row 2: Everyday */}
-              <div className="grid grid-cols-1">
+                {/* 3. Everyday (Moved here from its own row) */}
                 <label className="flex h-16 cursor-pointer flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-2 shadow-sm transition hover:bg-blue-100">
                   <input
                     type="checkbox"
@@ -536,8 +542,9 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   </span>
                 </label>
               </div>
+              {/* End of consolidated preset row */}
 
-              {/* Row 3: Monday - Friday */}
+              {/* Row 3: Monday - Friday (Remains the same) */}
               <div className="grid grid-cols-5 gap-1">
                 {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(
                   (day) => (
@@ -566,7 +573,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 )}
               </div>
 
-              {/* Row 4: Saturday, Sunday, Clear All */}
+              {/* Row 4: Saturday, Sunday, Clear All (Remains the same) */}
               <div className="grid grid-cols-3 gap-2">
                 {["Saturday", "Sunday"].map((day) => (
                   <label

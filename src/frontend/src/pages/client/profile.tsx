@@ -522,7 +522,7 @@ const ClientProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   // Error states for validation
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
@@ -665,7 +665,7 @@ const ClientProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       {toast && (
         <Toast
           message={toast.message}
@@ -673,15 +673,20 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">My Profile</h1>
+          <div className="flex-grow lg:hidden"></div>
+          <h1 className="ml-0 text-2xl font-extrabold tracking-tight text-black lg:ml-4">
+            My Profile
+          </h1>
+          <div className="flex-grow lg:hidden"></div>
+          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
 
@@ -751,31 +756,24 @@ const ClientProfilePage: React.FC = () => {
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
                       )}
                     </div>
-                    <div>
+                    <div className="text-left">
                       <label
                         htmlFor="phone"
-                        className="block text-left text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium text-gray-700"
                       >
                         Phone Number
                       </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => {
-                          // Remove spaces from phone number input
-                          const phoneValue = e.target.value.replace(/\s/g, "");
-                          setPhone(phoneValue);
-                          if (phoneError) setPhoneError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {phoneError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {phoneError}
+                      <p className="mt-1 text-gray-800">
+                        {profile?.phone || "No phone number"}
+                      </p>
+                      <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                        <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                        <p className="text-xs text-blue-800">
+                          Your phone number is linked to your account for
+                          security and cannot be changed here. Please contact
+                          support for assistance if you need to update it.
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -853,7 +851,7 @@ const ClientProfilePage: React.FC = () => {
           </div>
 
           {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
+          <div className="mt-1 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
                 <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
@@ -1014,16 +1012,6 @@ const ClientProfilePage: React.FC = () => {
           {/* End grid container */}
         </div>
       </main>
-      {/* Mobile Logout Button (bottom of page, only on mobile) */}
-      <div className="mt-8 block w-full px-4 lg:hidden">
-        <button
-          onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-        >
-          Log Out
-        </button>
-      </div>
-      {/* Bottom navigation bar (always visible) */}
       <BottomNavigation />
     </div>
   );

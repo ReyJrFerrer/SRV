@@ -1028,19 +1028,6 @@ const BookingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-2xl text-gray-600 hover:text-gray-800"
-          >
-            ←
-          </button>
-          <h1 className="text-lg font-medium text-gray-900">Book Service</h1>
-          <div className="w-8"></div>
-        </div>
-      </header>
-
       <main className="flex-1">
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
           <style>{`
@@ -1055,7 +1042,7 @@ const BookingPage: React.FC = () => {
           .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) { background-color: #dbeafe; color: #1e40af; }
           .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
         `}</style>
-          <div className="flex-grow pb-36 md:pb-28">
+          <div className="flex-grow pb-2 md:pb-28">
             <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
               <div className="md:flex md:gap-x-8">
                 <div className="space-y-6 md:w-1/2">

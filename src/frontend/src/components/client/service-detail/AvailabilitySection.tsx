@@ -50,7 +50,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
   );
 
   return (
-    <div className="mt-8 rounded-3xl bg-white p-6 shadow-2xl backdrop-blur-md">
+    <div className="mt-8 rounded-xl bg-white p-6 shadow-xl backdrop-blur-md">
       <div className="mb-4 flex items-center gap-2">
         <CalendarIcon />
         <h3 className="text-lg font-semibold text-gray-800">Availability</h3>

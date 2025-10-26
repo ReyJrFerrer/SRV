@@ -16,6 +16,10 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import { useFeedback } from "../../../hooks/useFeedback";
+import { toast } from "sonner";
+import { bookingCanisterService } from "../../../services/bookingCanisterService";
 
 const ActiveServicePage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +39,7 @@ const ActiveServicePage: React.FC = () => {
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
+  const { submitReport } = useFeedback();
 
   const booking = useMemo(() => {
     if (bookingId && typeof bookingId === "string") {
@@ -96,6 +101,27 @@ const ActiveServicePage: React.FC = () => {
       window.open(`tel:${booking.clientPhone}`, "_self");
     } else {
       alert(`Contact client: ${booking?.clientName || "Unknown Client"}`);
+    }
+  };
+
+  // Special cancel: file a complaint ticket to admin and cancel booking
+  const handleCancelActiveService = async (reason: string) => {
+    if (!booking) return;
+    try {
+      // Prefix reason to make it clear in admin reports
+      const reportDescription = `Active Service Cancel [Booking ${booking.id}]: ${reason}`;
+      const reportOk = await submitReport(reportDescription);
+      if (!reportOk) {
+        toast.error("Failed to submit complaint to admin.");
+        return;
+      }
+      // Actually cancel the booking
+      await bookingCanisterService.cancelBooking(booking.id);
+      toast.success("Complaint filed and booking cancelled.");
+      navigate("/provider/bookings");
+    } catch (err) {
+      toast.error("Unable to cancel active service. Please try again.");
+      throw err;
     }
   };
 
@@ -339,6 +365,16 @@ const ActiveServicePage: React.FC = () => {
               >
                 <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
               </button>
+              <CancelWithReasonButton
+                buttonText="Cancel Service"
+                className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
+                confirmTitle="Cancel Active Service?"
+                confirmDescription="Share a reason. We'll file it as a complaint ticket to the admin and cancel this service."
+                textareaLabel="Reason for cancellation"
+                submitText="Submit"
+                cancelText="Back"
+                onSubmit={handleCancelActiveService}
+              />
             </div>
           </section>
         </div>

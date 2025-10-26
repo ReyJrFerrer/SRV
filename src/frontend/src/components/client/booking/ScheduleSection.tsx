@@ -179,11 +179,6 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                         {isUserBooked && (
                           <span className="ml-1 text-xs">(You Booked)</span>
                         )}
-                        {!isUserBooked && !isSlotAvailable && (
-                          <span className="ml-1 text-xs">
-                            {hasTimePassed ? "(Passed)" : "(Booked)"}
-                          </span>
-                        )}
                       </button>
                     );
                   })

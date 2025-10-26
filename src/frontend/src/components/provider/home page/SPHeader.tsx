@@ -6,6 +6,7 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
+import EnableLocationButton from "../../common/EnableLocationButton";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 // --- Props ---
@@ -148,6 +149,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userProvince,
     locationLoading,
     requestLocation,
+    locationStatus,
   } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const [showMap, setShowMap] = useState(false);
@@ -374,7 +376,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 </span>
               )}
             </div>
+            {(locationStatus === "denied" || locationStatus === "not_set") && (
+              <div className="ml-3">
+                <EnableLocationButton />
+              </div>
+            )}
           </div>
+          {(locationStatus === "denied" || locationStatus === "not_set") && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+              Location access is off. Some features are limited.
+            </div>
+          )}
         </div>
       </header>
       {/* --- Map Modal for Location Display --- */}

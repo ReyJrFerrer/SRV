@@ -103,7 +103,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   );
 
   return (
-    <div className="mt-8 rounded-3xl bg-white p-6 shadow-2xl">
+    <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleIcon />

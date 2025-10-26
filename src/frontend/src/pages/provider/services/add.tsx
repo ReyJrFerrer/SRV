@@ -464,23 +464,23 @@ const AddServicePage: React.FC = () => {
         }
         break;
       case 3: // Location
+        // Accept either GPS coordinates OR a complete manual address
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
+        const hasManualProvince = !!(formData.locationProvince || "")
+          .toString()
+          .trim();
+        const hasManualCity = !!(formData.locationMunicipalityCity || "")
+          .toString()
+          .trim();
+        // Only province and city are required for manual input in this flow
+
         if (!hasGPSCoordinates) {
-          errors.locationMunicipalityCity =
-            "Still detecting your location, please wait";
-        } else if (!hasGPSCoordinates) {
-          if (!formData.locationProvince.trim()) {
+          // When GPS is unavailable, require only Province and Municipality/City
+          if (!hasManualProvince) {
             errors.locationMunicipalityCity = "Province is required";
-          } else if (!formData.locationMunicipalityCity.trim()) {
+          } else if (!hasManualCity) {
             errors.locationMunicipalityCity = "Municipality/City is required";
-          } else if (!formData.locationBarangay.trim()) {
-            errors.locationMunicipalityCity = "Barangay is required";
-          } else if (!formData.locationStreet.trim()) {
-            errors.locationMunicipalityCity = "Street name is required";
-          } else if (!formData.locationHouseNumber.trim()) {
-            errors.locationMunicipalityCity =
-              "House number/building is required";
           }
         }
         break;
@@ -1177,11 +1177,11 @@ const AddServicePage: React.FC = () => {
 
   // --- Main Page Layout ---
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100 pb-12">
       <Toaster position="top-center" />
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
-        <div className="container mx-auto flex items-center">
+      <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-24">
           <button
             onClick={() =>
               serviceCreated
@@ -1194,14 +1194,14 @@ const AddServicePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-l font-extrabold text-black sm:text-xl md:text-2xl">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black sm:text-xl md:text-2xl">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>
       </header>
       {/* Main Content */}
-      <main className="container mx-auto flex-grow p-4 sm:p-6">
-        <div className="mt-6 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
+      <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
+        <div className="mt-20 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>
         {/* Navigation Buttons */}

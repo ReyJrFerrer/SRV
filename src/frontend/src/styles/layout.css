@@ -8,6 +8,6 @@
 /* Ensure mobile bottom bar doesn't overlap main content bottom area */
 @media (max-width: 767.98px) {
   body #root {
-    padding-bottom: 3.5rem; /* approximate height of bottom nav */
+    /* padding-bottom: 3.5rem; approximate height of bottom nav */
   }
 }

@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useLocationStore } from "../../../store/locationStore";
 import LocationMapPicker from "../../common/LocationMapPicker";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import phLocations from "../../../data/ph_locations.json";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -96,6 +98,16 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   streetRef,
   houseNumberRef,
 }) => {
+  const { locationStatus, requestLocation } = useLocationStore();
+  // If permission denied/not_set, default to showing manual forms to guide the user
+  useEffect(() => {
+    if (locationStatus === "denied") {
+      try {
+        setShowFallbackForms(true);
+        setLocationInputMode("manual");
+      } catch {}
+    }
+  }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -142,34 +154,50 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             Automatically detected via browser geolocation. Drop a custom pin if
             this is inaccurate.
           </div>
-          <div className="overflow-hidden rounded-xl border border-gray-200">
-            {mapsReady && geoLocation ? (
-              <Map
-                defaultCenter={{
-                  lat: geoLocation.latitude,
-                  lng: geoLocation.longitude,
-                }}
-                defaultZoom={16}
-                mapId="6922634ff75ae05ac38cc473"
-                style={{ width: "100%", height: 260 }}
-                disableDefaultUI={true}
-                zoomControl={true}
-              >
-                <AdvancedMarker
-                  position={{
+          {locationStatus === "allowed" ? (
+            <div className="overflow-hidden rounded-xl border border-gray-200">
+              {mapsReady && geoLocation ? (
+                <Map
+                  defaultCenter={{
                     lat: geoLocation.latitude,
                     lng: geoLocation.longitude,
                   }}
-                />
-              </Map>
-            ) : (
-              <div className="flex h-64 items-center justify-center text-sm text-gray-500">
-                {locationLoading || detectedStatus === "loading"
-                  ? "Detecting location..."
-                  : "Map loading..."}
+                  defaultZoom={16}
+                  mapId="6922634ff75ae05ac38cc473"
+                  style={{ width: "100%", height: 260 }}
+                  disableDefaultUI={true}
+                  zoomControl={true}
+                >
+                  <AdvancedMarker
+                    position={{
+                      lat: geoLocation.latitude,
+                      lng: geoLocation.longitude,
+                    }}
+                  />
+                </Map>
+              ) : (
+                <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                  {locationLoading || detectedStatus === "loading"
+                    ? "Detecting location..."
+                    : "Map loading..."}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+              Location permission is not enabled. Use the manual address form
+              below or enable location.
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => requestLocation()}
+                  className="rounded-md border border-blue-300 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                >
+                  Enable location
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
             {detectedStatus === "ok" && detectedAddress
               ? detectedAddress
@@ -445,7 +473,13 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 <option value="" disabled>
                   Select Province
                 </option>
-                {/* Province options provided by parent */}
+                {phLocations &&
+                  Array.isArray((phLocations as any).provinces) &&
+                  (phLocations as any).provinces.map((prov: any) => (
+                    <option key={prov.name} value={prov.name}>
+                      {prov.name}
+                    </option>
+                  ))}
               </select>
             </div>
             <div className="flex-1">
@@ -461,7 +495,22 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 <option value="" disabled>
                   Select City/Municipality
                 </option>
-                {/* City options provided by parent */}
+                {manualProvince &&
+                  phLocations &&
+                  Array.isArray((phLocations as any).provinces) &&
+                  (() => {
+                    const prov = (phLocations as any).provinces.find(
+                      (p: any) => p.name === manualProvince,
+                    );
+                    if (prov && Array.isArray(prov.municipalities)) {
+                      return prov.municipalities.map((m: any) => (
+                        <option key={m.name} value={m.name}>
+                          {m.name}
+                        </option>
+                      ));
+                    }
+                    return null;
+                  })()}
               </select>
             </div>
           </div>
