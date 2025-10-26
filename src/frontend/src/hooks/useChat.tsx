@@ -15,14 +15,14 @@ import { authCanisterService } from "../services/authCanisterService";
  */
 const useIsMounted = () => {
   const isMountedRef = useRef(true);
-  
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
   }, []);
-  
+
   return isMountedRef;
 };
 
@@ -216,7 +216,7 @@ export const useChat = () => {
     }
 
     if (!isMountedRef.current) return;
-    
+
     setLoading(true);
     setError(null);
 
@@ -226,7 +226,7 @@ export const useChat = () => {
           userId,
           async (summaries) => {
             if (!isMountedRef.current) return;
-            
+
             console.log(
               `✅ [useChat] Real-time update: ${summaries.length} conversations`,
             );
@@ -235,13 +235,16 @@ export const useChat = () => {
               // Enhance conversations with user names
               const enhancedConversations =
                 await enhanceConversationsWithNames(summaries);
-              
+
               if (isMountedRef.current) {
                 setConversations(enhancedConversations);
                 setLoading(false);
               }
             } catch (error) {
-              console.error("❌ [useChat] Error enhancing conversations:", error);
+              console.error(
+                "❌ [useChat] Error enhancing conversations:",
+                error,
+              );
               if (isMountedRef.current) {
                 setError("Could not load conversations.");
                 setLoading(false);
@@ -250,8 +253,11 @@ export const useChat = () => {
           },
           (error) => {
             if (!isMountedRef.current) return;
-            
-            console.error("❌ [useChat] Error in conversations listener:", error);
+
+            console.error(
+              "❌ [useChat] Error in conversations listener:",
+              error,
+            );
             if (isMountedRef.current) {
               setError("Could not load conversations.");
               setLoading(false);
@@ -259,7 +265,10 @@ export const useChat = () => {
           },
         );
     } catch (error) {
-      console.error("❌ [useChat] Error setting up conversations listener:", error);
+      console.error(
+        "❌ [useChat] Error setting up conversations listener:",
+        error,
+      );
       if (isMountedRef.current) {
         setError("Could not set up conversations listener.");
         setLoading(false);
@@ -313,7 +322,7 @@ export const useChat = () => {
       }
 
       if (!isMountedRef.current) return;
-      
+
       setLoading(true);
       setError(null);
 
@@ -324,7 +333,10 @@ export const useChat = () => {
           try {
             await messagesUnsubscribe.current();
           } catch (error) {
-            console.error("❌ [useChat] Error cleaning up messages listener:", error);
+            console.error(
+              "❌ [useChat] Error cleaning up messages listener:",
+              error,
+            );
           }
           messagesUnsubscribe.current = null;
         }
@@ -336,45 +348,46 @@ export const useChat = () => {
           "🔔 [useChat] Setting up messages listener for:",
           conversationId,
         );
-        messagesUnsubscribe.current = await chatCanisterService.subscribeToMessages(
-          conversationId,
-          (rawMessages) => {
-            if (!isMountedRef.current) return;
-            
-            console.log(
-              `✅ [useChat] Real-time update: ${rawMessages.length} messages`,
-            );
-            
-            try {
-              // Adapt messages to frontend format
-              const adaptedMessages = rawMessages.map(adaptBackendMessage);
+        messagesUnsubscribe.current =
+          await chatCanisterService.subscribeToMessages(
+            conversationId,
+            (rawMessages) => {
+              if (!isMountedRef.current) return;
+
+              console.log(
+                `✅ [useChat] Real-time update: ${rawMessages.length} messages`,
+              );
+
+              try {
+                // Adapt messages to frontend format
+                const adaptedMessages = rawMessages.map(adaptBackendMessage);
+                if (isMountedRef.current) {
+                  setMessages(adaptedMessages);
+                  setLoading(false);
+                }
+              } catch (error) {
+                console.error("❌ [useChat] Error adapting messages:", error);
+                if (isMountedRef.current) {
+                  setError("Could not process messages.");
+                  setLoading(false);
+                }
+              }
+            },
+            (error) => {
+              if (!isMountedRef.current) return;
+
+              console.error("❌ [useChat] Error in messages listener:", error);
               if (isMountedRef.current) {
-                setMessages(adaptedMessages);
+                setError("Could not load messages.");
                 setLoading(false);
               }
-            } catch (error) {
-              console.error("❌ [useChat] Error adapting messages:", error);
-              if (isMountedRef.current) {
-                setError("Could not process messages.");
-                setLoading(false);
-              }
-            }
-          },
-          (error) => {
-            if (!isMountedRef.current) return;
-            
-            console.error("❌ [useChat] Error in messages listener:", error);
-            if (isMountedRef.current) {
-              setError("Could not load messages.");
-              setLoading(false);
-            }
-          },
-        );
+            },
+          );
 
         // Fetch conversation details after setting up listener
         const conversation =
           await chatCanisterService.getConversation(conversationId);
-        
+
         if (isMountedRef.current) {
           setCurrentConversation(conversation);
         }
@@ -521,16 +534,19 @@ export const useChat = () => {
    */
   const cleanupListeners = useCallback(async () => {
     console.log("🔕 [useChat] Cleaning up all listeners");
-    
+
     try {
       if (conversationsUnsubscribe.current) {
         await conversationsUnsubscribe.current();
         conversationsUnsubscribe.current = null;
       }
     } catch (error) {
-      console.error("❌ [useChat] Error cleaning up conversations listener:", error);
+      console.error(
+        "❌ [useChat] Error cleaning up conversations listener:",
+        error,
+      );
     }
-    
+
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
@@ -554,7 +570,7 @@ export const useChat = () => {
     } catch (error) {
       console.error("❌ [useChat] Error cleaning up messages listener:", error);
     }
-    
+
     if (isMountedRef.current) {
       setCurrentConversation(null);
       setMessages([]);
@@ -565,7 +581,7 @@ export const useChat = () => {
   // Setup real-time listeners on auth state change
   useEffect(() => {
     console.log("🔄 [useChat] Auth state changed, updating listeners");
-    
+
     if (isAuthenticated && identity && isMountedRef.current) {
       setupConversationsListener();
     } else {
@@ -578,7 +594,9 @@ export const useChat = () => {
 
     // Cleanup on unmount or auth change
     return () => {
-      console.log("🔕 [useChat] Cleaning up listeners (unmount or auth change)");
+      console.log(
+        "🔕 [useChat] Cleaning up listeners (unmount or auth change)",
+      );
       cleanupListeners();
     };
   }, [

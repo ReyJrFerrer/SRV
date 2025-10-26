@@ -31,7 +31,7 @@ const ProviderChatPage: React.FC = () => {
         },
       });
     } catch (error) {
-      //console.error("Error handling conversation click:", error);
+      console.error("Error handling conversation click:", error);
     }
   };
 
