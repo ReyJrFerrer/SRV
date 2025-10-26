@@ -3,6 +3,7 @@ import { useLocationStore } from "../../../store/locationStore";
 import LocationMapPicker from "../../common/LocationMapPicker";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
+import EnableLocationButton from "../../common/EnableLocationButton";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -98,7 +99,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   streetRef,
   houseNumberRef,
 }) => {
-  const { locationStatus, requestLocation } = useLocationStore();
+  const { locationStatus } = useLocationStore();
   // If permission denied/not_set, default to showing manual forms to guide the user
   useEffect(() => {
     if (locationStatus === "denied") {
@@ -188,13 +189,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               Location permission is not enabled. Use the manual address form
               below or enable location.
               <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={() => requestLocation()}
-                  className="rounded-md border border-blue-300 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-                >
-                  Enable location
-                </button>
+                <EnableLocationButton />
               </div>
             </div>
           )}
