@@ -30,7 +30,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
       <div className="relative w-full max-w-lg rounded-lg bg-white p-8 shadow-xl">
         {/* Close Button */}
         <button
-          className="absolute top-4 right-4 text-2xl font-bold text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-2xl font-bold text-gray-500 hover:text-gray-700"
           onClick={onClose}
           aria-label="Close"
         >
@@ -49,11 +49,11 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>Effective Date: August 6, 2025</strong>
             </p>
             <p className="mt-2">
-              <b>Welcome to SRV!</b> These Terms and Conditions ("Terms") govern your
-              access to and use of the SRV app, including all content, features,
-              and services offered through it (collectively, the "Platform" or
-              "Services"). The Platform is owned and operated by SRV, a platform
-              based in Baguio City, Philippines.
+              <b>Welcome to SRV!</b> These Terms and Conditions ("Terms") govern
+              your access to and use of the SRV app, including all content,
+              features, and services offered through it (collectively, the
+              "Platform" or "Services"). The Platform is owned and operated by
+              SRV, a platform based in Baguio City, Philippines.
             </p>
             <p className="mt-2">
               The Platform connects users seeking on-demand services ("Clients")
@@ -80,24 +80,24 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>1. Definitions</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>Platform:</b> The SRV mobile application and associated web or
-                  backend systems.
+                  <b>Platform:</b> The SRV mobile application and associated web
+                  or backend systems.
                 </li>
                 <li>
                   <b>User:</b> Any individual or entity accessing or using the
                   Platform, including Clients and Service Providers.
                 </li>
                 <li>
-                  <b>Client:</b> A User who requests, books, or receives services via
-                  the Platform.
+                  <b>Client:</b> A User who requests, books, or receives
+                  services via the Platform.
                 </li>
                 <li>
-                  <b>Service Provider (or Provider):</b> A User who offers services via
-                  the Platform.
+                  <b>Service Provider (or Provider):</b> A User who offers
+                  services via the Platform.
                 </li>
                 <li>
-                  <b>Service:</b> The work, tasks, or services offered by Service
-                  Providers and requested by Clients via the Platform.
+                  <b>Service:</b> The work, tasks, or services offered by
+                  Service Providers and requested by Clients via the Platform.
                 </li>
                 <li>
                   <b>Platform Services:</b> The features offered by the company,
@@ -105,28 +105,30 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
                   communication channels, and payment coordination.
                 </li>
                 <li>
-                  <b>Content:</b> Any text, images, video, audio, or other materials
-                  submitted or made available via the Platform by Users or the
-                  company.
+                  <b>Content:</b> Any text, images, video, audio, or other
+                  materials submitted or made available via the Platform by
+                  Users or the company.
                 </li>
                 <li>
-                  <b>Blockchain Features:</b> Functionalities using blockchain (e.g.
-                  wallet authentication, smart contract escrow, ledger records).
+                  <b>Blockchain Features:</b> Functionalities using blockchain
+                  (e.g. wallet authentication, smart contract escrow, ledger
+                  records).
                 </li>
                 <li>
-                  <b>Commission Fee:</b> The service fee charged by SRV to the Provider
-                  for the use of the Platform, calculated as a percentage of the
-                  total Service price.
+                  <b>Commission Fee:</b> The service fee charged by SRV to the
+                  Provider for the use of the Platform, calculated as a
+                  percentage of the total Service price.
                 </li>
                 <li>
-                  <b>Outstanding Commission:</b> The cumulative, running balance of
-                  unpaid Commission Fees owed by a Provider to the Platform.
+                  <b>Outstanding Commission:</b> The cumulative, running balance
+                  of unpaid Commission Fees owed by a Provider to the Platform.
                   This is a measure of debt and is not electronic money.
                 </li>
                 <li>
-                  <b>Commission Credit Limit:</b> The maximum allowable Outstanding
-                  Commission a Provider may accrue before their ability to
-                  accept new jobs is automatically and temporarily restricted.
+                  <b>Commission Credit Limit:</b> The maximum allowable
+                  Outstanding Commission a Provider may accrue before their
+                  ability to accept new jobs is automatically and temporarily
+                  restricted.
                 </li>
               </ul>
             </li>
@@ -159,17 +161,17 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
                   needed.
                 </li>
                 <li>
-                  <b>Account Verification:</b> You agree to provide accurate, current,
-                  and complete information during the registration process and
-                  to update such information to keep it accurate.
+                  <b>Account Verification:</b> You agree to provide accurate,
+                  current, and complete information during the registration
+                  process and to update such information to keep it accurate.
                 </li>
                 <li>
-                  <b>Security:</b> Users bear sole responsibility for safeguarding
-                  their account credentials. All activity under an account is
-                  the User's responsibility. Any suspected unauthorized access
-                  or security breach must be reported immediately. The company
-                  is not liable for losses from a User's failure to protect
-                  their account.
+                  <b>Security:</b> Users bear sole responsibility for
+                  safeguarding their account credentials. All activity under an
+                  account is the User's responsibility. Any suspected
+                  unauthorized access or security breach must be reported
+                  immediately. The company is not liable for losses from a
+                  User's failure to protect their account.
                 </li>
               </ul>
             </li>
@@ -178,27 +180,27 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>4. The Platform's Role</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>Marketplace Role:</b> SRV is a facilitator and technology platform
-                  connecting Clients and Service Providers.
+                  <b>Marketplace Role:</b> SRV is a facilitator and technology
+                  platform connecting Clients and Service Providers.
                 </li>
                 <li>
-                  <b>Independent Contractors:</b> Service Providers are independent
-                  contractors, not employees, agents, or partners of SRV. SRV
-                  does not control the manner in which Service Providers perform
-                  services.
+                  <b>Independent Contractors:</b> Service Providers are
+                  independent contractors, not employees, agents, or partners of
+                  SRV. SRV does not control the manner in which Service
+                  Providers perform services.
                 </li>
                 <li>
-                  <b>Bridge Role:</b> SRV does not directly perform the Services and is
-                  not responsible for the quality, timing, legality, or any
-                  aspect of the Services provided, except as explicitly stated
-                  in these Terms. Our role is limited to facilitating the
+                  <b>Bridge Role:</b> SRV does not directly perform the Services
+                  and is not responsible for the quality, timing, legality, or
+                  any aspect of the Services provided, except as explicitly
+                  stated in these Terms. Our role is limited to facilitating the
                   connection and providing the features described herein.
                 </li>
                 <li>
-                  <b>No Endorsement:</b> Although the Platform may include reviews,
-                  ratings, and verification systems, SRV does not guarantee or
-                  endorse the quality, safety, or reliability of any Service
-                  Provider or service.
+                  <b>No Endorsement:</b> Although the Platform may include
+                  reviews, ratings, and verification systems, SRV does not
+                  guarantee or endorse the quality, safety, or reliability of
+                  any Service Provider or service.
                 </li>
               </ul>
             </li>
@@ -246,7 +248,8 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
                   </ul>
                 </li>
                 <li>
-                  <b>Prohibited Activities:</b> Users must not use the Platform to:
+                  <b>Prohibited Activities:</b> Users must not use the Platform
+                  to:
                   <ul className="mt-1 list-disc pl-5">
                     <li>Violate laws or regulations.</li>
                     <li>
@@ -282,22 +285,23 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>6. Client-specific Terms</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>Booking:</b> Clients request services by providing necessary
-                  details. A booking becomes valid only upon acceptance by a
-                  Service Provider.
+                  <b>Booking:</b> Clients request services by providing
+                  necessary details. A booking becomes valid only upon
+                  acceptance by a Service Provider.
                 </li>
                 <li>
-                  <b>Communication:</b> All communication about bookings should be
-                  through in-app tools unless otherwise agreed.
+                  <b>Communication:</b> All communication about bookings should
+                  be through in-app tools unless otherwise agreed.
                 </li>
                 <li>
-                  <b>Verification & Completion:</b> Clients should confirm satisfactory
-                  completion of service before Service Provider marks booking as
-                  complete.
+                  <b>Verification & Completion:</b> Clients should confirm
+                  satisfactory completion of service before Service Provider
+                  marks booking as complete.
                 </li>
                 <li>
-                  <b>Cancellations:</b> Cancellations may incur sanctions per Service
-                  Provider policy or Platform rules. A reason may be required.
+                  <b>Cancellations:</b> Cancellations may incur sanctions per
+                  Service Provider policy or Platform rules. A reason may be
+                  required.
                 </li>
                 <li>
                   <b>Ratings & Reviews:</b> Clients should provide honest, fair
@@ -315,79 +319,81 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
                   availability, and any special terms.
                 </li>
                 <li>
-                  <b>Credentials & KYC:</b> Providers must comply with verification
-                  requests. Misrepresentation may result in suspension or
-                  termination.
+                  <b>Credentials & KYC:</b> Providers must comply with
+                  verification requests. Misrepresentation may result in
+                  suspension or termination.
                 </li>
                 <li>
-                  <b>Booking Management:</b> Providers should respond promptly to
-                  requests and manage their schedule professionally.
+                  <b>Booking Management:</b> Providers should respond promptly
+                  to requests and manage their schedule professionally.
                 </li>
                 <li>
-                  <b>Service Delivery:</b> Services must be delivered securely, safely,
-                  and per agreed terms. Providers should provide status updates
-                  or proof of work when required.
+                  <b>Service Delivery:</b> Services must be delivered securely,
+                  safely, and per agreed terms. Providers should provide status
+                  updates or proof of work when required.
                 </li>
                 <li>
-                  <b>Location & Tracking:</b> Location sharing may be used during
-                  service delivery.
+                  <b>Location & Tracking:</b> Location sharing may be used
+                  during service delivery.
                 </li>
                 <li>
-                  <b>Cancellations:</b> Providers must adhere to cancellation policies
-                  and may incur penalties for unjustified cancellations.
+                  <b>Cancellations:</b> Providers must adhere to cancellation
+                  policies and may incur penalties for unjustified
+                  cancellations.
                 </li>
                 <li>
-                  <b>Review Feedback:</b> Clients and Providers may report unfair
-                  feedback to the admin for review.
+                  <b>Review Feedback:</b> Clients and Providers may report
+                  unfair feedback to the admin for review.
                 </li>
                 <li>
-                  <b>Independent Contractor:</b> Providers are responsible for their
-                  own taxes, insurance, equipment, and regulatory compliance.
+                  <b>Independent Contractor:</b> Providers are responsible for
+                  their own taxes, insurance, equipment, and regulatory
+                  compliance.
                 </li>
                 <li>
-                  <b>Cash Payments:</b> The primary method of payment for Services is a
-                  direct cash payment from the Client to the Service Provider
-                  upon completion of the Service. The Platform does not process
-                  these payments.
+                  <b>Cash Payments:</b> The primary method of payment for
+                  Services is a direct cash payment from the Client to the
+                  Service Provider upon completion of the Service. The Platform
+                  does not process these payments.
                 </li>
                 <li>
-                  <b>Commission Fee:</b> In consideration for the use of the Platform,
-                  the Provider agrees to pay SRV a Commission Fee for each
-                  completed job booked through the Platform. The applicable
+                  <b>Commission Fee:</b> In consideration for the use of the
+                  Platform, the Provider agrees to pay SRV a Commission Fee for
+                  each completed job booked through the Platform. The applicable
                   percentage will be displayed to the Provider before they
                   accept a job.
                 </li>
                 <li>
-                  <b>Accrual of Outstanding Commission:</b> Upon confirmation that a
-                  cash-based job is complete, the Platform will automatically
-                  calculate the Commission Fee and add this amount to the
-                  Provider's Outstanding Commission balance. This is an
+                  <b>Accrual of Outstanding Commission:</b> Upon confirmation
+                  that a cash-based job is complete, the Platform will
+                  automatically calculate the Commission Fee and add this amount
+                  to the Provider's Outstanding Commission balance. This is an
                   automated accounting of debt owed to the Platform.
                 </li>
                 <li>
-                  <b>Payment of Outstanding Commission:</b> Providers are obligated to
-                  settle their Outstanding Commission balance regularly.
-                  Payments shall be made via GCash to the official company
-                  account specified within the Platform. Providers must submit
-                  proof of payment (e.g., a transaction receipt screenshot)
-                  through the designated in-app upload facility for
+                  <b>Payment of Outstanding Commission:</b> Providers are
+                  obligated to settle their Outstanding Commission balance
+                  regularly. Payments shall be made via GCash to the official
+                  company account specified within the Platform. Providers must
+                  submit proof of payment (e.g., a transaction receipt
+                  screenshot) through the designated in-app upload facility for
                   verification.
                 </li>
                 <li>
-                  <b>Commission Credit Limit:</b> The Platform enforces a Commission
-                  Credit Limit (e.g., ₱500.00). If a Provider's Outstanding
-                  Commission meets or exceeds this limit, their account will be
-                  automatically and temporarily restricted from accepting new
-                  job requests. This restriction will be lifted automatically
-                  once their Outstanding Commission is paid and verified,
-                  bringing their balance below the limit. By using the Platform,
-                  you explicitly agree to this condition as a fundamental part
-                  of the service.
+                  <b>Commission Credit Limit:</b> The Platform enforces a
+                  Commission Credit Limit (e.g., ₱500.00). If a Provider's
+                  Outstanding Commission meets or exceeds this limit, their
+                  account will be automatically and temporarily restricted from
+                  accepting new job requests. This restriction will be lifted
+                  automatically once their Outstanding Commission is paid and
+                  verified, bringing their balance below the limit. By using the
+                  Platform, you explicitly agree to this condition as a
+                  fundamental part of the service.
                 </li>
                 <li>
-                  <b>Disputes:</b> Any disputes regarding commission calculations must
-                  be raised through the Platform's support channels within seven
-                  (7) days of the transaction.
+                  <b>Disputes:</b> Any disputes regarding commission
+                  calculations must be raised through the Platform's support
+                  channels within seven (7) days of the transaction.
                 </li>
                 <li>
                   <b>Performance Monitoring and Provider Accountability:</b> The
@@ -419,16 +425,16 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
                   liable for nonpayment or disputes in cash transactions.
                 </li>
                 <li>
-                  <b>Fees:</b> Any service or platform fees (if applicable) will be
-                  clearly disclosed.
+                  <b>Fees:</b> Any service or platform fees (if applicable) will
+                  be clearly disclosed.
                 </li>
                 <li>
-                  <b>Taxes:</b> Users are responsible for determining, withholding, and
-                  paying applicable taxes.
+                  <b>Taxes:</b> Users are responsible for determining,
+                  withholding, and paying applicable taxes.
                 </li>
                 <li>
-                  <b>Refunds:</b> For cash payments, refund matters must be handled
-                  directly between Client and Service Provider.
+                  <b>Refunds:</b> For cash payments, refund matters must be
+                  handled directly between Client and Service Provider.
                 </li>
               </ul>
             </li>
@@ -437,38 +443,41 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>9. Reviews and User Content</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>User Content:</b> Users may post reviews, ratings, and other
-                  content ("User Content"). You grant SRV a non-exclusive,
+                  <b>User Content:</b> Users may post reviews, ratings, and
+                  other content ("User Content"). You grant SRV a non-exclusive,
                   worldwide, perpetual, royalty-free license to use, display,
                   and distribute your User Content in connection with the
                   Platform.
                 </li>
                 <li>
-                  <b>User Responsibility:</b> You are solely responsible for your User
-                  Content. You agree not to post content that is false,
-                  defamatory, obscene, or infringing on any third-party rights,
-                  including intellectual property rights under the Intellectual
-                  Property Code of the Philippines (Republic Act No. 8293).
+                  <b>User Responsibility:</b> You are solely responsible for
+                  your User Content. You agree not to post content that is
+                  false, defamatory, obscene, or infringing on any third-party
+                  rights, including intellectual property rights under the
+                  Intellectual Property Code of the Philippines (Republic Act
+                  No. 8293).
                 </li>
                 <li>
-                  <b>Independence of Reviews:</b> Reviews and ratings published on the
-                  online application are solely the opinions of the individual
-                  users who submit them and do not reflect the opinions, views,
-                  or endorsement of SRV. SRV disclaims all liability for the
-                  accuracy or content of any user-submitted review.
+                  <b>Independence of Reviews:</b> Reviews and ratings published
+                  on the online application are solely the opinions of the
+                  individual users who submit them and do not reflect the
+                  opinions, views, or endorsement of SRV. SRV disclaims all
+                  liability for the accuracy or content of any user-submitted
+                  review.
                 </li>
                 <li>
-                  <b>Moderation Rights:</b> SRV reserves the absolute right to monitor,
-                  edit, remove, or otherwise moderate any review that is deemed
-                  to violate these Terms and Conditions, including but not
-                  limited to content that is unlawful, abusive, defamatory, or
-                  infringes on the rights of others.
+                  <b>Moderation Rights:</b> SRV reserves the absolute right to
+                  monitor, edit, remove, or otherwise moderate any review that
+                  is deemed to violate these Terms and Conditions, including but
+                  not limited to content that is unlawful, abusive, defamatory,
+                  or infringes on the rights of others.
                 </li>
                 <li>
-                  <b>Dispute Resolution:</b> All disputes related to the content or
-                  existence of a user review, which cannot be resolved directly
-                  between the user and the service provider, may be escalated to
-                  the platform's administration for a final determination.
+                  <b>Dispute Resolution:</b> All disputes related to the content
+                  or existence of a user review, which cannot be resolved
+                  directly between the user and the service provider, may be
+                  escalated to the platform's administration for a final
+                  determination.
                 </li>
               </ul>
             </li>
@@ -477,29 +486,29 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>10. Dispute Resolution</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>User-to-User:</b> Clients and Providers are encouraged to try to
-                  resolve disputes directly.
+                  <b>User-to-User:</b> Clients and Providers are encouraged to
+                  try to resolve disputes directly.
                 </li>
                 <li>
-                  <b>Platform Mediation:</b> If unresolved, Users may file a dispute
-                  through the Platform, submitting relevant evidence (e.g.
-                  communications, photos).
+                  <b>Platform Mediation:</b> If unresolved, Users may file a
+                  dispute through the Platform, submitting relevant evidence
+                  (e.g. communications, photos).
                 </li>
                 <li>
-                  <b>Admin Decision:</b> SRV admins will review the dispute and make a
-                  final decision. For cash transactions, the admin acts
+                  <b>Admin Decision:</b> SRV admins will review the dispute and
+                  make a final decision. For cash transactions, the admin acts
                   primarily as mediator, since SRV does not hold the funds. The
                   admin's ruling is final and binding.
                 </li>
                 <li>
-                  <b>Sanctions:</b> SRV may suspend or terminate accounts involved in
-                  repeated or fraudulent disputes.
+                  <b>Sanctions:</b> SRV may suspend or terminate accounts
+                  involved in repeated or fraudulent disputes.
                 </li>
                 <li>
-                  <b>Additional Services and Scope of Work:</b> Any services or work
-                  requested by the client and performed by the service provider
-                  that fall outside the scope of the original booking made
-                  through the online application are considered separate
+                  <b>Additional Services and Scope of Work:</b> Any services or
+                  work requested by the client and performed by the service
+                  provider that fall outside the scope of the original booking
+                  made through the online application are considered separate
                   agreements. SRV is not responsible for the negotiation,
                   payment, execution, or resolution of disputes concerning these
                   additional services.
@@ -511,28 +520,29 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>11. Cancellation Policy</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>Online Payments:</b> For services paid for in advance through SRV,
-                  the funds will be securely held by SRV until the service is
-                  marked as complete. In the event the Client properly initiates
-                  a dispute and a full refund is approved by the platform, 100%
-                  of the pre-paid amount will be returned to the Client.
+                  <b>Online Payments:</b> For services paid for in advance
+                  through SRV, the funds will be securely held by SRV until the
+                  service is marked as complete. In the event the Client
+                  properly initiates a dispute and a full refund is approved by
+                  the platform, 100% of the pre-paid amount will be returned to
+                  the Client.
                 </li>
                 <li>
-                  <b>Transaction Completion:</b> Once the Service Provider confirms
-                  completion of the service and the pre-paid online payment is
-                  released to them, the transaction is deemed final and
-                  complete. At this point, the funds are outside the control of
-                  the platform and cannot be unilaterally recalled or refunded
-                  to the Client.
+                  <b>Transaction Completion:</b> Once the Service Provider
+                  confirms completion of the service and the pre-paid online
+                  payment is released to them, the transaction is deemed final
+                  and complete. At this point, the funds are outside the control
+                  of the platform and cannot be unilaterally recalled or
+                  refunded to the Client.
                 </li>
                 <li>
-                  <b>Evidence and Resolution:</b> In the event the Client is unable to
-                  file a dispute report (or to support a claim of non-payment),
-                  the Service Provider must provide substantial evidence (e.g.,
-                  time logs, before/after photos, communications) for review by
-                  the platform's administration. The administration will use all
-                  available evidence from both parties to make a final and
-                  binding decision on the dispute.
+                  <b>Evidence and Resolution:</b> In the event the Client is
+                  unable to file a dispute report (or to support a claim of
+                  non-payment), the Service Provider must provide substantial
+                  evidence (e.g., time logs, before/after photos,
+                  communications) for review by the platform's administration.
+                  The administration will use all available evidence from both
+                  parties to make a final and binding decision on the dispute.
                 </li>
               </ul>
             </li>
@@ -541,14 +551,14 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>12. Intellectual Property</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>Platform IP:</b> All content, software, features, and trademarks
-                  belonging to SRV (excluding User Content) remain its exclusive
-                  property.
+                  <b>Platform IP:</b> All content, software, features, and
+                  trademarks belonging to SRV (excluding User Content) remain
+                  its exclusive property.
                 </li>
                 <li>
-                  <b>User License:</b> Users are granted a limited, non-exclusive,
-                  non-transferable, revocable license to use the Platform per
-                  these Terms.
+                  <b>User License:</b> Users are granted a limited,
+                  non-exclusive, non-transferable, revocable license to use the
+                  Platform per these Terms.
                 </li>
                 <li>
                   <b>User Content:</b> Users retain ownership of their submitted
@@ -656,17 +666,18 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               <strong>18. Termination</strong>
               <ul className="mt-1 list-disc pl-5">
                 <li>
-                  <b>By User:</b> You may terminate your account at any time via the
-                  app or by contacting support.
+                  <b>By User:</b> You may terminate your account at any time via
+                  the app or by contacting support.
                 </li>
                 <li>
-                  <b>By SRV:</b> The company may suspend or terminate a User's access
-                  at any time, for any reason, including breach of these Terms.
+                  <b>By SRV:</b> The company may suspend or terminate a User's
+                  access at any time, for any reason, including breach of these
+                  Terms.
                 </li>
                 <li>
-                  <b>Effect of Termination:</b> Upon termination, all rights to use the
-                  Platform cease immediately. Provisions that should survive
-                  (e.g. ownership, disclaimers, indemnification, dispute
+                  <b>Effect of Termination:</b> Upon termination, all rights to
+                  use the Platform cease immediately. Provisions that should
+                  survive (e.g. ownership, disclaimers, indemnification, dispute
                   resolution) will remain in force. Outstanding obligations,
                   payments, or disputes may still need resolution.
                 </li>
