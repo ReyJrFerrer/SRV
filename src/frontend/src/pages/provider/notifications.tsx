@@ -202,7 +202,8 @@ const NotificationsPageSP = () => {
       case "new_booking_request":
       case "booking_confirmation":
       case "service_completion_reminder":
-      case "review_request":''
+      case "review_request":
+        "";
       case "booking_cancelled":
       case "booking_rescheduled":
         navigate(notification.href);
