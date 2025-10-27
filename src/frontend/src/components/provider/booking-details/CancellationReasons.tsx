@@ -24,7 +24,11 @@ export default function CancellationReasons({
   // available, try to read a locally stored entry (this can simulate a
   // client-provided reason if you store it in localStorage for tests).
   const key = bookingId ? STORAGE_KEY_PREFIX + bookingId : null;
-  const [localEntry, setLocalEntry] = useState<{ reason?: string; notes?: string; ts?: number } | null>(null);
+  const [localEntry, setLocalEntry] = useState<{
+    reason?: string;
+    notes?: string;
+    ts?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!key) return;
@@ -51,12 +55,24 @@ export default function CancellationReasons({
     <section className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <svg className="h-6 w-6 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
+          <svg
+            className="h-6 w-6 text-red-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728"
+            />
           </svg>
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-red-800">Client cancelled this booking</h3>
+          <h3 className="text-sm font-semibold text-red-800">
+            Client cancelled this booking
+          </h3>
           <div className="mt-1 text-sm text-red-700">
             {displayedReason ? (
               <div className="whitespace-pre-wrap">{displayedReason}</div>
@@ -64,10 +80,14 @@ export default function CancellationReasons({
               <div>No reason provided by client.</div>
             )}
             {displayedNotes && (
-              <div className="mt-2 text-xs text-red-700">Notes: {displayedNotes}</div>
+              <div className="mt-2 text-xs text-red-700">
+                Notes: {displayedNotes}
+              </div>
             )}
             {localEntry?.ts && (
-              <div className="mt-2 text-xs text-red-600">Recorded {new Date(localEntry.ts).toLocaleString()}</div>
+              <div className="mt-2 text-xs text-red-600">
+                Recorded {new Date(localEntry.ts).toLocaleString()}
+              </div>
             )}
           </div>
         </div>
