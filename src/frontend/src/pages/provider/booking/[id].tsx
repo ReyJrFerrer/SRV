@@ -10,6 +10,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
+import CancellationReasons from "../../../components/provider/booking-details/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // (Places library reserved for future use with Autocomplete if needed)
@@ -716,6 +717,13 @@ const ProviderBookingDetailsPage: React.FC = () => {
           </h1>
         </div>
       </header>
+
+      {/* Cancellation reasons (frontend-only local storage) - placed below header */}
+      <CancellationReasons
+        bookingId={specificBooking?.id}
+        cancelledByClient={specificBooking?.status === "Cancelled"}
+        cancellationReason={specificBooking?.notes ?? null}
+      />
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Side by side layout for provider and service details */}
