@@ -7,8 +7,7 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
-import { useProviderReviews } from "../../../../hooks/reviewManagement";
+import { useProviderStatStore } from "../../../../store/providerStatStore";
 
 // Import your new chart components
 import BookingStatusPieChart from "./BookingStatusPieChart";
@@ -16,7 +15,6 @@ import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
 import DailyBookingsBarChart from "./DailyBookingsBarChart";
 import CustomerRatingStars from "./CustomerRatingStars";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "../../../../hooks/useWallet";
 
 interface ProviderStatsProps {
   className?: string;
@@ -27,34 +25,35 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
 }) => {
-  const { balance, fetchBalance } = useWallet();
-
   const navigate = useNavigate();
 
   const handleWalletClick = () => {
     navigate("/provider/wallet");
   };
 
+  // Use Zustand store for provider stats
+  const {
+    bookingAnalytics,
+    reviewAnalytics,
+    walletData,
+    isLoading,
+    error,
+    fetchProviderStats,
+    fetchWalletBalance,
+  } = useProviderStatStore();
+
   const handleRefreshBalance = async () => {
     try {
-      await fetchBalance();
+      await fetchWalletBalance();
     } catch (error) {
       console.error("Failed to refresh balance:", error);
     }
   };
 
-  const {
-    analytics,
-    loading: bookingLoading,
-    getRevenueByPeriod,
-    error,
-  } = useProviderBookingManagement();
-
-  const {
-    analytics: reviewAnalytics,
-    loading: reviewsLoading,
-    error: reviewsError,
-  } = useProviderReviews();
+  // Fetch provider stats on component mount
+  useEffect(() => {
+    fetchProviderStats();
+  }, [fetchProviderStats]);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -67,8 +66,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isLoading = externalLoading || bookingLoading || reviewsLoading;
-  const hasError = error || reviewsError;
+  const loading = externalLoading || isLoading;
+  const hasError = error;
 
   const ratingData = React.useMemo(() => {
     if (reviewAnalytics) {
@@ -123,7 +122,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       },
     ];
 
-    if (!analytics) {
+    if (!bookingAnalytics) {
       return defaultStats.map((stat) => {
         if (stat.title === "Customer Rating") {
           return {
@@ -138,8 +137,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     }
 
     try {
-      const monthlyRevenue = getRevenueByPeriod("month");
-      const pendingPayout = analytics.expectedRevenue || 0;
+      const monthlyRevenue = bookingAnalytics.revenueThisMonth || 0;
+      const pendingPayout = bookingAnalytics.expectedRevenue || 0;
 
       return [
         {
@@ -156,7 +155,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         },
         {
           title: "Completed Jobs",
-          value: (analytics.completedBookings || 0).toString(),
+          value: (bookingAnalytics.completedBookings || 0).toString(),
           icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
           bgColor: "bg-[#4068F4]",
         },
@@ -170,13 +169,13 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         },
         {
           title: "Completion Rate",
-          value: `${(analytics.completionRate || 0).toFixed(0)}%`,
+          value: `${(bookingAnalytics.completionRate || 0).toFixed(0)}%`,
           icon: <ChartBarIcon className="h-6 w-6 text-white" />,
           bgColor: "bg-[#4068F4]",
         },
         {
           title: "Total Earnings",
-          value: `₱${(analytics.totalRevenue || 0).toFixed(2)}`,
+          value: `₱${(bookingAnalytics.totalRevenue || 0).toFixed(2)}`,
           icon: <ChartPieIcon className="h-6 w-6 text-white" />,
           bgColor: "bg-[#4068F4]",
         },
@@ -185,7 +184,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       //console.error("Error calculating stats:", err);
       return defaultStats;
     }
-  }, [analytics, getRevenueByPeriod, ratingData]);
+  }, [bookingAnalytics, ratingData]);
 
   const statPairs: Array<typeof stats> = [];
   for (let i = 0; i < stats.length; i += 2) {
@@ -220,7 +219,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   // --- Improved Mobile Stat Cards Layout ---
   const renderCards = () => (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {isLoading
+      {loading
         ? Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="flex w-64 flex-shrink-0 flex-col gap-4">
               <div className="flex animate-pulse items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
@@ -256,7 +255,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     <div
       className={`grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 ${className}`}
     >
-      {isLoading ? (
+      {loading ? (
         <>
           <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
           <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
@@ -311,7 +310,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             </button>
           </div>
           <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-            ₱ {balance.toFixed(2)}
+            ₱ {(walletData?.balance ?? 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -338,7 +337,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats: {error || reviewsError || "Unknown error"}
+            Error loading stats: {error || "Unknown error"}
           </p>
         </div>
       </div>
