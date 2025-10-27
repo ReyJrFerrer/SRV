@@ -483,7 +483,10 @@ export const bookingCanisterService = {
    * @param bookingId The ID of the booking to cancel
    * @param cancelReason The reason for cancellation (required)
    */
-  async cancelBooking(bookingId: string, cancelReason: string): Promise<Booking | null> {
+  async cancelBooking(
+    bookingId: string,
+    cancelReason: string,
+  ): Promise<Booking | null> {
     console.log(
       "🚀 [bookingCanisterService] cancelBooking called for booking:",
       bookingId,
@@ -491,13 +494,13 @@ export const bookingCanisterService = {
     try {
       const cancelBookingFn = httpsCallable(functions, "cancelBooking");
 
-      if (!cancelReason || cancelReason.trim() === '') {
-        throw new Error('A reason for cancellation is required');
+      if (!cancelReason || cancelReason.trim() === "") {
+        throw new Error("A reason for cancellation is required");
       }
 
-      const result = await cancelBookingFn({ 
-        bookingId, 
-        cancelReason: cancelReason.trim() 
+      const result = await cancelBookingFn({
+        bookingId,
+        cancelReason: cancelReason.trim(),
       });
       console.log(
         "✅ [bookingCanisterService] cancelBooking raw result:",

@@ -1461,7 +1461,8 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      `${cancellerName} has cancelled the booking for "${serviceName}"`,
+      `${cancellerName} has cancelled the booking for "${serviceName}" 
+      Reason of the client: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
@@ -1469,8 +1470,8 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         cancelledBy: authInfo.uid,
         cancelReason: cancelReason.trim(),
         senderName: cancellerName,
-        message: `${cancellerName} has cancelled the booking for "${serviceName}". ` +
-                `Reason: ${cancelReason.trim()}`,
+        message: `${cancellerName} has cancelled the booking for "${serviceName} " 
+          Reason of the client: ${cancelReason.trim()}`,
       },
     );
 

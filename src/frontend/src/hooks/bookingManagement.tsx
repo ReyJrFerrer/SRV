@@ -65,7 +65,7 @@ interface BookingManagementHook {
 
   // Functions
   bookingsByStatus: (status: BookingStatus) => EnhancedBooking[];
-  updateBookingStatus: (id: string, status: BookingStatus) => Promise<void>;
+  updateBookingStatus: (id: string, status: BookingStatus, cancelReason : string) => Promise<void>;
   refreshBookings: () => Promise<void>;
   clearError: () => void;
   getBookingCount: (status: BookingStatus) => number;
@@ -598,7 +598,11 @@ export const useBookingManagement = (): BookingManagementHook => {
 
   // Booking status management
   const updateBookingStatus = useCallback(
-    async (bookingId: string, newStatus: BookingStatus, cancelReason?: string) => {
+    async (
+      bookingId: string,
+      newStatus: BookingStatus,
+      cancelReason: string,
+    ) => {
       try {
         setLoadingState(`update-${bookingId}`, true);
         clearError();
@@ -610,8 +614,10 @@ export const useBookingManagement = (): BookingManagementHook => {
             if (!cancelReason) {
               throw new Error("A reason for cancellation is required");
             }
-            updatedBooking =
-              await bookingCanisterService.cancelBooking(bookingId, cancelReason);
+            updatedBooking = await bookingCanisterService.cancelBooking(
+              bookingId,
+              cancelReason,
+            );
             break;
           case "Accepted":
             updatedBooking = await bookingCanisterService.acceptBooking(

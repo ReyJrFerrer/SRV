@@ -322,10 +322,20 @@ const BookingDetailsPage: React.FC = () => {
   const handleUpdateBookingStatus = async (
     bookingId: string,
     newStatus: BookingStatus,
+    cancelReason: string,
   ) => {
-    await updateBookingStatusHook(bookingId, newStatus);
-    const updatedBooking = bookings.find((b) => b.id === bookingId);
-    if (updatedBooking) setSpecificBooking(updatedBooking);
+    try {
+      if (newStatus === "Cancelled" && !cancelReason) {
+        throw new Error("A reason is required for cancellation");
+      }
+      
+      await updateBookingStatusHook(bookingId, newStatus, cancelReason);
+      const updatedBooking = bookings.find((b) => b.id === bookingId);
+      if (updatedBooking) setSpecificBooking(updatedBooking);
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      throw error;
+    }
   };
 
   const handleRetry = () => {
@@ -334,10 +344,14 @@ const BookingDetailsPage: React.FC = () => {
     refreshBookings();
   };
 
-  const handleCancelWithReason = async (_reason: string) => {
+  const handleCancelWithReason = async (reason: string) => {
     if (!specificBooking) return;
-    await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
-    toast.success("Booking has been cancelled.");
+    try {
+      await handleUpdateBookingStatus(specificBooking.id, "Cancelled", reason);
+      toast.success("Booking has been cancelled.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to cancel booking");
+    }
   };
 
   const handleChatWithProvider = async () => {

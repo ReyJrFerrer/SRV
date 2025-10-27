@@ -268,14 +268,19 @@ export const useProviderNotificationsWithPush = () => {
             id: `frontend-review-${booking.id}-${Date.now()}`,
             message: `Rate your experience with ${booking.clientName} for "${booking.serviceName}"`,
             type: "review_request" as const,
-            timestamp: new Date(booking.completedDate || Date.now()).toISOString(),
+            timestamp: new Date(
+              booking.completedDate || Date.now(),
+            ).toISOString(),
             read: false,
             href: `/provider/rate-client/${booking.id}`,
             clientName: booking.clientName,
             bookingId: booking.id,
           }));
 
-        additionalNotifications.push(...serviceReminders, ...reviewReminderNotifications);
+        additionalNotifications.push(
+          ...serviceReminders,
+          ...reviewReminderNotifications,
+        );
       }
 
       // Combine canister notifications with additional frontend-generated ones
