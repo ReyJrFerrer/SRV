@@ -1094,6 +1094,25 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
+    // Create service completion reminder notification for the provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "your client" : "your client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER,
+      "Service In Progress",
+      `Don't forget to complete the service for ${clientName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
+
     console.log("✅ [startBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
   } catch (error) {
@@ -1316,6 +1335,42 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       console.log("Reputation couldn't update");
     }
 
+
+    // Create review reminder notification for client
+    await createNotification(
+      booking.clientId,
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.REVIEW_REMINDER,
+      "Share Your Experience",
+      `Please review your recent "${serviceName}" service with ${providerName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        providerName,
+        bookingId: booking.id,
+      },
+    );
+
+    // Create review reminder notification for provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "the client" : "the client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.REVIEW_REQUEST,
+      "Rate Your Client",
+      `Rate your experience with ${clientName} for "${serviceName}"`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
 
     console.log("✅ [completeBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};

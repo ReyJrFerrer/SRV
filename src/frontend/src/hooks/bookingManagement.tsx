@@ -65,7 +65,11 @@ interface BookingManagementHook {
 
   // Functions
   bookingsByStatus: (status: BookingStatus) => EnhancedBooking[];
-  updateBookingStatus: (id: string, status: BookingStatus, cancelReason : string) => Promise<void>;
+  updateBookingStatus: (
+    id: string,
+    status: BookingStatus,
+    cancelReason: string,
+  ) => Promise<void>;
   refreshBookings: () => Promise<void>;
   clearError: () => void;
   getBookingCount: (status: BookingStatus) => number;

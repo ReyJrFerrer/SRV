@@ -328,7 +328,7 @@ const BookingDetailsPage: React.FC = () => {
       if (newStatus === "Cancelled" && !cancelReason) {
         throw new Error("A reason is required for cancellation");
       }
-      
+
       await updateBookingStatusHook(bookingId, newStatus, cancelReason);
       const updatedBooking = bookings.find((b) => b.id === bookingId);
       if (updatedBooking) setSpecificBooking(updatedBooking);
@@ -350,7 +350,9 @@ const BookingDetailsPage: React.FC = () => {
       await handleUpdateBookingStatus(specificBooking.id, "Cancelled", reason);
       toast.success("Booking has been cancelled.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to cancel booking");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel booking",
+      );
     }
   };
 
