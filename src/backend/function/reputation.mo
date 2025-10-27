@@ -37,6 +37,7 @@ persistent actor ReputationCanister {
     private transient let MAX_AGE_POINTS : Float = 10.0;
     private transient let MIN_TRUST_SCORE : Float = 0.0;
     private transient let MAX_TRUST_SCORE : Float = 100.0;
+    private let CANCELLATION_PENALTY : Float = 5.0; // Points to deduct for each cancellation
     private transient let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
         (#Low, 20.0),
         (#Medium, 50.0),
@@ -628,6 +629,53 @@ persistent actor ReputationCanister {
     
     // Public functions
     
+    // Deduct reputation points for booking cancellation
+    public shared(_msg) func deductReputationForCancellation(userId : Principal) : async Result<ReputationScore> {
+        try {
+            // Get current reputation or initialize if not exists
+            let currentScore = switch (reputations.get(userId)) {
+                case (?score) { score };
+                case null { 
+                    let newScore : ReputationScore = {
+                        userId = userId;
+                        trustScore = BASE_SCORE;
+                        trustLevel = #Low;
+                        completedBookings = 0;
+                        averageRating = null;
+                        detectionFlags = [];
+                        lastUpdated = Time.now();
+                    };
+                    reputations.put(userId, newScore);
+                    newScore;
+                };
+            };
+            
+            // Calculate new score with penalty, ensuring it doesn't go below minimum
+            let newTrustScore = Float.max(MIN_TRUST_SCORE, currentScore.trustScore - CANCELLATION_PENALTY);
+            
+            // Update reputation
+            let updatedScore : ReputationScore = {
+                userId = currentScore.userId;
+                trustScore = newTrustScore;
+                trustLevel = determineTrustLevel(newTrustScore);
+                completedBookings = currentScore.completedBookings;
+                averageRating = currentScore.averageRating;
+                detectionFlags = currentScore.detectionFlags;
+                lastUpdated = Time.now();
+            };
+            
+            // Save the updated score
+            reputations.put(userId, updatedScore);
+            
+            // Update reputation history
+            updateReputationHistory(userId, newTrustScore);
+            
+            #ok(updatedScore);
+        } catch (e) {
+            #err("Failed to update reputation: " # Error.message(e));
+        };
+    };
+
     // Initialize reputation for a new user
     public func initializeReputation(userId : Principal, _creationTime : Time.Time) : async Result<ReputationScore> {
         switch (reputations.get(userId)) {

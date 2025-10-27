@@ -149,6 +149,11 @@ function getManualReputationIdl() {
         [],
       ),
       getReputationScore: IDL.Func([IDL.Principal], [ReputationResult], ["query"]),
+      deductReputationForCancellation: IDL.Func(
+        [IDL.Principal],
+        [ReputationResult],
+        [],
+      ),
     });
   };
 }
@@ -750,6 +755,67 @@ exports.updateProviderReputation = functions.https.onCall(async (data, _context)
 exports.updateProviderReputationInternal = updateProviderReputationInternal;
 
 /**
+ * Deduct reputation points for a user who cancelled a booking
+ * @param {string} userId - The ID of the user who cancelled the booking
+ * @returns {Promise<Object>} Result of the reputation deduction
+ */
+const deductReputationForCancellationInternal = async (userId) => {
+  try {
+    const actor = await createReputationActor();
+    const result = await actor.deductReputationForCancellation(Principal.fromText(userId));
+
+    if ("ok" in result) {
+      return {
+        success: true,
+        data: {
+          userId: result.ok.userId.toString(),
+          trustScore: result.ok.trustScore,
+          trustLevel: result.ok.trustLevel,
+          lastUpdated: new Date(Number(result.ok.lastUpdated / BigInt(1000000))).toISOString(),
+        },
+      };
+    } else {
+      throw new Error(result.err || "Failed to deduct reputation points");
+    }
+  } catch (error) {
+    console.error("Error in deductReputationForCancellationInternal:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deduct reputation points for a user who cancelled a booking
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    const result = await deductReputationForCancellationInternal(userId);
+    return {success: true, data: result};
+  } catch (error) {
+    console.error("Error deducting reputation for cancellation:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Failed to deduct reputation points",
+      error,
+    );
+  }
+});
+
+// Export the internal function for use in other cloud functions
+exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
+
+/**
  * Process a review and update reputations for both client and provider
  * HTTP Cloud Function - can be called from client or other services via HTTP
  */
@@ -820,6 +886,118 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
 
     // If not in Firestore, try IC canister
     console.log(`📞 No Firestore data, trying IC canister for ${userId}`);
+    const reputationActor = await createReputationActor();
+    const principal = Principal.fromText(userId);
+
+    const result = await reputationActor.getReputationScore(principal);
+
+    if ("ok" in result) {
+      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
+      return {
+        success: true,
+        data: result.ok,
+      };
+    } else {
+      console.error(`❌ Error from canister: ${result.err}`);
+      // Return default reputation instead of throwing error
+      return {
+        success: true,
+        data: {
+          trustScore: 50,
+          trustLevel: "New",
+          completedBookings: 0,
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Error getting reputation score:", error);
+    // Return default reputation instead of throwing error
+    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
+    return {
+      success: true,
+      data: {
+        trustScore: 50,
+        trustLevel: "New",
+        completedBookings: 0,
+      },
+    };
+  }
+});
+
+/**
+ * Internal function to check the user reputation
+ * Can be called directly from other cloud functions
+ * @param {string} userId -  User principal as text
+ * @return {Promise<Object>} Result object
+ */
+async function checkUserReputationInternal(userId) {
+  try {
+    // Check in IC canister
+    console.log(`📞 [checkUserReputationInternal] Checking User Reputation 
+      for ${userId}`);
+    const reputationActor = await createReputationActor();
+    const principal = Principal.fromText(userId);
+
+    const result = await reputationActor.getReputationScore(principal);
+
+    console.log("Reputation result", result);
+
+    if ("ok" in result) {
+      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
+      return {
+        success: true,
+        data: {
+          trustScore: Number(result.ok.trustScore),
+          trustLevel: result.ok.trustLevel?.toString(),
+          completedBookings: Number(result.ok.completedBookings),
+        },
+      };
+    } else {
+      console.error(`❌ Error from canister: ${result.err}`);
+      return {
+        success: false,
+        error: result.err || "Failed to get reputation from canister",
+        data: {
+          trustScore: 50,
+          trustLevel: "New",
+          completedBookings: 0,
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Error in checkUserReputationInternal:", error);
+    return {
+      success: false,
+      error: error.message || "Error checking reputation",
+      data: {
+        trustScore: 50,
+        trustLevel: "New",
+        completedBookings: 0,
+      },
+    };
+  }
+}
+
+exports.checkUserReputationInternal = checkUserReputationInternal;
+
+
+exports.checkUserReputation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  console.log("🔄 Get Reputation Score Payload:", {userId});
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    // Check reputation score in the canister
+    console.log(`📞 Checking User Reputation in IC canister for ${userId}`);
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(userId);
 
