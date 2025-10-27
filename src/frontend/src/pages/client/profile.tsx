@@ -673,20 +673,17 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <div className="flex-grow lg:hidden"></div>
-          <h1 className="ml-0 text-2xl font-extrabold tracking-tight text-black lg:ml-4">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             My Profile
           </h1>
-          <div className="flex-grow lg:hidden"></div>
-          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
 

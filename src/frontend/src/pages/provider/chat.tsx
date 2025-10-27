@@ -52,9 +52,9 @@ const ProviderChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Messages
           </h1>
           {/* Add a button for starting a new chat in the future */}
