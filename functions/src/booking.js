@@ -1094,6 +1094,25 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
+    // Create service completion reminder notification for the provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "your client" : "your client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER,
+      "Service In Progress",
+      `Don't forget to complete the service for ${clientName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
+
     console.log("✅ [startBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
   } catch (error) {
@@ -1317,6 +1336,42 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     }
 
 
+    // Create review reminder notification for client
+    await createNotification(
+      booking.clientId,
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.REVIEW_REMINDER,
+      "Share Your Experience",
+      `Please review your recent "${serviceName}" service with ${providerName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        providerName,
+        bookingId: booking.id,
+      },
+    );
+
+    // Create review reminder notification for provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "the client" : "the client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.REVIEW_REQUEST,
+      "Rate Your Client",
+      `Rate your experience with ${clientName} for "${serviceName}"`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
+
     console.log("✅ [completeBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
   } catch (error) {
@@ -1336,7 +1391,16 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
   const safeDataForLog = {bookingId: data.data?.bookingId};
   console.log("📦 [cancelBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const {bookingId, cancelReason} = payload;
+
+  if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
+    console.error(`❌ [cancelBooking] Validation failed: 
+      cancelReason is required and cannot be empty.`);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "A reason for cancellation is required",
+    );
+  }
 
   const authInfo = getAuthInfo(context, data);
   console.log("🔐 [cancelBooking] Auth info:", authInfo);
@@ -1401,6 +1465,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     const updatedBooking = {
       ...booking,
       status: "Cancelled",
+      cancelReason: cancelReason.trim(),
+      cancelledBy: authInfo.uid,
+      cancelledAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1409,6 +1476,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Cancelled",
+        cancelReason: cancelReason.trim(),
+        cancelledBy: authInfo.uid,
+        cancelledAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
     });
@@ -1446,13 +1516,17 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      `${cancellerName} has cancelled the booking for "${serviceName}"`,
+      `${cancellerName} has cancelled the booking for "${serviceName}" 
+      Reason of the client: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
         serviceName,
         cancelledBy: authInfo.uid,
+        cancelReason: cancelReason.trim(),
         senderName: cancellerName,
+        message: `${cancellerName} has cancelled the booking for "${serviceName} " 
+          Reason of the client: ${cancelReason.trim()}`,
       },
     );
 

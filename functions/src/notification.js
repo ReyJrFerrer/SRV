@@ -97,7 +97,7 @@ function generateNotificationHref(notificationType, userType, entityId) {
   case NOTIFICATION_TYPES.REVIEW_REMINDER:
   case NOTIFICATION_TYPES.REVIEW_REQUEST:
     return isProvider ?
-      `/provider/booking/${entityId}` :
+      `/provider/rate-client/${entityId}` :
       `/client/review/${entityId}`;
 
   case NOTIFICATION_TYPES.PAYMENT_COMPLETED:

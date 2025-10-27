@@ -116,7 +116,7 @@ const ActiveServicePage: React.FC = () => {
         return;
       }
       // Actually cancel the booking
-      await bookingCanisterService.cancelBooking(booking.id);
+      await bookingCanisterService.cancelBooking(booking.id, reason);
       toast.success("Complaint filed and booking cancelled.");
       navigate("/provider/bookings");
     } catch (err) {
