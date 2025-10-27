@@ -97,14 +97,49 @@ export default function CreateProfilePage() {
       return;
     }
 
-    // Name validation: at least two words, each at least 2 letters, only letters
+    // Name validation rules:
+    // - At least two words (first and last name required).
+    // - First and last words must contain at least 2 alphabetic letters (periods ignored).
+    // - Middle words may be full names (>=2 letters) or a single-letter initial with optional period (e.g., "M" or "M.").
+    // - Only letters and periods are allowed (no other special characters).
     const nameTrimmed = formData.name.trim();
     const nameWords = nameTrimmed.split(/\s+/);
-    if (
-      nameWords.length < 2 ||
-      !nameWords.every((word) => word.length >= 2 && /^[A-Za-z]+$/.test(word))
-    ) {
-      setError("Please enter your full name");
+
+    const isValidName = (() => {
+      if (nameWords.length < 2) return false;
+
+      for (let i = 0; i < nameWords.length; i++) {
+        const word = nameWords[i];
+
+        // Only allow letters and periods
+        if (!/^[A-Za-z.]+$/.test(word)) return false;
+
+        // Count alphabetic letters (ignore periods)
+        const lettersCount = (word.match(/[A-Za-z]/g) || []).length;
+
+        // First and last word must have at least 2 letters
+        if (i === 0 || i === nameWords.length - 1) {
+          if (lettersCount < 2) return false;
+          continue;
+        }
+
+        // Middle words: allow either a regular name (>=2 letters)
+        if (lettersCount >= 2) continue;
+
+        // Or allow a single-letter initial, optionally followed by a period (e.g., "A" or "A.")
+        if (/^[A-Za-z]\.?$/.test(word)) continue;
+
+        // Anything else is invalid
+        return false;
+      }
+
+      return true;
+    })();
+
+    if (!isValidName) {
+      setError(
+        "Please enter your full name (first and last). Middle initials like 'M.' are allowed. No other special characters.",
+      );
       return;
     }
 
@@ -384,7 +419,7 @@ export default function CreateProfilePage() {
                             value={formData.name}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pl-12 pr-3 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                           />
                         </div>
 
@@ -399,7 +434,7 @@ export default function CreateProfilePage() {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pl-12 pr-3 text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none"
                           />
                         </div>
                       </div>
