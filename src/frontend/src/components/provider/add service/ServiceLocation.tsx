@@ -126,7 +126,6 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
       return "Detecting location...";
     }
 
-
     if (userAddress && userProvince) {
       return `${userAddress}, ${userProvince}`;
     }
@@ -244,7 +243,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             </div>
           </div>
         )}
-{/* 
+        {/* 
         {(validationErrors?.locationMunicipalityCity || localLocationError) && (
           <div className="mt-2 text-center text-sm text-red-600">
             {validationErrors?.locationMunicipalityCity || localLocationError}
