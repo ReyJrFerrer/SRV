@@ -69,7 +69,7 @@ function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
     "Requested": ["Accepted", "Declined", "Cancelled"],
     "Accepted": ["InProgress", "Cancelled"],
-    "InProgress": ["Completed", "Disputed"],
+    "InProgress": ["Completed", "Disputed", "Cancelled"],
     "Completed": ["Disputed"],
     "Declined": [],
     "Cancelled": [],
