@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -6,9 +6,12 @@ import {
   UserIcon,
   BriefcaseIcon,
   QuestionMarkCircleIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useFeedback } from "../../../hooks/useFeedback";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import { initializeFirebase } from "../../../services/firebaseApp";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 // Ticket-compatible interfaces (same as client version)
 interface TicketCategory {
@@ -60,6 +63,36 @@ const ReportIssuePage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { submitReport, submitting, error, clearError } = useFeedback();
 
+  // Screenshots (optional)
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Generate/revoke object URLs for previews
+  useEffect(() => {
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [files]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = Array.from(e.target.files || []);
+    if (list.length === 0) return;
+    const imagesOnly = list.filter((f) => f.type.startsWith("image/"));
+    const combined = [...files, ...imagesOnly].slice(0, 5); // limit to 5
+    setFiles(combined);
+    setUploadError(null);
+    // reset input value to allow re-selecting same file
+    e.currentTarget.value = "";
+  };
+
+  const removeFileAt = (idx: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -69,6 +102,31 @@ const ReportIssuePage: React.FC = () => {
 
     clearError();
     setSuccessMessage(null);
+    setUploadError(null);
+
+    // Upload screenshots first (if any), then include URLs in report
+    let attachmentUrls: string[] = [];
+    if (files.length > 0) {
+      try {
+        setUploading(true);
+        const { storage } = initializeFirebase();
+        const folder = `reports/provider/${Date.now()}`;
+        const uploads = files.map(async (file, i) => {
+          const fileRef = ref(storage, `${folder}/${i}_${file.name}`);
+          await uploadBytes(fileRef, file, { contentType: file.type });
+          return await getDownloadURL(fileRef);
+        });
+        attachmentUrls = await Promise.all(uploads);
+      } catch (err) {
+        setUploadError(
+          err instanceof Error ? err.message : "Failed to upload screenshots",
+        );
+        setUploading(false);
+        return; // don't submit if uploads failed
+      } finally {
+        setUploading(false);
+      }
+    }
 
     // Create ticket-compatible report with structured data
     const reportDescription = JSON.stringify({
@@ -77,6 +135,7 @@ const ReportIssuePage: React.FC = () => {
       category,
       timestamp: new Date().toISOString(),
       source: "provider_report", // Identify source for admin
+      attachments: attachmentUrls,
     });
 
     const success = await submitReport(reportDescription);
@@ -88,6 +147,7 @@ const ReportIssuePage: React.FC = () => {
       setTitle("");
       setDescription("");
       setCategory("other");
+      setFiles([]);
       // Navigate back after delay
       setTimeout(() => {
         navigate(-1);
@@ -123,6 +183,11 @@ const ReportIssuePage: React.FC = () => {
           {successMessage && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
               {successMessage}
+            </div>
+          )}
+          {uploadError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+              {uploadError}
             </div>
           )}
 
@@ -211,12 +276,69 @@ const ReportIssuePage: React.FC = () => {
             />
           </div>
 
+          {/* Screenshots (optional) */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Screenshots (optional)
+            </label>
+            <div className="rounded-lg border border-dashed border-yellow-300 bg-yellow-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <PhotoIcon className="h-5 w-5" />
+                  <span className="text-sm">Upload up to 5 images</span>
+                </div>
+                <label className="inline-flex cursor-pointer items-center rounded-md bg-yellow-200 px-3 py-1.5 text-sm font-semibold text-black hover:bg-yellow-300">
+                  Choose Files
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={handleFileChange}
+                    disabled={submitting || uploading}
+                  />
+                </label>
+              </div>
+              {previews.length > 0 && (
+                <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {previews.map((src, idx) => (
+                    <div
+                      key={idx}
+                      className="group relative overflow-hidden rounded-md border border-yellow-200 bg-white"
+                    >
+                      <img
+                        src={src}
+                        alt={`screenshot-${idx + 1}`}
+                        className="h-24 w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFileAt(idx)}
+                        className="absolute right-1 top-1 rounded bg-red-600/90 px-1.5 py-0.5 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        aria-label="Remove"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {uploading && (
+                <div className="mt-3 text-sm text-yellow-700">
+                  Uploading screenshots...
+                </div>
+              )}
+            </div>
+          </div>
+
           <button
             type="submit"
-            disabled={!title.trim() || !description.trim() || submitting}
+            disabled={
+              !title.trim() || !description.trim() || submitting || uploading
+            }
             className="w-full rounded-lg bg-yellow-200 px-6 py-3 text-lg font-semibold text-black shadow transition-colors hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? "Submitting..." : "Submit Report"}
+            {submitting || uploading ? "Submitting..." : "Submit Report"}
           </button>
         </form>
       </div>

@@ -176,6 +176,17 @@ exports.onboardProvider = functions.https.onRequest(async (req, res) => {
         .doc(providerId)
         .set(providerData, {merge: true});
       console.log("Provider data saved to Firestore successfully");
+
+      // Update user profile to mark as onboarded
+      await admin
+        .firestore()
+        .collection("users")
+        .doc(providerId)
+        .update({
+          isOnboarded: true,
+          updatedAt: new Date().toISOString(),
+        });
+      console.log("User profile updated with onboarded flag");
     } catch (firestoreError) {
       console.error("Error saving to Firestore:", firestoreError);
       // Continue with success response even if Firestore fails

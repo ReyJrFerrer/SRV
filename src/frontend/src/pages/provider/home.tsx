@@ -19,6 +19,17 @@ const ProviderHomePage: React.FC = () => {
   // --- Use Zustand location store for location status ---
   const { locationStatus } = useLocationStore();
 
+  // --- Dismissible location overlay state (must be declared unconditionally) ---
+  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
+    () => {
+      try {
+        return sessionStorage.getItem("providerDismissedLocationBlock") === "1";
+      } catch {
+        return false;
+      }
+    },
+  );
+
   // Use the service management hook
   const {
     userServices,
@@ -159,11 +170,23 @@ const ProviderHomePage: React.FC = () => {
     );
   }
 
-  // --- Show location blocked message if denied (reference: client home.tsx) ---
-  if (locationStatus === "denied") {
+  if (locationStatus === "denied" && !dismissedLocationBlock) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
         <div className="relative max-w-lg rounded-2xl bg-white p-8 shadow-xl">
+          {/* Close button */}
+          <button
+            aria-label="Close"
+            className="absolute right-3 top-3 rounded-full border border-gray-300 bg-gray-100 px-2 py-1 text-gray-700 hover:bg-gray-200"
+            onClick={() => {
+              setDismissedLocationBlock(true);
+              try {
+                sessionStorage.setItem("providerDismissedLocationBlock", "1");
+              } catch {}
+            }}
+          >
+            ×
+          </button>
           {/* Computer guy character at the top */}
           <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
             <img
@@ -199,12 +222,28 @@ const ProviderHomePage: React.FC = () => {
                 browser app permissions
               </li>
             </ul>
-            <button
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
+            <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
+                onClick={() => window.location.reload()}
+              >
+                Reload
+              </button>
+              <button
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100"
+                onClick={() => {
+                  setDismissedLocationBlock(true);
+                  try {
+                    sessionStorage.setItem(
+                      "providerDismissedLocationBlock",
+                      "1",
+                    );
+                  } catch {}
+                }}
+              >
+                Continue without location
+              </button>
+            </div>
           </div>
         </div>
       </div>

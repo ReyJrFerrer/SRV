@@ -37,6 +37,7 @@ persistent actor ReputationCanister {
     private transient let MAX_AGE_POINTS : Float = 10.0;
     private transient let MIN_TRUST_SCORE : Float = 0.0;
     private transient let MAX_TRUST_SCORE : Float = 100.0;
+    private let CANCELLATION_PENALTY : Float = 5.0; // Points to deduct for each cancellation
     private transient let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
         (#Low, 20.0),
         (#Medium, 50.0),
@@ -628,6 +629,53 @@ persistent actor ReputationCanister {
     
     // Public functions
     
+    // Deduct reputation points for booking cancellation
+    public shared(_msg) func deductReputationForCancellation(userId : Principal) : async Result<ReputationScore> {
+        try {
+            // Get current reputation or initialize if not exists
+            let currentScore = switch (reputations.get(userId)) {
+                case (?score) { score };
+                case null { 
+                    let newScore : ReputationScore = {
+                        userId = userId;
+                        trustScore = BASE_SCORE;
+                        trustLevel = #Low;
+                        completedBookings = 0;
+                        averageRating = null;
+                        detectionFlags = [];
+                        lastUpdated = Time.now();
+                    };
+                    reputations.put(userId, newScore);
+                    newScore;
+                };
+            };
+            
+            // Calculate new score with penalty, ensuring it doesn't go below minimum
+            let newTrustScore = Float.max(MIN_TRUST_SCORE, currentScore.trustScore - CANCELLATION_PENALTY);
+            
+            // Update reputation
+            let updatedScore : ReputationScore = {
+                userId = currentScore.userId;
+                trustScore = newTrustScore;
+                trustLevel = determineTrustLevel(newTrustScore);
+                completedBookings = currentScore.completedBookings;
+                averageRating = currentScore.averageRating;
+                detectionFlags = currentScore.detectionFlags;
+                lastUpdated = Time.now();
+            };
+            
+            // Save the updated score
+            reputations.put(userId, updatedScore);
+            
+            // Update reputation history
+            updateReputationHistory(userId, newTrustScore);
+            
+            #ok(updatedScore);
+        } catch (e) {
+            #err("Failed to update reputation: " # Error.message(e));
+        };
+    };
+
     // Initialize reputation for a new user
     public func initializeReputation(userId : Principal, _creationTime : Time.Time) : async Result<ReputationScore> {
         switch (reputations.get(userId)) {
@@ -699,12 +747,62 @@ persistent actor ReputationCanister {
         // 3. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 4. Update client reputation (reviewer) with provided data
+        // 4. Update client reputation (the reviewer) to track their trustworthiness
         ignore await updateUserReputation(
             review.clientId,
             clientCompletedBookings,
             clientAverageRating,
             clientAccountAge
+        );
+        
+        // 5. Return updated review with status and quality score
+        let updatedReview : Review = {
+            id = review.id;
+            bookingId = review.bookingId;
+            clientId = review.clientId;
+            providerId = review.providerId;
+            serviceId = review.serviceId;
+            rating = review.rating;
+            comment = review.comment;
+            status = if (shouldHide) { #Hidden } else if (flags.size() > 0) { #Flagged } else { #Visible };
+            qualityScore = ?qualityScore;
+            createdAt = review.createdAt;
+            updatedAt = Time.now();
+        };
+        
+        return #ok(updatedReview);
+    };
+
+    // Process a provider-to-client review and update provider reputation
+    // This is used when providers rate clients after service completion
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(_msg) func processProviderReview(
+        review : Review,
+        providerCompletedBookings : Nat,
+        providerAverageRating : ?Float,
+        providerAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
+
+        // 1. Analyze review for flags
+        let flags = analyzeReview(review);
+        
+        // 2. Calculate quality score (0.0 - 1.0)
+        let qualityScore : Float = Float.max(0.0, Float.min(1.0, 1.0 - (Float.fromInt(flags.size()) * 0.25)));
+        
+        // 3. Determine if review should be hidden
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+        
+        // 4. Update provider reputation (the reviewer) to track their trustworthiness
+        ignore await updateProviderReputation(
+            review.providerId,
+            providerCompletedBookings,
+            providerAverageRating,
+            providerAccountAge
         );
         
         // 5. Return updated review with status and quality score
@@ -769,7 +867,7 @@ persistent actor ReputationCanister {
     // Process a new review with LLM sentiment analysis
     // Accepts additional data needed for reputation calculation
     // Secured for Firebase service agent only
-    public shared(msg) func processReviewWithLLM(
+    public shared(_msg) func processReviewWithLLM(
         review : Review,
         clientCompletedBookings : Nat,
         clientAverageRating : ?Float,
@@ -792,12 +890,65 @@ persistent actor ReputationCanister {
         // 4. Determine if review should be hidden
         let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
-        // 5. Update client reputation (reviewer) with provided data
+        // 5. Update client reputation (the reviewer) to track their trustworthiness
         ignore await updateUserReputation(
             review.clientId,
             clientCompletedBookings,
             clientAverageRating,
             clientAccountAge
+        );
+        
+        // 6. Return updated review with status and quality score
+        let updatedReview : Review = {
+            id = review.id;
+            bookingId = review.bookingId;
+            clientId = review.clientId;
+            providerId = review.providerId;
+            serviceId = review.serviceId;
+            rating = review.rating;
+            comment = review.comment;
+            status = if (shouldHide) { #Hidden } else if (flags.size() > 0) { #Flagged } else { #Visible };
+            qualityScore = ?qualityScore;
+            createdAt = review.createdAt;
+            updatedAt = Time.now();
+        };
+        
+        return #ok(updatedReview);
+    };
+
+    // Process a provider-to-client review with LLM sentiment analysis
+    // This is used when providers rate clients after service completion
+    // Accepts additional data needed for reputation calculation
+    // Secured for Firebase service agent only
+    public shared(_msg) func processProviderReviewWithLLM(
+        review : Review,
+        providerCompletedBookings : Nat,
+        providerAverageRating : ?Float,
+        providerAccountAge : Time.Time
+    ) : async Result<Review> {
+        // Check authorization
+        // if (not isAuthorized(msg.caller)) {
+        //     return #err("Unauthorized: Only trusted service agent can call this function");
+        // };
+
+        // 1. Analyze sentiment with LLM
+        let llmSentimentScore = await analyzeSentimentWithLLM(review);
+        
+        // 2. Analyze review for flags (enhanced with LLM sentiment)
+        let flags = analyzeReviewWithLLMSentiment(review, llmSentimentScore);
+        
+        // 3. Calculate quality score incorporating LLM sentiment
+        let qualityScore : Float = calculateReviewQualityWithLLM(review, llmSentimentScore, flags);
+        
+        // 4. Determine if review should be hidden
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+        
+        // 5. Update provider reputation (the reviewer) to track their trustworthiness
+        ignore await updateProviderReputation(
+            review.providerId,
+            providerCompletedBookings,
+            providerAverageRating,
+            providerAccountAge
         );
         
         // 6. Return updated review with status and quality score

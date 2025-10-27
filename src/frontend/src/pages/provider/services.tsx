@@ -135,7 +135,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       {/* Activate/Deactivate Button */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
         <Tooltip
           content={`Cannot ${
             isActive ? "deactivate" : "activate"
@@ -145,7 +145,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors  ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -186,7 +186,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600 ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -202,7 +202,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             }
           >
             <TrashIcon className="h-5 w-5" />
-            Delete
+            <h5 className="text-lg">Delete</h5>
           </button>
         </Tooltip>
       </div>

@@ -7,6 +7,7 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useLocationStore } from "../../store/locationStore";
+import EnableLocationButton from "../common/EnableLocationButton";
 
 // --- Props ---
 export interface HeaderProps {
@@ -154,6 +155,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     userAddress,
     userProvince,
     locationLoading,
+    locationStatus,
   } = useLocationStore();
 
   // Get requestLocation function separately to avoid dependency issues
@@ -181,6 +183,24 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
+  // --- Sticky header: show/hide location area on scroll ---
+  const [showLocationArea, setShowLocationArea] = useState(true);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > lastY + 10) {
+        // scrolling down
+        setShowLocationArea(false);
+      } else if (y < lastY - 10) {
+        // scrolling up
+        setShowLocationArea(true);
+      }
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // --- New: Resolved formatted geocoded address (Google Maps) ---
   const [gmapsAddress, setGmapsAddress] = useState<string>(
@@ -215,6 +235,12 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       /* ignore */
     }
   }, []);
+
+  // When locationStatus changes to denied/unsupported, reflect in gmapsStatus
+  useEffect(() => {
+    if (locationStatus === "denied") setGmapsStatus("denied");
+    if (locationStatus === "unsupported") setGmapsStatus("unsupported");
+  }, [locationStatus]);
 
   // --- API Key Definition ---
   // Root APIProvider supplies the key; keep placeholder only if needed elsewhere
@@ -324,14 +350,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
-    if (!locationLoading && !isAuthLoading) {
+    if (
+      !locationLoading &&
+      !isAuthLoading &&
+      (locationStatus === "allowed" || locationStatus === "unsupported")
+    ) {
       setPlaceholder(
         searchPlaceholders[
           Math.floor(Math.random() * searchPlaceholders.length)
         ],
       );
     }
-  }, [locationLoading, isAuthLoading]);
+  }, [locationLoading, isAuthLoading, locationStatus]);
 
   // --- Handler: go to profile page ---
   const handleProfileClick = () => {
@@ -356,7 +386,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
-        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className} sticky top-0 z-40`}
       >
         {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
         <div className="hidden items-center justify-between md:flex">
@@ -419,7 +449,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         </div>
 
         {/* --- Location & Search Section --- */}
-        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
+        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-200">
+          <div className={`${showLocationArea ? "block" : "hidden"}`}>
+            {/* location area shown/hidden based on scroll */}
+          </div>
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <MapPinIcon className="h-6 w-6 text-blue-600" />
@@ -461,7 +494,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 </span>
               )}
             </div>
+            {(locationStatus === "denied" || locationStatus === "not_set") && (
+              <div className="ml-3">
+                <EnableLocationButton />
+              </div>
+            )}
           </div>
+          {(locationStatus === "denied" || locationStatus === "not_set") && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+              Location access is off. Some features are limited.
+            </div>
+          )}
           {/* --- Search Bar for Service Queries --- */}
           <form
             className="mt-4 w-full"

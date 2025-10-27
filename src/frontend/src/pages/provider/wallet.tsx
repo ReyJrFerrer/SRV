@@ -22,6 +22,7 @@ import {
 } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Principal } from "@dfinity/principal";
+import authCanisterService from "../../services/authCanisterService";
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
@@ -93,10 +94,19 @@ const WalletPage: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated || !identity) return;
 
-    const isOnboarded = localStorage.getItem("provider_onboarded");
-    if (!isOnboarded) {
-      setShowOnboardingModal(true);
-    }
+    const checkOnboardingStatus = async () => {
+      try {
+        const profile = await authCanisterService.getMyProfile();
+        console.log("Profile onboarding check", profile);
+        if (profile && !profile.isOnboarded) {
+          setShowOnboardingModal(true);
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      }
+    };
+
+    checkOnboardingStatus();
   }, [isAuthenticated, identity]);
 
   // Periodically check for completed payments

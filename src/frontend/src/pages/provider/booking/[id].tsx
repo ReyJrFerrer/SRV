@@ -200,15 +200,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
   };
 
   // New function to handle the actual decline after confirmation
-  const handleConfirmDecline = async () => {
+  const handleConfirmDecline = async (reason: string) => {
     if (!specificBooking) return;
 
     setIsDeclinining(true);
     try {
-      const success = await declineBookingById(
-        specificBooking.id,
-        "Declined by provider",
-      );
+      const success = await declineBookingById(specificBooking.id, reason);
       if (success) {
         await refreshBookings();
         const updatedBooking = bookings.find(

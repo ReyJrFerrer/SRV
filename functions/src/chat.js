@@ -519,8 +519,9 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Use transaction for atomic update
-    return await db.runTransaction(async (transaction) => {
+    // Step 1: Atomically update the unread count in a transaction.
+    // This is a quick operation to avoid lock contention.
+    await db.runTransaction(async (transaction) => {
       const conversationRef = db.collection("conversations").doc(conversationId);
       const conversationDoc = await transaction.get(conversationRef);
 
@@ -551,28 +552,30 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
       transaction.update(conversationRef, {
         unreadCount: updatedUnreadCount,
       });
+    });
 
-      // Mark all messages as read for this user
+    // Step 2: Update all messages outside the transaction using a batched write.
+    // This is much more efficient for bulk updates and avoids timeouts.
+    const messagesSnapshot = await db
+      .collection("messages")
+      .where("conversationId", "==", conversationId)
+      .where("receiverId", "==", userId)
+      .where("readAt", "==", [])
+      .get();
+
+    if (!messagesSnapshot.empty) {
+      const batch = db.batch();
       const now = new Date().toISOString();
-      const messagesSnapshot = await db
-        .collection("messages")
-        .where("conversationId", "==", conversationId)
-        .where("receiverId", "==", userId)
-        .where("readAt", "==", [])
-        .get();
-
       messagesSnapshot.forEach((doc) => {
-        transaction.update(doc.ref, {
-          status: {Read: null}, // Update status to Read
-          readAt: [now], // Array with timestamp mirrors Motoko's optional
+        batch.update(doc.ref, {
+          status: {Read: null},
+          readAt: [now],
         });
       });
+      await batch.commit();
+    }
 
-      return {
-        success: true,
-        data: true,
-      };
-    });
+    return {success: true, data: true};
   } catch (error) {
     console.error("Error marking messages as read:", error);
     if (error instanceof functions.https.HttpsError) {
