@@ -204,7 +204,6 @@ const useDebounce = <F extends (...args: any[]) => any>(
   callback: F,
   delay: number,
 ) => {
-  // Use ReturnType<typeof setTimeout> for better cross-environment compatibility
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef<F>(callback);
 
@@ -1446,27 +1445,32 @@ export const useProviderBookingManagement =
     }, [loadProviderProfile]);
 
     // Memoized booking update handler
-    const handleBookingsUpdate = useCallback(async (bookings: Booking[]) => {
-      try {
-        // Enrich bookings with client data in parallel
-        const enrichedBookings = await Promise.all(
-          bookings.map((booking) => enrichBookingWithClientData(booking))
-        );
+    const handleBookingsUpdate = useCallback(
+      async (bookings: Booking[]) => {
+        try {
+          // Enrich bookings with client data in parallel
+          const enrichedBookings = await Promise.all(
+            bookings.map((booking) => enrichBookingWithClientData(booking)),
+          );
 
-        setProviderBookings(prevBookings => {
-          // Skip update if the data is the same
-          if (JSON.stringify(prevBookings) === JSON.stringify(enrichedBookings)) {
-            return prevBookings;
-          }
-          return enrichedBookings;
-        });
-      } catch (error) {
-        console.error("Error enriching bookings:", error);
-        handleBookingError(error, "enrich provider bookings");
-      } finally {
-        setLoadingState("bookings", false);
-      }
-    }, [enrichBookingWithClientData, handleBookingError]);
+          setProviderBookings((prevBookings) => {
+            // Skip update if the data is the same
+            if (
+              JSON.stringify(prevBookings) === JSON.stringify(enrichedBookings)
+            ) {
+              return prevBookings;
+            }
+            return enrichedBookings;
+          });
+        } catch (error) {
+          console.error("Error enriching bookings:", error);
+          handleBookingError(error, "enrich provider bookings");
+        } finally {
+          setLoadingState("bookings", false);
+        }
+      },
+      [enrichBookingWithClientData, handleBookingError],
+    );
 
     // Create debounced version of the handler
     const debouncedBookingsUpdate = useDebounce(handleBookingsUpdate, 300);
@@ -1491,7 +1495,7 @@ export const useProviderBookingManagement =
         // Subscribe to realtime updates with debounced handler
         const unsubscribe = bookingCanisterService.subscribeToProviderBookings(
           providerPrincipal,
-          debouncedBookingsUpdate
+          debouncedBookingsUpdate,
         );
 
         // Cleanup subscription on unmount or when dependencies change

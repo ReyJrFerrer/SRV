@@ -20,7 +20,6 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
   analytics,
   getMonthlyRevenue,
 }) => {
- 
   const data = getMonthlyRevenue();
 
   // Ensure analytics and totalRevenue are available before using them

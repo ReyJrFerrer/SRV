@@ -11,9 +11,8 @@ import {
 } from "recharts";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
-
-interface DailyBookingsBarChartProps{
-  getBookingCountByDay : any;
+interface DailyBookingsBarChartProps {
+  getBookingCountByDay: any;
 }
 
 const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({

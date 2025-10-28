@@ -7,9 +7,6 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
-import { useProviderReviews } from "../../../../hooks/reviewManagement";
-
 // Import your new chart components
 import BookingStatusPieChart from "./BookingStatusPieChart";
 import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
@@ -21,11 +18,29 @@ import { useWallet } from "../../../../hooks/useWallet";
 interface ProviderStatsProps {
   className?: string;
   loading?: boolean;
+  analytics: any;
+  bookingsLoading: any;
+  bookingsError: any;
+  getMonthlyRevenue: any;
+  getBookingCountByDay: any;
+  getRevenueByPeriod: any;
+  reviewAnalytics: any;
+  reviewsLoading: any;
+  reviewsError: any;
 }
 
 const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
+  analytics,
+  bookingsLoading,
+  bookingsError,
+  getMonthlyRevenue,
+  getBookingCountByDay,
+  getRevenueByPeriod,
+  reviewAnalytics,
+  reviewsLoading,
+  reviewsError
 }) => {
   const { balance, fetchBalance } = useWallet();
 
@@ -43,21 +58,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     }
   };
 
-  const {
-    analytics,
-    getMonthlyRevenue,
-    getBookingCountByDay,
-    loading: bookingLoading,
-    getRevenueByPeriod,
-    error,
-  } = useProviderBookingManagement();
-
-  const {
-    analytics: reviewAnalytics,
-    loading: reviewsLoading,
-    error: reviewsError,
-  } = useProviderReviews();
-
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -69,8 +69,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isLoading = externalLoading || bookingLoading || reviewsLoading;
-  const hasError = error || reviewsError;
+  const isLoading = externalLoading || bookingsLoading || reviewsLoading;
+  const hasError = bookingsError || reviewsError;
 
   const ratingData = React.useMemo(() => {
     if (reviewAnalytics) {
@@ -271,13 +271,18 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             <BookingStatusPieChart analytics={analytics} />
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <MonthlyRevenueLineChart analytics={analytics} getMonthlyRevenue={getMonthlyRevenue}/>
+            <MonthlyRevenueLineChart
+              analytics={analytics}
+              getMonthlyRevenue={getMonthlyRevenue}
+            />
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <DailyBookingsBarChart getBookingCountByDay={getBookingCountByDay}/>
+            <DailyBookingsBarChart
+              getBookingCountByDay={getBookingCountByDay}
+            />
           </div>
           <div className="flex h-80 items-center justify-center rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <CustomerRatingStars analytics={ratingData}/>
+            <CustomerRatingStars analytics={ratingData} />
           </div>
         </>
       )}
@@ -340,7 +345,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats: {error || reviewsError || "Unknown error"}
+            Error loading stats: {bookingsError || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>

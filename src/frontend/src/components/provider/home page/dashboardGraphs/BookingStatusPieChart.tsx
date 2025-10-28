@@ -24,9 +24,9 @@ const placeholderData = [{ name: "No Data", value: 100 }];
 interface BookingStatusPieChartsProps {
   analytics: any;
 }
-const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({ analytics }) => {
-
-
+const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
+  analytics,
+}) => {
   // Check if there is no analytics data at all.
   const hasAnalyticsData =
     analytics &&

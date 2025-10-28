@@ -1,12 +1,12 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 
-
 interface CustomerRatingStarsProps {
   analytics: any;
 }
-const CustomerRatingStars: React.FC<CustomerRatingStarsProps> = ({ analytics }) => {
-  
+const CustomerRatingStars: React.FC<CustomerRatingStarsProps> = ({
+  analytics,
+}) => {
   const averageRating = analytics?.averageRating || 0;
   const totalReviews = analytics?.totalReviews || 0;
 

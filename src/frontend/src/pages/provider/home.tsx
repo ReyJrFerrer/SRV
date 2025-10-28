@@ -8,6 +8,7 @@ import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import { useLocationStore } from "../../store/locationStore";
+import { useProviderReviews } from "../../hooks/reviewManagement";
 
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
@@ -46,10 +47,23 @@ const ProviderHomePage: React.FC = () => {
     bookings,
     loading: bookingsLoading,
     error: bookingsError,
+    //addition of invocations used by Provider stats 
+    analytics,
+    getMonthlyRevenue,
+    getBookingCountByDay,
+    getRevenueByPeriod,
+
   } = useProviderBookingManagement();
 
+   const {
+      analytics: reviewAnalytics,
+      loading: reviewsLoading,
+      error: reviewsError,
+    } = useProviderReviews();
+  
+
   // Only create a legacy provider object for components that still need the old interface
-  const legacyProvider = useMemo(() => {
+  const provider = useMemo(() => {
     if (!userProfile) return null;
 
     const nameParts = userProfile.name.split(" ");
@@ -263,9 +277,9 @@ const ProviderHomePage: React.FC = () => {
         <main className="flex-grow overflow-y-auto pb-20">
           <div className="mx-auto max-w-7xl p-4">
             {/* Use legacyProvider for components that still need the old interface */}
-            {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
+            {provider && <ProviderStatsNextjs loading={isDataLoading} analytics={analytics} bookingsLoading={bookingsLoading} bookingsError={bookingsError} getMonthlyRevenue={getMonthlyRevenue} getBookingCountByDay={getBookingCountByDay} getRevenueByPeriod={getRevenueByPeriod} reviewAnalytics={reviewAnalytics} reviewsLoading={reviewsLoading} reviewsError={reviewsError} />}
 
-            {/* <BookingRequestsNextjs
+            <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}
               upcomingJobs={bookingCounts.upcomingCount}
             />
@@ -275,7 +289,7 @@ const ProviderHomePage: React.FC = () => {
               loading={servicesLoading}
               error={servicesError}
               onRefresh={refreshServices}
-            /> */}
+            />
           </div>
         </main>
 
