@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
   Service,
@@ -252,6 +252,42 @@ export interface OrganizedWeeklySchedule {
   saturday?: DayAvailability;
   sunday?: DayAvailability;
 }
+
+// Debounce utility function
+const useDebounce = <F extends (...args: any[]) => any>(
+  callback: F,
+  delay: number,
+) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef<F>(callback);
+
+  // Update the callback if it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<F>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    },
+    [delay],
+  );
+};
 
 export const useServiceManagement = (): ServiceManagementHook => {
   // Authentication - Using identity from custom AuthContext
@@ -1192,33 +1228,57 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [isAuthenticated, identity, fetchUserProfile]);
 
+  // Memoized service update handler
+  const handleServicesUpdate = useCallback(
+    async (servicesData: Service[]) => {
+      try {
+        // Enrich services with provider data in parallel
+        const enrichedServices = await Promise.all(
+          servicesData.map((service) => enrichServiceWithProviderData(service)),
+        );
+
+        setServices((prevServices) => {
+          // Skip update if the data is the same
+          if (
+            JSON.stringify(prevServices) === JSON.stringify(enrichedServices)
+          ) {
+            return prevServices;
+          }
+          return enrichedServices;
+        });
+        setError(null);
+      } catch (error) {
+        handleError(error, "enrich services with provider data");
+      } finally {
+        setLoadingState("services", false);
+      }
+    },
+    [enrichServiceWithProviderData, handleError],
+  );
+
+  // Create debounced version of the handler
+  const debouncedServicesUpdate = useDebounce(handleServicesUpdate, 300);
+
   // Subscribe to all services with realtime updates
   useEffect(() => {
+    if (!isAuthenticated || !identity) {
+      return;
+    }
+
     setLoadingState("services", true);
+    clearError();
 
-    const unsubscribe = serviceCanisterService.subscribeToAllServices(
-      async (servicesData: Service[]) => {
-        try {
-          // Enrich services with provider data
-          const enrichedServices = await Promise.all(
-            servicesData.map((service: Service) =>
-              enrichServiceWithProviderData(service),
-            ),
-          );
+    try {
+      const unsubscribe = serviceCanisterService.subscribeToAllServices(
+        debouncedServicesUpdate,
+      );
 
-          setServices(enrichedServices);
-          setError(null);
-        } catch (error) {
-          handleError(error, "subscribe to services");
-        } finally {
-          setLoadingState("services", false);
-        }
-      },
-    );
-
-    return () => {
-      unsubscribe();
-    };
+      return () => {
+        unsubscribe();
+      };
+    } catch (error) {
+      handleError(error, "subscribe to all services");
+    }
   }, [setLoadingState, handleError, enrichServiceWithProviderData]);
 
   // Fetch categories once
