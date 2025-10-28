@@ -47,20 +47,18 @@ const ProviderHomePage: React.FC = () => {
     bookings,
     loading: bookingsLoading,
     error: bookingsError,
-    //addition of invocations used by Provider stats 
+    //addition of invocations used by Provider stats
     analytics,
     getMonthlyRevenue,
     getBookingCountByDay,
     getRevenueByPeriod,
-
   } = useProviderBookingManagement();
 
-   const {
-      analytics: reviewAnalytics,
-      loading: reviewsLoading,
-      error: reviewsError,
-    } = useProviderReviews();
-  
+  const {
+    analytics: reviewAnalytics,
+    loading: reviewsLoading,
+    error: reviewsError,
+  } = useProviderReviews();
 
   // Only create a legacy provider object for components that still need the old interface
   const provider = useMemo(() => {
@@ -277,7 +275,20 @@ const ProviderHomePage: React.FC = () => {
         <main className="flex-grow overflow-y-auto pb-20">
           <div className="mx-auto max-w-7xl p-4">
             {/* Use legacyProvider for components that still need the old interface */}
-            {provider && <ProviderStatsNextjs loading={isDataLoading} analytics={analytics} bookingsLoading={bookingsLoading} bookingsError={bookingsError} getMonthlyRevenue={getMonthlyRevenue} getBookingCountByDay={getBookingCountByDay} getRevenueByPeriod={getRevenueByPeriod} reviewAnalytics={reviewAnalytics} reviewsLoading={reviewsLoading} reviewsError={reviewsError} />}
+            {provider && (
+              <ProviderStatsNextjs
+                loading={isDataLoading}
+                analytics={analytics}
+                bookingsLoading={bookingsLoading}
+                bookingsError={bookingsError}
+                getMonthlyRevenue={getMonthlyRevenue}
+                getBookingCountByDay={getBookingCountByDay}
+                getRevenueByPeriod={getRevenueByPeriod}
+                reviewAnalytics={reviewAnalytics}
+                reviewsLoading={reviewsLoading}
+                reviewsError={reviewsError}
+              />
+            )}
 
             <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}

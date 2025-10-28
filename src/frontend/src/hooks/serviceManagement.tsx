@@ -253,41 +253,41 @@ export interface OrganizedWeeklySchedule {
   sunday?: DayAvailability;
 }
 
-  // Debounce utility function
-  const useDebounce = <F extends (...args: any[]) => any>(
-    callback: F,
-    delay: number,
-  ) => {
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const callbackRef = useRef<F>(callback);
-  
-    // Update the callback if it changes
-    useEffect(() => {
-      callbackRef.current = callback;
-    }, [callback]);
-  
-    // Cleanup on unmount
-    useEffect(() => {
-      return () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-    }, []);
-  
-    return useCallback(
-      (...args: Parameters<F>) => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-  
-        timeoutRef.current = setTimeout(() => {
-          callbackRef.current(...args);
-        }, delay);
-      },
-      [delay],
-    );
-  };
+// Debounce utility function
+const useDebounce = <F extends (...args: any[]) => any>(
+  callback: F,
+  delay: number,
+) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef<F>(callback);
+
+  // Update the callback if it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<F>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    },
+    [delay],
+  );
+};
 
 export const useServiceManagement = (): ServiceManagementHook => {
   // Authentication - Using identity from custom AuthContext
@@ -1239,7 +1239,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
         setServices((prevServices) => {
           // Skip update if the data is the same
-          if (JSON.stringify(prevServices) === JSON.stringify(enrichedServices)) {
+          if (
+            JSON.stringify(prevServices) === JSON.stringify(enrichedServices)
+          ) {
             return prevServices;
           }
           return enrichedServices;
@@ -1274,10 +1276,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
       return () => {
         unsubscribe();
       };
-  } catch (error) {
-    handleError(error, "subscribe to all services");
-  }
-}, [setLoadingState, handleError, enrichServiceWithProviderData]);
+    } catch (error) {
+      handleError(error, "subscribe to all services");
+    }
+  }, [setLoadingState, handleError, enrichServiceWithProviderData]);
 
   // Fetch categories once
   useEffect(() => {

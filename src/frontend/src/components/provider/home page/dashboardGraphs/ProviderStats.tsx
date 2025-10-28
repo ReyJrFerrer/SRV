@@ -40,7 +40,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   getRevenueByPeriod,
   reviewAnalytics,
   reviewsLoading,
-  reviewsError
+  reviewsError,
 }) => {
   const { balance, fetchBalance } = useWallet();
 
@@ -345,7 +345,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats: {bookingsError || reviewsError || "Unknown error"}
+            Error loading stats:{" "}
+            {bookingsError || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>
