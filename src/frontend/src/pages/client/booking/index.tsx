@@ -185,7 +185,8 @@ const MyBookingsPage: React.FC = () => {
   };
 
   const handleCancelBookingOnListPage = async (bookingId: string) => {
-    await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
+    // updateBookingStatus now requires a cancelReason; pass empty string for UI-triggered cancels without a reason
+    await bookingManagement.updateBookingStatus(bookingId, "Cancelled", "");
   };
 
   // Cancellation confirmation UI moved into reusable button inside the card

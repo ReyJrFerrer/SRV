@@ -27,6 +27,7 @@ import { useChat } from "../../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../../context/AuthContext"; // Import auth context
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancellationReasons from "../../../components/common/CancellationReasons";
 // Reputation Score Component (from ServiceDetailPageComponent.tsx)
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -580,6 +581,12 @@ const BookingDetailsPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        <CancellationReasons
+          bookingId={specificBooking?.id ?? null}
+          cancelledByClient={status === "Cancelled"}
+          cancellationReason={(specificBooking as any)?.notes ?? null}
+          cancellationNotes={(specificBooking as any)?.cancellationNotes ?? null}
+        />
         <div className="mt-10 pt-10">
           <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
             <span

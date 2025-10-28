@@ -10,7 +10,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
-import CancellationReasons from "../../../components/provider/booking-details/CancellationReasons";
+import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // (Places library reserved for future use with Autocomplete if needed)
