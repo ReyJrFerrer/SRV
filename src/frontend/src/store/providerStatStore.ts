@@ -100,14 +100,18 @@ const calculateBookingAnalytics = (
   const pendingRequests = bookings.filter(
     (b) => b.status === "Requested",
   ).length;
-  const acceptedBookings = bookings.filter((b) => b.status === "Accepted").length;
+  const acceptedBookings = bookings.filter(
+    (b) => b.status === "Accepted",
+  ).length;
   const completedBookings = bookings.filter(
     (b) => b.status === "Completed",
   ).length;
   const cancelledBookings = bookings.filter(
     (b) => b.status === "Cancelled",
   ).length;
-  const disputedBookings = bookings.filter((b) => b.status === "Disputed").length;
+  const disputedBookings = bookings.filter(
+    (b) => b.status === "Disputed",
+  ).length;
 
   const totalRevenue = bookings
     .filter((b) => b.status === "Completed")
@@ -267,7 +271,7 @@ export const useProviderStatStore = create<ProviderStatState>((set, get) => ({
   // Fetch wallet balance
   fetchWalletBalance: async () => {
     const state = get();
-    
+
     if (!state.providerProfile) {
       console.log("No provider profile found, skipping wallet fetch");
       return;
@@ -396,14 +400,19 @@ export const useProviderStatStore = create<ProviderStatState>((set, get) => ({
 }));
 
 // Helper functions for chart data (exported separately to avoid hook dependencies)
-export const getMonthlyRevenue = (bookings: Booking[]): { name: string; value: number }[] => {
+export const getMonthlyRevenue = (
+  bookings: Booking[],
+): { name: string; value: number }[] => {
   const monthlyData: Record<string, number> = {};
   const now = new Date();
-  
+
   // Initialize last 12 months
   for (let i = 11; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthKey = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    const monthKey = date.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    });
     monthlyData[monthKey] = 0;
   }
 
@@ -412,7 +421,10 @@ export const getMonthlyRevenue = (bookings: Booking[]): { name: string; value: n
     .filter((b) => b.status === "Completed")
     .forEach((booking) => {
       const bookingDate = new Date(booking.createdAt);
-      const monthKey = bookingDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      const monthKey = bookingDate.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
       if (monthlyData.hasOwnProperty(monthKey)) {
         monthlyData[monthKey] += booking.price || 0;
       }
@@ -421,10 +433,12 @@ export const getMonthlyRevenue = (bookings: Booking[]): { name: string; value: n
   return Object.entries(monthlyData).map(([name, value]) => ({ name, value }));
 };
 
-export const getBookingCountByDay = (bookings: Booking[]): { name: string; value: number }[] => {
+export const getBookingCountByDay = (
+  bookings: Booking[],
+): { name: string; value: number }[] => {
   const dailyData: Record<string, number> = {};
   const now = new Date();
-  
+
   // Initialize last 7 days
   for (let i = 6; i >= 0; i--) {
     const date = new Date(now);
@@ -436,10 +450,14 @@ export const getBookingCountByDay = (bookings: Booking[]): { name: string; value
   // Aggregate bookings by day
   bookings.forEach((booking) => {
     const bookingDate = new Date(booking.createdAt);
-    const daysDiff = Math.floor((now.getTime() - bookingDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const daysDiff = Math.floor(
+      (now.getTime() - bookingDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
     if (daysDiff >= 0 && daysDiff < 7) {
-      const dayKey = bookingDate.toLocaleDateString("en-US", { weekday: "short" });
+      const dayKey = bookingDate.toLocaleDateString("en-US", {
+        weekday: "short",
+      });
       if (dailyData.hasOwnProperty(dayKey)) {
         dailyData[dayKey]++;
       }

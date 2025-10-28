@@ -9,7 +9,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderStatStore, getMonthlyRevenue } from "../../../../store/providerStatStore";
+import {
+  useProviderStatStore,
+  getMonthlyRevenue,
+} from "../../../../store/providerStatStore";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 
 const MonthlyRevenueLineChart: React.FC = () => {

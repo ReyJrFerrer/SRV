@@ -9,7 +9,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderStatStore, getBookingCountByDay } from "../../../../store/providerStatStore";
+import {
+  useProviderStatStore,
+  getBookingCountByDay,
+} from "../../../../store/providerStatStore";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
 const DailyBookingsBarChart: React.FC = () => {
