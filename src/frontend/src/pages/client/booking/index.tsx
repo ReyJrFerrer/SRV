@@ -184,7 +184,10 @@ const MyBookingsPage: React.FC = () => {
     ).length;
   };
 
-  const handleCancelBookingOnListPage = async (bookingId: string, reason: string) => {
+  const handleCancelBookingOnListPage = async (
+    bookingId: string,
+    reason: string,
+  ) => {
     await bookingManagement.updateBookingStatus(bookingId, "Cancelled", reason);
   };
 
@@ -293,7 +296,9 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={(bookingId, reason) => handleCancelBookingOnListPage(bookingId, reason)}
+                          onCancelBooking={(bookingId, reason) =>
+                            handleCancelBookingOnListPage(bookingId, reason)
+                          }
                         />
                       </div>
                     ))}
@@ -313,7 +318,9 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={(bookingId, reason) => handleCancelBookingOnListPage(bookingId, reason)}
+                          onCancelBooking={(bookingId, reason) =>
+                            handleCancelBookingOnListPage(bookingId, reason)
+                          }
                         />
                       </div>
                     ))}

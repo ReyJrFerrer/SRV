@@ -20,7 +20,7 @@ import CancelWithReasonButton from "../common/CancelWithReasonButton";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
-  onCancelBooking?: (bookingId: string, reason : string) => void;
+  onCancelBooking?: (bookingId: string, reason: string) => void;
   onUpdateStatus?: (bookingId: string, status: string) => Promise<void>;
 }
 
@@ -263,7 +263,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Check if booking can be cancelled ---
-  const canCancel = ["Requested",  "Accepted", "Confirmed"].includes(
+  const canCancel = ["Requested", "Accepted", "Confirmed"].includes(
     booking.status,
   );
 

@@ -1,4 +1,3 @@
-
 interface Props {
   bookingId?: string | null;
   // optional server-provided cancellation reason (if/when backend exists)
@@ -8,14 +7,11 @@ interface Props {
   cancelledByClient?: boolean;
 }
 
-
-
 export default function CancellationReasons({
   cancellationReason,
   cancelledByClient,
 }: Props) {
-
-  const displayedReason = cancellationReason ;
+  const displayedReason = cancellationReason;
   // const displayedNotes = cancellationNotes;
 
   const shouldShow = !!(cancelledByClient || displayedReason);
@@ -44,9 +40,8 @@ export default function CancellationReasons({
             Client cancelled this booking
           </h3>
           <div className="mt-1 text-sm text-red-700">
-            
-              <div className="whitespace-pre-wrap">{displayedReason}</div>
-         
+            <div className="whitespace-pre-wrap">{displayedReason}</div>
+
             {/* {displayedNotes && (
               <div className="mt-2 text-xs text-red-700">
                 Notes: {displayedNotes}
