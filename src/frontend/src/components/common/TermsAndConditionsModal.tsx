@@ -714,7 +714,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
             <br />
             <li>
               Contact Information: For any questions about these Terms, please
-              contact us at <strong>support@srvpinoy.com</strong>.
+              contact us at <strong>hello@srvpinoy.com</strong>.
             </li>
           </ul>
         </div>

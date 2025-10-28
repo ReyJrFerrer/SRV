@@ -255,7 +255,7 @@ const TermsAndConditionsPage: React.FC = () => {
               acceptance of the new Terms.
               <br />
               Contact Information: For any questions about these Terms, please
-              contact us at support@srvpinoy.com.
+              contact us at hello@srvpinoy.com.
             </p>
           </div>
         </div>

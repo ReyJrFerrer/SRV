@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
@@ -8,6 +8,8 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { useClientRating } from "../../hooks/useClientRating";
+import { useReputation } from "../../hooks/useReputation";
 
 type BookingStatusTab =
   | "ALL"
@@ -57,6 +59,66 @@ const ProviderBookingsPage: React.FC = () => {
     refreshBookings,
     isProviderAuthenticated,
   } = useProviderBookingManagement();
+
+  const { getClientReviewsByUser } = useClientRating();
+  const { fetchUserReputation } = useReputation();
+  
+  // Memoized function to fetch client data
+  const fetchClientData = useCallback(async (clientId: string) => {
+    if (!clientId) return { reviews: [], reputation: null };
+    
+    try {
+      const [clientReviews, clientReputation] = await Promise.all([
+        getClientReviewsByUser(clientId),
+        fetchUserReputation(clientId)
+      ]);
+      
+      return {
+        reviews: clientReviews || [],
+        reputation: clientReputation || null
+      };
+    } catch (err) {
+      console.error("Error fetching client data:", err);
+      return { reviews: [], reputation: null };
+    }
+  }, [getClientReviewsByUser, fetchUserReputation]);
+  
+  // Memoized client data state
+  const [clientDataMap, setClientDataMap] = useState<Record<string, { reviews: any[]; reputation: any }>>({});
+  
+  // Effect to fetch client data for all unique client IDs
+  useEffect(() => {
+    const fetchAllClientData = async () => {
+      const clientIds = Array.from(
+        new Set(
+          bookings
+            .map(booking => booking.clientProfile?.id?.toString() || booking.clientId?.toString())
+            .filter(Boolean) as string[]
+        )
+      );
+      
+      const newClientDataMap = { ...clientDataMap };
+      let hasUpdates = false;
+      
+      await Promise.all(
+        clientIds.map(async (clientId) => {
+          if (!clientId || clientDataMap[clientId]) return;
+          
+          const data = await fetchClientData(clientId);
+          newClientDataMap[clientId] = data;
+          hasUpdates = true;
+        })
+      );
+      
+      if (hasUpdates) {
+        setClientDataMap(newClientDataMap);
+      }
+    };
+    
+    if (bookings.length > 0) {
+      fetchAllClientData();
+    }
+  }, [bookings, clientDataMap, fetchClientData]);
 
   useEffect(() => {
     if (
@@ -237,17 +299,6 @@ const ProviderBookingsPage: React.FC = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="text-gray-600">Loading Bookings...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error && bookings.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -368,28 +419,42 @@ const ProviderBookingsPage: React.FC = () => {
         </div>
 
         <main className="flex-grow overflow-y-auto pb-10">
-          {currentBookings.length > 0 ? (
+          {loading ? (
+            <div className="py-16 text-center">
+              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-gray-500">Loading bookings...</p>
+            </div>
+          ) : currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
-              {currentBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  onClick={() => {
-                    // Make inprogress bookings viewable
-                    if (
-                      (activeTab === "IN PROGRESS" ||
-                        booking.status?.toLowerCase() === "inprogress") &&
-                      booking.id
-                    ) {
-                      navigate(`/provider/active-service/${booking.id}`);
-                    } else if (booking.id) {
-                      navigate(`/provider/booking/${booking.id}`);
-                    }
-                  }}
-                  className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
-                >
-                  <ProviderBookingItemCard booking={booking} />
-                </div>
-              ))}
+              {currentBookings.map((booking) => {
+                const clientId = booking.clientProfile?.id?.toString() || booking.clientId?.toString();
+                const clientData = clientId ? clientDataMap[clientId] : { reviews: [], reputation: null };
+                
+                return (
+                  <div
+                    key={booking.id}
+                    onClick={() => {
+                      // Make inprogress bookings viewable
+                      if (
+                        (activeTab === "IN PROGRESS" ||
+                          booking.status?.toLowerCase() === "inprogress") &&
+                        booking.id
+                      ) {
+                        navigate(`/provider/active-service/${booking.id}`);
+                      } else if (booking.id) {
+                        navigate(`/provider/booking/${booking.id}`);
+                      }
+                    }}
+                    className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
+                  >
+                    <ProviderBookingItemCard 
+                      booking={booking} 
+                      review={clientData?.reviews || []}
+                      reputation={clientData?.reputation || null}
+                    />
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="flex h-[calc(100vh-250px)] flex-col items-center justify-center px-4 py-16 text-center">

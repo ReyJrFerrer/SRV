@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
-import { useClientRating } from "../../../hooks/useClientRating";
 
-const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
-  const { getClientReviewsByUser } = useClientRating();
+interface ClientRatingSummaryProps{
+  reviews: any;
+}
+const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({ reviews }) => {
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [reviewsCount, setReviewsCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        setLoading(true);
-        const reviews = await getClientReviewsByUser(clientId);
+
         if (!mounted) return;
         const count = Array.isArray(reviews) ? reviews.length : 0;
         setReviewsCount(count);
@@ -31,15 +30,13 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
         if (!mounted) return;
         setAvgRating(null);
         setReviewsCount(0);
-      } finally {
-        if (mounted) setLoading(false);
       }
     };
-    if (clientId) load();
+    load();
     return () => {
       mounted = false;
     };
-  }, [clientId, getClientReviewsByUser]);
+  }, [reviews]);
 
   const renderStars = (rating: number) => {
     const full = Math.floor(rating);
@@ -56,14 +53,6 @@ const ClientRatingSummary: React.FC<{ clientId: string }> = ({ clientId }) => {
     return stars;
   };
 
-  if (loading) {
-    return (
-      <span className="flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm text-gray-600">
-        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
-        <span>Loading rating...</span>
-      </span>
-    );
-  }
 
   return (
     <span className="flex items-center rounded-lg px-0 pb-1 text-sm font-medium text-gray-700">

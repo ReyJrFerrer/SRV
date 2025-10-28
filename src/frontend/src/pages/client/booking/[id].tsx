@@ -191,7 +191,6 @@ const BookingDetailsPage: React.FC = () => {
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
-  const [localError, setLocalError] = useState<string | null>(null);
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
@@ -215,8 +214,6 @@ const BookingDetailsPage: React.FC = () => {
     bookings,
     updateBookingStatus: updateBookingStatusHook,
     loading: hookLoading,
-    refreshBookings,
-    clearError,
   } = useBookingManagement();
 
   // Call useUserImage hook early to avoid conditional hook calls
@@ -235,8 +232,6 @@ const BookingDetailsPage: React.FC = () => {
       const foundBooking = bookings.find((booking) => booking.id === id);
       if (foundBooking) {
         setSpecificBooking(foundBooking);
-      } else {
-        setLocalError("Booking not found");
       }
       setLocalLoading(false);
     }
@@ -339,11 +334,6 @@ const BookingDetailsPage: React.FC = () => {
     }
   };
 
-  const handleRetry = () => {
-    setLocalError(null);
-    clearError();
-    refreshBookings();
-  };
 
   const handleCancelWithReason = async (reason: string) => {
     if (!specificBooking) return;
@@ -471,41 +461,6 @@ const BookingDetailsPage: React.FC = () => {
     );
   }
 
-  if (localError && !specificBooking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 text-center">
-        <div>
-          <h1 className="mb-2 text-2xl font-bold text-red-600">
-            Error Loading Booking
-          </h1>
-          <p className="mb-4 text-gray-600">{localError}</p>
-          <button
-            onClick={handleRetry}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!specificBooking) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-        <h1 className="mb-4 text-xl font-semibold text-red-600">
-          Booking Not Found
-        </h1>
-        <Link
-          to="/client/booking"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Back to Bookings
-        </Link>
-      </div>
-    );
-  }
-
   const {
     providerProfile,
     packageName,
@@ -514,7 +469,7 @@ const BookingDetailsPage: React.FC = () => {
     price,
     status,
     scheduledDate,
-  } = specificBooking;
+  } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
 
@@ -663,7 +618,7 @@ const BookingDetailsPage: React.FC = () => {
                     <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                     <span>
                       <strong>Scheduled:</strong>{" "}
-                      {formatDateRange(requestedDate, scheduledDate)}
+                      {formatDateRange(requestedDate || "", scheduledDate || "")}
                     </span>
                   </div>
                   <div className="flex items-start">
