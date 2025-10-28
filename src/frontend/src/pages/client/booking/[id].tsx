@@ -27,6 +27,7 @@ import { useChat } from "../../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../../context/AuthContext"; // Import auth context
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancellationReasons from "../../../components/common/CancellationReasons";
 // Reputation Score Component (from ServiceDetailPageComponent.tsx)
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -561,125 +562,142 @@ const BookingDetailsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
             className="mr-4 flex-shrink-0 rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <div className="flex-grow lg:hidden"></div>
+          <h1 className="flex-grow text-center text-2xl font-extrabold tracking-tight text-black lg:ml-4 lg:text-left">
             Booking Details
           </h1>
+          <div className="flex-grow lg:hidden"></div>
+          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 p-4 pb-28 sm:p-6">
-        <div className="relative mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
-          <span
-            className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
-            aria-label="Booking status"
-          >
-            {status?.replace("_", " ") || "Unknown"}
-          </span>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
-            <div className="border-r-0 border-gray-200 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-                <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
-              </h3>
-              <div className="flex items-center gap-5">
-                <div className="flex-shrink-0">
-                  <img
-                    src={userImageUrl || "/default-provider.svg"}
-                    alt={providerProfile?.name || "Provider"}
-                    className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-gray-900">
-                    {providerProfile?.name || "N/A"}
-                  </p>
-                  <ReputationScore providerId={providerProfile?.id || ""} />
-                  <p className="mt-1 flex items-center text-sm text-gray-500">
-                    <PhoneIcon className="mr-1.5 h-4 w-4" />
-                    {providerProfile?.phone || "No contact number"}
-                  </p>
-                  <div className="mt-2 flex flex-col items-start gap-1">
-                    <div className="flex items-center gap-2">
-                      {loadingStats ? (
-                        <p className="text-sm text-gray-400">
-                          Loading reviews...
-                        </p>
-                      ) : averageRating != null && reviewCount != null ? (
-                        <>
-                          <div className="flex items-center text-sm font-bold text-yellow-500">
-                            <StarIcon className="mr-1 h-4 w-4" />
-                            <span>{averageRating.toFixed(1)}</span>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            ({reviewCount}{" "}
-                            {reviewCount === 1 ? "review" : "reviews"})
-                          </span>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-400">No reviews yet</p>
-                      )}
+      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        <CancellationReasons
+          bookingId={specificBooking?.id ?? null}
+          cancelledByClient={status === "Cancelled"}
+          cancellationReason={(specificBooking as any)?.notes ?? null}
+          cancellationNotes={
+            (specificBooking as any)?.cancellationNotes ?? null
+          }
+        />
+        <div className="mt-10 pt-10">
+          <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
+            <span
+              className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
+              aria-label="Booking status"
+            >
+              {status?.replace("_", " ") || "Unknown"}
+            </span>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
+              <div className="border-r-0 border-gray-200 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+                  <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider
+                  Details
+                </h3>
+                <div className="flex items-center gap-5">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={userImageUrl || "/default-provider.svg"}
+                      alt={providerProfile?.name || "Provider"}
+                      className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-lg font-bold text-gray-900">
+                      {providerProfile?.name || "N/A"}
+                    </p>
+                    <ReputationScore providerId={providerProfile?.id || ""} />
+                    <p className="mt-1 flex items-center text-sm text-gray-500">
+                      <PhoneIcon className="mr-1.5 h-4 w-4" />
+                      {providerProfile?.phone || "No contact number"}
+                    </p>
+                    <div className="mt-2 flex flex-col items-start gap-1">
+                      <div className="flex items-center gap-2">
+                        {loadingStats ? (
+                          <p className="text-sm text-gray-400">
+                            Loading reviews...
+                          </p>
+                        ) : averageRating != null && reviewCount != null ? (
+                          <>
+                            <div className="flex items-center text-sm font-bold text-yellow-500">
+                              <StarIcon className="mr-1 h-4 w-4" />
+                              <span>{averageRating.toFixed(1)}</span>
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              ({reviewCount}{" "}
+                              {reviewCount === 1 ? "review" : "reviews"})
+                            </span>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-400">
+                            No reviews yet
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="pt-6 lg:col-span-3 lg:pl-8 lg:pt-0">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
-                <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
-                Details
-              </h3>
-              <div className="space-y-3 text-base">
-                <div className="flex items-start">
-                  <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                  <span>
-                    <strong>Package:</strong> {packageName}
-                  </span>
-                </div>
-                <div className="flex items-start">
-                  <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                  <span>
-                    <strong>Scheduled:</strong>{" "}
-                    {formatDateRange(requestedDate, scheduledDate)}
-                  </span>
-                </div>
-                <div className="flex items-start">
-                  <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                  <span>
-                    <strong>Location:</strong>{" "}
-                    {(formattedLocation || "Not specified")
-                      .split(" ")
-                      .map(
-                        (word) =>
-                          word.charAt(0).toUpperCase() +
-                          word.slice(1).toLowerCase(),
-                      )
-                      .join(" ")}
-                  </span>
-                </div>
-                {price != null && (
+              <div className="pt-6 lg:col-span-3 lg:pl-8 lg:pt-0">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
+                  <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
+                  Details
+                </h3>
+                <div className="space-y-3 text-base">
                   <div className="flex items-start">
-                    <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                    <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                     <span>
-                      <strong>Payment:</strong> ₱
-                      {(
-                        price + commissionValidation.estimatedCommission
-                      ).toFixed(2)}{" "}
-                      (Cash)
+                      <strong>Package:</strong> {packageName}
                     </span>
                   </div>
-                )}
+                  <div className="flex items-start">
+                    <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                    <span>
+                      <strong>Scheduled:</strong>{" "}
+                      {formatDateRange(requestedDate, scheduledDate)}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                    <span>
+                      <strong>Location:</strong>{" "}
+                      {(formattedLocation || "Not specified")
+                        .split(" ")
+                        .map(
+                          (word) =>
+                            word.charAt(0).toUpperCase() +
+                            word.slice(1).toLowerCase(),
+                        )
+                        .join(" ")}
+                    </span>
+                  </div>
+                  {price != null && (
+                    <div className="flex items-start">
+                      <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                      <span>
+                        <strong>Payment:</strong> ₱
+                        {(
+                          price + commissionValidation.estimatedCommission
+                        ).toFixed(2)}{" "}
+                        (Cash)
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
         {/* Section 3: Progress Tracker */}
         <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
           <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
@@ -690,6 +708,7 @@ const BookingDetailsPage: React.FC = () => {
             <BookingProgressTracker currentStatus={status as BookingStatus} />
           </div>
         </div>
+
         {/* Chat Error Message */}
         {chatErrorMessage && (
           <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -702,6 +721,7 @@ const BookingDetailsPage: React.FC = () => {
             </button>
           </div>
         )}
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
           <button
