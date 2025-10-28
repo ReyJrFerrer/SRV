@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+// Remove Next.js Head import
 import SPHeaderNextjs from "../../components/provider/home page/SPHeader";
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
@@ -264,7 +265,7 @@ const ProviderHomePage: React.FC = () => {
             {/* Use legacyProvider for components that still need the old interface */}
             {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
 
-            <BookingRequestsNextjs
+            {/* <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}
               upcomingJobs={bookingCounts.upcomingCount}
             />
@@ -274,7 +275,7 @@ const ProviderHomePage: React.FC = () => {
               loading={servicesLoading}
               error={servicesError}
               onRefresh={refreshServices}
-            />
+            /> */}
           </div>
         </main>
 

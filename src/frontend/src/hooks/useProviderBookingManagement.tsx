@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Principal } from "@dfinity/principal";
 import {
   Booking,
@@ -198,6 +198,41 @@ interface ProviderBookingManagementHook {
   canAcceptCashBooking: (booking: ProviderEnhancedBooking) => Promise<boolean>;
   getWalletBalance: () => Promise<number>;
 }
+
+// Debounce utility function
+const useDebounce = <F extends (...args: any[]) => any>(
+  callback: F,
+  delay: number,
+) => {
+  // Use ReturnType<typeof setTimeout> for better cross-environment compatibility
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef<F>(callback);
+
+  // Update the callback if it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  return useCallback(
+    (...args: Parameters<F>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+
+      // Cleanup function to clear the timeout
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    },
+    [delay],
+  );
+};
 
 export const useProviderBookingManagement =
   (): ProviderBookingManagementHook => {
@@ -1410,6 +1445,32 @@ export const useProviderBookingManagement =
       initializeData();
     }, [loadProviderProfile]);
 
+    // Memoized booking update handler
+    const handleBookingsUpdate = useCallback(async (bookings: Booking[]) => {
+      try {
+        // Enrich bookings with client data in parallel
+        const enrichedBookings = await Promise.all(
+          bookings.map((booking) => enrichBookingWithClientData(booking))
+        );
+
+        setProviderBookings(prevBookings => {
+          // Skip update if the data is the same
+          if (JSON.stringify(prevBookings) === JSON.stringify(enrichedBookings)) {
+            return prevBookings;
+          }
+          return enrichedBookings;
+        });
+      } catch (error) {
+        console.error("Error enriching bookings:", error);
+        handleBookingError(error, "enrich provider bookings");
+      } finally {
+        setLoadingState("bookings", false);
+      }
+    }, [enrichBookingWithClientData, handleBookingError]);
+
+    // Create debounced version of the handler
+    const debouncedBookingsUpdate = useDebounce(handleBookingsUpdate, 300);
+
     // Subscribe to bookings with realtime updates when provider profile is available
     useEffect(() => {
       if (!providerProfile || !isProviderAuthenticated()) {
@@ -1427,28 +1488,15 @@ export const useProviderBookingManagement =
       try {
         const providerPrincipal = Principal.fromText(currentProviderId);
 
-        // Subscribe to realtime updates
+        // Subscribe to realtime updates with debounced handler
         const unsubscribe = bookingCanisterService.subscribeToProviderBookings(
           providerPrincipal,
-          async (bookings) => {
-            try {
-              // Enrich bookings with client data in parallel
-              const enrichedBookings = await Promise.all(
-                bookings.map((booking) => enrichBookingWithClientData(booking)),
-              );
-
-              setProviderBookings(enrichedBookings);
-              setLoadingState("bookings", false);
-            } catch (error) {
-              console.error("Error enriching bookings:", error);
-              handleBookingError(error, "enrich provider bookings");
-              setLoadingState("bookings", false);
-            }
-          },
+          debouncedBookingsUpdate
         );
 
         // Cleanup subscription on unmount or when dependencies change
         return () => {
+          // Clear any pending debounced updates
           unsubscribe();
         };
       } catch (error) {
@@ -1459,7 +1507,7 @@ export const useProviderBookingManagement =
       providerProfile,
       isProviderAuthenticated,
       getCurrentProviderId,
-      enrichBookingWithClientData,
+      debouncedBookingsUpdate,
       setLoadingState,
       clearError,
       handleBookingError,

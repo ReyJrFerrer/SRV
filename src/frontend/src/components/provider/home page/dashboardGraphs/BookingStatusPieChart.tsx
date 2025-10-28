@@ -7,7 +7,6 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { useProviderStatStore } from "../../../../store/providerStatStore";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const COLORS = [
@@ -22,28 +21,20 @@ const COLORS = [
 const PLACEHOLDER_COLOR = "#E0E0E0";
 const placeholderData = [{ name: "No Data", value: 100 }];
 
-const BookingStatusPieChart: React.FC = () => {
-  const { bookingAnalytics, isLoading } = useProviderStatStore();
+interface BookingStatusPieChartsProps {
+  analytics: any;
+}
+const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({ analytics }) => {
 
-  // If the data is still loading, display a loading message.
-  if (isLoading) {
-    return (
-      <div className="flex h-[275px] w-full items-center justify-center rounded-2xl bg-white shadow-inner">
-        <span className="animate-pulse text-lg font-semibold text-blue-400">
-          Loading chart...
-        </span>
-      </div>
-    );
-  }
 
   // Check if there is no analytics data at all.
   const hasAnalyticsData =
-    bookingAnalytics &&
-    (bookingAnalytics.acceptedBookings > 0 ||
-      bookingAnalytics.completedBookings > 0 ||
-      bookingAnalytics.pendingRequests > 0 ||
-      bookingAnalytics.cancelledBookings > 0 ||
-      bookingAnalytics.disputedBookings > 0);
+    analytics &&
+    (analytics.acceptedBookings > 0 ||
+      analytics.completedBookings > 0 ||
+      analytics.pendingRequests > 0 ||
+      analytics.cancelledBookings > 0 ||
+      analytics.disputedBookings > 0);
 
   if (!hasAnalyticsData) {
     return (
@@ -78,11 +69,11 @@ const BookingStatusPieChart: React.FC = () => {
   }
 
   const data = [
-    { name: "Accepted", value: bookingAnalytics.acceptedBookings },
-    { name: "Completed", value: bookingAnalytics.completedBookings },
-    { name: "Pending", value: bookingAnalytics.pendingRequests },
-    { name: "Cancelled", value: bookingAnalytics.cancelledBookings },
-    { name: "Disputed", value: bookingAnalytics.disputedBookings },
+    { name: "Accepted", value: analytics.acceptedBookings },
+    { name: "Completed", value: analytics.completedBookings },
+    { name: "Pending", value: analytics.pendingRequests },
+    { name: "Cancelled", value: analytics.cancelledBookings },
+    { name: "Disputed", value: analytics.disputedBookings },
   ];
 
   return (
