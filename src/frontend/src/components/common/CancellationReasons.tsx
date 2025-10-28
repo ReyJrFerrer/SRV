@@ -72,10 +72,14 @@ export default function CancellationReasons({
               <div>No reason provided by client.</div>
             )}
             {displayedNotes && (
-              <div className="mt-2 text-xs text-red-700">Notes: {displayedNotes}</div>
+              <div className="mt-2 text-xs text-red-700">
+                Notes: {displayedNotes}
+              </div>
             )}
             {localEntry?.ts && (
-              <div className="mt-2 text-xs text-red-600">Recorded {new Date(localEntry.ts).toLocaleString()}</div>
+              <div className="mt-2 text-xs text-red-600">
+                Recorded {new Date(localEntry.ts).toLocaleString()}
+              </div>
             )}
           </div>
         </div>

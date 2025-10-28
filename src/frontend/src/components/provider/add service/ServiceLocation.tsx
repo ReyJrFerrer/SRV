@@ -243,7 +243,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             </div>
           </div>
         )}
-        {(_validationErrors?.locationMunicipalityCity || _localLocationError) && (
+        {(_validationErrors?.locationMunicipalityCity ||
+          _localLocationError) && (
           <div className="mt-2 text-center text-sm text-red-600">
             {_validationErrors?.locationMunicipalityCity || _localLocationError}
           </div>
