@@ -722,8 +722,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
       <CancellationReasons
         bookingId={specificBooking?.id}
         cancelledByClient={specificBooking?.status === "Cancelled"}
-        cancellationReason={specificBooking?.notes ?? null}
-        cancellationNotes={(specificBooking as any)?.cancellationNotes ?? null}
+        cancellationReason={(specificBooking as any)?.cancelReason}
+        // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
       />
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">

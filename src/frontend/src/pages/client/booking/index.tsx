@@ -184,9 +184,8 @@ const MyBookingsPage: React.FC = () => {
     ).length;
   };
 
-  const handleCancelBookingOnListPage = async (bookingId: string) => {
-    // updateBookingStatus now requires a cancelReason; pass empty string for UI-triggered cancels without a reason
-    await bookingManagement.updateBookingStatus(bookingId, "Cancelled", "");
+  const handleCancelBookingOnListPage = async (bookingId: string, reason: string) => {
+    await bookingManagement.updateBookingStatus(bookingId, "Cancelled", reason);
   };
 
   // Cancellation confirmation UI moved into reusable button inside the card
@@ -294,7 +293,7 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={handleCancelBookingOnListPage}
+                          onCancelBooking={(bookingId, reason) => handleCancelBookingOnListPage(bookingId, reason)}
                         />
                       </div>
                     ))}
@@ -314,7 +313,7 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={handleCancelBookingOnListPage}
+                          onCancelBooking={(bookingId, reason) => handleCancelBookingOnListPage(bookingId, reason)}
                         />
                       </div>
                     ))}

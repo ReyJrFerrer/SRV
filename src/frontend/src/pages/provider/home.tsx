@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-// Remove Next.js Head import
 import SPHeaderNextjs from "../../components/provider/home page/SPHeader";
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
-// import BookingRequestsNextjs from "../../components/provider/BookingRequests";
-// import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
+import BookingRequestsNextjs from "../../components/provider/BookingRequests";
+import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
@@ -32,18 +31,18 @@ const ProviderHomePage: React.FC = () => {
 
   // Use the service management hook
   const {
-    // userServices,
+    userServices,
     userProfile,
     getProviderStats,
     loading: servicesLoading,
     error: servicesError,
-    // refreshServices,
+    refreshServices,
     isUserAuthenticated,
   } = useServiceManagement();
 
   // Use the provider booking management hook
   const {
-    // bookings,
+    bookings,
     loading: bookingsLoading,
     error: bookingsError,
   } = useProviderBookingManagement();
@@ -102,28 +101,28 @@ const ProviderHomePage: React.FC = () => {
   }, [isUserAuthenticated, getProviderStats, initializationAttempts]);
 
   // Calculate counts for pending and upcoming jobs using real booking data
-  // const bookingCounts = useMemo(() => {
-  //   if (!bookings || bookings.length === 0) {
-  //     return { pendingCount: 0, upcomingCount: 0 };
-  //   }
+  const bookingCounts = useMemo(() => {
+    if (!bookings || bookings.length === 0) {
+      return { pendingCount: 0, upcomingCount: 0 };
+    }
 
-  //   const pendingBookings = bookings.filter(
-  //     (booking) =>
-  //       booking.status?.toLowerCase() === "requested" ||
-  //       booking.status?.toLowerCase() === "pending",
-  //   );
+    const pendingBookings = bookings.filter(
+      (booking) =>
+        booking.status?.toLowerCase() === "requested" ||
+        booking.status?.toLowerCase() === "pending",
+    );
 
-  //   const upcomingBookings = bookings.filter(
-  //     (booking) =>
-  //       booking.status?.toLowerCase() === "accepted" ||
-  //       booking.status?.toLowerCase() === "confirmed",
-  //   );
+    const upcomingBookings = bookings.filter(
+      (booking) =>
+        booking.status?.toLowerCase() === "accepted" ||
+        booking.status?.toLowerCase() === "confirmed",
+    );
 
-  //   return {
-  //     pendingCount: pendingBookings.length,
-  //     upcomingCount: upcomingBookings.length,
-  //   };
-  // }, [bookings]);
+    return {
+      pendingCount: pendingBookings.length,
+      upcomingCount: upcomingBookings.length,
+    };
+  }, [bookings]);
 
   // Combined loading state
   const isDataLoading = servicesLoading || bookingsLoading;
@@ -265,7 +264,7 @@ const ProviderHomePage: React.FC = () => {
             {/* Use legacyProvider for components that still need the old interface */}
             {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
 
-            {/* <BookingRequestsNextjs
+            <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}
               upcomingJobs={bookingCounts.upcomingCount}
             />
@@ -275,7 +274,7 @@ const ProviderHomePage: React.FC = () => {
               loading={servicesLoading}
               error={servicesError}
               onRefresh={refreshServices}
-            /> */}
+            />
           </div>
         </main>
 

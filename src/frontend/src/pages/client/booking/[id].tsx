@@ -584,10 +584,10 @@ const BookingDetailsPage: React.FC = () => {
         <CancellationReasons
           bookingId={specificBooking?.id ?? null}
           cancelledByClient={status === "Cancelled"}
-          cancellationReason={(specificBooking as any)?.notes ?? null}
-          cancellationNotes={
-            (specificBooking as any)?.cancellationNotes ?? null
-          }
+          cancellationReason={(specificBooking as any)?.cancelReason}
+          // cancellationNotes={
+          //   (specificBooking as any)?.cancellationNotes ?? null
+          // }
         />
         <div className="mt-10 pt-10">
           <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
