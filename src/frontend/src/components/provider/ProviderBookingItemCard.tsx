@@ -300,7 +300,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // Provider-side cancel for accepted/confirmed bookings
   const handleCancelAccepted = async (_reason: string) => {
     try {
-      await bookingCanisterService.cancelBooking(booking.id);
+      // backend API expects a cancel reason; pass empty string for now
+      await bookingCanisterService.cancelBooking(booking.id, "");
       toast.success("Booking has been cancelled.");
       navigate(`/provider/bookings`);
     } catch (error) {
