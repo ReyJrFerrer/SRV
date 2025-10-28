@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
@@ -62,59 +68,68 @@ const ProviderBookingsPage: React.FC = () => {
 
   const { getClientReviewsByUser } = useClientRating();
   const { fetchUserReputation } = useReputation();
-  
+
   // Memoized function to fetch client data
-  const fetchClientData = useCallback(async (clientId: string) => {
-    if (!clientId) return { reviews: [], reputation: null };
-    
-    try {
-      const [clientReviews, clientReputation] = await Promise.all([
-        getClientReviewsByUser(clientId),
-        fetchUserReputation(clientId)
-      ]);
-      
-      return {
-        reviews: clientReviews || [],
-        reputation: clientReputation || null
-      };
-    } catch (err) {
-      console.error("Error fetching client data:", err);
-      return { reviews: [], reputation: null };
-    }
-  }, [getClientReviewsByUser, fetchUserReputation]);
-  
+  const fetchClientData = useCallback(
+    async (clientId: string) => {
+      if (!clientId) return { reviews: [], reputation: null };
+
+      try {
+        const [clientReviews, clientReputation] = await Promise.all([
+          getClientReviewsByUser(clientId),
+          fetchUserReputation(clientId),
+        ]);
+
+        return {
+          reviews: clientReviews || [],
+          reputation: clientReputation || null,
+        };
+      } catch (err) {
+        console.error("Error fetching client data:", err);
+        return { reviews: [], reputation: null };
+      }
+    },
+    [getClientReviewsByUser, fetchUserReputation],
+  );
+
   // Memoized client data state
-  const [clientDataMap, setClientDataMap] = useState<Record<string, { reviews: any[]; reputation: any }>>({});
-  
+  const [clientDataMap, setClientDataMap] = useState<
+    Record<string, { reviews: any[]; reputation: any }>
+  >({});
+
   // Effect to fetch client data for all unique client IDs
   useEffect(() => {
     const fetchAllClientData = async () => {
       const clientIds = Array.from(
         new Set(
           bookings
-            .map(booking => booking.clientProfile?.id?.toString() || booking.clientId?.toString())
-            .filter(Boolean) as string[]
-        )
+            .map(
+              (booking) =>
+                booking.clientProfile?.id?.toString() ||
+                booking.clientId?.toString(),
+            )
+            .filter(Boolean) as string[],
+        ),
       );
-      
+
       const newClientDataMap = { ...clientDataMap };
       let hasUpdates = false;
-      
+
       await Promise.all(
         clientIds.map(async (clientId) => {
           if (!clientId || clientDataMap[clientId]) return;
-          
+
           const data = await fetchClientData(clientId);
           newClientDataMap[clientId] = data;
           hasUpdates = true;
-        })
+        }),
       );
-      
+
       if (hasUpdates) {
         setClientDataMap(newClientDataMap);
       }
     };
-    
+
     if (bookings.length > 0) {
       fetchAllClientData();
     }
@@ -427,9 +442,13 @@ const ProviderBookingsPage: React.FC = () => {
           ) : currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
               {currentBookings.map((booking) => {
-                const clientId = booking.clientProfile?.id?.toString() || booking.clientId?.toString();
-                const clientData = clientId ? clientDataMap[clientId] : { reviews: [], reputation: null };
-                
+                const clientId =
+                  booking.clientProfile?.id?.toString() ||
+                  booking.clientId?.toString();
+                const clientData = clientId
+                  ? clientDataMap[clientId]
+                  : { reviews: [], reputation: null };
+
                 return (
                   <div
                     key={booking.id}
@@ -447,8 +466,8 @@ const ProviderBookingsPage: React.FC = () => {
                     }}
                     className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
                   >
-                    <ProviderBookingItemCard 
-                      booking={booking} 
+                    <ProviderBookingItemCard
+                      booking={booking}
                       review={clientData?.reviews || []}
                       reputation={clientData?.reputation || null}
                     />

@@ -334,7 +334,6 @@ const BookingDetailsPage: React.FC = () => {
     }
   };
 
-
   const handleCancelWithReason = async (reason: string) => {
     if (!specificBooking) return;
     try {
@@ -618,7 +617,10 @@ const BookingDetailsPage: React.FC = () => {
                     <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                     <span>
                       <strong>Scheduled:</strong>{" "}
-                      {formatDateRange(requestedDate || "", scheduledDate || "")}
+                      {formatDateRange(
+                        requestedDate || "",
+                        scheduledDate || "",
+                      )}
                     </span>
                   </div>
                   <div className="flex items-start">

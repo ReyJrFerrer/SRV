@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ShieldCheckIcon } from "@heroicons/react/24/solid";
 
-
-interface ClientReputationScoreProps{
+interface ClientReputationScoreProps {
   reputation: any;
 }
 
@@ -21,7 +20,7 @@ const ClientReputationScore: React.FC<ClientReputationScoreProps> = ({
         }
       } catch (error) {
         setReputationScore(50);
-      } 
+      }
     };
 
     if (reputation) loadReputation();
@@ -43,7 +42,6 @@ const ClientReputationScore: React.FC<ClientReputationScoreProps> = ({
     iconColor = "text-yellow-600";
     textColor = "text-yellow-700";
   }
-
 
   return (
     <span

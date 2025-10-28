@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 
-interface ClientRatingSummaryProps{
+interface ClientRatingSummaryProps {
   reviews: any;
 }
-const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({ reviews }) => {
+const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({
+  reviews,
+}) => {
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [reviewsCount, setReviewsCount] = useState<number>(0);
 
@@ -13,7 +15,6 @@ const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({ reviews }) =>
     let mounted = true;
     const load = async () => {
       try {
-
         if (!mounted) return;
         const count = Array.isArray(reviews) ? reviews.length : 0;
         setReviewsCount(count);
@@ -52,7 +53,6 @@ const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({ reviews }) =>
     }
     return stars;
   };
-
 
   return (
     <span className="flex items-center rounded-lg px-0 pb-1 text-sm font-medium text-gray-700">

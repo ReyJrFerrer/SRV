@@ -636,8 +636,9 @@ export const useBookingManagement = (): BookingManagementHook => {
 
     try {
       const userPrincipal = Principal.fromText(currentUserId);
-      const bookings = await bookingCanisterService.getClientBookings(userPrincipal);
-      
+      const bookings =
+        await bookingCanisterService.getClientBookings(userPrincipal);
+
       // Use the debounced handler to process the bookings
       await handleBookingsUpdate(bookings);
     } catch (error) {
@@ -646,7 +647,6 @@ export const useBookingManagement = (): BookingManagementHook => {
       setRefreshing(false);
     }
   }, [isUserAuthenticated, getCurrentUserId, clearError, handleBookingError]);
-
 
   // Booking status management
   const updateBookingStatus = useCallback(
@@ -809,26 +809,34 @@ export const useBookingManagement = (): BookingManagementHook => {
   }, [debouncedLoadUserProfile]);
 
   // Memoize the subscription callback to prevent unnecessary re-renders
-  const handleBookingsUpdate = useCallback(async (bookings: Booking[]) => {
-    try {
-      // Transform base bookings to extended bookings with package support
-      const transformedBookings = bookings.map(transformBooking);
+  const handleBookingsUpdate = useCallback(
+    async (bookings: Booking[]) => {
+      try {
+        // Transform base bookings to extended bookings with package support
+        const transformedBookings = bookings.map(transformBooking);
 
-      // Enrich bookings with all data (provider, service, package) in parallel
-      const enrichedBookings = await Promise.all(
-        transformedBookings.map((booking) =>
-          enrichBookingWithAllData(booking),
-        ),
-      );
+        // Enrich bookings with all data (provider, service, package) in parallel
+        const enrichedBookings = await Promise.all(
+          transformedBookings.map((booking) =>
+            enrichBookingWithAllData(booking),
+          ),
+        );
 
-      setUserBookings(enrichedBookings);
-      setLoadingState("bookings", false);
-    } catch (error) {
-      console.error("Error enriching client bookings:", error);
-      handleBookingError(error, "enrich client bookings");
-      setLoadingState("bookings", false);
-    }
-  }, [transformBooking, enrichBookingWithAllData, setLoadingState, handleBookingError]);
+        setUserBookings(enrichedBookings);
+        setLoadingState("bookings", false);
+      } catch (error) {
+        console.error("Error enriching client bookings:", error);
+        handleBookingError(error, "enrich client bookings");
+        setLoadingState("bookings", false);
+      }
+    },
+    [
+      transformBooking,
+      enrichBookingWithAllData,
+      setLoadingState,
+      handleBookingError,
+    ],
+  );
 
   // Debounce the bookings update handler
   const debouncedHandleBookingsUpdate = useDebounce(handleBookingsUpdate, 300);

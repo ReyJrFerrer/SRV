@@ -50,8 +50,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const { userImageUrl, refetch } = useUserImage(
     booking?.clientProfile?.profilePicture?.imageUrl,
   );
-  
-  const clientId = booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
+
+  const clientId =
+    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
@@ -162,7 +163,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
-
 
   console.log("From Provider Booking Item Card", booking);
 
@@ -287,7 +287,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to decline booking. Please try again."
+          : "Failed to decline booking. Please try again.",
       );
     } finally {
       setIsDeclinining(false);
