@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-// Remove Next.js Head import
 import SPHeaderNextjs from "../../components/provider/home page/SPHeader";
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";

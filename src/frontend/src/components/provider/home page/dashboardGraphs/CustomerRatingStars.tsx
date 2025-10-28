@@ -1,11 +1,11 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { useProviderReviews } from "../../../../hooks/reviewManagement";
+import { useProviderStatStore } from "../../../../store/providerStatStore";
 
 const CustomerRatingStars: React.FC = () => {
-  const { analytics, loading } = useProviderReviews();
-  const averageRating = analytics?.averageRating || 0;
-  const totalReviews = analytics?.totalReviews || 0;
+  const { reviewAnalytics, isLoading } = useProviderStatStore();
+  const averageRating = reviewAnalytics?.averageRating || 0;
+  const totalReviews = reviewAnalytics?.totalReviews || 0;
 
   const renderStars = () => {
     const stars = [];
@@ -37,7 +37,7 @@ const CustomerRatingStars: React.FC = () => {
     return stars;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <span className="animate-pulse text-lg font-semibold text-blue-400">

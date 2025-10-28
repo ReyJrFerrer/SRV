@@ -203,20 +203,15 @@ const NotificationsPageSP = () => {
       case "booking_confirmation":
       case "service_completion_reminder":
       case "review_request":
-        "";
       case "booking_cancelled":
       case "booking_rescheduled":
-        navigate(notification.href);
-        break;
       case "payment_completed":
+      case "client_no_show":
+      case "payment_issue":
         navigate(notification.href);
         break;
       case "chat_message":
         navigate(`/provider/chat/${notification.clientName}`);
-        break;
-      case "client_no_show":
-      case "payment_issue":
-        navigate(notification.href);
         break;
       default:
         navigate(notification.href);
@@ -245,7 +240,9 @@ const NotificationsPageSP = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div
-          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${
+            unreadCount > 0 ? "justify-between" : "justify-center"
+          }`}
         >
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Notifications
