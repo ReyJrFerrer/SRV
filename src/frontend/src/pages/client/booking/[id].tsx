@@ -703,7 +703,7 @@ const BookingDetailsPage: React.FC = () => {
           </div>
         )}
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg mb-24">
+        <div className="mb-24 flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
           <button
             onClick={handleChatWithProvider}
             disabled={chatLoading}
