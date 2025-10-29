@@ -13,8 +13,8 @@ import MapSection from "../../../components/provider/booking-details/MapSection"
 import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
-// (Places library reserved for future use with Autocomplete if needed)
-//
+import { useClientRating } from "../../../hooks/useClientRating";
+import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
 import ServiceDetailsCard from "../../../components/provider/booking-details/ServiceDetailsCard";
 import BookingProgressSection from "../../../components/provider/booking-details/BookingProgressSection";
@@ -39,6 +39,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
+  const { getClientReviewsByUser } = useClientRating();
+  const { fetchUserReputation } = useReputation();
+
 
   // Set document title
   useEffect(() => {
@@ -735,6 +738,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
             clientName={clientName}
             clientContact={clientContact}
             clientId={clientId}
+            reviews={getClientReviewsByUser(clientId || "")}
+            reputation={fetchUserReputation(clientId || "")}
           />
 
           {/* Service and package details - right */}

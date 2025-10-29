@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
   ProviderEnhancedBooking,
-  useProviderBookingManagement,
 } from "../../hooks/useProviderBookingManagement";
 import {
   MapPinIcon,
@@ -29,10 +28,10 @@ interface ProviderBookingItemCardProps {
   onCancelClick: (booking: ProviderEnhancedBooking) => void;
   isDeclining: boolean;
 
-  acceptBookingById : any;
-  isBookingActionInProgress : any;
-  checkCommissionValidation : any;
-  startBookingById : any;
+  acceptBookingById: any;
+  isBookingActionInProgress: any;
+  checkCommissionValidation: any;
+  startBookingById: any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
@@ -49,7 +48,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
-
 
   const { conversations, createConversation } = useChat();
   const { userImageUrl, refetch } = useUserImage(

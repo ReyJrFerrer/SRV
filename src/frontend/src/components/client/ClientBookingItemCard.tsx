@@ -17,7 +17,6 @@ import {
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
-
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
   onCancelClick: (booking: EnhancedBooking) => void;

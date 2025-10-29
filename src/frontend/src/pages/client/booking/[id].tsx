@@ -32,11 +32,9 @@ import CancellationReasons from "../../../components/common/CancellationReasons"
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number>(50); // Default score
-  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     const loadReputation = async () => {
       try {
-        setLoading(true);
         const reputation = await fetchUserReputation(providerId);
         if (reputation) {
           setReputationScore(Math.round(reputation.trustScore));
@@ -46,7 +44,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
       } catch (error) {
         setReputationScore(50); // Fallback to default on error
       } finally {
-        setLoading(false);
       }
     };
 
@@ -56,8 +53,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   }, [providerId, fetchUserReputation]);
 
   const score = reputationScore;
-
- 
 
   return (
     <span
@@ -180,7 +175,6 @@ const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL params
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
-  const [localLoading, setLocalLoading] = useState(true);
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
@@ -226,7 +220,6 @@ const BookingDetailsPage: React.FC = () => {
       if (foundBooking) {
         setSpecificBooking(foundBooking);
       }
-      setLocalLoading(false);
     }
   }, [id, bookings, hookLoading]);
 
@@ -448,7 +441,6 @@ const BookingDetailsPage: React.FC = () => {
       className: "bg-yellow-500 hover:bg-yellow-600",
     };
   };
-
 
   const {
     providerProfile,
