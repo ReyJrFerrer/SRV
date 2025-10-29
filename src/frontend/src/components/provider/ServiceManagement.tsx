@@ -119,12 +119,12 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   if (loading) {
     return (
       <>
-        <h2 className="not-last:mb-6 mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900">
+        <h2 className="mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900 not-last:mb-6">
           My Services
         </h2>
         <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
             <p className="mt-4 text-gray-500">Loading your services...</p>
           </div>
         </div>
@@ -135,7 +135,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   if (error) {
     return (
       <>
-        <h2 className="mb-6 mt-5 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
+        <h2 className="mt-5 mb-6 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
           My Services
         </h2>
         <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
@@ -194,8 +194,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-2 pt-5">
-        <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
+      <div className="flex items-center justify-between md:py-5 lg:py-8">
+        <h2 className="text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>
         <Tooltip
@@ -223,7 +223,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
       {services.length ? (
         <>
-          <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-10 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
               const categoryImage = getCategoryImage(
@@ -241,7 +241,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   {/* Make the entire card a button */}
                   <button
                     type="button"
-                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     style={{
                       background: "transparent",
                       border: "none",
@@ -270,14 +270,14 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   {/* Status badge */}
                   {isActive ? (
                     <span
-                      className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+                      className="pointer-events-none absolute top-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
                       title="Active"
                     >
                       Active
                     </span>
                   ) : (
                     <span
-                      className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
+                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
                     >
                       {getStatusDisplay(service.status).text}
                     </span>
@@ -285,7 +285,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
                   <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
                     <h4
-                      className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
+                      className="mb-0 line-clamp-2 w-full text-center text-lg font-bold break-words text-blue-900"
                       style={{ wordBreak: "break-word" }}
                     >
                       {service.title}

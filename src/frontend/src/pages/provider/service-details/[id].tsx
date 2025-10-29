@@ -980,7 +980,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
@@ -1100,7 +1100,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8 sm:py-12">
+      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
         <HeroSection
           onBack={() => navigate("/provider/home")}
           service={service}

@@ -67,7 +67,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
           )}
         </div>
         <button
-          className="absolute right-2 top-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
           onClick={onClose}
           aria-label="Close"
         >
@@ -168,7 +168,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         <button
           type="button"
           aria-label="Show badge info"
-          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
           onClick={onInfoClick}
         >
           <InformationCircleIcon
@@ -273,7 +273,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
         </ul>
         <button
-          className="absolute right-2 top-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
           onClick={onClose}
           aria-label="Close"
         >
@@ -353,7 +353,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
               }}
             />
             <button
-              className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+              className="absolute top-2 right-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
               onClick={() => setShowModal(false)}
               aria-label="Close"
             >
@@ -504,16 +504,16 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">
-            My Provider Profile
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            My Profile
           </h1>
         </div>
       </header>
@@ -541,7 +541,7 @@ const ProviderProfilePage: React.FC = () => {
                       />
                       <button
                         onClick={handleImageUploadClick}
-                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
+                        className="absolute right-1 bottom-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
                       >
                         <CameraIcon className="h-5 w-5" />
                       </button>
@@ -575,7 +575,7 @@ const ProviderProfilePage: React.FC = () => {
                           if (nameError) setNameError("");
                           if (editError) setEditError("");
                         }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                       />
                       {nameError && (
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
@@ -672,8 +672,8 @@ const ProviderProfilePage: React.FC = () => {
             </div>
           </div>
           {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+          <div className="mt-1 lg:col-span-2 lg:mt-0">
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
                 <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                   Your Reputation Score
@@ -681,7 +681,7 @@ const ProviderProfilePage: React.FC = () => {
                 <button
                   type="button"
                   aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   onClick={() => setShowAboutInfo(true)}
                 >
                   <InformationCircleIcon className="h-6 w-6 text-blue-500" />
@@ -760,7 +760,7 @@ const ProviderProfilePage: React.FC = () => {
       <div className="mt-8 block w-full px-4 lg:hidden">
         <button
           onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+          className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
         >
           Log Out
         </button>

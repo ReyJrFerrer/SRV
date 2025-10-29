@@ -53,8 +53,8 @@ const ProviderChatPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Messages
           </h1>
           {/* Add a button for starting a new chat in the future */}
@@ -123,7 +123,7 @@ const ProviderChatPage: React.FC = () => {
                           className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
                         />
                         {unreadCount > 0 && (
-                          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
                             {unreadCount}
                           </span>
                         )}
@@ -146,7 +146,7 @@ const ProviderChatPage: React.FC = () => {
                             className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
                           >
                             {lastMessage?.content || (
-                              <span className="italic text-gray-400">
+                              <span className="text-gray-400 italic">
                                 No messages yet
                               </span>
                             )}

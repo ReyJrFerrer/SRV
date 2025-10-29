@@ -41,7 +41,7 @@ const HeroSection: React.FC<Props> = ({
 }) => {
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+      <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
         <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
           {serviceImages &&
           serviceImages.length > 0 &&
@@ -83,7 +83,7 @@ const HeroSection: React.FC<Props> = ({
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
+                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >

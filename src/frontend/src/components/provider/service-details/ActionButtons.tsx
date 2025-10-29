@@ -32,7 +32,7 @@ const ActionButtons: React.FC<Props> = ({
           isUpdatingStatus || hasActiveBookings ? undefined : onToggleStatus
         }
         disabled={isUpdatingStatus || hasActiveBookings}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 md:flex-1 ${
+        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 sm:flex-1 ${
           status === "Available"
             ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
             : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
@@ -57,7 +57,7 @@ const ActionButtons: React.FC<Props> = ({
       <Tooltip
         content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
         showWhenDisabled={hasActiveBookings}
-        className="w-full md:flex-1"
+        className="w-full sm:flex-1"
       >
         <button
           onClick={hasActiveBookings ? undefined : onDeleteClick}

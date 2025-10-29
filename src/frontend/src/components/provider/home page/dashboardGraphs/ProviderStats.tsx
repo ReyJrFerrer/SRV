@@ -355,7 +355,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="mb-6 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
+      <h1 className="my-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
         Dashboard
       </h1>
 

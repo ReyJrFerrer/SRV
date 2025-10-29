@@ -849,7 +849,7 @@ const ClientProfilePage: React.FC = () => {
 
           {/* --- Right Column: Reputation and Stats --- */}
           <div className="mt-1 lg:col-span-2 lg:mt-0">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
                 <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                   Your Reputation Score

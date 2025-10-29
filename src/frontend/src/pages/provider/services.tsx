@@ -100,7 +100,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             service.category?.slug || service.category?.name,
           )}
           alt="Category"
-          className="absolute left-2 top-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
+          className="absolute top-2 left-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/images/categories/others.svg";
@@ -109,7 +109,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Status badge at top right of service image */}
         <span
-          className={`absolute right-2 top-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
+          className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
         >
           {statusDisplay.text}
         </span>
@@ -117,7 +117,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
       {/* Service Name */}
       <h4
-        className="mb-0 line-clamp-2 w-full break-words text-center text-xl font-bold text-blue-900"
+        className="mb-0 line-clamp-2 w-full text-center text-xl font-bold break-words text-blue-900"
         style={{ wordBreak: "break-word" }}
       >
         {service.title}
@@ -145,7 +145,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors  ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -369,10 +369,9 @@ const MyServicesPage: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-6">
-          <div className="flex-1"></div>
-          <h1 className="flex-1 text-center text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-3.5 py-2.5">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             My Services
           </h1>
           <div className="flex flex-1 justify-end">
@@ -400,7 +399,7 @@ const MyServicesPage: React.FC = () => {
         <div className="mt-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
               <p className="mt-4 text-gray-500">Loading your services...</p>
             </div>
           ) : error ? (
