@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
+import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
 import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
 import {
@@ -39,7 +40,9 @@ const MyBookingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
-  // Cancel handled within item card via reusable component
+  const [cancellingBooking, setCancellingBooking] =
+    useState<EnhancedBooking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Effect to sync the active tab with the URL query parameter
   useEffect(() => {
@@ -184,14 +187,23 @@ const MyBookingsPage: React.FC = () => {
     ).length;
   };
 
-  const handleCancelBookingOnListPage = async (
-    bookingId: string,
-    reason: string,
-  ) => {
-    await bookingManagement.updateBookingStatus(bookingId, "Cancelled", reason);
+  const handleCancelBooking = async (reason: string) => {
+    if (!cancellingBooking) return;
+    setIsCancelling(true);
+    try {
+      await bookingManagement.updateBookingStatus(
+        cancellingBooking.id,
+        "Cancelled",
+        reason,
+      );
+      toast.success("Booking has been cancelled.");
+      setCancellingBooking(null);
+    } catch (error) {
+      toast.error("Failed to cancel booking. Please try again.");
+    } finally {
+      setIsCancelling(false);
+    }
   };
-
-  // Cancellation confirmation UI moved into reusable button inside the card
 
   return (
     <>
@@ -296,9 +308,7 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={(bookingId, reason) =>
-                            handleCancelBookingOnListPage(bookingId, reason)
-                          }
+                          onCancelClick={setCancellingBooking}
                         />
                       </div>
                     ))}
@@ -318,9 +328,7 @@ const MyBookingsPage: React.FC = () => {
                       <div key={booking.id}>
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={(bookingId, reason) =>
-                            handleCancelBookingOnListPage(bookingId, reason)
-                          }
+                          onCancelClick={setCancellingBooking}
                         />
                       </div>
                     ))}
@@ -343,7 +351,17 @@ const MyBookingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Cancel dialog handled at card-level via CancelWithReasonButton */}
+      <CancelWithReasonButton
+        show={!!cancellingBooking}
+        isSubmitting={isCancelling}
+        onSubmit={handleCancelBooking}
+        onCancel={() => setCancellingBooking(null)}
+        confirmTitle="Cancel Booking?"
+        confirmDescription="Please let us know why you're cancelling this booking."
+        textareaLabel="Reason for cancellation"
+        submitText={isCancelling ? "Cancelling..." : "Submit Cancellation"}
+        cancelText="Back"
+      />
 
       <Toaster position="top-center" richColors />
     </>
