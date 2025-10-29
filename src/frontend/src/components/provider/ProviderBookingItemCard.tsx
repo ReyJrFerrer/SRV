@@ -1,7 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import {
-  ProviderEnhancedBooking,
-} from "../../hooks/useProviderBookingManagement";
+import { ProviderEnhancedBooking } from "../../hooks/useProviderBookingManagement";
 import {
   MapPinIcon,
   ClockIcon,

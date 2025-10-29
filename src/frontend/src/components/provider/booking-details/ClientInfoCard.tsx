@@ -18,8 +18,7 @@ const ClientInfoCard: React.FC<Props> = ({
   clientContact,
   clientId,
   reviews,
-  reputation
-
+  reputation,
 }) => {
   return (
     <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
@@ -41,7 +40,7 @@ const ClientInfoCard: React.FC<Props> = ({
         {/* Reputation and Contact (Side-by-Side) */}
         <div className="mt-2 flex w-full items-center justify-center gap-4">
           {/* Reputation Score */}
-          {clientId && <ClientReputationScore reputation={reputation}/>}
+          {clientId && <ClientReputationScore reputation={reputation} />}
 
           {/* Contact Info */}
           {clientContact && clientContact !== "Contact not available" && (

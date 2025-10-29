@@ -42,7 +42,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const { getClientReviewsByUser } = useClientRating();
   const { fetchUserReputation } = useReputation();
 
-
   // Set document title
   useEffect(() => {
     if (specificBooking) {
