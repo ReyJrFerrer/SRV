@@ -19,17 +19,22 @@ import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { useEffect, useState, MouseEvent } from "react";
+import { MouseEvent, useState, useEffect } from "react";
 import CancelWithReasonButton from "../common/CancelWithReasonButton";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
 import { toast } from "sonner";
+import DeclineConfirmDialog from "./booking-details/DeclineConfirmDialog";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
+  review: any;
+  reputation: any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
+  review = [],
+  reputation = null,
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
@@ -46,11 +51,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     booking?.clientProfile?.profilePicture?.imageUrl,
   );
 
+  const clientId =
+    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
-  const [declineReason, setDeclineReason] = useState<string>("");
-  const [declineError, setDeclineError] = useState<string | null>(null);
 
   // State for complete confirmation dialog
   const [showCompleteConfirm, setShowCompleteConfirm] =
@@ -158,8 +163,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
-  const clientId =
-    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
 
   console.log("From Provider Booking Item Card", booking);
 
@@ -268,25 +271,26 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // New function to handle the actual decline after confirmation
-  const handleConfirmDecline = async () => {
-    if (!declineReason.trim()) {
-      setDeclineError("Please provide a reason for declining.");
+  const handleDeclineBooking = async () => {
+    if (!booking?.id) {
+      toast.error("Invalid booking ID");
       return;
     }
-    setIsDeclinining(true);
+
     try {
-      const success = await declineBookingById(
-        booking.id,
-        declineReason.trim(),
+      setIsDeclinining(true);
+      // Using a default reason since the dialog doesn't collect it anymore
+      await declineBookingById(booking.id, "Booking declined by provider");
+      setShowDeclineConfirm(false);
+      toast.success("Booking declined successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to decline booking. Please try again.",
       );
-      if (success) {
-        navigate(`../../provider/home`);
-      }
     } finally {
       setIsDeclinining(false);
-      setShowDeclineConfirm(false);
-      setDeclineReason("");
-      setDeclineError(null);
     }
   };
 
@@ -298,9 +302,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // Provider-side cancel for accepted/confirmed bookings
-  const handleCancelAccepted = async (_reason: string) => {
+  const handleCancelAccepted = async (reason: string) => {
     try {
-      await bookingCanisterService.cancelBooking(booking.id);
+      await bookingCanisterService.cancelBooking(booking.id, reason);
       toast.success("Booking has been cancelled.");
       navigate(`/provider/bookings`);
     } catch (error) {
@@ -452,8 +456,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             {/* REPUTATION AND RATING: MOBILE COLUMN, WEB ROW */}
             {clientId && (
               <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
-                <ClientReputationScore clientId={clientId} />
-                <ClientRatingSummary clientId={clientId} />
+                <ClientReputationScore reputation={reputation} />
+                <ClientRatingSummary reviews={review} />
               </div>
             )}
 
@@ -645,65 +649,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   return (
     <>
       {/* Decline Confirmation Dialog */}
-      {showDeclineConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Decline Booking?
-            </h3>
-            <p className="mb-3 text-sm text-gray-700">
-              Please provide a brief reason for declining this booking from{" "}
-              <b>{clientName}</b>.
-            </p>
-            <label
-              htmlFor="decline-reason"
-              className="mb-1 block text-sm font-semibold text-gray-700"
-            >
-              Reason for declining
-            </label>
-            <textarea
-              id="decline-reason"
-              className="mb-1 min-h-[96px] w-full resize-none rounded-lg border border-gray-300 p-3 text-sm shadow focus:outline-none focus:ring-2 focus:ring-red-400"
-              value={declineReason}
-              onChange={(e) => {
-                setDeclineReason(e.target.value);
-                if (declineError) setDeclineError(null);
-              }}
-              maxLength={500}
-              placeholder="Type your reason here (required)"
-              disabled={isDeclinining}
-            />
-            <div className="mb-3 text-right text-xs text-gray-500">
-              {declineReason.length}/500
-            </div>
-            {declineError && (
-              <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-                {declineError}
-              </div>
-            )}
-            <div className="mt-2 flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60"
-                onClick={() => {
-                  setShowDeclineConfirm(false);
-                  setDeclineReason("");
-                  setDeclineError(null);
-                }}
-                disabled={isDeclinining}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-                onClick={handleConfirmDecline}
-                disabled={isDeclinining}
-              >
-                {isDeclinining ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeclineConfirmDialog
+        show={showDeclineConfirm}
+        clientName={clientName}
+        isDeclinining={isDeclinining}
+        onCancel={() => setShowDeclineConfirm(false)}
+        onConfirm={handleDeclineBooking}
+      />
 
       {/* Complete Confirmation Dialog */}
       {showCompleteConfirm && (

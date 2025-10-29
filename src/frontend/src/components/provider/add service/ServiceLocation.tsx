@@ -17,7 +17,7 @@ interface ServiceLocationProps {
 
 const ServiceLocation: React.FC<ServiceLocationProps> = ({
   setFormData,
-  validationErrors,
+  validationErrors: _validationErrors,
   formData,
 }) => {
   // Use Zustand location store
@@ -107,7 +107,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   const hasGPSCoordinates =
     !!formData.locationLatitude && !!formData.locationLongitude;
 
-  const localLocationError =
+  const _localLocationError =
     locationInputMode === "detected" &&
     !hasGPSCoordinates &&
     locationStatus === "denied"
@@ -243,12 +243,12 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             </div>
           </div>
         )}
-        {/* 
-        {(validationErrors?.locationMunicipalityCity || localLocationError) && (
+        {(_validationErrors?.locationMunicipalityCity ||
+          _localLocationError) && (
           <div className="mt-2 text-center text-sm text-red-600">
-            {validationErrors?.locationMunicipalityCity || localLocationError}
+            {_validationErrors?.locationMunicipalityCity || _localLocationError}
           </div>
-        )} */}
+        )}
       </section>
     </div>
   );

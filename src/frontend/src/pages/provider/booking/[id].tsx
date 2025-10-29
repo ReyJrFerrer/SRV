@@ -10,6 +10,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
+import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
 // (Places library reserved for future use with Autocomplete if needed)
@@ -200,12 +201,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
   };
 
   // New function to handle the actual decline after confirmation
-  const handleConfirmDecline = async (reason: string) => {
+  const handleConfirmDecline = async () => {
     if (!specificBooking) return;
 
     setIsDeclinining(true);
     try {
-      const success = await declineBookingById(specificBooking.id, reason);
+      const success = await declineBookingById(specificBooking.id);
       if (success) {
         await refreshBookings();
         const updatedBooking = bookings.find(
@@ -698,7 +699,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         clientName={specificBooking?.clientName || "this client"}
         isDeclinining={isDeclinining}
         onCancel={() => setShowDeclineConfirm(false)}
-        onConfirm={handleConfirmDecline}
+        onConfirm={() => handleConfirmDecline()}
       />
 
       {/* Header */}
@@ -716,6 +717,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
           </h1>
         </div>
       </header>
+
+      {/* Cancellation reasons (frontend-only / informational) */}
+      <CancellationReasons
+        bookingId={specificBooking?.id}
+        cancelledByClient={specificBooking?.status === "Cancelled"}
+        cancellationReason={(specificBooking as any)?.cancelReason}
+        // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
+      />
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Side by side layout for provider and service details */}

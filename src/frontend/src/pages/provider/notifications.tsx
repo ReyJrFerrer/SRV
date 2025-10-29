@@ -203,20 +203,15 @@ const NotificationsPageSP = () => {
       case "booking_confirmation":
       case "service_completion_reminder":
       case "review_request":
-        "";
       case "booking_cancelled":
       case "booking_rescheduled":
-        navigate(notification.href);
-        break;
       case "payment_completed":
+      case "client_no_show":
+      case "payment_issue":
         navigate(notification.href);
         break;
       case "chat_message":
         navigate(`/provider/chat/${notification.clientName}`);
-        break;
-      case "client_no_show":
-      case "payment_issue":
-        navigate(notification.href);
         break;
       default:
         navigate(notification.href);

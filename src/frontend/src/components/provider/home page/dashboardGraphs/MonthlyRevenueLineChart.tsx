@@ -9,23 +9,18 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 
-const MonthlyRevenueLineChart: React.FC = () => {
-  const { getMonthlyRevenue, analytics, loading } =
-    useProviderBookingManagement();
-  const data = getMonthlyRevenue();
+interface MonthlyRevenueLineChartProps {
+  analytics: any;
+  getMonthlyRevenue: any;
+}
 
-  if (loading) {
-    return (
-      <div className="flex h-[275px] w-full items-center justify-center rounded-2xl bg-white shadow-inner">
-        <span className="animate-pulse text-lg font-semibold text-blue-400">
-          Loading chart...
-        </span>
-      </div>
-    );
-  }
+const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
+  analytics,
+  getMonthlyRevenue,
+}) => {
+  const data = getMonthlyRevenue();
 
   // Ensure analytics and totalRevenue are available before using them
   const totalRevenue = analytics?.totalRevenue ?? 0;

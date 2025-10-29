@@ -27,7 +27,7 @@ interface MapModalProps {
 const GEO_DENIAL_KEY = "geoDeniedAt";
 const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_PROVIDER_V1";
-const ADDR_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
+const ADDR_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 interface AddrCache {
   address: string;
   ts: number;
