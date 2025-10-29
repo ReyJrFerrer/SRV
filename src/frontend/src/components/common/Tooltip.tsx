@@ -32,7 +32,9 @@ const Tooltip: React.FC<TooltipProps> = ({
   })();
 
   return (
-    <div className={`group relative inline-block align-middle${className ? ` ${className}` : ""}`}>
+    <div
+      className={`group relative inline-block align-middle${className ? ` ${className}` : ""}`}
+    >
       {children}
       {showWhenDisabled && (
         <div
