@@ -47,11 +47,9 @@ const CancelWithReasonButton: React.FC<CancelWithReasonButtonProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-        <h3 className="mb-2 text-lg font-bold text-red-700">
-          {confirmTitle}
-        </h3>
+        <h3 className="mb-2 text-lg font-bold text-red-700">{confirmTitle}</h3>
         <p className="mb-3 text-sm text-gray-700">{confirmDescription}</p>
-        
+
         <label
           htmlFor="cancel-reason"
           className="mb-1 block text-sm font-semibold text-gray-700"

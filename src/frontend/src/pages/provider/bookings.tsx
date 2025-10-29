@@ -55,8 +55,11 @@ const ProviderBookingsPage: React.FC = () => {
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
-  const [decliningBookingId, setDecliningBookingId] = useState<string | null>(null);
-  const [cancellingBooking, setCancellingBooking] = useState<ProviderEnhancedBooking | null>(null);
+  const [decliningBookingId, setDecliningBookingId] = useState<string | null>(
+    null,
+  );
+  const [cancellingBooking, setCancellingBooking] =
+    useState<ProviderEnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
 
   const timingDropdownRef = useRef<HTMLDivElement>(null);
@@ -74,6 +77,9 @@ const ProviderBookingsPage: React.FC = () => {
     isProviderAuthenticated,
     declineBookingById,
     isBookingActionInProgress,
+    acceptBookingById,
+    checkCommissionValidation,
+    startBookingById,
   } = useProviderBookingManagement();
 
   const { getClientReviewsByUser } = useClientRating();
@@ -102,11 +108,14 @@ const ProviderBookingsPage: React.FC = () => {
     [getClientReviewsByUser, fetchUserReputation],
   );
 
-    // Get the client name for the decline confirmation dialog
-  const getClientName = useCallback((bookingId: string) => {
-    const booking = bookings.find(b => b.id === bookingId);
-    return booking?.clientName || 'the client';
-  }, [bookings]);
+  // Get the client name for the decline confirmation dialog
+  const getClientName = useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((b) => b.id === bookingId);
+      return booking?.clientName || "the client";
+    },
+    [bookings],
+  );
 
   // Client data state with proper typing
   interface ClientData {
@@ -114,20 +123,27 @@ const ProviderBookingsPage: React.FC = () => {
     reputation: any;
   }
 
-  const [clientDataMap, setClientDataMap] = useState<Record<string, ClientData>>({});
+  const [clientDataMap, setClientDataMap] = useState<
+    Record<string, ClientData>
+  >({});
 
   // Handle booking decline
   const handleDeclineBooking = async () => {
     if (!decliningBookingId) return;
 
     try {
-      await declineBookingById(decliningBookingId, "Booking declined by provider");
+      await declineBookingById(
+        decliningBookingId,
+        "Booking declined by provider",
+      );
       setShowDeclineConfirm(false);
       toast.success("Booking declined successfully");
       await refreshBookings();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to decline booking. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Failed to decline booking. Please try again.",
       );
     } finally {
       setDecliningBookingId(null);
@@ -530,8 +546,17 @@ const ProviderBookingsPage: React.FC = () => {
                         setDecliningBookingId(booking.id);
                         setShowDeclineConfirm(true);
                       }}
-                      onCancelClick={(booking: ProviderEnhancedBooking) => setCancellingBooking(booking)}
-                      isDeclining={isBookingActionInProgress(booking.id, "decline")}
+                      onCancelClick={(booking: ProviderEnhancedBooking) =>
+                        setCancellingBooking(booking)
+                      }
+                      isDeclining={isBookingActionInProgress(
+                        booking.id,
+                        "decline",
+                      )}
+                      acceptBookingById={acceptBookingById}
+                      isBookingActionInProgress={isBookingActionInProgress}
+                      checkCommissionValidation={checkCommissionValidation}
+                      startBookingById={startBookingById}
                     />
                   </div>
                 );
@@ -551,8 +576,13 @@ const ProviderBookingsPage: React.FC = () => {
       {/* Decline Confirmation Dialog */}
       <DeclineConfirmDialog
         show={showDeclineConfirm}
-        clientName={decliningBookingId ? getClientName(decliningBookingId) : 'the client'}
-        isDeclinining={!!decliningBookingId && isBookingActionInProgress(decliningBookingId, "decline")}
+        clientName={
+          decliningBookingId ? getClientName(decliningBookingId) : "the client"
+        }
+        isDeclinining={
+          !!decliningBookingId &&
+          isBookingActionInProgress(decliningBookingId, "decline")
+        }
         onCancel={() => {
           setShowDeclineConfirm(false);
           setDecliningBookingId(null);
@@ -566,7 +596,7 @@ const ProviderBookingsPage: React.FC = () => {
         confirmTitle="Cancel Booking?"
         confirmDescription="Please provide a reason for cancelling this booking."
         textareaLabel="Reason for cancellation"
-        submitText={isCancelling ? 'Cancelling...' : 'Submit'}
+        submitText={isCancelling ? "Cancelling..." : "Submit"}
         cancelText="Back"
         isSubmitting={isCancelling}
         onSubmit={handleCancelBooking}

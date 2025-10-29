@@ -28,6 +28,11 @@ interface ProviderBookingItemCardProps {
   onDeclineClick: () => void;
   onCancelClick: (booking: ProviderEnhancedBooking) => void;
   isDeclining: boolean;
+
+  acceptBookingById : any;
+  isBookingActionInProgress : any;
+  checkCommissionValidation : any;
+  startBookingById : any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
@@ -37,15 +42,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   onDeclineClick,
   onCancelClick,
   isDeclining,
+  acceptBookingById,
+  isBookingActionInProgress,
+  checkCommissionValidation,
+  startBookingById,
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
-  const {
-    acceptBookingById,
-    isBookingActionInProgress,
-    checkCommissionValidation,
-    startBookingById,
-  } = useProviderBookingManagement();
+
 
   const { conversations, createConversation } = useChat();
   const { userImageUrl, refetch } = useUserImage(
@@ -67,7 +71,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     commissionValidationMessage: "",
     loading: false,
   });
-  
+
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   // Check commission validation for cash bookings that can be accepted
@@ -268,14 +272,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.stopPropagation();
     navigate(`/provider/complete-service/${booking.id}`);
   };
-  
+
   // Handle cancel button click
   const handleCancelClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     onCancelClick(booking);
   };
-  
+
   // Handle complete confirmation
   const handleCompleteConfirm = () => {
     navigate(`/provider/complete-service/${booking.id}`);
@@ -565,11 +569,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               {/* Cancel button additions */}
               {isAccepted && (
                 <button
-                onClick={handleCancelClick}
-                className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
-              >
-                <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
-              </button>
+                  onClick={handleCancelClick}
+                  className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
+                >
+                  <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
+                </button>
               )}
               {isInProgress && (
                 <button
@@ -592,10 +596,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // --- Card Layout ---
   return (
-    <> 
-        {/* Booking Card */}
-        <BookingCardContent showDurationInDetails={!isInProgress} />
-      
+    <>
+      {/* Booking Card */}
+      <BookingCardContent showDurationInDetails={!isInProgress} />
+
       {/* Complete Confirmation Dialog */}
       {showCompleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
