@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeftIcon, AdjustmentsHorizontalIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowLeftIcon,
+  AdjustmentsHorizontalIcon,
+} from "@heroicons/react/24/solid";
 import PageHeader from "../../../components/common/PageHeader";
 
 // Components

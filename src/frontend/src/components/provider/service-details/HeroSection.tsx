@@ -83,7 +83,7 @@ const HeroSection: React.FC<Props> = ({
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
+                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >

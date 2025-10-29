@@ -100,7 +100,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             service.category?.slug || service.category?.name,
           )}
           alt="Category"
-          className="absolute top-2 left-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
+          className="absolute left-2 top-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/images/categories/others.svg";
@@ -109,7 +109,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Status badge at top right of service image */}
         <span
-          className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
+          className={`absolute right-2 top-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
         >
           {statusDisplay.text}
         </span>
@@ -117,7 +117,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
       {/* Service Name */}
       <h4
-        className="mb-0 line-clamp-2 w-full text-center text-xl font-bold break-words text-blue-900"
+        className="mb-0 line-clamp-2 w-full break-words text-center text-xl font-bold text-blue-900"
         style={{ wordBreak: "break-word" }}
       >
         {service.title}
@@ -399,7 +399,7 @@ const MyServicesPage: React.FC = () => {
         <div className="mt-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
               <p className="mt-4 text-gray-500">Loading your services...</p>
             </div>
           ) : error ? (

@@ -238,19 +238,19 @@ const PackagesSection: React.FC<Props> = ({
                     className="flex-1"
                   >
                     <button
-                        onClick={() =>
-                          hasActiveBookings ? undefined : onEditPackage(pkg)
-                        }
-                        className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                          hasActiveBookings || isAddingOrEditingPackage
-                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                            : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
-                        }`}
-                        aria-label={`Edit ${pkg.title}`}
-                        disabled={hasActiveBookings || isAddingOrEditingPackage}
-                      >
-                        Edit Package
-                      </button>
+                      onClick={() =>
+                        hasActiveBookings ? undefined : onEditPackage(pkg)
+                      }
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                        hasActiveBookings || isAddingOrEditingPackage
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                      }`}
+                      aria-label={`Edit ${pkg.title}`}
+                      disabled={hasActiveBookings || isAddingOrEditingPackage}
+                    >
+                      Edit Package
+                    </button>
                   </Tooltip>
 
                   <Tooltip
@@ -259,27 +259,27 @@ const PackagesSection: React.FC<Props> = ({
                     className="flex-1"
                   >
                     <button
-                        onClick={() =>
-                          hasActiveBookings || packages.length <= 1
-                            ? undefined
-                            : onDeletePackage(pkg.id)
-                        }
-                        className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                          hasActiveBookings ||
-                          isAddingOrEditingPackage ||
-                          packages.length <= 1
-                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                            : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                        }`}
-                        aria-label={`Delete ${pkg.title}`}
-                        disabled={
-                          hasActiveBookings ||
-                          isAddingOrEditingPackage ||
-                          packages.length <= 1
-                        }
-                      >
-                        Delete
-                      </button>
+                      onClick={() =>
+                        hasActiveBookings || packages.length <= 1
+                          ? undefined
+                          : onDeletePackage(pkg.id)
+                      }
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                        hasActiveBookings ||
+                        isAddingOrEditingPackage ||
+                        packages.length <= 1
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                      }`}
+                      aria-label={`Delete ${pkg.title}`}
+                      disabled={
+                        hasActiveBookings ||
+                        isAddingOrEditingPackage ||
+                        packages.length <= 1
+                      }
+                    >
+                      Delete
+                    </button>
                   </Tooltip>
                 </div>
               </div>
