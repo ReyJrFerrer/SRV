@@ -1015,7 +1015,7 @@ const BookingPage: React.FC = () => {
   if (!serviceId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -1044,7 +1044,7 @@ const BookingPage: React.FC = () => {
           .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
         `}</style>
           <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-            <div className="relative flex w-full items-center px-4 py-3">
+            <div className="relative flex w-full items-center px-5 py-4">
               <button
                 onClick={() => navigate(-1)}
                 className="mr-4 flex-shrink-0 text-gray-600 hover:text-gray-800"

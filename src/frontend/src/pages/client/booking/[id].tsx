@@ -563,7 +563,7 @@ const BookingDetailsPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+        <div className="relative flex w-full items-center px-5 py-4">
           <button
             onClick={() => navigate(-1)}
             className="mr-4 flex-shrink-0 rounded-full hover:bg-gray-100"
@@ -576,7 +576,7 @@ const BookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 p-4 pb-28 sm:p-6">
+      <main className="container mx-auto space-y-6 p-4 ">
         <div className="relative mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
           <span
             className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
@@ -703,7 +703,7 @@ const BookingDetailsPage: React.FC = () => {
           </div>
         )}
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
+        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg mb-24">
           <button
             onClick={handleChatWithProvider}
             disabled={chatLoading}

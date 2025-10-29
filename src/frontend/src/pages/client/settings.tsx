@@ -70,10 +70,10 @@ const SettingsPage: React.FC = () => {
   refetchImage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Settings
           </h1>
         </div>
