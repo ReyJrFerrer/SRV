@@ -5,6 +5,7 @@ export interface TooltipProps {
   content: string;
   showWhenDisabled?: boolean;
   side?: "top" | "bottom" | "left" | "right";
+  className?: string;
 }
 
 // Shared Tooltip with consistent API across app.
@@ -14,6 +15,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   content,
   showWhenDisabled = false,
   side = "top",
+  className,
 }) => {
   const positionClass = (() => {
     switch (side) {
@@ -30,7 +32,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   })();
 
   return (
-    <div className="group relative inline-block align-middle">
+    <div className={`group relative inline-block align-middle${className ? ` ${className}` : ""}`}>
       {children}
       {showWhenDisabled && (
         <div

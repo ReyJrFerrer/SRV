@@ -980,7 +980,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
@@ -1084,24 +1084,23 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-8">
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(`/provider/home`)}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Service Details
           </h1>
-          <div className="w-8"></div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
+      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8 sm:py-12">
         <HeroSection
           onBack={() => navigate("/provider/home")}
           service={service}
