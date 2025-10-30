@@ -591,30 +591,7 @@ const BookingDetailsPage: React.FC = () => {
                       <PhoneIcon className="mr-1.5 h-4 w-4" />
                       {providerProfile?.phone || "No contact number"}
                     </p>
-                    <div className="mt-2 flex flex-col items-start gap-1">
-                      <div className="flex items-center gap-2">
-                        {loadingStats ? (
-                          <p className="text-sm text-gray-400">
-                            Loading reviews...
-                          </p>
-                        ) : averageRating != null && reviewCount != null ? (
-                          <>
-                            <div className="flex items-center text-sm font-bold text-yellow-500">
-                              <StarIcon className="mr-1 h-4 w-4" />
-                              <span>{averageRating.toFixed(1)}</span>
-                            </div>
-                            <span className="text-sm text-gray-500">
-                              ({reviewCount}{" "}
-                              {reviewCount === 1 ? "review" : "reviews"})
-                            </span>
-                          </>
-                        ) : (
-                          <p className="text-sm text-gray-400">
-                            No reviews yet
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    <p className="mt-1 flex items-center text-sm text-gray-500"></p>
                   </div>
                 </div>
               </div>
