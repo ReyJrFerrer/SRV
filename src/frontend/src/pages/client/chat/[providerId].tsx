@@ -145,6 +145,10 @@ const ConversationPage: React.FC = () => {
     } catch {}
   };
 
+  const handleReportClick = () => {
+    navigate("/client/report");
+  };
+
   // Format timestamp for display in chat bubbles
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
@@ -213,21 +217,42 @@ const ConversationPage: React.FC = () => {
         >
           <ArrowLeftIcon className="h-6 w-6 text-blue-700 hover:text-yellow-600" />
         </button>
-        <div className="ml-3 flex items-center">
-          <div className="relative h-11 w-11">
-            <ProfileImage
-              profilePictureUrl={
-                otherUserImage !== DEFAULT_USER_IMAGE
-                  ? otherUserImage
-                  : undefined
-              }
-              userName={otherUserName}
-              size="h-11 w-11"
-            />
+        <div className="ml-3 flex flex-1 items-center justify-between">
+          <div className="flex items-center">
+            <div className="relative h-11 w-11">
+              <ProfileImage
+                profilePictureUrl={
+                  otherUserImage !== DEFAULT_USER_IMAGE
+                    ? otherUserImage
+                    : undefined
+                }
+                userName={otherUserName}
+                size="h-11 w-11"
+              />
+            </div>
+            <div className="ml-3">
+              <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
+            </div>
           </div>
-          <div className="ml-3">
-            <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
-          </div>
+          <button
+            onClick={handleReportClick}
+            className="group relative flex items-center justify-center rounded-lg bg-gray-100 p-2 text-gray-500 shadow-sm transition-colors hover:bg-red-100 hover:text-red-600"
+            title="Report this user"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </button>
         </div>
       </header>
 

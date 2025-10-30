@@ -35,6 +35,16 @@ const db = admin.firestore();
 const NOTIFICATION_EXPIRY_DAYS = 30;
 
 /**
+ * Generate a unique report ID
+ * @return {string} Unique report ID
+ */
+function generateReportId() {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `report_${timestamp}_${random}`;
+}
+
+/**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
  * @param {object} data - Request data
@@ -359,6 +369,7 @@ async function cancelConflictingBookings(
 
     const batch = db.batch();
     const notificationPromises = [];
+    const ticketPromises = [];
     let cancelledCount = 0;
 
     conflictingBookingsQuery.forEach((doc) => {
@@ -1530,6 +1541,43 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
+    // Automatically create a ticket with cancellation category
+    try {
+      const userProfile = cancellerDoc.exists ? cancellerDoc.data() : null;
+      const reportId = generateReportId();
+      
+      // Create ticket description with structured data
+      const ticketDescription = JSON.stringify({
+        title: `Booking Cancellation - ${serviceName}`,
+        description: `Cancelled Booking.\nCancellation Reason: ${cancelReason.trim()}`,
+        category: "cancellation",
+        timestamp: new Date().toISOString(),
+        source: authInfo.uid === booking.clientId ? "client_cancellation" : "provider_cancellation",
+        bookingId: bookingId,
+        cancelledBy: authInfo.uid,
+        serviceId: booking.serviceId,
+        serviceName: serviceName,
+        cancelledByName: cancellerName,
+      });
+
+      const newReport = {
+        id: reportId,
+        userId: authInfo.uid,
+        userName: cancellerName,
+        userPhone: userProfile?.phone || "Unknown",
+        description: ticketDescription,
+        status: "open",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Save report to Firestore
+      await db.collection("app_reports").doc(reportId).set(newReport);
+      console.log(`✅ [cancelBooking] Automatically created ticket ${reportId} for booking cancellation.`);
+    } catch (ticketError) {
+      // Don't fail the cancellation if ticket creation fails - just log it
+      console.error(`⚠️ [cancelBooking] Failed to create automatic ticket: ${ticketError.message}`);
+    }
+
     console.log("✅ [cancelBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
   } catch (error) {
@@ -2647,12 +2695,49 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         ),
       );
 
+      // Automatically create a ticket with cancellation category for scheduled auto-cancel
+      try {
+        const reportId = generateReportId();
+        const ticketDescription = JSON.stringify({
+          title: `Scheduled Auto-Cancellation - ${serviceName}`,
+          description: "Cancelled Booking.\nCancellation Reason: missed scheduled time slot",
+          category: "cancellation",
+          timestamp: new Date().toISOString(),
+          source: "system_auto_cancellation_missed_slot",
+          bookingId: booking.id,
+          cancelledBy: "system",
+          serviceId: booking.serviceId,
+          serviceName: serviceName,
+          providerId: booking.providerId,
+          clientId: booking.clientId,
+        });
+
+        const newReport = {
+          id: reportId,
+          userId: "system",
+          userName: "System",
+          userPhone: "N/A",
+          description: ticketDescription,
+          status: "open",
+          createdAt: new Date().toISOString(),
+        };
+
+        ticketPromises.push(
+          db.collection("app_reports").doc(reportId).set(newReport).catch((err) => {
+            console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel ticket for booking ${booking.id}: ${err.message}`);
+          })
+        );
+      } catch (ticketError) {
+        console.error(`⚠️ [cancelMissedBookings] Ticket creation error: ${ticketError.message}`);
+      }
+
       cancelledCount++;
     }
 
     if (cancelledCount > 0) {
       await batch.commit();
       await Promise.allSettled(notificationPromises);
+      await Promise.allSettled(ticketPromises);
       console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
     }
 

@@ -28,6 +28,20 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
 
     let ticket: Ticket;
     if (parsedData) {
+      // Build tags based on source and category
+      const tags = [];
+      if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+        tags.push("provider");
+      } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+        tags.push("client");
+      }
+      
+      if (parsedData.category === "cancellation") {
+        tags.push("cancellation");
+      }
+      
+      tags.push("user-report");
+
       ticket = {
         id: `REPORT-${report.id}`,
         title: parsedData.title,
@@ -38,10 +52,7 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         submittedById: report.userId,
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
-        tags: [
-          parsedData.source === "provider_report" ? "provider" : "client",
-          "user-report",
-        ],
+        tags: tags,
       };
     } else {
       ticket = {
@@ -67,7 +78,7 @@ interface Ticket {
   title: string;
   description: string;
   status: "open" | "in_progress" | "resolved" | "closed";
-  category: "technical" | "billing" | "account" | "service" | "other";
+  category: "technical" | "billing" | "account" | "service" | "cancellation" | "other";
   submittedBy: string;
   submittedById: string; // User ID for navigation
   submittedAt: string;
@@ -103,6 +114,8 @@ const getCategoryColor = (category: string) => {
       return "bg-blue-100 text-blue-800";
     case "service":
       return "bg-yellow-100 text-yellow-800";
+    case "cancellation":
+      return "bg-orange-100 text-orange-800";
     case "other":
       return "bg-gray-100 text-gray-800";
     default:
@@ -545,6 +558,7 @@ export const TicketInboxPage: React.FC = () => {
                   <option value="billing">Billing</option>
                   <option value="account">Account</option>
                   <option value="service">Service</option>
+                  <option value="cancellation">Cancellation</option>
                   <option value="other">Other</option>
                 </select>
               </div>
