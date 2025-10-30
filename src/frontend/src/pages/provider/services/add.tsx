@@ -8,9 +8,8 @@ import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   saveFilesToIDB,
   getFilesFromIDB,
+  getFilesEntries,
   deleteDraftFromIDB,
-  listBlobKeys,
-  getBlob,
 } from "../../../utils/draftStorage";
 
 // Step Components
@@ -255,40 +254,32 @@ const AddServicePage: React.FC = () => {
         else if (loadedDraft.certificationPreviews)
           setCertificationPreviews(loadedDraft.certificationPreviews);
 
-        // Reconstruct File objects from IDB blobs so submission works
+        // Reconstruct File objects from IDB entries so submission works
         try {
-          const keys = await listBlobKeys();
-          const imgKeys = keys.filter((k) =>
-            k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:img:`),
-          );
-          const certKeys = keys.filter((k) =>
-            k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:cert:`),
-          );
-          const restoredImgFiles: File[] = [];
-          for (let i = 0; i < imgKeys.length; i++) {
-            const b = await getBlob(imgKeys[i]);
-            if (b) {
-              const f = new File([b], `draft-img-${i}`, {
-                type: b.type || "application/octet-stream",
-              });
-              restoredImgFiles.push(f);
-            }
+          const imgEntries = await getFilesEntries(ADD_SERVICE_DRAFT_KEY, "img");
+          if (imgEntries && imgEntries.length > 0) {
+            // set previews from blobs (preserve order)
+            setImagePreviews(imgEntries.map((e) => URL.createObjectURL(e.blob)));
+            const restoredImgFiles = imgEntries.map((e, i) => {
+              const name = e.name || `draft-img-${i}`;
+              const type = e.type || (e.blob && (e.blob as Blob).type) || "application/octet-stream";
+              const lastModified = e.lastModified || Date.now();
+              return new File([e.blob], name, { type, lastModified });
+            });
+            if (restoredImgFiles.length > 0) setServiceImageFiles(restoredImgFiles);
           }
-          if (restoredImgFiles.length > 0)
-            setServiceImageFiles(restoredImgFiles);
 
-          const restoredCertFiles: File[] = [];
-          for (let i = 0; i < certKeys.length; i++) {
-            const b = await getBlob(certKeys[i]);
-            if (b) {
-              const f = new File([b], `draft-cert-${i}`, {
-                type: b.type || "application/octet-stream",
-              });
-              restoredCertFiles.push(f);
-            }
+          const certEntries = await getFilesEntries(ADD_SERVICE_DRAFT_KEY, "cert");
+          if (certEntries && certEntries.length > 0) {
+            setCertificationPreviews(certEntries.map((e) => URL.createObjectURL(e.blob)));
+            const restoredCertFiles = certEntries.map((e, i) => {
+              const name = e.name || `draft-cert-${i}`;
+              const type = e.type || (e.blob && (e.blob as Blob).type) || "application/octet-stream";
+              const lastModified = e.lastModified || Date.now();
+              return new File([e.blob], name, { type, lastModified });
+            });
+            if (restoredCertFiles.length > 0) setCertificationFiles(restoredCertFiles);
           }
-          if (restoredCertFiles.length > 0)
-            setCertificationFiles(restoredCertFiles);
         } catch (err) {
           // ignore file reconstruction errors
         }
@@ -852,10 +843,32 @@ const AddServicePage: React.FC = () => {
             fileData: Uint8Array;
           }>
         | undefined;
-      if (serviceImageFiles.length > 0) {
+
+      // Ensure we process images even if the in-memory state is empty
+      // (covers the case where user restored from IDB but state wasn't populated yet)
+      let filesToProcess: File[] = serviceImageFiles;
+      if ((!filesToProcess || filesToProcess.length === 0) && typeof getFilesEntries === "function") {
         try {
-          processedServiceImages =
-            await processImageFilesForService(serviceImageFiles);
+          const imgEntries = await getFilesEntries(ADD_SERVICE_DRAFT_KEY, "img");
+          if (imgEntries && imgEntries.length > 0) {
+            filesToProcess = imgEntries.map((e, i) => {
+              const name = e.name || `draft-img-${i}`;
+              const type = e.type || (e.blob && (e.blob as Blob).type) || "application/octet-stream";
+              const lastModified = e.lastModified || Date.now();
+              return new File([e.blob], name, { type, lastModified });
+            });
+            // also set local state so UI reflects restored files
+            setServiceImageFiles(filesToProcess);
+            setImagePreviews(imgEntries.map((e) => URL.createObjectURL(e.blob)));
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      if (filesToProcess && filesToProcess.length > 0) {
+        try {
+          processedServiceImages = await processImageFilesForService(filesToProcess);
         } catch {
           processedServiceImages = undefined;
         }
