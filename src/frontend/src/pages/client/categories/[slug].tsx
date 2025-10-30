@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/solid";
 
 // Components
@@ -26,7 +26,6 @@ interface CategoryState {
 }
 
 const CategoryPage: React.FC = () => {
-  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
 
   const [category, setCategory] = useState<CategoryState | null>(null);
@@ -109,7 +108,6 @@ const CategoryPage: React.FC = () => {
     loadCategory();
   }, [slug]);
 
-  const handleBackClick = () => navigate(-1);
   const handleSearch = (term: string) => setSearchTerm(term);
 
   // --- REFACTORED: Memoized sorting and filtering logic ---
