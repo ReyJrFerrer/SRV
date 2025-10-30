@@ -522,7 +522,8 @@ const AddServicePage: React.FC = () => {
           } else if (name.trim().length < 3) {
             errors.categoryId = "Category name must be at least 3 characters";
           } else if (name.trim().length > 40) {
-            errors.categoryId = "Category name must be no more than 40 characters";
+            errors.categoryId =
+              "Category name must be no more than 40 characters";
           }
         }
         if (formData.servicePackages.length === 0) {
@@ -1022,12 +1023,9 @@ const AddServicePage: React.FC = () => {
   };
 
   // --- Category request handler: persist custom category name into formData ---
-  const onRequestCategory = useCallback(
-    (categoryName: string) => {
-      setFormData((prev) => ({ ...prev, customCategoryName: categoryName }));
-    },
-    [],
-  );
+  const onRequestCategory = useCallback((categoryName: string) => {
+    setFormData((prev) => ({ ...prev, customCategoryName: categoryName }));
+  }, []);
 
   // --- Step Renderer ---
   const renderStep = () => {
@@ -1184,7 +1182,7 @@ const AddServicePage: React.FC = () => {
                   </div>
                   <p className="break-words text-lg font-semibold text-blue-800">
                     {formData.categoryId === "__other__"
-                      ? ((formData as any).customCategoryName || "Unknown")
+                      ? (formData as any).customCategoryName || "Unknown"
                       : categories.find((cat) => cat.id === formData.categoryId)
                           ?.name || "Unknown"}
                   </p>

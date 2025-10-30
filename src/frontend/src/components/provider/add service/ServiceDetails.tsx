@@ -381,7 +381,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       onChange={(e) => onRequestCategory(e.target.value)}
                       required
                       maxLength={40}
-                      className="mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm border-gray-300 bg-gray-50"
+                      className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm"
                     />
                   </div>
                 )}
