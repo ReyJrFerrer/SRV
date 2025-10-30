@@ -12,6 +12,7 @@ import {
 import MapSection from "../../../components/provider/booking-details/MapSection";
 import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 
 import { useClientRating } from "../../../hooks/useClientRating";
 import { useReputation } from "../../../hooks/useReputation";
@@ -801,6 +802,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {/* Booking Progress Section */}
         <BookingProgressSection status={specificBooking?.status} />
 
+        
+
         {/* Commission Validation Section for Cash Bookings */}
         <CommissionInfo
           show={Boolean(
@@ -825,6 +828,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
           showStreetView={showStreetView}
           setShowStreetView={setShowStreetView}
         />
+
+        {/* Booking Notes Section */}
+        <BookingNotes notes={(specificBooking as any)?.notes} />
 
         {/* Action Buttons */}
         {specificBooking && (
