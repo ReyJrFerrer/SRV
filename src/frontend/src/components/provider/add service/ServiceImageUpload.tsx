@@ -28,7 +28,16 @@ const FileInput: React.FC<{
   buttonClass: string;
   label: string;
   description: string;
-}> = ({ id, accept, multiple, onChange, files, previews, buttonText, buttonClass, label, description }) => {
+}> = ({
+  id,
+  accept,
+  multiple,
+  onChange,
+  files,
+  previews,
+  buttonText,
+  buttonClass,
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -41,7 +50,8 @@ const FileInput: React.FC<{
     onChange(e);
   };
 
-  const hasFiles = files.length > 0 || previews.length > 0 || selectedFiles.length > 0;
+  const hasFiles =
+    files.length > 0 || previews.length > 0 || selectedFiles.length > 0;
   const displayFiles = files.length > 0 ? files : selectedFiles;
 
   return (
@@ -56,7 +66,8 @@ const FileInput: React.FC<{
         </button>
         {hasFiles && (
           <span className="text-sm text-gray-600">
-            {displayFiles.length} file{displayFiles.length !== 1 ? 's' : ''} selected
+            {displayFiles.length} file{displayFiles.length !== 1 ? "s" : ""}{" "}
+            selected
           </span>
         )}
         <input
@@ -91,7 +102,9 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
     }
   };
 
-  const onCertificationFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCertificationFilesChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
       handleCertificationFilesChange?.(e);

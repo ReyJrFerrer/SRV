@@ -30,16 +30,22 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
     if (parsedData) {
       // Build tags based on source and category
       const tags = [];
-      if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+      if (
+        parsedData.source === "provider_report" ||
+        parsedData.source === "provider_cancellation"
+      ) {
         tags.push("provider");
-      } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+      } else if (
+        parsedData.source === "client_report" ||
+        parsedData.source === "client_cancellation"
+      ) {
         tags.push("client");
       }
-      
+
       if (parsedData.category === "cancellation") {
         tags.push("cancellation");
       }
-      
+
       tags.push("user-report");
 
       ticket = {
@@ -78,7 +84,13 @@ interface Ticket {
   title: string;
   description: string;
   status: "open" | "in_progress" | "resolved" | "closed";
-  category: "technical" | "billing" | "account" | "service" | "cancellation" | "other";
+  category:
+    | "technical"
+    | "billing"
+    | "account"
+    | "service"
+    | "cancellation"
+    | "other";
   submittedBy: string;
   submittedById: string; // User ID for navigation
   submittedAt: string;
