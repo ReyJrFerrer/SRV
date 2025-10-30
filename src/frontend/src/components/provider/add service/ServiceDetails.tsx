@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
-import { ServiceCategory, CommissionQuote } from "../../../services/serviceCanisterService";
+import {
+  ServiceCategory,
+  CommissionQuote,
+} from "../../../services/serviceCanisterService";
 import { toast } from "sonner";
 
 // Validation errors interface
@@ -228,7 +231,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             if (onCommissionComputed) {
               try {
                 // treat returned shape as CommissionQuote when possible
-                onCommissionComputed(pkgId, quote as unknown as CommissionQuote);
+                onCommissionComputed(
+                  pkgId,
+                  quote as unknown as CommissionQuote,
+                );
               } catch (e) {
                 // ignore lifting errors
               }
@@ -242,7 +248,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             }));
             if (onCommissionComputed) {
               try {
-                onCommissionComputed(pkgId, { commissionFee: fee } as CommissionQuote);
+                onCommissionComputed(pkgId, {
+                  commissionFee: fee,
+                } as CommissionQuote);
               } catch (e) {}
             }
           }
@@ -468,8 +476,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           />
                           {/* Live commission display or loading state */}
                           {commissionLoading[pkg.id] ? (
-                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
-                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-transparent border-gray-400" />
+                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
                               <span>Calculating…</span>
                             </div>
                           ) : (
@@ -487,13 +495,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                   </span>
                                   <span className="font-semibold">
                                     Total: ₱
-                                    {liveCommission[pkg.id]!.total.toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}
+                                    {liveCommission[
+                                      pkg.id
+                                    ]!.total.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
                                   </span>
                                 </div>
                               </div>
