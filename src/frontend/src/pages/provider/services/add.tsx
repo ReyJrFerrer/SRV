@@ -1025,6 +1025,9 @@ const AddServicePage: React.FC = () => {
             // provide the commission computation function so ServiceDetails can
             // calculate commission/total live as the user types
             computeCommission={getCommissionQuote}
+            onCommissionComputed={(pkgId, quote) =>
+              setCommissionQuotes((prev) => ({ ...prev, [pkgId]: quote }))
+            }
             handleChange={handleChange}
             handlePackageChange={handlePackageChange}
             addPackage={addPackage}

@@ -307,7 +307,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               onChange={() => setLocationInputMode("manual")}
               className="h-4 w-4 text-blue-600"
             />
-            <span className="text-gray-700">Manual City/Province</span>
+            <span className="text-gray-700">Choose City/Province</span>
           </label>
           <button
             type="button"

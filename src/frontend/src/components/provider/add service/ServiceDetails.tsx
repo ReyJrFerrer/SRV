@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
-import { ServiceCategory } from "../../../services/serviceCanisterService";
+import { ServiceCategory, CommissionQuote } from "../../../services/serviceCanisterService";
+import { toast } from "sonner";
 
 // Validation errors interface
 interface ValidationErrors {
@@ -59,6 +60,9 @@ interface ServiceDetailsProps {
   ) => Promise<{
     commissionFee: number;
   }>;
+  // Called when a commission quote is retrieved for a package so parent
+  // can persist/use the result (lifting the live value to `commissionQuotes`).
+  onCommissionComputed?: (pkgId: string, quote: CommissionQuote) => void;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -72,6 +76,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   validationErrors = {},
   scrollToErrorTrigger,
   computeCommission,
+  onCommissionComputed,
 }) => {
   // Local live commission map per package id
   const [liveCommission, setLiveCommission] = useState<{
@@ -80,6 +85,11 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
   // Debounce timers per package
   const commissionTimers = useRef<{ [pkgId: string]: number | undefined }>({});
+
+  // Loading state for per-package commission fetches
+  const [commissionLoading, setCommissionLoading] = useState<{
+    [pkgId: string]: boolean | undefined;
+  }>({});
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -200,6 +210,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       }
       // schedule debounce
       commissionTimers.current[pkgId] = window.setTimeout(async () => {
+        // indicate loading for this package
+        setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
         try {
           const priceNum = Number(String(value).replace(/[^0-9]/g, "")) || 0;
           const categoryName =
@@ -212,6 +224,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               ...prev,
               [pkgId]: { commissionFee: fee, total: priceNum + fee },
             }));
+            // lift to parent if requested
+            if (onCommissionComputed) {
+              try {
+                // treat returned shape as CommissionQuote when possible
+                onCommissionComputed(pkgId, quote as unknown as CommissionQuote);
+              } catch (e) {
+                // ignore lifting errors
+              }
+            }
           } else {
             // Fallback: simple percentage (5%)
             const fee = Math.round(priceNum * 0.05 * 100) / 100;
@@ -219,10 +240,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               ...prev,
               [pkgId]: { commissionFee: fee, total: priceNum + fee },
             }));
+            if (onCommissionComputed) {
+              try {
+                onCommissionComputed(pkgId, { commissionFee: fee } as CommissionQuote);
+              } catch (e) {}
+            }
           }
         } catch (e) {
-          // ignore
+          // show a subtle toast on failure
+          toast.error("Failed to fetch commission quote");
         }
+        // clear loading flag
+        setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
       }, 400);
     }
   };
@@ -437,31 +466,38 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                           />
-                          {/* Live commission display */}
-                          {liveCommission[pkg.id] && (
-                            <div className="mt-2 text-sm text-green-600">
-                              <div className="flex flex-col">
-                                <span className="mb-1">
-                                  Commission: ₱
-                                  {liveCommission[
-                                    pkg.id
-                                  ]!.commissionFee.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                                <span className="font-semibold">
-                                  Total: ₱
-                                  {liveCommission[pkg.id]!.total.toLocaleString(
-                                    undefined,
-                                    {
+                          {/* Live commission display or loading state */}
+                          {commissionLoading[pkg.id] ? (
+                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-transparent border-gray-400" />
+                              <span>Calculating…</span>
+                            </div>
+                          ) : (
+                            liveCommission[pkg.id] && (
+                              <div className="mt-2 text-sm text-green-600">
+                                <div className="flex flex-col">
+                                  <span className="mb-1">
+                                    Commission: ₱
+                                    {liveCommission[
+                                      pkg.id
+                                    ]!.commissionFee.toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
-                                    },
-                                  )}
-                                </span>
+                                    })}
+                                  </span>
+                                  <span className="font-semibold">
+                                    Total: ₱
+                                    {liveCommission[pkg.id]!.total.toLocaleString(
+                                      undefined,
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
+                            )
                           )}
                           {pkgError &&
                             pkgError.price &&
