@@ -1,5 +1,8 @@
 import React from "react";
-import { ChatBubbleLeftRightIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import {
+  ChatBubbleLeftRightIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 
 type ReviewButtonContent = {
@@ -20,7 +23,15 @@ const ActionButtons: React.FC<{
   reviewButtonContent: ReviewButtonContent | null;
   status?: string | null;
   onReport: () => void;
-}> = ({ onChat, chatLoading, onRequestCancel, canCancel, reviewButtonContent, status, onReport }) => {
+}> = ({
+  onChat,
+  chatLoading,
+  onRequestCancel,
+  canCancel,
+  reviewButtonContent,
+  status,
+  onReport,
+}) => {
   return (
     <div className="mb-24 flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
       <button
@@ -35,7 +46,8 @@ const ActionButtons: React.FC<{
           </>
         ) : (
           <>
-            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with Provider
+            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
+            Provider
           </>
         )}
       </button>

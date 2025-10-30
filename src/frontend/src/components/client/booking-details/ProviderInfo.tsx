@@ -73,7 +73,9 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
                   <StarIcon className="mr-1 h-4 w-4" />
                   <span>{averageRating.toFixed(1)}</span>
                 </div>
-                <span className="text-sm text-gray-500">({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
+                <span className="text-sm text-gray-500">
+                  ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                </span>
               </>
             ) : (
               <p className="text-sm text-gray-400">No reviews yet</p>

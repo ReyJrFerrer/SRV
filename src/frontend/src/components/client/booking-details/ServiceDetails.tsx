@@ -1,5 +1,11 @@
 import React from "react";
-import { BriefcaseIcon, CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, ArchiveBoxIcon } from "@heroicons/react/24/solid";
+import {
+  BriefcaseIcon,
+  CalendarDaysIcon,
+  MapPinIcon,
+  CurrencyDollarIcon,
+  ArchiveBoxIcon,
+} from "@heroicons/react/24/solid";
 
 type ServiceDetailsProps = {
   packageName?: string | null;
@@ -35,7 +41,8 @@ const formatDateRange = (
     });
 
     // Check if both dates are on the same day
-    const isSameDay = requestedDateObj.toDateString() === scheduledDateObj.toDateString();
+    const isSameDay =
+      requestedDateObj.toDateString() === scheduledDateObj.toDateString();
 
     if (isSameDay) {
       return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledTimeStr}`;
@@ -75,7 +82,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         <div className="flex items-start">
           <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <span>
-            <strong>Scheduled:</strong> {formatDateRange(requestedDate || "", scheduledDate || "")}
+            <strong>Scheduled:</strong>{" "}
+            {formatDateRange(requestedDate || "", scheduledDate || "")}
           </span>
         </div>
         <div className="flex items-start">
@@ -84,7 +92,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             <strong>Location:</strong>{" "}
             {(formattedLocation || "Not specified")
               .split(" ")
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+              )
               .join(" ")}
           </span>
         </div>
@@ -92,7 +103,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
           <div className="flex items-start">
             <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
             <span>
-              <strong>Payment:</strong> ₱{(price + (commissionEstimate || 0)).toFixed(2)} (Cash)
+              <strong>Payment:</strong> ₱
+              {(price + (commissionEstimate || 0)).toFixed(2)} (Cash)
             </span>
           </div>
         )}
