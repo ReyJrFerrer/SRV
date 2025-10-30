@@ -54,7 +54,13 @@ export async function getBlob(id: string): Promise<Blob | null> {
 }
 
 // Return the full stored entry (blob + metadata)
-export async function getBlobEntry(id: string): Promise<{ id: string; blob: Blob; name?: string; type?: string; lastModified?: number } | null> {
+export async function getBlobEntry(id: string): Promise<{
+  id: string;
+  blob: Blob;
+  name?: string;
+  type?: string;
+  lastModified?: number;
+} | null> {
   const db = await openDraftDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction("blobs", "readonly");
@@ -127,18 +133,44 @@ export async function getFilesFromIDB(
 }
 
 // Return stored entries (blob + metadata) for a draft prefix, sorted by the numeric suffix
-export async function getFilesEntries(draftKey: string, prefix: string): Promise<Array<{ key: string; blob: Blob; name?: string; type?: string; lastModified?: number; index: number }>> {
+export async function getFilesEntries(
+  draftKey: string,
+  prefix: string,
+): Promise<
+  Array<{
+    key: string;
+    blob: Blob;
+    name?: string;
+    type?: string;
+    lastModified?: number;
+    index: number;
+  }>
+> {
   const keys = await listBlobKeys();
   const matched = keys
     .filter((k) => k.startsWith(`${draftKey}:${prefix}:`))
     .map((k) => ({ key: k, index: Number(k.split(":").pop() || "0") }))
     .sort((a, b) => a.index - b.index);
 
-  const results: Array<{ key: string; blob: Blob; name?: string; type?: string; lastModified?: number; index: number }> = [];
+  const results: Array<{
+    key: string;
+    blob: Blob;
+    name?: string;
+    type?: string;
+    lastModified?: number;
+    index: number;
+  }> = [];
   for (const m of matched) {
     const entry = await getBlobEntry(m.key);
     if (entry) {
-      results.push({ key: m.key, blob: entry.blob, name: entry.name, type: entry.type, lastModified: entry.lastModified, index: m.index });
+      results.push({
+        key: m.key,
+        blob: entry.blob,
+        name: entry.name,
+        type: entry.type,
+        lastModified: entry.lastModified,
+        index: m.index,
+      });
     }
   }
   return results;
