@@ -27,6 +27,7 @@ import {
 } from "../store/locationStore";
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
+import authCanisterService from "../services/authCanisterService";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -230,6 +231,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log("✅ Successfully authenticated with Firebase!");
             console.log("Firebase UID:", result.user.uid);
 
+            // Update user active status to true on successful login
+            try {
+              await authCanisterService.updateUserActiveStatus(true);
+            } catch (error) {
+              console.error(
+                "Error updating user active status on login:",
+                error,
+              );
+              // Continue with login even if this fails
+            }
+
             // Notify user if they need to create a profile
             if (result.needsProfile) {
               console.log("📝 New user detected - profile creation required");
@@ -265,6 +277,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     if (!authClient) return;
+
+    // Update user active status to false before logout
+    try {
+      await authCanisterService.updateUserActiveStatus(false);
+    } catch (error) {
+      console.error("Error updating user active status on logout:", error);
+      // Continue with logout even if this fails
+    }
 
     // Clear stored IC custom token
     clearICCustomToken();

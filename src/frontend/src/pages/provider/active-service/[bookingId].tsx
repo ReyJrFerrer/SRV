@@ -27,6 +27,7 @@ const ActiveServicePage: React.FC = () => {
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(
     null,
   );
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
@@ -118,6 +119,7 @@ const ActiveServicePage: React.FC = () => {
       // Actually cancel the booking
       await bookingCanisterService.cancelBooking(booking.id, reason);
       toast.success("Complaint filed and booking cancelled.");
+      setIsCancelModalOpen(false);
       navigate("/provider/bookings");
     } catch (err) {
       toast.error("Unable to cancel active service. Please try again.");
@@ -365,21 +367,27 @@ const ActiveServicePage: React.FC = () => {
               >
                 <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
               </button>
-              <CancelWithReasonButton
-                buttonText="Cancel Service"
+              <button
+                onClick={() => setIsCancelModalOpen(true)}
                 className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
-                confirmTitle="Cancel Active Service?"
-                confirmDescription="Share a reason. We'll file it as a complaint ticket to the admin and cancel this service."
-                textareaLabel="Reason for cancellation"
-                submitText="Submit"
-                cancelText="Back"
-                onSubmit={handleCancelActiveService}
-              />
+              >
+                Cancel Service
+              </button>
             </div>
           </section>
         </div>
       </main>
       <div className="lg:hidden"></div>
+      <CancelWithReasonButton
+        show={isCancelModalOpen}
+        onSubmit={handleCancelActiveService}
+        onCancel={() => setIsCancelModalOpen(false)}
+        confirmTitle="Cancel Active Service?"
+        confirmDescription="Share a reason. We'll file it as a complaint ticket to the admin and cancel this service."
+        textareaLabel="Reason for cancellation"
+        submitText="Submit"
+        cancelText="Back"
+      />
       <BottomNavigation />
     </div>
   );

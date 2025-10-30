@@ -8,6 +8,8 @@ interface Props {
   clientName: string;
   clientContact: string | undefined;
   clientId?: string;
+  reviews: any;
+  reputation: any;
 }
 
 const ClientInfoCard: React.FC<Props> = ({
@@ -15,6 +17,8 @@ const ClientInfoCard: React.FC<Props> = ({
   clientName,
   clientContact,
   clientId,
+  reviews,
+  reputation,
 }) => {
   return (
     <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
@@ -36,7 +40,7 @@ const ClientInfoCard: React.FC<Props> = ({
         {/* Reputation and Contact (Side-by-Side) */}
         <div className="mt-2 flex w-full items-center justify-center gap-4">
           {/* Reputation Score */}
-          {clientId && <ClientReputationScore clientId={clientId} />}
+          {clientId && <ClientReputationScore reputation={reputation} />}
 
           {/* Contact Info */}
           {clientContact && clientContact !== "Contact not available" && (
@@ -50,7 +54,7 @@ const ClientInfoCard: React.FC<Props> = ({
         {/* Rating Summary (Bottom) */}
         {clientId && (
           <div className="mt-2 border-t border-blue-200 pt-2">
-            <ClientRatingSummary clientId={clientId} />
+            <ClientRatingSummary reviews={reviews} />
           </div>
         )}
       </div>

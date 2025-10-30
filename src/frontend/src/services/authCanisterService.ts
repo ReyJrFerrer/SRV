@@ -8,6 +8,8 @@
  */
 
 import * as identityBridge from "./identityBridge";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
 // Frontend-compatible Profile interface
 export interface FrontendProfile {
@@ -251,6 +253,34 @@ export const authCanisterService = {
       throw new Error("Failed to remove profile picture");
     } catch (error) {
       console.error("Error removing profile picture:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update user active status (for login/logout tracking)
+   */
+  async updateUserActiveStatus(isActive: boolean): Promise<void> {
+    try {
+      const functions = getFirebaseFunctions();
+      const updateActiveStatusFn = httpsCallable(
+        functions,
+        "updateUserActiveStatus",
+      );
+
+      const result: any = await updateActiveStatusFn({
+        isActive: isActive,
+      });
+
+      if (!result.data?.success) {
+        throw new Error(
+          result.data?.message || "Failed to update user active status",
+        );
+      }
+
+      console.log(`✅ User active status updated to: ${isActive}`);
+    } catch (error) {
+      console.error("Error updating user active status:", error);
       throw error;
     }
   },

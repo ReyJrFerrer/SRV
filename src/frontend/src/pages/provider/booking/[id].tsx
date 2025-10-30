@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
@@ -13,8 +13,8 @@ import MapSection from "../../../components/provider/booking-details/MapSection"
 import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
-// (Places library reserved for future use with Autocomplete if needed)
-//
+import { useClientRating } from "../../../hooks/useClientRating";
+import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
 import ServiceDetailsCard from "../../../components/provider/booking-details/ServiceDetailsCard";
 import BookingProgressSection from "../../../components/provider/booking-details/BookingProgressSection";
@@ -36,9 +36,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+  // State for client-specific data
+  const [clientReviews, setClientReviews] = useState<any[]>([]);
+  const [clientReputation, setClientReputation] = useState<any>(null);
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
+  const { getClientReviewsByUser } = useClientRating();
+  const { fetchUserReputation } = useReputation();
 
   // Set document title
   useEffect(() => {
@@ -111,6 +116,30 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [id, bookings, hookLoading]);
 
+  const clientId =
+    specificBooking?.clientProfile?.id?.toString() ||
+    specificBooking?.clientId?.toString();
+
+  // Fetch client-specific data (reviews and reputation)
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (!clientId) return;
+
+      try {
+        const [reviews, reputation] = await Promise.all([
+          getClientReviewsByUser(clientId),
+          fetchUserReputation(clientId),
+        ]);
+        setClientReviews(reviews);
+        setClientReputation(reputation);
+      } catch (error) {
+        console.error("Failed to fetch client data:", error);
+      }
+    };
+
+    fetchClientData();
+  }, [clientId, getClientReviewsByUser, fetchUserReputation]);
+
   // Check commission validation when booking changes
   useEffect(() => {
     const validateCommission = async () => {
@@ -163,7 +192,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
   };
 
   // Action handlers
-  const handleAcceptBooking = async () => {
+  const handleAcceptBooking = useCallback(async () => {
     if (!specificBooking) return;
 
     // Check commission validation for cash bookings before accepting
@@ -191,17 +220,23 @@ const ProviderBookingDetailsPage: React.FC = () => {
         setSpecificBooking(updatedBooking);
       }
     }
-  };
+  }, [
+    specificBooking,
+    commissionValidation,
+    acceptBookingById,
+    refreshBookings,
+    bookings,
+  ]);
 
-  const handleDeclineBooking = async () => {
+  const handleDeclineBooking = useCallback(() => {
     if (!specificBooking) return;
 
     // Show confirmation dialog instead of window.confirm
     setShowDeclineConfirm(true);
-  };
+  }, [specificBooking]);
 
   // New function to handle the actual decline after confirmation
-  const handleConfirmDecline = async () => {
+  const handleConfirmDecline = useCallback(async () => {
     if (!specificBooking) return;
 
     setIsDeclinining(true);
@@ -220,12 +255,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
       setIsDeclinining(false);
       setShowDeclineConfirm(false);
     }
-  };
+  }, [specificBooking, declineBookingById, refreshBookings, bookings]);
 
   console.log("From booking details page", specificBooking);
 
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
-  const handleStartService = async () => {
+  const handleStartService = useCallback(async () => {
     if (!specificBooking) return;
 
     // Check the locationDetection flag
@@ -239,15 +274,19 @@ const ProviderBookingDetailsPage: React.FC = () => {
       startBookingById(specificBooking.id);
       navigate(`/provider/active-service/${specificBooking.id}`);
     }
-  };
+  }, [specificBooking, navigate, startBookingById]);
 
-  const handleCompleteService = async () => {
+  const handleCompleteService = useCallback(async () => {
     if (!specificBooking) return;
     navigate(`/provider/complete-service/${specificBooking.id}`);
-  };
+  }, [specificBooking, navigate]);
+
+  const handleReportClick = useCallback(() => {
+    navigate("/provider/report");
+  }, [navigate]);
 
   // Chat button handler (ProviderBookingItemCard logic)
-  const handleChatClient = async () => {
+  const handleChatClient = useCallback(async () => {
     if (!specificBooking || !identity) return;
     const clientId =
       specificBooking.clientProfile?.id?.toString() ||
@@ -298,10 +337,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
           : "Could not start conversation. Please try again.",
       );
     }
-  };
+  }, [specificBooking, identity, conversations, navigate, createConversation]);
 
   // Check if today is the service date and time, or after
-  const canStartServiceNow = () => {
+  const canStartServiceNow = useCallback(() => {
     if (!specificBooking) return false;
 
     // Use scheduledDate if available, otherwise fall back to requestedDate
@@ -317,10 +356,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     } catch {
       return false;
     }
-  };
+  }, [specificBooking]);
 
   // Contact client handler
-  const handleContactClient = () => {
+  const handleContactClient = useCallback(() => {
     if (!specificBooking) return;
     const phone =
       specificBooking.clientPhone || specificBooking.clientProfile?.phone || "";
@@ -331,7 +370,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         `Contact client: ${specificBooking.clientName || "Unknown Client"}`,
       );
     }
-  };
+  }, [specificBooking]);
   // Geocode enhancement state (before early returns to keep hook order stable)
   const [resolvedCoords, setResolvedCoords] = useState<{
     lat: number;
@@ -636,10 +675,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const providerImage = userImageUrl || "/default-client.svg";
 
-  const clientId =
-    specificBooking?.clientProfile?.id?.toString() ||
-    specificBooking?.clientId?.toString();
-
   const price =
     specificBooking?.price ??
     specificBooking?.packageDetails?.price ??
@@ -734,7 +769,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
             providerImage={providerImage}
             clientName={clientName}
             clientContact={clientContact}
-            clientId={clientId}
+            clientId={clientId || ""}
+            reviews={clientReviews}
+            reputation={clientReputation}
           />
 
           {/* Service and package details - right */}
@@ -805,6 +842,32 @@ const ProviderBookingDetailsPage: React.FC = () => {
             navigate={navigate}
           />
         )}
+
+      {(specificBooking?.status === "Completed" ||
+        specificBooking?.status === "Cancelled") && (
+        <div className="mt-3 flex">
+          <button
+            onClick={handleReportClick}
+            className="group relative flex min-w-[150px] items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-red-100 hover:text-red-700"
+            title="Report this booking"
+          >
+            <svg
+              className="mr-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+            Report
+          </button>
+        </div>
+      )}
       </main>
 
       <div></div>

@@ -32,11 +32,9 @@ import CancellationReasons from "../../../components/common/CancellationReasons"
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number>(50); // Default score
-  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     const loadReputation = async () => {
       try {
-        setLoading(true);
         const reputation = await fetchUserReputation(providerId);
         if (reputation) {
           setReputationScore(Math.round(reputation.trustScore));
@@ -46,7 +44,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
       } catch (error) {
         setReputationScore(50); // Fallback to default on error
       } finally {
-        setLoading(false);
       }
     };
 
@@ -56,19 +53,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   }, [providerId, fetchUserReputation]);
 
   const score = reputationScore;
-
-  if (loading) {
-    return (
-      <span
-        className="mb-2 mt-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
-        style={{ minWidth: 0 }}
-      >
-        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
-        <span className="mr-2">Loading reputation...</span>
-      </span>
-    );
-  }
-
   return (
     <span
       className="text-md mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
@@ -190,9 +174,10 @@ const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL params
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
-  const [localLoading, setLocalLoading] = useState(true);
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
@@ -233,7 +218,6 @@ const BookingDetailsPage: React.FC = () => {
       if (foundBooking) {
         setSpecificBooking(foundBooking);
       }
-      setLocalLoading(false);
     }
   }, [id, bookings, hookLoading]);
 
@@ -315,6 +299,17 @@ const BookingDetailsPage: React.FC = () => {
     validateCommission();
   }, [specificBooking, checkCommissionValidation]);
 
+  if (hookLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleUpdateBookingStatus = async (
     bookingId: string,
     newStatus: BookingStatus,
@@ -336,13 +331,17 @@ const BookingDetailsPage: React.FC = () => {
 
   const handleCancelWithReason = async (reason: string) => {
     if (!specificBooking) return;
+    setIsCancelling(true);
     try {
       await handleUpdateBookingStatus(specificBooking.id, "Cancelled", reason);
       toast.success("Booking has been cancelled.");
+      setIsCancelModalOpen(false);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to cancel booking",
       );
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -412,6 +411,10 @@ const BookingDetailsPage: React.FC = () => {
       navigate(`/client/service/reviews/${specificBooking.serviceId}`);
   };
 
+  const handleReportClick = () => {
+    navigate("/client/report");
+  };
+
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
       REQUESTED: "bg-yellow-100 text-yellow-700",
@@ -451,14 +454,6 @@ const BookingDetailsPage: React.FC = () => {
       className: "bg-yellow-500 hover:bg-yellow-600",
     };
   };
-
-  if (hookLoading || localLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   const {
     providerProfile,
@@ -700,20 +695,14 @@ const BookingDetailsPage: React.FC = () => {
           </button>
 
           {canCancel && (
-            <CancelWithReasonButton
-              buttonText={
-                <span className="flex items-center">
-                  <XCircleIcon className="mr-2 h-5 w-5" /> Cancel
-                </span>
-              }
+            <button
+              onClick={() => setIsCancelModalOpen(true)}
               className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
-              onSubmit={handleCancelWithReason}
-              confirmTitle="Cancel Booking?"
-              confirmDescription="Please let us know why you're cancelling this booking."
-              textareaLabel="Reason for cancellation"
-              submitText="Submit"
-              cancelText="Cancel"
-            />
+            >
+              <span className="flex items-center">
+                <XCircleIcon className="mr-2 h-5 w-5" /> Cancel
+              </span>
+            </button>
           )}
 
           {reviewButtonContent &&
@@ -734,6 +723,29 @@ const BookingDetailsPage: React.FC = () => {
                 {reviewButtonContent.icon} {reviewButtonContent.text}
               </button>
             ))}
+
+          {(status === "Completed" || status === "Cancelled") && (
+            <button
+              onClick={handleReportClick}
+              className="group relative flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-red-100 hover:text-red-700"
+              title="Report this booking"
+            >
+              <svg
+                className="mr-2 h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              Report
+            </button>
+          )}
         </div>
       </main>
 
@@ -741,7 +753,17 @@ const BookingDetailsPage: React.FC = () => {
         <BottomNavigation />
       </div>
 
-      {/* Cancel dialog handled via CancelWithReasonButton */}
+      <CancelWithReasonButton
+        show={isCancelModalOpen}
+        isSubmitting={isCancelling}
+        onSubmit={handleCancelWithReason}
+        onCancel={() => setIsCancelModalOpen(false)}
+        confirmTitle="Cancel Booking?"
+        confirmDescription="Please let us know why you're cancelling this booking."
+        textareaLabel="Reason for cancellation"
+        submitText={isCancelling ? "Submitting..." : "Submit"}
+        cancelText="Back"
+      />
 
       <Toaster position="top-center" richColors />
     </div>
