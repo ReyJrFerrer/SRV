@@ -53,7 +53,10 @@ interface ServiceDetailsProps {
   // Optional helper to compute commission for a given category and price
   // The project provides getCommissionQuote which returns a CommissionQuote
   // so we accept that shape and compute total locally.
-  computeCommission?: (categoryName: string, price: number) => Promise<{
+  computeCommission?: (
+    categoryName: string,
+    price: number,
+  ) => Promise<{
     commissionFee: number;
   }>;
 }
@@ -199,15 +202,23 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       commissionTimers.current[pkgId] = window.setTimeout(async () => {
         try {
           const priceNum = Number(String(value).replace(/[^0-9]/g, "")) || 0;
-          const categoryName = categories.find((c) => c.id === formData.categoryId)?.name || "Default Category";
+          const categoryName =
+            categories.find((c) => c.id === formData.categoryId)?.name ||
+            "Default Category";
           if (computeCommission) {
-                const quote = await computeCommission(categoryName, priceNum);
-                const fee = quote.commissionFee;
-                setLiveCommission((prev) => ({ ...prev, [pkgId]: { commissionFee: fee, total: priceNum + fee } }));
+            const quote = await computeCommission(categoryName, priceNum);
+            const fee = quote.commissionFee;
+            setLiveCommission((prev) => ({
+              ...prev,
+              [pkgId]: { commissionFee: fee, total: priceNum + fee },
+            }));
           } else {
             // Fallback: simple percentage (5%)
             const fee = Math.round(priceNum * 0.05 * 100) / 100;
-            setLiveCommission((prev) => ({ ...prev, [pkgId]: { commissionFee: fee, total: priceNum + fee } }));
+            setLiveCommission((prev) => ({
+              ...prev,
+              [pkgId]: { commissionFee: fee, total: priceNum + fee },
+            }));
           }
         } catch (e) {
           // ignore
@@ -430,8 +441,25 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           {liveCommission[pkg.id] && (
                             <div className="mt-2 text-sm text-green-600">
                               <div className="flex flex-col">
-                                <span className="mb-1">Commission: ₱{liveCommission[pkg.id]!.commissionFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                <span className="font-semibold">Total: ₱{liveCommission[pkg.id]!.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="mb-1">
+                                  Commission: ₱
+                                  {liveCommission[
+                                    pkg.id
+                                  ]!.commissionFee.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                                <span className="font-semibold">
+                                  Total: ₱
+                                  {liveCommission[pkg.id]!.total.toLocaleString(
+                                    undefined,
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    },
+                                  )}
+                                </span>
                               </div>
                             </div>
                           )}
