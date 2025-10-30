@@ -226,21 +226,34 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div
-          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+          className={`w-full px-4 py-3 ${
+            unreadCount <= 0
+              ? "flex items-center justify-center"
+              : "relative flex items-center justify-between"
+          }`}
         >
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+          <h1
+            className={`text-2xl font-extrabold tracking-tight text-black ${
+              unreadCount > 0
+                ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
+                : ""
+            }`}
+          >
             Notifications
           </h1>
           {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-            >
-              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-              Mark all as read
-            </button>
+            <>
+              <div className="hidden sm:block" aria-hidden="true" />
+              <button
+                onClick={markAllAsRead}
+                className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+              >
+                <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                Mark all as read
+              </button>
+            </>
           )}
         </div>
       </header>
