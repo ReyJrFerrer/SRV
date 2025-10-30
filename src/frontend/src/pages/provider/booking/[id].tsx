@@ -802,8 +802,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {/* Booking Progress Section */}
         <BookingProgressSection status={specificBooking?.status} />
 
-        
-
         {/* Commission Validation Section for Cash Bookings */}
         <CommissionInfo
           show={Boolean(

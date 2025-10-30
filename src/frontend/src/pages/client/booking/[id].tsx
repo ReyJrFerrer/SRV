@@ -550,7 +550,8 @@ const BookingDetailsPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
               <div className="border-r-0 border-gray-200 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
                 <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-                  <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
+                  <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider
+                  Details
                 </h3>
                 <div className="flex items-center gap-5">
                   <div className="flex-shrink-0">
@@ -568,7 +569,9 @@ const BookingDetailsPage: React.FC = () => {
                     {/* Provider rating (frontend-only read) */}
                     <div className="mt-1 flex items-center gap-3 text-sm">
                       {loadingStats ? (
-                        <p className="text-sm text-gray-400">Loading reviews...</p>
+                        <p className="text-sm text-gray-400">
+                          Loading reviews...
+                        </p>
                       ) : averageRating != null && reviewCount != null ? (
                         <>
                           <div className="flex items-center text-sm font-bold text-yellow-500">
@@ -576,7 +579,8 @@ const BookingDetailsPage: React.FC = () => {
                             <span>{averageRating.toFixed(1)}</span>
                           </div>
                           <span className="text-sm text-gray-500">
-                            ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                            ({reviewCount}{" "}
+                            {reviewCount === 1 ? "review" : "reviews"})
                           </span>
                         </>
                       ) : (
@@ -679,11 +683,13 @@ const BookingDetailsPage: React.FC = () => {
           </div>
         </div>
 
-          {/* Booking Notes (if any) */}
+        {/* Booking Notes (if any) */}
         {specificBooking?.notes && (
           <div className="mt-4 rounded border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
             <strong>Booking Notes:</strong>
-            <div className="mt-2 whitespace-pre-wrap">{specificBooking.notes}</div>
+            <div className="mt-2 whitespace-pre-wrap">
+              {specificBooking.notes}
+            </div>
           </div>
         )}
 
