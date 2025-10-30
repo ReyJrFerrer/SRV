@@ -80,6 +80,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   scrollToErrorTrigger,
   computeCommission,
   onCommissionComputed,
+  onRequestCategory,
 }) => {
   // Local live commission map per package id
   const [liveCommission, setLiveCommission] = useState<{
@@ -189,6 +190,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     setHideCategoryError(true);
     handleChange(e);
   };
+
+  // Note: custom category name is stored in parent `formData.customCategoryName`.
+  // ServiceDetails will call `onRequestCategory` when the user types to persist it.
 
   // Modify the handlePackageInputChange function
   const handlePackageInputChange = (
@@ -365,7 +369,22 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                         </option>
                       ))
                   )}
+                  {/* Allow users to specify a custom category */}
+                  <option value="__other__">Other</option>
                 </select>
+                {formData.categoryId === "__other__" && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="Enter category name"
+                      value={(formData as any).customCategoryName || ""}
+                      onChange={(e) => onRequestCategory(e.target.value)}
+                      required
+                      maxLength={40}
+                      className="mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm border-gray-300 bg-gray-50"
+                    />
+                  </div>
+                )}
                 {validationErrors.categoryId && !hideCategoryError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.categoryId}
