@@ -504,16 +504,16 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">
-            My Provider Profile
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            My Profile
           </h1>
         </div>
       </header>
@@ -672,8 +672,8 @@ const ProviderProfilePage: React.FC = () => {
             </div>
           </div>
           {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+          <div className="mt-1 lg:col-span-2 lg:mt-0">
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
                 <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                   Your Reputation Score
@@ -760,7 +760,7 @@ const ProviderProfilePage: React.FC = () => {
       <div className="mt-8 block w-full px-4 lg:hidden">
         <button
           onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+          className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
         >
           Log Out
         </button>

@@ -230,16 +230,18 @@ const PackagesSection: React.FC<Props> = ({
                   </div>
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
+
                 <div className="flex gap-3">
                   <Tooltip
                     content="Cannot edit when another package form is open."
                     showWhenDisabled={isAddingOrEditingPackage}
+                    className="flex-1"
                   >
                     <button
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex-1 rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
                           : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
@@ -250,35 +252,34 @@ const PackagesSection: React.FC<Props> = ({
                       Edit Package
                     </button>
                   </Tooltip>
+
                   <Tooltip
                     content="A service must have at least one package."
                     showWhenDisabled={packages.length <= 1}
+                    className="flex-1"
                   >
-                    {/* The Tooltip needs a div wrapper for disabled buttons to work correctly */}
-                    <div className="flex-1">
-                      <button
-                        onClick={() =>
-                          hasActiveBookings || packages.length <= 1
-                            ? undefined
-                            : onDeletePackage(pkg.id)
-                        }
-                        className={`w-full rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
-                          hasActiveBookings ||
-                          isAddingOrEditingPackage ||
-                          packages.length <= 1
-                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                            : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
-                        }`}
-                        aria-label={`Delete ${pkg.title}`}
-                        disabled={
-                          hasActiveBookings ||
-                          isAddingOrEditingPackage ||
-                          packages.length <= 1
-                        }
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      onClick={() =>
+                        hasActiveBookings || packages.length <= 1
+                          ? undefined
+                          : onDeletePackage(pkg.id)
+                      }
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                        hasActiveBookings ||
+                        isAddingOrEditingPackage ||
+                        packages.length <= 1
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                      }`}
+                      aria-label={`Delete ${pkg.title}`}
+                      disabled={
+                        hasActiveBookings ||
+                        isAddingOrEditingPackage ||
+                        packages.length <= 1
+                      }
+                    >
+                      Delete
+                    </button>
                   </Tooltip>
                 </div>
               </div>

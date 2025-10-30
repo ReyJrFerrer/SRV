@@ -465,7 +465,6 @@ const ServiceDetailsPage: React.FC = () => {
             <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
           </button>
           <h1 className="text-2xl font-bold text-black">Service Details</h1>
-          <div className="w-8"></div>
         </div>
       </header>
 

@@ -1084,19 +1084,18 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-8">
+      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(`/provider/home`)}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Service Details
           </h1>
-          <div className="w-8"></div>
         </div>
       </header>
 

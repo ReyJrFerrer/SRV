@@ -194,8 +194,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-2 pt-5">
-        <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
+      <div className="flex items-center justify-between md:py-5 lg:py-8">
+        <h2 className="text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>
         <Tooltip
@@ -223,7 +223,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
       {services.length ? (
         <>
-          <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-10 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
               const categoryImage = getCategoryImage(

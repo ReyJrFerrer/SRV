@@ -416,15 +416,15 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center justify-center">
-            <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+          <div className="flex w-full items-center justify-center px-4 py-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-black">
               My Bookings
             </h1>
           </div>
         </header>
 
-        <div className="sticky top-[64px] z-10 bg-white px-4 pt-4">
+        <div className="sticky z-10 bg-white px-4 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">

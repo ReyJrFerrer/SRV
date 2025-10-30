@@ -41,7 +41,7 @@ const HeroSection: React.FC<Props> = ({
 }) => {
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+      <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
         <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
           {serviceImages &&
           serviceImages.length > 0 &&

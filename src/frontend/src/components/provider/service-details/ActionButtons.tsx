@@ -32,9 +32,9 @@ const ActionButtons: React.FC<Props> = ({
           isUpdatingStatus || hasActiveBookings ? undefined : onToggleStatus
         }
         disabled={isUpdatingStatus || hasActiveBookings}
-        className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-600 bg-yellow-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 sm:flex-1 ${
           status === "Available"
-            ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-600 hover:text-white"}`
+            ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-yellow-500 hover:text-white"}`
             : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
         }`}
       >
@@ -46,19 +46,23 @@ const ActionButtons: React.FC<Props> = ({
           <LockOpenIcon className="h-6 w-6" />
         )}
         {isUpdatingStatus
-          ? "Updating..."
+          ? status === "Available"
+            ? "Deactivating..."
+            : "Activating..."
           : status === "Available"
             ? "Deactivate"
             : "Activate"}
       </button>
+
       <Tooltip
         content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
         showWhenDisabled={hasActiveBookings}
+        className="w-full sm:flex-1"
       >
         <button
           onClick={hasActiveBookings ? undefined : onDeleteClick}
           disabled={isDeleting || hasActiveBookings}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
+          className={`flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60 ${
             hasActiveBookings
               ? "cursor-not-allowed opacity-60"
               : "hover:bg-red-400 hover:text-white"

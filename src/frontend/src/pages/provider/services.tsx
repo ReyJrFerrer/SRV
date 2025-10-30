@@ -145,7 +145,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors  ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -369,10 +369,9 @@ const MyServicesPage: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-6">
-          <div className="flex-1"></div>
-          <h1 className="flex-1 text-center text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-3.5 py-2.5">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             My Services
           </h1>
           <div className="flex flex-1 justify-end">
