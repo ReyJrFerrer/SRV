@@ -239,7 +239,6 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-     
       <div className="mx-auto max-w-4xl px-4 py-3">
         {unreadCount > 0 && (
           <div className="flex justify-end">
