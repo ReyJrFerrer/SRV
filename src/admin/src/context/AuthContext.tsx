@@ -17,6 +17,7 @@ import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { updateMediaActor } from "../services/mediaServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
+import authCanisterService from "../../../frontend/src/services/authCanisterService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -154,6 +155,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               );
               console.log("[Admin] Firebase UID:", result.user.uid);
 
+              // Update user active status to true on successful login
+              try {
+                await authCanisterService.updateUserActiveStatus(true);
+              } catch (error) {
+                console.error(
+                  "[Admin] Error updating user active status on login:",
+                  error,
+                );
+                // Continue with login even if this fails
+              }
+
               // Auto-grant admin role for testing (development only)
               if (import.meta.env.DEV) {
                 try {
@@ -244,6 +256,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     if (!authClient) return;
+
+    // Update user active status to false before logout
+    try {
+      await authCanisterService.updateUserActiveStatus(false);
+    } catch (error) {
+      console.error(
+        "[Admin] Error updating user active status on logout:",
+        error,
+      );
+      // Continue with logout even if this fails
+    }
 
     // Logout from Firebase
     const auth = getFirebaseAuth();
