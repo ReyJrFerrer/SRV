@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
-import PageHeader from "../../../components/common/PageHeader";
 
 // Components
 import SearchBar from "../../../components/client/SearchBar";
@@ -180,7 +178,6 @@ const CategoryPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <PageHeader title={category.name} onBack={handleBackClick} />
       <div className="px-4 py-4">
         <div className="mb-4 flex items-center gap-2">
           <div className="flex-grow">
