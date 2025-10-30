@@ -212,7 +212,7 @@ const NotificationsPageSP = () => {
         navigate(notification.href);
         break;
       case "chat_message":
-        navigate(`/provider/chat/${notification.clientName}`);
+        navigate(notification.href);
         break;
       default:
         navigate(notification.href);

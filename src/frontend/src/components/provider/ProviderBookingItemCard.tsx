@@ -1,8 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import {
-  ProviderEnhancedBooking,
-  useProviderBookingManagement,
-} from "../../hooks/useProviderBookingManagement";
+import { useNavigate } from "react-router-dom";
+import { ProviderEnhancedBooking } from "../../hooks/useProviderBookingManagement";
 import {
   MapPinIcon,
   ClockIcon,
@@ -19,32 +16,36 @@ import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { MouseEvent, useState, useEffect } from "react";
-import CancelWithReasonButton from "../common/CancelWithReasonButton";
-import { bookingCanisterService } from "../../services/bookingCanisterService";
-import { toast } from "sonner";
-import DeclineConfirmDialog from "./booking-details/DeclineConfirmDialog";
+import { MouseEvent, useEffect, useState } from "react";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
   review: any;
   reputation: any;
+  onDeclineClick: () => void;
+  onCancelClick: (booking: ProviderEnhancedBooking) => void;
+  isDeclining: boolean;
+
+  acceptBookingById: any;
+  isBookingActionInProgress: any;
+  checkCommissionValidation: any;
+  startBookingById: any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
   review = [],
   reputation = null,
+  onDeclineClick,
+  onCancelClick,
+  isDeclining,
+  acceptBookingById,
+  isBookingActionInProgress,
+  checkCommissionValidation,
+  startBookingById,
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
-  const {
-    acceptBookingById,
-    declineBookingById,
-    isBookingActionInProgress,
-    checkCommissionValidation,
-    startBookingById,
-  } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
   const { userImageUrl, refetch } = useUserImage(
@@ -53,14 +54,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   const clientId =
     booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
-  // State for decline confirmation dialog
-  const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
-  const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
-
-  // State for complete confirmation dialog
-  const [showCompleteConfirm, setShowCompleteConfirm] =
-    useState<boolean>(false);
-  const [isCompleting, setIsCompleting] = useState<boolean>(false);
 
   // Commission validation state for cash bookings
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -74,6 +67,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     commissionValidationMessage: "",
     loading: false,
   });
+
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   // Check commission validation for cash bookings that can be accepted
   useEffect(() => {
@@ -262,68 +257,28 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  const handleReject = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleReject = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // Show confirmation dialog instead of window.confirm
-    setShowDeclineConfirm(true);
-  };
-
-  // New function to handle the actual decline after confirmation
-  const handleDeclineBooking = async () => {
-    if (!booking?.id) {
-      toast.error("Invalid booking ID");
-      return;
-    }
-
-    try {
-      setIsDeclinining(true);
-      // Using a default reason since the dialog doesn't collect it anymore
-      await declineBookingById(booking.id, "Booking declined by provider");
-      setShowDeclineConfirm(false);
-      toast.success("Booking declined successfully");
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to decline booking. Please try again.",
-      );
-    } finally {
-      setIsDeclinining(false);
-    }
+    onDeclineClick();
   };
 
   const handleMarkAsCompleted = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Show the confirmation dialog instead of window.confirm
-    setShowCompleteConfirm(true);
+    navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // Provider-side cancel for accepted/confirmed bookings
-  const handleCancelAccepted = async (reason: string) => {
-    try {
-      await bookingCanisterService.cancelBooking(booking.id, reason);
-      toast.success("Booking has been cancelled.");
-      navigate(`/provider/bookings`);
-    } catch (error) {
-      toast.error("Failed to cancel booking. Please try again.");
-      throw error;
-    }
+  // Handle cancel button click
+  const handleCancelClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCancelClick(booking);
   };
 
-  // New function to handle the actual completion after confirmation
-  const handleConfirmComplete = async () => {
-    setIsCompleting(true);
-    try {
-      // The action is to navigate to the completion page
-      navigate(`/provider/complete-service/${booking.id}`);
-    } finally {
-      // This will run before navigation completes
-      setIsCompleting(false);
-      setShowCompleteConfirm(false);
-    }
+  // Handle complete confirmation
+  const handleCompleteConfirm = () => {
+    navigate(`/provider/complete-service/${booking.id}`);
   };
 
   // Navigate to directions page first; actual start initiated from there
@@ -533,13 +488,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             <div className="flex w-full flex-wrap gap-2">
               <button
                 onClick={handleReject}
-                disabled={isBookingActionInProgress(booking.id, "decline")}
+                disabled={isDeclining}
                 className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
               >
                 <XCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "decline")
-                  ? "Declining..."
-                  : "Decline"}
+                {isDeclining ? "Declining..." : "Decline"}
               </button>
               <button
                 onClick={handleAccept}
@@ -611,20 +564,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               )}
               {/* Cancel button additions */}
               {isAccepted && (
-                <CancelWithReasonButton
-                  buttonText={
-                    <span className="flex items-center">
-                      <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
-                    </span>
-                  }
+                <button
+                  onClick={handleCancelClick}
                   className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
-                  confirmTitle="Cancel Booking?"
-                  confirmDescription="Please provide a reason for cancelling this booking."
-                  textareaLabel="Reason for cancellation"
-                  submitText="Submit"
-                  cancelText="Back"
-                  onSubmit={handleCancelAccepted}
-                />
+                >
+                  <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
+                </button>
               )}
               {isInProgress && (
                 <button
@@ -648,14 +593,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // --- Card Layout ---
   return (
     <>
-      {/* Decline Confirmation Dialog */}
-      <DeclineConfirmDialog
-        show={showDeclineConfirm}
-        clientName={clientName}
-        isDeclinining={isDeclinining}
-        onCancel={() => setShowDeclineConfirm(false)}
-        onConfirm={handleDeclineBooking}
-      />
+      {/* Booking Card */}
+      <BookingCardContent showDurationInDetails={!isInProgress} />
 
       {/* Complete Confirmation Dialog */}
       {showCompleteConfirm && (
@@ -672,35 +611,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               <button
                 className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
                 onClick={() => setShowCompleteConfirm(false)}
-                disabled={isCompleting}
               >
                 Cancel
               </button>
               <button
                 className="flex-1 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
-                onClick={handleConfirmComplete}
-                disabled={isCompleting}
+                onClick={handleCompleteConfirm}
               >
-                {isCompleting ? "Proceeding..." : "Confirm"}
+                Confirm
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {isInProgress ? (
-        <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
-          {/* Booking Card */}
-          <BookingCardContent />
-        </div>
-      ) : (
-        <Link
-          to={`/provider/booking/${booking.id}`}
-          className="mb-6 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        >
-          {/* Booking Card */}
-          <BookingCardContent showDurationInDetails={false} />
-        </Link>
       )}
     </>
   );

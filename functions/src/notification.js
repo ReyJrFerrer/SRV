@@ -114,7 +114,7 @@ function generateNotificationHref(notificationType, userType, entityId) {
   case NOTIFICATION_TYPES.SERVICE_REMINDER:
     // Redirect to active service or booking details
     return isProvider ?
-      `/provider/active-service/${entityId}` :
+      `/provider/booking/${entityId}` :
       `/client/booking/${entityId}`;
 
   default:

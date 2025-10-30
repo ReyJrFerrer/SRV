@@ -125,14 +125,12 @@ const NotificationItem: React.FC<{
         return `Payment received successfully${providerName}. Your transaction is complete.`;
       case "payment_failed":
         return `Payment failed${providerName}. Please check your payment method and try again.`;
-      case "provider_message":
+      case "chat_message":
         return `New message${providerName}. Tap to view and respond.`;
       case "system_announcement":
         return `System announcement: ${notification.message || "Important update from SRV team."}`;
       case "service_rescheduled":
         return `Service rescheduled${providerName}. Your appointment has been moved to a new time.`;
-      case "service_reminder":
-        return `Service reminder${providerName}. Your appointment is coming up soon.`;
       case "promo_offer":
         return `Special offer available! ${notification.message || "Check out our latest promotions."}`;
       case "provider_on_the_way":
