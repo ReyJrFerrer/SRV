@@ -5,7 +5,6 @@ import {
   useProviderNotifications,
 } from "../../hooks/useProviderNotificationsWithPush";
 import BottomNavigation from "../../components/provider/BottomNavigation";
-import PageHeader from "../../components/common/PageHeader";
 import {
   BellAlertIcon,
   CheckCircleIcon,
@@ -155,7 +154,7 @@ const NotificationItem: React.FC<{
         </p>
         {notification.message &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
+            <p className="mt-1 text-xs text-gray-600 italic">
               {notification.message}
             </p>
           )}
@@ -239,20 +238,37 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <PageHeader title="Notifications" />
-      <div className="mx-auto max-w-4xl px-4 py-3">
-        {unreadCount > 0 && (
-          <div className="flex justify-end">
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-            >
-              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-              Mark all as read
-            </button>
-          </div>
-        )}
-      </div>
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div
+          className={`w-full px-4 py-3 ${
+            unreadCount <= 0
+              ? "flex items-center justify-center"
+              : "relative flex items-center justify-between"
+          }`}
+        >
+          <h1
+            className={`text-2xl font-extrabold tracking-tight text-black ${
+              unreadCount > 0
+                ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
+                : ""
+            }`}
+          >
+            Notifications
+          </h1>
+          {unreadCount > 0 && (
+            <>
+              <div className="hidden sm:block" aria-hidden="true" />
+              <button
+                onClick={markAllAsRead}
+                className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+              >
+                <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                Mark all as read
+              </button>
+            </>
+          )}
+        </div>
+      </header>
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (

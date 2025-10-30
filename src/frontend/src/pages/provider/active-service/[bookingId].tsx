@@ -182,7 +182,7 @@ const ActiveServicePage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -222,26 +222,26 @@ const ActiveServicePage: React.FC = () => {
   // --- UI Section ---
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3 lg:ml-20">
           <button
             onClick={() => navigate(`/provider/booking/${booking.id}`)}
-            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight whitespace-nowrap text-black">
             Service In Progress
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto flex-grow space-y-8 p-4 pb-24 sm:p-8">
+      <main className="container mx-auto flex-grow space-y-10 px-4 py-16 sm:px-8">
         {/* Timer removed */}
 
         {/* Details and Actions Section */}
-        <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+        <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
           {/* Left Column: Booking Details */}
           <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
             <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
@@ -286,8 +286,8 @@ const ActiveServicePage: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <MapPinIcon className="mr-3 mt-1 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="break-words font-medium text-gray-800">
+                <MapPinIcon className="mt-1 mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                <span className="font-medium break-words text-gray-800">
                   {booking.formattedLocation || "Location not specified"}
                 </span>
               </div>

@@ -1181,7 +1181,7 @@ const AddServicePage: React.FC = () => {
       <Toaster position="top-center" />
       {/* Header */}
       <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-24">
+        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
           <button
             onClick={() =>
               serviceCreated

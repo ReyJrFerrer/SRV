@@ -4,7 +4,6 @@ import {
   ArrowLeftIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
-import PageHeader from "../../../components/common/PageHeader";
 
 // Components
 import SearchBar from "../../../components/client/SearchBar";
@@ -179,10 +178,18 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <PageHeader title={category.name} onBack={handleBackClick} />
-      <div className="px-4 py-4">
-        <div className="mb-4 flex items-center gap-2">
+      <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <button
+            onClick={handleBackClick}
+            className="rounded-full p-2 hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+          </button>
+          <h1 className="truncate text-xl font-bold">{category.name}</h1>
+        </div>
+        <div className="flex items-center gap-2">
           <div className="flex-grow">
             <SearchBar
               placeholder={`Search in ${category.name}`}
