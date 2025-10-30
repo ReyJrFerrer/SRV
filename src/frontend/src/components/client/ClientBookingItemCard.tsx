@@ -472,16 +472,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   </span>
                 </p>
               )}
-              </div>
-
-              {/* Booking Notes (if any) */}
-              {notes && (
-                <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-                  <strong>Booking Notes:</strong> {notes}
-                </div>
-              )}
-
             </div>
+
+            {/* Booking Notes (if any) */}
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
+          </div>
 
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
             {canCancel && (
