@@ -16,6 +16,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import ReputationScore from "./service-detail/ReputationScore";
+import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -128,11 +130,34 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }
   const providerName = booking.providerProfile?.name;
 
-  // --- Mock reputation / rating data (frontend-only) ---
-  // Copied-style from ProviderBookingItemCard but using local mock values
-  const mockReputation = { trustScore: 68 };
-  const mockAverageRating = 4.4;
-  const mockReviewCount = 23;
+  // --- Reputation / rating data (frontend-only) ---
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!booking?.serviceId) return;
+      setLoadingStats(true);
+      try {
+        const avg = await reviewCanisterService.calculateServiceRating(
+          booking.serviceId,
+        );
+        const reviews = await reviewCanisterService.getServiceReviews(
+          booking.serviceId,
+        );
+        setAverageRating(avg?.averageRating ?? null);
+        setReviewCount(Array.isArray(reviews) ? reviews.length : 0);
+      } catch (err) {
+        setAverageRating(null);
+        setReviewCount(null);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    load();
+  }, [booking?.serviceId]);
 
   const bookingLocation =
     booking.formattedLocation ||
@@ -383,22 +408,29 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <p className="mt-1 text-xs text-gray-500">
               Provided by: {providerName}
             </p>
-            {/* Reputation + Rating (mock frontend-only display) */}
+            {/* Reputation + Rating (real frontend display using shared components) */}
             <div className="mt-2 flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-full  px-3 py-1 text-sm font-semibold text-gray-800">
-                <span className="flex items-center gap-1 text-yellow-500">
-                  <StarIcon className="h-4 w-4" />
-                  <span>{mockAverageRating.toFixed(1)}</span>
-                </span>
-                <span className="ml-2 text-xs text-gray-500">
-                  ({mockReviewCount})
-                </span>
+              <div className="flex-shrink-0">
+                <ReputationScore providerId={booking.providerProfile?.id ?? ""} />
               </div>
-              <div className="text-sm text-gray-600">
-                Reputation Score:{" "}
-                <span className="font-semibold">
-                  {mockReputation.trustScore}
-                </span>
+
+              <div className="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
+                {loadingStats ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
+                    <span className="text-xs text-gray-500">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <StarRatingDisplay rating={averageRating ?? 0} />
+                      <span className="ml-1 font-bold">
+                        {averageRating != null ? averageRating.toFixed(1) : "N/A"}
+                      </span>
+                    </div>
+                    <span className="ml-2 text-xs text-gray-500">({reviewCount ?? 0})</span>
+                  </>
+                )}
               </div>
             </div>
             <p className="mt-1 text-xs text-gray-500">

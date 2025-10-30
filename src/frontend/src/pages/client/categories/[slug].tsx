@@ -31,6 +31,12 @@ interface CategoryState {
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
 
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    navigate(-1);
+  };
+
   const [category, setCategory] = useState<CategoryState | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
