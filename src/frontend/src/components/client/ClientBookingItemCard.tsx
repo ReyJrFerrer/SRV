@@ -128,6 +128,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }
   const providerName = booking.providerProfile?.name;
 
+  // --- Mock reputation / rating data (frontend-only) ---
+  // Copied-style from ProviderBookingItemCard but using local mock values
+  const mockReputation = { trustScore: 68 };
+  const mockAverageRating = 4.4;
+  const mockReviewCount = 23;
+
   const bookingLocation =
     booking.formattedLocation ||
     (typeof booking.location === "string"
@@ -377,6 +383,24 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <p className="mt-1 text-xs text-gray-500">
               Provided by: {providerName}
             </p>
+            {/* Reputation + Rating (mock frontend-only display) */}
+            <div className="mt-2 flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-full  px-3 py-1 text-sm font-semibold text-gray-800">
+                <span className="flex items-center gap-1 text-yellow-500">
+                  <StarIcon className="h-4 w-4" />
+                  <span>{mockAverageRating.toFixed(1)}</span>
+                </span>
+                <span className="ml-2 text-xs text-gray-500">
+                  ({mockReviewCount})
+                </span>
+              </div>
+              <div className="text-sm text-gray-600">
+                Reputation Score:{" "}
+                <span className="font-semibold">
+                  {mockReputation.trustScore}
+                </span>
+              </div>
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Contact: {booking.providerProfile?.phone}
             </p>

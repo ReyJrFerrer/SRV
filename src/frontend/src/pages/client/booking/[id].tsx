@@ -460,6 +460,9 @@ const BookingDetailsPage: React.FC = () => {
     status,
     scheduledDate,
   } = specificBooking || {};
+  // Mock rating values for provider (frontend-only)
+  const mockAverageRating: number = 4.4;
+  const mockReviewCount: number = 23;
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
 
@@ -561,6 +564,17 @@ const BookingDetailsPage: React.FC = () => {
                       {providerProfile?.name || "N/A"}
                     </p>
                     <ReputationScore providerId={providerProfile?.id || ""} />
+                    {/* Mock provider rating (frontend-only) */}
+                    <div className="mt-1 flex items-center gap-3 text-sm">
+                      <div className="flex items-center text-sm font-bold text-yellow-500">
+                        <StarIcon className="mr-1 h-4 w-4" />
+                        <span>{mockAverageRating.toFixed(1)}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        ({mockReviewCount}{" "}
+                        {mockReviewCount === 1 ? "review" : "reviews"})
+                      </span>
+                    </div>
                     <p className="mt-1 flex items-center text-sm text-gray-500">
                       <PhoneIcon className="mr-1.5 h-4 w-4" />
                       {providerProfile?.phone || "No contact number"}
