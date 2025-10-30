@@ -134,7 +134,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         setClientReputation(reputation);
       } catch (error) {
         console.error("Failed to fetch client data:", error);
-      } 
+      }
     };
 
     fetchClientData();
@@ -333,13 +333,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           : "Could not start conversation. Please try again.",
       );
     }
-  }, [
-    specificBooking,
-    identity,
-    conversations,
-    navigate,
-    createConversation,
-  ]);
+  }, [specificBooking, identity, conversations, navigate, createConversation]);
 
   // Check if today is the service date and time, or after
   const canStartServiceNow = useCallback(() => {
