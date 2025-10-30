@@ -122,11 +122,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         Service Location <span className="text-red-500">*</span>
       </h3>
 
-    {/* When browser location permission is denied, do not show the
+      {/* When browser location permission is denied, do not show the
       detected / maps buttons. Show a short banner with a CTA to
       re-enable location permission so the user can restore detected
       / map-based selection. */}
-    {!showFallbackForms && locationStatus !== "denied" && (
+      {!showFallbackForms && locationStatus !== "denied" && (
         <div className="mb-4 flex gap-3 text-xs font-medium">
           <button
             type="button"
@@ -155,10 +155,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {/* Inline banner shown when browser blocks location access */}
       {locationStatus === "denied" && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           <div>
-            <strong className="block font-semibold">Location permission blocked</strong>
-            <div className="text-xs">Detected / Map options are hidden — please choose your city/province or enable location.</div>
+            <strong className="block font-semibold">
+              Location permission blocked
+            </strong>
+            <div className="text-xs">
+              Detected / Map options are hidden — please choose your
+              city/province or enable location.
+            </div>
           </div>
           <div className="ml-4">
             <EnableLocationButton />
