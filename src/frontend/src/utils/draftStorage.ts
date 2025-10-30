@@ -34,7 +34,7 @@ export async function getBlob(id: string): Promise<Blob | null> {
     const req = store.get(id);
     req.onsuccess = () => {
       const res = req.result;
-      resolve(res ? res.blob as Blob : null);
+      resolve(res ? (res.blob as Blob) : null);
     };
     req.onerror = () => reject(req.error);
   });
@@ -72,13 +72,22 @@ export async function listBlobKeys(): Promise<string[]> {
 }
 
 // Helpers that operate with a draftKey prefix
-export async function saveFilesToIDB(draftKey: string, files: File[], prefix: string) {
+export async function saveFilesToIDB(
+  draftKey: string,
+  files: File[],
+  prefix: string,
+) {
   // prefix should be 'img' or 'cert'
-  const promises = files.map((file, idx) => saveBlob(`${draftKey}:${prefix}:${idx}`, file));
+  const promises = files.map((file, idx) =>
+    saveBlob(`${draftKey}:${prefix}:${idx}`, file),
+  );
   await Promise.all(promises);
 }
 
-export async function getFilesFromIDB(draftKey: string, prefix: string): Promise<string[]> {
+export async function getFilesFromIDB(
+  draftKey: string,
+  prefix: string,
+): Promise<string[]> {
   const keys = await listBlobKeys();
   const matched = keys.filter((k) => k.startsWith(`${draftKey}:${prefix}:`));
   const urls: string[] = [];

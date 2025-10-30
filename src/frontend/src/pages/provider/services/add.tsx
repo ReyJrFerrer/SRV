@@ -242,49 +242,65 @@ const AddServicePage: React.FC = () => {
   const handleRestoreDraft = async () => {
     if (!loadedDraft) return;
     try {
-      if (loadedDraft.formData) setFormData((prev) => ({ ...prev, ...loadedDraft.formData }));
+      if (loadedDraft.formData)
+        setFormData((prev) => ({ ...prev, ...loadedDraft.formData }));
       // Try to load files from IDB (will fall back to previews stored in localStorage)
       try {
         const imgUrls = await getFilesFromIDB(ADD_SERVICE_DRAFT_KEY, "img");
         const certUrls = await getFilesFromIDB(ADD_SERVICE_DRAFT_KEY, "cert");
         if (imgUrls && imgUrls.length > 0) setImagePreviews(imgUrls);
-        else if (loadedDraft.imagePreviews) setImagePreviews(loadedDraft.imagePreviews);
+        else if (loadedDraft.imagePreviews)
+          setImagePreviews(loadedDraft.imagePreviews);
         if (certUrls && certUrls.length > 0) setCertificationPreviews(certUrls);
-        else if (loadedDraft.certificationPreviews) setCertificationPreviews(loadedDraft.certificationPreviews);
+        else if (loadedDraft.certificationPreviews)
+          setCertificationPreviews(loadedDraft.certificationPreviews);
 
         // Reconstruct File objects from IDB blobs so submission works
         try {
           const keys = await listBlobKeys();
-          const imgKeys = keys.filter((k) => k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:img:`));
-          const certKeys = keys.filter((k) => k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:cert:`));
+          const imgKeys = keys.filter((k) =>
+            k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:img:`),
+          );
+          const certKeys = keys.filter((k) =>
+            k.startsWith(`${ADD_SERVICE_DRAFT_KEY}:cert:`),
+          );
           const restoredImgFiles: File[] = [];
           for (let i = 0; i < imgKeys.length; i++) {
             const b = await getBlob(imgKeys[i]);
             if (b) {
-              const f = new File([b], `draft-img-${i}`, { type: b.type || "application/octet-stream" });
+              const f = new File([b], `draft-img-${i}`, {
+                type: b.type || "application/octet-stream",
+              });
               restoredImgFiles.push(f);
             }
           }
-          if (restoredImgFiles.length > 0) setServiceImageFiles(restoredImgFiles);
+          if (restoredImgFiles.length > 0)
+            setServiceImageFiles(restoredImgFiles);
 
           const restoredCertFiles: File[] = [];
           for (let i = 0; i < certKeys.length; i++) {
             const b = await getBlob(certKeys[i]);
             if (b) {
-              const f = new File([b], `draft-cert-${i}`, { type: b.type || "application/octet-stream" });
+              const f = new File([b], `draft-cert-${i}`, {
+                type: b.type || "application/octet-stream",
+              });
               restoredCertFiles.push(f);
             }
           }
-          if (restoredCertFiles.length > 0) setCertificationFiles(restoredCertFiles);
+          if (restoredCertFiles.length > 0)
+            setCertificationFiles(restoredCertFiles);
         } catch (err) {
           // ignore file reconstruction errors
         }
       } catch (e) {
         // fallback to stored previews
-        if (loadedDraft.imagePreviews) setImagePreviews(loadedDraft.imagePreviews);
-        if (loadedDraft.certificationPreviews) setCertificationPreviews(loadedDraft.certificationPreviews);
+        if (loadedDraft.imagePreviews)
+          setImagePreviews(loadedDraft.imagePreviews);
+        if (loadedDraft.certificationPreviews)
+          setCertificationPreviews(loadedDraft.certificationPreviews);
       }
-      if (loadedDraft.commissionQuotes) setCommissionQuotes(loadedDraft.commissionQuotes);
+      if (loadedDraft.commissionQuotes)
+        setCommissionQuotes(loadedDraft.commissionQuotes);
     } catch (e) {
       // ignore
     }
@@ -306,7 +322,10 @@ const AddServicePage: React.FC = () => {
     }
     if (currentStep === 1) {
       // If at first step and no changes, just go back
-      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialServiceState) || serviceImageFiles.length > 0 || certificationFiles.length > 0;
+      const hasChanges =
+        JSON.stringify(formData) !== JSON.stringify(initialServiceState) ||
+        serviceImageFiles.length > 0 ||
+        certificationFiles.length > 0;
       if (!hasChanges) {
         navigate(-1);
         return;
@@ -1377,7 +1396,8 @@ const AddServicePage: React.FC = () => {
           <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-2 text-lg font-bold">Restore draft?</h2>
             <p className="mb-4 text-sm text-gray-600">
-              We found a saved draft for your service. Would you like to restore your progress now?
+              We found a saved draft for your service. Would you like to restore
+              your progress now?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -1409,7 +1429,8 @@ const AddServicePage: React.FC = () => {
           <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-2 text-lg font-bold">Save draft?</h2>
             <p className="mb-4 text-sm text-gray-600">
-              You haven't finished creating this service. Would you like to save your current progress as a draft?
+              You haven't finished creating this service. Would you like to save
+              your current progress as a draft?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -1438,7 +1459,10 @@ const AddServicePage: React.FC = () => {
       {/* Header */}
       <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
-          <button onClick={handleHeaderBack} className="mr-2 rounded-full p-2 hover:bg-gray-100">
+          <button
+            onClick={handleHeaderBack}
+            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+          >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="text-2xl font-extrabold tracking-tight text-black sm:text-xl md:text-2xl">
@@ -1448,13 +1472,25 @@ const AddServicePage: React.FC = () => {
       </header>
       {/* Draft available banner (uses draftAvailable state so it's not unused) */}
       {draftAvailable && !showRestorePrompt && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex justify-center">
-          <div className="mx-4 w-full max-w-4xl rounded-md bg-yellow-50 border border-yellow-200 p-3 flex items-center justify-between">
+        <div className="fixed left-0 right-0 top-16 z-40 flex justify-center">
+          <div className="mx-4 flex w-full max-w-4xl items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-3">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-5 w-5 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <p className="text-sm font-medium text-yellow-800">A saved draft for this service is available.</p>
+              <p className="text-sm font-medium text-yellow-800">
+                A saved draft for this service is available.
+              </p>
             </div>
             <div className="flex gap-2">
               <button
