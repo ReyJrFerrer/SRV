@@ -53,7 +53,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   }, [providerId, fetchUserReputation]);
 
   const score = reputationScore;
-
   return (
     <span
       className="text-md mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
@@ -177,7 +176,6 @@ const BookingDetailsPage: React.FC = () => {
     useState<EnhancedBooking | null>(null);
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
-
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -300,6 +298,18 @@ const BookingDetailsPage: React.FC = () => {
 
     validateCommission();
   }, [specificBooking, checkCommissionValidation]);
+
+  if (hookLoading) {
+  return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <p className="text-gray-600">Loading booking details...</p>
+      </div>
+    </div>
+  );
+}
+
 
   const handleUpdateBookingStatus = async (
     bookingId: string,
