@@ -755,12 +755,15 @@ const ProviderBookingDetailsPage: React.FC = () => {
       </header>
 
       {/* Cancellation reasons (frontend-only / informational) */}
-      <CancellationReasons
-        bookingId={specificBooking?.id}
-        cancelledByClient={specificBooking?.status === "Cancelled"}
-        cancellationReason={(specificBooking as any)?.cancelReason}
-        // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
-      />
+      {/* Add top margin so this block isn't hidden behind the sticky header */}
+      <div className="mt-16">
+        <CancellationReasons
+          bookingId={specificBooking?.id}
+          cancelledByClient={specificBooking?.status === "Cancelled"}
+          cancellationReason={(specificBooking as any)?.cancelReason}
+          // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
+        />
+      </div>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Side by side layout for provider and service details */}
