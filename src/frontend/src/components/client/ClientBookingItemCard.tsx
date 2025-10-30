@@ -411,7 +411,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             {/* Reputation + Rating (real frontend display using shared components) */}
             <div className="mt-2 flex items-center gap-3">
               <div className="flex-shrink-0">
-                <ReputationScore providerId={booking.providerProfile?.id ?? ""} />
+                <ReputationScore
+                  providerId={booking.providerProfile?.id ?? ""}
+                />
               </div>
 
               <div className="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
@@ -425,10 +427,14 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                     <div className="flex items-center gap-2">
                       <StarRatingDisplay rating={averageRating ?? 0} />
                       <span className="ml-1 font-bold">
-                        {averageRating != null ? averageRating.toFixed(1) : "N/A"}
+                        {averageRating != null
+                          ? averageRating.toFixed(1)
+                          : "N/A"}
                       </span>
                     </div>
-                    <span className="ml-2 text-xs text-gray-500">({reviewCount ?? 0})</span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({reviewCount ?? 0})
+                    </span>
                   </>
                 )}
               </div>
