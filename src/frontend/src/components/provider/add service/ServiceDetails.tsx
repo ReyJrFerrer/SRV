@@ -50,6 +50,12 @@ interface ServiceDetailsProps {
   validationErrors?: ValidationErrors;
   onRequestCategory: (categoryName: string) => void;
   scrollToErrorTrigger?: number;
+  // Optional helper to compute commission for a given category and price
+  // The project provides getCommissionQuote which returns a CommissionQuote
+  // so we accept that shape and compute total locally.
+  computeCommission?: (categoryName: string, price: number) => Promise<{
+    commissionFee: number;
+  }>;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -62,7 +68,24 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   removePackage,
   validationErrors = {},
   scrollToErrorTrigger,
+  computeCommission,
 }) => {
+  // Local live commission map per package id
+  const [liveCommission, setLiveCommission] = useState<{
+    [pkgId: string]: { commissionFee: number; total: number } | undefined;
+  }>({});
+
+  // Debounce timers per package
+  const commissionTimers = useRef<{ [pkgId: string]: number | undefined }>({});
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(commissionTimers.current).forEach((t) => {
+        if (t) window.clearTimeout(t);
+      });
+    };
+  }, []);
   // Local state to control error visibility
   const [hideTitleError, setHideTitleError] = useState(false);
   const [hideCategoryError, setHideCategoryError] = useState(false);
@@ -164,6 +187,33 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       [pkgId]: { ...prev[pkgId], [field]: true },
     }));
     handlePackageChange(index, field, value);
+    // If the price field changed, kick off live commission calculation
+    if (field === "price") {
+      const pkg = formData.servicePackages[index];
+      const pkgId = pkg.id;
+      // clear existing timer
+      if (commissionTimers.current[pkgId]) {
+        window.clearTimeout(commissionTimers.current[pkgId]);
+      }
+      // schedule debounce
+      commissionTimers.current[pkgId] = window.setTimeout(async () => {
+        try {
+          const priceNum = Number(String(value).replace(/[^0-9]/g, "")) || 0;
+          const categoryName = categories.find((c) => c.id === formData.categoryId)?.name || "Default Category";
+          if (computeCommission) {
+                const quote = await computeCommission(categoryName, priceNum);
+                const fee = quote.commissionFee;
+                setLiveCommission((prev) => ({ ...prev, [pkgId]: { commissionFee: fee, total: priceNum + fee } }));
+          } else {
+            // Fallback: simple percentage (5%)
+            const fee = Math.round(priceNum * 0.05 * 100) / 100;
+            setLiveCommission((prev) => ({ ...prev, [pkgId]: { commissionFee: fee, total: priceNum + fee } }));
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 400);
+    }
   };
 
   // Modify the handlePackageInputChange function
@@ -376,6 +426,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                           />
+                          {/* Live commission display */}
+                          {liveCommission[pkg.id] && (
+                            <div className="mt-2 text-sm text-green-600">
+                              <div className="flex flex-col">
+                                <span className="mb-1">Commission: ₱{liveCommission[pkg.id]!.commissionFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="font-semibold">Total: ₱{liveCommission[pkg.id]!.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              </div>
+                            </div>
+                          )}
                           {pkgError &&
                             pkgError.price &&
                             !hidePackageFieldError[pkg.id]?.price && (

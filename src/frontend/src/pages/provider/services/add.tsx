@@ -1022,6 +1022,9 @@ const AddServicePage: React.FC = () => {
             formData={formData}
             categories={categories}
             loadingCategories={loadingCategories}
+            // provide the commission computation function so ServiceDetails can
+            // calculate commission/total live as the user types
+            computeCommission={getCommissionQuote}
             handleChange={handleChange}
             handlePackageChange={handlePackageChange}
             addPackage={addPackage}
