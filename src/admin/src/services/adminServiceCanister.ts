@@ -1389,6 +1389,104 @@ export const adminServiceCanister = {
       return [];
     }
   },
+
+  /**
+   * Get conversations for a specific user (admin function)
+   */
+  async getUserConversations(userId: string): Promise<any[]> {
+    try {
+      requireAuth();
+
+      // Use the chat function but with admin override
+      // callFirebaseFunction already extracts the data property from {success: true, data: [...]}
+      const result = await callFirebaseFunction("getMyConversations", {
+        userId, // Pass userId for admin override in backend
+      });
+
+      // The result is already the data array (or message if no data)
+      // If result is an array, return it; otherwise return empty array
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      logError("Error fetching user conversations", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get messages for a specific conversation (admin function)
+   */
+  async getConversationMessages(
+    conversationId: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<any[]> {
+    try {
+      requireAuth();
+
+      const result = await callFirebaseFunction("getConversationMessages", {
+        conversationId,
+        limit,
+        offset,
+      });
+
+      // The result is already the data object { messages, hasMore, nextPageToken }
+      // Extract and adapt messages array
+      const messages = result?.messages || [];
+      
+      // Adapt messages to extract content from encrypted format
+      return messages.map((msg: any) => ({
+        ...msg,
+        content: typeof msg.content === 'string' 
+          ? msg.content 
+          : (msg.content?.encryptedText || ''),
+      }));
+    } catch (error) {
+      logError("Error fetching conversation messages", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get detailed reviews for a user (both as client and provider)
+   */
+  async getUserDetailedReviews(userId: string): Promise<{
+    clientReviews: any[];
+    providerReviews: any[];
+  }> {
+    try {
+      requireAuth();
+
+      // Get reviews where user is the client (reviews they received)
+      const [clientReviewsResult, providerReviewsResult] =
+        await Promise.allSettled([
+          callFirebaseFunction("getUserReviews", { userId }),
+          callFirebaseFunction("getProviderReviews", { providerId: userId }),
+        ]);
+
+      const clientReviews =
+        clientReviewsResult.status === "fulfilled" &&
+        Array.isArray(clientReviewsResult.value)
+          ? clientReviewsResult.value
+          : [];
+
+      const providerReviews =
+        providerReviewsResult.status === "fulfilled" &&
+        Array.isArray(providerReviewsResult.value)
+          ? providerReviewsResult.value
+          : [];
+
+      return {
+        clientReviews,
+        providerReviews,
+      };
+    } catch (error) {
+      logError("Error fetching user detailed reviews", error);
+      return {
+        clientReviews: [],
+        providerReviews: [],
+      };
+    }
+  },
 };
 
 // Export individual functions for direct use
