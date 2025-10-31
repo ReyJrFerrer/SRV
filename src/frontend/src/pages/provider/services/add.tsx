@@ -1,22 +1,20 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import {
-  saveFilesToIDB,
-  getFilesFromIDB,
-  getFilesEntries,
-  deleteDraftFromIDB,
-} from "../../../utils/draftStorage";
+import ServiceDrafts from "../../../components/provider/add service/ServiceDrafts";
+import { getFilesEntries, deleteDraftFromIDB } from "../../../utils/draftStorage";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
 import ServiceAvailability from "../../../components/provider/add service/ServiceAvailability";
 import ServiceLocation from "../../../components/provider/add service/ServiceLocation";
 import ServiceImageUpload from "../../../components/provider/add service/ServiceImageUpload";
+import ReviewSubmit from "../../../components/provider/add service/ReviewSubmit";
+// Draft UI/logic moved into ServiceDrafts component
 
 // Service Management Hook & Types
 import {
@@ -150,182 +148,11 @@ const AddServicePage: React.FC = () => {
   }>({});
   const [loadingCommissions, setLoadingCommissions] = useState(false);
 
-  // Local draft autosave key
+  // Local draft autosave key (used by submission to clear saved draft)
   const ADD_SERVICE_DRAFT_KEY = "add_service_draft_v1";
 
-  // --- Draft UX state ---
-  const [loadedDraft, setLoadedDraft] = useState<any | null>(null);
-  const [draftAvailable, setDraftAvailable] = useState(false);
-  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
-  const [showExitPrompt, setShowExitPrompt] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  // Pending navigation target when user attempts to leave with unsaved changes
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
-    null,
-  );
-
-  // --- Detect draft on mount but DO NOT auto-restore ---
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(ADD_SERVICE_DRAFT_KEY);
-      if (!raw) return;
-      const draft = JSON.parse(raw);
-      if (draft) {
-        setLoadedDraft(draft);
-        setDraftAvailable(true);
-        setShowRestorePrompt(true);
-      }
-    } catch (e) {
-      // ignore parse errors
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Debounced autosave of draft (do NOT try to save File objects)
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      try {
-        const toSave = {
-          formData: {
-            // only save serializable fields from formData to avoid large blobs
-            ...formData,
-            // strip fields that may contain non-serializable objects just in case
-          },
-          imagePreviews: imagePreviews || [],
-          certificationPreviews: certificationPreviews || [],
-          commissionQuotes: commissionQuotes || {},
-        };
-        localStorage.setItem(ADD_SERVICE_DRAFT_KEY, JSON.stringify(toSave));
-      } catch (e) {
-        // ignore quota errors
-      }
-    }, 700);
-    return () => clearTimeout(handler);
-  }, [formData, imagePreviews, certificationPreviews, commissionQuotes]);
-
-  // Helper: save draft including file blobs to IndexedDB
-  const saveDraftIncludingFiles = async () => {
-    setIsSavingDraft(true);
-    try {
-      const toSave = {
-        formData: { ...formData },
-        // previews are already serializable
-        imagePreviews: imagePreviews || [],
-        certificationPreviews: certificationPreviews || [],
-        commissionQuotes: commissionQuotes || {},
-      };
-      localStorage.setItem(ADD_SERVICE_DRAFT_KEY, JSON.stringify(toSave));
-
-      // Save files to IDB so previews can persist across sessions
-      if (serviceImageFiles && serviceImageFiles.length > 0) {
-        await saveFilesToIDB(ADD_SERVICE_DRAFT_KEY, serviceImageFiles, "img");
-      }
-      if (certificationFiles && certificationFiles.length > 0) {
-        await saveFilesToIDB(ADD_SERVICE_DRAFT_KEY, certificationFiles, "cert");
-      }
-      toast.success("Draft saved");
-    } catch (e) {
-      console.error("Failed to save draft:", e);
-      toast.error("Failed to save draft");
-    } finally {
-      setIsSavingDraft(false);
-    }
-  };
-
-  const clearDraftCompletely = async () => {
-    try {
-      localStorage.removeItem(ADD_SERVICE_DRAFT_KEY);
-      await deleteDraftFromIDB(ADD_SERVICE_DRAFT_KEY);
-    } catch (e) {}
-    setLoadedDraft(null);
-    setDraftAvailable(false);
-    setShowRestorePrompt(false);
-  };
-
-  const handleRestoreDraft = async () => {
-    if (!loadedDraft) return;
-    try {
-      if (loadedDraft.formData)
-        setFormData((prev) => ({ ...prev, ...loadedDraft.formData }));
-      // Try to load files from IDB (will fall back to previews stored in localStorage)
-      try {
-        const imgUrls = await getFilesFromIDB(ADD_SERVICE_DRAFT_KEY, "img");
-        const certUrls = await getFilesFromIDB(ADD_SERVICE_DRAFT_KEY, "cert");
-        if (imgUrls && imgUrls.length > 0) setImagePreviews(imgUrls);
-        else if (loadedDraft.imagePreviews)
-          setImagePreviews(loadedDraft.imagePreviews);
-        if (certUrls && certUrls.length > 0) setCertificationPreviews(certUrls);
-        else if (loadedDraft.certificationPreviews)
-          setCertificationPreviews(loadedDraft.certificationPreviews);
-
-        // Reconstruct File objects from IDB entries so submission works
-        try {
-          const imgEntries = await getFilesEntries(
-            ADD_SERVICE_DRAFT_KEY,
-            "img",
-          );
-          if (imgEntries && imgEntries.length > 0) {
-            // set previews from blobs (preserve order)
-            setImagePreviews(
-              imgEntries.map((e) => URL.createObjectURL(e.blob)),
-            );
-            const restoredImgFiles = imgEntries.map((e, i) => {
-              const name = e.name || `draft-img-${i}`;
-              const type =
-                e.type ||
-                (e.blob && (e.blob as Blob).type) ||
-                "application/octet-stream";
-              const lastModified = e.lastModified || Date.now();
-              return new File([e.blob], name, { type, lastModified });
-            });
-            if (restoredImgFiles.length > 0)
-              setServiceImageFiles(restoredImgFiles);
-          }
-
-          const certEntries = await getFilesEntries(
-            ADD_SERVICE_DRAFT_KEY,
-            "cert",
-          );
-          if (certEntries && certEntries.length > 0) {
-            setCertificationPreviews(
-              certEntries.map((e) => URL.createObjectURL(e.blob)),
-            );
-            const restoredCertFiles = certEntries.map((e, i) => {
-              const name = e.name || `draft-cert-${i}`;
-              const type =
-                e.type ||
-                (e.blob && (e.blob as Blob).type) ||
-                "application/octet-stream";
-              const lastModified = e.lastModified || Date.now();
-              return new File([e.blob], name, { type, lastModified });
-            });
-            if (restoredCertFiles.length > 0)
-              setCertificationFiles(restoredCertFiles);
-          }
-        } catch (err) {
-          // ignore file reconstruction errors
-        }
-      } catch (e) {
-        // fallback to stored previews
-        if (loadedDraft.imagePreviews)
-          setImagePreviews(loadedDraft.imagePreviews);
-        if (loadedDraft.certificationPreviews)
-          setCertificationPreviews(loadedDraft.certificationPreviews);
-      }
-      if (loadedDraft.commissionQuotes)
-        setCommissionQuotes(loadedDraft.commissionQuotes);
-    } catch (e) {
-      // ignore
-    }
-    setShowRestorePrompt(false);
-    setDraftAvailable(false);
-    setLoadedDraft(null);
-  };
-
-  const handleDiscardDraft = async () => {
-    await clearDraftCompletely();
-    setShowRestorePrompt(false);
-  };
+  // ServiceDrafts ref handles all draft/localStorage logic (save/restore/banner/modal)
+  const serviceDraftsRef = useRef<any>(null);
 
   // Header back handler: ask user if they'd like to save as draft before leaving
   const handleHeaderBack = () => {
@@ -343,55 +170,19 @@ const AddServicePage: React.FC = () => {
         navigate(-1);
         return;
       }
-      setShowExitPrompt(true);
+      // delegate to ServiceDrafts to show the same modal
+      serviceDraftsRef.current?.showExitPromptNow?.();
       return;
     }
     // otherwise just go back a step
     handleBack();
   };
 
-  const handleSaveDraftAndExit = async () => {
-    setShowExitPrompt(false);
-    try {
-      await saveDraftIncludingFiles();
-    } finally {
-      const to = pendingNavigation;
-      setPendingNavigation(null);
-      if (to) {
-        navigate(to);
-      } else {
-        navigate(-1);
-      }
-    }
-  };
-
-  const handleDontSaveAndExit = async () => {
-    setShowExitPrompt(false);
-    await clearDraftCompletely();
-    const to = pendingNavigation;
-    setPendingNavigation(null);
-    if (to) {
-      navigate(to);
-    } else {
-      navigate(-1);
-    }
-  };
-
-  // Called by navigation UI to ask for permission before navigating away.
-  // Return false to prevent immediate navigation. Caller may later call
-  // navigate() after user confirms via the modal.
   const handleNavigateAttempt = (to: string): boolean => {
-    // If there are no unsaved changes, allow navigation immediately
-    const hasChanges =
-      JSON.stringify(formData) !== JSON.stringify(initialServiceState) ||
-      serviceImageFiles.length > 0 ||
-      certificationFiles.length > 0;
-    if (!hasChanges) return true;
-
-    // Otherwise store target and show exit prompt, cancel navigation now
-    setPendingNavigation(to);
-    setShowExitPrompt(true);
-    return false;
+    if (serviceDraftsRef.current && typeof serviceDraftsRef.current.handleNavigateAttempt === "function") {
+      return serviceDraftsRef.current.handleNavigateAttempt(to);
+    }
+    return true;
   };
 
   // --- Image Handlers ---
@@ -912,22 +703,22 @@ const AddServicePage: React.FC = () => {
             ADD_SERVICE_DRAFT_KEY,
             "img",
           );
-          if (imgEntries && imgEntries.length > 0) {
-            filesToProcess = imgEntries.map((e, i) => {
-              const name = e.name || `draft-img-${i}`;
-              const type =
-                e.type ||
-                (e.blob && (e.blob as Blob).type) ||
-                "application/octet-stream";
-              const lastModified = e.lastModified || Date.now();
-              return new File([e.blob], name, { type, lastModified });
-            });
-            // also set local state so UI reflects restored files
-            setServiceImageFiles(filesToProcess);
-            setImagePreviews(
-              imgEntries.map((e) => URL.createObjectURL(e.blob)),
-            );
-          }
+              if (imgEntries && imgEntries.length > 0) {
+                filesToProcess = imgEntries.map((e: any, i: number) => {
+                  const name = e.name || `draft-img-${i}`;
+                  const type =
+                    e.type ||
+                    (e.blob && (e.blob as Blob).type) ||
+                    "application/octet-stream";
+                  const lastModified = e.lastModified || Date.now();
+                  return new File([e.blob], name, { type, lastModified });
+                });
+                // also set local state so UI reflects restored files
+                setServiceImageFiles(filesToProcess);
+                setImagePreviews(
+                  imgEntries.map((e: any) => URL.createObjectURL(e.blob)),
+                );
+              }
         } catch (err) {
           // ignore
         }
@@ -1139,331 +930,19 @@ const AddServicePage: React.FC = () => {
           </div>
         );
       case 5:
-        // Review & Submit Step
+        // Review & Submit Step - extracted to ReviewSubmit component
         return (
-          <div className="flex flex-col items-center space-y-8">
-            <div className="w-full max-w-3xl rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-10 shadow-2xl">
-              <div className="mb-8 flex flex-col items-center text-center">
-                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 shadow">
-                  <svg
-                    className="h-8 w-8 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="mb-2 text-3xl font-extrabold text-blue-900">
-                  Review &amp; Submit
-                </h2>
-                <p className="text-lg text-gray-600">
-                  Please review your service details before submitting.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="4" y="4" width="16" height="16" rx="2" />
-                      <path d="M8 9h8M8 13h6" strokeLinecap="round" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Service Title
-                    </h3>
-                  </div>
-                  <p className="break-words text-lg font-semibold text-blue-800">
-                    {formData.serviceOfferingTitle}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M7 7a2 2 0 114 0 2 2 0 01-4 0z" />
-                      <path d="M3 11V7a2 2 0 012-2h4l10 10a2 2 0 010 2.83l-4.17 4.17a2 2 0 01-2.83 0L3 11z" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Category</h3>
-                  </div>
-                  <p className="break-words text-lg font-semibold text-blue-800">
-                    {categories.find((cat) => cat.id === formData.categoryId)
-                      ?.name || "Unknown"}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm md:col-span-2">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="7" width="18" height="13" rx="2" />
-                      <path d="M16 3v4M8 3v4M3 7h18" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Packages</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {formData.servicePackages
-                      .filter(
-                        (pkg) =>
-                          pkg.name.trim() &&
-                          pkg.description.trim() &&
-                          pkg.price,
-                      )
-                      .map((pkg) => {
-                        const commissionQuote = commissionQuotes[pkg.id];
-                        return (
-                          <div
-                            key={pkg.id}
-                            className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-blue-900">
-                                {pkg.name}
-                              </p>
-                              <p className="break-words text-sm text-gray-600">
-                                {pkg.description}
-                              </p>
-                            </div>
-                            <div className="mt-2 text-right md:mt-0">
-                              <p className="text-lg font-semibold text-green-600">
-                                ₱{Number(pkg.price).toLocaleString()}
-                              </p>
-                              {loadingCommissions && (
-                                <p className="text-xs text-gray-500">
-                                  Loading commission...
-                                </p>
-                              )}
-                              {commissionQuote && (
-                                <div className="mt-1 text-base text-gray-600">
-                                  <p>
-                                    Commission: ₱
-                                    {commissionQuote.commissionFee.toLocaleString()}
-                                  </p>
-                                  <p className="font-medium text-blue-600">
-                                    Total: ₱
-                                    {(
-                                      Number(pkg.price) +
-                                      commissionQuote.commissionFee
-                                    ).toLocaleString()}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="5" width="18" height="16" rx="2" />
-                      <path d="M16 3v2M8 3v2M3 9h18" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Availability
-                    </h3>
-                  </div>
-                  <div className="font-medium text-blue-900">
-                    {formData.availabilitySchedule.join(", ")}
-                  </div>
-                  {formData.availabilitySchedule.length > 0 && (
-                    <span className="mt-1 block text-sm text-gray-500">
-                      {formData.useSameTimeForAllDays
-                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${
-                            formData.commonTimeSlots.length > 1 ? "s" : ""
-                          })`
-                        : "Custom hours per day"}
-                    </span>
-                  )}
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 21c-4.418 0-8-4.03-8-9a8 8 0 1116 0c0 4.97-3.582 9-8 9z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Location</h3>
-                  </div>
-                  <div className="break-words font-medium text-blue-900">
-                    {[
-                      formData.locationMunicipalityCity,
-                      formData.locationProvince,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </div>
-                </div>
-              </div>
-              {/* Service Images Preview */}
-              {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
-                <div className="mt-10">
-                  <div className="mb-2 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="5" width="18" height="14" rx="2" />
-                      <circle cx="8.5" cy="12.5" r="1.5" />
-                      <path d="M21 19l-5.5-7-4.5 6-3-4-4 5" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Service Images
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {serviceImageFiles.length > 0
-                      ? serviceImageFiles.map((file, idx) => (
-                          <div
-                            key={file.name + idx}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                          >
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`Service Image ${idx + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))
-                      : imagePreviews.map((previewUrl, idx) => (
-                          <div
-                            key={previewUrl}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                          >
-                            <img
-                              src={previewUrl}
-                              alt={`Service Image ${idx + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                  </div>
-                </div>
-              )}
-              {/* Certifications Preview */}
-              {(certificationFiles?.length > 0 ||
-                certificationPreviews?.length > 0) && (
-                <div className="mt-10">
-                  <div className="mb-2 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-yellow-500"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
-                    </svg>
-                    <h3 className="font-semibold text-yellow-700">
-                      Certifications
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {certificationFiles && certificationFiles.length > 0
-                      ? certificationFiles.map((file, idx) => {
-                          const isPdf =
-                            file.type === "application/pdf" ||
-                            file.name.endsWith(".pdf");
-                          const src = URL.createObjectURL(file);
-                          return (
-                            <div
-                              key={file.name + idx}
-                              className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
-                            >
-                              {isPdf ? (
-                                <iframe
-                                  src={src}
-                                  title={`Certification PDF ${idx + 1}`}
-                                  className="h-full w-full rounded bg-gray-100"
-                                  style={{
-                                    minHeight: 0,
-                                    minWidth: 0,
-                                    border: "none",
-                                  }}
-                                />
-                              ) : (
-                                <img
-                                  src={src}
-                                  alt={`Certification ${idx + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-                              )}
-                            </div>
-                          );
-                        })
-                      : certificationPreviews?.map((previewUrl, idx) => (
-                          <div
-                            key={previewUrl}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
-                          >
-                            {previewUrl.endsWith(".pdf") ? (
-                              <iframe
-                                src={previewUrl}
-                                title={`Certification PDF ${idx + 1}`}
-                                className="h-full w-full rounded bg-gray-100"
-                                style={{
-                                  minHeight: 0,
-                                  minWidth: 0,
-                                  border: "none",
-                                }}
-                              />
-                            ) : (
-                              <img
-                                src={previewUrl}
-                                alt={`Certification ${idx + 1}`}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                        ))}
-                  </div>
-                </div>
-              )}
-              {/* Error Display */}
-              {validationErrors.general && (
-                <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="text-sm text-red-600">
-                    {validationErrors.general}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <ReviewSubmit
+            formData={formData}
+            categories={categories}
+            commissionQuotes={commissionQuotes}
+            loadingCommissions={loadingCommissions}
+            serviceImageFiles={serviceImageFiles}
+            imagePreviews={imagePreviews}
+            certificationFiles={certificationFiles}
+            certificationPreviews={certificationPreviews}
+            validationErrors={validationErrors}
+          />
         );
       default:
         return <div>Review and Submit</div>;
@@ -1475,72 +954,23 @@ const AddServicePage: React.FC = () => {
     <div className="flex min-h-screen flex-col bg-gray-100 pb-12">
       <Toaster position="top-center" />
 
-      {/* Restore Draft Modal */}
-      {showRestorePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-2 text-lg font-bold">Restore draft?</h2>
-            <p className="mb-4 text-sm text-gray-600">
-              We found a saved draft for your service. Would you like to restore
-              your progress now?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowRestorePrompt(false)}
-                className="rounded-md border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDiscardDraft}
-                className="rounded-md border px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                Discard
-              </button>
-              <button
-                onClick={handleRestoreDraft}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Restore draft
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Exit (Save Draft) Modal */}
-      {showExitPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-2 text-lg font-bold">Save draft?</h2>
-            <p className="mb-4 text-sm text-gray-600">
-              You haven't finished creating this service. Would you like to save
-              your current progress as a draft?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowExitPrompt(false)}
-                className="rounded-md border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDontSaveAndExit}
-                className="rounded-md border px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                Don't Save
-              </button>
-              <button
-                onClick={handleSaveDraftAndExit}
-                disabled={isSavingDraft}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSavingDraft ? "Saving..." : "Save Draft & Exit"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ServiceDrafts
+        ref={serviceDraftsRef}
+        formData={formData}
+        setFormData={setFormData}
+        serviceImageFiles={serviceImageFiles}
+        setServiceImageFiles={setServiceImageFiles}
+        imagePreviews={imagePreviews}
+        setImagePreviews={setImagePreviews}
+        certificationFiles={certificationFiles}
+        setCertificationFiles={setCertificationFiles}
+        certificationPreviews={certificationPreviews}
+        setCertificationPreviews={setCertificationPreviews}
+        commissionQuotes={commissionQuotes}
+        setCommissionQuotes={setCommissionQuotes}
+        initialServiceState={initialServiceState}
+        navigate={navigate}
+      />
       {/* Header */}
       <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
@@ -1555,45 +985,7 @@ const AddServicePage: React.FC = () => {
           </h1>
         </div>
       </header>
-      {/* Draft available banner (uses draftAvailable state so it's not unused) */}
-      {draftAvailable && !showRestorePrompt && (
-        <div className="fixed left-0 right-0 top-16 z-40 flex justify-center">
-          <div className="mx-4 flex w-full max-w-4xl items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-3">
-            <div className="flex items-center gap-3">
-              <svg
-                className="h-5 w-5 text-yellow-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-sm font-medium text-yellow-800">
-                A saved draft for this service is available.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleDiscardDraft}
-                className="rounded-md border px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-              >
-                Discard
-              </button>
-              <button
-                onClick={handleRestoreDraft}
-                className="rounded-md bg-yellow-600 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-700"
-              >
-                Restore
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
       <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
         <div className="mt-20 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
