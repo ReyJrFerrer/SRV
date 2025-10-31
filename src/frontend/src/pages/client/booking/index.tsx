@@ -9,6 +9,7 @@ import {
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
+import { useReputation } from "../../../hooks/useReputation";
 import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
@@ -166,13 +167,23 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
-  // Pre-fetch service ratings and reviews for bookings at page level so cards don't run hooks
   const [serviceStatsMap, setServiceStatsMap] = useState<
     Record<
       string,
-      { averageRating: number | null; reviews: any[]; loading: boolean }
+      { 
+        averageRating: number | null; 
+        reviews: any[]; 
+        loading: boolean;
+        reputation?: {
+          trustScore: number;
+          trustLevel: string;
+          completedBookings: number;
+        } | null;
+      }
     >
   >({});
+  
+  const { fetchUserReputation } = useReputation();
 
   useEffect(() => {
     const fetchStatsForServices = async () => {
@@ -189,19 +200,44 @@ const MyBookingsPage: React.FC = () => {
       await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
+            const booking = filteredBookings.find(b => b.serviceId === serviceId);
+            
+            // Initialize with loading state
             mapCopy[serviceId] = {
               averageRating: null,
               reviews: [],
               loading: true,
+              reputation: null
             };
-            const avg =
-              await reviewCanisterService.calculateServiceRating(serviceId);
-            const reviews =
-              await reviewCanisterService.getServiceReviews(serviceId);
+            
+            // Fetch service rating and reviews in parallel
+            const [avg, reviews] = await Promise.all([
+              reviewCanisterService.calculateServiceRating(serviceId),
+              reviewCanisterService.getServiceReviews(serviceId)
+            ]);
+            
+            let reputation = null;
+            if (booking?.providerProfile?.id) {
+              try {
+                const rep = await fetchUserReputation(booking.providerProfile.id);
+                if (rep) {
+                  reputation = {
+                    trustScore: rep.trustScore,
+                    trustLevel: rep.trustLevel,
+                    completedBookings: rep.completedBookings
+                  };
+                }
+              } catch (err) {
+                console.error('Error fetching reputation:', err);
+              }
+            }
+            
+            // Update the map with all the fetched data
             mapCopy[serviceId] = {
               averageRating: avg?.averageRating ?? null,
               reviews: Array.isArray(reviews) ? reviews : [],
               loading: false,
+              reputation
             };
           } catch (err) {
             mapCopy[serviceId] = {
@@ -378,6 +414,9 @@ const MyBookingsPage: React.FC = () => {
                           loadingStats={
                             serviceStatsMap[booking.serviceId || ""]?.loading
                           }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
+                          }
                         />
                       </div>
                     ))}
@@ -411,6 +450,9 @@ const MyBookingsPage: React.FC = () => {
                           }
                           loadingStats={
                             serviceStatsMap[booking.serviceId || ""]?.loading
+                          }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
                         />
                       </div>

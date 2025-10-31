@@ -29,6 +29,7 @@ interface ClientBookingItemCardProps {
   reviewCount?: number | null;
   reviews?: any[];
   loadingStats?: boolean;
+  reputation: any;
 }
 
 const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
@@ -37,6 +38,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   averageRating,
   reviewCount,
   loadingStats,
+  reputation
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -449,7 +451,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0">
                 <ReputationScore
-                  providerId={booking.providerProfile?.id ?? ""}
+                  reputation={reputation}
                 />
               </div>
 
