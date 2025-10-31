@@ -15,19 +15,23 @@ interface Message {
 }
 
 export const UserChatHistoryPage: React.FC = () => {
-  const { id: userId, conversationId } = useParams<{ id: string; conversationId: string }>();
+  const { id: userId, conversationId } = useParams<{
+    id: string;
+    conversationId: string;
+  }>();
   const navigate = useNavigate();
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [otherUserName, setOtherUserName] = useState<string>("");
   const [otherUserId, setOtherUserId] = useState<string>("");
-  const [otherUserImage, setOtherUserImage] = useState<string>(DEFAULT_USER_IMAGE);
+  const [otherUserImage, setOtherUserImage] =
+    useState<string>(DEFAULT_USER_IMAGE);
   const [userName, setUserName] = useState<string>("");
   const [userImage, setUserImage] = useState<string>(DEFAULT_USER_IMAGE);
 
@@ -72,16 +76,20 @@ export const UserChatHistoryPage: React.FC = () => {
 
   const loadOtherUserProfile = async () => {
     if (!userId || !conversationId) return;
-    
+
     try {
       // First try to get other user ID from conversation if not in state
       if (!otherUserId) {
-        const conversations = await adminServiceCanister.getUserConversations(userId);
-        const conv = conversations.find((c: any) => c.conversation.id === conversationId);
+        const conversations =
+          await adminServiceCanister.getUserConversations(userId);
+        const conv = conversations.find(
+          (c: any) => c.conversation.id === conversationId,
+        );
         if (conv) {
-          const otherId = conv.conversation.clientId === userId
-            ? conv.conversation.providerId
-            : conv.conversation.clientId;
+          const otherId =
+            conv.conversation.clientId === userId
+              ? conv.conversation.providerId
+              : conv.conversation.clientId;
           setOtherUserId(otherId);
         }
       }
@@ -94,10 +102,7 @@ export const UserChatHistoryPage: React.FC = () => {
             setOtherUserName(profile.name);
           }
           // Only update if profilePicture exists (like client/provider does)
-          if (
-            profile.profilePicture &&
-            profile.profilePicture.imageUrl
-          ) {
+          if (profile.profilePicture && profile.profilePicture.imageUrl) {
             setOtherUserImage(profile.profilePicture.imageUrl);
           }
           // If null, don't call setState - stays as DEFAULT_USER_IMAGE
@@ -110,16 +115,13 @@ export const UserChatHistoryPage: React.FC = () => {
 
   const loadUserProfile = async () => {
     if (!userId) return;
-    
+
     try {
       const profile = await authCanisterService.getProfile(userId);
       if (profile) {
         setUserName(profile.name);
         // Only update if profilePicture exists (like client/provider does)
-        if (
-          profile.profilePicture &&
-          profile.profilePicture.imageUrl
-        ) {
+        if (profile.profilePicture && profile.profilePicture.imageUrl) {
           setUserImage(profile.profilePicture.imageUrl);
         }
         // If null, don't call setState - stays as DEFAULT_USER_IMAGE
@@ -144,10 +146,14 @@ export const UserChatHistoryPage: React.FC = () => {
     if (diffHours < 1) return "Just now";
     if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
     if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return (
+      date.toLocaleDateString() +
+      " " +
+      date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   };
 
   const isFromUser = (senderId: string): boolean => {
@@ -186,16 +192,20 @@ export const UserChatHistoryPage: React.FC = () => {
               />
             </div>
             <div className="ml-3">
-              <h1 className="text-lg font-bold text-black">{otherUserName || "Chat"}</h1>
+              <h1 className="text-lg font-bold text-black">
+                {otherUserName || "Chat"}
+              </h1>
             </div>
           </div>
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="rounded-full p-2 text-gray-400 hover:text-gray-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-full p-2 text-gray-400 hover:text-gray-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             title="Refresh messages"
           >
-            <ArrowPathIcon className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            <ArrowPathIcon
+              className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
+            />
           </button>
         </div>
       </header>
@@ -263,9 +273,7 @@ export const UserChatHistoryPage: React.FC = () => {
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
                       profilePictureUrl={
-                        userImage !== DEFAULT_USER_IMAGE
-                          ? userImage
-                          : undefined
+                        userImage !== DEFAULT_USER_IMAGE ? userImage : undefined
                       }
                       userName={userName || "User"}
                       size="h-9 w-9"
@@ -281,4 +289,3 @@ export const UserChatHistoryPage: React.FC = () => {
     </div>
   );
 };
-

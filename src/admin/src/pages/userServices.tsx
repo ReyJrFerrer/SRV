@@ -102,14 +102,14 @@ const UserServicesPage: React.FC = () => {
       if (backendStatus === "Suspended") return "cancelled";
       return "active";
     }
-    
+
     // If it's an object (Motoko variant format), check for keys
     if (typeof backendStatus === "object" && backendStatus !== null) {
       if ("Available" in backendStatus) return "active";
       if ("Unavailable" in backendStatus) return "cancelled";
       if ("Suspended" in backendStatus) return "cancelled";
     }
-    
+
     return "active";
   };
 
@@ -127,7 +127,7 @@ const UserServicesPage: React.FC = () => {
       if (backendStatus === "Disputed") return "cancelled";
       return "pending";
     }
-    
+
     // If it's an object (Motoko variant format), check for keys
     if (typeof backendStatus === "object" && backendStatus !== null) {
       if ("Requested" in backendStatus) return "pending";
@@ -138,7 +138,7 @@ const UserServicesPage: React.FC = () => {
       if ("Declined" in backendStatus) return "cancelled";
       if ("Disputed" in backendStatus) return "cancelled";
     }
-    
+
     return "pending";
   };
 

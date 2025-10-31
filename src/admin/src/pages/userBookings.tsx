@@ -40,9 +40,7 @@ export const UserBookingsPage: React.FC = () => {
         setError(null);
 
         // Filter out any invalid profiles before searching
-        const validUsers = backendUsers.filter(
-          (u) => u && u.id,
-        );
+        const validUsers = backendUsers.filter((u) => u && u.id);
 
         // Find user in backend users
         const foundUser = validUsers.find((u) => u.id.toString() === userId);
@@ -175,7 +173,7 @@ export const UserBookingsPage: React.FC = () => {
     const normalizedStatus = normalizeBookingStatus(booking.status);
     const filterValue = statusFilter.toLowerCase();
     let matchesStatus = false;
-    
+
     if (statusFilter === "all") {
       matchesStatus = true;
     } else if (filterValue === "pending") {
@@ -185,8 +183,7 @@ export const UserBookingsPage: React.FC = () => {
     } else if (filterValue === "inprogress") {
       // Handle both "inprogress" and "in_progress"
       matchesStatus =
-        normalizedStatus === "inprogress" ||
-        normalizedStatus === "in_progress";
+        normalizedStatus === "inprogress" || normalizedStatus === "in_progress";
     } else {
       matchesStatus = normalizedStatus === filterValue;
     }
@@ -629,20 +626,24 @@ export const UserBookingsPage: React.FC = () => {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{startIndex + 1}</span>{" "}
-                    to{" "}
+                    Showing{" "}
+                    <span className="font-medium">{startIndex + 1}</span> to{" "}
                     <span className="font-medium">
                       {Math.min(endIndex, filteredBookings.length)}
                     </span>{" "}
                     of{" "}
-                    <span className="font-medium">{filteredBookings.length}</span>{" "}
+                    <span className="font-medium">
+                      {filteredBookings.length}
+                    </span>{" "}
                     results
                   </p>
                 </div>
                 <div>
                   <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm">
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1}
                       className="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >

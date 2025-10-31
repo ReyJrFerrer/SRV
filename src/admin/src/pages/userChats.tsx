@@ -24,7 +24,7 @@ interface ConversationSummary {
 
 export const UserChatsPage: React.FC = () => {
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
-  
+
   const { id: userId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -60,7 +60,7 @@ export const UserChatsPage: React.FC = () => {
       // Fetch names and images for other users
       const namesMap = new Map<string, string>();
       const imagesMap = new Map<string, string>();
-      
+
       await Promise.all(
         Array.from(otherUserIds).map(async (otherUserId) => {
           try {
@@ -68,10 +68,7 @@ export const UserChatsPage: React.FC = () => {
             if (profile) {
               namesMap.set(otherUserId, profile.name);
               // Only set image URL if it exists (like client/provider does)
-              if (
-                profile.profilePicture &&
-                profile.profilePicture.imageUrl
-              ) {
+              if (profile.profilePicture && profile.profilePicture.imageUrl) {
                 imagesMap.set(otherUserId, profile.profilePicture.imageUrl);
               } else {
                 // If null, set to default (or don't set at all, will use default)
@@ -81,7 +78,7 @@ export const UserChatsPage: React.FC = () => {
           } catch (e) {
             // Ignore errors
           }
-        })
+        }),
       );
 
       setUserNames(namesMap);
@@ -123,7 +120,8 @@ export const UserChatsPage: React.FC = () => {
         conversationId: conv.conversation.id,
         otherUserName,
         otherUserId,
-        otherUserImage: otherUserImage !== DEFAULT_USER_IMAGE ? otherUserImage : undefined,
+        otherUserImage:
+          otherUserImage !== DEFAULT_USER_IMAGE ? otherUserImage : undefined,
       },
     });
   };
@@ -173,10 +171,22 @@ export const UserChatsPage: React.FC = () => {
               {conversations
                 .slice()
                 .sort((a, b) => {
-                  const aMsg = Array.isArray(a.lastMessage) && a.lastMessage.length > 0 ? a.lastMessage[0] : null;
-                  const bMsg = Array.isArray(b.lastMessage) && b.lastMessage.length > 0 ? b.lastMessage[0] : null;
-                  const aTime = aMsg?.createdAt || a.conversation.lastMessageAt || a.conversation.createdAt;
-                  const bTime = bMsg?.createdAt || b.conversation.lastMessageAt || b.conversation.createdAt;
+                  const aMsg =
+                    Array.isArray(a.lastMessage) && a.lastMessage.length > 0
+                      ? a.lastMessage[0]
+                      : null;
+                  const bMsg =
+                    Array.isArray(b.lastMessage) && b.lastMessage.length > 0
+                      ? b.lastMessage[0]
+                      : null;
+                  const aTime =
+                    aMsg?.createdAt ||
+                    a.conversation.lastMessageAt ||
+                    a.conversation.createdAt;
+                  const bTime =
+                    bMsg?.createdAt ||
+                    b.conversation.lastMessageAt ||
+                    b.conversation.createdAt;
                   return new Date(bTime).getTime() - new Date(aTime).getTime();
                 })
                 .map((conv) => {
@@ -185,12 +195,17 @@ export const UserChatsPage: React.FC = () => {
                       ? conv.conversation.providerId
                       : conv.conversation.clientId;
                   const otherUserName =
-                    userNames.get(otherUserId) || `User ${otherUserId.slice(0, 8)}...`;
-                  const otherUserImage = userImages.get(otherUserId) || DEFAULT_USER_IMAGE;
-                  const unreadCount = conv.conversation.unreadCount[userId] || 0;
-                  const lastMsg = Array.isArray(conv.lastMessage) && conv.lastMessage.length > 0 
-                    ? conv.lastMessage[0] 
-                    : null;
+                    userNames.get(otherUserId) ||
+                    `User ${otherUserId.slice(0, 8)}...`;
+                  const otherUserImage =
+                    userImages.get(otherUserId) || DEFAULT_USER_IMAGE;
+                  const unreadCount =
+                    conv.conversation.unreadCount[userId] || 0;
+                  const lastMsg =
+                    Array.isArray(conv.lastMessage) &&
+                    conv.lastMessage.length > 0
+                      ? conv.lastMessage[0]
+                      : null;
 
                   return (
                     <li
@@ -223,21 +238,24 @@ export const UserChatsPage: React.FC = () => {
                             className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                           >
                             {formatTimestamp(
-                              lastMsg?.createdAt || conv.conversation.lastMessageAt
+                              lastMsg?.createdAt ||
+                                conv.conversation.lastMessageAt,
                             )}
                           </p>
                         </div>
                         <div className="mt-1 flex items-start justify-between">
                           <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                            {lastMsg?.content 
-                              ? (typeof lastMsg.content === 'string' 
-                                  ? lastMsg.content 
-                                  : (lastMsg.content as any)?.encryptedText || '')
-                              : (
-                                <span className="italic text-gray-400">
-                                  No messages yet
-                                </span>
-                              )}
+                            {lastMsg?.content ? (
+                              typeof lastMsg.content === "string" ? (
+                                lastMsg.content
+                              ) : (
+                                (lastMsg.content as any)?.encryptedText || ""
+                              )
+                            ) : (
+                              <span className="italic text-gray-400">
+                                No messages yet
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -258,4 +276,3 @@ export const UserChatsPage: React.FC = () => {
     </div>
   );
 };
-

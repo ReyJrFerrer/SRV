@@ -520,7 +520,7 @@ export const UserDetailsPage: React.FC = () => {
                       }
                       userName={user.name}
                       size="h-16 w-16"
-                      className="ring-4 ring-white shadow-lg"
+                      className="shadow-lg ring-4 ring-white"
                     />
                   </div>
                   <div className="ml-6">
@@ -570,7 +570,7 @@ export const UserDetailsPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center space-x-3 flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-2 space-x-3">
                   <Link
                     to={`/user/${user.id}/services`}
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
