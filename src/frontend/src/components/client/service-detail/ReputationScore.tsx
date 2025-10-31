@@ -33,15 +33,15 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   let textColor = "text-blue-700";
   if (score >= 80) {
     iconColor = "text-blue-600";
- 
+
     textColor = "text-blue-700";
   } else if (score >= 60) {
     iconColor = "text-blue-400";
-  
+
     textColor = "text-blue-700";
   } else if (score >= 40) {
     iconColor = "text-yellow-400";
- 
+
     textColor = "text-yellow-700";
   } else {
     iconColor = "text-yellow-600";
