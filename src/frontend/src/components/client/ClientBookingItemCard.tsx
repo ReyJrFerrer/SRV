@@ -24,11 +24,19 @@ import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
   onCancelClick: (booking: EnhancedBooking) => void;
+  // Optional pre-fetched rating/reviews provided by parent (My Bookings page)
+  averageRating?: number | null;
+  reviewCount?: number | null;
+  reviews?: any[];
+  loadingStats?: boolean;
 }
 
 const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   booking,
   onCancelClick,
+  averageRating,
+  reviewCount,
+  loadingStats,
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -135,35 +143,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const providerName = booking.providerProfile?.name;
 
   const notes = (booking as any)?.notes;
-
-  // --- Reputation / rating data (frontend-only) ---
-  const [averageRating, setAverageRating] = useState<number | null>(null);
-  const [reviewCount, setReviewCount] = useState<number | null>(null);
-  const [loadingStats, setLoadingStats] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      if (!booking?.serviceId) return;
-      setLoadingStats(true);
-      try {
-        const avg = await reviewCanisterService.calculateServiceRating(
-          booking.serviceId,
-        );
-        const reviews = await reviewCanisterService.getServiceReviews(
-          booking.serviceId,
-        );
-        setAverageRating(avg?.averageRating ?? null);
-        setReviewCount(Array.isArray(reviews) ? reviews.length : 0);
-      } catch (err) {
-        setAverageRating(null);
-        setReviewCount(null);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
-    load();
-  }, [booking?.serviceId]);
 
   const bookingLocation =
     booking.formattedLocation ||
@@ -467,7 +446,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               Provided by: {providerName}
             </p>
             {/* Reputation + Rating (real frontend display using shared components) */}
-            <div className="mt-2 flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex-shrink-0">
                 <ReputationScore
                   providerId={booking.providerProfile?.id ?? ""}
@@ -486,7 +465,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                       <StarRatingDisplay rating={averageRating ?? 0} />
                       <span className="ml-1 font-bold">
                         {averageRating != null
-                          ? averageRating.toFixed(1)
+                          ? (averageRating as number).toFixed(1)
                           : "N/A"}
                       </span>
                     </div>

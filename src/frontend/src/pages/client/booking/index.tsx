@@ -8,6 +8,7 @@ import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
+import { reviewCanisterService } from "../../../services/reviewCanisterService";
 import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
@@ -165,6 +166,56 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
+  // Pre-fetch service ratings and reviews for bookings at page level so cards don't run hooks
+  const [serviceStatsMap, setServiceStatsMap] = useState<
+    Record<
+      string,
+      { averageRating: number | null; reviews: any[]; loading: boolean }
+    >
+  >({});
+
+  useEffect(() => {
+    const fetchStatsForServices = async () => {
+      const serviceIds = Array.from(
+        new Set(
+          filteredBookings
+            .map((b) => b.serviceId)
+            .filter(Boolean) as string[],
+        ),
+      );
+
+      const mapCopy = { ...serviceStatsMap };
+      const toFetch = serviceIds.filter((id) => !mapCopy[id]);
+      if (toFetch.length === 0) return;
+
+      await Promise.all(
+        toFetch.map(async (serviceId) => {
+          try {
+            mapCopy[serviceId] = { averageRating: null, reviews: [], loading: true };
+            const avg = await reviewCanisterService.calculateServiceRating(
+              serviceId,
+            );
+            const reviews = await reviewCanisterService.getServiceReviews(
+              serviceId,
+            );
+            mapCopy[serviceId] = {
+              averageRating: avg?.averageRating ?? null,
+              reviews: Array.isArray(reviews) ? reviews : [],
+              loading: false,
+            };
+          } catch (err) {
+            mapCopy[serviceId] = { averageRating: null, reviews: [], loading: false };
+          }
+        }),
+      );
+
+      setServiceStatsMap(mapCopy);
+    };
+
+    if (filteredBookings.length > 0) fetchStatsForServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredBookings]);
+
   const getBookingCountForTab = (tab: BookingStatusTab) => {
     if (!bookingManagement.bookings) return 0;
     if (tab === "ALL") return bookingManagement.bookings.length;
@@ -309,6 +360,10 @@ const MyBookingsPage: React.FC = () => {
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
+                          averageRating={serviceStatsMap[booking.serviceId || ""]?.averageRating}
+                          reviewCount={serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0}
+                          reviews={serviceStatsMap[booking.serviceId || ""]?.reviews}
+                          loadingStats={serviceStatsMap[booking.serviceId || ""]?.loading}
                         />
                       </div>
                     ))}
@@ -329,6 +384,10 @@ const MyBookingsPage: React.FC = () => {
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
+                          averageRating={serviceStatsMap[booking.serviceId || ""]?.averageRating}
+                          reviewCount={serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0}
+                          reviews={serviceStatsMap[booking.serviceId || ""]?.reviews}
+                          loadingStats={serviceStatsMap[booking.serviceId || ""]?.loading}
                         />
                       </div>
                     ))}

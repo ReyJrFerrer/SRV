@@ -1,8 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { useServiceReviews } from "../../../hooks/reviewManagement";
-import { useUserImage } from "../../../hooks/useMediaLoader";
 
 export const StarRatingDisplay: React.FC<{
   rating: number;
@@ -22,16 +20,15 @@ export const StarRatingDisplay: React.FC<{
 );
 
 export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
-  const { userImageUrl: clientImageUrl } = useUserImage(
-    review.clientProfile?.profilePicture?.imageUrl,
-  );
+  const clientImageUrl =
+    review.clientProfile?.profilePicture?.imageUrl || "/default-client.svg";
 
   return (
     <div className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-md transition-all hover:shadow-lg">
       <div className="mb-3 flex items-center gap-3">
         <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
           <img
-            src={clientImageUrl || "/default-client.svg"}
+            src={clientImageUrl}
             alt={review.clientName || "Client"}
             className="h-10 w-10 rounded-full object-cover"
             onError={(e) => {
@@ -45,8 +42,7 @@ export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
           </p>
           {typeof review.clientReputationScore === "number" && (
             <span className="mt-1 flex items-center gap-1 text-xs text-blue-600">
-              Reputation Score:{" "}
-              <span className="font-bold">{review.clientReputationScore}</span>
+              Reputation Score: <span className="font-bold">{review.clientReputationScore}</span>
             </span>
           )}
           <div className="flex items-center">
@@ -63,9 +59,23 @@ export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
   );
 };
 
-const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
-  const { reviews, loading, error, getAverageRating, getRatingDistribution } =
-    useServiceReviews(serviceId);
+type ReviewsSectionProps = {
+  serviceId?: string;
+  reviews?: any[];
+  loading?: boolean;
+  error?: any;
+  averageRating?: number;
+  ratingDistribution?: Record<number, number>;
+};
+
+const ReviewsSection: React.FC<ReviewsSectionProps> = ({
+  serviceId,
+  reviews = [],
+  loading = false,
+  error = null,
+  averageRating = 0,
+  ratingDistribution = {},
+}) => {
 
   if (loading)
     return (
@@ -80,9 +90,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
       </div>
     );
 
-  const visibleReviews = reviews.filter((r) => r.status === "Visible");
-  const averageRating = getAverageRating(visibleReviews);
-  const ratingDistribution = getRatingDistribution(visibleReviews);
+  const visibleReviews = (reviews || []).filter((r) => r.status === "Visible");
   const totalReviews = visibleReviews.length;
 
   const ChatBubbleIcon = (props: React.SVGProps<SVGSVGElement>) => (
