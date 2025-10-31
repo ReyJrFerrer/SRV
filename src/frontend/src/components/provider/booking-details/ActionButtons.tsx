@@ -63,12 +63,10 @@ const ActionButtons: React.FC<Props> = ({
     booking?.canDecline &&
     !isBookingActionInProgress(booking?.id || "", "decline")
   );
-  // Show Accept button when the booking can be accepted and the accept action
-  // is not currently in progress. We will render it disabled when commission
-  // validation prevents acceptance (so the button is visible but inactive).
   const showAccept = !!(
     booking?.canAccept &&
     booking?.canDecline &&
+    !acceptDisabledBecauseCommission &&
     !isBookingActionInProgress(booking?.id || "", "accept")
   );
   const showStart = !!(booking?.canStart && canStartServiceNow());
@@ -152,10 +150,8 @@ const ActionButtons: React.FC<Props> = ({
     buttons.push(
       <button
         key="accept"
-        onClick={acceptDisabledBecauseCommission ? stopAndRun(() => {}) : stopAndRun(onAccept)}
-        disabled={acceptDisabledBecauseCommission}
-        className={`${baseButtonClass} w-full ${color.accept} ${acceptDisabledBecauseCommission ? "opacity-50 cursor-not-allowed" : ""}`}
-        title={acceptDisabledBecauseCommission ? "Cannot accept: commission validation failed or insufficient balance" : undefined}
+        onClick={stopAndRun(onAccept)}
+        className={`${baseButtonClass} w-full ${color.accept}`}
       >
         <CheckCircleIcon className="mr-2 h-5 w-5" /> Accept
       </button>,
