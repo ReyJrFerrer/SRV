@@ -180,7 +180,6 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
     profilePicture: null,
     biography: null,
     isActive: true,
-    reputationScore: 0,
     totalEarnings: 0,
     isOnboarded: false, // Provider onboarding status for payment functionality
   };

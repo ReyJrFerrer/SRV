@@ -3,6 +3,7 @@ import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 // Keep some Motoko types for compatibility during migration
 import { notificationCanisterService } from "../../../frontend/src/services/notificationCanisterService";
+import reputationCanisterService from "../../../frontend/src/services/reputationCanisterService";
 
 // Get Firebase instances from singleton
 const auth = getFirebaseAuth();
@@ -1143,22 +1144,29 @@ export const adminServiceCanister = {
     completedBookings: number;
   }> {
     try {
-      // Call Firebase function to get reputation data
-      const result = await callFirebaseFunction("getReputationScore", {
-        userId,
-      });
-      const reputation = result.data || result;
+      // Call IC canister directly using frontend service (same as clients/providers)
+      const reputationData = await reputationCanisterService.getReputationScore(userId);
 
-      // Check if we got valid reputation data
-      if (reputation && typeof reputation.trustScore === "number") {
+      if (reputationData) {
+        // Convert the reputation data to match expected format
+        const trustLevel = reputationData.trustLevel?.hasOwnProperty("New")
+          ? "New"
+          : reputationData.trustLevel?.hasOwnProperty("Low")
+            ? "Low"
+            : reputationData.trustLevel?.hasOwnProperty("Medium")
+              ? "Medium"
+              : reputationData.trustLevel?.hasOwnProperty("High")
+                ? "High"
+                : "VeryHigh";
+
         return {
-          reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
-          trustLevel: reputation.trustLevel?.toString() || "New",
-          completedBookings: Number(reputation.completedBookings || 0),
+          reputationScore: Math.round(Number(reputationData.trustScore)),
+          trustLevel: trustLevel,
+          completedBookings: Number(reputationData.completedBookings || 0),
         };
       } else {
         // Fallback to default values if data is invalid
-        console.warn(`Invalid reputation data for user ${userId}:`, reputation);
+        console.warn(`Invalid reputation data for user ${userId}:`, reputationData);
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
@@ -1167,19 +1175,7 @@ export const adminServiceCanister = {
       }
     } catch (error) {
       logError("Error fetching user reputation", error);
-
-      // If it's a 500 error, try to get reputation from local storage or return default
-      if (error instanceof Error && error.message.includes("INTERNAL")) {
-        console.warn(
-          `Firebase function error for user ${userId}, using default reputation`,
-        );
-        return {
-          reputationScore: 50, // Default score
-          trustLevel: "New",
-          completedBookings: 0,
-        };
-      }
-
+      // Return default reputation on error
       return {
         reputationScore: 50, // Default score
         trustLevel: "New",

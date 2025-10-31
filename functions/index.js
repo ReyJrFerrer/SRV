@@ -55,7 +55,6 @@ const {
   updateUserReputation: updateUserReputationBridge,
   updateProviderReputation,
   processReviewForReputation,
-  getReputationScore,
 } = require("./src/reputation");
 
 // Import Admin Management functions
@@ -268,7 +267,6 @@ exports.initializeReputation = initializeReputation;
 exports.updateUserReputationBridge = updateUserReputationBridge;
 exports.updateProviderReputation = updateProviderReputation;
 exports.processReviewForReputation = processReviewForReputation;
-exports.getReputationScore = getReputationScore;
 
 // Export Commission functions
 exports.calculateCommission = calculateCommission;
