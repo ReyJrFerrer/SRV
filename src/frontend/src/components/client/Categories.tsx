@@ -328,8 +328,14 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                     height={imageSize}
                     className="mb-2 object-cover transition-transform duration-200 ease-in-out"
                   />
-                  <span className={textClass + " w-full truncate group-hover:text-blue-700"}>
-                    Request<br />Category
+                  <span
+                    className={
+                      textClass + " w-full truncate group-hover:text-blue-700"
+                    }
+                  >
+                    Request
+                    <br />
+                    Category
                   </span>
                 </span>
               </a>
