@@ -349,8 +349,8 @@ const ProviderDirectionsPage: React.FC = () => {
     if (!map || !providerLocation) return;
     if (isInNavigationMode) {
       const heading = deviceHeading ?? 0;
-      // Zoom a bit more in navigation mode but not too tight.
-      map.moveCamera({ center: providerLocation, zoom: 17, heading, tilt: 45 });
+      // Zoom in to road level for navigation mode.
+      map.moveCamera({ center: providerLocation, zoom: 23, heading, tilt: 45 });
     } else if (followMe) {
       map.panTo(providerLocation);
     }

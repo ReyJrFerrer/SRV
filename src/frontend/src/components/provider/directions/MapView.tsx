@@ -31,12 +31,13 @@ const MapView: React.FC<MapViewProps> = ({
     <APIProvider apiKey={mapApiKey}>
       <Map
         style={containerStyle}
-        defaultZoom={isInNavigationMode ? 16 : 15}
+        defaultZoom={isInNavigationMode ? 23 : 15}
         defaultCenter={providerLocation}
         onCameraChanged={(ev) => setMapRef(ev.map)}
         gestureHandling={isInNavigationMode ? "none" : "greedy"}
         disableDefaultUI={true}
-        zoomControl={true}
+        // Hide built-in +/- zoom controls but keep programmatic zooming intact
+        zoomControl={false}
         mapId={"6922634ff75ae05ac38cc473"}
       >
         {providerLocation && (
