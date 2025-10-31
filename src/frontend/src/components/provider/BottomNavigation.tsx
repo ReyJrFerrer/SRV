@@ -271,7 +271,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       }
                       if (onNavigateAttempt) {
                         try {
-                          const result = await onNavigateAttempt(displayItem.to);
+                          const result = await onNavigateAttempt(
+                            displayItem.to,
+                          );
                           if (result === false) return; // blocked by caller
                         } catch (err) {
                           return; // treat errors as cancel
@@ -453,7 +455,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               if (onNavigateAttempt) {
                 try {
-                  const result = await onNavigateAttempt("/provider/notifications");
+                  const result = await onNavigateAttempt(
+                    "/provider/notifications",
+                  );
                   if (result === false) return;
                 } catch {
                   return;
@@ -518,7 +522,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               if (onNavigateAttempt) {
                 try {
-                  const result = await onNavigateAttempt(navItems.find((i) => i.label === "Profile")!.to);
+                  const result = await onNavigateAttempt(
+                    navItems.find((i) => i.label === "Profile")!.to,
+                  );
                   if (result === false) return;
                 } catch {
                   return;

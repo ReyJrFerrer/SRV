@@ -1638,7 +1638,7 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
-  <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
+      <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
     </div>
   );
 };
