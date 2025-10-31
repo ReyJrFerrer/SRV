@@ -39,6 +39,8 @@ const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
+  const [localLoading, setLocalLoading] = useState(true);
+  const [bookingNotFound, setBookingNotFound] = useState(false);
   const [canUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -72,8 +74,16 @@ const BookingDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (id && typeof id === "string" && !hookLoading) {
+      setLocalLoading(true);
       const foundBooking = bookings.find((booking) => booking.id === id);
-      if (foundBooking) setSpecificBooking(foundBooking);
+      if (foundBooking) {
+        setSpecificBooking(foundBooking);
+        setBookingNotFound(false);
+      } else {
+        setSpecificBooking(null);
+        setBookingNotFound(true);
+      }
+      setLocalLoading(false);
     }
   }, [id, bookings, hookLoading]);
 
@@ -263,6 +273,19 @@ const BookingDetailsPage: React.FC = () => {
   } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
+  // Determine loading state
+  const isLoading = hookLoading || localLoading || loadingStats;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
@@ -298,7 +321,7 @@ const BookingDetailsPage: React.FC = () => {
               className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
               aria-label="Booking status"
             >
-              {status?.replace("_", " ") || "Unknown"}
+              {status?.replace("_", " ")}
             </span>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
