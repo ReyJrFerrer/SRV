@@ -1,9 +1,8 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 
-
 interface ReputationScoreProps {
-  reputation: any
+  reputation: any;
 }
 
 const ReputationScore: React.FC<ReputationScoreProps> = ({ reputation }) => {

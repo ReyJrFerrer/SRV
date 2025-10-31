@@ -170,9 +170,9 @@ const MyBookingsPage: React.FC = () => {
   const [serviceStatsMap, setServiceStatsMap] = useState<
     Record<
       string,
-      { 
-        averageRating: number | null; 
-        reviews: any[]; 
+      {
+        averageRating: number | null;
+        reviews: any[];
         loading: boolean;
         reputation?: {
           trustScore: number;
@@ -182,7 +182,7 @@ const MyBookingsPage: React.FC = () => {
       }
     >
   >({});
-  
+
   const { fetchUserReputation } = useReputation();
 
   useEffect(() => {
@@ -200,44 +200,48 @@ const MyBookingsPage: React.FC = () => {
       await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
-            const booking = filteredBookings.find(b => b.serviceId === serviceId);
-            
+            const booking = filteredBookings.find(
+              (b) => b.serviceId === serviceId,
+            );
+
             // Initialize with loading state
             mapCopy[serviceId] = {
               averageRating: null,
               reviews: [],
               loading: true,
-              reputation: null
+              reputation: null,
             };
-            
+
             // Fetch service rating and reviews in parallel
             const [avg, reviews] = await Promise.all([
               reviewCanisterService.calculateServiceRating(serviceId),
-              reviewCanisterService.getServiceReviews(serviceId)
+              reviewCanisterService.getServiceReviews(serviceId),
             ]);
-            
+
             let reputation = null;
             if (booking?.providerProfile?.id) {
               try {
-                const rep = await fetchUserReputation(booking.providerProfile.id);
+                const rep = await fetchUserReputation(
+                  booking.providerProfile.id,
+                );
                 if (rep) {
                   reputation = {
                     trustScore: rep.trustScore,
                     trustLevel: rep.trustLevel,
-                    completedBookings: rep.completedBookings
+                    completedBookings: rep.completedBookings,
                   };
                 }
               } catch (err) {
-                console.error('Error fetching reputation:', err);
+                console.error("Error fetching reputation:", err);
               }
             }
-            
+
             // Update the map with all the fetched data
             mapCopy[serviceId] = {
               averageRating: avg?.averageRating ?? null,
               reviews: Array.isArray(reviews) ? reviews : [],
               loading: false,
-              reputation
+              reputation,
             };
           } catch (err) {
             mapCopy[serviceId] = {
