@@ -436,6 +436,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   {/* 'Other' custom category removed */}
                 </select>
                 {/* Removed optional custom category input */}
+                {/* Request Service Category button - opens Google Form in new tab */}
+                <div className="mt-3">
+                  <a
+                    href="https://forms.gle/o3KjDDCkcr5KGE2R8"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-blue-500 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 md:w-auto"
+                    aria-label="Request Service Category"
+                  >
+                    Request Service Category
+                  </a>
+                </div>
                 {validationErrors.categoryId && !hideCategoryError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.categoryId}
