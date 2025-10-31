@@ -52,7 +52,13 @@ const ActionButtons: React.FC<{
   const showChat = !chatLoading;
   const showCancel = !!canCancel;
   const showBookAgain = !!onBookAgain;
-  const showReview = !!(reviewButtonContent && !reviewButtonContent.disabled);
+  const isViewReviewsButton = !!(
+    reviewButtonContent &&
+    typeof reviewButtonContent.text === "string" &&
+    /view\s*review/i.test(reviewButtonContent.text)
+  );
+  // Hide client-side "View Reviews" button; allow other review actions (e.g., Rate Provider)
+  const showReview = !!(reviewButtonContent && !reviewButtonContent.disabled && !isViewReviewsButton);
   const showReport = !!(status === "Completed" || status === "Cancelled");
 
   const baseContainer = compact ? containerCompact : containerDefault;
@@ -69,7 +75,11 @@ const ActionButtons: React.FC<{
 
   if (showChat) {
     buttons.push(
-      <button key="chat" onClick={stopAndRun(onChat)} className={`${baseButtonClass} w-full ${color.chat}`}>
+      <button
+        key="chat"
+        onClick={stopAndRun(onChat)}
+        className={`${baseButtonClass} w-full ${color.chat}`}
+      >
         <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
         {!compact ? "Chat with Provider" : "Chat"}
       </button>,
@@ -78,9 +88,14 @@ const ActionButtons: React.FC<{
 
   if (showCancel) {
     buttons.push(
-      <button key="cancel" onClick={stopAndRun(onRequestCancel)} className={`${baseButtonClass} w-full ${color.cancel}`}>
+      <button
+        key="cancel"
+        onClick={stopAndRun(onRequestCancel)}
+        className={`${baseButtonClass} w-full ${color.cancel}`}
+      >
         <span className="flex items-center">
-          <XCircleIcon className="mr-2 h-5 w-5" /> {!compact ? "Cancel" : "Cancel"}
+          <XCircleIcon className="mr-2 h-5 w-5" />{" "}
+          {!compact ? "Cancel" : "Cancel"}
         </span>
       </button>,
     );
@@ -88,7 +103,11 @@ const ActionButtons: React.FC<{
 
   if (showBookAgain) {
     buttons.push(
-      <button key="bookAgain" onClick={stopAndRun(onBookAgain)} className={`${baseButtonClass} w-full ${color.bookAgain}`}>
+      <button
+        key="bookAgain"
+        onClick={stopAndRun(onBookAgain)}
+        className={`${baseButtonClass} w-full ${color.bookAgain}`}
+      >
         <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
       </button>,
     );
@@ -97,13 +116,23 @@ const ActionButtons: React.FC<{
   if (showReview) {
     if (reviewButtonContent?.to) {
       buttons.push(
-        <Link key="reviewLink" to={reviewButtonContent.to} state={reviewButtonContent.state} onClick={(e) => e.stopPropagation()} className={`${baseButtonClass} w-full ${reviewButtonContent.className}`}>
+        <Link
+          key="reviewLink"
+          to={reviewButtonContent.to}
+          state={reviewButtonContent.state}
+          onClick={(e) => e.stopPropagation()}
+          className={`${baseButtonClass} w-full ${reviewButtonContent.className}`}
+        >
           {reviewButtonContent.icon} {reviewButtonContent.text}
         </Link>,
       );
     } else {
       buttons.push(
-        <button key="reviewBtn" onClick={stopAndRun(reviewButtonContent?.onClick)} className={`${baseButtonClass} w-full ${reviewButtonContent?.className}`}>
+        <button
+          key="reviewBtn"
+          onClick={stopAndRun(reviewButtonContent?.onClick)}
+          className={`${baseButtonClass} w-full ${reviewButtonContent?.className}`}
+        >
           {reviewButtonContent?.icon} {reviewButtonContent?.text}
         </button>,
       );
@@ -112,9 +141,24 @@ const ActionButtons: React.FC<{
 
   if (showReport) {
     buttons.push(
-      <button key="report" onClick={stopAndRun(onReport)} className={`${baseButtonClass} w-full ${color.report}`} title="Report this booking">
-        <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      <button
+        key="report"
+        onClick={stopAndRun(onReport)}
+        className={`${baseButtonClass} w-full ${color.report}`}
+        title="Report this booking"
+      >
+        <svg
+          className="mr-2 h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
         </svg>
         Report
       </button>,
@@ -122,7 +166,6 @@ const ActionButtons: React.FC<{
   }
 
   const visibleCount = buttons.length;
-
 
   // Layout rendering
   if (visibleCount === 0) return <div className={baseContainer} />;
@@ -140,8 +183,16 @@ const ActionButtons: React.FC<{
   if (visibleCount === 4) {
     return (
       <div className={`${baseContainer} w-full flex-col`}>
-        <div className="grid grid-cols-3 gap-2 w-full">{buttons.slice(0, 3).map((b, i) => (<div key={`top-${i}`} className="w-full">{b}</div>))}</div>
-      <div className="mt-2 flex w-full justify-center">{<div className="w-2/3">{buttons[3]}</div>}</div>
+        <div className="grid w-full grid-cols-3 gap-2">
+          {buttons.slice(0, 3).map((b, i) => (
+            <div key={`top-${i}`} className="w-full">
+              {b}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex w-full justify-center">
+          {<div className="w-2/3">{buttons[3]}</div>}
+        </div>
       </div>
     );
   }
@@ -149,7 +200,13 @@ const ActionButtons: React.FC<{
   // Default: 2 or 3 or 5+ buttons — center and distribute equally
   return (
     <div className={`${baseContainer} w-full`}>
-      <div className="flex w-full gap-2 justify-center">{buttons.map((b, i) => (<div key={`btn-${i}`} className="flex-1">{b}</div>))}</div>
+      <div className="flex w-full justify-center gap-2">
+        {buttons.map((b, i) => (
+          <div key={`btn-${i}`} className="flex-1">
+            {b}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
