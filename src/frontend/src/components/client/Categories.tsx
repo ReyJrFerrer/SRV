@@ -257,7 +257,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                     "w-full items-center truncate group-hover:text-blue-700"
                   }
                 >
-                  {mobileExpanded ? "Bawasan" : "More"}
+                  {mobileExpanded ? "Show Less" : "More"}
                 </span>
               </span>
             </button>
