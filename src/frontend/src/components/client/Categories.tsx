@@ -309,6 +309,30 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                   </span>
                 </button>
               ))}
+              {/* Static tile in the extra list to request a new category */}
+              <a
+                key="request-category-extra"
+                href="https://forms.gle/o3KjDDCkcr5KGE2R8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={
+                  itemBaseClass +
+                  " group w-full min-w-0 hover:scale-105 hover:text-blue-700"
+                }
+              >
+                <span className="flex flex-col items-center transition-all duration-200 group-hover:scale-110 group-hover:text-blue-700">
+                  <img
+                    src="/images/categories/add.svg"
+                    alt="Request Category"
+                    width={imageSize}
+                    height={imageSize}
+                    className="mb-2 object-cover transition-transform duration-200 ease-in-out"
+                  />
+                  <span className={textClass + " w-full truncate group-hover:text-blue-700"}>
+                    Request<br />Category
+                  </span>
+                </span>
+              </a>
             </div>
           )}
       </div>
