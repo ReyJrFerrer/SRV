@@ -848,13 +848,25 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    await db.collection("users").doc(userId).update({
-      reputationScore: reputationScore,
-      updatedAt: new Date().toISOString(),
-      updatedBy: authInfo.uid,
-    });
+    // Use helper functions from reputation module
+    const {createReputationActor} = require("./reputation");
+    const {Principal} = require("@dfinity/principal");
 
-    return {success: true, message: "User reputation updated successfully"};
+    // Create reputation actor
+    const reputationActor = await createReputationActor();
+
+    // Call IC canister to update reputation
+    const principal = Principal.fromText(userId);
+    const result = await reputationActor.setUserReputation(
+      principal,
+      BigInt(reputationScore),
+    );
+
+    if ("ok" in result) {
+      return {success: true, message: result.ok};
+    } else {
+      throw new Error(result.err || "Failed to update reputation in canister");
+    }
   } catch (error) {
     console.error("Error in updateUserReputation:", error);
     throw new functions.https.HttpsError("internal", error.message);

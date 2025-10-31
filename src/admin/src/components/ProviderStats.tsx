@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -7,6 +8,7 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
+import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 
 interface ProviderStatsProps {
   className?: string;
@@ -33,17 +35,48 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   onUpdateCommission,
   outstandingCommission = 3200.0,
   userData,
+  providerId,
 }) => {
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [newCommissionAmount, setNewCommissionAmount] = useState("");
+  const [balance, setBalance] = useState(outstandingCommission);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Update balance when outstandingCommission changes
+  useEffect(() => {
+    setBalance(outstandingCommission);
+  }, [outstandingCommission]);
 
   // Initialize commission amount when modal opens
   useEffect(() => {
     if (showCommissionModal) {
-      setNewCommissionAmount(outstandingCommission.toFixed(2));
+      setNewCommissionAmount(balance.toFixed(2));
     }
-  }, [showCommissionModal, outstandingCommission]);
+  }, [showCommissionModal, balance]);
+
+  const handleRefreshBalance = async () => {
+    if (!providerId) return;
+    try {
+      setRefreshing(true);
+      const newBalance = await walletCanisterService.getBalanceOf(providerId);
+      setBalance(newBalance);
+      if (onUpdateCommission) {
+        onUpdateCommission(newBalance);
+      }
+    } catch (error) {
+      console.error("Failed to refresh balance:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleViewWallet = () => {
+    if (providerId) {
+      navigate(`/user/${providerId}/wallet`);
+    }
+  };
 
   const handleUpdateCommission = () => {
     const amount = parseFloat(newCommissionAmount);
@@ -53,9 +86,9 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     }
   };
 
-  const handleOpenModal = () => {
-    setShowCommissionModal(true);
-  };
+  // const handleOpenModal = () => {
+  //   setShowCommissionModal(true);
+  // };
 
   const handleCloseModal = () => {
     setShowCommissionModal(false);
@@ -134,34 +167,54 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     ];
   }, [stats]);
 
-  // --- Outstanding Commission Card ---
-  const OutstandingCommissionCard = () => (
+  // --- SRV Wallet Card ---
+  const WalletCard = () => (
     <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
       <div className="flex items-center gap-4">
         <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
         <div>
-          <p className="text-sm font-semibold text-blue-700">
-            Outstanding Commission
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
+            <button
+              onClick={handleRefreshBalance}
+              disabled={refreshing}
+              className="rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50"
+              title="Refresh balance"
+            >
+              <svg
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          </div>
           <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-            ₱{outstandingCommission.toFixed(2)}
+            ₱{balance.toFixed(2)}
           </p>
         </div>
       </div>
       <button
-        onClick={handleOpenModal}
+        onClick={handleViewWallet}
         className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
           <path
             stroke="currentColor"
             strokeWidth="2"
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            d="M17 9V7a5 5 0 00-10 0v2M5 12h14m-1 9H6a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012-2z"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
-        Update Commission
+        View Wallet
       </button>
     </div>
   );
@@ -250,7 +303,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <OutstandingCommissionCard />
+        <WalletCard />
       </div>
 
       {isMobile ? renderCards() : renderStats()}

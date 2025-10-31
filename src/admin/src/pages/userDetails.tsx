@@ -82,127 +82,6 @@ interface UserData {
   servicesCount: number;
 }
 
-const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
-  const [analytics, setAnalytics] = useState<{
-    totalBookings: number;
-    servicesCompleted: number;
-    totalSpent: number;
-    memberSince: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchClientAnalytics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        try {
-          setAnalytics({
-            totalBookings: 0,
-            servicesCompleted: 0,
-            totalSpent: 0,
-            memberSince: "Data not available",
-          });
-        } catch (adminError) {
-          console.log(
-            "Admin canister failed, using fallback data:",
-            adminError,
-          );
-          // Fallback to placeholder data if admin canister fails
-          setAnalytics({
-            totalBookings: 0,
-            servicesCompleted: 0,
-            totalSpent: 0,
-            memberSince: "Data not available",
-          });
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching client analytics:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load client statistics",
-        );
-        setAnalytics({
-          totalBookings: 0,
-          servicesCompleted: 0,
-          totalSpent: 0,
-          memberSince: "Unknown",
-        });
-      }
-    };
-
-    fetchClientAnalytics();
-  }, [userId]);
-
-  if (loading) {
-    return (
-      <div className="py-8 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-        <p className="mt-2 text-sm text-gray-500">
-          Loading client statistics...
-        </p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-red-500">
-          Failed to load client statistics: {error}
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!analytics) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-gray-500">No client statistics available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.totalBookings}
-        </div>
-        <div className="text-sm text-gray-500">Total Bookings</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.servicesCompleted}
-        </div>
-        <div className="text-sm text-gray-500">Services Completed</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          ₱{analytics.totalSpent.toLocaleString()}
-        </div>
-        <div className="text-sm text-gray-500">Total Spent</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.memberSince}
-        </div>
-        <div className="text-sm text-gray-500">Member Since</div>
-      </div>
-    </div>
-  );
-};
-
 export const UserDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -383,9 +262,12 @@ export const UserDetailsPage: React.FC = () => {
     }
   };
 
-  const handleUpdateCommission = (newAmount: number) => {
+  const handleUpdateCommission = async (newAmount: number) => {
+    // Update local balance when refreshed from ProviderStats
+    if (user) {
+      setUser({ ...user, walletBalance: newAmount });
+    }
     setOutstandingCommission(newAmount);
-    setShowCommissionConfirmation(true);
   };
 
   const handleReputationChange = (newScore: number) => {
@@ -686,7 +568,7 @@ export const UserDetailsPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex items-center space-x-3">
                   <Link
                     to={`/user/${user.id}/services`}
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -706,6 +588,25 @@ export const UserDetailsPage: React.FC = () => {
                     </svg>
                     View Services
                   </Link>
+                  <button
+                    onClick={() => navigate(`/user/${user.id}/bookings`)}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                      />
+                    </svg>
+                    View Bookings
+                  </button>
                 </div>
               </div>
             </div>
@@ -897,70 +798,6 @@ export const UserDetailsPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Performance Metrics */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Performance Metrics
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.completedJobs}
-                </div>
-                <div className="text-sm text-gray-500">Completed Jobs</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.completionRate.toFixed(1)}%
-                </div>
-                <div className="text-sm text-gray-500">Completion Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.averageRating.toFixed(1)}
-                </div>
-                <div className="text-sm text-gray-500">Average Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.totalReviews}
-                </div>
-                <div className="text-sm text-gray-500">Total Reviews</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Client Statistics */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Client Statistics
-              </h3>
-              <button
-                onClick={() => navigate(`/user/${user.id}/bookings`)}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="mr-1.5 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                  />
-                </svg>
-                View Bookings
-              </button>
-            </div>
-            <ClientStats userId={user.id} />
-          </div>
         </div>
       </main>
 
@@ -997,7 +834,7 @@ export const UserDetailsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Commission Update Confirmation Modal */}
+      {/* Commission Update Confirmation Modal - Keeping for backward compatibility but not used */}
       {showCommissionConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
@@ -1019,12 +856,15 @@ export const UserDetailsPage: React.FC = () => {
               >
                 Cancel
               </button>
-              {/* <button
-                onClick={confirmCommissionUpdate}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              <button
+                onClick={() => {
+                  // This modal is now deprecated - wallet changes happen through wallet page
+                  setShowCommissionConfirmation(false);
+                }}
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Update Commission
-              </button> */}
+                Close
+              </button>
             </div>
           </div>
         </div>

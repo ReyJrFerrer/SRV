@@ -10,6 +10,7 @@ import { TicketDetailsPage } from "./pages/ticketDetails";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
 import { AnalyticsPage } from "./pages/analytics";
+import UserWalletPage from "./pages/userWallet";
 
 // Login component
 const LoginPage = () => {
@@ -118,6 +119,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <UserBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/wallet"
+        element={
+          <ProtectedRoute>
+            <UserWalletPage />
           </ProtectedRoute>
         }
       />

@@ -18,6 +18,7 @@ import { updateAdminActor } from "../services/adminServiceCanister";
 import { updateMediaActor } from "../services/mediaServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
 import authCanisterService from "../../../frontend/src/services/authCanisterService";
+import { updateReputationActor } from "../../../frontend/src/services/reputationCanisterService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -36,6 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
   updateMediaActor();
+  updateReputationActor(identity);
 };
 
 export const useAuth = () => {
