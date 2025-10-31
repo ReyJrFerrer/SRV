@@ -11,6 +11,8 @@ import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
 import { AnalyticsPage } from "./pages/analytics";
 import UserWalletPage from "./pages/userWallet";
+import { UserChatsPage } from "./pages/userChats";
+import { UserChatHistoryPage } from "./pages/userChatHistory";
 
 // Login component
 const LoginPage = () => {
@@ -119,6 +121,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <UserBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/chat"
+        element={
+          <ProtectedRoute>
+            <UserChatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/chat/:conversationId"
+        element={
+          <ProtectedRoute>
+            <UserChatHistoryPage />
           </ProtectedRoute>
         }
       />

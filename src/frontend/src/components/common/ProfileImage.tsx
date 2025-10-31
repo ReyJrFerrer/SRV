@@ -22,6 +22,12 @@ export const ProfileImage: React.FC<{
         src={"/default-provider.svg"}
         alt={userName}
         className={`${size} rounded-full border-2 border-blue-100 object-cover shadow ${className}`}
+        onError={(e) => {
+          // Prevent infinite loop - if default also fails, show nothing rather than error
+          if ((e.target as HTMLImageElement).src !== "/default-provider.svg") {
+            (e.target as HTMLImageElement).src = "/default-provider.svg";
+          }
+        }}
       />
     );
   }
