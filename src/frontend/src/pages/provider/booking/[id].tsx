@@ -359,19 +359,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [specificBooking]);
 
-  // Contact client handler
-  const handleContactClient = useCallback(() => {
-    if (!specificBooking) return;
-    const phone =
-      specificBooking.clientPhone || specificBooking.clientProfile?.phone || "";
-    if (phone) {
-      window.open(`tel:${phone}`, "_self");
-    } else {
-      alert(
-        `Contact client: ${specificBooking.clientName || "Unknown Client"}`,
-      );
-    }
-  }, [specificBooking]);
+  // contact handler removed; ActionButtons no longer supports a contact action
   // Geocode enhancement state (before early returns to keep hook order stable)
   const [resolvedCoords, setResolvedCoords] = useState<{
     lat: number;
@@ -838,7 +826,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
           <ActionButtons
             booking={specificBooking}
             onChat={handleChatClient}
-            onContact={handleContactClient}
             onAccept={handleAcceptBooking}
             onDecline={handleDeclineBooking}
             onStart={handleStartService}

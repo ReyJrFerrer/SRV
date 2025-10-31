@@ -2,8 +2,16 @@ import React from "react";
 import {
   ChatBubbleLeftRightIcon,
   XCircleIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
+import {
+  containerDefault,
+  containerCompact,
+  baseButtonDefault,
+  baseButtonCompact,
+  color,
+} from "../../shared/buttonStyles";
 
 type ReviewButtonContent = {
   text: string;
@@ -23,6 +31,11 @@ const ActionButtons: React.FC<{
   reviewButtonContent: ReviewButtonContent | null;
   status?: string | null;
   onReport: () => void;
+  // Optional Book Again action
+  onBookAgain?: () => void;
+  bookAgainLabel?: string;
+  // Layout variant: compact for inline small buttons, default for card-like group
+  compact?: boolean;
 }> = ({
   onChat,
   chatLoading,
@@ -31,63 +44,77 @@ const ActionButtons: React.FC<{
   reviewButtonContent,
   status,
   onReport,
+  onBookAgain,
+  bookAgainLabel = "Book Again",
+  compact = false,
 }) => {
+  const containerClass = compact ? containerCompact : containerDefault;
+
+  const baseButtonClass = compact ? baseButtonCompact : baseButtonDefault;
+
+  const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fn) fn();
+  };
+
   return (
-    <div className="mb-24 flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
-      <button
-        onClick={onChat}
-        disabled={chatLoading}
-        className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-      >
-        {chatLoading ? (
-          <>
-            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-            Creating Chat...
-          </>
-        ) : (
-          <>
-            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
-            Provider
-          </>
-        )}
-      </button>
+    <div className={containerClass}>
+      {!chatLoading && (
+        <button
+          onClick={stopAndRun(onChat)}
+          className={`${baseButtonClass} ${color.chat}`}
+        >
+          <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
+          {!compact ? "Chat with Provider" : "Chat"}
+        </button>
+      )}
 
       {canCancel && (
         <button
-          onClick={onRequestCancel}
-          className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+          onClick={stopAndRun(onRequestCancel)}
+          className={`${baseButtonClass} ${color.cancel}`}
         >
           <span className="flex items-center">
-            <XCircleIcon className="mr-2 h-5 w-5" /> Cancel
+            <XCircleIcon className="mr-2 h-5 w-5" /> {!compact ? "Cancel" : "Cancel"}
           </span>
         </button>
       )}
 
-      {reviewButtonContent &&
+      {onBookAgain && (
+        <button
+          onClick={stopAndRun(onBookAgain)}
+          className={`${baseButtonClass} ${color.bookAgain}`}
+        >
+          <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        </button>
+      )}
+
+      {reviewButtonContent && !reviewButtonContent.disabled &&
         (reviewButtonContent.to ? (
           <Link
             to={reviewButtonContent.to}
             state={reviewButtonContent.state}
-            className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className}`}
+            onClick={(e) => e.stopPropagation()}
+            className={`${baseButtonClass} ${reviewButtonContent.className}`}
           >
             {reviewButtonContent.icon} {reviewButtonContent.text}
           </Link>
         ) : (
           <button
-            onClick={reviewButtonContent.onClick}
-            disabled={reviewButtonContent.disabled}
-            className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
+            onClick={stopAndRun(reviewButtonContent.onClick)}
+            className={`${baseButtonClass} ${reviewButtonContent.className}`}
           >
             {reviewButtonContent.icon} {reviewButtonContent.text}
           </button>
         ))}
 
       {(status === "Completed" || status === "Cancelled") && (
-        <button
-          onClick={onReport}
-          className="group relative flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-red-100 hover:text-red-700"
-          title="Report this booking"
-        >
+          <button
+            onClick={stopAndRun(onReport)}
+            className={`${baseButtonClass} ${color.report}`}
+            title="Report this booking"
+          >
           <svg
             className="mr-2 h-5 w-5"
             fill="none"

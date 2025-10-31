@@ -4,11 +4,11 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   StarIcon,
-  PhoneIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
 import { Link, NavigateFunction } from "react-router-dom";
 import { ProviderEnhancedBooking } from "../../../hooks/useProviderBookingManagement";
+import { containerDefault, baseButtonDefault, color } from "../../shared/buttonStyles";
 
 interface CommissionValidation {
   estimatedCommission: number;
@@ -19,7 +19,6 @@ interface CommissionValidation {
 interface Props {
   booking: ProviderEnhancedBooking;
   onChat: () => void;
-  onContact: () => void;
   onAccept: () => void;
   onDecline: () => void;
   onStart: () => void;
@@ -28,12 +27,14 @@ interface Props {
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
   commissionValidation: CommissionValidation;
   navigate: NavigateFunction;
+  // optional Book Again from provider side (rare)
+  onBookAgain?: () => void;
+  bookAgainLabel?: string;
 }
 
 const ActionButtons: React.FC<Props> = ({
   booking,
   onChat,
-  onContact,
   onAccept,
   onDecline,
   onStart,
@@ -42,120 +43,95 @@ const ActionButtons: React.FC<Props> = ({
   isBookingActionInProgress,
   commissionValidation,
   navigate,
+  onBookAgain,
+  bookAgainLabel = "Book Again",
 }) => {
+  // Add ml-auto so the action group pushes to the right when inside a flex row
+  const containerClass = `${containerDefault} ml-auto`;
+
+  const baseButtonClass = baseButtonDefault;
+
+  const acceptDisabledBecauseCommission =
+    booking?.paymentMethod === "CashOnHand" &&
+    (commissionValidation.loading || commissionValidation.hasInsufficientBalance);
+
+  const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fn) fn();
+  };
+
+  // We will hide buttons that would otherwise render disabled/locked to avoid confusion.
+  // acceptDisabledBecauseCommission is used to decide whether to render Accept.
+
+  // Render buttons but only if they would be interactive (not locked/disabled)
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
-      <button
-        onClick={onChat}
-        className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-      >
-        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat{" "}
-        {booking?.clientName?.split(" ")[0] || "Client"}
-      </button>
-      <button
-        onClick={onContact}
-        className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-      >
-        <PhoneIcon className="mr-2 h-5 w-5" /> Contact{" "}
-        {booking?.clientName?.split(" ")[0] || "Client"}
-      </button>
+    <div className={containerClass}>
+      {/* Chat - show only when not loading */}
+      {typeof onChat === "function" && !false && (
+        <button onClick={stopAndRun(onChat)} className={`${baseButtonClass} ${color.chat}`}>
+          <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat {booking?.clientName?.split(" ")[0] || "Client"}
+        </button>
+      )}
+
+      {/* Book Again (optional) - already conditional */}
+      {onBookAgain && (
+        <button onClick={stopAndRun(onBookAgain)} className={`${baseButtonClass} ${color.bookAgain}`}>
+          <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        </button>
+      )}
+
+      {/* Go to active service - show only if actionable */}
       {booking?.status === "InProgress" && (
         <button
-          onClick={() => {
-            const storedStartTime = localStorage.getItem(
-              `activeServiceStartTime:${booking.id}`,
-            );
-            const startTime =
-              storedStartTime ||
-              booking.scheduledDate ||
-              booking.requestedDate ||
-              new Date().toISOString();
-            navigate(
-              `/provider/active-service/${booking.id}?startTime=${encodeURIComponent(startTime)}`,
-            );
-          }}
-          className="flex flex-1 items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+          onClick={stopAndRun(() => {
+            const storedStartTime = localStorage.getItem(`activeServiceStartTime:${booking.id}`);
+            const startTime = storedStartTime || booking.scheduledDate || booking.requestedDate || new Date().toISOString();
+            navigate(`/provider/active-service/${booking.id}?startTime=${encodeURIComponent(startTime)}`);
+          })}
+          className={`${baseButtonClass} ${color.review}`}
         >
-          <ArrowPathIcon className="mr-2 h-5 w-5" />
-          Go to Active Service
+          <ArrowPathIcon className="mr-2 h-5 w-5" /> Go to Active Service
         </button>
       )}
-      {booking?.canAccept && booking?.canDecline && (
-        <>
-          <button
-            onClick={onDecline}
-            disabled={isBookingActionInProgress(booking?.id || "", "decline")}
-            className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
-          >
-            <XCircleIcon className="mr-2 h-5 w-5" />
-            {isBookingActionInProgress(booking?.id || "", "decline")
-              ? "Declining..."
-              : "Decline"}
-          </button>
-          <button
-            onClick={onAccept}
-            disabled={
-              isBookingActionInProgress(booking?.id || "", "accept") ||
-              (booking?.paymentMethod === "CashOnHand" &&
-                (commissionValidation.loading ||
-                  commissionValidation.hasInsufficientBalance))
-            }
-            className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
-              booking?.paymentMethod === "CashOnHand" &&
-              (commissionValidation.loading ||
-                commissionValidation.hasInsufficientBalance)
-                ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
-                : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-            } disabled:opacity-50`}
-            title={
-              booking?.paymentMethod === "CashOnHand" &&
-              commissionValidation.hasInsufficientBalance
-                ? "Insufficient wallet balance for commission fee"
-                : ""
-            }
-          >
-            <CheckCircleIcon className="mr-2 h-5 w-5" />
-            {isBookingActionInProgress(booking?.id || "", "accept")
-              ? "Accepting..."
-              : commissionValidation.loading
-                ? "Checking..."
-                : "Accept"}
-          </button>
-        </>
-      )}
-      {booking?.canStart && (
+
+      {/* Decline - show only if actionable */}
+      {booking?.canAccept && booking?.canDecline && !isBookingActionInProgress(booking?.id || "", "decline") && (
         <button
-          onClick={onStart}
-          disabled={!canStartServiceNow()}
-          className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
-            !canStartServiceNow()
-              ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-              : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
-          } disabled:opacity-50`}
-          title={
-            !canStartServiceNow()
-              ? "Service can only be started on or after the scheduled date and time"
-              : "Navigate to directions"
-          }
+          onClick={stopAndRun(onDecline)}
+          className={`${baseButtonClass} ${color.decline}`}
         >
-          <ArrowPathIcon className="mr-2 h-5 w-5" />
-          Start Service
+          <XCircleIcon className="mr-2 h-5 w-5" /> Decline
         </button>
       )}
+
+      {/* Accept - show only if actionable and not locked by commission */}
+      {booking?.canAccept && booking?.canDecline && !acceptDisabledBecauseCommission && !isBookingActionInProgress(booking?.id || "", "accept") && (
+        <button
+          onClick={stopAndRun(onAccept)}
+          className={`${baseButtonClass} ${color.accept}`}
+        >
+          <CheckCircleIcon className="mr-2 h-5 w-5" /> Accept
+        </button>
+      )}
+
+      {/* Start Service - show only if actionable */}
+      {booking?.canStart && canStartServiceNow() && (
+        <button onClick={stopAndRun(onStart)} className={`${baseButtonClass} ${color.start}`}>
+          <ArrowPathIcon className="mr-2 h-5 w-5" /> Start Service
+        </button>
+      )}
+
+      {/* Mark Completed - show only if actionable */}
       {booking?.canComplete && (
-        <button
-          onClick={onComplete}
-          className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-medium text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900"
-        >
-          <CheckCircleIcon className="mr-2 h-5 w-5" />
-          Mark Completed
+        <button onClick={stopAndRun(onComplete)} className={`${baseButtonClass} ${color.complete}`}>
+          <CheckCircleIcon className="mr-2 h-5 w-5" /> Mark Completed
         </button>
       )}
+
+      {/* View Review - show only if booking completed */}
       {booking?.status === "Completed" && (
-        <Link
-          to={`/provider/review/${booking?.id}`}
-          className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2.5 text-center text-sm font-medium text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-        >
+        <Link to={`/provider/review/${booking?.id}`} onClick={(e) => e.stopPropagation()} className={`${baseButtonClass} ${color.review}`}>
           <StarIcon className="mr-2 h-5 w-5" /> View Review
         </Link>
       )}

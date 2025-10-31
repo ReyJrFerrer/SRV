@@ -5,18 +5,15 @@ import {
   ClockIcon,
   CurrencyDollarIcon,
   CalendarDaysIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ExclamationTriangleIcon,
-  ArrowPathIcon,
-  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import ClientReputationScore from "./booking-details/ClientReputationScore";
 import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { MouseEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import ActionButtons from "./booking-details/ActionButtons";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -37,8 +34,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   review = [],
   reputation = null,
   onDeclineClick,
-  onCancelClick,
-  isDeclining,
   acceptBookingById,
   isBookingActionInProgress,
   checkCommissionValidation,
@@ -231,9 +226,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // --- Action handlers ---
-  const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleAccept = async () => {
 
     // Check commission validation for cash bookings before accepting
     if (booking.paymentMethod === "CashOnHand") {
@@ -257,24 +250,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  const handleReject = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onDeclineClick();
-  };
 
-  const handleMarkAsCompleted = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMarkAsCompleted = async () => {
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
   // Handle cancel button click
-  const handleCancelClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onCancelClick(booking);
-  };
 
   // Handle complete confirmation
   const handleCompleteConfirm = () => {
@@ -299,9 +280,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---
-  const handleChatClient = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleChatClient = async () => {
     if (!booking.clientId || !identity) return;
     try {
       const currentUserId = identity.getPrincipal().toString();
@@ -348,13 +327,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
+  // contact removed; ActionButtons no longer supports contact action
+
   // --- Booking state checks for button logic ---
-  const canAcceptOrDecline = booking.canAccept && booking.canDecline;
-  const canStart = booking.canStart;
-  const canComplete = booking.canComplete;
-  const isCompleted = status === "Completed";
   const isInProgress = status === "InProgress";
-  const isAccepted = status === "Accepted";
 
   // --- Helper: Check if booking is scheduled for a future date ---
   const isScheduledForFuture = (() => {
@@ -471,120 +447,30 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 Duration: {duration}
               </p>
             )}
-          </div>
 
-          {/* Booking Notes */}
-          {notes && (
-            <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-              <strong>Booking Notes:</strong> {notes}
-            </div>
-          )}
+            {/* Booking Notes */}
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Action Buttons Section */}
+        {/* Action Buttons Section - use shared ActionButtons component */}
         <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-          {/* Accept/Decline Actions */}
-          {canAcceptOrDecline && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleReject}
-                disabled={isDeclining}
-                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50"
-              >
-                <XCircleIcon className="mr-1 h-4 w-4" />
-                {isDeclining ? "Declining..." : "Decline"}
-              </button>
-              <button
-                onClick={handleAccept}
-                disabled={
-                  isBookingActionInProgress(booking.id, "accept") ||
-                  commissionValidation.hasInsufficientBalance
-                }
-                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 disabled:opacity-50"
-              >
-                <CheckCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "accept")
-                  ? "Accepting..."
-                  : commissionValidation.hasInsufficientBalance
-                    ? "Insufficient Balance"
-                    : "Accept"}
-              </button>
-            </div>
-          )}
-          {(canStart ||
-            canComplete ||
-            isCompleted ||
-            isAccepted ||
-            isInProgress) && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleChatClient}
-                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100"
-              >
-                <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
-                Chat {booking.clientName?.split(" ")[0] || "Client"}
-              </button>
-
-              {canStart && (
-                <button
-                  onClick={handleStartService}
-                  disabled={
-                    isBookingActionInProgress(booking.id, "start") ||
-                    isScheduledForFuture
-                  }
-                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 disabled:opacity-50 ${
-                    isScheduledForFuture ? "cursor-not-allowed opacity-60" : ""
-                  }`}
-                  title={
-                    isScheduledForFuture
-                      ? "You can only start the service on the scheduled date."
-                      : undefined
-                  }
-                >
-                  <ArrowPathIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "start")
-                    ? "Starting..."
-                    : isScheduledForFuture
-                      ? "Start Service (Locked)"
-                      : "Start Service"}
-                </button>
-              )}
-
-              {canComplete && (
-                <button
-                  onClick={handleMarkAsCompleted}
-                  disabled={isBookingActionInProgress(booking.id, "complete")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 disabled:opacity-50"
-                >
-                  <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "complete")
-                    ? "Completing..."
-                    : "Mark Completed"}
-                </button>
-              )}
-              {/* Cancel button additions */}
-              {isAccepted && (
-                <button
-                  onClick={handleCancelClick}
-                  className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
-                >
-                  <XCircleIcon className="mr-1 h-4 w-4" /> Cancel
-                </button>
-              )}
-              {isInProgress && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigate(`/provider/active-service/${booking.id}`);
-                  }}
-                  className="flex flex-1 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700"
-                >
-                  <XCircleIcon className="mr-1 h-4 w-4" /> Cancel Service
-                </button>
-              )}
-            </div>
-          )}
+          <ActionButtons
+            booking={booking}
+            onChat={handleChatClient}
+            onAccept={handleAccept}
+            onDecline={onDeclineClick}
+            onStart={handleStartService}
+            onComplete={handleMarkAsCompleted}
+            canStartServiceNow={() => !isScheduledForFuture}
+            isBookingActionInProgress={isBookingActionInProgress}
+            commissionValidation={commissionValidation}
+            navigate={navigate}
+          />
         </div>
       </div>
     </div>

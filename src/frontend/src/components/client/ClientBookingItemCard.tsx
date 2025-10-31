@@ -1,5 +1,5 @@
 // --- Client Booking Item Card ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
@@ -10,13 +10,15 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   XCircleIcon,
-  ArrowPathIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
+import { useChat } from "../../hooks/useChat";
+import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import ReputationScore from "./service-detail/ReputationScore";
+import ActionButtons from "./booking-details/ActionButtons";
 import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 
 interface ClientBookingItemCardProps {
@@ -30,6 +32,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
+  const { conversations, createConversation } = useChat();
+  const { identity } = useAuth();
 
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -253,10 +257,60 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Event Handlers ---
-  const handleBookAgainClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleChat = useCallback(async () => {
+    if (!booking.providerProfile?.id) {
+      toast.error("Provider information is missing.");
+      return;
+    }
+    if (!identity) {
+      toast.error("You must be logged in to start a conversation.");
+      return;
+    }
 
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      const providerIdString = booking.providerProfile.id.toString();
+
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === providerIdString) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === providerIdString),
+      );
+
+      if (existingConversation) {
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
+      }
+
+      const newConv = await createConversation(currentUserId, providerIdString);
+      if (newConv && newConv.id) {
+        navigate(`/client/chat/${newConv.id}`, {
+          state: {
+            conversationId: newConv.id,
+            otherUserName: booking.providerProfile?.name || "Provider",
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
+      }
+
+      toast.error("Could not start a new conversation. Please try again later.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start conversation. Please try again.");
+    }
+  }, [booking, conversations, createConversation, identity, navigate]);
+
+  const handleBookAgain = () => {
     if (booking.serviceId) {
       navigate(`/client/book/${booking.serviceId}`);
     } else {
@@ -266,10 +320,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // Add handler for viewing reviews when already reviewed
-  const handleViewReviews = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleViewReviews = () => {
     if (booking.serviceId) {
       navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
@@ -285,7 +336,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // --- Check if booking is completed/cancelled for actions ---
   const isCompleted = booking.status === "Completed";
   const isCancelled = booking.status === "Cancelled";
-  const isFinished = isCompleted || isCancelled;
 
   // --- Review button content logic ---
   const getReviewButtonContent = () => {
@@ -483,59 +533,36 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           </div>
 
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-            {canCancel && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onCancelClick(booking);
-                }}
-                className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
-              >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
-              </button>
-            )}
-
-            {/* Only show "Book Again" for completed bookings, not cancelled */}
-            {isCompleted && booking.serviceId && (
-              <button
-                onClick={handleBookAgainClick}
-                className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
-              >
-                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Book Again
-              </button>
-            )}
-
-            {/* Enhanced review button with validation for cancelled bookings */}
-            {isFinished && reviewButtonContent && (
-              <div className="relative">
-                {reviewButtonContent.href ? (
-                  <Link
-                    to={reviewButtonContent.href.pathname}
-                    state={{ providerName }}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    onClick={(e) => {
-                      if (reviewButtonContent.disabled) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </Link>
-                ) : (
-                  <button
-                    onClick={reviewButtonContent.onClick}
-                    disabled={reviewButtonContent.disabled}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    title={reviewButtonContent.tooltip}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
+            <ActionButtons
+                compact={true}
+                onChat={handleChat}
+              chatLoading={false}
+              onRequestCancel={() => onCancelClick(booking)}
+              canCancel={canCancel}
+              // provide Book Again handler so the shared component renders it
+              onBookAgain={isCompleted && booking.serviceId ? handleBookAgain : undefined}
+              bookAgainLabel={"Book Again"}
+              reviewButtonContent={
+                reviewButtonContent
+                  ? {
+                      text: reviewButtonContent.text,
+                      icon: reviewButtonContent.icon,
+                      onClick: reviewButtonContent.onClick ?? undefined,
+                      to: reviewButtonContent.href
+                        ? reviewButtonContent.href.pathname
+                        : undefined,
+                      state: reviewButtonContent.href
+                        ? reviewButtonContent.href.query || { providerName }
+                        : undefined,
+                      disabled: reviewButtonContent.disabled,
+                      className: reviewButtonContent.className,
+                    }
+                  : null
+              }
+              status={booking.status}
+              onReport={() => navigate(`/client/report`, { state: { bookingId: booking.id } })}
+            />
           </div>
         </div>
       </div>
