@@ -6,7 +6,10 @@ import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import ServiceDrafts from "../../../components/provider/add service/ServiceDrafts";
-import { getFilesEntries, deleteDraftFromIDB } from "../../../utils/draftStorage";
+import {
+  getFilesEntries,
+  deleteDraftFromIDB,
+} from "../../../utils/draftStorage";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
@@ -179,7 +182,10 @@ const AddServicePage: React.FC = () => {
   };
 
   const handleNavigateAttempt = (to: string): boolean => {
-    if (serviceDraftsRef.current && typeof serviceDraftsRef.current.handleNavigateAttempt === "function") {
+    if (
+      serviceDraftsRef.current &&
+      typeof serviceDraftsRef.current.handleNavigateAttempt === "function"
+    ) {
       return serviceDraftsRef.current.handleNavigateAttempt(to);
     }
     return true;
@@ -703,22 +709,22 @@ const AddServicePage: React.FC = () => {
             ADD_SERVICE_DRAFT_KEY,
             "img",
           );
-              if (imgEntries && imgEntries.length > 0) {
-                filesToProcess = imgEntries.map((e: any, i: number) => {
-                  const name = e.name || `draft-img-${i}`;
-                  const type =
-                    e.type ||
-                    (e.blob && (e.blob as Blob).type) ||
-                    "application/octet-stream";
-                  const lastModified = e.lastModified || Date.now();
-                  return new File([e.blob], name, { type, lastModified });
-                });
-                // also set local state so UI reflects restored files
-                setServiceImageFiles(filesToProcess);
-                setImagePreviews(
-                  imgEntries.map((e: any) => URL.createObjectURL(e.blob)),
-                );
-              }
+          if (imgEntries && imgEntries.length > 0) {
+            filesToProcess = imgEntries.map((e: any, i: number) => {
+              const name = e.name || `draft-img-${i}`;
+              const type =
+                e.type ||
+                (e.blob && (e.blob as Blob).type) ||
+                "application/octet-stream";
+              const lastModified = e.lastModified || Date.now();
+              return new File([e.blob], name, { type, lastModified });
+            });
+            // also set local state so UI reflects restored files
+            setServiceImageFiles(filesToProcess);
+            setImagePreviews(
+              imgEntries.map((e: any) => URL.createObjectURL(e.blob)),
+            );
+          }
         } catch (err) {
           // ignore
         }

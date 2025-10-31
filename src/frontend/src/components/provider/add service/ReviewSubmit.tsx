@@ -104,7 +104,8 @@ const ReviewSubmit: React.FC<Props> = ({
             <div className="space-y-2">
               {formData.servicePackages
                 .filter(
-                  (pkg: any) => pkg.name.trim() && pkg.description.trim() && pkg.price,
+                  (pkg: any) =>
+                    pkg.name.trim() && pkg.description.trim() && pkg.price,
                 )
                 .map((pkg: any) => {
                   const commissionQuote = commissionQuotes[pkg.id];
@@ -115,17 +116,32 @@ const ReviewSubmit: React.FC<Props> = ({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-blue-900">{pkg.name}</p>
-                        <p className="break-words text-sm text-gray-600">{pkg.description}</p>
+                        <p className="break-words text-sm text-gray-600">
+                          {pkg.description}
+                        </p>
                       </div>
                       <div className="mt-2 text-right md:mt-0">
-                        <p className="text-lg font-semibold text-green-600">₱{Number(pkg.price).toLocaleString()}</p>
+                        <p className="text-lg font-semibold text-green-600">
+                          ₱{Number(pkg.price).toLocaleString()}
+                        </p>
                         {loadingCommissions && (
-                          <p className="text-xs text-gray-500">Loading commission...</p>
+                          <p className="text-xs text-gray-500">
+                            Loading commission...
+                          </p>
                         )}
                         {commissionQuote && (
                           <div className="mt-1 text-base text-gray-600">
-                            <p>Commission: ₱{commissionQuote.commissionFee.toLocaleString()}</p>
-                            <p className="font-medium text-blue-600">Total: ₱{(Number(pkg.price) + commissionQuote.commissionFee).toLocaleString()}</p>
+                            <p>
+                              Commission: ₱
+                              {commissionQuote.commissionFee.toLocaleString()}
+                            </p>
+                            <p className="font-medium text-blue-600">
+                              Total: ₱
+                              {(
+                                Number(pkg.price) +
+                                commissionQuote.commissionFee
+                              ).toLocaleString()}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -148,7 +164,9 @@ const ReviewSubmit: React.FC<Props> = ({
               </svg>
               <h3 className="font-semibold text-gray-800">Availability</h3>
             </div>
-            <div className="font-medium text-blue-900">{formData.availabilitySchedule.join(", ")}</div>
+            <div className="font-medium text-blue-900">
+              {formData.availabilitySchedule.join(", ")}
+            </div>
             {formData.availabilitySchedule.length > 0 && (
               <span className="mt-1 block text-sm text-gray-500">
                 {formData.useSameTimeForAllDays
@@ -172,7 +190,9 @@ const ReviewSubmit: React.FC<Props> = ({
               <h3 className="font-semibold text-gray-800">Location</h3>
             </div>
             <div className="break-words font-medium text-blue-900">
-              {[formData.locationMunicipalityCity, formData.locationProvince].filter(Boolean).join(", ")}
+              {[formData.locationMunicipalityCity, formData.locationProvince]
+                .filter(Boolean)
+                .join(", ")}
             </div>
           </div>
         </div>
@@ -196,23 +216,44 @@ const ReviewSubmit: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {serviceImageFiles.length > 0
                 ? serviceImageFiles.map((file, idx) => (
-                    <div key={file.name + idx} className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white">
-                      <img src={URL.createObjectURL(file)} alt={`Service Image ${idx + 1}`} className="h-full w-full object-cover" />
+                    <div
+                      key={file.name + idx}
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Service Image ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                   ))
                 : imagePreviews.map((previewUrl, idx) => (
-                    <div key={previewUrl} className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white">
-                      <img src={previewUrl} alt={`Service Image ${idx + 1}`} className="h-full w-full object-cover" />
+                    <div
+                      key={previewUrl}
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                    >
+                      <img
+                        src={previewUrl}
+                        alt={`Service Image ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                   ))}
             </div>
           </div>
         )}
 
-        {(certificationFiles?.length > 0 || certificationPreviews?.length > 0) && (
+        {(certificationFiles?.length > 0 ||
+          certificationPreviews?.length > 0) && (
           <div className="mt-10">
             <div className="mb-2 flex items-center gap-2">
-              <svg className="h-5 w-5 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                className="h-5 w-5 text-yellow-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
                 <circle cx="12" cy="8" r="4" />
                 <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
               </svg>
@@ -221,24 +262,54 @@ const ReviewSubmit: React.FC<Props> = ({
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {certificationFiles && certificationFiles.length > 0
                 ? certificationFiles.map((file, idx) => {
-                    const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
+                    const isPdf =
+                      file.type === "application/pdf" ||
+                      file.name.endsWith(".pdf");
                     const src = URL.createObjectURL(file);
                     return (
-                      <div key={file.name + idx} className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white">
+                      <div
+                        key={file.name + idx}
+                        className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
+                      >
                         {isPdf ? (
-                          <iframe src={src} title={`Certification PDF ${idx + 1}`} className="h-full w-full rounded bg-gray-100" style={{ minHeight: 0, minWidth: 0, border: "none" }} />
+                          <iframe
+                            src={src}
+                            title={`Certification PDF ${idx + 1}`}
+                            className="h-full w-full rounded bg-gray-100"
+                            style={{
+                              minHeight: 0,
+                              minWidth: 0,
+                              border: "none",
+                            }}
+                          />
                         ) : (
-                          <img src={src} alt={`Certification ${idx + 1}`} className="h-full w-full object-cover" />
+                          <img
+                            src={src}
+                            alt={`Certification ${idx + 1}`}
+                            className="h-full w-full object-cover"
+                          />
                         )}
                       </div>
                     );
                   })
                 : certificationPreviews?.map((previewUrl, idx) => (
-                    <div key={previewUrl} className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white">
+                    <div
+                      key={previewUrl}
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
+                    >
                       {previewUrl.endsWith(".pdf") ? (
-                        <iframe src={previewUrl} title={`Certification PDF ${idx + 1}`} className="h-full w-full rounded bg-gray-100" style={{ minHeight: 0, minWidth: 0, border: "none" }} />
+                        <iframe
+                          src={previewUrl}
+                          title={`Certification PDF ${idx + 1}`}
+                          className="h-full w-full rounded bg-gray-100"
+                          style={{ minHeight: 0, minWidth: 0, border: "none" }}
+                        />
                       ) : (
-                        <img src={previewUrl} alt={`Certification ${idx + 1}`} className="h-full w-full object-cover" />
+                        <img
+                          src={previewUrl}
+                          alt={`Certification ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
                       )}
                     </div>
                   ))}

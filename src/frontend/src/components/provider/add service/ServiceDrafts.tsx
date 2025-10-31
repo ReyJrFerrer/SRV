@@ -111,11 +111,7 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
         await saveFilesToIDB(ADD_SERVICE_DRAFT_KEY, serviceImageFiles, "img");
       }
       if (certificationFiles && certificationFiles.length > 0) {
-        await saveFilesToIDB(
-          ADD_SERVICE_DRAFT_KEY,
-          certificationFiles,
-          "cert",
-        );
+        await saveFilesToIDB(ADD_SERVICE_DRAFT_KEY, certificationFiles, "cert");
       }
       toast.success("Draft saved");
     } catch (e) {
@@ -148,29 +144,38 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
         if (imgUrls && imgUrls.length > 0) setImagePreviews(imgUrls);
         else if (loadedDraft.imagePreviews)
           setImagePreviews(loadedDraft.imagePreviews);
-        if (certUrls && certUrls.length > 0)
-          setCertificationPreviews(certUrls);
+        if (certUrls && certUrls.length > 0) setCertificationPreviews(certUrls);
         else if (loadedDraft.certificationPreviews)
           setCertificationPreviews(loadedDraft.certificationPreviews);
 
         // Reconstruct File objects from IDB entries so submission works
         try {
-          const imgEntries = await getFilesEntries(ADD_SERVICE_DRAFT_KEY, "img");
+          const imgEntries = await getFilesEntries(
+            ADD_SERVICE_DRAFT_KEY,
+            "img",
+          );
           if (imgEntries && imgEntries.length > 0) {
             // set previews from blobs (preserve order)
-            setImagePreviews(imgEntries.map((e) => URL.createObjectURL(e.blob)));
+            setImagePreviews(
+              imgEntries.map((e) => URL.createObjectURL(e.blob)),
+            );
             const restoredImgFiles = imgEntries.map((e, i) => {
               const name = e.name || `draft-img-${i}`;
               const type =
-                e.type || (e.blob && (e.blob as Blob).type) ||
+                e.type ||
+                (e.blob && (e.blob as Blob).type) ||
                 "application/octet-stream";
               const lastModified = e.lastModified || Date.now();
               return new File([e.blob], name, { type, lastModified });
             });
-            if (restoredImgFiles.length > 0) setServiceImageFiles(restoredImgFiles);
+            if (restoredImgFiles.length > 0)
+              setServiceImageFiles(restoredImgFiles);
           }
 
-          const certEntries = await getFilesEntries(ADD_SERVICE_DRAFT_KEY, "cert");
+          const certEntries = await getFilesEntries(
+            ADD_SERVICE_DRAFT_KEY,
+            "cert",
+          );
           if (certEntries && certEntries.length > 0) {
             setCertificationPreviews(
               certEntries.map((e) => URL.createObjectURL(e.blob)),
@@ -178,7 +183,8 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
             const restoredCertFiles = certEntries.map((e, i) => {
               const name = e.name || `draft-cert-${i}`;
               const type =
-                e.type || (e.blob && (e.blob as Blob).type) ||
+                e.type ||
+                (e.blob && (e.blob as Blob).type) ||
                 "application/octet-stream";
               const lastModified = e.lastModified || Date.now();
               return new File([e.blob], name, { type, lastModified });
@@ -191,11 +197,13 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
         }
       } catch (e) {
         // fallback to stored previews
-        if (loadedDraft.imagePreviews) setImagePreviews(loadedDraft.imagePreviews);
+        if (loadedDraft.imagePreviews)
+          setImagePreviews(loadedDraft.imagePreviews);
         if (loadedDraft.certificationPreviews)
           setCertificationPreviews(loadedDraft.certificationPreviews);
       }
-      if (loadedDraft.commissionQuotes) setCommissionQuotes(loadedDraft.commissionQuotes);
+      if (loadedDraft.commissionQuotes)
+        setCommissionQuotes(loadedDraft.commissionQuotes);
     } catch (e) {
       // ignore
     }
