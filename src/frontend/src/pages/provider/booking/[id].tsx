@@ -589,18 +589,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const isLoading = hookLoading || localLoading;
   const displayError = localError || hookError;
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-          <p className="text-gray-600">Loading booking details...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Error state
   if (displayError && !specificBooking) {
     return (
@@ -754,87 +742,98 @@ const ProviderBookingDetailsPage: React.FC = () => {
       </div>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        {/* Side by side layout for provider and service details */}
-        <div className="mt-4 flex flex-col gap-6 md:flex-row">
-          {/* Provider (client) info card - left */}
-          <ClientInfoCard
-            providerImage={providerImage}
-            clientName={clientName}
-            clientContact={clientContact}
-            clientId={clientId || ""}
-            reviews={clientReviews}
-            reputation={clientReputation}
-          />
+        {isLoading ? (
+          <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <p className="text-gray-600">Loading booking details...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Side by side layout for provider and service details */}
+            <div className="mt-4 flex flex-col gap-6 md:flex-row">
+              {/* Provider (client) info card - left */}
+              <ClientInfoCard
+                providerImage={providerImage}
+                clientName={clientName}
+                clientContact={clientContact}
+                clientId={clientId || ""}
+                reviews={clientReviews}
+                reputation={clientReputation}
+              />
 
-          {/* Service and package details - right */}
-          <ServiceDetailsCard
-            serviceName={serviceName}
-            packageTitle={specificBooking?.packageDetails?.title}
-            packageName={specificBooking?.packageName}
-            requestedDate={specificBooking?.requestedDate || ""}
-            scheduledDate={specificBooking?.scheduledDate || ""}
-            bookingLocation={bookingLocation}
-            displayAddress={displayAddress}
-            preciseAddress={preciseAddress}
-            geocodedAddress={geocodedAddress}
-            hasExplicitCoords={hasExplicitCoords}
-            clientLocation={clientLocation}
-            price={
-              price !== undefined
-                ? price + commissionValidation.estimatedCommission
-                : undefined
-            }
-            amountToPay={amountToPay}
-            duration={duration}
-            formatDateRange={formatDateRange}
-          />
-        </div>
+              {/* Service and package details - right */}
+              <ServiceDetailsCard
+                serviceName={serviceName}
+                packageTitle={specificBooking?.packageDetails?.title}
+                packageName={specificBooking?.packageName}
+                requestedDate={specificBooking?.requestedDate || ""}
+                scheduledDate={specificBooking?.scheduledDate || ""}
+                bookingLocation={bookingLocation}
+                displayAddress={displayAddress}
+                preciseAddress={preciseAddress}
+                geocodedAddress={geocodedAddress}
+                hasExplicitCoords={hasExplicitCoords}
+                clientLocation={clientLocation}
+                price={
+                  price !== undefined
+                    ? price + commissionValidation.estimatedCommission
+                    : undefined
+                }
+                amountToPay={amountToPay}
+                duration={duration}
+                formatDateRange={formatDateRange}
+              />
+            </div>
 
-        {/* Booking Progress Section */}
-        <BookingProgressSection status={specificBooking?.status} />
+            {/* Booking Progress Section */}
+            <BookingProgressSection status={specificBooking?.status} />
 
-        {/* Commission Validation Section for Cash Bookings */}
-        <CommissionInfo
-          show={Boolean(
-            specificBooking?.paymentMethod === "CashOnHand" &&
-              specificBooking?.canAccept,
-          )}
-          commissionValidation={commissionValidation}
-        />
+            {/* Commission Validation Section for Cash Bookings */}
+            <CommissionInfo
+              show={Boolean(
+                specificBooking?.paymentMethod === "CashOnHand" &&
+                  specificBooking?.canAccept,
+              )}
+              commissionValidation={commissionValidation}
+            />
 
-        {/* Map Section */}
-        <MapSection
-          mapsReady={mapsReady}
-          resolvedCoords={resolvedCoords}
-          clientLocation={clientLocation}
-          hasExplicitCoords={hasExplicitCoords}
-          bookingLocation={bookingLocation}
-          geocodeStatus={geocodeStatus}
-          displayAddress={displayAddress}
-          preciseAddress={preciseAddress}
-          geocodedAddress={geocodedAddress}
-          mapsApiKey={mapsApiKey}
-          showStreetView={showStreetView}
-          setShowStreetView={setShowStreetView}
-        />
+            {/* Map Section */}
+            <MapSection
+              mapsReady={mapsReady}
+              resolvedCoords={resolvedCoords}
+              clientLocation={clientLocation}
+              hasExplicitCoords={hasExplicitCoords}
+              bookingLocation={bookingLocation}
+              geocodeStatus={geocodeStatus}
+              displayAddress={displayAddress}
+              preciseAddress={preciseAddress}
+              geocodedAddress={geocodedAddress}
+              mapsApiKey={mapsApiKey}
+              showStreetView={showStreetView}
+              setShowStreetView={setShowStreetView}
+            />
 
-        {/* Booking Notes Section */}
-        <BookingNotes notes={(specificBooking as any)?.notes} />
+            {/* Booking Notes Section */}
+            <BookingNotes notes={(specificBooking as any)?.notes} />
 
-        {/* Action Buttons */}
-        {specificBooking && (
-          <ActionButtons
-            booking={specificBooking}
-            onChat={handleChatClient}
-            onAccept={handleAcceptBooking}
-            onDecline={handleDeclineBooking}
-            onStart={handleStartService}
-            onComplete={handleCompleteService}
-            canStartServiceNow={canStartServiceNow}
-            isBookingActionInProgress={isBookingActionInProgress}
-            commissionValidation={commissionValidation}
-            navigate={navigate}
-          />
+            {/* Action Buttons */}
+            {specificBooking && (
+              <ActionButtons
+                booking={specificBooking}
+                onChat={handleChatClient}
+                onAccept={handleAcceptBooking}
+                onDecline={handleDeclineBooking}
+                onStart={handleStartService}
+                onComplete={handleCompleteService}
+                canStartServiceNow={canStartServiceNow}
+                isBookingActionInProgress={isBookingActionInProgress}
+                commissionValidation={commissionValidation}
+                navigate={navigate}
+              />
+            )}
+          </>
         )}
 
         {(specificBooking?.status === "Completed" ||

@@ -5,6 +5,8 @@ import ProviderStats from "../components/ProviderStats";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
+import { ViewReviewsModal } from "../components/ViewReviewsModal";
+import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 // Reputation Score Component
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
@@ -105,6 +107,7 @@ export const UserDetailsPage: React.FC = () => {
     useState(false);
   const [outstandingCommission, setOutstandingCommission] = useState(0);
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   // Convert Profile to UserData format with real data
   const convertProfileToUserData = async (
@@ -322,7 +325,7 @@ export const UserDetailsPage: React.FC = () => {
     }
 
     // Find the user in backend users
-    const foundProfile = backendUsers.find((p) => p.id.toString() === id);
+    const foundProfile = backendUsers.find((p) => p?.id?.toString() === id);
 
     if (foundProfile) {
       try {
@@ -334,13 +337,17 @@ export const UserDetailsPage: React.FC = () => {
         console.error("Error converting user data:", error);
         // Fallback to basic user data
         const basicUserData: UserData = {
-          id: foundProfile.id.toString(),
-          name: foundProfile.name,
-          phone: foundProfile.phone,
-          createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
-          updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
+          id: foundProfile?.id?.toString() || id || "",
+          name: foundProfile?.name || "Unknown User",
+          phone: foundProfile?.phone || "",
+          createdAt: foundProfile?.createdAt
+            ? new Date(Number(foundProfile.createdAt) / 1000000)
+            : new Date(),
+          updatedAt: foundProfile?.updatedAt
+            ? new Date(Number(foundProfile.updatedAt) / 1000000)
+            : new Date(),
           profilePicture:
-            foundProfile.profilePicture &&
+            foundProfile?.profilePicture &&
             foundProfile.profilePicture.length > 0
               ? {
                   imageUrl: foundProfile.profilePicture[0]!.imageUrl,
@@ -348,7 +355,7 @@ export const UserDetailsPage: React.FC = () => {
                 }
               : undefined,
           biography:
-            foundProfile.biography && foundProfile.biography.length > 0
+            foundProfile?.biography && foundProfile.biography.length > 0
               ? foundProfile.biography[0]
               : undefined,
           totalEarnings: 0,
@@ -358,11 +365,13 @@ export const UserDetailsPage: React.FC = () => {
           averageRating: 0,
           totalReviews: 0,
           completionRate: 0,
-          lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
+          lastActivity: foundProfile?.updatedAt
+            ? new Date(Number(foundProfile.updatedAt) / 1000000)
+            : new Date(),
           reputationScore: 50,
           reputationLevel: "New",
           reputationRing: 1,
-          isLocked: getUserLockStatus(foundProfile.id.toString()),
+          isLocked: getUserLockStatus(foundProfile?.id?.toString() || id || ""),
           walletBalance: 0,
           servicesCount: 0,
         };
@@ -504,22 +513,15 @@ export const UserDetailsPage: React.FC = () => {
                 </div>
                 <div className="mt-4 flex items-center">
                   <div className="h-16 w-16 flex-shrink-0">
-                    {user.profilePicture ? (
-                      <img
-                        className="h-16 w-16 rounded-full object-cover shadow-lg ring-4 ring-white"
-                        src={
-                          user.profilePicture.thumbnailUrl ||
-                          user.profilePicture.imageUrl
-                        }
-                        alt={user.name}
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg">
-                        <span className="text-xl font-bold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <ProfileImage
+                      profilePictureUrl={
+                        user.profilePicture?.thumbnailUrl ||
+                        user.profilePicture?.imageUrl
+                      }
+                      userName={user.name}
+                      size="h-16 w-16"
+                      className="shadow-lg ring-4 ring-white"
+                    />
                   </div>
                   <div className="ml-6">
                     <div className="flex items-center space-x-3">
@@ -568,7 +570,7 @@ export const UserDetailsPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center space-x-3">
+                <div className="mt-4 flex flex-wrap items-center gap-2 space-x-3">
                   <Link
                     to={`/user/${user.id}/services`}
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -606,6 +608,44 @@ export const UserDetailsPage: React.FC = () => {
                       />
                     </svg>
                     View Bookings
+                  </button>
+                  <button
+                    onClick={() => navigate(`/user/${user.id}/chat`)}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    View Chats
+                  </button>
+                  <button
+                    onClick={() => setShowReviewsModal(true)}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                    View Reviews
                   </button>
                 </div>
               </div>
@@ -868,6 +908,15 @@ export const UserDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* View Reviews Modal */}
+      {user && (
+        <ViewReviewsModal
+          userId={user.id}
+          isOpen={showReviewsModal}
+          onClose={() => setShowReviewsModal(false)}
+        />
       )}
     </div>
   );

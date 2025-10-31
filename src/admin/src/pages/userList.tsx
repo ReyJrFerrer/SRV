@@ -12,6 +12,7 @@ import {
   LockClosedIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
+import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 // User data interface based on Profile type from backend
 interface UserData {
@@ -741,22 +742,15 @@ export const UserListPage: React.FC = () => {
                         <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-12 w-12 flex-shrink-0">
-                              {user.profilePicture ? (
-                                <img
-                                  className="h-12 w-12 rounded-full object-cover shadow-sm ring-2 ring-white"
-                                  src={
-                                    user.profilePicture.thumbnailUrl ||
-                                    user.profilePicture.imageUrl
-                                  }
-                                  alt={user.name}
-                                />
-                              ) : (
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
-                                  <span className="text-sm font-semibold">
-                                    {user.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
+                              <ProfileImage
+                                profilePictureUrl={
+                                  user.profilePicture?.thumbnailUrl ||
+                                  user.profilePicture?.imageUrl
+                                }
+                                userName={user.name}
+                                size="h-12 w-12"
+                                className="shadow-sm ring-2 ring-white"
+                              />
                             </div>
                             <div className="ml-4">
                               <div className="flex items-center space-x-2">
@@ -967,22 +961,15 @@ export const UserListPage: React.FC = () => {
               {/* Summary band */}
               <div className="mb-4 grid grid-cols-[auto,1fr] items-center gap-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
                 <div className="h-16 w-16">
-                  {selectedUser.profilePicture ? (
-                    <img
-                      className="h-16 w-16 rounded-full object-cover shadow-sm ring-2 ring-white"
-                      src={
-                        selectedUser.profilePicture.thumbnailUrl ||
-                        selectedUser.profilePicture.imageUrl
-                      }
-                      alt={selectedUser.name}
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
-                      <span className="text-lg font-semibold">
-                        {selectedUser.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+                  <ProfileImage
+                    profilePictureUrl={
+                      selectedUser.profilePicture?.thumbnailUrl ||
+                      selectedUser.profilePicture?.imageUrl
+                    }
+                    userName={selectedUser.name}
+                    size="h-16 w-16"
+                    className="shadow-sm ring-2 ring-white"
+                  />
                 </div>
                 <div>
                   <div className="text-lg font-semibold text-gray-900">

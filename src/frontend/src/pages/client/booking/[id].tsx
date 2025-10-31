@@ -39,11 +39,11 @@ const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
+  const [localLoading, setLocalLoading] = useState(true);
   const [canUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -72,8 +72,14 @@ const BookingDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (id && typeof id === "string" && !hookLoading) {
+      setLocalLoading(true);
       const foundBooking = bookings.find((booking) => booking.id === id);
-      if (foundBooking) setSpecificBooking(foundBooking);
+      if (foundBooking) {
+        setSpecificBooking(foundBooking);
+      } else {
+        setSpecificBooking(null);
+      }
+      setLocalLoading(false);
     }
   }, [id, bookings, hookLoading]);
 
@@ -263,7 +269,8 @@ const BookingDetailsPage: React.FC = () => {
   } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
-
+  // Determine loading state
+  const isLoading = hookLoading || localLoading || loadingStats;
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
@@ -284,77 +291,92 @@ const BookingDetailsPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="mt-19">
-          <CancellationReasons
-            bookingId={specificBooking?.id ?? null}
-            cancelledByClient={status === "Cancelled"}
-            cancellationReason={(specificBooking as any)?.cancelReason}
-          />
-        </div>
-
-        <div className="mt-1 pt-1">
-          <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
-            <span
-              className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
-              aria-label="Booking status"
-            >
-              {status?.replace("_", " ") || "Unknown"}
-            </span>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
-              <ProviderInfo
-                providerProfile={providerProfile}
-                userImageUrl={userImageUrl ?? null}
-                loadingStats={loadingStats}
-                averageRating={averageRating}
-                reviewCount={reviewCount}
-                providerId={providerProfile?.id}
-              />
-              <ServiceDetails
-                packageName={packageName}
-                requestedDate={requestedDate}
-                scheduledDate={scheduledDate}
-                formattedLocation={formattedLocation}
-                price={price}
-                commissionEstimate={commissionValidation.estimatedCommission}
-              />
+        {isLoading ? (
+          <div className="flex min-h-[calc(100vh-150px)] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <p className="text-gray-600">Loading booking details...</p>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="mt-19">
+              <CancellationReasons
+                bookingId={specificBooking?.id ?? null}
+                cancelledByClient={status === "Cancelled"}
+                cancellationReason={(specificBooking as any)?.cancelReason}
+              />
+            </div>
 
-        <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
-          <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-            <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
-            Progress
-          </h3>
-          <div className="px-2 sm:px-8">
-            <BookingProgressTracker currentStatus={status as BookingStatus} />
-          </div>
-        </div>
+            <div className="mt-1 pt-1">
+              <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
+                <span
+                  className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
+                  aria-label="Booking status"
+                >
+                  {status?.replace("_", " ")}
+                </span>
 
-        <BookingNotes notes={(specificBooking as any)?.notes} />
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
+                  <ProviderInfo
+                    providerProfile={providerProfile}
+                    userImageUrl={userImageUrl ?? null}
+                    loadingStats={loadingStats}
+                    averageRating={averageRating}
+                    reviewCount={reviewCount}
+                    providerId={providerProfile?.id}
+                  />
+                  <ServiceDetails
+                    packageName={packageName}
+                    requestedDate={requestedDate}
+                    scheduledDate={scheduledDate}
+                    formattedLocation={formattedLocation}
+                    price={price}
+                    commissionEstimate={
+                      commissionValidation.estimatedCommission
+                    }
+                  />
+                </div>
+              </div>
+            </div>
 
-        {chatErrorMessage && (
-          <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-            <span className="block sm:inline">{chatErrorMessage}</span>
-            <button
-              onClick={() => setChatErrorMessage(null)}
-              className="ml-2 text-red-900 hover:text-red-700"
-            >
-              ✕
-            </button>
-          </div>
+            <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
+              <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+                <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
+                Progress
+              </h3>
+              <div className="px-2 sm:px-8">
+                <BookingProgressTracker
+                  currentStatus={status as BookingStatus}
+                />
+              </div>
+            </div>
+
+            <BookingNotes notes={(specificBooking as any)?.notes} />
+
+            {chatErrorMessage && (
+              <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+                <span className="block sm:inline">{chatErrorMessage}</span>
+                <button
+                  onClick={() => setChatErrorMessage(null)}
+                  className="ml-2 text-red-900 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <ActionButtons
+              onChat={handleChatWithProvider}
+              chatLoading={chatLoading}
+              onRequestCancel={() => setIsCancelModalOpen(true)}
+              canCancel={canCancel}
+              reviewButtonContent={reviewButtonContent}
+              status={status}
+              onReport={handleReportClick}
+            />
+          </>
         )}
-
-        <ActionButtons
-          onChat={handleChatWithProvider}
-          chatLoading={chatLoading}
-          onRequestCancel={() => setIsCancelModalOpen(true)}
-          canCancel={canCancel}
-          reviewButtonContent={reviewButtonContent}
-          status={status}
-          onReport={handleReportClick}
-        />
       </main>
 
       <div>

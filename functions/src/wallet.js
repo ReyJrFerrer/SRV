@@ -563,11 +563,86 @@ exports.debitBalance = functions.https.onCall(async (data, context) => {
   }
 });
 
+/**
+ * Internal function to credit a user's balance
+ * Can be called directly from other cloud functions
+ * @param {string} userId - User ID
+ * @param {number} amount - Amount to credit (must be positive)
+ * @param {string} paymentChannel - Payment channel (e.g., 'GCash', 'PayMaya')
+ * @param {string} [description] - Transaction description
+ * @return {Promise<Object>} Result object with success status and new balance
+ */
+async function creditWalletInternal(userId, amount, paymentChannel, description = "") {
+  const logMessage = `💰 [creditWalletInternal] Crediting ${amount} to user ${userId}`;
+  console.log(logMessage);
+
+  // Input validation
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+  if (typeof amount !== "number" || amount <= 0) {
+    throw new Error("Amount must be a positive number");
+  }
+  if (!paymentChannel) {
+    throw new Error("Payment channel is required");
+  }
+
+  const db = admin.firestore();
+  const walletRef = db.collection("wallets").doc(userId);
+
+  try {
+    return await db.runTransaction(async (transaction) => {
+      const walletDoc = await transaction.get(walletRef);
+      let currentBalance = 0;
+
+      if (walletDoc.exists) {
+        currentBalance = walletDoc.data().balance || 0;
+      }
+
+      const newBalance = currentBalance + amount;
+
+      // Update wallet balance
+      transaction.set(
+        walletRef,
+        {
+          balance: newBalance,
+          updatedAt: new Date().toISOString(),
+        },
+        {merge: true},
+      );
+
+      // Record transaction
+      const txId = generateTransactionId();
+      const transactionData = {
+        id: txId,
+        from: null, // System or payment provider
+        to: userId,
+        amount: amount,
+        transaction_type: "Credit",
+        timestamp: new Date().toISOString(),
+        description: description || `Wallet top-up via ${paymentChannel}`,
+        payment_channel: paymentChannel,
+        running_balance: newBalance,
+      };
+
+      const txRef = db.collection("transactions").doc(txId);
+      transaction.set(txRef, transactionData);
+
+      console.log(`✅ Credit successful for user ${userId}. New balance: ${newBalance}`);
+      return {success: true, newBalance, transactionId: txId};
+    });
+  } catch (error) {
+    console.error("Error in creditWalletInternal:", error);
+    throw error;
+  }
+}
+
 // Export the internal function for use by other cloud functions
 exports.debitBalanceInternal = debitBalanceInternal;
 exports.holdBalanceInternal = holdBalanceInternal;
 exports.releaseHoldInternal = releaseHoldInternal;
 exports.convertHoldToDebitInternal = convertHoldToDebitInternal;
+exports.creditWalletInternal = creditWalletInternal;
 
 /**
  * Transfer funds between users

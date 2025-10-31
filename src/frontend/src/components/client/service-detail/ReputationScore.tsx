@@ -1,9 +1,11 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { useReputation } from "../../../hooks/useReputation";
 
-const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
-  const { fetchUserReputation } = useReputation();
+interface ReputationScoreProps {
+  reputation: any;
+}
+
+const ReputationScore: React.FC<ReputationScoreProps> = ({ reputation }) => {
   const [reputationScore, setReputationScore] = React.useState<number>(50);
   const [loading, setLoading] = React.useState<boolean>(true);
 
@@ -11,7 +13,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
     const loadReputation = async () => {
       try {
         setLoading(true);
-        const reputation = await fetchUserReputation(providerId);
         if (reputation) {
           setReputationScore(Math.round(reputation.trustScore));
         } else {
@@ -24,8 +25,8 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
       }
     };
 
-    if (providerId) loadReputation();
-  }, [providerId, fetchUserReputation]);
+    loadReputation();
+  }, [reputation]);
 
   const score = reputationScore;
   let iconColor = "text-blue-600";

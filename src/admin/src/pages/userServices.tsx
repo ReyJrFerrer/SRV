@@ -55,15 +55,17 @@ const UserServicesPage: React.FC = () => {
   };
 
   // Convert backend services and bookings to frontend ServiceData format
+  // Note: Only services are included here. Bookings should be viewed on the bookings page.
   const convertBackendDataToServiceData = (
     offeredServices: any[],
-    clientBookings: any[],
+    _clientBookings: any[],
     _providerBookings: any[],
     userData: UserData,
   ): ServiceData[] => {
     const services: ServiceData[] = [];
 
     // Convert offered services (services this user provides)
+    // Only include actual services, not bookings
     offeredServices.forEach((service) => {
       const serviceData: ServiceData = {
         id: service.id,
@@ -84,52 +86,59 @@ const UserServicesPage: React.FC = () => {
       services.push(serviceData);
     });
 
-    clientBookings.forEach((booking) => {
-      const serviceData: ServiceData = {
-        id: booking.id,
-        title: `Booking: ${booking.serviceId}`,
-        description: booking.notes || "Service booking",
-        category: "General",
-        status: convertBookingStatus(booking.status),
-        type: "requested",
-        price: Number(booking.price) / 100,
-        currency: "PHP",
-        location: booking.location.address,
-        scheduledDate: booking.scheduledDate
-          ? new Date(Number(booking.scheduledDate) / 1000000)
-          : undefined,
-        completedDate: booking.completedDate
-          ? new Date(Number(booking.completedDate) / 1000000)
-          : undefined,
-        createdDate: new Date(Number(booking.createdAt) / 1000000),
-        clientId: booking.clientId.toString(),
-        clientName: userData.name,
-        providerId: booking.providerId.toString(),
-        providerName: "Service Provider",
-      };
-      services.push(serviceData);
-    });
+    // Bookings are excluded from the Services page
+    // They should be viewed on the separate bookings page instead
 
     return services;
   };
 
   // Helper function to convert backend service status to frontend status
+  // Handles both string format and Motoko variant object format
   const convertServiceStatus = (backendStatus: any): ServiceData["status"] => {
-    if ("Available" in backendStatus) return "active";
-    if ("Unavailable" in backendStatus) return "cancelled";
-    if ("Suspended" in backendStatus) return "cancelled";
+    // If it's a string, handle it directly
+    if (typeof backendStatus === "string") {
+      if (backendStatus === "Available") return "active";
+      if (backendStatus === "Unavailable") return "cancelled";
+      if (backendStatus === "Suspended") return "cancelled";
+      return "active";
+    }
+
+    // If it's an object (Motoko variant format), check for keys
+    if (typeof backendStatus === "object" && backendStatus !== null) {
+      if ("Available" in backendStatus) return "active";
+      if ("Unavailable" in backendStatus) return "cancelled";
+      if ("Suspended" in backendStatus) return "cancelled";
+    }
+
     return "active";
   };
 
   // Helper function to convert backend booking status to frontend status
+  // Handles both string format and Motoko variant object format
   const convertBookingStatus = (backendStatus: any): ServiceData["status"] => {
-    if ("Requested" in backendStatus) return "pending";
-    if ("Accepted" in backendStatus) return "active";
-    if ("InProgress" in backendStatus) return "in_progress";
-    if ("Completed" in backendStatus) return "completed";
-    if ("Cancelled" in backendStatus) return "cancelled";
-    if ("Declined" in backendStatus) return "cancelled";
-    if ("Disputed" in backendStatus) return "cancelled";
+    // If it's a string, handle it directly
+    if (typeof backendStatus === "string") {
+      if (backendStatus === "Requested") return "pending";
+      if (backendStatus === "Accepted") return "active";
+      if (backendStatus === "InProgress") return "in_progress";
+      if (backendStatus === "Completed") return "completed";
+      if (backendStatus === "Cancelled") return "cancelled";
+      if (backendStatus === "Declined") return "cancelled";
+      if (backendStatus === "Disputed") return "cancelled";
+      return "pending";
+    }
+
+    // If it's an object (Motoko variant format), check for keys
+    if (typeof backendStatus === "object" && backendStatus !== null) {
+      if ("Requested" in backendStatus) return "pending";
+      if ("Accepted" in backendStatus) return "active";
+      if ("InProgress" in backendStatus) return "in_progress";
+      if ("Completed" in backendStatus) return "completed";
+      if ("Cancelled" in backendStatus) return "cancelled";
+      if ("Declined" in backendStatus) return "cancelled";
+      if ("Disputed" in backendStatus) return "cancelled";
+    }
+
     return "pending";
   };
 
@@ -144,14 +153,23 @@ const UserServicesPage: React.FC = () => {
       if (backendUsers.length === 0) {
         try {
           await refreshUsers();
+          // After refreshing, backendUsers will be updated and effect will run again
+          // Don't set loading to false here - let the next effect run handle it
           return;
         } catch (error) {
           console.error("Failed to load users:", error);
+          setLoading(false);
+          return;
         }
       }
 
+      // Filter out any invalid profiles before searching
+      const validUsers = backendUsers.filter(
+        (profile) => profile && profile.id,
+      );
+
       // Find user from backend data
-      const foundProfile = backendUsers.find(
+      const foundProfile = validUsers.find(
         (profile) => profile.id.toString() === id,
       );
       if (foundProfile) {
@@ -175,6 +193,9 @@ const UserServicesPage: React.FC = () => {
           // Set empty array instead of mock data when backend call fails
           setServices([]);
         }
+      } else {
+        // User not found in the backend users list
+        console.warn(`User with id ${id} not found in backend users`);
       }
 
       setLoading(false);
@@ -524,7 +545,6 @@ const UserServicesPage: React.FC = () => {
             >
               <option value="all">All Types</option>
               <option value="offered">Services Offered</option>
-              <option value="requested">Services Requested</option>
             </select>
           </div>
 
@@ -713,7 +733,7 @@ const UserServicesPage: React.FC = () => {
               typeFilter !== "all" ||
               categoryFilter !== "all"
                 ? "Try adjusting your search or filter criteria."
-                : "This user has not offered any services or made any service requests yet."}
+                : "This user has not offered any services yet."}
             </p>
           </div>
         )}
