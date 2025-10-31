@@ -262,9 +262,12 @@ export const UserDetailsPage: React.FC = () => {
     }
   };
 
-  const handleUpdateCommission = (newAmount: number) => {
+  const handleUpdateCommission = async (newAmount: number) => {
+    // Update local balance when refreshed from ProviderStats
+    if (user) {
+      setUser({ ...user, walletBalance: newAmount });
+    }
     setOutstandingCommission(newAmount);
-    setShowCommissionConfirmation(true);
   };
 
   const handleReputationChange = (newScore: number) => {
@@ -832,7 +835,7 @@ export const UserDetailsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Commission Update Confirmation Modal */}
+      {/* Commission Update Confirmation Modal - Keeping for backward compatibility but not used */}
       {showCommissionConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
@@ -854,12 +857,15 @@ export const UserDetailsPage: React.FC = () => {
               >
                 Cancel
               </button>
-              {/* <button
-                onClick={confirmCommissionUpdate}
+              <button
+                onClick={() => {
+                  // This modal is now deprecated - wallet changes happen through wallet page
+                  setShowCommissionConfirmation(false);
+                }}
                 className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
               >
-                Update Commission
-              </button> */}
+                Close
+              </button>
             </div>
           </div>
         </div>
