@@ -465,7 +465,7 @@ const AddServicePage: React.FC = () => {
         (cat: ServiceCategory) => !cat.parentId,
       );
       if (defaultCategory) {
-          setFormData((prev) => ({ ...prev, categoryId: defaultCategory.id }));
+        setFormData((prev) => ({ ...prev, categoryId: defaultCategory.id }));
       }
     }
   }, [categories, formData.categoryId]);

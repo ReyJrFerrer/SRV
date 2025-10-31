@@ -135,7 +135,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               }));
               if (onCommissionComputed) {
                 try {
-                  onCommissionComputed(pkgId, { commissionFee: fee } as CommissionQuote);
+                  onCommissionComputed(pkgId, {
+                    commissionFee: fee,
+                  } as CommissionQuote);
                 } catch (e) {}
               }
             }
