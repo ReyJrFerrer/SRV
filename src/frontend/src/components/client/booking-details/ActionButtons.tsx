@@ -58,7 +58,11 @@ const ActionButtons: React.FC<{
     /view\s*review/i.test(reviewButtonContent.text)
   );
   // Hide client-side "View Reviews" button; allow other review actions (e.g., Rate Provider)
-  const showReview = !!(reviewButtonContent && !reviewButtonContent.disabled && !isViewReviewsButton);
+  const showReview = !!(
+    reviewButtonContent &&
+    !reviewButtonContent.disabled &&
+    !isViewReviewsButton
+  );
   const showReport = !!(status === "Completed" || status === "Cancelled");
 
   const baseContainer = compact ? containerCompact : containerDefault;
