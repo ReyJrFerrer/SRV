@@ -73,8 +73,8 @@ const ReviewsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-3xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full p-2 hover:bg-gray-100"
@@ -93,7 +93,7 @@ const ReviewsPage: React.FC = () => {
               />
             </svg>
           </button>
-          <h1 className="ml-3 text-lg font-semibold text-slate-800">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             My Reviews
           </h1>
         </div>

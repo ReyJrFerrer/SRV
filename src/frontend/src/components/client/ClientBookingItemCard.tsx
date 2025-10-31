@@ -1,5 +1,5 @@
 // --- Client Booking Item Card ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
@@ -10,12 +10,16 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   XCircleIcon,
-  ArrowPathIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
+import { useChat } from "../../hooks/useChat";
+import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import ReputationScore from "./service-detail/ReputationScore";
+import ActionButtons from "./booking-details/ActionButtons";
+import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -28,6 +32,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
+  const { conversations, createConversation } = useChat();
+  const { identity } = useAuth();
 
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -128,11 +134,36 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }
   const providerName = booking.providerProfile?.name;
 
-  // --- Mock reputation / rating data (frontend-only) ---
-  // Copied-style from ProviderBookingItemCard but using local mock values
-  const mockReputation = { trustScore: 68 };
-  const mockAverageRating = 4.4;
-  const mockReviewCount = 23;
+  const notes = (booking as any)?.notes;
+
+  // --- Reputation / rating data (frontend-only) ---
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!booking?.serviceId) return;
+      setLoadingStats(true);
+      try {
+        const avg = await reviewCanisterService.calculateServiceRating(
+          booking.serviceId,
+        );
+        const reviews = await reviewCanisterService.getServiceReviews(
+          booking.serviceId,
+        );
+        setAverageRating(avg?.averageRating ?? null);
+        setReviewCount(Array.isArray(reviews) ? reviews.length : 0);
+      } catch (err) {
+        setAverageRating(null);
+        setReviewCount(null);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    load();
+  }, [booking?.serviceId]);
 
   const bookingLocation =
     booking.formattedLocation ||
@@ -226,10 +257,66 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Event Handlers ---
-  const handleBookAgainClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleChat = useCallback(async () => {
+    if (!booking.providerProfile?.id) {
+      toast.error("Provider information is missing.");
+      return;
+    }
+    if (!identity) {
+      toast.error("You must be logged in to start a conversation.");
+      return;
+    }
 
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      const providerIdString = booking.providerProfile.id.toString();
+
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === providerIdString) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === providerIdString),
+      );
+
+      if (existingConversation) {
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
+      }
+
+      const newConv = await createConversation(currentUserId, providerIdString);
+      if (newConv && newConv.id) {
+        navigate(`/client/chat/${newConv.id}`, {
+          state: {
+            conversationId: newConv.id,
+            otherUserName: booking.providerProfile?.name || "Provider",
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
+      }
+
+      toast.error(
+        "Could not start a new conversation. Please try again later.",
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not start conversation. Please try again.",
+      );
+    }
+  }, [booking, conversations, createConversation, identity, navigate]);
+
+  const handleBookAgain = () => {
     if (booking.serviceId) {
       navigate(`/client/book/${booking.serviceId}`);
     } else {
@@ -239,10 +326,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // Add handler for viewing reviews when already reviewed
-  const handleViewReviews = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleViewReviews = () => {
     if (booking.serviceId) {
       navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
@@ -258,7 +342,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // --- Check if booking is completed/cancelled for actions ---
   const isCompleted = booking.status === "Completed";
   const isCancelled = booking.status === "Cancelled";
-  const isFinished = isCompleted || isCancelled;
 
   // --- Review button content logic ---
   const getReviewButtonContent = () => {
@@ -383,22 +466,35 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <p className="mt-1 text-xs text-gray-500">
               Provided by: {providerName}
             </p>
-            {/* Reputation + Rating (mock frontend-only display) */}
+            {/* Reputation + Rating (real frontend display using shared components) */}
             <div className="mt-2 flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-full  px-3 py-1 text-sm font-semibold text-gray-800">
-                <span className="flex items-center gap-1 text-yellow-500">
-                  <StarIcon className="h-4 w-4" />
-                  <span>{mockAverageRating.toFixed(1)}</span>
-                </span>
-                <span className="ml-2 text-xs text-gray-500">
-                  ({mockReviewCount})
-                </span>
+              <div className="flex-shrink-0">
+                <ReputationScore
+                  providerId={booking.providerProfile?.id ?? ""}
+                />
               </div>
-              <div className="text-sm text-gray-600">
-                Reputation Score:{" "}
-                <span className="font-semibold">
-                  {mockReputation.trustScore}
-                </span>
+
+              <div className="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
+                {loadingStats ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
+                    <span className="text-xs text-gray-500">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <StarRatingDisplay rating={averageRating ?? 0} />
+                      <span className="ml-1 font-bold">
+                        {averageRating != null
+                          ? averageRating.toFixed(1)
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({reviewCount ?? 0})
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <p className="mt-1 text-xs text-gray-500">
@@ -433,62 +529,50 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 </p>
               )}
             </div>
+
+            {/* Booking Notes (if any) */}
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-            {canCancel && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onCancelClick(booking);
-                }}
-                className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
-              >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
-              </button>
-            )}
-
-            {/* Only show "Book Again" for completed bookings, not cancelled */}
-            {isCompleted && booking.serviceId && (
-              <button
-                onClick={handleBookAgainClick}
-                className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
-              >
-                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Book Again
-              </button>
-            )}
-
-            {/* Enhanced review button with validation for cancelled bookings */}
-            {isFinished && reviewButtonContent && (
-              <div className="relative">
-                {reviewButtonContent.href ? (
-                  <Link
-                    to={reviewButtonContent.href.pathname}
-                    state={{ providerName }}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    onClick={(e) => {
-                      if (reviewButtonContent.disabled) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </Link>
-                ) : (
-                  <button
-                    onClick={reviewButtonContent.onClick}
-                    disabled={reviewButtonContent.disabled}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    title={reviewButtonContent.tooltip}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
+            <ActionButtons
+              compact={true}
+              onChat={handleChat}
+              chatLoading={false}
+              onRequestCancel={() => onCancelClick(booking)}
+              canCancel={canCancel}
+              // provide Book Again handler so the shared component renders it
+              onBookAgain={
+                isCompleted && booking.serviceId ? handleBookAgain : undefined
+              }
+              bookAgainLabel={"Book Again"}
+              reviewButtonContent={
+                reviewButtonContent
+                  ? {
+                      text: reviewButtonContent.text,
+                      icon: reviewButtonContent.icon,
+                      onClick: reviewButtonContent.onClick ?? undefined,
+                      to: reviewButtonContent.href
+                        ? reviewButtonContent.href.pathname
+                        : undefined,
+                      state: reviewButtonContent.href
+                        ? reviewButtonContent.href.query || { providerName }
+                        : undefined,
+                      disabled: reviewButtonContent.disabled,
+                      className: reviewButtonContent.className,
+                    }
+                  : null
+              }
+              status={booking.status}
+              onReport={() =>
+                navigate(`/client/report`, { state: { bookingId: booking.id } })
+              }
+            />
           </div>
         </div>
       </div>

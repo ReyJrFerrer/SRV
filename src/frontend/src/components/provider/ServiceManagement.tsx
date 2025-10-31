@@ -194,7 +194,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between md:py-5 lg:py-8">
+      <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
         <h2 className="text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>

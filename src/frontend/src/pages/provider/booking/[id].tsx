@@ -12,6 +12,7 @@ import {
 import MapSection from "../../../components/provider/booking-details/MapSection";
 import CancellationReasons from "../../../components/common/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 
 import { useClientRating } from "../../../hooks/useClientRating";
 import { useReputation } from "../../../hooks/useReputation";
@@ -358,19 +359,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [specificBooking]);
 
-  // Contact client handler
-  const handleContactClient = useCallback(() => {
-    if (!specificBooking) return;
-    const phone =
-      specificBooking.clientPhone || specificBooking.clientProfile?.phone || "";
-    if (phone) {
-      window.open(`tel:${phone}`, "_self");
-    } else {
-      alert(
-        `Contact client: ${specificBooking.clientName || "Unknown Client"}`,
-      );
-    }
-  }, [specificBooking]);
+  // contact handler removed; ActionButtons no longer supports a contact action
   // Geocode enhancement state (before early returns to keep hook order stable)
   const [resolvedCoords, setResolvedCoords] = useState<{
     lat: number;
@@ -754,12 +743,15 @@ const ProviderBookingDetailsPage: React.FC = () => {
       </header>
 
       {/* Cancellation reasons (frontend-only / informational) */}
-      <CancellationReasons
-        bookingId={specificBooking?.id}
-        cancelledByClient={specificBooking?.status === "Cancelled"}
-        cancellationReason={(specificBooking as any)?.cancelReason}
-        // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
-      />
+      {/* Add top margin so this block isn't hidden behind the sticky header */}
+      <div className="mt-16">
+        <CancellationReasons
+          bookingId={specificBooking?.id}
+          cancelledByClient={specificBooking?.status === "Cancelled"}
+          cancellationReason={(specificBooking as any)?.cancelReason}
+          // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
+        />
+      </div>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Side by side layout for provider and service details */}
@@ -826,12 +818,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
           setShowStreetView={setShowStreetView}
         />
 
+        {/* Booking Notes Section */}
+        <BookingNotes notes={(specificBooking as any)?.notes} />
+
         {/* Action Buttons */}
         {specificBooking && (
           <ActionButtons
             booking={specificBooking}
             onChat={handleChatClient}
-            onContact={handleContactClient}
             onAccept={handleAcceptBooking}
             onDecline={handleDeclineBooking}
             onStart={handleStartService}

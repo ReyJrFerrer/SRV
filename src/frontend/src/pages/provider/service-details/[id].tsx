@@ -1084,8 +1084,8 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
           <button
             onClick={() => navigate(`/provider/home`)}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
@@ -1100,7 +1100,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
+      <main className="mx-auto max-w-full space-y-10 px-4 py-16 sm:px-8">
         <HeroSection
           onBack={() => navigate("/provider/home")}
           service={service}

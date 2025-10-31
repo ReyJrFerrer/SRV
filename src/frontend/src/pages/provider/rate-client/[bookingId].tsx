@@ -121,8 +121,8 @@ const ProviderRateClientPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full p-2 hover:bg-gray-100"
@@ -141,7 +141,9 @@ const ProviderRateClientPage: React.FC = () => {
               />
             </svg>
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">Rate Client</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            Rate Client
+          </h1>
         </div>
       </header>
 
