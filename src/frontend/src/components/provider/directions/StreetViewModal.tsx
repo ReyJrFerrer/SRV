@@ -7,7 +7,11 @@ interface StreetViewModalProps {
   onClose: () => void;
 }
 
-const StreetViewModal: React.FC<StreetViewModalProps> = ({ show, position, onClose }) => {
+const StreetViewModal: React.FC<StreetViewModalProps> = ({
+  show,
+  position,
+  onClose,
+}) => {
   if (!show || !position) return null;
   return (
     <div
@@ -27,7 +31,11 @@ const StreetViewModal: React.FC<StreetViewModalProps> = ({ show, position, onClo
           <GStreetView
             position={position}
             pov={{ heading: 0, pitch: 0 }}
-            options={{ addressControl: true, linksControl: true, panControl: true }}
+            options={{
+              addressControl: true,
+              linksControl: true,
+              panControl: true,
+            }}
             style={{ width: "100%", height: "100%" }}
           />
         </div>

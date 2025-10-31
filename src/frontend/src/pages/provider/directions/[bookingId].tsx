@@ -695,7 +695,6 @@ const ProviderDirectionsPage: React.FC = () => {
         destResolveStatus={destResolveStatus}
         directionsResponse={directionsResponse}
         selectedRouteIndex={selectedRouteIndex}
-        
         setShowStreetView={setShowStreetView}
         followMe={followMe}
         setFollowMe={setFollowMe}
@@ -707,7 +706,11 @@ const ProviderDirectionsPage: React.FC = () => {
         navigateBack={() => navigate(-1)}
       />
 
-      <StreetViewModal show={showStreetView} position={destinationCoords} onClose={() => setShowStreetView(false)} />
+      <StreetViewModal
+        show={showStreetView}
+        position={destinationCoords}
+        onClose={() => setShowStreetView(false)}
+      />
 
       {mapApiKey === "REPLACE_WITH_KEY" && (
         <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">

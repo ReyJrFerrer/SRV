@@ -7,7 +7,7 @@ interface ControlsOverlayProps {
   destResolveStatus: "idle" | "pending" | "ok" | "failed";
   directionsResponse: google.maps.DirectionsResult | null;
   selectedRouteIndex: number;
-  
+
   setShowStreetView: (v: boolean) => void;
   followMe: boolean;
   setFollowMe: (v: boolean) => void;
@@ -101,7 +101,9 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
 
       <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
         {directionsStatus === "pending" && (
-          <p className="text-center text-sm font-medium text-gray-700">Calculating route...</p>
+          <p className="text-center text-sm font-medium text-gray-700">
+            Calculating route...
+          </p>
         )}
         {directionsStatus === "ok" && directionsResponse && (
           <div className="text-center">
@@ -111,22 +113,32 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
                 directionsResponse.routes[0].legs[0];
               return (
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                  <div className="text-lg font-extrabold text-gray-900">{leg.duration?.text || "N/A"}</div>
+                  <div className="text-lg font-extrabold text-gray-900">
+                    {leg.duration?.text || "N/A"}
+                  </div>
                   <span className="text-gray-300">•</span>
-                  <div className="text-base font-semibold text-gray-700">{leg.distance?.text || "N/A"}</div>
+                  <div className="text-base font-semibold text-gray-700">
+                    {leg.distance?.text || "N/A"}
+                  </div>
                 </div>
               );
             })()}
           </div>
         )}
         {directionsStatus === "failed" && (
-          <p className="text-center text-sm font-medium text-red-600">Could not compute directions.</p>
+          <p className="text-center text-sm font-medium text-red-600">
+            Could not compute directions.
+          </p>
         )}
         {!destinationHasCoords && destResolveStatus !== "pending" && (
-          <p className="mt-2 text-center text-xs text-red-600">Destination coordinates missing for this booking.</p>
+          <p className="mt-2 text-center text-xs text-red-600">
+            Destination coordinates missing for this booking.
+          </p>
         )}
         {!destinationHasCoords && destResolveStatus === "pending" && (
-          <p className="mt-2 text-center text-xs text-gray-600">Resolving destination...</p>
+          <p className="mt-2 text-center text-xs text-gray-600">
+            Resolving destination...
+          </p>
         )}
       </div>
 
