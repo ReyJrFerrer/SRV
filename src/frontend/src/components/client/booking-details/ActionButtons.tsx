@@ -76,7 +76,8 @@ const ActionButtons: React.FC<{
           className={`${baseButtonClass} ${color.cancel}`}
         >
           <span className="flex items-center">
-            <XCircleIcon className="mr-2 h-5 w-5" /> {!compact ? "Cancel" : "Cancel"}
+            <XCircleIcon className="mr-2 h-5 w-5" />{" "}
+            {!compact ? "Cancel" : "Cancel"}
           </span>
         </button>
       )}
@@ -90,7 +91,8 @@ const ActionButtons: React.FC<{
         </button>
       )}
 
-      {reviewButtonContent && !reviewButtonContent.disabled &&
+      {reviewButtonContent &&
+        !reviewButtonContent.disabled &&
         (reviewButtonContent.to ? (
           <Link
             to={reviewButtonContent.to}
@@ -110,11 +112,11 @@ const ActionButtons: React.FC<{
         ))}
 
       {(status === "Completed" || status === "Cancelled") && (
-          <button
-            onClick={stopAndRun(onReport)}
-            className={`${baseButtonClass} ${color.report}`}
-            title="Report this booking"
-          >
+        <button
+          onClick={stopAndRun(onReport)}
+          className={`${baseButtonClass} ${color.report}`}
+          title="Report this booking"
+        >
           <svg
             className="mr-2 h-5 w-5"
             fill="none"

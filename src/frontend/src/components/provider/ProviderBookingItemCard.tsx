@@ -227,7 +227,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // --- Action handlers ---
   const handleAccept = async () => {
-
     // Check commission validation for cash bookings before accepting
     if (booking.paymentMethod === "CashOnHand") {
       if (commissionValidation.loading) {
@@ -249,7 +248,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       navigate(`../../provider/booking/${booking.id}`);
     }
   };
-
 
   const handleMarkAsCompleted = async () => {
     navigate(`/provider/complete-service/${booking.id}`);

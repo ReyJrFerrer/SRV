@@ -304,9 +304,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         return;
       }
 
-      toast.error("Could not start a new conversation. Please try again later.");
+      toast.error(
+        "Could not start a new conversation. Please try again later.",
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start conversation. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not start conversation. Please try again.",
+      );
     }
   }, [booking, conversations, createConversation, identity, navigate]);
 
@@ -535,13 +541,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
             {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
             <ActionButtons
-                compact={true}
-                onChat={handleChat}
+              compact={true}
+              onChat={handleChat}
               chatLoading={false}
               onRequestCancel={() => onCancelClick(booking)}
               canCancel={canCancel}
               // provide Book Again handler so the shared component renders it
-              onBookAgain={isCompleted && booking.serviceId ? handleBookAgain : undefined}
+              onBookAgain={
+                isCompleted && booking.serviceId ? handleBookAgain : undefined
+              }
               bookAgainLabel={"Book Again"}
               reviewButtonContent={
                 reviewButtonContent
@@ -561,7 +569,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   : null
               }
               status={booking.status}
-              onReport={() => navigate(`/client/report`, { state: { bookingId: booking.id } })}
+              onReport={() =>
+                navigate(`/client/report`, { state: { bookingId: booking.id } })
+              }
             />
           </div>
         </div>
