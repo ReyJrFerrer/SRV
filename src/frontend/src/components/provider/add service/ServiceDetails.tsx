@@ -52,7 +52,6 @@ interface ServiceDetailsProps {
   addPackage: () => void;
   removePackage: (id: string) => void;
   validationErrors?: ValidationErrors;
-  onRequestCategory: (categoryName: string) => void;
   scrollToErrorTrigger?: number;
   // Optional helper to compute commission for a given category and price
   // The project provides getCommissionQuote which returns a CommissionQuote
@@ -80,7 +79,6 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   scrollToErrorTrigger,
   computeCommission,
   onCommissionComputed,
-  onRequestCategory,
 }) => {
   // Local live commission map per package id
   const [liveCommission, setLiveCommission] = useState<{
@@ -94,6 +92,73 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   const [commissionLoading, setCommissionLoading] = useState<{
     [pkgId: string]: boolean | undefined;
   }>({});
+
+  // When the component mounts or when formData changes (for example after
+  // restoring a draft), precompute live commission for any packages that
+  // already have a price so the UI shows the commission value immediately.
+  useEffect(() => {
+    let mounted = true;
+
+    const computeInitial = async () => {
+      for (const pkg of formData.servicePackages) {
+        const pkgId = pkg.id;
+        const priceNum = Number(pkg.price) || 0;
+        // Only compute when there is a price and we don't already have a value
+        if (priceNum > 0 && !liveCommission[pkgId]) {
+          if (!mounted) return;
+          setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
+          try {
+            const categoryName =
+              categories.find((c) => c.id === formData.categoryId)?.name ||
+              "Default Category";
+            if (computeCommission) {
+              const quote = await computeCommission(categoryName, priceNum);
+              const fee = (quote as any).commissionFee || 0;
+              if (!mounted) return;
+              setLiveCommission((prev) => ({
+                ...prev,
+                [pkgId]: { commissionFee: fee, total: priceNum + fee },
+              }));
+              if (onCommissionComputed) {
+                try {
+                  onCommissionComputed(pkgId, quote as CommissionQuote);
+                } catch (e) {
+                  // ignore
+                }
+              }
+            } else {
+              const fee = Math.round(priceNum * 0.05 * 100) / 100;
+              if (!mounted) return;
+              setLiveCommission((prev) => ({
+                ...prev,
+                [pkgId]: { commissionFee: fee, total: priceNum + fee },
+              }));
+              if (onCommissionComputed) {
+                try {
+                  onCommissionComputed(pkgId, {
+                    commissionFee: fee,
+                  } as CommissionQuote);
+                } catch (e) {}
+              }
+            }
+          } catch (e) {
+            // ignore failures here - live commission is best-effort
+          } finally {
+            if (!mounted) return;
+            setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
+          }
+        }
+      }
+    };
+
+    computeInitial();
+
+    return () => {
+      mounted = false;
+    };
+    // Intentionally include formData.servicePackages and category so this
+    // re-runs when the parent restores the draft (which updates formData).
+  }, [formData.servicePackages, formData.categoryId, computeCommission]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -191,8 +256,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
-  // Note: custom category name is stored in parent `formData.customCategoryName`.
-  // ServiceDetails will call `onRequestCategory` when the user types to persist it.
+  // (Custom/"Other" categories have been removed.)
 
   // Modify the handlePackageInputChange function
   const handlePackageInputChange = (
@@ -369,22 +433,9 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                         </option>
                       ))
                   )}
-                  {/* Allow users to specify a custom category */}
-                  <option value="__other__">Other</option>
+                  {/* 'Other' custom category removed */}
                 </select>
-                {formData.categoryId === "__other__" && (
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      placeholder="Enter category name"
-                      value={(formData as any).customCategoryName || ""}
-                      onChange={(e) => onRequestCategory(e.target.value)}
-                      required
-                      maxLength={40}
-                      className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm"
-                    />
-                  </div>
-                )}
+                {/* Removed optional custom category input */}
                 {validationErrors.categoryId && !hideCategoryError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.categoryId}

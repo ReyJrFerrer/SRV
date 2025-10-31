@@ -69,7 +69,6 @@ const filter = new Filter();
 const initialServiceState = {
   serviceOfferingTitle: "",
   categoryId: "",
-  customCategoryName: "",
   servicePackages: [
     {
       id: nanoid(),
@@ -160,6 +159,10 @@ const AddServicePage: React.FC = () => {
   const [showRestorePrompt, setShowRestorePrompt] = useState(false);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  // Pending navigation target when user attempts to leave with unsaved changes
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null,
+  );
 
   // --- Detect draft on mount but DO NOT auto-restore ---
   useEffect(() => {
@@ -349,14 +352,46 @@ const AddServicePage: React.FC = () => {
 
   const handleSaveDraftAndExit = async () => {
     setShowExitPrompt(false);
-    await saveDraftIncludingFiles();
-    navigate(-1);
+    try {
+      await saveDraftIncludingFiles();
+    } finally {
+      const to = pendingNavigation;
+      setPendingNavigation(null);
+      if (to) {
+        navigate(to);
+      } else {
+        navigate(-1);
+      }
+    }
   };
 
   const handleDontSaveAndExit = async () => {
     setShowExitPrompt(false);
     await clearDraftCompletely();
-    navigate(-1);
+    const to = pendingNavigation;
+    setPendingNavigation(null);
+    if (to) {
+      navigate(to);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  // Called by navigation UI to ask for permission before navigating away.
+  // Return false to prevent immediate navigation. Caller may later call
+  // navigate() after user confirms via the modal.
+  const handleNavigateAttempt = (to: string): boolean => {
+    // If there are no unsaved changes, allow navigation immediately
+    const hasChanges =
+      JSON.stringify(formData) !== JSON.stringify(initialServiceState) ||
+      serviceImageFiles.length > 0 ||
+      certificationFiles.length > 0;
+    if (!hasChanges) return true;
+
+    // Otherwise store target and show exit prompt, cancel navigation now
+    setPendingNavigation(to);
+    setShowExitPrompt(true);
+    return false;
   };
 
   // --- Image Handlers ---
@@ -514,18 +549,8 @@ const AddServicePage: React.FC = () => {
         if (!formData.categoryId) {
           errors.categoryId = "Please select a category";
         }
-        // If user selected 'Other', require a custom category name
-        if (formData.categoryId === "__other__") {
-          const name = (formData as any).customCategoryName || "";
-          if (!name || !name.trim()) {
-            errors.categoryId = "Please enter a category name";
-          } else if (name.trim().length < 3) {
-            errors.categoryId = "Category name must be at least 3 characters";
-          } else if (name.trim().length > 40) {
-            errors.categoryId =
-              "Category name must be no more than 40 characters";
-          }
-        }
+        // Category must be selected
+        // (custom "Other" categories were removed)
         if (formData.servicePackages.length === 0) {
           errors.servicePackages = "At least one service package is required";
         } else {
@@ -1022,10 +1047,7 @@ const AddServicePage: React.FC = () => {
     }));
   };
 
-  // --- Category request handler: persist custom category name into formData ---
-  const onRequestCategory = useCallback((categoryName: string) => {
-    setFormData((prev) => ({ ...prev, customCategoryName: categoryName }));
-  }, []);
+  // removed optional custom category handling
 
   // --- Step Renderer ---
   const renderStep = () => {
@@ -1048,7 +1070,6 @@ const AddServicePage: React.FC = () => {
             addPackage={addPackage}
             removePackage={removePackage}
             validationErrors={validationErrors}
-            onRequestCategory={onRequestCategory}
             scrollToErrorTrigger={scrollToErrorTrigger}
           />
         );
@@ -1181,10 +1202,8 @@ const AddServicePage: React.FC = () => {
                     <h3 className="font-semibold text-gray-800">Category</h3>
                   </div>
                   <p className="break-words text-lg font-semibold text-blue-800">
-                    {formData.categoryId === "__other__"
-                      ? (formData as any).customCategoryName || "Unknown"
-                      : categories.find((cat) => cat.id === formData.categoryId)
-                          ?.name || "Unknown"}
+                    {categories.find((cat) => cat.id === formData.categoryId)
+                      ?.name || "Unknown"}
                   </p>
                 </div>
                 <div className="rounded-lg bg-white p-5 shadow-sm md:col-span-2">
@@ -1619,7 +1638,7 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
-      <BottomNavigation />
+      <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
     </div>
   );
 };

@@ -51,8 +51,10 @@ const ActionButtons: React.FC<Props> = ({
   bookAgainLabel = "Book Again",
 }) => {
   // Compute visible buttons to adjust layout behavior:
-  const showChat = typeof onChat === "function";
-  const showBookAgain = !!onBookAgain;
+  const isRequested = booking?.status === "Requested";
+  // If booking is still Requested, hide chat and other non-decision actions; only show Accept/Decline
+  const showChat = typeof onChat === "function" && !isRequested;
+  const showBookAgain = !!onBookAgain && !isRequested;
   const showGoToActive = booking?.status === "InProgress";
   const acceptDisabledBecauseCommission =
     booking?.paymentMethod === "CashOnHand" &&

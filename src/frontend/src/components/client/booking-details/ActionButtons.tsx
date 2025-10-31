@@ -105,14 +105,29 @@ const ActionButtons: React.FC<{
     );
   }
 
-  if (showBookAgain) {
+  // Report button (for Completed/Cancelled) - place near the top so order becomes: chat, report, review, book again
+  if (showReport) {
     buttons.push(
       <button
-        key="bookAgain"
-        onClick={stopAndRun(onBookAgain)}
-        className={`${baseButtonClass} w-full ${color.bookAgain}`}
+        key="report"
+        onClick={stopAndRun(onReport)}
+        className={`${baseButtonClass} w-full ${color.report}`}
+        title="Report this booking"
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        <svg
+          className="mr-2 h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+        Report
       </button>,
     );
   }
@@ -143,28 +158,15 @@ const ActionButtons: React.FC<{
     }
   }
 
-  if (showReport) {
+  // Book Again button placed last so it becomes the 4th button in the 4-button layout
+  if (showBookAgain) {
     buttons.push(
       <button
-        key="report"
-        onClick={stopAndRun(onReport)}
-        className={`${baseButtonClass} w-full ${color.report}`}
-        title="Report this booking"
+        key="bookAgain"
+        onClick={stopAndRun(onBookAgain)}
+        className={`${baseButtonClass} w-full ${color.bookAgain}`}
       >
-        <svg
-          className="mr-2 h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-          />
-        </svg>
-        Report
+        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
       </button>,
     );
   }
@@ -195,7 +197,7 @@ const ActionButtons: React.FC<{
           ))}
         </div>
         <div className="mt-2 flex w-full justify-center">
-          {<div className="w-2/3">{buttons[3]}</div>}
+          {<div className="w-full">{buttons[3]}</div>}
         </div>
       </div>
     );

@@ -29,23 +29,23 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   const score = reputationScore;
   let iconColor = "text-blue-600";
-  let bgColor = "bg-blue-50";
+
   let textColor = "text-blue-700";
   if (score >= 80) {
     iconColor = "text-blue-600";
-    bgColor = "bg-blue-50";
+
     textColor = "text-blue-700";
   } else if (score >= 60) {
     iconColor = "text-blue-400";
-    bgColor = "bg-blue-100";
+
     textColor = "text-blue-700";
   } else if (score >= 40) {
     iconColor = "text-yellow-400";
-    bgColor = "bg-yellow-50";
+
     textColor = "text-yellow-700";
   } else {
     iconColor = "text-yellow-600";
-    bgColor = "bg-yellow-100";
+
     textColor = "text-yellow-700";
   }
 
@@ -63,7 +63,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   return (
     <span
-      className={`mb-2 mt-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
+      className={`mb-2 mt-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${textColor}`}
       style={{ minWidth: 0 }}
     >
       <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
