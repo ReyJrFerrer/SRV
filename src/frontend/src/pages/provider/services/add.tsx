@@ -159,6 +159,10 @@ const AddServicePage: React.FC = () => {
   const [showRestorePrompt, setShowRestorePrompt] = useState(false);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  // Pending navigation target when user attempts to leave with unsaved changes
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null,
+  );
 
   // --- Detect draft on mount but DO NOT auto-restore ---
   useEffect(() => {
@@ -348,14 +352,46 @@ const AddServicePage: React.FC = () => {
 
   const handleSaveDraftAndExit = async () => {
     setShowExitPrompt(false);
-    await saveDraftIncludingFiles();
-    navigate(-1);
+    try {
+      await saveDraftIncludingFiles();
+    } finally {
+      const to = pendingNavigation;
+      setPendingNavigation(null);
+      if (to) {
+        navigate(to);
+      } else {
+        navigate(-1);
+      }
+    }
   };
 
   const handleDontSaveAndExit = async () => {
     setShowExitPrompt(false);
     await clearDraftCompletely();
-    navigate(-1);
+    const to = pendingNavigation;
+    setPendingNavigation(null);
+    if (to) {
+      navigate(to);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  // Called by navigation UI to ask for permission before navigating away.
+  // Return false to prevent immediate navigation. Caller may later call
+  // navigate() after user confirms via the modal.
+  const handleNavigateAttempt = (to: string): boolean => {
+    // If there are no unsaved changes, allow navigation immediately
+    const hasChanges =
+      JSON.stringify(formData) !== JSON.stringify(initialServiceState) ||
+      serviceImageFiles.length > 0 ||
+      certificationFiles.length > 0;
+    if (!hasChanges) return true;
+
+    // Otherwise store target and show exit prompt, cancel navigation now
+    setPendingNavigation(to);
+    setShowExitPrompt(true);
+    return false;
   };
 
   // --- Image Handlers ---
@@ -1602,7 +1638,7 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
-      <BottomNavigation />
+  <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
     </div>
   );
 };
