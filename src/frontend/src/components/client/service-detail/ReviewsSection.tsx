@@ -42,7 +42,8 @@ export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
           </p>
           {typeof review.clientReputationScore === "number" && (
             <span className="mt-1 flex items-center gap-1 text-xs text-blue-600">
-              Reputation Score: <span className="font-bold">{review.clientReputationScore}</span>
+              Reputation Score:{" "}
+              <span className="font-bold">{review.clientReputationScore}</span>
             </span>
           )}
           <div className="flex items-center">
@@ -76,7 +77,6 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   averageRating = 0,
   ratingDistribution = {},
 }) => {
-
   if (loading)
     return (
       <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 text-center text-gray-500 shadow-2xl">

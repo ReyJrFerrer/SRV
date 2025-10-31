@@ -178,9 +178,7 @@ const MyBookingsPage: React.FC = () => {
     const fetchStatsForServices = async () => {
       const serviceIds = Array.from(
         new Set(
-          filteredBookings
-            .map((b) => b.serviceId)
-            .filter(Boolean) as string[],
+          filteredBookings.map((b) => b.serviceId).filter(Boolean) as string[],
         ),
       );
 
@@ -191,20 +189,26 @@ const MyBookingsPage: React.FC = () => {
       await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
-            mapCopy[serviceId] = { averageRating: null, reviews: [], loading: true };
-            const avg = await reviewCanisterService.calculateServiceRating(
-              serviceId,
-            );
-            const reviews = await reviewCanisterService.getServiceReviews(
-              serviceId,
-            );
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: true,
+            };
+            const avg =
+              await reviewCanisterService.calculateServiceRating(serviceId);
+            const reviews =
+              await reviewCanisterService.getServiceReviews(serviceId);
             mapCopy[serviceId] = {
               averageRating: avg?.averageRating ?? null,
               reviews: Array.isArray(reviews) ? reviews : [],
               loading: false,
             };
           } catch (err) {
-            mapCopy[serviceId] = { averageRating: null, reviews: [], loading: false };
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: false,
+            };
           }
         }),
       );
@@ -360,10 +364,20 @@ const MyBookingsPage: React.FC = () => {
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
-                          averageRating={serviceStatsMap[booking.serviceId || ""]?.averageRating}
-                          reviewCount={serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0}
-                          reviews={serviceStatsMap[booking.serviceId || ""]?.reviews}
-                          loadingStats={serviceStatsMap[booking.serviceId || ""]?.loading}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          loadingStats={
+                            serviceStatsMap[booking.serviceId || ""]?.loading
+                          }
                         />
                       </div>
                     ))}
@@ -384,10 +398,20 @@ const MyBookingsPage: React.FC = () => {
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
-                          averageRating={serviceStatsMap[booking.serviceId || ""]?.averageRating}
-                          reviewCount={serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0}
-                          reviews={serviceStatsMap[booking.serviceId || ""]?.reviews}
-                          loadingStats={serviceStatsMap[booking.serviceId || ""]?.loading}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          loadingStats={
+                            serviceStatsMap[booking.serviceId || ""]?.loading
+                          }
                         />
                       </div>
                     ))}
