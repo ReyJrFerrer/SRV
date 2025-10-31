@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, 
+  // useNavigate, 
+  Link } from "react-router-dom";
 import {
   BanknotesIcon,
   ArrowUpIcon,
@@ -17,7 +19,7 @@ import { Toaster, toast } from "sonner";
 
 const UserWalletPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
