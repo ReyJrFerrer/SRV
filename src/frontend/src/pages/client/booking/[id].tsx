@@ -40,12 +40,10 @@ const BookingDetailsPage: React.FC = () => {
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
-  const [bookingNotFound, setBookingNotFound] = useState(false);
   const [canUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -78,10 +76,8 @@ const BookingDetailsPage: React.FC = () => {
       const foundBooking = bookings.find((booking) => booking.id === id);
       if (foundBooking) {
         setSpecificBooking(foundBooking);
-        setBookingNotFound(false);
       } else {
         setSpecificBooking(null);
-        setBookingNotFound(true);
       }
       setLocalLoading(false);
     }
