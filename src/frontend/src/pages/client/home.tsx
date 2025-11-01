@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useUserProfile } from "../../hooks/useUserProfile";
-import { useFeedback } from "../../hooks/useFeedback";
+// feedback popup moved to a separate component
+import FeedbackPopup from "../../components/common/FeedbackPopup";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListRow";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
-import { useBookingManagement } from "../../hooks/bookingManagement";
+
 import ClientHeader from "../../components/client/Header";
 import LocationBlockedModal from "../../components/common/LocationBlockedModal";
-import {
-  StarIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronRightIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowPathRoundedSquareIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { useLocationStore } from "../../store/locationStore";
-import { toast } from "sonner";
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
 
@@ -28,14 +24,7 @@ const ClientHomePage: React.FC = () => {
 
   // --- Use Zustand location store for location permission status ---
   const { locationStatus } = useLocationStore();
-  const { bookings } = useBookingManagement();
-  const { submitFeedback, submitting } = useFeedback();
-  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
-  // --- State: Star rating for feedback ---
-  const [feedbackRating, setFeedbackRating] = useState<number>(0);
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
-  // --- State: Feedback comment ---
-  const [feedbackComment, setFeedbackComment] = useState<string>("");
+  
   // --- State: Button loading for provider CTA ---
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
@@ -56,111 +45,13 @@ const ClientHomePage: React.FC = () => {
     document.title = "Home | SRV";
   }, []);
 
-  useEffect(() => {
-    // Show feedback popup after first completed booking
-    const hasSeenFeedback = localStorage.getItem("hasSeenFeedbackPopup");
-    const completedBookings = bookings.filter((b) => b.status === "Completed");
-    if (!hasSeenFeedback && completedBookings.length === 1) {
-      setShowFeedbackPopup(true);
-      localStorage.setItem("hasSeenFeedbackPopup", "true");
-    }
-  }, [bookings]);
+  
 
   // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-32">
-      {/* Feedback popup after first completed booking */}
-      {showFeedbackPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-            {/* Girl character at the top */}
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/srv characters (SVG)/girl.svg"
-                alt="SRV Girl Character"
-                className="h-24 w-24 rounded-full border-4 border-white bg-yellow-100 shadow-lg"
-                style={{ objectFit: "cover" }}
-              />
-            </div>
-            <div className="mt-14">
-              <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
-                We value your feedback!
-              </h2>
-              <p className="mb-4 text-center text-gray-700">
-                You just completed your first booking. Please let us know about
-                your experience.
-              </p>
-              {/* Star rating input */}
-              <div className="mb-3 flex justify-center space-x-3">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                    className="transition-transform hover:scale-110 focus:scale-110 focus:outline-none"
-                    onClick={() => setFeedbackRating(star)}
-                    onMouseEnter={() => setHoveredRating(star)}
-                    onMouseLeave={() => setHoveredRating(null)}
-                  >
-                    <StarIcon
-                      className={`h-12 w-12 drop-shadow transition-colors ${
-                        (hoveredRating ?? feedbackRating) >= star
-                          ? "text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                      fill={
-                        (hoveredRating ?? feedbackRating) >= star
-                          ? "currentColor"
-                          : "none"
-                      }
-                    />
-                  </button>
-                ))}
-              </div>
-              <textarea
-                className="mb-4 w-full rounded-lg border border-gray-300 p-3"
-                rows={4}
-                placeholder="Share your thoughts..."
-                value={feedbackComment}
-                onChange={(e) => setFeedbackComment(e.target.value)}
-              />
-              <button
-                className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={async () => {
-                  if (feedbackRating === 0) {
-                    toast.error("Please select a rating before submitting.");
-                    return;
-                  }
-
-                  try {
-                    await submitFeedback(feedbackRating, feedbackComment);
-
-                    // Reset form
-                    setFeedbackRating(0);
-                    setFeedbackComment("");
-                    setShowFeedbackPopup(false);
-
-                    // Show success message
-                    toast.success("Thank you for your feedback!");
-                  } catch (error) {
-                    //console.error("Failed to submit feedback:", error);
-                    toast.error("Failed to submit feedback. Please try again.");
-                  }
-                }}
-                disabled={submitting}
-              >
-                {submitting ? "Submitting..." : "Submit Feedback"}
-              </button>
-              <button
-                className="mt-2 w-full text-sm text-gray-500 hover:text-blue-700"
-                onClick={() => setShowFeedbackPopup(false)}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Feedback popup after first completed booking (extracted) */}
+      <FeedbackPopup />
 
       {/* Show location blocked message if location is denied (dismissible) */}
       <LocationBlockedModal
