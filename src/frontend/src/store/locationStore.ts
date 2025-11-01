@@ -6,6 +6,8 @@ export type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
 export interface Location {
   latitude: number;
   longitude: number;
+  // Reported accuracy in meters (if available)
+  accuracy?: number;
 }
 
 export interface ManualFields {
@@ -202,8 +204,8 @@ export const useLocationStore = create<LocationState>()(
 
         navigator.geolocation.getCurrentPosition(
           async (position) => {
-            const { latitude, longitude } = position.coords;
-            const newLocation = { latitude, longitude };
+            const { latitude, longitude, accuracy } = position.coords;
+            const newLocation: Location = { latitude, longitude, accuracy };
 
             // Check cache first
             const cacheKey = `address_${latitude}_${longitude}`;
@@ -290,6 +292,11 @@ export const useLocationStore = create<LocationState>()(
                 locationLoading: false,
               });
             }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
           },
         );
       },
