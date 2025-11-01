@@ -121,13 +121,33 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
         (results: any, status: string) => {
           if (status === "OK" && results && results[0]) {
-            let address = results[0].formatted_address as string;
-            // Remove geocode prefix if present (e.g., "geocode, " at the beginning)
-            address = address.replace(/^[^,]+,\s*/, "");
-            setGmapsAddress(address);
+            // Build a concise display address from address_components (no country)
+            const comps = results[0].address_components || [];
+            const find = (type: string) => {
+              const c = comps.find((cc: any) => cc.types && cc.types.indexOf(type) !== -1);
+              return c ? c.long_name : undefined;
+            };
+
+            const premise = find("premise") || find("subpremise") || find("establishment") || find("point_of_interest");
+            const streetNumber = find("street_number");
+            const route = find("route");
+            const barangay = find("sublocality_level_2") || find("sublocality") || find("neighborhood");
+            const locality =
+              find("locality") || find("postal_town") || find("administrative_area_level_3") || find("administrative_area_level_2");
+            const province = find("administrative_area_level_2") || find("administrative_area_level_1");
+
+            const line1 = premise || (streetNumber && route ? `${streetNumber} ${route}` : route || streetNumber);
+            const parts: string[] = [];
+            if (line1) parts.push(line1);
+            if (barangay) parts.push(barangay);
+            if (locality) parts.push(locality);
+            if (province) parts.push(province);
+
+            const displayAddress = parts.length > 0 ? parts.join(", ") : (results[0].formatted_address as string).replace(/^[^,]+,\s*/, "");
+            setGmapsAddress(displayAddress);
             setGmapsStatus("ok");
             try {
-              const payload: AddrCache = { address, ts: Date.now() };
+              const payload: AddrCache = { address: displayAddress, ts: Date.now() };
               localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
             } catch {}
           } else {
