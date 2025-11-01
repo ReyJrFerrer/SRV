@@ -371,8 +371,7 @@ exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
 exports.submitReport = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data.data || data;
-  const {description} = payload;
-  console.log("Submit Report Payload", payload);
+  const {description, attachments = []} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -391,6 +390,21 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // Validate attachments array
+  if (attachments && !Array.isArray(attachments)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Attachments must be an array",
+    );
+  }
+
+  if (attachments && attachments.length > 5) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Maximum 5 attachments allowed per report",
+    );
+  }
+
   try {
     // Get user profile from Firestore users collection
     const userRef = db.collection("users").doc(authInfo.uid);
@@ -403,6 +417,31 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     const userProfile = userSnap.data();
     console.log("User profile data for report:", userProfile);
 
+    // Extract media IDs from URLs if needed
+    // Attachments should be media IDs, but support both URL and ID formats
+    const mediaIds = [];
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        // If it's a URL, query Firestore to find the media ID
+        if (attachment.startsWith("http://") || attachment.startsWith("https://")) {
+          const mediaSnapshot = await db
+            .collection("media")
+            .where("url", "==", attachment)
+            .limit(1)
+            .get();
+
+          if (!mediaSnapshot.empty) {
+            mediaIds.push(mediaSnapshot.docs[0].id);
+          } else {
+            console.warn("Media not found for URL:", attachment);
+          }
+        } else {
+          // Assume it's already a media ID
+          mediaIds.push(attachment);
+        }
+      }
+    }
+
     const reportId = generateReportId();
     const newReport = {
       id: reportId,
@@ -410,6 +449,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
       userName: userProfile?.name || "Unknown",
       userPhone: userProfile?.phone || "Unknown",
       description: String(description), // Ensure it's a string
+      attachments: mediaIds, // Store media IDs instead of URLs
       status: "open", // Default status for new reports
       createdAt: new Date().toISOString(),
     };
@@ -434,10 +474,6 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
  * Mirrors the Motoko getAllReports function
  */
 exports.getAllReports = functions.https.onCall(async (data, context) => {
-  // Extract payload
-  const payload = data.data.data || data;
-  console.log("Get All Reports Payload", payload);
-
   // Authentication - admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {

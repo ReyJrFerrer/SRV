@@ -52,6 +52,7 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         lastUpdated: report.createdAt,
         tags: tags,
         comments: [],
+        attachments: report.attachments || [],
       };
     } else {
       ticket = {
@@ -66,6 +67,7 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         lastUpdated: report.createdAt,
         tags: ["legacy", "user-report"],
         comments: [],
+        attachments: report.attachments || [],
       };
     }
     return ticket;
@@ -92,6 +94,7 @@ interface Ticket {
   lastUpdated: string;
   tags: string[];
   comments?: Comment[];
+  attachments?: string[];
 }
 
 interface Comment {
@@ -148,6 +151,10 @@ export const TicketDetailsPage: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [imageDataUrls, setImageDataUrls] = useState<Record<string, string>>(
+    {},
+  );
+  const [loadingImages, setLoadingImages] = useState(false);
 
   // Initialize canister references and refresh data
   useEffect(() => {
@@ -199,6 +206,105 @@ export const TicketDetailsPage: React.FC = () => {
       loadTicket();
     }
   }, [id, backendUsers]);
+
+  // Load images using the media service
+  useEffect(() => {
+    if (ticket && ticket.attachments && ticket.attachments.length > 0) {
+      const loadImages = async () => {
+        setLoadingImages(true);
+        const urls: Record<string, string> = {};
+
+        try {
+          // Import Firestore utilities and media service
+          const { collection, query, where, getDocs } = await import(
+            "firebase/firestore"
+          );
+          const { getFirebaseFirestore } = await import(
+            "../services/firebaseApp"
+          );
+          const { getMediaItem } = await import(
+            "../services/mediaServiceCanister"
+          );
+
+          const firestore = getFirebaseFirestore();
+          for (const attachment of ticket.attachments!) {
+            try {
+              let mediaId = attachment;
+
+              if (
+                attachment.startsWith("http://") ||
+                attachment.startsWith("https://")
+              ) {
+                console.log("Processing legacy URL attachment:", attachment);
+
+                // Query Firestore to find media document with this URL
+                const mediaCollection = collection(firestore, "media");
+                const q = query(
+                  mediaCollection,
+                  where("url", "==", attachment),
+                );
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                  mediaId = querySnapshot.docs[0].id;
+                  console.log(
+                    "Found media ID for legacy URL:",
+                    mediaId,
+                    "URL:",
+                    attachment,
+                  );
+                } else {
+                  console.warn("No media found for URL:", attachment);
+                  // Use URL directly as fallback
+                  urls[attachment] = attachment;
+                  continue;
+                }
+              } else {
+                console.log("Processing media ID:", mediaId);
+              }
+
+              // Get media item which contains the public URL
+              const mediaItem = await getMediaItem(mediaId);
+              console.log("Got media item:", mediaItem);
+
+              if (mediaItem && mediaItem.url) {
+                let imageUrl = mediaItem.url;
+
+                // Add timestamp to prevent caching issues
+                if (!imageUrl.includes("&token=")) {
+                  imageUrl = `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+                }
+
+                console.log("Final image URL:", imageUrl);
+                urls[attachment] = imageUrl;
+                console.log("Successfully loaded image URL for:", attachment);
+              } else {
+                console.warn("Failed to get media item for:", attachment);
+                urls[attachment] =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
+              }
+            } catch (error) {
+              console.error(
+                "Error loading image for attachment:",
+                attachment,
+                error,
+              );
+              urls[attachment] =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
+            }
+          }
+
+          setImageDataUrls(urls);
+        } catch (error) {
+          console.error("Error in image loading process:", error);
+        } finally {
+          setLoadingImages(false);
+        }
+      };
+
+      loadImages();
+    }
+  }, [ticket]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -361,6 +467,8 @@ export const TicketDetailsPage: React.FC = () => {
     );
   }
 
+  console.log("From ticketDetails", ticket);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -426,6 +534,72 @@ export const TicketDetailsPage: React.FC = () => {
                     {ticket.description}
                   </p>
                 </div>
+
+                {/* Attachments Section */}
+                {ticket.attachments && ticket.attachments.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="mb-3 text-sm font-medium text-gray-900">
+                      Attachments ({ticket.attachments.length})
+                      {loadingImages && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          Loading images...
+                        </span>
+                      )}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                      {ticket.attachments.map((attachment, index) => {
+                        const displayUrl = imageDataUrls[attachment] || "";
+                        const isLoading =
+                          loadingImages && !imageDataUrls[attachment];
+
+                        return (
+                          <div
+                            key={index}
+                            className="overflow-hidden rounded-lg border border-gray-200"
+                          >
+                            {isLoading ? (
+                              <div className="flex h-32 w-full items-center justify-center bg-gray-100">
+                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                              </div>
+                            ) : (
+                              <div className="h-32 w-full bg-white">
+                                <img
+                                  src={displayUrl}
+                                  alt={`Attachment ${index + 1}`}
+                                  className="h-full w-full object-contain"
+                                  onLoad={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    console.log(
+                                      `✅ Image ${index + 1} loaded successfully:`,
+                                      {
+                                        attachment,
+                                        naturalWidth: img.naturalWidth,
+                                        naturalHeight: img.naturalHeight,
+                                        displayUrl,
+                                      },
+                                    );
+                                  }}
+                                  onError={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    console.error(
+                                      `❌ Image ${index + 1} failed to load:`,
+                                      {
+                                        attachment,
+                                        displayUrl,
+                                        src: img.src,
+                                        error: e,
+                                      },
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {ticket.tags.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">

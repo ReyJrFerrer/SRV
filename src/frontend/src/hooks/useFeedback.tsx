@@ -43,7 +43,10 @@ export const useFeedback = () => {
   /**
    * Submit report
    */
-  const submitReport = async (description: string): Promise<boolean> => {
+  const submitReport = async (
+    description: string,
+    attachments: string[] = [],
+  ): Promise<boolean> => {
     if (!isAuthenticated) {
       setError("You must be logged in to submit a report.");
       return false;
@@ -53,7 +56,7 @@ export const useFeedback = () => {
     setError(null);
 
     try {
-      await feedbackCanisterService.submitReport(description);
+      await feedbackCanisterService.submitReport(description, attachments);
       return true;
     } catch (err) {
       console.error("Failed to submit report:", err);

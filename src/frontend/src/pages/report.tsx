@@ -9,8 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useFeedback } from "../hooks/useFeedback";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import { initializeFirebase } from "../services/firebaseApp";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { uploadReportAttachments } from "../services/mediaService";
 
 // Ticket-compatible interfaces
 interface TicketCategory {
@@ -102,19 +101,13 @@ const ReportIssuePage: React.FC = () => {
     setSuccessMessage(null);
     setUploadError(null);
 
-    // Upload screenshots first (if any), then include URLs in report
+    // Upload screenshots using media service (if any)
     let attachmentUrls: string[] = [];
     if (files.length > 0) {
       try {
         setUploading(true);
-        const { storage } = initializeFirebase();
-        const folder = `reports/client/${Date.now()}`;
-        const uploads = files.map(async (file, i) => {
-          const fileRef = ref(storage, `${folder}/${i}_${file.name}`);
-          await uploadBytes(fileRef, file, { contentType: file.type });
-          return await getDownloadURL(fileRef);
-        });
-        attachmentUrls = await Promise.all(uploads);
+        // Use media service to upload report attachments
+        attachmentUrls = await uploadReportAttachments(files);
       } catch (err) {
         setUploadError(
           err instanceof Error ? err.message : "Failed to upload screenshots",
@@ -133,9 +126,8 @@ const ReportIssuePage: React.FC = () => {
       category,
       timestamp: new Date().toISOString(),
       source: "client_report", // Identify source for admin
-      attachments: attachmentUrls,
     });
-    const success = await submitReport(reportData);
+    const success = await submitReport(reportData, attachmentUrls);
 
     if (success) {
       setSuccessMessage(

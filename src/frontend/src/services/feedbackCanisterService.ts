@@ -32,6 +32,7 @@ export interface AppReport {
   userName: string;
   userPhone: string;
   description: string;
+  attachments?: string[]; // Media URLs for report screenshots/attachments
   status?: string; // Admin-managed status: "open", "in_progress", "resolved", "closed"
   createdAt: string; // ISO string from Firebase
 }
@@ -261,16 +262,20 @@ export const feedbackCanisterService = {
   /**
    * Submit report
    */
-  async submitReport(description: string): Promise<AppReport> {
+  async submitReport(
+    description: string,
+    attachments: string[] = [],
+  ): Promise<AppReport> {
     console.log("🚀 [feedbackCanisterService] submitReport called with:", {
       description,
+      attachments,
     });
     try {
       const submitReportFn = httpsCallable(functions, "submitReport");
 
-      // Send the description directly - backend will handle JSON parsing if needed
+      // Send the description and attachments - backend will handle JSON parsing if needed
       const result = await submitReportFn({
-        data: { description },
+        data: { description, attachments },
       });
 
       console.log(
