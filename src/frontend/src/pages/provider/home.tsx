@@ -129,95 +129,96 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({
         style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        <div className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "invisible opacity-0 pointer-events-none" : "visible opacity-100"}`}>
-            <div className="hidden items-center justify-between md:flex">
-              <div className="flex items-center space-x-6">
-                <Link to="/provider/home">
-                  <img
-                    src="/logo.svg"
-                    alt="SRV Logo"
-                    className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
-                  />
-                </Link>
-                <div className="h-10 border-l-2 border-blue-100"></div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                    Welcome,{" "}
-                    <span className="text-2xl font-bold text-gray-800">
-                      {displayName}
-                    </span>
+        <div
+          className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible opacity-0" : "visible opacity-100"}`}
+        >
+          <div className="hidden items-center justify-between md:flex">
+            <div className="flex items-center space-x-6">
+              <Link to="/provider/home">
+                <img
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                />
+              </Link>
+              <div className="h-10 border-l-2 border-blue-100"></div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                  Welcome,{" "}
+                  <span className="text-2xl font-bold text-gray-800">
+                    {displayName}
                   </span>
-                </div>
+                </span>
               </div>
+            </div>
+            {isAuthenticated && (
+              <button
+                onClick={handleNotificationsClick}
+                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                aria-label="Notifications"
+              >
+                <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+          <div className="md:hidden">
+            <div className="flex items-center justify-between">
+              <Link to="/client/home">
+                <img
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                />
+              </Link>
               {isAuthenticated && (
                 <button
                   onClick={handleNotificationsClick}
                   className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
                   aria-label="Notifications"
                 >
-                  <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                  <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
                       {unreadCount}
                     </span>
                   )}
                 </button>
               )}
             </div>
-            <div className="md:hidden">
-              <div className="flex items-center justify-between">
-                <Link to="/client/home">
-                  <img
-                    src="/logo.svg"
-                    alt="SRV Logo"
-                    className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
-                  />
-                </Link>
-                {isAuthenticated && (
-                  <button
-                    onClick={handleNotificationsClick}
-                    className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-                    aria-label="Notifications"
-                  >
-                    <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                )}
-              </div>
-              <hr className="my-4 border-blue-100" />
-              <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-                <span className="text-xl font-semibold tracking-wide text-blue-700">
-                  Welcome Back,
-                </span>
-                <span className="text-xl font-bold text-gray-800">
-                  {displayName}
+            <hr className="my-4 border-blue-100" />
+            <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+              <span className="text-xl font-semibold tracking-wide text-blue-700">
+                Welcome Back,
+              </span>
+              <span className="text-xl font-bold text-gray-800">
+                {displayName}
+              </span>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <MapPinIcon className="h-6 w-6 text-blue-600" />
+                <span className="text-base font-bold text-gray-800">
+                  My Location
                 </span>
               </div>
             </div>
-            <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center gap-3">
-                  <MapPinIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-base font-bold text-gray-800">
-                    My Location
-                  </span>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <MapFunctions />
-              </div>
-              {(locationStatus === "denied" ||
-                locationStatus === "not_set") && (
-                <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-                  Location access is off. Some features are limited.
-                </div>
-              )}
+            <div className="mt-2 flex items-center gap-2">
+              <MapFunctions />
             </div>
-            </div>
+            {(locationStatus === "denied" || locationStatus === "not_set") && (
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                Location access is off. Some features are limited.
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
