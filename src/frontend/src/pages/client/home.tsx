@@ -302,7 +302,6 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({
             <div
               className={`overflow-hidden transition-all duration-300 ${showMiniLocation ? "max-h-16 translate-y-0 opacity-100" : "max-h-0 -translate-y-1 opacity-0"}`}
             >
-
               <div className="-mt-1 mb-1 flex items-center gap-2">
                 <MapFunctions />
               </div>
