@@ -399,7 +399,11 @@ const MyBookingsPage: React.FC = () => {
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
                     {sameDayBookings.map((booking, idx) => (
-                      <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
@@ -436,7 +440,11 @@ const MyBookingsPage: React.FC = () => {
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
                     {scheduledBookings.map((booking, idx) => (
-                      <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}

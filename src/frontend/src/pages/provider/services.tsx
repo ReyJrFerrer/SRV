@@ -420,7 +420,9 @@ const MyServicesPage: React.FC = () => {
                     onToggleActive={handleToggleActive}
                     onDelete={setDeleteConfirmId}
                     hasActiveBookings={hasActiveBookings}
-                    getServiceActiveBookingsCount={getServiceActiveBookingsCount}
+                    getServiceActiveBookingsCount={
+                      getServiceActiveBookingsCount
+                    }
                     updatingId={updatingId}
                     deletingId={deletingId}
                   />

@@ -70,10 +70,7 @@ const ViewAllServicesPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem
-                  service={service}
-                  inCategories={true}
-                />
+                <ServiceListItem service={service} inCategories={true} />
               </Appear>
             ))}
           </div>

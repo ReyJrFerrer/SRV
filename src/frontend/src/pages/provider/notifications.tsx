@@ -295,7 +295,11 @@ const NotificationsPageSP = () => {
                   </h2>
                   <div className="divide-y divide-blue-100">
                     {unread.map((notif, idx) => (
-                      <Appear key={notif.id} delayMs={idx * 25} variant="fade-up">
+                      <Appear
+                        key={notif.id}
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
@@ -313,7 +317,11 @@ const NotificationsPageSP = () => {
                   </h2>
                   <div className="divide-y divide-gray-100">
                     {read.map((notif, idx) => (
-                      <Appear key={notif.id} delayMs={idx * 25} variant="fade-up">
+                      <Appear
+                        key={notif.id}
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
