@@ -503,7 +503,10 @@ export const TicketDetailsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Image Modal */}
       {modalImage && (
-        <ImageAttachmentModal src={modalImage} onClose={() => setModalImage(null)} />
+        <ImageAttachmentModal
+          src={modalImage}
+          onClose={() => setModalImage(null)}
+        />
       )}
 
       {/* Header */}
