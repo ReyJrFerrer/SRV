@@ -24,7 +24,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { requestLocation, locationStatus } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
   // Effect: fetch user profile and initialize location when auth loads
   useEffect(() => {

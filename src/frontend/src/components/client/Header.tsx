@@ -68,7 +68,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   }, []);
 
   // maps logic has been extracted into MapFunctions component
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);

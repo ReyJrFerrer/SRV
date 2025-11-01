@@ -16,8 +16,12 @@ const MapFunctions: React.FC = () => {
   } = useLocationStore();
 
   const [showMap, setShowMap] = useState(false);
-  const [gmapsAddress, setGmapsAddress] = useState<string>("Detecting location...");
-  const [gmapsStatus, setGmapsStatus] = useState<"idle" | "loading" | "ok" | "denied" | "unsupported" | "failed">("idle");
+  const [gmapsAddress, setGmapsAddress] = useState<string>(
+    "Detecting location...",
+  );
+  const [gmapsStatus, setGmapsStatus] = useState<
+    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
+  >("idle");
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
 
   useEffect(() => {
@@ -51,25 +55,47 @@ const MapFunctions: React.FC = () => {
           if (status === "OK" && results && results[0]) {
             const comps = results[0].address_components || [];
             const find = (type: string) => {
-              const c = comps.find((cc: any) => cc.types && cc.types.indexOf(type) !== -1);
+              const c = comps.find(
+                (cc: any) => cc.types && cc.types.indexOf(type) !== -1,
+              );
               return c ? c.long_name : undefined;
             };
 
-            const premise = find("premise") || find("subpremise") || find("establishment") || find("point_of_interest");
+            const premise =
+              find("premise") ||
+              find("subpremise") ||
+              find("establishment") ||
+              find("point_of_interest");
             const streetNumber = find("street_number");
             const route = find("route");
-            const barangay = find("sublocality_level_2") || find("sublocality") || find("neighborhood");
-            const locality = find("locality") || find("postal_town") || find("administrative_area_level_3") || find("administrative_area_level_2");
-            const province = find("administrative_area_level_2") || find("administrative_area_level_1");
+            const barangay =
+              find("sublocality_level_2") ||
+              find("sublocality") ||
+              find("neighborhood");
+            const locality =
+              find("locality") ||
+              find("postal_town") ||
+              find("administrative_area_level_3") ||
+              find("administrative_area_level_2");
+            const province =
+              find("administrative_area_level_2") ||
+              find("administrative_area_level_1");
 
-            const line1 = premise || (streetNumber && route ? `${streetNumber} ${route}` : route || streetNumber);
+            const line1 =
+              premise ||
+              (streetNumber && route
+                ? `${streetNumber} ${route}`
+                : route || streetNumber);
             const parts: string[] = [];
             if (line1) parts.push(line1);
             if (barangay) parts.push(barangay);
             if (locality) parts.push(locality);
             if (province) parts.push(province);
 
-            const displayAddress = parts.length > 0 ? parts.join(", ") : (results[0].formatted_address as string);
+            const displayAddress =
+              parts.length > 0
+                ? parts.join(", ")
+                : (results[0].formatted_address as string);
             setGmapsAddress(displayAddress);
             setGmapsStatus("ok");
             try {
@@ -101,7 +127,9 @@ const MapFunctions: React.FC = () => {
             {gmapsAddress}
           </button>
         ) : locationLoading || gmapsStatus === "loading" ? (
-          <span className="animate-pulse text-sm text-gray-500">Detecting location...</span>
+          <span className="animate-pulse text-sm text-gray-500">
+            Detecting location...
+          </span>
         ) : userAddress && userProvince ? (
           <button
             type="button"
@@ -112,7 +140,9 @@ const MapFunctions: React.FC = () => {
             {userAddress}, {userProvince}
           </button>
         ) : (
-          <span className="text-left text-sm text-gray-500">{gmapsAddress}</span>
+          <span className="text-left text-sm text-gray-500">
+            {gmapsAddress}
+          </span>
         )}
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
