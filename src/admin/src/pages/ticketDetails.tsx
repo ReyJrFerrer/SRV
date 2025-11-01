@@ -271,8 +271,17 @@ export const TicketDetailsPage: React.FC = () => {
               console.log("Got media item:", mediaItem);
 
               if (mediaItem && mediaItem.url) {
-                // Use the public URL directly
-                urls[attachment] = mediaItem.url;
+                // For Firebase Storage emulator URLs, we need to ensure they're accessible
+                // Check if it's an emulator URL and add a timestamp to prevent caching issues
+                let imageUrl = mediaItem.url;
+                
+                // Add timestamp to prevent caching issues
+                if (!imageUrl.includes('&token=')) {
+                  imageUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                }
+                
+                console.log("Final image URL:", imageUrl);
+                urls[attachment] = imageUrl;
                 console.log("Successfully loaded image URL for:", attachment);
               } else {
                 console.warn("Failed to get media item for:", attachment);
@@ -549,56 +558,48 @@ export const TicketDetailsPage: React.FC = () => {
                           loadingImages && !imageDataUrls[attachment];
 
                         return (
-                          <a
+                          <div
                             key={index}
-                            href={displayUrl || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-all hover:border-blue-300 hover:shadow-md"
+                            className="overflow-hidden rounded-lg border border-gray-200"
                           >
                             {isLoading ? (
                               <div className="flex h-32 w-full items-center justify-center bg-gray-100">
                                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
                               </div>
                             ) : (
-                              <img
-                                src={displayUrl}
-                                alt={`Attachment ${index + 1}`}
-                                className="h-32 w-full object-cover transition-transform group-hover:scale-105"
-                                onLoad={() => {
-                                  console.log(
-                                    `Image ${index + 1} loaded successfully:`,
-                                    attachment,
-                                  );
-                                }}
-                                onError={(e) => {
-                                  console.error(
-                                    `Image ${index + 1} failed to load:`,
-                                    attachment,
-                                  );
-                                  // Fallback for broken images
-                                  const target = e.target as HTMLImageElement;
-                                  target.src =
-                                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
-                                }}
-                              />
-                            )}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-all group-hover:bg-opacity-10">
-                              <svg
-                                className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              <div className="h-32 w-full bg-white">
+                                <img
+                                  src={displayUrl}
+                                  alt={`Attachment ${index + 1}`}
+                                  className="h-full w-full object-contain"
+                                  onLoad={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    console.log(
+                                      `✅ Image ${index + 1} loaded successfully:`,
+                                      {
+                                        attachment,
+                                        naturalWidth: img.naturalWidth,
+                                        naturalHeight: img.naturalHeight,
+                                        displayUrl,
+                                      },
+                                    );
+                                  }}
+                                  onError={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    console.error(
+                                      `❌ Image ${index + 1} failed to load:`,
+                                      {
+                                        attachment,
+                                        displayUrl,
+                                        src: img.src,
+                                        error: e,
+                                      },
+                                    );
+                                  }}
                                 />
-                              </svg>
-                            </div>
-                          </a>
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
