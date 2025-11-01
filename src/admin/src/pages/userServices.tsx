@@ -113,34 +113,34 @@ const UserServicesPage: React.FC = () => {
     return "active";
   };
 
-  // Helper function to convert backend booking status to frontend status
-  // Handles both string format and Motoko variant object format
-  const convertBookingStatus = (backendStatus: any): ServiceData["status"] => {
-    // If it's a string, handle it directly
-    if (typeof backendStatus === "string") {
-      if (backendStatus === "Requested") return "pending";
-      if (backendStatus === "Accepted") return "active";
-      if (backendStatus === "InProgress") return "in_progress";
-      if (backendStatus === "Completed") return "completed";
-      if (backendStatus === "Cancelled") return "cancelled";
-      if (backendStatus === "Declined") return "cancelled";
-      if (backendStatus === "Disputed") return "cancelled";
-      return "pending";
-    }
+  // // Helper function to convert backend booking status to frontend status
+  // // Handles both string format and Motoko variant object format
+  // const convertBookingStatus = (backendStatus: any): ServiceData["status"] => {
+  //   // If it's a string, handle it directly
+  //   if (typeof backendStatus === "string") {
+  //     if (backendStatus === "Requested") return "pending";
+  //     if (backendStatus === "Accepted") return "active";
+  //     if (backendStatus === "InProgress") return "in_progress";
+  //     if (backendStatus === "Completed") return "completed";
+  //     if (backendStatus === "Cancelled") return "cancelled";
+  //     if (backendStatus === "Declined") return "cancelled";
+  //     if (backendStatus === "Disputed") return "cancelled";
+  //     return "pending";
+  //   }
 
-    // If it's an object (Motoko variant format), check for keys
-    if (typeof backendStatus === "object" && backendStatus !== null) {
-      if ("Requested" in backendStatus) return "pending";
-      if ("Accepted" in backendStatus) return "active";
-      if ("InProgress" in backendStatus) return "in_progress";
-      if ("Completed" in backendStatus) return "completed";
-      if ("Cancelled" in backendStatus) return "cancelled";
-      if ("Declined" in backendStatus) return "cancelled";
-      if ("Disputed" in backendStatus) return "cancelled";
-    }
+  //   // If it's an object (Motoko variant format), check for keys
+  //   if (typeof backendStatus === "object" && backendStatus !== null) {
+  //     if ("Requested" in backendStatus) return "pending";
+  //     if ("Accepted" in backendStatus) return "active";
+  //     if ("InProgress" in backendStatus) return "in_progress";
+  //     if ("Completed" in backendStatus) return "completed";
+  //     if ("Cancelled" in backendStatus) return "cancelled";
+  //     if ("Declined" in backendStatus) return "cancelled";
+  //     if ("Disputed" in backendStatus) return "cancelled";
+  //   }
 
-    return "pending";
-  };
+  //   return "pending";
+  // };
 
   useEffect(() => {
     const loadUser = async () => {
