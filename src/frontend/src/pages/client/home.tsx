@@ -172,7 +172,7 @@ const ClientHomePage: React.FC = () => {
           } catch {}
         }}
       />
-      
+
       {/* Error: Service categories failed to load */}
       {error && (
         <div className="mx-4 mt-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">

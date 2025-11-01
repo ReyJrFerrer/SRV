@@ -37,8 +37,7 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             Features are unusable if location is not enabled.
             <br />
             <span className="mt-2 block font-medium text-blue-700">
-              After changing your browser settings, please reload the
-              website.
+              After changing your browser settings, please reload the website.
             </span>
           </p>
           <div className="mb-2 text-left text-sm text-gray-700">
@@ -46,144 +45,238 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             <div className="mt-2">
               {/* The expanded help content is intentionally identical to the original modal */}
               <details className="mb-2">
-                <summary className="cursor-pointer font-semibold text-blue-700">Brave</summary>
+                <summary className="cursor-pointer font-semibold text-blue-700">
+                  Brave
+                </summary>
                 <div className="mt-1 pl-4">
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Desktop</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Desktop
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Go to the specific website.</li>
                       <li>Click the lock icon 🔒 in the address bar.</li>
                       <li>Click Site settings.</li>
-                      <li>Find Location in the permissions list and change its setting to <b>Allow</b>.</li>
+                      <li>
+                        Find Location in the permissions list and change its
+                        setting to <b>Allow</b>.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (Android)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (Android)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Tap the three-dots menu (⋮) at the bottom-right.</li>
                       <li>Tap Settings ⚙️.</li>
-                      <li>Tap Site settings. (If you don't see it, first tap Privacy and security).</li>
-                      <li>Tap Location and ensure the main toggle is on to allow sites to ask for permission.</li>
+                      <li>
+                        Tap Site settings. (If you don't see it, first tap
+                        Privacy and security).
+                      </li>
+                      <li>
+                        Tap Location and ensure the main toggle is on to allow
+                        sites to ask for permission.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (iOS - iPhone/iPad)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (iOS - iPhone/iPad)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>The primary control for location is in the main iOS Settings.</li>
+                      <li>
+                        The primary control for location is in the main iOS
+                        Settings.
+                      </li>
                       <li>Open the Settings app on your iPhone/iPad.</li>
                       <li>Scroll down and tap on Brave.</li>
                       <li>Tap on Location.</li>
-                      <li>Select <b>While Using the App</b> or <b>Ask Next Time Or When I Share</b>.</li>
+                      <li>
+                        Select <b>While Using the App</b> or{" "}
+                        <b>Ask Next Time Or When I Share</b>.
+                      </li>
                     </ul>
                   </details>
                 </div>
               </details>
               <details className="mb-2">
-                <summary className="cursor-pointer font-semibold text-blue-700">Chrome</summary>
+                <summary className="cursor-pointer font-semibold text-blue-700">
+                  Chrome
+                </summary>
                 <div className="mt-1 pl-4">
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Desktop</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Desktop
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Go to the specific website.</li>
                       <li>Click the lock icon 🔒 in the address bar.</li>
                       <li>Click Site settings.</li>
-                      <li>Find Location in the permissions list and change its setting to <b>Allow</b>.</li>
+                      <li>
+                        Find Location in the permissions list and change its
+                        setting to <b>Allow</b>.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (Android)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (Android)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Tap the three-dots menu (⋮) at the top-right.</li>
                       <li>Tap Settings ⚙️.</li>
                       <li>Tap Site settings.</li>
-                      <li>Tap Location and ensure the main toggle is on. You can also manage permissions for individual sites here.</li>
+                      <li>
+                        Tap Location and ensure the main toggle is on. You can
+                        also manage permissions for individual sites here.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (iOS - iPhone/iPad)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (iOS - iPhone/iPad)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>The primary control for location is in the main iOS Settings.</li>
+                      <li>
+                        The primary control for location is in the main iOS
+                        Settings.
+                      </li>
                       <li>Open the Settings app on your iPhone/iPad.</li>
                       <li>Scroll down and tap on Chrome.</li>
                       <li>Tap on Location.</li>
-                      <li>Select <b>While Using the App</b> or <b>Ask Next Time Or When I Share</b>.</li>
+                      <li>
+                        Select <b>While Using the App</b> or{" "}
+                        <b>Ask Next Time Or When I Share</b>.
+                      </li>
                     </ul>
                   </details>
                 </div>
               </details>
               <details className="mb-2">
-                <summary className="cursor-pointer font-semibold text-blue-700">Firefox</summary>
+                <summary className="cursor-pointer font-semibold text-blue-700">
+                  Firefox
+                </summary>
                 <div className="mt-1 pl-4">
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Desktop</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Desktop
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Go to the specific website.</li>
-                      <li>Click the lock icon 🔒 in the address bar. A small panel will open.</li>
-                      <li>Find the Location permission in the panel and use the dropdown or toggle to <b>Allow</b> access.</li>
+                      <li>
+                        Click the lock icon 🔒 in the address bar. A small panel
+                        will open.
+                      </li>
+                      <li>
+                        Find the Location permission in the panel and use the
+                        dropdown or toggle to <b>Allow</b> access.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (Android)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (Android)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Tap the three-dots menu (⋮) at the bottom-right.</li>
                       <li>Tap Settings ⚙️.</li>
                       <li>Scroll down and tap Site permissions.</li>
-                      <li>Tap Location and choose <b>Ask to allow</b> (recommended) or manage exceptions for specific sites.</li>
+                      <li>
+                        Tap Location and choose <b>Ask to allow</b>{" "}
+                        (recommended) or manage exceptions for specific sites.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (iOS - iPhone/iPad)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (iOS - iPhone/iPad)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>The primary control for location is in the main iOS Settings.</li>
+                      <li>
+                        The primary control for location is in the main iOS
+                        Settings.
+                      </li>
                       <li>Open the Settings app on your iPhone/iPad.</li>
                       <li>Scroll down and tap on Firefox.</li>
                       <li>Tap on Location.</li>
-                      <li>Select <b>While Using the App</b> or <b>Ask Next Time Or When I Share</b>.</li>
+                      <li>
+                        Select <b>While Using the App</b> or{" "}
+                        <b>Ask Next Time Or When I Share</b>.
+                      </li>
                     </ul>
                   </details>
                 </div>
               </details>
               <details className="mb-2">
-                <summary className="cursor-pointer font-semibold text-blue-700">Safari</summary>
+                <summary className="cursor-pointer font-semibold text-blue-700">
+                  Safari
+                </summary>
                 <div className="mt-1 pl-4">
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">macOS (Desktop)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      macOS (Desktop)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>With Safari open, click Safari in the top menu bar (next to the Apple logo ).</li>
+                      <li>
+                        With Safari open, click Safari in the top menu bar (next
+                        to the Apple logo ).
+                      </li>
                       <li>Click Settings... (or Preferences...).</li>
                       <li>Go to the Websites tab.</li>
                       <li>Click on Location in the left-hand sidebar.</li>
-                      <li>Find the website in the list on the right and change its permission to <b>Allow</b>.</li>
+                      <li>
+                        Find the website in the list on the right and change its
+                        permission to <b>Allow</b>.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">iOS/iPadOS (Mobile)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      iOS/iPadOS (Mobile)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>The primary control for location is in the main iOS Settings.</li>
+                      <li>
+                        The primary control for location is in the main iOS
+                        Settings.
+                      </li>
                       <li>Open the Settings app on your iPhone/iPad.</li>
                       <li>Scroll down and tap on Safari.</li>
                       <li>Scroll down again and tap on Location.</li>
-                      <li>Select <b>Allow</b> or <b>Ask</b>.</li>
+                      <li>
+                        Select <b>Allow</b> or <b>Ask</b>.
+                      </li>
                     </ul>
                   </details>
                 </div>
               </details>
               <details className="mb-2">
-                <summary className="cursor-pointer font-semibold text-blue-700">Microsoft Edge</summary>
+                <summary className="cursor-pointer font-semibold text-blue-700">
+                  Microsoft Edge
+                </summary>
                 <div className="mt-1 pl-4">
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Desktop</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Desktop
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
                       <li>Go to the specific website.</li>
                       <li>Click the lock icon 🔒 in the address bar.</li>
                       <li>Click Permissions for this site.</li>
-                      <li>Find Location in the permissions list and change its setting to <b>Allow</b>.</li>
+                      <li>
+                        Find Location in the permissions list and change its
+                        setting to <b>Allow</b>.
+                      </li>
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (Android)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (Android)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>Tap the three-dots menu (...) at the bottom-center.</li>
+                      <li>
+                        Tap the three-dots menu (...) at the bottom-center.
+                      </li>
                       <li>Tap Settings ⚙️.</li>
                       <li>Tap Privacy and security.</li>
                       <li>Tap Site permissions.</li>
@@ -191,13 +284,21 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
                     </ul>
                   </details>
                   <details>
-                    <summary className="cursor-pointer font-medium text-blue-600">Mobile (iOS - iPhone/iPad)</summary>
+                    <summary className="cursor-pointer font-medium text-blue-600">
+                      Mobile (iOS - iPhone/iPad)
+                    </summary>
                     <ul className="mt-1 list-disc pl-5">
-                      <li>The primary control for location is in the main iOS Settings.</li>
+                      <li>
+                        The primary control for location is in the main iOS
+                        Settings.
+                      </li>
                       <li>Open the Settings app on your iPhone/iPad.</li>
                       <li>Scroll down and tap on Edge.</li>
                       <li>Tap on Location.</li>
-                      <li>Select <b>While Using the App</b> or <b>Ask Next Time Or When I Share</b>.</li>
+                      <li>
+                        Select <b>While Using the App</b> or{" "}
+                        <b>Ask Next Time Or When I Share</b>.
+                      </li>
                     </ul>
                   </details>
                 </div>
@@ -205,10 +306,16 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700" onClick={() => window.location.reload()}>
+            <button
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
+              onClick={() => window.location.reload()}
+            >
               Reload
             </button>
-            <button className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100" onClick={onClose}>
+            <button
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100"
+              onClick={onClose}
+            >
               Continue without location
             </button>
           </div>
