@@ -17,7 +17,10 @@ const EnableLocationButton: React.FC<Props> = ({ className }) => {
     if (locationStatus === "denied") {
       setAwaitingGeoResult(false);
       setShowBlockedModal(true);
-    } else if (locationStatus === "allowed" || locationStatus === "unsupported") {
+    } else if (
+      locationStatus === "allowed" ||
+      locationStatus === "unsupported"
+    ) {
       setAwaitingGeoResult(false);
     }
   }, [awaitingGeoResult, locationStatus]);
