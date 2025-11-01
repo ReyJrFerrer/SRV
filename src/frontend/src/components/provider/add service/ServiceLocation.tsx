@@ -109,11 +109,9 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
 
     const existing = document.getElementById("gmaps-js");
     if (existing) {
-      existing.addEventListener(
-        "load",
-        () => setMapsApiLoaded(true),
-        { once: true } as any,
-      );
+      existing.addEventListener("load", () => setMapsApiLoaded(true), {
+        once: true,
+      } as any);
       return;
     }
 
@@ -202,13 +200,15 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
               try {
                 const ph = phLocations as any;
                 if (locality && ph?.provinces && Array.isArray(ph.provinces)) {
-                  const match = ph.provinces.find((p: any) =>
-                    Array.isArray(p.municipalities) &&
-                    p.municipalities.some(
-                      (m: any) =>
-                        typeof m?.name === "string" &&
-                        m.name.toLowerCase() === String(locality).toLowerCase(),
-                    ),
+                  const match = ph.provinces.find(
+                    (p: any) =>
+                      Array.isArray(p.municipalities) &&
+                      p.municipalities.some(
+                        (m: any) =>
+                          typeof m?.name === "string" &&
+                          m.name.toLowerCase() ===
+                            String(locality).toLowerCase(),
+                      ),
                   );
                   if (match?.name) {
                     province = match.name;
