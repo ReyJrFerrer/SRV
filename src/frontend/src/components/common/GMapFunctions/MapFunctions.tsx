@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import LocationMapModal from "../LocationMapModal";
+import LocationMapModal from "./LocationMapModal";
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../EnableLocationButton";
 
