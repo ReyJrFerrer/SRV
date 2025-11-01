@@ -25,8 +25,12 @@ import { toast } from "sonner";
 // import NotificationSettings from "../../components/NotificationSettings";
 
 // Inline Client Header component (sticky mini header)
-interface InlineClientHeaderProps { className?: string }
-const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) => {
+interface InlineClientHeaderProps {
+  className?: string;
+}
+const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({
+  className,
+}) => {
   const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -51,6 +55,7 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
 
   // sticky mini state
   const headerRef = React.useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = React.useState<number | null>(null);
   const [isMini, setIsMini] = React.useState(false);
   const [showMiniLocation, setShowMiniLocation] = React.useState(false);
   React.useEffect(() => {
@@ -87,16 +92,34 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-  const [filteredSuggestions, setFilteredSuggestions] = React.useState<string[]>([]);
+  // Measure header height and keep it as a minHeight when the mini overlay is shown
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+    };
+    // Measure once after mount
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const [filteredSuggestions, setFilteredSuggestions] = React.useState<
+    string[]
+  >([]);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     if (value.trim().length > 0) {
-      const serviceNames = Array.from(new Set(services.map(s => s.title).filter(Boolean)));
-      const filtered = serviceNames.filter(s => s.toLowerCase().includes(value.toLowerCase()));
+      const serviceNames = Array.from(
+        new Set(services.map((s) => s.title).filter(Boolean)),
+      );
+      const filtered = serviceNames.filter((s) =>
+        s.toLowerCase().includes(value.toLowerCase()),
+      );
       setFilteredSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -121,8 +144,16 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
   }, [isAuthenticated, isAuthLoading, locationStore]);
 
   React.useEffect(() => {
-    if (!locationLoading && !isAuthLoading && (locationStatus === "allowed" || locationStatus === "unsupported")) {
-      setPlaceholder(searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)]);
+    if (
+      !locationLoading &&
+      !isAuthLoading &&
+      (locationStatus === "allowed" || locationStatus === "unsupported")
+    ) {
+      setPlaceholder(
+        searchPlaceholders[
+          Math.floor(Math.random() * searchPlaceholders.length)
+        ],
+      );
     }
   }, [locationLoading, isAuthLoading, locationStatus]);
 
@@ -136,23 +167,36 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
   return (
     <APIProvider apiKey={mapsApiKey}>
       {/* Full-size header within the flow */}
-      <header ref={headerRef} className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}>
-        {!isMini && (
-          <div className="space-y-6 transition-all duration-300 ease-in-out">
+      <header
+        ref={headerRef}
+        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
+      >
+        <div className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "invisible opacity-0 pointer-events-none" : "visible opacity-100"}`}>
             <div className="hidden items-center justify-between md:flex">
               <div className="flex items-center space-x-6">
                 <Link to="/client/home">
-                  <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110" />
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
                 </Link>
                 <div className="h-10 border-l-2 border-blue-100"></div>
                 <div className="flex flex-col">
                   <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                    Welcome, <span className="text-2xl font-bold text-gray-800">{displayName}</span>
+                    Welcome,{" "}
+                    <span className="text-2xl font-bold text-gray-800">
+                      {displayName}
+                    </span>
                   </span>
                 </div>
               </div>
               {isAuthenticated && (
-                <button onClick={handleProfileClick} className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200">
+                <button
+                  onClick={handleProfileClick}
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                >
                   <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
                 </button>
               )}
@@ -160,37 +204,75 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
             <div className="md:hidden">
               <div className="flex items-center justify-between">
                 <Link to="/client/home">
-                  <img src="/logo.svg" alt="SRV Logo" className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110" />
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
                 </Link>
                 {isAuthenticated && (
-                  <button onClick={handleProfileClick} className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200">
+                  <button
+                    onClick={handleProfileClick}
+                    className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  >
                     <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                   </button>
                 )}
               </div>
               <hr className="my-4 border-blue-100" />
               <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-                <span className="text-xl font-semibold tracking-wide text-blue-700">Welcome,</span>
-                <span className="text-xl font-bold text-gray-800">{displayName}</span>
+                <span className="text-xl font-semibold tracking-wide text-blue-700">
+                  Welcome,
+                </span>
+                <span className="text-xl font-bold text-gray-800">
+                  {displayName}
+                </span>
               </div>
             </div>
             <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <MapPinIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-base font-bold text-gray-800">My Location</span>
+                  <span className="text-base font-bold text-gray-800">
+                    My Location
+                  </span>
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <MapFunctions />
               </div>
-              <form className="mt-4 w-full" onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) navigate(`/client/search-results?query=${encodeURIComponent(searchQuery)}`); }}>
+              <form
+                className="mt-4 w-full"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (searchQuery.trim())
+                    navigate(
+                      `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                    );
+                }}
+              >
                 <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
-                  <input type="text" className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0" placeholder={placeholder} value={searchQuery} onChange={handleSearchInputChange} onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)} onBlur={() => setTimeout(() => setShowSuggestions(false), 100)} />
+                  <input
+                    type="text"
+                    className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                    placeholder={placeholder}
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    onFocus={() =>
+                      setShowSuggestions(filteredSuggestions.length > 0)
+                    }
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 100)
+                    }
+                  />
                   {showSuggestions && filteredSuggestions.length > 0 && (
                     <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                       {filteredSuggestions.map((suggestion, idx) => (
-                        <li key={idx} className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50" onMouseDown={() => handleSuggestionClick(suggestion)}>
+                        <li
+                          key={idx}
+                          className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
+                          onMouseDown={() => handleSuggestionClick(suggestion)}
+                        >
                           {suggestion}
                         </li>
                       ))}
@@ -199,8 +281,7 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
                 </div>
               </form>
             </div>
-          </div>
-        )}
+            </div>
       </header>
 
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
@@ -208,10 +289,14 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
         <div className="fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
           <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             {/* Location row (reveals on slight scroll-up) */}
-            <div className={`overflow-hidden transition-all duration-300 ${showMiniLocation ? "max-h-16 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1"}`}>
+            <div
+              className={`overflow-hidden transition-all duration-300 ${showMiniLocation ? "max-h-16 translate-y-0 opacity-100" : "max-h-0 -translate-y-1 opacity-0"}`}
+            >
               <div className="flex items-center gap-2 pb-2">
                 <MapPinIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-800">My Location</span>
+                <span className="text-sm font-semibold text-gray-800">
+                  My Location
+                </span>
               </div>
               <div className="-mt-1 flex items-center gap-2">
                 <MapFunctions />
@@ -224,7 +309,9 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({ className }) =>
               onSubmit={(e) => {
                 e.preventDefault();
                 if (searchQuery.trim()) {
-                  navigate(`/client/search-results?query=${encodeURIComponent(searchQuery)}`);
+                  navigate(
+                    `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                  );
                 }
               }}
             >

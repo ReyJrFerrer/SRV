@@ -266,7 +266,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                     onFocus={() =>
                       setShowSuggestions(filteredSuggestions.length > 0)
                     }
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 100)
+                    }
                   />
                   {showSuggestions && filteredSuggestions.length > 0 && (
                     <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
@@ -293,7 +295,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             {/* Location row (collapsible) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
-                showMiniLocation ? "max-h-16 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1"
+                showMiniLocation
+                  ? "max-h-16 translate-y-0 opacity-100"
+                  : "max-h-0 -translate-y-1 opacity-0"
               }`}
             >
               <div className="flex items-center gap-2 pb-2">
@@ -313,7 +317,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (searchQuery.trim())
-                  navigate(`/client/search-results?query=${encodeURIComponent(searchQuery)}`);
+                  navigate(
+                    `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                  );
               }}
             >
               <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
@@ -326,7 +332,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 {showSuggestions && filteredSuggestions.length > 0 && (
                   <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                     {filteredSuggestions.map((suggestion, idx) => (
-                      <li key={idx} className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50" onMouseDown={() => handleSuggestionClick(suggestion)}>
+                      <li
+                        key={idx}
+                        className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
+                        onMouseDown={() => handleSuggestionClick(suggestion)}
+                      >
                         {suggestion}
                       </li>
                     ))}

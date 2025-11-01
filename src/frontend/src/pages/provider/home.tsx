@@ -22,22 +22,34 @@ import { useProviderReviews } from "../../hooks/reviewManagement";
 // import NotificationSettings from "../../components/NotificationSettings";
 
 // Inline Provider Header component (sticky mini header showing only location)
-interface InlineProviderHeaderProps { className?: string; scrollTargetRef?: React.RefObject<HTMLElement> }
-const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, scrollTargetRef }) => {
+interface InlineProviderHeaderProps {
+  className?: string;
+  scrollTargetRef?: React.RefObject<HTMLElement>;
+}
+const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({
+  className,
+  scrollTargetRef,
+}) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
   const { requestLocation, locationStatus } = useLocationStore();
   const [profile, setProfile] = React.useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const mapsApiKey =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
   React.useEffect(() => {
     const loadInitialData = async () => {
       if (isAuthenticated) {
-        try { const userProfile = await authCanisterService.getMyProfile(); setProfile(userProfile); } catch {}
+        try {
+          const userProfile = await authCanisterService.getMyProfile();
+          setProfile(userProfile);
+        } catch {}
       }
-      if (!isAuthLoading) { requestLocation(); }
+      if (!isAuthLoading) {
+        requestLocation();
+      }
     };
     if (!isAuthLoading) loadInitialData();
   }, [isAuthenticated, isAuthLoading, requestLocation]);
@@ -45,14 +57,19 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, 
   const handleNotificationsClick = () => navigate("/provider/notifications");
 
   const headerRef = React.useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = React.useState<number | null>(null);
   const [isMini, setIsMini] = React.useState(false);
   React.useEffect(() => {
     // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
     const candidate = scrollTargetRef?.current ?? null;
-    const isScrollable = (el: HTMLElement | null) => !!el && el.scrollHeight > el.clientHeight + 1;
-    const targetEl: Window | HTMLElement = isScrollable(candidate) ? (candidate as HTMLElement) : window;
+    const isScrollable = (el: HTMLElement | null) =>
+      !!el && el.scrollHeight > el.clientHeight + 1;
+    const targetEl: Window | HTMLElement = isScrollable(candidate)
+      ? (candidate as HTMLElement)
+      : window;
 
-    const getScrollY = () => (targetEl instanceof Window ? targetEl.scrollY : (targetEl.scrollTop || 0));
+    const getScrollY = () =>
+      targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
     let ticking = false;
     const ENTER_MINI_AT = 140;
     const EXIT_MINI_BELOW = 100;
@@ -76,7 +93,11 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, 
     if (targetEl instanceof Window) {
       targetEl.addEventListener("scroll", onScroll, { passive: true });
     } else {
-      targetEl.addEventListener("scroll", onScroll as EventListener, { passive: true } as AddEventListenerOptions);
+      targetEl.addEventListener(
+        "scroll",
+        onScroll as EventListener,
+        { passive: true } as AddEventListenerOptions,
+      );
       window.addEventListener("scroll", onScroll, { passive: true });
     }
 
@@ -90,29 +111,55 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, 
     };
   }, [scrollTargetRef]);
 
+  // Measure header height and keep it as a minHeight when the mini overlay is shown
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   return (
     <APIProvider apiKey={mapsApiKey}>
       {/* Full-size header within the flow */}
-      <header ref={headerRef} className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}>
-        {!isMini && (
-          <div className="space-y-6 transition-all duration-300 ease-in-out">
+      <header
+        ref={headerRef}
+        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
+      >
+        <div className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "invisible opacity-0 pointer-events-none" : "visible opacity-100"}`}>
             <div className="hidden items-center justify-between md:flex">
               <div className="flex items-center space-x-6">
                 <Link to="/provider/home">
-                  <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110" />
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
                 </Link>
                 <div className="h-10 border-l-2 border-blue-100"></div>
                 <div className="flex flex-col">
                   <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                    Welcome, <span className="text-2xl font-bold text-gray-800">{displayName}</span>
+                    Welcome,{" "}
+                    <span className="text-2xl font-bold text-gray-800">
+                      {displayName}
+                    </span>
                   </span>
                 </div>
               </div>
               {isAuthenticated && (
-                <button onClick={handleNotificationsClick} className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200" aria-label="Notifications">
+                <button
+                  onClick={handleNotificationsClick}
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  aria-label="Notifications"
+                >
                   <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">{unreadCount}</span>
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                      {unreadCount}
+                    </span>
                   )}
                 </button>
               )}
@@ -120,39 +167,57 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, 
             <div className="md:hidden">
               <div className="flex items-center justify-between">
                 <Link to="/client/home">
-                  <img src="/logo.svg" alt="SRV Logo" className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110" />
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
                 </Link>
                 {isAuthenticated && (
-                  <button onClick={handleNotificationsClick} className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200" aria-label="Notifications">
+                  <button
+                    onClick={handleNotificationsClick}
+                    className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                    aria-label="Notifications"
+                  >
                     <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                     {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">{unreadCount}</span>
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                        {unreadCount}
+                      </span>
                     )}
                   </button>
                 )}
               </div>
               <hr className="my-4 border-blue-100" />
               <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-                <span className="text-xl font-semibold tracking-wide text-blue-700">Welcome Back,</span>
-                <span className="text-xl font-bold text-gray-800">{displayName}</span>
+                <span className="text-xl font-semibold tracking-wide text-blue-700">
+                  Welcome Back,
+                </span>
+                <span className="text-xl font-bold text-gray-800">
+                  {displayName}
+                </span>
               </div>
             </div>
             <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <MapPinIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-base font-bold text-gray-800">My Location</span>
+                  <span className="text-base font-bold text-gray-800">
+                    My Location
+                  </span>
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <MapFunctions />
               </div>
-              {(locationStatus === "denied" || locationStatus === "not_set") && (
-                <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">Location access is off. Some features are limited.</div>
+              {(locationStatus === "denied" ||
+                locationStatus === "not_set") && (
+                <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                  Location access is off. Some features are limited.
+                </div>
               )}
             </div>
-          </div>
-        )}
+            </div>
       </header>
 
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
@@ -161,7 +226,9 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({ className, 
           <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-semibold text-gray-800">My Location</span>
+              <span className="text-sm font-semibold text-gray-800">
+                My Location
+              </span>
             </div>
             <div className="-mt-1 flex items-center gap-2">
               <MapFunctions />
@@ -435,8 +502,13 @@ const ProviderHomePage: React.FC = () => {
          * Make the scrolling container explicit and pass it to the header
          * so the mini-header logic follows the correct scroll element.
          */}
-        <main className="flex-grow overflow-y-auto pb-20" ref={scrollRef as React.RefObject<HTMLDivElement>}>
-          <InlineProviderHeader scrollTargetRef={scrollRef as React.RefObject<HTMLElement>} />
+        <main
+          className="flex-grow overflow-y-auto pb-20"
+          ref={scrollRef as React.RefObject<HTMLDivElement>}
+        >
+          <InlineProviderHeader
+            scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
+          />
           <div className="mx-auto max-w-7xl p-4">
             {/* Use legacyProvider for components that still need the old interface */}
             {provider && (

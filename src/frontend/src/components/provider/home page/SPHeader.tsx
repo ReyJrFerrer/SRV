@@ -58,8 +58,10 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [isMini, setIsMini] = useState(false);
   useEffect(() => {
-    const el: (Window | HTMLElement) | null = scrollTargetRef?.current ?? window;
-    const getScrollY = () => (el instanceof Window ? el.scrollY : el.scrollTop || 0);
+    const el: (Window | HTMLElement) | null =
+      scrollTargetRef?.current ?? window;
+    const getScrollY = () =>
+      el instanceof Window ? el.scrollY : el.scrollTop || 0;
     const onScroll = () => {
       const y = getScrollY();
       const threshold = (headerRef.current?.offsetHeight || 240) - 40;
@@ -69,7 +71,9 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       el.addEventListener("scroll", onScroll, { passive: true });
       return () => el.removeEventListener("scroll", onScroll);
     } else if (el) {
-      el.addEventListener("scroll", onScroll, { passive: true } as AddEventListenerOptions);
+      el.addEventListener("scroll", onScroll, {
+        passive: true,
+      } as AddEventListenerOptions);
       return () => el.removeEventListener("scroll", onScroll as EventListener);
     }
   }, [scrollTargetRef]);
@@ -170,7 +174,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               <div className="mt-2 flex items-center gap-2">
                 <MapFunctions />
               </div>
-              {(locationStatus === "denied" || locationStatus === "not_set") && (
+              {(locationStatus === "denied" ||
+                locationStatus === "not_set") && (
                 <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
                   Location access is off. Some features are limited.
                 </div>
@@ -184,7 +189,9 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           <div className="rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-md transition-all duration-300 ease-in-out">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-semibold text-gray-800">My Location</span>
+              <span className="text-sm font-semibold text-gray-800">
+                My Location
+              </span>
             </div>
             <div className="-mt-1 flex items-center gap-2">
               <MapFunctions />
