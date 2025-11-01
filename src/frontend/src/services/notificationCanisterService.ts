@@ -81,6 +81,22 @@ const convertToFrontendNotification = (
   };
 };
 
+/**
+ * Debounce helper function
+ */
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
+
 // Notification Service Functions using Firebase
 export const notificationCanisterService = {
   /**
@@ -117,6 +133,14 @@ export const notificationCanisterService = {
         }
       }
 
+      // Debounce the callback to prevent rapid re-renders
+      const debouncedCallback = debounce(
+        (notifications: FrontendNotification[]) => {
+          callback(notifications);
+        },
+        250,
+      ); // 250ms debounce for notifications
+
       // Set up real-time listener
       return onSnapshot(
         q,
@@ -132,7 +156,7 @@ export const notificationCanisterService = {
                   : new Date().toISOString(),
             });
           });
-          callback(notifications);
+          debouncedCallback(notifications);
         },
         (error) => {
           console.error("Error in notification listener:", error);
