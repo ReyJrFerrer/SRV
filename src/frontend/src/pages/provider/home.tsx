@@ -231,7 +231,7 @@ const InlineProviderHeader: React.FC<InlineProviderHeaderProps> = ({
 
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
-        <div className="fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
           <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
