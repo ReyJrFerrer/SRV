@@ -227,13 +227,10 @@ export const TicketDetailsPage: React.FC = () => {
           );
 
           const firestore = getFirebaseFirestore();
-
-          // Attachments can be either media IDs (new format) or URLs (legacy format)
           for (const attachment of ticket.attachments!) {
             try {
               let mediaId = attachment;
 
-              // Check if it's a URL (legacy format) - convert to media ID
               if (
                 attachment.startsWith("http://") ||
                 attachment.startsWith("https://")
@@ -271,15 +268,13 @@ export const TicketDetailsPage: React.FC = () => {
               console.log("Got media item:", mediaItem);
 
               if (mediaItem && mediaItem.url) {
-                // For Firebase Storage emulator URLs, we need to ensure they're accessible
-                // Check if it's an emulator URL and add a timestamp to prevent caching issues
                 let imageUrl = mediaItem.url;
-                
+
                 // Add timestamp to prevent caching issues
-                if (!imageUrl.includes('&token=')) {
-                  imageUrl = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                if (!imageUrl.includes("&token=")) {
+                  imageUrl = `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
                 }
-                
+
                 console.log("Final image URL:", imageUrl);
                 urls[attachment] = imageUrl;
                 console.log("Successfully loaded image URL for:", attachment);
