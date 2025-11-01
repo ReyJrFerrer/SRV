@@ -288,7 +288,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   {gmapsAddress}
                 </span>
               )}
-                {/* Coordinates/accuracy debug chip removed */}
+              {/* Coordinates/accuracy debug chip removed */}
             </div>
             {(locationStatus === "denied" || locationStatus === "not_set") && (
               <div className="ml-3">

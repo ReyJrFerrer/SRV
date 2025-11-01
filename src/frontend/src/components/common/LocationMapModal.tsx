@@ -12,7 +12,10 @@ export interface LocationMapModalProps {
 }
 
 // Imperative circle overlay using native Google Maps API
-const AccuracyCircle: React.FC<{ center: { lat: number; lng: number }; radius: number }> = ({ center, radius }) => {
+const AccuracyCircle: React.FC<{
+  center: { lat: number; lng: number };
+  radius: number;
+}> = ({ center, radius }) => {
   const map = useMap();
   const circleRef = useRef<google.maps.Circle | null>(null);
 
@@ -57,7 +60,9 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
 
   // Controlled camera state: preserve user zoom and panning
   const [zoom, setZoom] = useState<number>(16);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(center);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
+    center,
+  );
 
   useEffect(() => {
     if (show) {
@@ -66,9 +71,10 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
   }, [show, center.lat, center.lng]);
 
   // Scale the visible accuracy to be smaller ("shorter")
-  const scaledAccuracy = typeof accuracy === "number" && accuracy > 0
-    ? Math.min(accuracy * 0.6, 200) // 40% smaller, cap to 200m
-    : undefined;
+  const scaledAccuracy =
+    typeof accuracy === "number" && accuracy > 0
+      ? Math.min(accuracy * 0.6, 200) // 40% smaller, cap to 200m
+      : undefined;
 
   return (
     <div
