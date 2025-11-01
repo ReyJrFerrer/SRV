@@ -170,6 +170,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     enablePushNotificationsPWA,
   ]);
 
+  // Also trigger a geolocation request right after login (mirrors notification timing)
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      // This is safe to call multiple times; the store has guards and caching
+      locationStore.requestLocation();
+    }
+  }, [isLoading, isAuthenticated, locationStore]);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {

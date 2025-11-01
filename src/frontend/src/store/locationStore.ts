@@ -444,15 +444,8 @@ export const useLocationStore = create<LocationState>()(
         }
 
         set({ isInitialized: true });
-
-        // Only request location if we don't have it yet or status is not_set.
-        // In manual mode, this will populate GPS without overwriting manual address.
-        if (
-          state.locationStatus === "not_set" ||
-          (!state.location && state.locationStatus === "allowed")
-        ) {
-          await get().requestLocation();
-        }
+        // Do not automatically request geolocation on initial app load.
+        // Components/pages (e.g., headers) or post-login effect will explicitly call requestLocation().
       },
     }),
     {
