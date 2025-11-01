@@ -71,7 +71,6 @@ const ReviewsPage: React.FC = () => {
 
   return (
     <>
-    
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
@@ -79,85 +78,87 @@ const ReviewsPage: React.FC = () => {
           </h1>
         </div>
       </header>
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <main className="mx-auto w-full max-w-3xl p-4">
-        <section className="mb-6 rounded-xl bg-white p-5 shadow">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <StarIcon
-                  key={s}
-                  className={`h-6 w-6 ${
-                    s <= Math.round(stats.avg)
-                      ? "text-yellow-400"
-                      : "text-gray-200"
-                  }`}
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <main className="mx-auto w-full max-w-3xl p-4">
+          <section className="mb-6 rounded-xl bg-white p-5 shadow">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <StarIcon
+                    key={s}
+                    className={`h-6 w-6 ${
+                      s <= Math.round(stats.avg)
+                        ? "text-yellow-400"
+                        : "text-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="text-2xl font-bold text-slate-800">
+                {stats.avg.toFixed(1)}
+              </div>
+              <div className="text-sm text-gray-600">
+                {stats.total} review{stats.total === 1 ? "" : "s"}
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              {[5, 4, 3, 2, 1].map((r) => (
+                <StarBar
+                  key={r}
+                  label={`${r}★`}
+                  value={stats.counts[r] || 0}
+                  total={stats.total}
                 />
               ))}
             </div>
-            <div className="text-2xl font-bold text-slate-800">
-              {stats.avg.toFixed(1)}
-            </div>
-            <div className="text-sm text-gray-600">
-              {stats.total} review{stats.total === 1 ? "" : "s"}
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            {[5, 4, 3, 2, 1].map((r) => (
-              <StarBar
-                key={r}
-                label={`${r}★`}
-                value={stats.counts[r] || 0}
-                total={stats.total}
-              />
-            ))}
-          </div>
-        </section>
+          </section>
 
-        <section className="space-y-3">
-          {loading && (
-            <div className="flex justify-center p-6">
-              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
-            </div>
-          )}
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-              {error}
-            </div>
-          )}
-          {reviews.length === 0 && !loading ? (
-            <div className="rounded-xl bg-white p-6 text-center text-gray-600 shadow">
-              You don't have any reviews yet.
-            </div>
-          ) : (
-            reviews.map((rev) => (
-              <div key={rev.id} className="rounded-xl bg-white p-5 shadow">
-                <div className="mb-1 flex items-center justify-between">
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <StarIcon
-                        key={s}
-                        className={`h-4 w-4 ${
-                          s <= rev.rating ? "text-yellow-400" : "text-gray-200"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(rev.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                {rev.comment && (
-                  <p className="mt-2 text-sm text-gray-700">{rev.comment}</p>
-                )}
+          <section className="space-y-3">
+            {loading && (
+              <div className="flex justify-center p-6">
+                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
               </div>
-            ))
-          )}
-        </section>
-      </main>
+            )}
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+                {error}
+              </div>
+            )}
+            {reviews.length === 0 && !loading ? (
+              <div className="rounded-xl bg-white p-6 text-center text-gray-600 shadow">
+                You don't have any reviews yet.
+              </div>
+            ) : (
+              reviews.map((rev) => (
+                <div key={rev.id} className="rounded-xl bg-white p-5 shadow">
+                  <div className="mb-1 flex items-center justify-between">
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <StarIcon
+                          key={s}
+                          className={`h-4 w-4 ${
+                            s <= rev.rating
+                              ? "text-yellow-400"
+                              : "text-gray-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(rev.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  {rev.comment && (
+                    <p className="mt-2 text-sm text-gray-700">{rev.comment}</p>
+                  )}
+                </div>
+              ))
+            )}
+          </section>
+        </main>
 
-      <BottomNavigation />
-    </div>
+        <BottomNavigation />
+      </div>
     </>
   );
 };
