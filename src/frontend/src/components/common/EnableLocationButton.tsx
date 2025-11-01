@@ -1,32 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useLocationStore } from "../../store/locationStore";
-import LocationBlockedModal from "./LocationBlockedModal";
 
 interface Props {
   className?: string;
 }
 
 const EnableLocationButton: React.FC<Props> = ({ className }) => {
-  const { requestLocation, locationStatus, locationLoading } =
-    useLocationStore();
-  const [awaitingGeoResult, setAwaitingGeoResult] = useState(false);
-  const [showBlockedModal, setShowBlockedModal] = useState(false);
-
-  useEffect(() => {
-    if (!awaitingGeoResult) return;
-    if (locationStatus === "denied") {
-      setAwaitingGeoResult(false);
-      setShowBlockedModal(true);
-    } else if (
-      locationStatus === "allowed" ||
-      locationStatus === "unsupported"
-    ) {
-      setAwaitingGeoResult(false);
-    }
-  }, [awaitingGeoResult, locationStatus]);
+  const { requestLocation, locationLoading } = useLocationStore();
 
   const handleClick = async () => {
-    setAwaitingGeoResult(true);
     try {
       await requestLocation();
     } catch {
@@ -43,14 +25,8 @@ const EnableLocationButton: React.FC<Props> = ({ className }) => {
         onClick={handleClick}
         disabled={locationLoading}
       >
-        {locationLoading && awaitingGeoResult
-          ? "Requesting..."
-          : "Click to enable location"}
+        {locationLoading ? "Requesting..." : "Click to enable location"}
       </button>
-      <LocationBlockedModal
-        visible={showBlockedModal}
-        onClose={() => setShowBlockedModal(false)}
-      />
     </>
   );
 };
