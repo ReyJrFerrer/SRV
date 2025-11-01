@@ -207,6 +207,28 @@ export const useLocationStore = create<LocationState>()(
         // Even in manual mode, we still try to detect GPS so maps can work.
         // We will NOT overwrite manual address fields when addressMode === "manual".
 
+        // Guard: avoid duplicate concurrent requests
+        if (state.locationLoading) {
+          return;
+        }
+
+        // Lightweight throttle: if permission is denied, avoid hammering the API repeatedly
+        try {
+          const now = Date.now();
+          const lastAttempt = Number(
+            localStorage.getItem("location_last_attempt") || 0,
+          );
+          if (
+            state.locationStatus === "denied" &&
+            now - lastAttempt < 10000 /* 10s */
+          ) {
+            return;
+          }
+          localStorage.setItem("location_last_attempt", String(now));
+        } catch {
+          // ignore throttle storage errors
+        }
+
         // If we already have location data and it's not expired, don't refetch
         if (
           state.location &&
