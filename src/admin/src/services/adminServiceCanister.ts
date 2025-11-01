@@ -1538,6 +1538,7 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
       description: report.description,
       status: report.status || "open",
       createdAt: report.createdAt || new Date().toISOString(),
+      attachments: report.attachments || [],
     }));
   } catch (error) {
     logError("Error fetching reports from Firebase", error);
