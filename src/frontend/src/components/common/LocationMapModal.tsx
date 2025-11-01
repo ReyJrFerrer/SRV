@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
 
 export interface LocationMapModalProps {
@@ -76,7 +77,7 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
       ? Math.min(accuracy * 0.6, 200) // 40% smaller, cap to 200m
       : undefined;
 
-  return (
+  const modal = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
       onClick={handleBackdropClick}
@@ -157,6 +158,12 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
       </div>
     </div>
   );
+
+  // Render the modal into the document body to avoid ancestor stacking/transform/context
+  if (typeof document !== "undefined") {
+    return createPortal(modal, document.body);
+  }
+  return modal;
 };
 
 export default LocationMapModal;
