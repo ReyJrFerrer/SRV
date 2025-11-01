@@ -54,40 +54,92 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     navigate("/provider/notifications");
   };
 
-  // --- Sticky mini header behavior (provider shows only location) ---
+  // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
   useEffect(() => {
-    const el: (Window | HTMLElement) | null =
-      scrollTargetRef?.current ?? window;
+    // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
+    const candidate = scrollTargetRef?.current ?? null;
+    const isScrollable = (el: HTMLElement | null) =>
+      !!el && el.scrollHeight > el.clientHeight + 1;
+    const targetEl: Window | HTMLElement = isScrollable(candidate)
+      ? (candidate as HTMLElement)
+      : window;
+
     const getScrollY = () =>
-      el instanceof Window ? el.scrollY : el.scrollTop || 0;
+      targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
+    let ticking = false;
+    const ENTER_MINI_AT = 140;
+    const EXIT_MINI_BELOW = 100;
+
     const onScroll = () => {
       const y = getScrollY();
-      const threshold = (headerRef.current?.offsetHeight || 240) - 40;
-      setIsMini(y > threshold);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsMini((prev) => {
+            if (!prev && y > ENTER_MINI_AT) return true;
+            if (prev && y < EXIT_MINI_BELOW) return false;
+            return prev;
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    if (el instanceof Window) {
-      el.addEventListener("scroll", onScroll, { passive: true });
-      return () => el.removeEventListener("scroll", onScroll);
-    } else if (el) {
-      el.addEventListener("scroll", onScroll, {
-        passive: true,
-      } as AddEventListenerOptions);
-      return () => el.removeEventListener("scroll", onScroll as EventListener);
+
+    // Attach listener to chosen target; also attach to window if different to catch both flows
+    if (targetEl instanceof Window) {
+      targetEl.addEventListener("scroll", onScroll, { passive: true });
+    } else {
+      targetEl.addEventListener(
+        "scroll",
+        onScroll as EventListener,
+        { passive: true } as AddEventListenerOptions,
+      );
+      window.addEventListener("scroll", onScroll, { passive: true });
     }
+
+    return () => {
+      if (targetEl instanceof Window) {
+        targetEl.removeEventListener("scroll", onScroll);
+      } else {
+        targetEl.removeEventListener("scroll", onScroll as EventListener);
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
   }, [scrollTargetRef]);
+
+  // Toggle a body class so global layout can compensate for the fixed mini overlay
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isMini) document.body.classList.add("has-mini-header");
+    else document.body.classList.remove("has-mini-header");
+    return () => document.body.classList.remove("has-mini-header");
+  }, [isMini]);
+
+  // Measure header height and keep it as a minHeight when the mini overlay is shown
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   // --- Render: Header layout ---
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
         ref={headerRef}
+        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        {/* Full header before threshold */}
-        {!isMini && (
-          <div className="space-y-6 transition-all duration-300 ease-in-out">
+        {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
+        <div
+          className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible opacity-0" : "visible opacity-100"}`}
+        >
             {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
             <div className="hidden items-center justify-between md:flex">
               <div className="flex items-center space-x-6">
@@ -181,12 +233,12 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Mini header (provider: location only) */}
-        {isMini && (
-          <div className="rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-md transition-all duration-300 ease-in-out">
+        </div>
+      </header>
+      {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
+      {isMini && (
+        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
+          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-semibold text-gray-800">
@@ -197,9 +249,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               <MapFunctions />
             </div>
           </div>
-        )}
-      </header>
-      {/* Map modal handled inside MapFunctions component */}
+        </div>
+      )}
     </APIProvider>
   );
 };

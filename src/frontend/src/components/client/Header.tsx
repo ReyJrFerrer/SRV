@@ -47,30 +47,62 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   ];
   const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
 
-  // --- Sticky mini header behavior ---
+  // --- Sticky mini header behavior with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
   const [showMiniLocation, setShowMiniLocation] = useState(false);
   useEffect(() => {
+    // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
     let lastY = window.scrollY;
+    let ticking = false;
+    const ENTER_MINI_AT = 140; // px
+    const EXIT_MINI_BELOW = 100; // px
+
     const onScroll = () => {
       const y = window.scrollY;
-      // threshold: once user scrolls past the full header height (approx) show mini
-      const threshold = (headerRef.current?.offsetHeight || 280) - 40; // small buffer
-      setIsMini(y > threshold);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsMini((prev) => {
+            if (!prev && y > ENTER_MINI_AT) return true;
+            if (prev && y < EXIT_MINI_BELOW) return false;
+            return prev;
+          });
 
-      // within mini: slight scroll up shows location, scroll down hides
-      const delta = y - lastY;
-      if (y > threshold) {
-        if (delta < -6) setShowMiniLocation(true);
-        else if (delta > 6) setShowMiniLocation(false);
-      } else {
-        setShowMiniLocation(false);
+          const delta = y - lastY;
+          if (y > ENTER_MINI_AT) {
+            if (delta < -8) setShowMiniLocation(true);
+            else if (delta > 8) setShowMiniLocation(false);
+          } else {
+            setShowMiniLocation(false);
+          }
+          lastY = y;
+          ticking = false;
+        });
+        ticking = true;
       }
-      lastY = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Toggle body class so global layout can compensate for fixed mini overlay
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isMini) document.body.classList.add("has-mini-header");
+    else document.body.classList.remove("has-mini-header");
+    return () => document.body.classList.remove("has-mini-header");
+  }, [isMini]);
+
+  // Measure header height and keep it as a minHeight when the mini overlay is shown
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+    };
+    // Measure once after mount
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   // maps logic has been extracted into MapFunctions component
@@ -166,11 +198,13 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     <APIProvider apiKey={mapsApiKey}>
       <header
         ref={headerRef}
+        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        {/* Full header (shown before scroll threshold) */}
-        {!isMini && (
-          <div className="space-y-6 transition-all duration-300 ease-in-out">
+        {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
+        <div
+          className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible opacity-0" : "visible opacity-100"}`}
+        >
             {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
             <div className="hidden items-center justify-between md:flex">
               <div className="flex items-center space-x-6">
@@ -286,13 +320,13 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 </div>
               </form>
             </div>
-          </div>
-        )}
-
-        {/* Mini header (sticky, shown after scroll threshold). Location above search on slight scroll up */}
-        {isMini && (
-          <div className="rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-md transition-all duration-300 ease-in-out">
-            {/* Location row (collapsible) */}
+        </div>
+      </header>
+      {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
+      {isMini && (
+        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
+          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+            {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
                 showMiniLocation
@@ -300,26 +334,21 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   : "max-h-0 -translate-y-1 opacity-0"
               }`}
             >
-              <div className="flex items-center gap-2 pb-2">
-                <MapPinIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-800">
-                  My Location
-                </span>
-              </div>
-              <div className="-mt-1 flex items-center gap-2">
+              <div className="-mt-1 mb-1 flex items-center gap-2">
                 <MapFunctions />
               </div>
             </div>
 
-            {/* Search row (always visible in mini) */}
+            {/* Search row (always visible) */}
             <form
               className="w-full"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (searchQuery.trim())
+                if (searchQuery.trim()) {
                   navigate(
                     `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
                   );
+                }
               }}
             >
               <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
@@ -330,7 +359,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   placeholder={placeholder}
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  <ul className="absolute left-0 top-full z-50 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                     {filteredSuggestions.map((suggestion, idx) => (
                       <li
                         key={idx}
@@ -345,9 +374,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               </div>
             </form>
           </div>
-        )}
-      </header>
-      {/* Map modal handled inside MapFunctions component */}
+        </div>
+      )}
     </APIProvider>
   );
 };
