@@ -9,7 +9,10 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 
 import ClientHeader from "../../components/client/Header";
 import LocationBlockedModal from "../../components/common/LocationBlockedModal";
-import { ArrowPathRoundedSquareIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathRoundedSquareIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { useLocationStore } from "../../store/locationStore";
 // import PWAInstall from "../../components/PWAInstall";
@@ -24,7 +27,7 @@ const ClientHomePage: React.FC = () => {
 
   // --- Use Zustand location store for location permission status ---
   const { locationStatus } = useLocationStore();
-  
+
   // --- State: Button loading for provider CTA ---
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
@@ -44,8 +47,6 @@ const ClientHomePage: React.FC = () => {
   useEffect(() => {
     document.title = "Home | SRV";
   }, []);
-
-  
 
   // --- Render: Client Home Page Layout ---
   return (

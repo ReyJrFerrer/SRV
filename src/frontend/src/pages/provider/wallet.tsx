@@ -143,7 +143,7 @@ const WalletPage: React.FC = () => {
             // Payment completed - the backend has already credited the wallet
             if (statusResponse.credited) {
               const amount = statusResponse.paidAmount || 0;
-              
+
               if (statusResponse.alreadyCredited) {
                 // Already credited in a previous check
                 toast.info(
@@ -155,9 +155,9 @@ const WalletPage: React.FC = () => {
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
               }
-              
+
               completedInvoices.add(invoiceId);
-              
+
               // Refresh wallet data to show updated balance
               await refreshWalletData();
             } else if (statusResponse.creditError) {
