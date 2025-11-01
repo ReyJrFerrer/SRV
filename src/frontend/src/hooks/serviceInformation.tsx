@@ -264,7 +264,10 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
-                { latitude: location!.latitude, longitude: location!.longitude },
+                {
+                  latitude: location!.latitude,
+                  longitude: location!.longitude,
+                },
                 { latitude: lat, longitude: lng },
               );
             } catch {
@@ -399,7 +402,10 @@ export const useServicesByCategory = (
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
-                { latitude: location!.latitude, longitude: location!.longitude },
+                {
+                  latitude: location!.latitude,
+                  longitude: location!.longitude,
+                },
                 { latitude: lat, longitude: lng },
               );
             } catch {
@@ -450,7 +456,7 @@ export const useServicesByCategory = (
         servicePackagesMap,
       );
 
-  setServices(filterAndSortByArea(enrichedServices));
+      setServices(filterAndSortByArea(enrichedServices));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch services"),
@@ -521,7 +527,10 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
-                { latitude: location!.latitude, longitude: location!.longitude },
+                {
+                  latitude: location!.latitude,
+                  longitude: location!.longitude,
+                },
                 { latitude: lat, longitude: lng },
               );
             } catch {
@@ -587,7 +596,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
         servicePackagesMap,
       );
 
-  setServices(filterAndSortByArea(enrichedServices));
+      setServices(filterAndSortByArea(enrichedServices));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch top services"),
