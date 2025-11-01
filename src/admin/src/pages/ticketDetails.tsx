@@ -151,7 +151,9 @@ export const TicketDetailsPage: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [imageDataUrls, setImageDataUrls] = useState<Record<string, string>>({});
+  const [imageDataUrls, setImageDataUrls] = useState<Record<string, string>>(
+    {},
+  );
   const [loadingImages, setLoadingImages] = useState(false);
 
   // Initialize canister references and refresh data
@@ -271,10 +273,7 @@ export const TicketDetailsPage: React.FC = () => {
               if (mediaItem && mediaItem.url) {
                 // Use the public URL directly
                 urls[attachment] = mediaItem.url;
-                console.log(
-                  "Successfully loaded image URL for:",
-                  attachment,
-                );
+                console.log("Successfully loaded image URL for:", attachment);
               } else {
                 console.warn("Failed to get media item for:", attachment);
                 urls[attachment] =
@@ -531,7 +530,6 @@ export const TicketDetailsPage: React.FC = () => {
                     {ticket.description}
                   </p>
                 </div>
-                
 
                 {/* Attachments Section */}
                 {ticket.attachments && ticket.attachments.length > 0 && (
@@ -547,7 +545,8 @@ export const TicketDetailsPage: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                       {ticket.attachments.map((attachment, index) => {
                         const displayUrl = imageDataUrls[attachment] || "";
-                        const isLoading = loadingImages && !imageDataUrls[attachment];
+                        const isLoading =
+                          loadingImages && !imageDataUrls[attachment];
 
                         return (
                           <a
