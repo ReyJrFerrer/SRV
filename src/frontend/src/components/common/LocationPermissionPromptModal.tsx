@@ -43,7 +43,8 @@ const LocationPermissionPromptModal: React.FC<Props> = ({
             Enable your location
           </h2>
           <p className="mb-4 text-sm text-gray-600">
-            Please enable location access in your browser so we can show services near you and improve your experience.
+            Please enable location access in your browser so we can show
+            services near you and improve your experience.
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
