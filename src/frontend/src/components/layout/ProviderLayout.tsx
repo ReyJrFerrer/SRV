@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import ActiveServiceBanner from "../provider/ActiveServiceBanner";
+import RouteTransition from "../common/RouteTransition";
 
 export default function ProviderLayout() {
   return (
@@ -9,7 +10,9 @@ export default function ProviderLayout() {
         <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}
         <main>
-          <Outlet />
+          <RouteTransition>
+            <Outlet />
+          </RouteTransition>
         </main>
         {/* Provider-specific footer can go here */}
       </div>
