@@ -86,9 +86,21 @@ const ProviderChatPage: React.FC = () => {
           ) : conversations.length > 0 ? (
             <section className="rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100">
               <ul className="divide-y divide-blue-50">
-                {conversations.map((conversationSummary) => {
+                {conversations
+                  .slice() // copy array to avoid mutating original
+                  .sort((a, b) => {
+                    const aTime = a.lastMessage?.[0]?.createdAt
+                      ? new Date(a.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    const bTime = b.lastMessage?.[0]?.createdAt
+                      ? new Date(b.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    return bTime - aTime;
+                  })
+                  .map((conversationSummary) => {
                   const conversation = conversationSummary.conversation;
-                  const lastMessage = conversationSummary.lastMessage;
+                  const lastMessage =
+                    conversationSummary.lastMessage?.[0] || undefined;
                   const currentUserId =
                     identity?.getPrincipal().toString() || "";
                   const otherUserId = conversationSummary.otherUserId;
@@ -145,7 +157,9 @@ const ProviderChatPage: React.FC = () => {
                           <p
                             className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
                           >
-                            {lastMessage?.content || (
+                            {lastMessage?.content?.encryptedText ? (
+                              lastMessage.content.encryptedText
+                            ) : (
                               <span className="italic text-gray-400">
                                 No messages yet
                               </span>

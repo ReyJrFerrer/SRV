@@ -343,7 +343,7 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
 
   // Use requested userId if admin, otherwise use authenticated user's ID
   const userId = (authInfo.isAdmin && requestedUserId) ? requestedUserId : authInfo.uid;
-  
+
   // Log for debugging admin queries
   if (authInfo.isAdmin && requestedUserId) {
     console.log(`[getMyConversations] Admin query for userId: ${userId}`);
@@ -363,7 +363,9 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
       .where("isActive", "==", true)
       .get();
 
-    console.log(`[getMyConversations] Found ${clientConversationsSnapshot.size} client conversations and ${providerConversationsSnapshot.size} provider conversations for userId: ${userId}`);
+    console.log(`[getMyConversations] Found ${clientConversationsSnapshot.size} 
+      client conversations and ${providerConversationsSnapshot.size} 
+      provider conversations for userId: ${userId}`);
 
     // Combine and deduplicate conversations
     const conversationMap = new Map();
