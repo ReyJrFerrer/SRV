@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import phLocations from "../data/ph_locations.json";
 
 export type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
 
@@ -70,7 +71,28 @@ const normalizeLocationData = (data: any) => {
   // Handle BigDataCloud API response format
   if (data?.city || data?.locality) {
     const cityPart = data.city || data.locality || "";
-    const provinceVal = data.principalSubdivision || data.countryName || "";
+    let provinceVal = data.principalSubdivision || data.countryName || "";
+
+    // Try to refine province for PH using localityInfo + known provinces
+    try {
+      const isPH = (data.countryName || "").toLowerCase() === "philippines";
+      const admin = data.localityInfo?.administrative || [];
+      if (isPH && Array.isArray(admin)) {
+        const provinces: string[] = Array.isArray((phLocations as any)?.provinces)
+          ? (phLocations as any).provinces.map((p: any) => p.name)
+          : [];
+        const match = admin.find((a: any) =>
+          provinces.some(
+            (prov) => a?.name?.toLowerCase?.() === prov.toLowerCase(),
+          ),
+        );
+        if (match?.name) {
+          provinceVal = match.name;
+        }
+      }
+    } catch {
+      // ignore refinement errors
+    }
 
     // Special case: Baguio normalization
     if (
@@ -180,12 +202,8 @@ export const useLocationStore = create<LocationState>()(
 
       requestLocation: async () => {
         const state = get();
-
-        // If user explicitly chose manual address, don't override it
-        if (state.addressMode === "manual") {
-          set({ locationLoading: false });
-          return;
-        }
+        // Even in manual mode, we still try to detect GPS so maps can work.
+        // We will NOT overwrite manual address fields when addressMode === "manual".
 
         // If we already have location data and it's not expired, don't refetch
         if (
@@ -365,11 +383,10 @@ export const useLocationStore = create<LocationState>()(
           "locationPermission",
         ) as LocationStatus;
 
-        // If using manual mode, trust persisted manual city/province and skip auto request
+        // If in manual mode, we still record stored permission
+        // and allow GPS to initialize so the map can be used when permission is allowed.
         if (state.addressMode === "manual") {
           if (storedPermission) set({ locationStatus: storedPermission });
-          set({ isInitialized: true, locationLoading: false });
-          return;
         }
 
         if (storedLocation && storedPermission === "allowed") {
@@ -404,11 +421,11 @@ export const useLocationStore = create<LocationState>()(
 
         set({ isInitialized: true });
 
-        // Only request location if we don't have it or permission status is not_set and not in manual mode
+        // Only request location if we don't have it yet or status is not_set.
+        // In manual mode, this will populate GPS without overwriting manual address.
         if (
-          get().addressMode !== "manual" &&
-          (state.locationStatus === "not_set" ||
-            (!state.location && state.locationStatus === "allowed"))
+          state.locationStatus === "not_set" ||
+          (!state.location && state.locationStatus === "allowed")
         ) {
           await get().requestLocation();
         }

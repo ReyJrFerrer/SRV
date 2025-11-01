@@ -120,7 +120,16 @@ const MapFunctions: React.FC = () => {
   return (
     <>
       <div className="flex w-full items-center justify-start">
-        {userAddress && userProvince ? (
+        {mapsApiLoaded && geoLocation && gmapsStatus === "ok" ? (
+          <button
+            type="button"
+            className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+            onClick={() => setShowMap(true)}
+            title={gmapsAddress}
+          >
+            {gmapsAddress}
+          </button>
+        ) : userAddress && userProvince ? (
           geoLocation ? (
             <button
               type="button"
@@ -138,15 +147,6 @@ const MapFunctions: React.FC = () => {
               {userAddress}, {userProvince}
             </span>
           )
-        ) : gmapsStatus === "ok" ? (
-          <button
-            type="button"
-            className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-            onClick={() => setShowMap(true)}
-            title={gmapsAddress}
-          >
-            {gmapsAddress}
-          </button>
         ) : locationLoading || gmapsStatus === "loading" ? (
           <span className="animate-pulse text-sm text-gray-500">
             Detecting location...
