@@ -1,5 +1,5 @@
 // --- Imports ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -12,12 +12,13 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 // --- Props ---
 export interface HeaderProps {
   className?: string;
+  scrollTargetRef?: React.RefObject<HTMLElement>;
 }
 
 // Map functions extracted into components/common/GMapFunctions/MapFunctions
 
 // --- Main Header Component ---
-const Header: React.FC<HeaderProps> = ({ className }) => {
+const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
@@ -53,126 +54,143 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     navigate("/provider/notifications");
   };
 
-  // --- Sticky header: show/hide location area on scroll ---
-  const [showLocationArea, setShowLocationArea] = useState(true);
+  // --- Sticky mini header behavior (provider shows only location) ---
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [isMini, setIsMini] = useState(false);
   useEffect(() => {
-    let lastY = window.scrollY;
+    const el: (Window | HTMLElement) | null = scrollTargetRef?.current ?? window;
+    const getScrollY = () => (el instanceof Window ? el.scrollY : el.scrollTop || 0);
     const onScroll = () => {
-      const y = window.scrollY;
-      if (y > lastY + 10) {
-        // scrolling down
-        setShowLocationArea(false);
-      } else if (y < lastY - 10) {
-        // scrolling up
-        setShowLocationArea(true);
-      }
-      lastY = y;
+      const y = getScrollY();
+      const threshold = (headerRef.current?.offsetHeight || 240) - 40;
+      setIsMini(y > threshold);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (el instanceof Window) {
+      el.addEventListener("scroll", onScroll, { passive: true });
+      return () => el.removeEventListener("scroll", onScroll);
+    } else if (el) {
+      el.addEventListener("scroll", onScroll, { passive: true } as AddEventListenerOptions);
+      return () => el.removeEventListener("scroll", onScroll as EventListener);
+    }
+  }, [scrollTargetRef]);
 
   // --- Render: Header layout ---
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
-        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+        ref={headerRef}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
-        <div className="hidden items-center justify-between md:flex">
-          <div className="flex items-center space-x-6">
-            <Link to="/provider/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
-            <div className="h-10 border-l-2 border-blue-100"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                Welcome,{" "}
-                <span className="text-2xl font-bold text-gray-800">
+        {/* Full header before threshold */}
+        {!isMini && (
+          <div className="space-y-6 transition-all duration-300 ease-in-out">
+            {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
+            <div className="hidden items-center justify-between md:flex">
+              <div className="flex items-center space-x-6">
+                <Link to="/provider/home">
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
+                </Link>
+                <div className="h-10 border-l-2 border-blue-100"></div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                    Welcome,{" "}
+                    <span className="text-2xl font-bold text-gray-800">
+                      {displayName}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              {/* Notification Button with badge */}
+              {isAuthenticated && (
+                <button
+                  onClick={handleNotificationsClick}
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  aria-label="Notifications"
+                >
+                  <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
+            <div className="md:hidden">
+              <div className="flex items-center justify-between">
+                <Link to="/client/home">
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
+                </Link>
+                {isAuthenticated && (
+                  <button
+                    onClick={handleNotificationsClick}
+                    className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                    aria-label="Notifications"
+                  >
+                    <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+              <hr className="my-4 border-blue-100" />
+              <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+                <span className="text-xl font-semibold tracking-wide text-blue-700">
+                  Welcome Back,
+                </span>
+                <span className="text-xl font-bold text-gray-800">
                   {displayName}
                 </span>
-              </span>
+              </div>
             </div>
-          </div>
-          {/* Notification Button with badge */}
-          {isAuthenticated && (
-            <button
-              onClick={handleNotificationsClick}
-              className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-              aria-label="Notifications"
-            >
-              <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
 
-        {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
-        <div className="md:hidden">
-          <div className="flex items-center justify-between">
-            <Link to="/client/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
-            {isAuthenticated && (
-              <button
-                onClick={handleNotificationsClick}
-                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-                aria-label="Notifications"
-              >
-                <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
-                    {unreadCount}
+            {/* --- Location Section --- */}
+            <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                  <MapPinIcon className="h-6 w-6 text-blue-600" />
+                  <span className="text-base font-bold text-gray-800">
+                    My Location
                   </span>
-                )}
-              </button>
-            )}
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <MapFunctions />
+              </div>
+              {(locationStatus === "denied" || locationStatus === "not_set") && (
+                <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                  Location access is off. Some features are limited.
+                </div>
+              )}
+            </div>
           </div>
-          <hr className="my-4 border-blue-100" />
-          <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-            <span className="text-xl font-semibold tracking-wide text-blue-700">
-              Welcome Back,
-            </span>
-            <span className="text-xl font-bold text-gray-800">
-              {displayName}
-            </span>
-          </div>
-        </div>
+        )}
 
-        {/* --- Location Section (search bar removed, location detection restored) --- */}
-        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
-          <div className={`${showLocationArea ? "block" : "hidden"}`}>
-            {/* location area shown/hidden based on scroll */}
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <MapPinIcon className="h-6 w-6 text-blue-600" />
-              <span className="text-base font-bold text-gray-800">
-                My Location
-              </span>
+        {/* Mini header (provider: location only) */}
+        {isMini && (
+          <div className="rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-md transition-all duration-300 ease-in-out">
+            <div className="flex items-center gap-2 pb-1">
+              <MapPinIcon className="h-5 w-5 text-blue-600" />
+              <span className="text-sm font-semibold text-gray-800">My Location</span>
+            </div>
+            <div className="-mt-1 flex items-center gap-2">
+              <MapFunctions />
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <MapFunctions />
-          </div>
-          {(locationStatus === "denied" || locationStatus === "not_set") && (
-            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-              Location access is off. Some features are limited.
-            </div>
-          )}
-        </div>
+        )}
       </header>
       {/* Map modal handled inside MapFunctions component */}
     </APIProvider>

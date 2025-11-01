@@ -1,5 +1,5 @@
 // --- Imports ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -47,19 +47,25 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   ];
   const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
 
-  // --- State: (map modal handled by MapFunctions) ---
-  // --- Sticky header: show/hide location area on scroll ---
-  const [showLocationArea, setShowLocationArea] = useState(true);
+  // --- Sticky mini header behavior ---
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [isMini, setIsMini] = useState(false);
+  const [showMiniLocation, setShowMiniLocation] = useState(false);
   useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      if (y > lastY + 10) {
-        // scrolling down
-        setShowLocationArea(false);
-      } else if (y < lastY - 10) {
-        // scrolling up
-        setShowLocationArea(true);
+      // threshold: once user scrolls past the full header height (approx) show mini
+      const threshold = (headerRef.current?.offsetHeight || 280) - 40; // small buffer
+      setIsMini(y > threshold);
+
+      // within mini: slight scroll up shows location, scroll down hides
+      const delta = y - lastY;
+      if (y > threshold) {
+        if (delta < -6) setShowMiniLocation(true);
+        else if (delta > 6) setShowMiniLocation(false);
+      } else {
+        setShowMiniLocation(false);
       }
       lastY = y;
     };
@@ -159,124 +165,177 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
-        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className} sticky top-0 z-40`}
+        ref={headerRef}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
-        <div className="hidden items-center justify-between md:flex">
-          <div className="flex items-center space-x-6">
-            <Link to="/client/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
-            <div className="h-10 border-l-2 border-blue-100"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                Welcome,{" "}
-                <span className="text-2xl font-bold text-gray-800">
-                  {displayName}
-                </span>
-              </span>
-            </div>
-          </div>
-          {isAuthenticated && (
-            <button
-              onClick={handleProfileClick}
-              className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-            >
-              <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-            </button>
-          )}
-        </div>
-
-        {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
-        <div className="md:hidden">
-          <div className="flex items-center justify-between">
-            <Link to="/client/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
-            {isAuthenticated && (
-              <button
-                onClick={handleProfileClick}
-                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-              >
-                <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-              </button>
-            )}
-          </div>
-          <hr className="my-4 border-blue-100" />
-          <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-            <span className="text-xl font-semibold tracking-wide text-blue-700">
-              Welcome,
-            </span>
-            <span className="text-xl font-bold text-gray-800">
-              {displayName}
-            </span>
-          </div>
-        </div>
-
-        {/* --- Location & Search Section --- */}
-        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-200">
-          <div className={`${showLocationArea ? "block" : "hidden"}`}>
-            {/* location area shown/hidden based on scroll */}
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <MapPinIcon className="h-6 w-6 text-blue-600" />
-              <span className="text-base font-bold text-gray-800">
-                My Location
-              </span>
-            </div>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <MapFunctions />
-          </div>
-          {/* --- Search Bar for Service Queries --- */}
-          <form
-            className="mt-4 w-full"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (searchQuery.trim()) {
-                navigate(
-                  `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
-                );
-              }
-            }}
-          >
-            <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
-              <input
-                type="text"
-                className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
-                placeholder={placeholder}
-                value={searchQuery}
-                onChange={handleSearchInputChange}
-                onFocus={() =>
-                  setShowSuggestions(filteredSuggestions.length > 0)
-                }
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-              />
-              {showSuggestions && filteredSuggestions.length > 0 && (
-                <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
-                  {filteredSuggestions.map((suggestion, idx) => (
-                    <li
-                      key={idx}
-                      className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
-                      onMouseDown={() => handleSuggestionClick(suggestion)}
-                    >
-                      {suggestion}
-                    </li>
-                  ))}
-                </ul>
+        {/* Full header (shown before scroll threshold) */}
+        {!isMini && (
+          <div className="space-y-6 transition-all duration-300 ease-in-out">
+            {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
+            <div className="hidden items-center justify-between md:flex">
+              <div className="flex items-center space-x-6">
+                <Link to="/client/home">
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
+                </Link>
+                <div className="h-10 border-l-2 border-blue-100"></div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                    Welcome,{" "}
+                    <span className="text-2xl font-bold text-gray-800">
+                      {displayName}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              {isAuthenticated && (
+                <button
+                  onClick={handleProfileClick}
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                >
+                  <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                </button>
               )}
             </div>
-          </form>
-        </div>
+
+            {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
+            <div className="md:hidden">
+              <div className="flex items-center justify-between">
+                <Link to="/client/home">
+                  <img
+                    src="/logo.svg"
+                    alt="SRV Logo"
+                    className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  />
+                </Link>
+                {isAuthenticated && (
+                  <button
+                    onClick={handleProfileClick}
+                    className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  >
+                    <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                  </button>
+                )}
+              </div>
+              <hr className="my-4 border-blue-100" />
+              <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+                <span className="text-xl font-semibold tracking-wide text-blue-700">
+                  Welcome,
+                </span>
+                <span className="text-xl font-bold text-gray-800">
+                  {displayName}
+                </span>
+              </div>
+            </div>
+
+            {/* --- Location & Search Section --- */}
+            <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                  <MapPinIcon className="h-6 w-6 text-blue-600" />
+                  <span className="text-base font-bold text-gray-800">
+                    My Location
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <MapFunctions />
+              </div>
+              {/* --- Search Bar for Service Queries --- */}
+              <form
+                className="mt-4 w-full"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (searchQuery.trim()) {
+                    navigate(
+                      `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                    );
+                  }
+                }}
+              >
+                <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
+                  <input
+                    type="text"
+                    className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                    placeholder={placeholder}
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    onFocus={() =>
+                      setShowSuggestions(filteredSuggestions.length > 0)
+                    }
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                  />
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                      {filteredSuggestions.map((suggestion, idx) => (
+                        <li
+                          key={idx}
+                          className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
+                          onMouseDown={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Mini header (sticky, shown after scroll threshold). Location above search on slight scroll up */}
+        {isMini && (
+          <div className="rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-md transition-all duration-300 ease-in-out">
+            {/* Location row (collapsible) */}
+            <div
+              className={`overflow-hidden transition-all duration-300 ${
+                showMiniLocation ? "max-h-16 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1"
+              }`}
+            >
+              <div className="flex items-center gap-2 pb-2">
+                <MapPinIcon className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-800">
+                  My Location
+                </span>
+              </div>
+              <div className="-mt-1 flex items-center gap-2">
+                <MapFunctions />
+              </div>
+            </div>
+
+            {/* Search row (always visible in mini) */}
+            <form
+              className="w-full"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim())
+                  navigate(`/client/search-results?query=${encodeURIComponent(searchQuery)}`);
+              }}
+            >
+              <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
+                <input
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
+                  className="flex-1 border-none bg-transparent p-0 text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                  placeholder={placeholder}
+                />
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                    {filteredSuggestions.map((suggestion, idx) => (
+                      <li key={idx} className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50" onMouseDown={() => handleSuggestionClick(suggestion)}>
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </form>
+          </div>
+        )}
       </header>
       {/* Map modal handled inside MapFunctions component */}
     </APIProvider>
