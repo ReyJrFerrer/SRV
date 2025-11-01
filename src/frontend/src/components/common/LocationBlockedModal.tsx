@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocationStore } from "../../store/locationStore";
 import phLocations from "../../data/ph_locations.json";
 
@@ -47,8 +48,8 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
 
   if (!visible) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+  const modalContent = (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         {/* Close button */}
         <button
@@ -143,6 +144,12 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
       </div>
     </div>
   );
+
+  // Render via portal to avoid being clipped by header or parent stacking contexts
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+  return modalContent;
 };
 
 export default LocationBlockedModal;
