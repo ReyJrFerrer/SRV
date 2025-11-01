@@ -235,10 +235,12 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           .replace(/\bcity\b/g, "")
           .replace(/\s+/g, " ")
           .trim();
-      const normalizeProvince = (val: string) => (val || "").toLowerCase().trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
 
       const inSameProvince = (svc: EnrichedService) =>
-        normalizeProvince(svc.location.state) === normalizeProvince(userProvince || "");
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
         normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
@@ -383,9 +385,11 @@ export const useServicesByCategory = (
           .replace(/\bcity\b/g, "")
           .replace(/\s+/g, " ")
           .trim();
-      const normalizeProvince = (val: string) => (val || "").toLowerCase().trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
-        normalizeProvince(svc.location.state) === normalizeProvince(userProvince || "");
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
         normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
@@ -511,9 +515,11 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
           .replace(/\bcity\b/g, "")
           .replace(/\s+/g, " ")
           .trim();
-      const normalizeProvince = (val: string) => (val || "").toLowerCase().trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
-        normalizeProvince(svc.location.state) === normalizeProvince(userProvince || "");
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
         normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
