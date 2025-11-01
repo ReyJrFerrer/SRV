@@ -135,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   };
 
-  // Effect: fetch user profile and initialize location when auth loads
+  // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
     const loadInitialData = async () => {
       // Fetch user profile if authenticated
@@ -146,11 +146,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         } catch (error) {
           /* Profile fetch failed */
         }
-      }
-
-      // Initialize location through Zustand store (will check cache first)
-      if (!isAuthLoading) {
-        locationStore.requestLocation();
       }
     };
 

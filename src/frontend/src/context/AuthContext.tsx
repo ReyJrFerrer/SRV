@@ -28,6 +28,8 @@ import {
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
+import LocationPermissionPromptModal from "../components/common/LocationPermissionPromptModal";
+import LocationBlockedModal from "../components/common/LocationBlockedModal";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -103,8 +105,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Post-login location prompt state
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [awaitingGeoResult, setAwaitingGeoResult] = useState(false);
 
-  // Initialize location store on mount
+  // Initialize location store on mount (does not auto-request geolocation)
   useEffect(() => {
     locationStore.initialize();
   }, [locationStore]);
@@ -170,13 +176,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     enablePushNotificationsPWA,
   ]);
 
-  // Also trigger a geolocation request right after login (mirrors notification timing)
+  // After login, show a friendly modal asking to enable location access (once per session)
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      // This is safe to call multiple times; the store has guards and caching
-      locationStore.requestLocation();
+    if (isLoading) return;
+    if (!isAuthenticated) return;
+
+    const alreadyShown = sessionStorage.getItem(
+      "post_login_location_prompt_shown",
+    );
+    if (!alreadyShown && locationStore.locationStatus !== "allowed") {
+      setShowLocationPrompt(true);
+      sessionStorage.setItem("post_login_location_prompt_shown", "1");
     }
-  }, [isLoading, isAuthenticated, locationStore]);
+  }, [isLoading, isAuthenticated, locationStore.locationStatus]);
+
+  // Watch for geolocation result after the user chose "Enable location"
+  useEffect(() => {
+    if (!awaitingGeoResult) return;
+    const status = locationStore.locationStatus;
+    if (status === "denied") {
+      setShowBlockedModal(true);
+      setAwaitingGeoResult(false);
+    } else if (status === "allowed" || status === "unsupported") {
+      setAwaitingGeoResult(false);
+    }
+  }, [awaitingGeoResult, locationStore.locationStatus]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -338,5 +362,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     disablePushNotifications: disablePushNotificationsPWA,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Post-login location permission prompt */}
+      <LocationPermissionPromptModal
+        visible={showLocationPrompt}
+        onEnable={async () => {
+          setShowLocationPrompt(false);
+          setAwaitingGeoResult(true);
+          try {
+            await locationStore.requestLocation();
+          } catch {
+            // ignore - store handles errors
+          }
+        }}
+        onSkip={() => {
+          setShowLocationPrompt(false);
+          setShowBlockedModal(true);
+        }}
+        onClose={() => {
+          setShowLocationPrompt(false);
+        }}
+      />
+      {/* Manual location selection when user declines or denies */}
+      <LocationBlockedModal
+        visible={showBlockedModal}
+        onClose={() => setShowBlockedModal(false)}
+      />
+    </AuthContext.Provider>
+  );
 };

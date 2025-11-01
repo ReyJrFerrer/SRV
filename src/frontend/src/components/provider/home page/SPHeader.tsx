@@ -22,13 +22,13 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
-  const { requestLocation, locationStatus } = useLocationStore();
+  const { locationStatus } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const mapsApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
-  // Effect: fetch user profile and initialize location when auth loads
+  // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
     const loadInitialData = async () => {
       if (isAuthenticated) {
@@ -39,16 +39,12 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           /* Profile fetch failed */
         }
       }
-
-      if (!isAuthLoading) {
-        requestLocation();
-      }
     };
 
     if (!isAuthLoading) {
       loadInitialData();
     }
-  }, [isAuthenticated, isAuthLoading, requestLocation]);
+  }, [isAuthenticated, isAuthLoading]);
 
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
