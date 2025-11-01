@@ -35,6 +35,8 @@ export interface EnrichedService {
     address: string;
     city: string;
     state: string;
+    latitude?: number;
+    longitude?: number;
     serviceDistance: number;
     serviceDistanceUnit: string;
   };
@@ -107,7 +109,9 @@ const transformToEnrichedService = (
       address: service.location.address,
       city: service.location.city,
       state: service.location.state,
-      serviceDistance: 10, // Default radius - could be fetched from actual data if available
+      latitude: service.location.latitude,
+      longitude: service.location.longitude,
+      serviceDistance: 25, // Default radius - could be fetched from actual data if available
       serviceDistanceUnit: "km",
     },
 
@@ -219,22 +223,30 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
 
   const filterAndSortByArea = useCallback(
     (items: EnrichedService[]): EnrichedService[] => {
-      // If we don't have a province/city, don't filter
+      // If we don't have any user geo context, don't filter
       if (!userProvince && !userAddress) return items;
 
       const RADIUS_KM = 25; // treat "near municipalities" within 25 km
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
 
+      const normalizeCity = (val: string) =>
+        (val || "")
+          .toLowerCase()
+          .replace(/\bcity\b/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
+
       const inSameProvince = (svc: EnrichedService) =>
-        (svc.location.state || "").toLowerCase() ===
-        (userProvince || "").toLowerCase();
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        (svc.location.city || "").toLowerCase() ===
-        (userAddress || "").toLowerCase();
+        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
-        const lat = (svc as any)?.location?.latitude;
-        const lng = (svc as any)?.location?.longitude;
+        const lat = svc.location?.latitude;
+        const lng = svc.location?.longitude;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         try {
           const d = calculateDistance(
@@ -247,20 +259,19 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         }
       };
 
-      const filtered = items.filter((svc) => {
-        // Only show services in user's province
-        if (!inSameProvince(svc)) return false;
-        // Prefer same city; also allow nearby municipalities by radius if coords exist
-        if (inSameCity(svc)) return true;
-        return withinRadius(svc);
-      });
+      // Include:
+      // - Always include same-city matches (even if province strings don't match)
+      // - Else include services in the same province that are within radius
+      const filtered = items.filter(
+        (svc) => inSameCity(svc) || (inSameProvince(svc) && withinRadius(svc)),
+      );
 
       // Sort: same city first, then by distance (if available)
       const withDistance = filtered.map((svc) => {
         let dist: number | null = null;
         if (hasUserCoords) {
-          const lat = (svc as any)?.location?.latitude;
-          const lng = (svc as any)?.location?.longitude;
+          const lat = svc.location?.latitude;
+          const lng = svc.location?.longitude;
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
@@ -368,16 +379,23 @@ export const useServicesByCategory = (
       if (!userProvince && !userAddress) return items;
       const RADIUS_KM = 25;
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
+      const normalizeCity = (val: string) =>
+        (val || "")
+          .toLowerCase()
+          .replace(/\bcity\b/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
-        (svc.location.state || "").toLowerCase() ===
-        (userProvince || "").toLowerCase();
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        (svc.location.city || "").toLowerCase() ===
-        (userAddress || "").toLowerCase();
+        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
-        const lat = (svc as any)?.location?.latitude;
-        const lng = (svc as any)?.location?.longitude;
+        const lat = svc.location?.latitude;
+        const lng = svc.location?.longitude;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         try {
           const d = calculateDistance(
@@ -389,16 +407,14 @@ export const useServicesByCategory = (
           return false;
         }
       };
-      const filtered = items.filter((svc) => {
-        if (!inSameProvince(svc)) return false;
-        if (inSameCity(svc)) return true;
-        return withinRadius(svc);
-      });
+      const filtered = items.filter(
+        (svc) => inSameCity(svc) || (inSameProvince(svc) && withinRadius(svc)),
+      );
       const withDistance = filtered.map((svc) => {
         let dist: number | null = null;
         if (hasUserCoords) {
-          const lat = (svc as any)?.location?.latitude;
-          const lng = (svc as any)?.location?.longitude;
+          const lat = svc.location?.latitude;
+          const lng = svc.location?.longitude;
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
@@ -493,16 +509,23 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       if (!userProvince && !userAddress) return items;
       const RADIUS_KM = 25;
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
+      const normalizeCity = (val: string) =>
+        (val || "")
+          .toLowerCase()
+          .replace(/\bcity\b/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+      const normalizeProvince = (val: string) =>
+        (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
-        (svc.location.state || "").toLowerCase() ===
-        (userProvince || "").toLowerCase();
+        normalizeProvince(svc.location.state) ===
+        normalizeProvince(userProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        (svc.location.city || "").toLowerCase() ===
-        (userAddress || "").toLowerCase();
+        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
-        const lat = (svc as any)?.location?.latitude;
-        const lng = (svc as any)?.location?.longitude;
+        const lat = svc.location?.latitude;
+        const lng = svc.location?.longitude;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         try {
           const d = calculateDistance(
@@ -514,16 +537,14 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
           return false;
         }
       };
-      const filtered = items.filter((svc) => {
-        if (!inSameProvince(svc)) return false;
-        if (inSameCity(svc)) return true;
-        return withinRadius(svc);
-      });
+      const filtered = items.filter(
+        (svc) => inSameCity(svc) || (inSameProvince(svc) && withinRadius(svc)),
+      );
       const withDistance = filtered.map((svc) => {
         let dist: number | null = null;
         if (hasUserCoords) {
-          const lat = (svc as any)?.location?.latitude;
-          const lng = (svc as any)?.location?.longitude;
+          const lat = svc.location?.latitude;
+          const lng = svc.location?.longitude;
           if (typeof lat === "number" && typeof lng === "number") {
             try {
               dist = calculateDistance(
