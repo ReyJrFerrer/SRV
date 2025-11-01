@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useAdmin } from "../hooks/useAdmin";
 
 // Function to parse structured report data (same as ticketInbox)
@@ -141,6 +142,34 @@ const getCategoryColor = (category: string) => {
   }
 };
 
+export const ImageAttachmentModal: React.FC<{
+  src: string;
+  onClose: () => void;
+}> = ({ src, onClose }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+    onClick={onClose}
+  >
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <img
+        src={src}
+        alt="Ticket Attachment Full Size"
+        className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "/default-provider.svg";
+        }}
+      />
+      <button
+        className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <XMarkIcon className="h-6 w-6" />
+      </button>
+    </div>
+  </div>
+);
+
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -155,6 +184,7 @@ export const TicketDetailsPage: React.FC = () => {
     {},
   );
   const [loadingImages, setLoadingImages] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
   // Initialize canister references and refresh data
   useEffect(() => {
@@ -471,6 +501,11 @@ export const TicketDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Image Modal */}
+      {modalImage && (
+        <ImageAttachmentModal src={modalImage} onClose={() => setModalImage(null)} />
+      )}
+
       {/* Header */}
       <header className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -552,49 +587,47 @@ export const TicketDetailsPage: React.FC = () => {
                         const isLoading =
                           loadingImages && !imageDataUrls[attachment];
 
-                        return (
-                          <div
-                            key={index}
-                            className="overflow-hidden rounded-lg border border-gray-200"
-                          >
-                            {isLoading ? (
-                              <div className="flex h-32 w-full items-center justify-center bg-gray-100">
-                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                              </div>
-                            ) : (
-                              <div className="h-32 w-full bg-white">
-                                <img
-                                  src={displayUrl}
-                                  alt={`Attachment ${index + 1}`}
-                                  className="h-full w-full object-contain"
-                                  onLoad={(e) => {
-                                    const img = e.target as HTMLImageElement;
-                                    console.log(
-                                      `✅ Image ${index + 1} loaded successfully:`,
-                                      {
-                                        attachment,
-                                        naturalWidth: img.naturalWidth,
-                                        naturalHeight: img.naturalHeight,
-                                        displayUrl,
-                                      },
-                                    );
-                                  }}
-                                  onError={(e) => {
-                                    const img = e.target as HTMLImageElement;
-                                    console.error(
-                                      `❌ Image ${index + 1} failed to load:`,
-                                      {
-                                        attachment,
-                                        displayUrl,
-                                        src: img.src,
-                                        error: e,
-                                      },
-                                    );
-                                  }}
-                                />
-                              </div>
-                            )}
+                        return isLoading ? (
+                          <div className="flex h-32 w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-100">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
                           </div>
+                        ) : (
+                          <button
+                            key={index}
+                            className="group relative h-32 w-full cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            onClick={() => setModalImage(displayUrl)}
+                          >
+                            <img
+                              src={displayUrl}
+                              alt={`Attachment ${index + 1}`}
+                              className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
+                              onLoad={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                console.log(
+                                  `✅ Image ${index + 1} loaded successfully:`,
+                                  {
+                                    attachment,
+                                    naturalWidth: img.naturalWidth,
+                                    naturalHeight: img.naturalHeight,
+                                    displayUrl,
+                                  },
+                                );
+                              }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                console.error(
+                                  `❌ Image ${index + 1} failed to load:`,
+                                  {
+                                    attachment,
+                                    displayUrl,
+                                    src: img.src,
+                                    error: e,
+                                  },
+                                );
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20"></div>
+                          </button>
                         );
                       })}
                     </div>
