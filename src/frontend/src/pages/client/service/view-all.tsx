@@ -6,6 +6,8 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import SearchBar from "../../../components/client/SearchBar";
 import ServiceListItem from "../../../components/client/ServiceListItem";
 import BottomNavigation from "../../../components/client/BottomNavigation";
+import Appear from "../../../components/common/Appear";
+import { ServiceGridSkeleton } from "../../../components/common/Skeletons";
 
 // Hooks
 import { useAllServicesWithProviders } from "../../../hooks/serviceInformation";
@@ -59,21 +61,20 @@ const ViewAllServicesPage: React.FC = () => {
         )}
 
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-          </div>
+          <ServiceGridSkeleton count={9} />
         ) : services.length === 0 && !error ? (
           <div className="py-10 text-center">
             <p className="text-gray-500">No services available</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <ServiceListItem
-                key={service.id}
-                service={service}
-                inCategories={true}
-              />
+            {services.map((service, idx) => (
+              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                <ServiceListItem
+                  service={service}
+                  inCategories={true}
+                />
+              </Appear>
             ))}
           </div>
         )}

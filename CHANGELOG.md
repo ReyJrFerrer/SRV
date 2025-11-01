@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Provider directions page (`/provider/directions/:bookingId`) showing turn-by-turn route from provider current location to client destination with ability to start service upon arrival. Uses unified Google Maps loader to avoid duplicate script issues.
 
+ - Add loading skeletons for service lists and provider services to stabilize layout during data fetches
+ - Add tiny top progress bar with yellow→blue gradient on route/data loads and cascade Appear animations on list grids
+
 ### Added
 
 - Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots

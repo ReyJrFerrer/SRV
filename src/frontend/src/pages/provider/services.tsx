@@ -17,6 +17,8 @@ import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import { useServiceImages } from "../../hooks/useMediaLoader";
 import Tooltip from "../../components/common/Tooltip";
+import Appear from "../../components/common/Appear";
+import { ServiceGridSkeleton } from "../../components/common/Skeletons";
 
 // Helper to get category image path
 const getCategoryImage = (slugOrName?: string) => {
@@ -398,10 +400,7 @@ const MyServicesPage: React.FC = () => {
       <main className="container mx-auto flex-grow p-6 pb-10">
         <div className="mt-4">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-              <p className="mt-4 text-gray-500">Loading your services...</p>
-            </div>
+            <ServiceGridSkeleton count={6} />
           ) : error ? (
             <div className="py-12 text-center">
               <p className="mb-4 text-red-500">{error}</p>
@@ -414,17 +413,18 @@ const MyServicesPage: React.FC = () => {
             </div>
           ) : userServices.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {userServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onToggleActive={handleToggleActive}
-                  onDelete={setDeleteConfirmId}
-                  hasActiveBookings={hasActiveBookings}
-                  getServiceActiveBookingsCount={getServiceActiveBookingsCount}
-                  updatingId={updatingId}
-                  deletingId={deletingId}
-                />
+              {userServices.map((service, idx) => (
+                <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                  <ServiceCard
+                    service={service}
+                    onToggleActive={handleToggleActive}
+                    onDelete={setDeleteConfirmId}
+                    hasActiveBookings={hasActiveBookings}
+                    getServiceActiveBookingsCount={getServiceActiveBookingsCount}
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                  />
+                </Appear>
               ))}
             </div>
           ) : (

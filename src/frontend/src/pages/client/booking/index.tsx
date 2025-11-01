@@ -8,6 +8,8 @@ import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
+import Appear from "../../../components/common/Appear";
+import { BookingListSkeleton } from "../../../components/common/Skeletons";
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
 import { useReputation } from "../../../hooks/useReputation";
 import {
@@ -371,10 +373,7 @@ const MyBookingsPage: React.FC = () => {
           style={{ minHeight: "calc(100vh - 180px)" }}
         >
           {bookingManagement.loading ? (
-            <div className="py-16 text-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-500">Loading bookings...</p>
-            </div>
+            <BookingListSkeleton count={6} />
           ) : bookingManagement.error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
               <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
@@ -399,8 +398,8 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
-                    {sameDayBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {sameDayBookings.map((booking, idx) => (
+                      <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
@@ -422,7 +421,7 @@ const MyBookingsPage: React.FC = () => {
                             serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -436,8 +435,8 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {scheduledBookings.map((booking, idx) => (
+                      <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
@@ -459,7 +458,7 @@ const MyBookingsPage: React.FC = () => {
                             serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>

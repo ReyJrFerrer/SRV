@@ -5,6 +5,8 @@ import {
   Notification,
 } from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import Appear from "../../components/common/Appear";
+import { NotificationListSkeleton } from "../../components/common/Skeletons";
 import {
   BellAlertIcon,
   CheckCircleIcon,
@@ -260,7 +262,7 @@ const NotificationsPage = () => {
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (
-          <div className="p-10 text-center text-gray-500">Loading...</div>
+          <NotificationListSkeleton count={6} />
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
         ) : notifications.length === 0 ? (
@@ -280,12 +282,13 @@ const NotificationsPage = () => {
                     New
                   </h2>
                   <div className="divide-y divide-blue-100">
-                    {unread.map((notif) => (
-                      <NotificationItem
-                        key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                    {unread.map((notif, idx) => (
+                      <Appear key={notif.id} delayMs={idx * 25} variant="fade-up">
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -297,12 +300,13 @@ const NotificationsPage = () => {
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">
-                    {read.map((notif) => (
-                      <NotificationItem
-                        key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                    {read.map((notif, idx) => (
+                      <Appear key={notif.id} delayMs={idx * 25} variant="fade-up">
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>

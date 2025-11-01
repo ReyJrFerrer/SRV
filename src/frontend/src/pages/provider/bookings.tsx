@@ -20,6 +20,8 @@ import CancelWithReasonButton from "../../components/common/CancelWithReasonButt
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
+import Appear from "../../components/common/Appear";
+import { BookingListSkeleton } from "../../components/common/Skeletons";
 
 type BookingStatusTab =
   | "ALL"
@@ -507,13 +509,12 @@ const ProviderBookingsPage: React.FC = () => {
 
         <main className="flex-grow overflow-y-auto pb-10">
           {loading ? (
-            <div className="py-16 text-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-500">Loading bookings...</p>
+            <div className="px-4 py-4">
+              <BookingListSkeleton count={6} />
             </div>
           ) : currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
-              {currentBookings.map((booking) => {
+              {currentBookings.map((booking, idx) => {
                 const clientId =
                   booking.clientProfile?.id?.toString() ||
                   booking.clientId?.toString();
@@ -522,43 +523,44 @@ const ProviderBookingsPage: React.FC = () => {
                   : { reviews: [], reputation: null };
 
                 return (
-                  <div
-                    key={booking.id}
-                    onClick={() => {
-                      // Make inprogress bookings viewable
-                      if (
-                        (activeTab === "IN PROGRESS" ||
-                          booking.status?.toLowerCase() === "inprogress") &&
-                        booking.id
-                      ) {
-                        navigate(`/provider/active-service/${booking.id}`);
-                      } else if (booking.id) {
-                        navigate(`/provider/booking/${booking.id}`);
-                      }
-                    }}
-                    className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
-                  >
-                    <ProviderBookingItemCard
-                      booking={booking}
-                      review={clientData?.reviews || []}
-                      reputation={clientData?.reputation || null}
-                      onDeclineClick={() => {
-                        setDecliningBookingId(booking.id);
-                        setShowDeclineConfirm(true);
+                  <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
+                    <div
+                      onClick={() => {
+                        // Make inprogress bookings viewable
+                        if (
+                          (activeTab === "IN PROGRESS" ||
+                            booking.status?.toLowerCase() === "inprogress") &&
+                          booking.id
+                        ) {
+                          navigate(`/provider/active-service/${booking.id}`);
+                        } else if (booking.id) {
+                          navigate(`/provider/booking/${booking.id}`);
+                        }
                       }}
-                      onCancelClick={(booking: ProviderEnhancedBooking) =>
-                        setCancellingBooking(booking)
-                      }
-                      isDeclining={isBookingActionInProgress(
-                        booking.id,
-                        "decline",
-                      )}
-                      acceptBookingById={acceptBookingById}
-                      isBookingActionInProgress={isBookingActionInProgress}
-                      checkCommissionValidation={checkCommissionValidation}
-                      startBookingById={startBookingById}
-                    />
-                  </div>
+                      className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
+                    >
+                      <ProviderBookingItemCard
+                        booking={booking}
+                        review={clientData?.reviews || []}
+                        reputation={clientData?.reputation || null}
+                        onDeclineClick={() => {
+                          setDecliningBookingId(booking.id);
+                          setShowDeclineConfirm(true);
+                        }}
+                        onCancelClick={(booking: ProviderEnhancedBooking) =>
+                          setCancellingBooking(booking)
+                        }
+                        isDeclining={isBookingActionInProgress(
+                          booking.id,
+                          "decline",
+                        )}
+                        acceptBookingById={acceptBookingById}
+                        isBookingActionInProgress={isBookingActionInProgress}
+                        checkCommissionValidation={checkCommissionValidation}
+                        startBookingById={startBookingById}
+                      />
+                    </div>
+                  </Appear>
                 );
               })}
             </div>
