@@ -8,8 +8,13 @@ interface Props {
 }
 
 const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
-  const { userAddress, userProvince, setAddress, setAddressMode, setDisplayAddress } =
-    useLocationStore();
+  const {
+    userAddress,
+    userProvince,
+    setAddress,
+    setAddressMode,
+    setDisplayAddress,
+  } = useLocationStore();
 
   const [province, setProvince] = useState<string>("");
   const [city, setCity] = useState<string>("");
@@ -22,7 +27,9 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
 
   const cityOptions = useMemo(() => {
     if (!province) return [] as string[];
-    const prov = (phLocations as any).provinces?.find((p: any) => p.name === province);
+    const prov = (phLocations as any).provinces?.find(
+      (p: any) => p.name === province,
+    );
     if (prov && Array.isArray(prov.municipalities)) {
       return prov.municipalities.map((m: any) => m.name);
     }
@@ -63,15 +70,19 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
         </div>
 
         <div className="mt-12">
-          <h2 className="mb-2 text-center text-xl font-bold text-blue-800">Choose your location</h2>
+          <h2 className="mb-2 text-center text-xl font-bold text-blue-800">
+            Choose your location
+          </h2>
           <p className="mb-4 text-center text-sm text-gray-600">
-            Your browser blocked location access. Select your City/Municipality and Province so we can
-            show nearby services.
+            Your browser blocked location access. Select your City/Municipality
+            and Province so we can show nearby services.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-blue-700">Province</label>
+              <label className="mb-1 block text-sm font-medium text-blue-700">
+                Province
+              </label>
               <select
                 value={province}
                 onChange={(e) => {
@@ -91,7 +102,9 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-blue-700">City / Municipality</label>
+              <label className="mb-1 block text-sm font-medium text-blue-700">
+                City / Municipality
+              </label>
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
