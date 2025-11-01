@@ -280,7 +280,9 @@ const ProviderHomePage: React.FC = () => {
           className="flex-grow overflow-y-auto pb-20"
           ref={scrollRef as React.RefObject<HTMLDivElement>}
         >
-          <SPHeader scrollTargetRef={scrollRef as React.RefObject<HTMLElement>} />
+          <SPHeader
+            scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
+          />
           <div className="mx-auto max-w-7xl p-4">
             {/* Use legacyProvider for components that still need the old interface */}
             {provider && (

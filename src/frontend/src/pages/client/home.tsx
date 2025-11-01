@@ -515,8 +515,8 @@ const ClientHomePage: React.FC = () => {
        */}
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">
-  {/* Header: displays welcome and location */}
-  <ClientHeader className="mb-6 w-full max-w-full" />
+        {/* Header: displays welcome and location */}
+        <ClientHeader className="mb-6 w-full max-w-full" />
         {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories
