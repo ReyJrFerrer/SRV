@@ -181,6 +181,12 @@ export const useLocationStore = create<LocationState>()(
       requestLocation: async () => {
         const state = get();
 
+        // If user explicitly chose manual address, don't override it
+        if (state.addressMode === "manual") {
+          set({ locationLoading: false });
+          return;
+        }
+
         // If we already have location data and it's not expired, don't refetch
         if (
           state.location &&
@@ -193,12 +199,16 @@ export const useLocationStore = create<LocationState>()(
         set({ locationLoading: true });
 
         if (!navigator.geolocation) {
-          set({
-            locationStatus: "unsupported",
-            userAddress: "Geolocation not supported",
-            userProvince: "",
-            locationLoading: false,
-          });
+          if (get().addressMode === "manual") {
+            set({ locationStatus: "unsupported", locationLoading: false });
+          } else {
+            set({
+              locationStatus: "unsupported",
+              userAddress: "Geolocation not supported",
+              userProvince: "",
+              locationLoading: false,
+            });
+          }
           return;
         }
 
@@ -214,13 +224,21 @@ export const useLocationStore = create<LocationState>()(
             if (cached) {
               try {
                 const { address, province } = JSON.parse(cached);
-                set({
-                  location: newLocation,
-                  locationStatus: "allowed",
-                  userAddress: address,
-                  userProvince: province,
-                  locationLoading: false,
-                });
+                if (get().addressMode === "manual") {
+                  set({
+                    location: newLocation,
+                    locationStatus: "allowed",
+                    locationLoading: false,
+                  });
+                } else {
+                  set({
+                    location: newLocation,
+                    locationStatus: "allowed",
+                    userAddress: address,
+                    userProvince: province,
+                    locationLoading: false,
+                  });
+                }
                 localStorage.setItem(
                   "userLocation",
                   JSON.stringify(newLocation),
@@ -241,13 +259,21 @@ export const useLocationStore = create<LocationState>()(
               const normalized = normalizeLocationData(data);
 
               if (normalized) {
-                set({
-                  location: newLocation,
-                  locationStatus: "allowed",
-                  userAddress: normalized.address,
-                  userProvince: normalized.province,
-                  locationLoading: false,
-                });
+                if (get().addressMode === "manual") {
+                  set({
+                    location: newLocation,
+                    locationStatus: "allowed",
+                    locationLoading: false,
+                  });
+                } else {
+                  set({
+                    location: newLocation,
+                    locationStatus: "allowed",
+                    userAddress: normalized.address,
+                    userProvince: normalized.province,
+                    locationLoading: false,
+                  });
+                }
 
                 // Cache the result
                 localStorage.setItem(cacheKey, JSON.stringify(normalized));
@@ -266,31 +292,47 @@ export const useLocationStore = create<LocationState>()(
                 });
               }
             } catch (error) {
-              set({
-                location: newLocation,
-                locationStatus: "allowed",
-                userAddress: "Could not determine city",
-                userProvince: "",
-                locationLoading: false,
-              });
+              if (get().addressMode === "manual") {
+                set({
+                  location: newLocation,
+                  locationStatus: "allowed",
+                  locationLoading: false,
+                });
+              } else {
+                set({
+                  location: newLocation,
+                  locationStatus: "allowed",
+                  userAddress: "Could not determine city",
+                  userProvince: "",
+                  locationLoading: false,
+                });
+              }
             }
           },
           (error) => {
             if (error.code === error.PERMISSION_DENIED) {
-              set({
-                locationStatus: "denied",
-                userAddress: "Location not shared",
-                userProvince: "",
-                locationLoading: false,
-              });
+              if (get().addressMode === "manual") {
+                set({ locationStatus: "denied", locationLoading: false });
+              } else {
+                set({
+                  locationStatus: "denied",
+                  userAddress: "Location not shared",
+                  userProvince: "",
+                  locationLoading: false,
+                });
+              }
               localStorage.setItem("locationPermission", "denied");
             } else {
-              set({
-                locationStatus: "denied",
-                userAddress: "Could not determine location",
-                userProvince: "",
-                locationLoading: false,
-              });
+              if (get().addressMode === "manual") {
+                set({ locationStatus: "denied", locationLoading: false });
+              } else {
+                set({
+                  locationStatus: "denied",
+                  userAddress: "Could not determine location",
+                  userProvince: "",
+                  locationLoading: false,
+                });
+              }
             }
           },
           {
@@ -322,6 +364,13 @@ export const useLocationStore = create<LocationState>()(
         const storedPermission = localStorage.getItem(
           "locationPermission",
         ) as LocationStatus;
+
+        // If using manual mode, trust persisted manual city/province and skip auto request
+        if (state.addressMode === "manual") {
+          if (storedPermission) set({ locationStatus: storedPermission });
+          set({ isInitialized: true, locationLoading: false });
+          return;
+        }
 
         if (storedLocation && storedPermission === "allowed") {
           try {
@@ -355,10 +404,11 @@ export const useLocationStore = create<LocationState>()(
 
         set({ isInitialized: true });
 
-        // Only request location if we don't have it or permission status is not_set
+        // Only request location if we don't have it or permission status is not_set and not in manual mode
         if (
-          state.locationStatus === "not_set" ||
-          (!state.location && state.locationStatus === "allowed")
+          get().addressMode !== "manual" &&
+          (state.locationStatus === "not_set" ||
+            (!state.location && state.locationStatus === "allowed"))
         ) {
           await get().requestLocation();
         }

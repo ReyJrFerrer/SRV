@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import LocationMapModal from "./LocationMapModal";
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../EnableLocationButton";
+import LocationBlockedModal from "../LocationBlockedModal";
 
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
 const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
@@ -13,9 +14,11 @@ const MapFunctions: React.FC = () => {
     userProvince,
     locationLoading,
     locationStatus,
+    addressMode,
   } = useLocationStore();
 
   const [showMap, setShowMap] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [gmapsAddress, setGmapsAddress] = useState<string>(
     "Detecting location...",
   );
@@ -117,7 +120,25 @@ const MapFunctions: React.FC = () => {
   return (
     <>
       <div className="flex w-full items-center justify-start">
-        {gmapsStatus === "ok" ? (
+        {userAddress && userProvince ? (
+          geoLocation ? (
+            <button
+              type="button"
+              className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+              onClick={() => setShowMap(true)}
+              title={`${userAddress}, ${userProvince}`}
+            >
+              {userAddress}, {userProvince}
+            </button>
+          ) : (
+            <span
+              className="text-left text-sm font-medium text-blue-900"
+              title={`${userAddress}, ${userProvince}`}
+            >
+              {userAddress}, {userProvince}
+            </span>
+          )
+        ) : gmapsStatus === "ok" ? (
           <button
             type="button"
             className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
@@ -130,15 +151,6 @@ const MapFunctions: React.FC = () => {
           <span className="animate-pulse text-sm text-gray-500">
             Detecting location...
           </span>
-        ) : userAddress && userProvince ? (
-          <button
-            type="button"
-            className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-            onClick={() => setShowMap(true)}
-            title={`${userAddress}, ${userProvince}`}
-          >
-            {userAddress}, {userProvince}
-          </button>
         ) : (
           <span className="text-left text-sm text-gray-500">
             {gmapsAddress}
@@ -146,8 +158,17 @@ const MapFunctions: React.FC = () => {
         )}
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
-        <div className="ml-3">
+        <div className="ml-3 flex items-center gap-2">
           <EnableLocationButton />
+          {addressMode === "manual" && userAddress && userProvince && (
+            <button
+              type="button"
+              className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50"
+              onClick={() => setShowLocationModal(true)}
+            >
+              Change location
+            </button>
+          )}
         </div>
       )}
 
@@ -162,6 +183,11 @@ const MapFunctions: React.FC = () => {
           accuracy={geoLocation.accuracy}
         />
       )}
+
+      <LocationBlockedModal
+        visible={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+      />
     </>
   );
 };
