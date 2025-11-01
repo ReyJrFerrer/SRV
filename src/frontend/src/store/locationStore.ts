@@ -78,7 +78,9 @@ const normalizeLocationData = (data: any) => {
       const isPH = (data.countryName || "").toLowerCase() === "philippines";
       const admin = data.localityInfo?.administrative || [];
       if (isPH && Array.isArray(admin)) {
-        const provinces: string[] = Array.isArray((phLocations as any)?.provinces)
+        const provinces: string[] = Array.isArray(
+          (phLocations as any)?.provinces,
+        )
           ? (phLocations as any).provinces.map((p: any) => p.name)
           : [];
         const match = admin.find((a: any) =>
