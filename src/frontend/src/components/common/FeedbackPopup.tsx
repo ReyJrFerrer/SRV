@@ -41,8 +41,8 @@ const FeedbackPopup: React.FC = () => {
             We value your feedback!
           </h2>
           <p className="mb-4 text-center text-gray-700">
-            You just completed your first booking. Please let us know about
-            your experience.
+            You just completed your first booking. Please let us know about your
+            experience.
           </p>
           {/* Star rating input */}
           <div className="mb-3 flex justify-center space-x-3">
