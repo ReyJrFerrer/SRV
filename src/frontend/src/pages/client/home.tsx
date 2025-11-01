@@ -92,6 +92,14 @@ const InlineClientHeader: React.FC<InlineClientHeaderProps> = ({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Toggle body class so global layout can compensate for fixed mini overlay
+  React.useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isMini) document.body.classList.add("has-mini-header");
+    else document.body.classList.remove("has-mini-header");
+    return () => document.body.classList.remove("has-mini-header");
+  }, [isMini]);
+
   // Measure header height and keep it as a minHeight when the mini overlay is shown
   React.useLayoutEffect(() => {
     const measure = () => {
