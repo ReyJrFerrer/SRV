@@ -6,56 +6,27 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
-import EnableLocationButton from "../../common/EnableLocationButton";
+import MapFunctions from "../../common/GMapFunctions/MapFunctions";
 import { APIProvider } from "@vis.gl/react-google-maps";
-import LocationMapModal from "../../common/LocationMapModal";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
 }
 
-// Map modal moved to components/common/LocationMapModal
-
-// Google Maps config (reserved for future autocomplete)
-const GEO_DENIAL_KEY = "geoDeniedAt";
-const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
-const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_PROVIDER_V1";
-const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
-interface AddrCache {
-  address: string;
-  ts: number;
-}
-
-// (removed inline MapModal; using LocationMapModal instead)
+// Map functions extracted into components/common/GMapFunctions/MapFunctions
 
 // --- Main Header Component ---
 const Header: React.FC<HeaderProps> = ({ className }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
-  const {
-    location: geoLocation,
-    userAddress,
-    userProvince,
-    locationLoading,
-    requestLocation,
-    locationStatus,
-  } = useLocationStore();
+  const { requestLocation, locationStatus } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
-  const [showMap, setShowMap] = useState(false);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-  const [gmapsAddress, setGmapsAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [gmapsStatus, setGmapsStatus] = useState<
-    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
-  >("idle");
-  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-
+  // Effect: fetch user profile and initialize location when auth loads
   useEffect(() => {
     const loadInitialData = async () => {
       if (isAuthenticated) {
@@ -66,128 +37,16 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
+
       if (!isAuthLoading) {
         requestLocation();
       }
     };
+
     if (!isAuthLoading) {
       loadInitialData();
     }
   }, [isAuthenticated, isAuthLoading, requestLocation]);
-
-  useEffect(() => {
-    try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem(GEO_DENIAL_KEY)
-          : null;
-      if (raw) {
-        const ts = Number(raw);
-        if (!isNaN(ts) && Date.now() - ts < GEO_DENIAL_COOLDOWN_MS) {
-          setGmapsStatus("denied");
-          setGmapsAddress("Location access previously denied");
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // Seed from cache and mark API loaded
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(ADDR_CACHE_KEY);
-      if (raw) {
-        const cached: AddrCache = JSON.parse(raw);
-        if (cached?.address && typeof cached.ts === "number") {
-          const fresh = Date.now() - cached.ts < ADDR_CACHE_TTL_MS;
-          if (fresh) {
-            setGmapsAddress(cached.address);
-            setGmapsStatus("ok");
-          }
-        }
-      }
-    } catch {}
-    if ((window as any).google?.maps) setMapsApiLoaded(true);
-  }, []);
-
-  // Reverse geocode using detected store location (no direct geolocation call)
-  useEffect(() => {
-    if (!mapsApiLoaded || !geoLocation || gmapsStatus !== "idle") return;
-    try {
-      const geocoder = new (window as any).google.maps.Geocoder();
-      setGmapsStatus("loading");
-      geocoder.geocode(
-        { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
-        (results: any, status: string) => {
-          if (status === "OK" && results && results[0]) {
-            // Build a concise display address from address_components (no country)
-            const comps = results[0].address_components || [];
-            const find = (type: string) => {
-              const c = comps.find(
-                (cc: any) => cc.types && cc.types.indexOf(type) !== -1,
-              );
-              return c ? c.long_name : undefined;
-            };
-
-            const premise =
-              find("premise") ||
-              find("subpremise") ||
-              find("establishment") ||
-              find("point_of_interest");
-            const streetNumber = find("street_number");
-            const route = find("route");
-            const barangay =
-              find("sublocality_level_2") ||
-              find("sublocality") ||
-              find("neighborhood");
-            const locality =
-              find("locality") ||
-              find("postal_town") ||
-              find("administrative_area_level_3") ||
-              find("administrative_area_level_2");
-            const province =
-              find("administrative_area_level_2") ||
-              find("administrative_area_level_1");
-
-            const line1 =
-              premise ||
-              (streetNumber && route
-                ? `${streetNumber} ${route}`
-                : route || streetNumber);
-            const parts: string[] = [];
-            if (line1) parts.push(line1);
-            if (barangay) parts.push(barangay);
-            if (locality) parts.push(locality);
-            if (province) parts.push(province);
-
-            const displayAddress =
-              parts.length > 0
-                ? parts.join(", ")
-                : (results[0].formatted_address as string).replace(
-                    /^[^,]+,\s*/,
-                    "",
-                  );
-            setGmapsAddress(displayAddress);
-            setGmapsStatus("ok");
-            try {
-              const payload: AddrCache = {
-                address: displayAddress,
-                ts: Date.now(),
-              };
-              localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
-            } catch {}
-          } else {
-            setGmapsStatus("failed");
-            setGmapsAddress("Unable to resolve address");
-          }
-        },
-      );
-    } catch {
-      setGmapsStatus("failed");
-      setGmapsAddress("Reverse geocode failed");
-    }
-  }, [mapsApiLoaded, gmapsStatus, geoLocation]);
 
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
@@ -305,43 +164,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             </div>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <div className="flex w-full items-center justify-start">
-              {gmapsStatus === "ok" ? (
-                <button
-                  type="button"
-                  className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                  onClick={() => setShowMap(true)}
-                  title={gmapsAddress}
-                >
-                  {gmapsAddress}
-                </button>
-              ) : locationLoading ||
-                isAuthLoading ||
-                gmapsStatus === "loading" ? (
-                <span className="animate-pulse text-sm text-gray-500">
-                  Detecting location...
-                </span>
-              ) : userAddress && userProvince ? (
-                <button
-                  type="button"
-                  className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                  onClick={() => setShowMap(true)}
-                  title={`${userAddress}, ${userProvince}`}
-                >
-                  {userAddress}, {userProvince}
-                </button>
-              ) : (
-                <span className="text-left text-sm text-gray-500">
-                  {gmapsAddress}
-                </span>
-              )}
-              {/* Coordinates/accuracy debug chip removed */}
-            </div>
-            {(locationStatus === "denied" || locationStatus === "not_set") && (
-              <div className="ml-3">
-                <EnableLocationButton />
-              </div>
-            )}
+            <MapFunctions />
           </div>
           {(locationStatus === "denied" || locationStatus === "not_set") && (
             <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
@@ -350,18 +173,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           )}
         </div>
       </header>
-      {/* --- Map Modal for Location Display --- */}
-      {mapsApiLoaded && geoLocation && (
-        <LocationMapModal
-          show={showMap}
-          onClose={() => setShowMap(false)}
-          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
-          address={gmapsAddress}
-          status={gmapsStatus}
-          mapsApiLoaded={mapsApiLoaded}
-          accuracy={geoLocation.accuracy}
-        />
-      )}
+      {/* Map modal handled inside MapFunctions component */}
     </APIProvider>
   );
 };
