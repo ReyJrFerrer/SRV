@@ -111,7 +111,7 @@ const transformToEnrichedService = (
       state: service.location.state,
       latitude: service.location.latitude,
       longitude: service.location.longitude,
-      serviceDistance: 10, // Default radius - could be fetched from actual data if available
+      serviceDistance: 25, // Default radius - could be fetched from actual data if available
       serviceDistanceUnit: "km",
     },
 
