@@ -15,9 +15,12 @@ const ClientActiveServiceBanner: React.FC = () => {
   if (!active || active.length === 0) return null;
 
   const booking = active[0];
-  const serviceName = getServiceDisplayName(booking) || booking.serviceName || "Service";
-  const packageName = getPackageDisplayName(booking) || booking.packageName || "Package";
-  const clientVisibleName = booking.providerName || booking.providerProfile?.name || "Provider";
+  const serviceName =
+    getServiceDisplayName(booking) || booking.serviceName || "Service";
+  const packageName =
+    getPackageDisplayName(booking) || booking.packageName || "Package";
+  const clientVisibleName =
+    booking.providerName || booking.providerProfile?.name || "Provider";
 
   const isServiceDetailsPage =
     location.pathname.startsWith("/client/service/") ||
