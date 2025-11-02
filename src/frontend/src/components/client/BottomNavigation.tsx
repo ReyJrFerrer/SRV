@@ -280,7 +280,7 @@ const BottomNavigation: React.FC = () => {
                             alt={displayItem.label}
                             className={`transition-all duration-300 ease-in-out ${
                               isActive
-                                ? "h-8 w-8 scale-160 drop-shadow-lg sm:h-10 sm:w-10"
+                                ? "scale-160 h-8 w-8 drop-shadow-lg sm:h-10 sm:w-10"
                                 : "h-5 w-5 sm:h-7 sm:w-7"
                             }`}
                             style={{
@@ -296,7 +296,7 @@ const BottomNavigation: React.FC = () => {
                         )}
                       </div>
                       {item.count > 0 && (
-                        <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 sm:top-2 sm:right-2"></span>
+                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                       )}
                     </Link>
                   );
@@ -307,7 +307,7 @@ const BottomNavigation: React.FC = () => {
       </div>
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed top-0 left-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
+      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
         {/* Top section: main nav items (Profile in place of Settings) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems.map((item) => {
@@ -387,7 +387,7 @@ const BottomNavigation: React.FC = () => {
                   </span>
                 )}
                 {item.count > 0 && (
-                  <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
                 )}
               </Link>
             );
@@ -395,7 +395,7 @@ const BottomNavigation: React.FC = () => {
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mt-auto mb-4 flex w-full flex-col items-center border-gray-100 pt-2">
+        <div className="mb-4 mt-auto flex w-full flex-col items-center border-gray-100 pt-2">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);
