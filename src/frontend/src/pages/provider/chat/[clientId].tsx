@@ -241,7 +241,7 @@ const ConversationPage: React.FC = () => {
           </div>
         ) : (
           messages.map((message) => {
-            console.log("Chat message:", message)
+            console.log("Chat message:", message);
             const fromCurrentUser = isFromCurrentUser(message.senderId);
             return (
               <div
