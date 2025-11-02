@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import AccuracyCircle from "./AccuracyCircle";
 
 export interface LocationMapModalProps {
   show: boolean;
@@ -12,37 +13,7 @@ export interface LocationMapModalProps {
   accuracy?: number; // meters
 }
 
-// Imperative circle overlay using native Google Maps API
-const AccuracyCircle: React.FC<{
-  center: { lat: number; lng: number };
-  radius: number;
-}> = ({ center, radius }) => {
-  const map = useMap();
-  const circleRef = useRef<google.maps.Circle | null>(null);
-
-  useEffect(() => {
-    if (!map || !window.google || typeof radius !== "number") return;
-    if (!circleRef.current) {
-      circleRef.current = new window.google.maps.Circle({
-        strokeColor: "#2563eb",
-        strokeOpacity: 0.9,
-        strokeWeight: 2,
-        fillColor: "#3b82f6",
-        fillOpacity: 0.15,
-      });
-      circleRef.current.setMap(map);
-    }
-    circleRef.current.setCenter(center);
-    circleRef.current.setRadius(radius);
-    return () => {
-      if (circleRef.current) {
-        circleRef.current.setMap(null);
-        circleRef.current = null;
-      }
-    };
-  }, [map, center.lat, center.lng, radius]);
-  return null;
-};
+// AccuracyCircle moved to a shared component at ./AccuracyCircle
 
 const LocationMapModal: React.FC<LocationMapModalProps> = ({
   show,
@@ -74,7 +45,7 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
   // Scale the visible accuracy to be smaller ("shorter")
   const scaledAccuracy =
     typeof accuracy === "number" && accuracy > 0
-      ? Math.min(accuracy * 0.6, 200) // 40% smaller, cap to 200m
+      ? Math.min(accuracy * 0.25, 100) // 25% of reported accuracy, cap to 100m
       : undefined;
 
   const modal = (
