@@ -20,6 +20,29 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
+
+// Helper function to check if user is online (active within last 24 hours)
+const isUserOnline = (user: any): boolean => {
+  if (!user.updatedAt) return false;
+  const updatedAt = typeof user.updatedAt === "number" 
+    ? new Date(Number(user.updatedAt) / 1000000)
+    : new Date(user.updatedAt);
+  const now = new Date();
+  const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+  return hoursSinceUpdate <= 24;
+};
+
+// Helper function to check if user is dormant (not updated for at least a month)
+const isUserDormant = (user: any): boolean => {
+  if (!user.updatedAt) return true; // Consider users without update time as dormant
+  const updatedAt = typeof user.updatedAt === "number" 
+    ? new Date(Number(user.updatedAt) / 1000000)
+    : new Date(user.updatedAt);
+  const now = new Date();
+  const daysSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceUpdate >= 30; // At least 30 days
+};
 
 export const AnalyticsPage: React.FC = () => {
   const {
@@ -48,6 +71,10 @@ export const AnalyticsPage: React.FC = () => {
     "name" | "totalRevenue" | "totalCommission" | "completedBookings"
   >("totalRevenue");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [userFilter, setUserFilter] = useState<"all" | "online" | "dormant">("all");
+  const [walletBalances, setWalletBalances] = useState<Record<string, number>>({});
+  const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
+  
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -100,6 +127,63 @@ export const AnalyticsPage: React.FC = () => {
     }
   }, [bookings, commissionTransactions, refreshSystemStats]);
 
+  // Fetch wallet balances for all providers
+  useEffect(() => {
+    const fetchWalletBalances = async () => {
+      // Get all provider IDs from serviceProviderPerformanceData
+      const providerIds = new Set<string>();
+      
+      // Collect provider IDs from various sources
+      if (serviceProviders && serviceProviders.length > 0) {
+        serviceProviders.forEach((provider) => {
+          providerIds.add(provider.id);
+        });
+      }
+      
+      if (bookings && bookings.length > 0) {
+        bookings.forEach((booking) => {
+          const providerId = booking.serviceProviderId || booking.providerId;
+          if (providerId) {
+            providerIds.add(providerId);
+          }
+        });
+      }
+
+      if (providerIds.size === 0) {
+        return;
+      }
+
+      setLoadingWalletBalances(true);
+      try {
+        const balancePromises = Array.from(providerIds).map(async (id) => {
+          try {
+            const balance = await walletCanisterService.getBalanceOf(id);
+            return { id, balance };
+          } catch (error) {
+            console.error(`Failed to fetch wallet balance for ${id}:`, error);
+            return { id, balance: 0 };
+          }
+        });
+
+        const results = await Promise.all(balancePromises);
+        const balancesMap: Record<string, number> = {};
+        results.forEach(({ id, balance }) => {
+          balancesMap[id] = balance;
+        });
+        setWalletBalances(balancesMap);
+      } catch (error) {
+        console.error("Error fetching wallet balances:", error);
+      } finally {
+        setLoadingWalletBalances(false);
+      }
+    };
+
+    // Only fetch if we have provider data
+    if (serviceProviders || (bookings && bookings.length > 0)) {
+      fetchWalletBalances();
+    }
+  }, [serviceProviders, bookings]);
+
   const loadProviderAnalytics = async (_providerId: string) => {
     console.log("Provider analytics loading removed - was using mock data");
   };
@@ -116,9 +200,23 @@ export const AnalyticsPage: React.FC = () => {
   console.log("🔍 [Analytics] totalRevenue:", systemStats?.totalRevenue);
   console.log("🔍 [Analytics] totalCommission:", systemStats?.totalCommission);
 
-  // Count users by their current active role
+  // Filter users based on selected filter
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    
+    return users.filter((user) => {
+      if (userFilter === "online") {
+        return isUserOnline(user);
+      } else if (userFilter === "dormant") {
+        return isUserDormant(user);
+      }
+      return true; // "all" - no filter
+    });
+  }, [users, userFilter]);
+
+  // Count users by their current active role (with filtering applied)
   const totalProviders =
-    users?.filter((user) => {
+    filteredUsers?.filter((user) => {
       if (!user.activeRole) return false;
 
       // Handle both string format and Motoko variant format
@@ -140,7 +238,7 @@ export const AnalyticsPage: React.FC = () => {
     }).length ?? 0;
 
   const totalClients =
-    users?.filter((user) => {
+    filteredUsers?.filter((user) => {
       if (!user.activeRole) return false;
 
       // Handle both string format and Motoko variant format
@@ -156,15 +254,54 @@ export const AnalyticsPage: React.FC = () => {
       return false;
     }).length ?? 0;
 
-  // Pie: Users by type (Providers vs Clients only)
-  const totalUsers = totalProviders + totalClients;
+  // Calculate total users (for "all" filter) and online users
+  const totalUsers = useMemo(() => {
+    if (!users) return 0;
+    return users.filter((user) => {
+      if (!user.activeRole) return false;
+      if (typeof user.activeRole === "string") {
+        return (
+          user.activeRole === "ServiceProvider" ||
+          user.activeRole === "Provider" ||
+          user.activeRole === "Client"
+        );
+      }
+      if (typeof user.activeRole === "object") {
+        return (
+          "ServiceProvider" in user.activeRole ||
+          "Provider" in user.activeRole ||
+          "Client" in user.activeRole
+        );
+      }
+      return false;
+    }).length;
+  }, [users]);
 
+  const onlineUsers = useMemo(() => {
+    if (!users) return 0;
+    return users.filter((user) => {
+      if (!user.activeRole) return false;
+      const hasValidRole =
+        typeof user.activeRole === "string"
+          ? user.activeRole === "ServiceProvider" ||
+            user.activeRole === "Provider" ||
+            user.activeRole === "Client"
+          : typeof user.activeRole === "object"
+            ? "ServiceProvider" in user.activeRole ||
+              "Provider" in user.activeRole ||
+              "Client" in user.activeRole
+            : false;
+      return hasValidRole && isUserOnline(user);
+    }).length;
+  }, [users]);
+
+  // Pie: Users by type (Providers vs Clients only) with filtering
   const userPieData = [
     { name: "Providers", value: totalProviders, color: "#10b981" },
     { name: "Clients", value: totalClients, color: "#3b82f6" },
   ];
 
-  // Service Provider Performance Data
+  // Service Provider Records Data
   const serviceProviderPerformanceData = useMemo(() => {
     console.log("🔍 [ServiceProviderPerformance] Debug data:", {
       bookingsLength: bookings?.length || 0,
@@ -254,16 +391,17 @@ export const AnalyticsPage: React.FC = () => {
         const isOnlyProvider = providersToShow.length === 1;
         const isFirstProvider = index === 0;
         const shouldGetTotals = isOnlyProvider || isFirstProvider;
+        const providerId = provider.id?.toString() || provider.id;
 
         return {
-          id: provider.id?.toString() || provider.id,
+          id: providerId,
           name: provider.name || "Unknown",
           phone: provider.phone || "N/A",
           totalRevenue: shouldGetTotals ? totalRevenue : 0,
           totalCommission: shouldGetTotals ? totalCommission : 0,
           completedBookings: shouldGetTotals ? settledBookings : 0,
           totalBookings: shouldGetTotals ? totalBookings : 0,
-          status: (provider as any).status || "active",
+          walletBalance: walletBalances[providerId] || 0,
         };
       });
       console.log(
@@ -287,7 +425,7 @@ export const AnalyticsPage: React.FC = () => {
         totalCommission: number;
         completedBookings: number;
         totalBookings: number;
-        status: string;
+        walletBalance: number;
       }
     >();
 
@@ -311,7 +449,7 @@ export const AnalyticsPage: React.FC = () => {
           totalCommission: 0,
           completedBookings: 0,
           totalBookings: 0,
-          status: "active",
+          walletBalance: walletBalances[providerId] || 0,
         });
       }
     });
@@ -328,8 +466,14 @@ export const AnalyticsPage: React.FC = () => {
             totalCommission: 0,
             completedBookings: 0,
             totalBookings: 0,
-            status: (provider as any).status || "active",
+            walletBalance: walletBalances[provider.id] || 0,
           });
+        } else {
+          // Update existing entry with wallet balance
+          const existing = performanceMap.get(provider.id);
+          if (existing) {
+            existing.walletBalance = walletBalances[provider.id] || 0;
+          }
         }
       });
     }
@@ -373,7 +517,7 @@ export const AnalyticsPage: React.FC = () => {
     });
 
     return result;
-  }, [bookings, serviceProviders, commissionTransactions, users, systemStats]);
+  }, [bookings, serviceProviders, commissionTransactions, users, systemStats, walletBalances]);
 
   // Filtered and sorted service provider performance data
   const filteredServiceProviderData = useMemo(() => {
@@ -600,15 +744,17 @@ export const AnalyticsPage: React.FC = () => {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <UserIcon className="h-8 w-8 text-yellow-600" />
+                  <BanknotesIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Services
+                      Total Topups
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.services ? "..." : services?.length || 0}
+                      {loading.systemStats
+                        ? "..."
+                        : formatCurrency(systemStats?.totalTopups || 0)}
                     </dd>
                   </dl>
                 </div>
@@ -625,10 +771,10 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Users
+                      Online Users
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.users ? "..." : totalUsers}
+                      {loading.users ? "..." : onlineUsers}
                     </dd>
                   </dl>
                 </div>
@@ -642,9 +788,44 @@ export const AnalyticsPage: React.FC = () => {
           {/* Users by Type */}
           <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-6 py-4">
-              <h2 className="text-lg font-medium text-gray-900">
-                Users by Type
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900">
+                  Users by Type
+                </h2>
+                {/* Toggle Pills */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setUserFilter("all")}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      userFilter === "all"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setUserFilter("online")}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      userFilter === "online"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Online
+                  </button>
+                  <button
+                    onClick={() => setUserFilter("dormant")}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      userFilter === "dormant"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Dormant
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="p-6">
               {loading.users ? (
@@ -652,14 +833,18 @@ export const AnalyticsPage: React.FC = () => {
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                   <p className="mt-4 text-sm text-gray-500">Loading users...</p>
                 </div>
-              ) : totalUsers === 0 ? (
+              ) : (totalProviders + totalClients) === 0 ? (
                 <div className="py-12 text-center">
                   <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-4 text-sm font-medium text-gray-900">
                     No users found
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    No user data available.
+                    {userFilter === "online"
+                      ? "No online users found."
+                      : userFilter === "dormant"
+                        ? "No dormant users found."
+                        : "No user data available."}
                   </p>
                 </div>
               ) : (
@@ -714,7 +899,7 @@ export const AnalyticsPage: React.FC = () => {
                         Total Users
                       </p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {totalUsers}
+                        {totalProviders + totalClients}
                       </p>
                     </div>
                   </div>
@@ -841,7 +1026,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Service Provider Performance */}
+        {/* Service Provider Records */}
         <div className="mt-8">
           {/* Search and Filter Controls */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -939,11 +1124,14 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Service Provider Performance Table */}
+          {/* Service Provider Records Table */}
           <ServiceProviderPerformanceTable
             providers={filteredServiceProviderData}
             loading={
-              loading.bookings || loading.serviceProviders || !systemStats
+              loading.bookings || 
+              loading.serviceProviders || 
+              !systemStats ||
+              loadingWalletBalances
             }
             onRefresh={() => refreshBookings(true)}
             showRefresh={true}

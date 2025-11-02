@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   BanknotesIcon,
   ArrowUpIcon,
@@ -18,6 +18,7 @@ import { Toaster, toast } from "sonner";
 const UserWalletPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -298,8 +299,16 @@ const UserWalletPage: React.FC = () => {
         <div className="mx-auto max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                to={`/user/${id}`}
+              <button
+                onClick={() => {
+                  // Check if we came from analytics page
+                  const fromAnalytics = location.state?.from === "analytics";
+                  if (fromAnalytics) {
+                    navigate("/analytics");
+                  } else {
+                    navigate(`/user/${id}`);
+                  }
+                }}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <svg
@@ -315,7 +324,7 @@ const UserWalletPage: React.FC = () => {
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-              </Link>
+              </button>
               <h1 className="text-2xl font-bold text-gray-900">User Wallet</h1>
             </div>
             <button

@@ -178,6 +178,8 @@ const {
   getUserReviews,
   updateReview,
   deleteReview,
+  restoreReview,
+  bulkUpdateReviewStatus,
   calculateProviderRating,
   calculateServiceRating,
   calculateUserAverageRating,
@@ -355,6 +357,8 @@ exports.getBookingReviews = getBookingReviews;
 exports.getUserReviews = getUserReviews;
 exports.updateReview = updateReview;
 exports.deleteReview = deleteReview;
+exports.restoreReview = restoreReview;
+exports.bulkUpdateReviewStatus = bulkUpdateReviewStatus;
 exports.calculateProviderRating = calculateProviderRating;
 exports.calculateServiceRating = calculateServiceRating;
 exports.calculateUserAverageRating = calculateUserAverageRating;

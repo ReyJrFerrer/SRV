@@ -141,32 +141,6 @@ export interface FrontendUserRoleAssignment {
   assignedAt: Date;
 }
 
-export interface FrontendRemittanceOrder {
-  id: string;
-  status:
-    | "AwaitingPayment"
-    | "PaymentSubmitted"
-    | "PaymentValidated"
-    | "Cancelled"
-    | "Settled";
-  serviceType: string;
-  serviceProviderId: string;
-  amount: number; // in PHP (converted from centavos)
-  commissionAmount: number; // in PHP (converted from centavos)
-  paymentMethod: string;
-  bookingId?: string;
-  serviceId?: string;
-  commissionRuleId: string;
-  commissionVersion: number;
-  paymentProofMediaIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  paymentSubmittedAt?: Date;
-  validatedAt?: Date;
-  validatedBy?: string;
-  settledAt?: Date;
-}
-
 export interface FrontendMediaItem {
   id: string;
   fileName: string;
@@ -175,7 +149,6 @@ export interface FrontendMediaItem {
   contentType: string;
   mediaType:
     | "ServiceImage"
-    | "RemittancePaymentProof"
     | "UserProfile"
     | "ServiceCertificate";
   fileSize: number;
@@ -194,6 +167,7 @@ export interface FrontendSystemStats {
   settledBookings: number;
   totalRevenue: number;
   totalCommission: number;
+  totalTopups: number;
 }
 
 export class AdminServiceError extends Error {
@@ -727,6 +701,7 @@ export const adminServiceCanister = {
         settledBookings: result.settledBookings,
         totalRevenue: result.totalRevenue,
         totalCommission: result.totalCommission,
+        totalTopups: result.totalTopups || 0,
       };
     } catch (error) {
       if (error instanceof AdminServiceError) throw error;
@@ -807,8 +782,16 @@ export const adminServiceCanister = {
           (result.data as any).message || "Failed to get bookings data",
         );
       }
-    } catch (error) {
-      console.error("❌ [getBookingsData] Error getting bookings data:", error);
+    } catch (error: any) {
+      // Suppress CORS errors in emulator - data gracefully falls back to systemStats
+      const isNetworkError = error?.code === "ERR_FAILED" || 
+                            error?.message?.includes("CORS") ||
+                            error?.name === "FirebaseError" ||
+                            (error?.code && error.code.includes("internal"));
+      
+      if (!isNetworkError) {
+        console.error("❌ [getBookingsData] Error getting bookings data:", error);
+      }
       return { bookings: [], commissionTransactions: [] };
     }
   },
@@ -1447,44 +1430,117 @@ export const adminServiceCanister = {
   },
 
   /**
-   * Get detailed reviews for a user (both as client and provider)
+   * Get detailed reviews for a user (received, given as client, given as provider)
    */
   async getUserDetailedReviews(userId: string): Promise<{
-    clientReviews: any[];
-    providerReviews: any[];
+    receivedReviews: any[]; // Reviews RECEIVED (what providers wrote about this user)
+    givenAsClientReviews: any[]; // Reviews GIVEN as client (what user wrote about providers/services)
+    givenAsProviderReviews: any[]; // Reviews GIVEN as provider (what user wrote about clients)
   }> {
     try {
       requireAuth();
 
-      // Get reviews where user is the client (reviews they received)
-      const [clientReviewsResult, providerReviewsResult] =
+      // Get all review types in parallel (including hidden reviews for admin)
+      // Note: Payload must be wrapped in { data: {...} } to match client format
+      const [receivedResult, givenAsClientResult, givenAsProviderResult] =
         await Promise.allSettled([
-          callFirebaseFunction("getUserReviews", { userId }),
-          callFirebaseFunction("getProviderReviews", { providerId: userId }),
+          // Reviews RECEIVED: what providers wrote about this user (as client)
+          callFirebaseFunction("getClientProviderReviews", { 
+            data: { clientId: userId, includeHidden: true } 
+          }),
+          // Reviews GIVEN as CLIENT: what this user wrote about providers/services
+          callFirebaseFunction("getUserReviews", { 
+            data: { userId: userId, includeHidden: true } 
+          }),
+          // Reviews GIVEN as PROVIDER: what this user wrote about clients
+          callFirebaseFunction("getProviderReviewsByProvider", { 
+            data: { providerId: userId, includeHidden: true } 
+          }),
         ]);
 
-      const clientReviews =
-        clientReviewsResult.status === "fulfilled" &&
-        Array.isArray(clientReviewsResult.value)
-          ? clientReviewsResult.value
+      // callFirebaseFunction already extracts data from {success: true, data: [...]}
+      const receivedReviews =
+        receivedResult.status === "fulfilled" &&
+        Array.isArray(receivedResult.value)
+          ? receivedResult.value
           : [];
 
-      const providerReviews =
-        providerReviewsResult.status === "fulfilled" &&
-        Array.isArray(providerReviewsResult.value)
-          ? providerReviewsResult.value
+      const givenAsClientReviews =
+        givenAsClientResult.status === "fulfilled" &&
+        Array.isArray(givenAsClientResult.value)
+          ? givenAsClientResult.value
+          : [];
+
+      const givenAsProviderReviews =
+        givenAsProviderResult.status === "fulfilled" &&
+        Array.isArray(givenAsProviderResult.value)
+          ? givenAsProviderResult.value
           : [];
 
       return {
-        clientReviews,
-        providerReviews,
+        receivedReviews,
+        givenAsClientReviews,
+        givenAsProviderReviews,
       };
     } catch (error) {
       logError("Error fetching user detailed reviews", error);
       return {
-        clientReviews: [],
-        providerReviews: [],
+        receivedReviews: [],
+        givenAsClientReviews: [],
+        givenAsProviderReviews: [],
       };
+    }
+  },
+
+  /**
+   * Delete a review (admin only - hides the review)
+   */
+  async deleteReview(reviewId: string, reviewType?: "review" | "providerReview"): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("deleteReview", { 
+        data: { reviewId } 
+      });
+    } catch (error) {
+      logError("Error deleting review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Restore a review (admin only - makes hidden review visible)
+   */
+  async restoreReview(reviewId: string): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("restoreReview", { 
+        data: { reviewId } 
+      });
+    } catch (error) {
+      logError("Error restoring review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Bulk update review status (admin only)
+   */
+  async bulkUpdateReviewStatus(reviewIds: string[], status: "Visible" | "Hidden"): Promise<{
+    updated: string[];
+    errors: Array<{reviewId: string; error: string}>;
+  }> {
+    try {
+      requireAuth();
+      const result = await callFirebaseFunction("bulkUpdateReviewStatus", { 
+        data: { reviewIds, status } 
+      });
+      return {
+        updated: result.updated || [],
+        errors: result.errors || [],
+      };
+    } catch (error) {
+      logError("Error bulk updating reviews", error);
+      throw error;
     }
   },
 };

@@ -207,10 +207,6 @@ export const AdminHomePage: React.FC = () => {
     period,
   ]);
 
-  useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
-
   // Load services with certificates for pending validations count
   useEffect(() => {
     const loadServicesWithCertificates = async () => {

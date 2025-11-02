@@ -13,6 +13,9 @@ import { AnalyticsPage } from "./pages/analytics";
 import UserWalletPage from "./pages/userWallet";
 import { UserChatsPage } from "./pages/userChats";
 import { UserChatHistoryPage } from "./pages/userChatHistory";
+import AdminServiceDetailsWrapper from "./components/AdminServiceDetailsWrapper";
+import ServiceReviewsPage from "./pages/serviceReviews";
+import UserReviewsPage from "./pages/userReviews";
 
 // Login component
 const LoginPage = () => {
@@ -149,10 +152,26 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/user/:userId/services/:serviceId"
+        path="/user/:id/reviews"
         element={
           <ProtectedRoute>
-            <ServiceDetailsPage />
+            <UserReviewsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:userId/services/:id"
+        element={
+          <ProtectedRoute>
+            <AdminServiceDetailsWrapper />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/service/:id/reviews"
+        element={
+          <ProtectedRoute>
+            <ServiceReviewsPage />
           </ProtectedRoute>
         }
       />

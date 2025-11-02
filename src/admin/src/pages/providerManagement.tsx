@@ -17,7 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
-  const { remittanceProviders, loading, refreshRemittanceProviders } =
+  const { serviceProviders, loading, refreshServiceProviders } =
     useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,8 +36,8 @@ export const ProviderManagementPage: React.FC = () => {
   const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
-    refreshRemittanceProviders();
-  }, [refreshRemittanceProviders]);
+    refreshServiceProviders();
+  }, [refreshServiceProviders]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -48,7 +48,7 @@ export const ProviderManagementPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const filteredProviders = remittanceProviders
+  const filteredProviders = serviceProviders
     .filter(
       (provider) =>
         provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,22 +171,22 @@ export const ProviderManagementPage: React.FC = () => {
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
-                  onClick={() => refreshRemittanceProviders(true)}
-                  disabled={loading.remittanceProviders}
+                  onClick={() => refreshServiceProviders(true)}
+                  disabled={loading.serviceProviders}
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                 >
                   <ArrowPathIcon className="mr-2 h-4 w-4" />
                   Refresh
                 </button>
                 <Link
-                  to="/remittance/analytics"
+                  to="/analytics"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
                   Analytics
                 </Link>
                 <Link
-                  to="/remittance"
+                  to="/dashboard"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
                   <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
@@ -209,22 +209,22 @@ export const ProviderManagementPage: React.FC = () => {
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
             <button
-              onClick={() => refreshRemittanceProviders(true)}
-              disabled={loading.remittanceProviders}
+              onClick={() => refreshServiceProviders(true)}
+              disabled={loading.serviceProviders}
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-4 w-4" />
               Refresh
             </button>
             <Link
-              to="/remittance/analytics"
+              to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ChartBarIcon className="mr-2 h-4 w-4 text-blue-600" />
               Analytics
             </Link>
             <Link
-              to="/remittance"
+              to="/dashboard"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
             >
               <ArrowLeftIcon className="mr-2 h-4 w-4 text-black" />
@@ -250,9 +250,9 @@ export const ProviderManagementPage: React.FC = () => {
                       Total Providers
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders
+                      {loading.serviceProviders
                         ? "..."
-                        : remittanceProviders.length}
+                        : serviceProviders.length}
                     </dd>
                   </dl>
                 </div>
@@ -272,10 +272,10 @@ export const ProviderManagementPage: React.FC = () => {
                       Total Earnings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders
+                      {loading.serviceProviders
                         ? "..."
                         : formatCurrency(
-                            remittanceProviders.reduce(
+                            serviceProviders.reduce(
                               (sum, p) => sum + p.totalEarnings,
                               0,
                             ),
@@ -299,11 +299,11 @@ export const ProviderManagementPage: React.FC = () => {
                       Outstanding Balance
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders
+                      {loading.serviceProviders
                         ? "..."
                         : formatCurrency(
-                            remittanceProviders.reduce(
-                              (sum, p) => sum + p.outstandingBalance,
+                            serviceProviders.reduce(
+                              (sum, p) => sum + (p.outstandingBalance || 0),
                               0,
                             ),
                           )}
@@ -326,10 +326,10 @@ export const ProviderManagementPage: React.FC = () => {
                       Overdue Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {loading.remittanceProviders
+                      {loading.serviceProviders
                         ? "..."
-                        : remittanceProviders.reduce(
-                            (sum, p) => sum + p.overdueOrders,
+                        : serviceProviders.reduce(
+                            (sum, p) => sum + (p.overdueOrders || 0),
                             0,
                           )}
                     </dd>
@@ -417,7 +417,7 @@ export const ProviderManagementPage: React.FC = () => {
           </div>
 
           <div className="overflow-x-auto">
-            {loading.remittanceProviders ? (
+            {loading.serviceProviders ? (
               <div className="py-12 text-center">
                 <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                 <p className="mt-4 text-sm text-gray-500">
@@ -435,7 +435,7 @@ export const ProviderManagementPage: React.FC = () => {
                 <p className="mt-2 text-sm text-gray-500">
                   {searchTerm
                     ? "No providers match your search criteria."
-                    : "Service providers will appear here once they have remittance activity."}
+                    : "Service providers will appear here once they have activity."}
                 </p>
               </div>
             ) : (

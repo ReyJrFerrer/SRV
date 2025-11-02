@@ -78,12 +78,38 @@ export const UserListPage: React.FC = () => {
       servicesCount = 0;
     }
 
+    // Safely convert dates from nanoseconds to Date objects
+    // Handle different types: bigint, number, string, or Date
+    const createdAtValue = profile.createdAt 
+      ? (typeof profile.createdAt === 'bigint' 
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === 'number'
+          ? new Date(profile.createdAt / 1000000)
+          : typeof profile.createdAt === 'string'
+          ? new Date(profile.createdAt)
+          : new Date())
+      : new Date();
+    
+    const updatedAtValue = profile.updatedAt
+      ? (typeof profile.updatedAt === 'bigint'
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === 'number'
+          ? new Date(profile.updatedAt / 1000000)
+          : typeof profile.updatedAt === 'string'
+          ? new Date(profile.updatedAt)
+          : new Date())
+      : new Date();
+
+    // Validate dates - if invalid, use current date as fallback
+    const createdAt = isNaN(createdAtValue.getTime()) ? new Date() : createdAtValue;
+    const updatedAt = isNaN(updatedAtValue.getTime()) ? new Date() : updatedAtValue;
+
     return {
       id: userId.toString(),
       name: profile.name,
       phone: profile.phone,
-      createdAt: new Date(Number(profile.createdAt) / 1000000),
-      updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       profilePicture:
         profile.profilePicture && profile.profilePicture.length > 0
           ? {
@@ -248,6 +274,10 @@ export const UserListPage: React.FC = () => {
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   const formatDate = (date: Date) => {
+    // Check if date is valid
+    if (!date || isNaN(date.getTime())) {
+      return "N/A";
+    }
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "2-digit",
