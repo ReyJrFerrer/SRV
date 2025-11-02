@@ -315,7 +315,8 @@ const BookingPage: React.FC = () => {
         // Only consider this a saved draft if it contains meaningful user inputs.
         const hasInputs = (() => {
           try {
-            if (parsed.packages && parsed.packages.some((p) => p.checked)) return true;
+            if (parsed.packages && parsed.packages.some((p) => p.checked))
+              return true;
             if (parsed.bookingOption) return true;
             if (parsed.selectedDate) return true;
             if (parsed.selectedTime && parsed.selectedTime.trim()) return true;
@@ -324,8 +325,10 @@ const BookingPage: React.FC = () => {
             if (parsed.landmark && parsed.landmark.trim()) return true;
             if (parsed.notes && parsed.notes.trim()) return true;
             if (parsed.amountPaid && parsed.amountPaid.trim()) return true;
-            if (parsed.selectedBarangay && parsed.selectedBarangay.trim()) return true;
-            if (parsed.otherBarangay && parsed.otherBarangay.trim()) return true;
+            if (parsed.selectedBarangay && parsed.selectedBarangay.trim())
+              return true;
+            if (parsed.otherBarangay && parsed.otherBarangay.trim())
+              return true;
             // mapLocation and geocoded/display address are treated as
             // auto-detected values and do not by themselves make the draft meaningful.
             return false;
