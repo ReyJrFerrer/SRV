@@ -640,7 +640,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       const description = (data.description || "").toLowerCase();
       const paymentChannel = data.payment_channel || "";
       const amount = parseFloat(data.amount) || 0;
-      
+
       // Only include transactions with "topup" in description but exclude admin updates
       if (
         (description.includes("topup") || description.includes("top-up")) &&
@@ -649,7 +649,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
         console.log("Debug - Topup transaction amount:", amount, "description:", data.description);
         return sum + amount;
       }
-      
+
       return sum;
     }, 0);
 

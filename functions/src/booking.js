@@ -1545,7 +1545,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     try {
       const userProfile = cancellerDoc.exists ? cancellerDoc.data() : null;
       const reportId = generateReportId();
-      
+
       // Create ticket description with structured data
       const ticketDescription = JSON.stringify({
         title: `Booking Cancellation - ${serviceName}`,
@@ -2725,7 +2725,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         ticketPromises.push(
           db.collection("app_reports").doc(reportId).set(newReport).catch((err) => {
             console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel ticket for booking ${booking.id}: ${err.message}`);
-          })
+          }),
         );
       } catch (ticketError) {
         console.error(`⚠️ [cancelMissedBookings] Ticket creation error: ${ticketError.message}`);
