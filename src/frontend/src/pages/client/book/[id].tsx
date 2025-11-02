@@ -451,16 +451,30 @@ const BookingPage: React.FC = () => {
 
   // Manual barangays when province/city changes
   useEffect(() => {
-    if (manualProvince && manualCity) {
+    try {
+      if (!manualProvince) {
+        setManualBarangayOptions([]);
+        setSelectedBarangay("");
+        return;
+      }
+
       const provinceObj = (phLocations as any).provinces.find(
         (prov: any) =>
-          prov.name.trim().toLowerCase() ===
-          manualProvince.trim().toLowerCase(),
+          prov.name.trim().toLowerCase() === manualProvince.trim().toLowerCase(),
       );
-      const muniObj = provinceObj?.municipalities.find(
+
+      if (!provinceObj || !Array.isArray(provinceObj.municipalities)) {
+        setManualBarangayOptions([]);
+        setSelectedBarangay("");
+        return;
+      }
+
+      // Find municipality match for the current manualCity
+      const muniObj = provinceObj.municipalities.find(
         (muni: any) =>
           muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
       );
+
       if (muniObj && Array.isArray(muniObj.barangays)) {
         setManualBarangayOptions(
           muniObj.barangays.filter(
@@ -468,11 +482,32 @@ const BookingPage: React.FC = () => {
               b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
           ),
         );
+        setSelectedBarangay("");
+        return;
+      }
+
+      // If the current manualCity is not a member of the selected province
+      // (e.g., user switched provinces but city stayed from previous province),
+      // pick a sensible default: select the first municipality for this
+      // province and populate its barangays so the UI shows correct options.
+      const firstMuni = provinceObj.municipalities[0];
+      if (firstMuni && firstMuni.name) {
+        setManualCity(firstMuni.name);
+        if (Array.isArray(firstMuni.barangays)) {
+          setManualBarangayOptions(
+            firstMuni.barangays.filter(
+              (b: string) =>
+                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+            ),
+          );
+        } else {
+          setManualBarangayOptions([]);
+        }
       } else {
         setManualBarangayOptions([]);
       }
       setSelectedBarangay("");
-    } else {
+    } catch {
       setManualBarangayOptions([]);
       setSelectedBarangay("");
     }
