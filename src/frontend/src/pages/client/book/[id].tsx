@@ -460,7 +460,8 @@ const BookingPage: React.FC = () => {
 
       const provinceObj = (phLocations as any).provinces.find(
         (prov: any) =>
-          prov.name.trim().toLowerCase() === manualProvince.trim().toLowerCase(),
+          prov.name.trim().toLowerCase() ===
+          manualProvince.trim().toLowerCase(),
       );
 
       if (!provinceObj || !Array.isArray(provinceObj.municipalities)) {
