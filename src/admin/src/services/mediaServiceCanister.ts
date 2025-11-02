@@ -42,7 +42,6 @@ export interface FrontendMediaStorageStats {
 
 export type MediaType =
   | "ServiceImage"
-  | "RemittancePaymentProof"
   | "UserProfile"
   | "ServiceCertificate";
 
@@ -69,41 +68,6 @@ const convertToDate = (timestamp: any): Date => {
 };
 
 // Media Service Functions
-
-/**
- * Gets multiple remittance media items by their IDs
- * @param mediaIds Array of media IDs to retrieve
- * @returns Array of media items
- */
-export const getRemittanceMediaItems = async (
-  mediaIds: string[],
-): Promise<FrontendMediaItem[]> => {
-  try {
-    const getRemittanceMediaItemsFn = httpsCallable(
-      functions,
-      "getRemittanceMediaItems",
-    );
-    const result = await getRemittanceMediaItemsFn({ mediaIds });
-
-    const data = result.data as {
-      success: boolean;
-      mediaItems: FrontendMediaItem[];
-    };
-    return data.success
-      ? data.mediaItems.map((item) => ({
-          ...item,
-          createdAt: convertToDate(item.createdAt),
-          updatedAt: convertToDate(item.updatedAt),
-        }))
-      : [];
-  } catch (error) {
-    if (error instanceof MediaServiceError) throw error;
-    throw new MediaServiceError({
-      message: `Failed to get remittance media items: ${error}`,
-      context: "getRemittanceMediaItems",
-    });
-  }
-};
 
 /**
  * Gets a single media item by ID
@@ -529,7 +493,6 @@ export const updateMediaActor = () => {
 
 // Default export of all service functions
 export const mediaServiceCanister = {
-  getRemittanceMediaItems,
   getMediaItem,
   getFileData,
   getMediaByOwner,

@@ -308,8 +308,16 @@ const UserWalletPage: React.FC = () => {
         <div className="mx-auto max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                to={`/user/${id}`}
+              <button
+                onClick={() => {
+                  // Check if we came from analytics page
+                  const fromAnalytics = location.state?.from === "analytics";
+                  if (fromAnalytics) {
+                    navigate("/analytics");
+                  } else {
+                    navigate(`/user/${id}`);
+                  }
+                }}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <svg
@@ -325,7 +333,7 @@ const UserWalletPage: React.FC = () => {
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-              </Link>
+              </button>
               <h1 className="text-2xl font-bold text-gray-900">User Wallet</h1>
             </div>
             <button
