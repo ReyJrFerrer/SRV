@@ -34,6 +34,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   review = [],
   reputation = null,
   onDeclineClick,
+  onCancelClick,
   acceptBookingById,
   isBookingActionInProgress,
   checkCommissionValidation,
@@ -462,12 +463,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             onChat={handleChatClient}
             onAccept={handleAccept}
             onDecline={onDeclineClick}
+            onCancel={() => onCancelClick(booking)}
             onStart={handleStartService}
             onComplete={handleMarkAsCompleted}
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
-            navigate={navigate}
           />
         </div>
       </div>

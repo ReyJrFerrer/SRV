@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useLocationStore } from "../../store/locationStore";
-import phLocations from "../../data/ph_locations.json";
+import { useLocationStore } from "../../../store/locationStore";
+import phLocations from "../../../data/ph_locations.json";
 
 interface Props {
   visible: boolean;

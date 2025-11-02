@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 import { toast } from "sonner";
+import BookingDrafts from "../../client/BookingDrafts";
 import {
   saveFilesToIDB,
   getFilesFromIDB,
@@ -270,37 +271,21 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
   return (
     <>
       {/* Restore Draft Modal */}
-      {showRestorePrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-2 text-lg font-bold">Restore draft?</h2>
-            <p className="mb-4 text-sm text-gray-600">
-              We found a saved draft for your service. Would you like to restore
-              your progress now?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowRestorePrompt(false)}
-                className="rounded-md border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDiscardDraft}
-                className="rounded-md border px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                Discard
-              </button>
-              <button
-                onClick={handleRestoreDraft}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Restore draft
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Use centralized draft modal for consistency */}
+      <BookingDrafts
+        {...({
+          isOpen: showRestorePrompt,
+          onClose: () => setShowRestorePrompt(false),
+          onRestore: handleRestoreDraft,
+          onDiscard: handleDiscardDraft,
+          title: "Restore service draft?",
+          message:
+            "We found a saved draft for this service. Would you like to restore your progress now?",
+          restoreLabel: "Restore draft",
+          discardLabel: "Discard draft",
+          closeLabel: "Not now",
+        } as any)}
+      />
 
       {/* Exit (Save Draft) Modal */}
       {showExitPrompt && (

@@ -10,7 +10,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
-import CancellationReasons from "../../../components/common/CancellationReasons";
+import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 
@@ -830,7 +830,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 canStartServiceNow={canStartServiceNow}
                 isBookingActionInProgress={isBookingActionInProgress}
                 commissionValidation={commissionValidation}
-                navigate={navigate}
               />
             )}
           </>

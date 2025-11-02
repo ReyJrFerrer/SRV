@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useLocationStore } from "../../../store/locationStore";
-import LocationMapPicker from "../../common/LocationMapPicker";
+import LocationMapPicker from "../../common/GMapFunctions/LocationMapPicker";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
-import EnableLocationButton from "../../common/EnableLocationButton";
+import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 
 export type ServiceLocationProps = {
   highlight?: boolean;

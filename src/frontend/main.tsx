@@ -6,7 +6,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 import App from "./src/App";
 import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
-import TopProgressBar from "./src/components/common/TopProgressBar";
+import TopProgressBar from "./src/components/common/pageFlowImprovements/TopProgressBar";
 
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";

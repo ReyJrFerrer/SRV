@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
 import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
 import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
-import Appear from "../../../components/common/Appear";
-import { BookingListSkeleton } from "../../../components/common/Skeletons";
+import Appear from "../../../components/common/pageFlowImprovements/Appear";
+import { BookingListSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
 import { useReputation } from "../../../hooks/useReputation";
 import {

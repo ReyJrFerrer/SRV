@@ -6,7 +6,7 @@ import {
   StarIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
-import { Link, NavigateFunction } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ProviderEnhancedBooking } from "../../../hooks/useProviderBookingManagement";
 import {
   containerDefault,
@@ -25,12 +25,13 @@ interface Props {
   onChat: () => void;
   onAccept: () => void;
   onDecline: () => void;
+  onCancel?: () => void;
   onStart: () => void;
   onComplete: () => void;
   canStartServiceNow: () => boolean;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
   commissionValidation: CommissionValidation;
-  navigate: NavigateFunction;
+  // navigate removed: ActionButtons no longer navigates directly
   // optional Book Again from provider side (rare)
   onBookAgain?: () => void;
   bookAgainLabel?: string;
@@ -41,12 +42,12 @@ const ActionButtons: React.FC<Props> = ({
   onChat,
   onAccept,
   onDecline,
+  onCancel,
   onStart,
   onComplete,
   canStartServiceNow,
   isBookingActionInProgress,
   commissionValidation,
-  navigate,
   onBookAgain,
   bookAgainLabel = "Book Again",
 }) => {
@@ -55,21 +56,37 @@ const ActionButtons: React.FC<Props> = ({
   // If booking is still Requested, hide chat and other non-decision actions; only show Accept/Decline
   const showChat = typeof onChat === "function" && !isRequested;
   const showBookAgain = !!onBookAgain && !isRequested;
-  const showGoToActive = booking?.status === "InProgress";
+
   const acceptDisabledBecauseCommission =
     booking?.paymentMethod === "CashOnHand" &&
     (commissionValidation.loading ||
       commissionValidation.hasInsufficientBalance);
+  // Show decline if booking explicitly allows declining and not currently processing
   const showDecline = !!(
-    booking?.canAccept &&
     booking?.canDecline &&
     !isBookingActionInProgress(booking?.id || "", "decline")
   );
-  const showAccept = !!(
-    booking?.canAccept &&
-    booking?.canDecline &&
-    !acceptDisabledBecauseCommission &&
-    !isBookingActionInProgress(booking?.id || "", "accept")
+
+  // Show cancel for in-progress bookings when allowed.
+  // Treat an absent `canCancel` flag as allowed (backend may omit it).
+  const canCancelFlag = (booking as any)?.canCancel;
+  const showCancel = !!(
+    booking?.status === "InProgress" &&
+    (canCancelFlag === undefined || canCancelFlag === true) &&
+    !isBookingActionInProgress(booking?.id || "", "cancel")
+  );
+  const cancelInProgress = isBookingActionInProgress(
+    booking?.id || "",
+    "cancel",
+  );
+
+  // Show accept when booking allows accepting. We'll render it disabled if commission
+  // validation fails or an accept action is in progress. This ensures the button is
+  // visible for Requested bookings even when a decline-only flag is absent.
+  const showAccept = !!booking?.canAccept;
+  const acceptInProgress = isBookingActionInProgress(
+    booking?.id || "",
+    "accept",
   );
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
@@ -112,30 +129,6 @@ const ActionButtons: React.FC<Props> = ({
     );
   }
 
-  if (showGoToActive) {
-    buttons.push(
-      <button
-        key="goToActive"
-        onClick={stopAndRun(() => {
-          const storedStartTime = localStorage.getItem(
-            `activeServiceStartTime:${booking.id}`,
-          );
-          const startTime =
-            storedStartTime ||
-            booking.scheduledDate ||
-            booking.requestedDate ||
-            new Date().toISOString();
-          navigate(
-            `/provider/active-service/${booking.id}?startTime=${encodeURIComponent(startTime)}`,
-          );
-        })}
-        className={`${baseButtonClass} w-full ${color.review}`}
-      >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> Go to Active Service
-      </button>,
-    );
-  }
-
   if (showDecline) {
     buttons.push(
       <button
@@ -148,14 +141,75 @@ const ActionButtons: React.FC<Props> = ({
     );
   }
 
+  if (showCancel) {
+    buttons.push(
+      <button
+        key="cancel"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (cancelInProgress) return;
+          // onCancel is optional
+          (onCancel || (() => {}))();
+        }}
+        disabled={cancelInProgress}
+        aria-disabled={cancelInProgress}
+        className={`${baseButtonClass} w-full ${color.decline} ${
+          cancelInProgress ? "cursor-not-allowed opacity-60" : ""
+        }`}
+      >
+        {cancelInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <XCircleIcon className="mr-2 h-5 w-5" />
+        )}
+        Cancel
+      </button>,
+    );
+  }
+
   if (showAccept) {
+    const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
+
     buttons.push(
       <button
         key="accept"
-        onClick={stopAndRun(onAccept)}
-        className={`${baseButtonClass} w-full ${color.accept}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // If commission validation indicates insufficient balance, prompt user to top up
+          if (acceptDisabled) {
+            if (commissionValidation.hasInsufficientBalance) {
+              // Prefer a simple user-facing message; can be replaced with a toast/modal
+              alert(
+                "You need to top up your SRV wallet to cover the commission before accepting this booking.",
+              );
+            } else if (commissionValidation.loading) {
+              alert("Please wait while we validate commission requirements.");
+            }
+            return;
+          }
+          onAccept && onAccept();
+        }}
+        disabled={acceptDisabled}
+        aria-disabled={acceptDisabled}
+        title={
+          commissionValidation.hasInsufficientBalance
+            ? "Top up required to cover commission"
+            : commissionValidation.loading
+              ? "Validating commission"
+              : undefined
+        }
+        className={`${baseButtonClass} w-full ${color.accept} ${
+          acceptDisabled ? "cursor-not-allowed opacity-60" : ""
+        }`}
       >
-        <CheckCircleIcon className="mr-2 h-5 w-5" /> Accept
+        {acceptInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <CheckCircleIcon className="mr-2 h-5 w-5" />
+        )}
+        Accept
       </button>,
     );
   }

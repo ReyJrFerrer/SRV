@@ -1,5 +1,5 @@
 import React from "react";
-import GStreetView from "../../common/GStreetView";
+import GStreetView from "../../common/GMapFunctions/GStreetView";
 
 interface StreetViewModalProps {
   show: boolean;

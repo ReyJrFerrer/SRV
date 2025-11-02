@@ -17,8 +17,8 @@ import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import { useServiceImages } from "../../hooks/useMediaLoader";
 import Tooltip from "../../components/common/Tooltip";
-import Appear from "../../components/common/Appear";
-import { ServiceGridSkeleton } from "../../components/common/Skeletons";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
 // Helper to get category image path
 const getCategoryImage = (slugOrName?: string) => {

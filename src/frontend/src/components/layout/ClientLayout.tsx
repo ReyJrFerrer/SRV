@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import RouteTransition from "../common/RouteTransition";
+import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function ClientLayout() {

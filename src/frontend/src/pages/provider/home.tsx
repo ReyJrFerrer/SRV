@@ -10,7 +10,7 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 import { useLocationStore } from "../../store/locationStore";
 import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
-import LocationBlockedModal from "../../components/common/LocationBlockedModal";
+import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";

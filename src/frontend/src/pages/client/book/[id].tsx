@@ -5,6 +5,8 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+import { Toaster } from "sonner";
+import BookingDrafts from "../../../components/client/BookingDrafts";
 import { useParams, useNavigate } from "react-router-dom";
 import useBookRequest, { BookingRequest } from "../../../hooks/bookRequest";
 import useBookingManagement from "../../../hooks/bookingManagement";
@@ -140,6 +142,157 @@ const BookingPage: React.FC = () => {
     "idle" | "loading" | "ok" | "failed" | "denied" | "na"
   >("idle");
   const [mapsReady, setMapsReady] = useState<boolean>(false);
+
+  // --- Booking draft (localStorage) ---
+  const DRAFT_KEY_PREFIX = "booking_draft_v1_";
+  interface BookingDraft {
+    packages: { id: string; checked: boolean }[];
+    bookingOption: "sameday" | "scheduled" | null;
+    selectedDate: string | null;
+    selectedTime: string;
+    street: string;
+    houseNumber: string;
+    landmark: string;
+    notes: string;
+    paymentMethod: "CashOnHand" | "GCash" | "SRVWallet";
+    amountPaid: string;
+    selectedBarangay: string;
+    otherBarangay: string;
+    locationInputMode: "detected" | "manual" | "hidden";
+    manualProvince: string;
+    manualCity: string;
+    mapLocation: { lat: number; lng: number; address?: string } | null;
+    mapPreciseAddress: string;
+    mapDisplayAddress: string;
+    timestamp: number;
+  }
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+  const [parsedDraft, setParsedDraft] = useState<BookingDraft | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
+
+  const saveDraftImmediate = useCallback(() => {
+    if (!draftKey) return;
+    try {
+      const payload: BookingDraft = {
+        packages: packages.map((p) => ({ id: p.id, checked: !!p.checked })),
+        bookingOption,
+        selectedDate: selectedDate ? selectedDate.toISOString() : null,
+        selectedTime,
+        street,
+        houseNumber,
+        landmark,
+        notes,
+        paymentMethod,
+        amountPaid,
+        selectedBarangay,
+        otherBarangay,
+        locationInputMode,
+        manualProvince,
+        manualCity,
+        mapLocation,
+        mapPreciseAddress,
+        mapDisplayAddress,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(payload));
+      setLastSavedAt(Date.now());
+    } catch (err) {
+      // ignore storage errors
+    }
+  }, [
+    draftKey,
+    packages,
+    bookingOption,
+    selectedDate,
+    selectedTime,
+    street,
+    houseNumber,
+    landmark,
+    notes,
+    paymentMethod,
+    amountPaid,
+    selectedBarangay,
+    otherBarangay,
+    locationInputMode,
+    manualProvince,
+    manualCity,
+    mapLocation,
+    mapPreciseAddress,
+    mapDisplayAddress,
+  ]);
+
+  // Debounced autosave when any form field changes
+  useEffect(() => {
+    if (!draftKey) return;
+    const t = setTimeout(() => saveDraftImmediate(), 700);
+    return () => clearTimeout(t);
+  }, [saveDraftImmediate, draftKey]);
+
+  // Save before unload to cover abrupt navigations
+  useEffect(() => {
+    const onUnload = () => saveDraftImmediate();
+    window.addEventListener("beforeunload", onUnload);
+    return () => window.removeEventListener("beforeunload", onUnload);
+  }, [saveDraftImmediate]);
+
+  // On mount, check for existing draft for this service
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as BookingDraft;
+        setParsedDraft(parsed);
+        setShowRestorePrompt(true);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [draftKey]);
+
+  const handleUseDraft = () => {
+    if (!parsedDraft) return setShowRestorePrompt(false);
+    try {
+      // restore packages checked state
+      setPackages((prev) =>
+        prev.map((p) => {
+          const matched = parsedDraft.packages.find((x) => x.id === p.id);
+          return matched ? { ...p, checked: !!matched.checked } : p;
+        }),
+      );
+      setBookingOption(parsedDraft.bookingOption);
+      setSelectedDate(
+        parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null,
+      );
+      setSelectedTime(parsedDraft.selectedTime || "");
+      setStreet(parsedDraft.street || "");
+      setHouseNumber(parsedDraft.houseNumber || "");
+      setLandmark(parsedDraft.landmark || "");
+      setNotes(parsedDraft.notes || "");
+      setPaymentMethod(parsedDraft.paymentMethod || "CashOnHand");
+      setAmountPaid(parsedDraft.amountPaid || "");
+      setSelectedBarangay(parsedDraft.selectedBarangay || "");
+      setOtherBarangay(parsedDraft.otherBarangay || "");
+      setLocationInputMode(parsedDraft.locationInputMode || "hidden");
+      setManualProvince(parsedDraft.manualProvince || "");
+      setManualCity(parsedDraft.manualCity || "");
+      setMapLocation(parsedDraft.mapLocation || null);
+      setMapPreciseAddress(parsedDraft.mapPreciseAddress || "");
+      setMapDisplayAddress(parsedDraft.mapDisplayAddress || "");
+    } catch (err) {
+      // ignore
+    } finally {
+      setShowRestorePrompt(false);
+    }
+  };
+
+  const handleDiscardDraft = () => {
+    if (draftKey) localStorage.removeItem(draftKey);
+    setParsedDraft(null);
+    setShowRestorePrompt(false);
+  };
 
   // Google maps readiness
   useEffect(() => {
@@ -995,6 +1148,12 @@ const BookingPage: React.FC = () => {
           municipality: finalMunicipality,
           province: finalProvince,
         };
+        // clear saved draft for this service now that booking succeeded
+        try {
+          if (draftKey) localStorage.removeItem(draftKey);
+        } catch (err) {
+          // ignore
+        }
         navigate("/client/booking/confirmation", {
           state: { details: confirmationDetails },
         });
@@ -1027,8 +1186,26 @@ const BookingPage: React.FC = () => {
   if (!service)
     return <div className="p-10 text-center">Service not found.</div>;
 
+  const timeAgo = (ts: number) => {
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 5) return "just now";
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return new Date(ts).toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster position="top-center" />
+
+      {/* Centralized BookingDrafts component handles modal + toasts */}
+      <BookingDrafts
+        isOpen={showRestorePrompt}
+        onClose={() => setShowRestorePrompt(false)}
+        onRestore={handleUseDraft}
+        onDiscard={handleDiscardDraft}
+      />
       <main className="flex-1">
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
           <style>{`
@@ -1173,11 +1350,18 @@ const BookingPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
-                  <StickyConfirmBar
-                    formError={formError}
-                    isSubmitting={isSubmitting}
-                    onConfirm={handleConfirmBooking}
-                  />
+                  <div className="relative mx-auto max-w-5xl">
+                    {lastSavedAt && (
+                      <div className="absolute left-4 top-3 hidden text-xs text-gray-600 sm:block">
+                        Saved • {timeAgo(lastSavedAt)}
+                      </div>
+                    )}
+                    <StickyConfirmBar
+                      formError={formError}
+                      isSubmitting={isSubmitting}
+                      onConfirm={handleConfirmBooking}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -8,7 +8,7 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 
 import ClientHeader from "../../components/client/Header";
-import LocationBlockedModal from "../../components/common/LocationBlockedModal";
+import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
