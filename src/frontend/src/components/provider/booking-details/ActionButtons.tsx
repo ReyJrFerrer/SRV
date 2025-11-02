@@ -60,16 +60,19 @@ const ActionButtons: React.FC<Props> = ({
     booking?.paymentMethod === "CashOnHand" &&
     (commissionValidation.loading ||
       commissionValidation.hasInsufficientBalance);
+  // Show decline if booking explicitly allows declining and not currently processing
   const showDecline = !!(
-    booking?.canAccept &&
     booking?.canDecline &&
     !isBookingActionInProgress(booking?.id || "", "decline")
   );
-  const showAccept = !!(
-    booking?.canAccept &&
-    booking?.canDecline &&
-    !acceptDisabledBecauseCommission &&
-    !isBookingActionInProgress(booking?.id || "", "accept")
+
+  // Show accept when booking allows accepting. We'll render it disabled if commission
+  // validation fails or an accept action is in progress. This ensures the button is
+  // visible for Requested bookings even when a decline-only flag is absent.
+  const showAccept = !!(booking?.canAccept);
+  const acceptInProgress = isBookingActionInProgress(
+    booking?.id || "",
+    "accept",
   );
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
@@ -149,13 +152,47 @@ const ActionButtons: React.FC<Props> = ({
   }
 
   if (showAccept) {
+    const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
+
     buttons.push(
       <button
         key="accept"
-        onClick={stopAndRun(onAccept)}
-        className={`${baseButtonClass} w-full ${color.accept}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // If commission validation indicates insufficient balance, prompt user to top up
+          if (acceptDisabled) {
+            if (commissionValidation.hasInsufficientBalance) {
+              // Prefer a simple user-facing message; can be replaced with a toast/modal
+              alert(
+                "You need to top up your SRV wallet to cover the commission before accepting this booking.",
+              );
+            } else if (commissionValidation.loading) {
+              alert("Please wait while we validate commission requirements.");
+            }
+            return;
+          }
+          onAccept && onAccept();
+        }}
+        disabled={acceptDisabled}
+        aria-disabled={acceptDisabled}
+        title={
+          commissionValidation.hasInsufficientBalance
+            ? "Top up required to cover commission"
+            : commissionValidation.loading
+            ? "Validating commission"
+            : undefined
+        }
+        className={`${baseButtonClass} w-full ${color.accept} ${
+          acceptDisabled ? "opacity-60 cursor-not-allowed" : ""
+        }`}
       >
-        <CheckCircleIcon className="mr-2 h-5 w-5" /> Accept
+        {acceptInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <CheckCircleIcon className="mr-2 h-5 w-5" />
+        )}
+        Accept
       </button>,
     );
   }
