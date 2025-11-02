@@ -39,6 +39,7 @@ const HeroSection: React.FC<Props> = ({
   onSave,
   onCancel,
 }) => {
+  console.log("From Hero Section: ", service)
   return (
     <>
       <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
