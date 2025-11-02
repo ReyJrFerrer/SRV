@@ -46,8 +46,8 @@ const MapSection: React.FC<Props> = ({
     typeof scaledAccuracy === "number" && scaledAccuracy > 0
       ? scaledAccuracy
       : defaultWhenExplicit
-      ? 40
-      : undefined;
+        ? 40
+        : undefined;
   return (
     <section className="rounded-2xl bg-white p-4 shadow-lg">
       <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">

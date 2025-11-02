@@ -208,7 +208,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   {/* Show a subtle accuracy circle around the detected location when available */}
                   {typeof scaledAccuracy === "number" && scaledAccuracy > 0 && (
                     <AccuracyCircle
-                      center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+                      center={{
+                        lat: geoLocation.latitude,
+                        lng: geoLocation.longitude,
+                      }}
                       radius={scaledAccuracy}
                     />
                   )}
