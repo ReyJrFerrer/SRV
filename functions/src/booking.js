@@ -17,7 +17,6 @@ const {
 
 // Import reputation bridge for updating reputations after booking completion
 const {
-  updateUserReputationInternal,
   updateProviderReputationInternal,
   checkUserReputationInternal,
 } = require("./reputation");
@@ -369,7 +368,6 @@ async function cancelConflictingBookings(
 
     const batch = db.batch();
     const notificationPromises = [];
-    const ticketPromises = [];
     let cancelledCount = 0;
 
     conflictingBookingsQuery.forEach((doc) => {
@@ -1335,10 +1333,6 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
 
     // Try-catch of updating reputation scores, if these fails then the functions goes through
     try {
-      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
-      await updateUserReputationInternal(booking.clientId);
-      console.log(`✅ [completeBooking] Client reputation updated successfully`);
-
       console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
       await updateProviderReputationInternal(booking.providerId);
       console.log(`✅ [completeBooking] Provider reputation updated successfully`);
@@ -1459,20 +1453,26 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Only deduct reputation if client is cancelling an accepted booking
-    if (authInfo.uid === booking.clientId && booking.status === "Accepted") {
+    // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
+    const shouldDeductReputation = booking.status === "Accepted" || booking.status === "InProgress";
+
+    if (shouldDeductReputation) {
       try {
-        console.log(`⚠️ [cancelBooking] Deducting reputation points for client 
-          ${booking.clientId} for cancellation.`);
-        await deductReputationForCancellationInternal(booking.clientId);
-        console.log(`✅ [cancelBooking] Successfully deducted reputation points for client 
-          ${booking.clientId}.`);
+        const cancellerType = authInfo.uid === booking.clientId ? "client" : "provider";
+        console.log(
+          `⚠️ [cancelBooking] Deducting reputation points for ${cancellerType} ` +
+          `${authInfo.uid} for cancelling ${booking.status} booking.`,
+        );
+        await deductReputationForCancellationInternal(authInfo.uid);
+        console.log(
+          `✅ [cancelBooking] Successfully deducted reputation points for ${cancellerType} ` +
+          `${authInfo.uid}.`,
+        );
       } catch (error) {
         console.error(`❌ [cancelBooking] Failed to deduct reputation points:`, error);
         // Don't fail the cancellation if reputation update fails, just log it
       }
     }
-
     const updatedBooking = {
       ...booking,
       status: "Cancelled",
@@ -1572,7 +1572,8 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
       // Save report to Firestore
       await db.collection("app_reports").doc(reportId).set(newReport);
-      console.log(`✅ [cancelBooking] Automatically created ticket ${reportId} for booking cancellation.`);
+      console.log(`✅ [cancelBooking] Automatically 
+        created ticket ${reportId} for booking cancellation.`);
     } catch (ticketError) {
       // Don't fail the cancellation if ticket creation fails - just log it
       console.error(`⚠️ [cancelBooking] Failed to create automatic ticket: ${ticketError.message}`);
@@ -2644,6 +2645,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
 
     const batch = db.batch();
     const notificationPromises = [];
+    const ticketPromises = [];
     let cancelledCount = 0;
 
     // Process each missed booking
@@ -2724,7 +2726,8 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
 
         ticketPromises.push(
           db.collection("app_reports").doc(reportId).set(newReport).catch((err) => {
-            console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel ticket for booking ${booking.id}: ${err.message}`);
+            console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel 
+              ticket for booking ${booking.id}: ${err.message}`);
           }),
         );
       } catch (ticketError) {
