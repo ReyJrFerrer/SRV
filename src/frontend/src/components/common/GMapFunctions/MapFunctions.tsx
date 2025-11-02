@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import LocationMapModal from "./LocationMapModal";
 import { useLocationStore } from "../../../store/locationStore";
-import EnableLocationButton from "../EnableLocationButton";
-import LocationBlockedModal from "../LocationBlockedModal";
+import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
+import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
 
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
 const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes

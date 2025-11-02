@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocationStore } from "../../store/locationStore";
+import { useLocationStore } from "../../../store/locationStore";
 
 interface Props {
   className?: string;
