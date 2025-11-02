@@ -4,11 +4,15 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   StarIcon,
-  PhoneIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
-import { Link, NavigateFunction } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ProviderEnhancedBooking } from "../../../hooks/useProviderBookingManagement";
+import {
+  containerDefault,
+  baseButtonDefault,
+  color,
+} from "../../shared/buttonStyles";
 
 interface CommissionValidation {
   estimatedCommission: number;
@@ -19,146 +23,272 @@ interface CommissionValidation {
 interface Props {
   booking: ProviderEnhancedBooking;
   onChat: () => void;
-  onContact: () => void;
   onAccept: () => void;
   onDecline: () => void;
+  onCancel?: () => void;
   onStart: () => void;
   onComplete: () => void;
   canStartServiceNow: () => boolean;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
   commissionValidation: CommissionValidation;
-  navigate: NavigateFunction;
+  // navigate removed: ActionButtons no longer navigates directly
+  // optional Book Again from provider side (rare)
+  onBookAgain?: () => void;
+  bookAgainLabel?: string;
 }
 
 const ActionButtons: React.FC<Props> = ({
   booking,
   onChat,
-  onContact,
   onAccept,
   onDecline,
+  onCancel,
   onStart,
   onComplete,
   canStartServiceNow,
   isBookingActionInProgress,
   commissionValidation,
-  navigate,
+  onBookAgain,
+  bookAgainLabel = "Book Again",
 }) => {
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
+  // Compute visible buttons to adjust layout behavior:
+  const isRequested = booking?.status === "Requested";
+  // If booking is still Requested, hide chat and other non-decision actions; only show Accept/Decline
+  const showChat = typeof onChat === "function" && !isRequested;
+  const showBookAgain = !!onBookAgain && !isRequested;
+
+  const acceptDisabledBecauseCommission =
+    booking?.paymentMethod === "CashOnHand" &&
+    (commissionValidation.loading ||
+      commissionValidation.hasInsufficientBalance);
+  // Show decline if booking explicitly allows declining and not currently processing
+  const showDecline = !!(
+    booking?.canDecline &&
+    !isBookingActionInProgress(booking?.id || "", "decline")
+  );
+
+  // Show cancel for in-progress bookings when allowed.
+  // Treat an absent `canCancel` flag as allowed (backend may omit it).
+  const canCancelFlag = (booking as any)?.canCancel;
+  const showCancel = !!(
+    booking?.status === "InProgress" &&
+    (canCancelFlag === undefined || canCancelFlag === true) &&
+    !isBookingActionInProgress(booking?.id || "", "cancel")
+  );
+  const cancelInProgress = isBookingActionInProgress(
+    booking?.id || "",
+    "cancel",
+  );
+
+  // Show accept when booking allows accepting. We'll render it disabled if commission
+  // validation fails or an accept action is in progress. This ensures the button is
+  // visible for Requested bookings even when a decline-only flag is absent.
+  const showAccept = !!booking?.canAccept;
+  const acceptInProgress = isBookingActionInProgress(
+    booking?.id || "",
+    "accept",
+  );
+  const showStart = !!(booking?.canStart && canStartServiceNow());
+  const showComplete = !!booking?.canComplete;
+  const showViewReview = booking?.status === "Completed";
+
+  const baseContainer = containerDefault;
+  const baseButtonClass = baseButtonDefault;
+
+  const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fn) fn();
+  };
+
+  // Build buttons array so we can mirror the client's layout logic and sizing
+  const buttons: React.ReactElement[] = [];
+
+  if (showChat) {
+    buttons.push(
       <button
-        onClick={onChat}
-        className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+        key="chat"
+        onClick={stopAndRun(onChat)}
+        className={`${baseButtonClass} w-full ${color.chat}`}
       >
         <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat{" "}
         {booking?.clientName?.split(" ")[0] || "Client"}
-      </button>
+      </button>,
+    );
+  }
+
+  if (showBookAgain) {
+    buttons.push(
       <button
-        onClick={onContact}
-        className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+        key="bookAgain"
+        onClick={stopAndRun(onBookAgain)}
+        className={`${baseButtonClass} w-full ${color.bookAgain}`}
       >
-        <PhoneIcon className="mr-2 h-5 w-5" /> Contact{" "}
-        {booking?.clientName?.split(" ")[0] || "Client"}
-      </button>
-      {booking?.status === "InProgress" && (
-        <button
-          onClick={() => {
-            const storedStartTime = localStorage.getItem(
-              `activeServiceStartTime:${booking.id}`,
-            );
-            const startTime =
-              storedStartTime ||
-              booking.scheduledDate ||
-              booking.requestedDate ||
-              new Date().toISOString();
-            navigate(
-              `/provider/active-service/${booking.id}?startTime=${encodeURIComponent(startTime)}`,
-            );
-          }}
-          className="flex flex-1 items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-        >
-          <ArrowPathIcon className="mr-2 h-5 w-5" />
-          Go to Active Service
-        </button>
-      )}
-      {booking?.canAccept && booking?.canDecline && (
-        <>
-          <button
-            onClick={onDecline}
-            disabled={isBookingActionInProgress(booking?.id || "", "decline")}
-            className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
-          >
-            <XCircleIcon className="mr-2 h-5 w-5" />
-            {isBookingActionInProgress(booking?.id || "", "decline")
-              ? "Declining..."
-              : "Decline"}
-          </button>
-          <button
-            onClick={onAccept}
-            disabled={
-              isBookingActionInProgress(booking?.id || "", "accept") ||
-              (booking?.paymentMethod === "CashOnHand" &&
-                (commissionValidation.loading ||
-                  commissionValidation.hasInsufficientBalance))
+        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+      </button>,
+    );
+  }
+
+  if (showDecline) {
+    buttons.push(
+      <button
+        key="decline"
+        onClick={stopAndRun(onDecline)}
+        className={`${baseButtonClass} w-full ${color.decline}`}
+      >
+        <XCircleIcon className="mr-2 h-5 w-5" /> Decline
+      </button>,
+    );
+  }
+
+  if (showCancel) {
+    buttons.push(
+      <button
+        key="cancel"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (cancelInProgress) return;
+          // onCancel is optional
+          (onCancel || (() => {}))();
+        }}
+        disabled={cancelInProgress}
+        aria-disabled={cancelInProgress}
+        className={`${baseButtonClass} w-full ${color.decline} ${
+          cancelInProgress ? "cursor-not-allowed opacity-60" : ""
+        }`}
+      >
+        {cancelInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <XCircleIcon className="mr-2 h-5 w-5" />
+        )}
+        Cancel
+      </button>,
+    );
+  }
+
+  if (showAccept) {
+    const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
+
+    buttons.push(
+      <button
+        key="accept"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // If commission validation indicates insufficient balance, prompt user to top up
+          if (acceptDisabled) {
+            if (commissionValidation.hasInsufficientBalance) {
+              // Prefer a simple user-facing message; can be replaced with a toast/modal
+              alert(
+                "You need to top up your SRV wallet to cover the commission before accepting this booking.",
+              );
+            } else if (commissionValidation.loading) {
+              alert("Please wait while we validate commission requirements.");
             }
-            className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
-              booking?.paymentMethod === "CashOnHand" &&
-              (commissionValidation.loading ||
-                commissionValidation.hasInsufficientBalance)
-                ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
-                : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-            } disabled:opacity-50`}
-            title={
-              booking?.paymentMethod === "CashOnHand" &&
-              commissionValidation.hasInsufficientBalance
-                ? "Insufficient wallet balance for commission fee"
-                : ""
-            }
-          >
-            <CheckCircleIcon className="mr-2 h-5 w-5" />
-            {isBookingActionInProgress(booking?.id || "", "accept")
-              ? "Accepting..."
-              : commissionValidation.loading
-                ? "Checking..."
-                : "Accept"}
-          </button>
-        </>
-      )}
-      {booking?.canStart && (
-        <button
-          onClick={onStart}
-          disabled={!canStartServiceNow()}
-          className={`flex flex-1 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
-            !canStartServiceNow()
-              ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
-              : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900"
-          } disabled:opacity-50`}
-          title={
-            !canStartServiceNow()
-              ? "Service can only be started on or after the scheduled date and time"
-              : "Navigate to directions"
+            return;
           }
-        >
-          <ArrowPathIcon className="mr-2 h-5 w-5" />
-          Start Service
-        </button>
-      )}
-      {booking?.canComplete && (
-        <button
-          onClick={onComplete}
-          className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-medium text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900"
-        >
+          onAccept && onAccept();
+        }}
+        disabled={acceptDisabled}
+        aria-disabled={acceptDisabled}
+        title={
+          commissionValidation.hasInsufficientBalance
+            ? "Top up required to cover commission"
+            : commissionValidation.loading
+              ? "Validating commission"
+              : undefined
+        }
+        className={`${baseButtonClass} w-full ${color.accept} ${
+          acceptDisabled ? "cursor-not-allowed opacity-60" : ""
+        }`}
+      >
+        {acceptInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
           <CheckCircleIcon className="mr-2 h-5 w-5" />
-          Mark Completed
-        </button>
-      )}
-      {booking?.status === "Completed" && (
-        <Link
-          to={`/provider/review/${booking?.id}`}
-          className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2.5 text-center text-sm font-medium text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-        >
-          <StarIcon className="mr-2 h-5 w-5" /> View Review
-        </Link>
-      )}
+        )}
+        Accept
+      </button>,
+    );
+  }
+
+  if (showStart) {
+    buttons.push(
+      <button
+        key="start"
+        onClick={stopAndRun(onStart)}
+        className={`${baseButtonClass} w-full ${color.start}`}
+      >
+        <ArrowPathIcon className="mr-2 h-5 w-5" /> Start Service
+      </button>,
+    );
+  }
+
+  if (showComplete) {
+    buttons.push(
+      <button
+        key="complete"
+        onClick={stopAndRun(onComplete)}
+        className={`${baseButtonClass} w-full ${color.complete}`}
+      >
+        <CheckCircleIcon className="mr-2 h-5 w-5" /> Mark Completed
+      </button>,
+    );
+  }
+
+  if (showViewReview) {
+    buttons.push(
+      <Link
+        key="viewReview"
+        to={`/provider/review/${booking?.id}`}
+        onClick={(e) => e.stopPropagation()}
+        className={`${baseButtonClass} w-full ${color.review}`}
+      >
+        <StarIcon className="mr-2 h-5 w-5" /> View Review
+      </Link>,
+    );
+  }
+
+  // Layout rendering to match client ActionButtons
+  if (buttons.length === 0) return <div className={baseContainer} />;
+
+  if (buttons.length === 1) {
+    return (
+      <div className={`${baseContainer} w-full`}>
+        <div className="flex w-full justify-end">{buttons[0]}</div>
+      </div>
+    );
+  }
+
+  if (buttons.length === 4) {
+    return (
+      <div className={`${baseContainer} w-full flex-col`}>
+        <div className="grid w-full grid-cols-3 gap-2">
+          {buttons.slice(0, 3).map((b, i) => (
+            <div key={`top-${i}`} className="w-full">
+              {b}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex w-full justify-center">
+          {<div className="w-2/3">{buttons[3]}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // Default: center and distribute equally
+  return (
+    <div className={`${baseContainer} w-full`}>
+      <div className="flex w-full justify-center gap-2">
+        {buttons.map((b, i) => (
+          <div key={`btn-${i}`} className="flex-1">
+            {b}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

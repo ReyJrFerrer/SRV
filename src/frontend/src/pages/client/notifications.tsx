@@ -5,6 +5,7 @@ import {
   Notification,
 } from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   BellAlertIcon,
   CheckCircleIcon,
@@ -260,7 +261,9 @@ const NotificationsPage = () => {
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (
-          <div className="p-10 text-center text-gray-500">Loading...</div>
+          <div className="p-8 text-center text-gray-500">
+            Loading notifications…
+          </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
         ) : notifications.length === 0 ? (
@@ -280,12 +283,17 @@ const NotificationsPage = () => {
                     New
                   </h2>
                   <div className="divide-y divide-blue-100">
-                    {unread.map((notif) => (
-                      <NotificationItem
+                    {unread.map((notif, idx) => (
+                      <Appear
                         key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -297,12 +305,17 @@ const NotificationsPage = () => {
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">
-                    {read.map((notif) => (
-                      <NotificationItem
+                    {read.map((notif, idx) => (
+                      <Appear
                         key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>

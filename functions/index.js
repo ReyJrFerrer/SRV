@@ -14,7 +14,7 @@ if (!admin.apps.length) {
 }
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({maxInstances: 10, region: "asia-east1"});
 
 /**
  * Initialize categories on startup
@@ -55,7 +55,6 @@ const {
   updateUserReputation: updateUserReputationBridge,
   updateProviderReputation,
   processReviewForReputation,
-  getReputationScore,
 } = require("./src/reputation");
 
 // Import Admin Management functions
@@ -179,6 +178,8 @@ const {
   getUserReviews,
   updateReview,
   deleteReview,
+  restoreReview,
+  bulkUpdateReviewStatus,
   calculateProviderRating,
   calculateServiceRating,
   calculateUserAverageRating,
@@ -268,7 +269,6 @@ exports.initializeReputation = initializeReputation;
 exports.updateUserReputationBridge = updateUserReputationBridge;
 exports.updateProviderReputation = updateProviderReputation;
 exports.processReviewForReputation = processReviewForReputation;
-exports.getReputationScore = getReputationScore;
 
 // Export Commission functions
 exports.calculateCommission = calculateCommission;
@@ -357,6 +357,8 @@ exports.getBookingReviews = getBookingReviews;
 exports.getUserReviews = getUserReviews;
 exports.updateReview = updateReview;
 exports.deleteReview = deleteReview;
+exports.restoreReview = restoreReview;
+exports.bulkUpdateReviewStatus = bulkUpdateReviewStatus;
 exports.calculateProviderRating = calculateProviderRating;
 exports.calculateServiceRating = calculateServiceRating;
 exports.calculateUserAverageRating = calculateUserAverageRating;

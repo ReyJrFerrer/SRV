@@ -1,6 +1,7 @@
 import React from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import GStreetView from "../../common/GStreetView";
+import GStreetView from "../../common/GMapFunctions/GStreetView";
+import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
 import { MapPinIcon } from "@heroicons/react/24/solid";
 
 interface Props {
@@ -32,6 +33,21 @@ const MapSection: React.FC<Props> = ({
   showStreetView,
   setShowStreetView,
 }) => {
+  // If resolvedCoords/clientLocation include an accuracy field, scale it for UI.
+  const rawAccuracy =
+    (resolvedCoords as any)?.accuracy ?? (clientLocation as any)?.accuracy;
+  const scaledAccuracy =
+    typeof rawAccuracy === "number" && rawAccuracy > 0
+      ? Math.min(rawAccuracy * 0.25, 100)
+      : undefined;
+  // Fallback: if no reported accuracy but we have explicit coordinates, show a small default radius
+  const defaultWhenExplicit = hasExplicitCoords || !!resolvedCoords;
+  const effectiveRadius =
+    typeof scaledAccuracy === "number" && scaledAccuracy > 0
+      ? scaledAccuracy
+      : defaultWhenExplicit
+        ? 40
+        : undefined;
   return (
     <section className="rounded-2xl bg-white p-4 shadow-lg">
       <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
@@ -92,6 +108,12 @@ const MapSection: React.FC<Props> = ({
               zoomControl={true}
             >
               <AdvancedMarker position={resolvedCoords || clientLocation} />
+              {typeof effectiveRadius === "number" && effectiveRadius > 0 && (
+                <AccuracyCircle
+                  center={resolvedCoords || clientLocation}
+                  radius={effectiveRadius}
+                />
+              )}
             </Map>
             <div className="pointer-events-none absolute inset-0">
               <div className="pointer-events-auto absolute bottom-2 left-2">

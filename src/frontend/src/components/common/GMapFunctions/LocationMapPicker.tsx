@@ -66,18 +66,34 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     rawName: string | undefined,
     formattedAddress: string | undefined,
   ): string => {
-    let formatted = (formattedAddress || "")
-      .trim()
-      .replace(/^\+[^,]+,\s*/i, "");
+    let formatted = (formattedAddress || "").trim();
     if (!formatted) return rawName || "";
+
+    // Split into comma-separated components, trim, and filter out
+    // unwanted tokens like plus-codes (e.g. "2FH3+G4C") and "Unnamed Road".
+    const parts = formatted
+      .split(",")
+      .map((p) => p.trim())
+      .filter((p) => {
+        if (!p) return false;
+        // plus-code pattern like "2FH3+G4C" (alphanum + plus + alphanum)
+        const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+        if (plusCodeRegex.test(p)) return false;
+        // remove generic unnamed road tokens
+        if (/^Unnamed\s+Road$/i.test(p)) return false;
+        return true;
+      });
+
+    const cleaned = parts.join(", ");
+    if (!cleaned) return rawName || "";
     if (
       rawName &&
       rawName.trim() &&
-      !formatted.toLowerCase().includes(rawName.trim().toLowerCase())
+      !cleaned.toLowerCase().includes(rawName.trim().toLowerCase())
     ) {
-      return `${rawName.trim()}, ${formatted}`;
+      return `${rawName.trim()}, ${cleaned}`;
     }
-    return formatted;
+    return cleaned;
   };
 
   const persistLocation = (loc: StructuredLocation) => {

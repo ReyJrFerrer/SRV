@@ -68,6 +68,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   const [reputationError, setReputationError] = useState<string | null>(null);
   const [hasSufficientReputation, setHasSufficientReputation] = useState(true);
   const { fetchUserReputation } = useReputation();
+  const [providerRep, setProviderRep] = useState<any | null>(null);
 
   // Check reputations when service and identity are available
   useEffect(() => {
@@ -86,12 +87,16 @@ const ClientServiceDetailsPage: React.FC = () => {
           identity.getPrincipal().toString(),
         );
         // Get provider's reputation
-        const providerRep = await fetchUserReputation(service.providerId);
+        const fetchedProviderRep = await fetchUserReputation(
+          service.providerId,
+        );
+        setProviderRep(fetchedProviderRep);
 
         // Check if both reputations are sufficient (>= 5)
         const isCurrentUserEligible =
           currentUserRep && currentUserRep.trustScore >= 5;
-        const isProviderEligible = providerRep && providerRep.trustScore >= 5;
+        const isProviderEligible =
+          fetchedProviderRep && fetchedProviderRep.trustScore >= 5;
 
         if (!isCurrentUserEligible || !isProviderEligible) {
           if (!isCurrentUserEligible) {
@@ -406,7 +411,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-1 flex w-full flex-col items-center gap-0">
-                    <ReputationScore providerId={service.providerId} />
+                    <ReputationScore reputation={providerRep} />
                     {isVerified === true && (
                       <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
                         <CheckBadgeIcon className="mr-2 h-5 w-5" />

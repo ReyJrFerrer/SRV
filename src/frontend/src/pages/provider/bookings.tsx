@@ -16,10 +16,13 @@ import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { useClientRating } from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
-import CancelWithReasonButton from "../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../components/common/canellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
+import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 
 type BookingStatusTab =
   | "ALL"
@@ -222,6 +225,8 @@ const ProviderBookingsPage: React.FC = () => {
     document.title = "My Bookings | SRV Provider";
   }, []);
 
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -416,11 +421,17 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+        <header className="relative sticky top-0 z-20 border-b border-gray-200 bg-white">
           <div className="flex w-full items-center justify-center px-4 py-3">
             <h1 className="text-2xl font-extrabold tracking-tight text-black">
               My Bookings
             </h1>
+            <button
+              onClick={() => setShowRatingInfo(true)}
+              className="absolute right-4 top-3 rounded-md px-2 py-1 text-sm text-blue-600 hover:underline"
+            >
+              About ratings
+            </button>
           </div>
         </header>
 
@@ -507,13 +518,12 @@ const ProviderBookingsPage: React.FC = () => {
 
         <main className="flex-grow overflow-y-auto pb-10">
           {loading ? (
-            <div className="py-16 text-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-500">Loading bookings...</p>
+            <div className="px-4 py-4">
+              <BookingListSkeleton count={6} />
             </div>
           ) : currentBookings.length > 0 ? (
             <div className="space-y-4 px-4 py-4">
-              {currentBookings.map((booking) => {
+              {currentBookings.map((booking, idx) => {
                 const clientId =
                   booking.clientProfile?.id?.toString() ||
                   booking.clientId?.toString();
@@ -522,43 +532,44 @@ const ProviderBookingsPage: React.FC = () => {
                   : { reviews: [], reputation: null };
 
                 return (
-                  <div
-                    key={booking.id}
-                    onClick={() => {
-                      // Make inprogress bookings viewable
-                      if (
-                        (activeTab === "IN PROGRESS" ||
-                          booking.status?.toLowerCase() === "inprogress") &&
-                        booking.id
-                      ) {
-                        navigate(`/provider/active-service/${booking.id}`);
-                      } else if (booking.id) {
-                        navigate(`/provider/booking/${booking.id}`);
-                      }
-                    }}
-                    className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
-                  >
-                    <ProviderBookingItemCard
-                      booking={booking}
-                      review={clientData?.reviews || []}
-                      reputation={clientData?.reputation || null}
-                      onDeclineClick={() => {
-                        setDecliningBookingId(booking.id);
-                        setShowDeclineConfirm(true);
+                  <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
+                    <div
+                      onClick={() => {
+                        // Make inprogress bookings viewable
+                        if (
+                          (activeTab === "IN PROGRESS" ||
+                            booking.status?.toLowerCase() === "inprogress") &&
+                          booking.id
+                        ) {
+                          navigate(`/provider/active-service/${booking.id}`);
+                        } else if (booking.id) {
+                          navigate(`/provider/booking/${booking.id}`);
+                        }
                       }}
-                      onCancelClick={(booking: ProviderEnhancedBooking) =>
-                        setCancellingBooking(booking)
-                      }
-                      isDeclining={isBookingActionInProgress(
-                        booking.id,
-                        "decline",
-                      )}
-                      acceptBookingById={acceptBookingById}
-                      isBookingActionInProgress={isBookingActionInProgress}
-                      checkCommissionValidation={checkCommissionValidation}
-                      startBookingById={startBookingById}
-                    />
-                  </div>
+                      className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
+                    >
+                      <ProviderBookingItemCard
+                        booking={booking}
+                        review={clientData?.reviews || []}
+                        reputation={clientData?.reputation || null}
+                        onDeclineClick={() => {
+                          setDecliningBookingId(booking.id);
+                          setShowDeclineConfirm(true);
+                        }}
+                        onCancelClick={(booking: ProviderEnhancedBooking) =>
+                          setCancellingBooking(booking)
+                        }
+                        isDeclining={isBookingActionInProgress(
+                          booking.id,
+                          "decline",
+                        )}
+                        acceptBookingById={acceptBookingById}
+                        isBookingActionInProgress={isBookingActionInProgress}
+                        checkCommissionValidation={checkCommissionValidation}
+                        startBookingById={startBookingById}
+                      />
+                    </div>
+                  </Appear>
                 );
               })}
             </div>
@@ -588,6 +599,12 @@ const ProviderBookingsPage: React.FC = () => {
           setDecliningBookingId(null);
         }}
         onConfirm={handleDeclineBooking}
+      />
+
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="provider"
       />
 
       {/* Cancel Booking Dialog */}

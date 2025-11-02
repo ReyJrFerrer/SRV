@@ -5,6 +5,7 @@ import ProviderStats from "../components/ProviderStats";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
+import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 // Reputation Score Component
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
@@ -20,7 +21,7 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative flex h-48 w-48 items-center justify-center">
+    <div className="relative flex h-60 w-60 items-center justify-center">
       <svg className="absolute h-full w-full" viewBox="0 0 100 100">
         <circle
           className="text-gray-200"
@@ -81,127 +82,6 @@ interface UserData {
   walletBalance: number;
   servicesCount: number;
 }
-
-const ClientStats: React.FC<{ userId: string }> = ({ userId }) => {
-  const [analytics, setAnalytics] = useState<{
-    totalBookings: number;
-    servicesCompleted: number;
-    totalSpent: number;
-    memberSince: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchClientAnalytics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        try {
-          setAnalytics({
-            totalBookings: 0,
-            servicesCompleted: 0,
-            totalSpent: 0,
-            memberSince: "Data not available",
-          });
-        } catch (adminError) {
-          console.log(
-            "Admin canister failed, using fallback data:",
-            adminError,
-          );
-          // Fallback to placeholder data if admin canister fails
-          setAnalytics({
-            totalBookings: 0,
-            servicesCompleted: 0,
-            totalSpent: 0,
-            memberSince: "Data not available",
-          });
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching client analytics:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load client statistics",
-        );
-        setAnalytics({
-          totalBookings: 0,
-          servicesCompleted: 0,
-          totalSpent: 0,
-          memberSince: "Unknown",
-        });
-      }
-    };
-
-    fetchClientAnalytics();
-  }, [userId]);
-
-  if (loading) {
-    return (
-      <div className="py-8 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-        <p className="mt-2 text-sm text-gray-500">
-          Loading client statistics...
-        </p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-red-500">
-          Failed to load client statistics: {error}
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!analytics) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-gray-500">No client statistics available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.totalBookings}
-        </div>
-        <div className="text-sm text-gray-500">Total Bookings</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.servicesCompleted}
-        </div>
-        <div className="text-sm text-gray-500">Services Completed</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          ₱{analytics.totalSpent.toLocaleString()}
-        </div>
-        <div className="text-sm text-gray-500">Total Spent</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-gray-900">
-          {analytics.memberSince}
-        </div>
-        <div className="text-sm text-gray-500">Member Since</div>
-      </div>
-    </div>
-  );
-};
 
 export const UserDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -305,12 +185,29 @@ export const UserDetailsPage: React.FC = () => {
         console.warn("Services data fetch failed:", servicesData.reason);
       }
 
+      // Safely convert dates from nanoseconds to Date objects
+      const createdAtValue = profile.createdAt 
+        ? (typeof profile.createdAt === 'bigint' 
+            ? new Date(Number(profile.createdAt) / 1000000)
+            : typeof profile.createdAt === 'number'
+            ? new Date(profile.createdAt / 1000000)
+            : new Date())
+        : new Date();
+      
+      const updatedAtValue = profile.updatedAt
+        ? (typeof profile.updatedAt === 'bigint'
+            ? new Date(Number(profile.updatedAt) / 1000000)
+            : typeof profile.updatedAt === 'number'
+            ? new Date(profile.updatedAt / 1000000)
+            : new Date())
+        : new Date();
+
       return {
         id: profile.id.toString(),
         name: profile.name,
         phone: profile.phone,
-        createdAt: new Date(Number(profile.createdAt) / 1000000),
-        updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+        createdAt: createdAtValue,
+        updatedAt: updatedAtValue,
         profilePicture:
           profile.profilePicture &&
           profile.profilePicture.length > 0 &&
@@ -331,7 +228,7 @@ export const UserDetailsPage: React.FC = () => {
         averageRating: reviewsData.averageRating,
         totalReviews: reviewsData.totalReviews,
         completionRate: analyticsData.completionRate,
-        lastActivity: new Date(Number(profile.updatedAt) / 1000000),
+        lastActivity: updatedAtValue,
         reputationScore: reputationData.reputationScore,
         reputationLevel: reputationData.trustLevel,
         reputationRing: Math.min(
@@ -345,12 +242,29 @@ export const UserDetailsPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching real user data, using defaults:", error);
       // Fallback to default values if real data fails
+      // Safely convert dates from nanoseconds to Date objects
+      const createdAtValue = profile.createdAt 
+        ? (typeof profile.createdAt === 'bigint' 
+            ? new Date(Number(profile.createdAt) / 1000000)
+            : typeof profile.createdAt === 'number'
+            ? new Date(profile.createdAt / 1000000)
+            : new Date())
+        : new Date();
+      
+      const updatedAtValue = profile.updatedAt
+        ? (typeof profile.updatedAt === 'bigint'
+            ? new Date(Number(profile.updatedAt) / 1000000)
+            : typeof profile.updatedAt === 'number'
+            ? new Date(profile.updatedAt / 1000000)
+            : new Date())
+        : new Date();
+
       return {
         id: profile.id.toString(),
         name: profile.name,
         phone: profile.phone,
-        createdAt: new Date(Number(profile.createdAt) / 1000000),
-        updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+        createdAt: createdAtValue,
+        updatedAt: updatedAtValue,
         profilePicture:
           profile.profilePicture &&
           profile.profilePicture.length > 0 &&
@@ -383,9 +297,12 @@ export const UserDetailsPage: React.FC = () => {
     }
   };
 
-  const handleUpdateCommission = (newAmount: number) => {
+  const handleUpdateCommission = async (newAmount: number) => {
+    // Update local balance when refreshed from ProviderStats
+    if (user) {
+      setUser({ ...user, walletBalance: newAmount });
+    }
     setOutstandingCommission(newAmount);
-    setShowCommissionConfirmation(true);
   };
 
   const handleReputationChange = (newScore: number) => {
@@ -440,7 +357,7 @@ export const UserDetailsPage: React.FC = () => {
     }
 
     // Find the user in backend users
-    const foundProfile = backendUsers.find((p) => p.id.toString() === id);
+    const foundProfile = backendUsers.find((p) => p?.id?.toString() === id);
 
     if (foundProfile) {
       try {
@@ -452,13 +369,17 @@ export const UserDetailsPage: React.FC = () => {
         console.error("Error converting user data:", error);
         // Fallback to basic user data
         const basicUserData: UserData = {
-          id: foundProfile.id.toString(),
-          name: foundProfile.name,
-          phone: foundProfile.phone,
-          createdAt: new Date(Number(foundProfile.createdAt) / 1000000),
-          updatedAt: new Date(Number(foundProfile.updatedAt) / 1000000),
+          id: foundProfile?.id?.toString() || id || "",
+          name: foundProfile?.name || "Unknown User",
+          phone: foundProfile?.phone || "",
+          createdAt: foundProfile?.createdAt
+            ? new Date(Number(foundProfile.createdAt) / 1000000)
+            : new Date(),
+          updatedAt: foundProfile?.updatedAt
+            ? new Date(Number(foundProfile.updatedAt) / 1000000)
+            : new Date(),
           profilePicture:
-            foundProfile.profilePicture &&
+            foundProfile?.profilePicture &&
             foundProfile.profilePicture.length > 0
               ? {
                   imageUrl: foundProfile.profilePicture[0]!.imageUrl,
@@ -466,7 +387,7 @@ export const UserDetailsPage: React.FC = () => {
                 }
               : undefined,
           biography:
-            foundProfile.biography && foundProfile.biography.length > 0
+            foundProfile?.biography && foundProfile.biography.length > 0
               ? foundProfile.biography[0]
               : undefined,
           totalEarnings: 0,
@@ -476,11 +397,13 @@ export const UserDetailsPage: React.FC = () => {
           averageRating: 0,
           totalReviews: 0,
           completionRate: 0,
-          lastActivity: new Date(Number(foundProfile.updatedAt) / 1000000),
+          lastActivity: foundProfile?.updatedAt
+            ? new Date(Number(foundProfile.updatedAt) / 1000000)
+            : new Date(),
           reputationScore: 50,
           reputationLevel: "New",
           reputationRing: 1,
-          isLocked: getUserLockStatus(foundProfile.id.toString()),
+          isLocked: getUserLockStatus(foundProfile?.id?.toString() || id || ""),
           walletBalance: 0,
           servicesCount: 0,
         };
@@ -622,22 +545,15 @@ export const UserDetailsPage: React.FC = () => {
                 </div>
                 <div className="mt-4 flex items-center">
                   <div className="h-16 w-16 flex-shrink-0">
-                    {user.profilePicture ? (
-                      <img
-                        className="h-16 w-16 rounded-full object-cover shadow-lg ring-4 ring-white"
-                        src={
-                          user.profilePicture.thumbnailUrl ||
-                          user.profilePicture.imageUrl
-                        }
-                        alt={user.name}
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg">
-                        <span className="text-xl font-bold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <ProfileImage
+                      profilePictureUrl={
+                        user.profilePicture?.thumbnailUrl ||
+                        user.profilePicture?.imageUrl
+                      }
+                      userName={user.name}
+                      size="h-16 w-16"
+                      className="shadow-lg ring-4 ring-white"
+                    />
                   </div>
                   <div className="ml-6">
                     <div className="flex items-center space-x-3">
@@ -686,7 +602,7 @@ export const UserDetailsPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap items-center gap-2 space-x-3">
                   <Link
                     to={`/user/${user.id}/services`}
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -706,6 +622,63 @@ export const UserDetailsPage: React.FC = () => {
                     </svg>
                     View Services
                   </Link>
+                  <button
+                    onClick={() => navigate(`/user/${user.id}/bookings`)}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                      />
+                    </svg>
+                    View Bookings
+                  </button>
+                  <button
+                    onClick={() => navigate(`/user/${user.id}/chat`)}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    View Chats
+                  </button>
+                  <button
+                    onClick={() => navigate(`/user/${user.id}/reviews`, { state: { from: "userDetails" } })}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                    View Reviews
+                  </button>
                 </div>
               </div>
             </div>
@@ -741,10 +714,10 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Provider Details */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Contact Information */}
+            {/* User Information */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Contact Information
+                User Information
               </h3>
               <div className="space-y-4">
                 <div>
@@ -777,18 +750,10 @@ export const UserDetailsPage: React.FC = () => {
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-gray-500">
-                    Services Posted
+                    Total Services
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {user.servicesCount}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    SRV Wallet Balance
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    ₱{user.walletBalance.toFixed(2)}
                   </dd>
                 </div>
               </div>
@@ -897,70 +862,6 @@ export const UserDetailsPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Performance Metrics */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Performance Metrics
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.completedJobs}
-                </div>
-                <div className="text-sm text-gray-500">Completed Jobs</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.completionRate.toFixed(1)}%
-                </div>
-                <div className="text-sm text-gray-500">Completion Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.averageRating.toFixed(1)}
-                </div>
-                <div className="text-sm text-gray-500">Average Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {user.totalReviews}
-                </div>
-                <div className="text-sm text-gray-500">Total Reviews</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Client Statistics */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Client Statistics
-              </h3>
-              <button
-                onClick={() => navigate(`/user/${user.id}/bookings`)}
-                className="inline-flex items-center rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                <svg
-                  className="mr-1.5 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                  />
-                </svg>
-                View Bookings
-              </button>
-            </div>
-            <ClientStats userId={user.id} />
-          </div>
         </div>
       </main>
 
@@ -997,7 +898,7 @@ export const UserDetailsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Commission Update Confirmation Modal */}
+      {/* Commission Update Confirmation Modal - Keeping for backward compatibility but not used */}
       {showCommissionConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
@@ -1019,16 +920,20 @@ export const UserDetailsPage: React.FC = () => {
               >
                 Cancel
               </button>
-              {/* <button
-                onClick={confirmCommissionUpdate}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              <button
+                onClick={() => {
+                  // This modal is now deprecated - wallet changes happen through wallet page
+                  setShowCommissionConfirmation(false);
+                }}
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Update Commission
-              </button> */}
+                Close
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

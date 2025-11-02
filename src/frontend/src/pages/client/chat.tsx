@@ -74,17 +74,18 @@ const ClientChatPage: React.FC = () => {
                 {conversations
                   .slice() // copy array to avoid mutating original
                   .sort((a, b) => {
-                    const aTime = a.lastMessage?.createdAt
-                      ? new Date(a.lastMessage.createdAt).getTime()
+                    const aTime = a.lastMessage?.[0]?.createdAt
+                      ? new Date(a.lastMessage[0].createdAt).getTime()
                       : 0;
-                    const bTime = b.lastMessage?.createdAt
-                      ? new Date(b.lastMessage.createdAt).getTime()
+                    const bTime = b.lastMessage?.[0]?.createdAt
+                      ? new Date(b.lastMessage[0].createdAt).getTime()
                       : 0;
                     return bTime - aTime;
                   })
                   .map((conversationSummary) => {
                     const conversation = conversationSummary.conversation;
-                    const lastMessage = conversationSummary.lastMessage;
+                    const lastMessage =
+                      conversationSummary.lastMessage?.[0] || undefined;
 
                     // Use the enhanced data from useChat hook
                     const currentUserId =
@@ -161,7 +162,9 @@ const ClientChatPage: React.FC = () => {
                           </div>
                           <div className="mt-1 flex items-start justify-between">
                             <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                              {lastMessage?.content || (
+                              {lastMessage?.content?.encryptedText ? (
+                                lastMessage.content.encryptedText
+                              ) : (
                                 <span className="italic text-gray-400">
                                   No messages yet
                                 </span>

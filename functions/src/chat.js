@@ -325,8 +325,13 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 /**
  * Get all conversations for the current user
  * Mirrors: getMyConversations()
+ * Admin override: If userId is provided in data and user is admin, use that userId
  */
 exports.getMyConversations = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId: requestedUserId} = payload;
+
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -336,19 +341,31 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const userId = authInfo.uid;
+  // Use requested userId if admin, otherwise use authenticated user's ID
+  const userId = (authInfo.isAdmin && requestedUserId) ? requestedUserId : authInfo.uid;
+
+  // Log for debugging admin queries
+  if (authInfo.isAdmin && requestedUserId) {
+    console.log(`[getMyConversations] Admin query for userId: ${userId}`);
+  }
 
   try {
     // Find all conversations where user is either client or provider
     const clientConversationsSnapshot = await db
       .collection("conversations")
       .where("clientId", "==", userId)
+      .where("isActive", "==", true)
       .get();
 
     const providerConversationsSnapshot = await db
       .collection("conversations")
       .where("providerId", "==", userId)
+      .where("isActive", "==", true)
       .get();
+
+    console.log(`[getMyConversations] Found ${clientConversationsSnapshot.size} 
+      client conversations and ${providerConversationsSnapshot.size} 
+      provider conversations for userId: ${userId}`);
 
     // Combine and deduplicate conversations
     const conversationMap = new Map();
@@ -429,7 +446,7 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
   }
 
   try {
-    // Verify user is part of conversation
+    // Verify user is part of conversation (unless admin)
     const conversationDoc = await db
       .collection("conversations")
       .doc(conversationId)
@@ -443,7 +460,9 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
     }
 
     const conversation = conversationDoc.data();
+    // Admin can view any conversation, otherwise check if user is part of conversation
     if (
+      !authInfo.isAdmin &&
       userId !== conversation.clientId &&
       userId !== conversation.providerId
     ) {

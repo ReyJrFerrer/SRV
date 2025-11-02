@@ -269,32 +269,18 @@ async function getUserProfile(principalText) {
 
 /**
  * Sign in with Internet Identity
- * HTTP onRequest Cloud Function that serves as the Identity Bridge
+ * Callable Cloud Function that serves as the Identity Bridge
  */
-exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) => {
-  // Set CORS headers
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  // Handle preflight OPTIONS request
-  if (req.method === "OPTIONS") {
-    res.status(200).send();
-    return;
-  }
-
-  // Only allow POST requests
-  if (req.method !== "POST") {
-    res.status(405).json({error: "Method not allowed"});
-    return;
-  }
-
+exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
   try {
-    const {principal: principalText} = req.body;
+    const {principal: principalText} = data.data;
+
 
     if (!principalText) {
-      res.status(400).json({error: "Principal is required"});
-      return;
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Principal is required",
+      );
     }
 
     // Validate the principal format
@@ -302,8 +288,10 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
     try {
       principal = Principal.fromText(principalText);
     } catch (error) {
-      res.status(400).json({error: "Invalid principal format"});
-      return;
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid principal format",
+      );
     }
 
     // Check the principal with IC canister
@@ -316,11 +304,10 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
     });
 
     if (!isValid) {
-      res.status(401).json({
-        error: "Invalid principal",
-        details: "Unable to verify principal with Internet Computer",
-      });
-      return;
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Unable to verify principal with Internet Computer",
+      );
     }
 
     // Check if user has a Firestore profile (for existing users)
@@ -341,7 +328,7 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
       hasProfile: hasFirestoreProfile,
     });
 
-    res.status(200).json({
+    return {
       success: true,
       customToken,
       principal: principalText,
@@ -350,12 +337,19 @@ exports.signInWithInternetIdentity = functions.https.onRequest(async (req, res) 
       message: hasFirestoreProfile ?
         "Successfully authenticated with Internet Identity" :
         "Successfully authenticated. Please complete your profile.",
-    });
+    };
   } catch (error) {
     console.error("Error in signInWithInternetIdentity:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      details: error.message,
-    });
+
+    // If it's already an HttpsError, re-throw it
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+
+    // Otherwise, wrap it in an internal error
+    throw new functions.https.HttpsError(
+      "internal",
+      error.message || "Internal server error",
+    );
   }
 });

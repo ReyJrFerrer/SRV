@@ -627,6 +627,34 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
 
     console.log("Debug - Total commission calculated:", totalCommission);
 
+    // Calculate total topups amount from transactions collection
+    const allCreditTransactionsSnapshot = await db.collection("transactions")
+      .where("transaction_type", "==", "Credit")
+      .get();
+
+    console.log("Debug - All Credit transactions found:", allCreditTransactionsSnapshot.size);
+
+    // Filter and sum topup transaction amounts (exclude admin credits, etc.)
+    const totalTopups = allCreditTransactionsSnapshot.docs.reduce((sum, doc) => {
+      const data = doc.data();
+      const description = (data.description || "").toLowerCase();
+      const paymentChannel = data.payment_channel || "";
+      const amount = parseFloat(data.amount) || 0;
+      
+      // Only include transactions with "topup" in description but exclude admin updates
+      if (
+        (description.includes("topup") || description.includes("top-up")) &&
+        paymentChannel !== "ADMIN_UPDATE"
+      ) {
+        console.log("Debug - Topup transaction amount:", amount, "description:", data.description);
+        return sum + amount;
+      }
+      
+      return sum;
+    }, 0);
+
+    console.log("Debug - Total topups amount calculated:", totalTopups);
+
     const stats = {
       totalCommissionRules: rulesSnapshot.size,
       activeCommissionRules: activeRulesSnapshot.size,
@@ -636,6 +664,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       settledBookings: settledBookings,
       totalRevenue: totalRevenue,
       totalCommission: totalCommission,
+      totalTopups: totalTopups,
     };
 
     return {success: true, data: stats};
@@ -848,13 +877,25 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    await db.collection("users").doc(userId).update({
-      reputationScore: reputationScore,
-      updatedAt: new Date().toISOString(),
-      updatedBy: authInfo.uid,
-    });
+    // Use helper functions from reputation module
+    const {createReputationActor} = require("./reputation");
+    const {Principal} = require("@dfinity/principal");
 
-    return {success: true, message: "User reputation updated successfully"};
+    // Create reputation actor
+    const reputationActor = await createReputationActor();
+
+    // Call IC canister to update reputation
+    const principal = Principal.fromText(userId);
+    const result = await reputationActor.setUserReputation(
+      principal,
+      BigInt(reputationScore),
+    );
+
+    if ("ok" in result) {
+      return {success: true, message: result.ok};
+    } else {
+      throw new Error(result.err || "Failed to update reputation in canister");
+    }
   } catch (error) {
     console.error("Error in updateUserReputation:", error);
     throw new functions.https.HttpsError("internal", error.message);

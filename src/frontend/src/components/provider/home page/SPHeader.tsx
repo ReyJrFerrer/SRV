@@ -1,170 +1,34 @@
 // --- Imports ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
-import EnableLocationButton from "../../common/EnableLocationButton";
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import MapFunctions from "../../common/GMapFunctions/MapFunctions";
+import { APIProvider } from "@vis.gl/react-google-maps";
 
 // --- Props ---
 export interface HeaderProps {
   className?: string;
+  scrollTargetRef?: React.RefObject<HTMLElement>;
 }
 
-interface MapModalProps {
-  show: boolean;
-  onClose: () => void;
-  center: { lat: number; lng: number };
-  address: string;
-  status: string;
-  mapsApiLoaded: boolean;
-}
-
-// Google Maps config (reserved for future autocomplete)
-const GEO_DENIAL_KEY = "geoDeniedAt";
-const GEO_DENIAL_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h
-const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_PROVIDER_V1";
-const ADDR_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-interface AddrCache {
-  address: string;
-  ts: number;
-}
-
-// --- Map Modal Component (outside) ---
-const MapModal: React.FC<MapModalProps> = ({
-  show,
-  onClose,
-  center,
-  address,
-  status,
-  mapsApiLoaded,
-}) => {
-  if (!show) return null;
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-  // Controlled camera state to preserve zoom/position across re-renders
-  const [zoom, setZoom] = useState<number>(16);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
-    center,
-  );
-
-  useEffect(() => {
-    // When modal opens or the provided center changes, sync the controlled state
-    if (show) {
-      setMapCenter(center);
-      // don't forcibly reset zoom if user already changed it in-session
-    }
-  }, [show, center.lat, center.lng]);
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
-        <button
-          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-          onClick={onClose}
-          aria-label="Close map"
-          tabIndex={0}
-        >
-          <span className="text-xl font-bold text-gray-700">&times;</span>
-        </button>
-        <div className="relative flex-1">
-          {/* Recenter button (icon-only, positioned above native zoom +/-) */}
-          <button
-            type="button"
-            className="pointer-events-auto absolute bottom-28 right-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50"
-            onClick={() => {
-              setMapCenter(center);
-              setZoom((z) => (typeof z === "number" ? Math.max(z, 16) : 16));
-            }}
-            aria-label="Recenter map"
-            title="Re-center map"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
-              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
-            </svg>
-          </button>
-          {mapsApiLoaded ? (
-            <Map
-              center={mapCenter}
-              zoom={zoom}
-              mapId="6922634ff75ae05ac38cc473"
-              style={{ width: "100%", height: "100%" }}
-              disableDefaultUI={true}
-              mapTypeControl={false}
-              zoomControl={true}
-              streetViewControl={false}
-              gestureHandling={"greedy"}
-              onCameraChanged={(ev: any) => {
-                try {
-                  const next = ev?.detail;
-                  if (next?.center) setMapCenter(next.center);
-                  if (typeof next?.zoom === "number") setZoom(next.zoom);
-                } catch {}
-              }}
-            >
-              {/* Keep marker at the provided center (fixed location), not at camera center */}
-              <AdvancedMarker position={center} />
-            </Map>
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-gray-500">
-              Loading map...
-            </div>
-          )}
-        </div>
-        <div className="border-t border-gray-200 bg-white p-3 text-center text-xs text-gray-600">
-          {status === "ok" && address !== "Detecting location..."
-            ? address
-            : `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`}
-        </div>
-      </div>
-    </div>
-  );
-};
+// Map functions extracted into components/common/GMapFunctions/MapFunctions
 
 // --- Main Header Component ---
-const Header: React.FC<HeaderProps> = ({ className }) => {
+const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
-  const {
-    location: geoLocation,
-    userAddress,
-    userProvince,
-    locationLoading,
-    requestLocation,
-    locationStatus,
-  } = useLocationStore();
+  const { locationStatus } = useLocationStore();
   const [profile, setProfile] = useState<any>(null);
-  const [showMap, setShowMap] = useState(false);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-  const [gmapsAddress, setGmapsAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [gmapsStatus, setGmapsStatus] = useState<
-    "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
-  >("idle");
-  const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
-
   const mapsApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
 
+  // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
     const loadInitialData = async () => {
       if (isAuthenticated) {
@@ -175,252 +39,212 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-      if (!isAuthLoading) {
-        requestLocation();
-      }
     };
+
     if (!isAuthLoading) {
       loadInitialData();
     }
-  }, [isAuthenticated, isAuthLoading, requestLocation]);
-
-  useEffect(() => {
-    try {
-      const raw =
-        typeof window !== "undefined"
-          ? localStorage.getItem(GEO_DENIAL_KEY)
-          : null;
-      if (raw) {
-        const ts = Number(raw);
-        if (!isNaN(ts) && Date.now() - ts < GEO_DENIAL_COOLDOWN_MS) {
-          setGmapsStatus("denied");
-          setGmapsAddress("Location access previously denied");
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // Seed from cache and mark API loaded
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(ADDR_CACHE_KEY);
-      if (raw) {
-        const cached: AddrCache = JSON.parse(raw);
-        if (cached?.address && typeof cached.ts === "number") {
-          const fresh = Date.now() - cached.ts < ADDR_CACHE_TTL_MS;
-          if (fresh) {
-            setGmapsAddress(cached.address);
-            setGmapsStatus("ok");
-          }
-        }
-      }
-    } catch {}
-    if ((window as any).google?.maps) setMapsApiLoaded(true);
-  }, []);
-
-  // Reverse geocode using detected store location (no direct geolocation call)
-  useEffect(() => {
-    if (!mapsApiLoaded || !geoLocation || gmapsStatus !== "idle") return;
-    try {
-      const geocoder = new (window as any).google.maps.Geocoder();
-      setGmapsStatus("loading");
-      geocoder.geocode(
-        { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
-        (results: any, status: string) => {
-          if (status === "OK" && results && results[0]) {
-            let address = results[0].formatted_address as string;
-            // Remove geocode prefix if present (e.g., "geocode, " at the beginning)
-            address = address.replace(/^[^,]+,\s*/, "");
-            setGmapsAddress(address);
-            setGmapsStatus("ok");
-            try {
-              const payload: AddrCache = { address, ts: Date.now() };
-              localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
-            } catch {}
-          } else {
-            setGmapsStatus("failed");
-            setGmapsAddress("Unable to resolve address");
-          }
-        },
-      );
-    } catch {
-      setGmapsStatus("failed");
-      setGmapsAddress("Reverse geocode failed");
-    }
-  }, [mapsApiLoaded, gmapsStatus, geoLocation]);
+  }, [isAuthenticated, isAuthLoading]);
 
   const handleNotificationsClick = () => {
     navigate("/provider/notifications");
   };
 
-  // --- Sticky header: show/hide location area on scroll ---
-  const [showLocationArea, setShowLocationArea] = useState(true);
+  // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
+  const [isMini, setIsMini] = useState(false);
   useEffect(() => {
-    let lastY = window.scrollY;
+    // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
+    const candidate = scrollTargetRef?.current ?? null;
+    const isScrollable = (el: HTMLElement | null) =>
+      !!el && el.scrollHeight > el.clientHeight + 1;
+    const targetEl: Window | HTMLElement = isScrollable(candidate)
+      ? (candidate as HTMLElement)
+      : window;
+
+    const getScrollY = () =>
+      targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
+    let ticking = false;
+    const ENTER_MINI_AT = 140;
+    const EXIT_MINI_BELOW = 100;
+
     const onScroll = () => {
-      const y = window.scrollY;
-      if (y > lastY + 10) {
-        // scrolling down
-        setShowLocationArea(false);
-      } else if (y < lastY - 10) {
-        // scrolling up
-        setShowLocationArea(true);
+      const y = getScrollY();
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsMini((prev) => {
+            if (!prev && y > ENTER_MINI_AT) return true;
+            if (prev && y < EXIT_MINI_BELOW) return false;
+            return prev;
+          });
+          ticking = false;
+        });
+        ticking = true;
       }
-      lastY = y;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+
+    // Attach listener to chosen target; also attach to window if different to catch both flows
+    if (targetEl instanceof Window) {
+      targetEl.addEventListener("scroll", onScroll, { passive: true });
+    } else {
+      targetEl.addEventListener(
+        "scroll",
+        onScroll as EventListener,
+        { passive: true } as AddEventListenerOptions,
+      );
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
+
+    return () => {
+      if (targetEl instanceof Window) {
+        targetEl.removeEventListener("scroll", onScroll);
+      } else {
+        targetEl.removeEventListener("scroll", onScroll as EventListener);
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
+  }, [scrollTargetRef]);
+
+  // Toggle a body class so global layout can compensate for the fixed mini overlay
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isMini) document.body.classList.add("has-mini-header");
+    else document.body.classList.remove("has-mini-header");
+    return () => document.body.classList.remove("has-mini-header");
+  }, [isMini]);
+
+  // Measure header height and keep it as a minHeight when the mini overlay is shown
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   // --- Render: Header layout ---
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
-        className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
+        ref={headerRef}
+        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
-        {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
-        <div className="hidden items-center justify-between md:flex">
-          <div className="flex items-center space-x-6">
-            <Link to="/provider/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
-            <div className="h-10 border-l-2 border-blue-100"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                Welcome,{" "}
-                <span className="text-2xl font-bold text-gray-800">
-                  {displayName}
+        {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
+        <div
+          className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible opacity-0" : "visible opacity-100"}`}
+        >
+          {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
+          <div className="hidden items-center justify-between md:flex">
+            <div className="flex items-center space-x-6">
+              <Link to="/provider/home">
+                <img
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                />
+              </Link>
+              <div className="h-10 border-l-2 border-blue-100"></div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                  Welcome,{" "}
+                  <span className="text-2xl font-bold text-gray-800">
+                    {displayName}
+                  </span>
                 </span>
-              </span>
+              </div>
             </div>
-          </div>
-          {/* Notification Button with badge */}
-          {isAuthenticated && (
-            <button
-              onClick={handleNotificationsClick}
-              className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-              aria-label="Notifications"
-            >
-              <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
-        <div className="md:hidden">
-          <div className="flex items-center justify-between">
-            <Link to="/client/home">
-              <img
-                src="/logo.svg"
-                alt="SRV Logo"
-                className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
-              />
-            </Link>
+            {/* Notification Button with badge */}
             {isAuthenticated && (
               <button
                 onClick={handleNotificationsClick}
                 className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
                 aria-label="Notifications"
               >
-                <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                     {unreadCount}
                   </span>
                 )}
               </button>
             )}
           </div>
-          <hr className="my-4 border-blue-100" />
-          <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-            <span className="text-xl font-semibold tracking-wide text-blue-700">
-              Welcome Back,
-            </span>
-            <span className="text-xl font-bold text-gray-800">
-              {displayName}
-            </span>
-          </div>
-        </div>
 
-        {/* --- Location Section (search bar removed, location detection restored) --- */}
-        <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
-          <div className={`${showLocationArea ? "block" : "hidden"}`}>
-            {/* location area shown/hidden based on scroll */}
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <MapPinIcon className="h-6 w-6 text-blue-600" />
-              <span className="text-base font-bold text-gray-800">
-                My Location
+          {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between">
+              <Link to="/client/home">
+                <img
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                />
+              </Link>
+              {isAuthenticated && (
+                <button
+                  onClick={handleNotificationsClick}
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  aria-label="Notifications"
+                >
+                  <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+            <hr className="my-4 border-blue-100" />
+            <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+              <span className="text-xl font-semibold tracking-wide text-blue-700">
+                Welcome Back,
+              </span>
+              <span className="text-xl font-bold text-gray-800">
+                {displayName}
               </span>
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex w-full items-center justify-start">
-              {gmapsStatus === "ok" ? (
-                <button
-                  type="button"
-                  className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                  onClick={() => setShowMap(true)}
-                  title={gmapsAddress}
-                >
-                  {gmapsAddress}
-                </button>
-              ) : locationLoading ||
-                isAuthLoading ||
-                gmapsStatus === "loading" ? (
-                <span className="animate-pulse text-sm text-gray-500">
-                  Detecting location...
+
+          {/* --- Location Section --- */}
+          <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <MapPinIcon className="h-6 w-6 text-blue-600" />
+                <span className="text-base font-bold text-gray-800">
+                  My Location
                 </span>
-              ) : userAddress && userProvince ? (
-                <button
-                  type="button"
-                  className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-                  onClick={() => setShowMap(true)}
-                  title={`${userAddress}, ${userProvince}`}
-                >
-                  {userAddress}, {userProvince}
-                </button>
-              ) : (
-                <span className="text-left text-sm text-gray-500">
-                  {gmapsAddress}
-                </span>
-              )}
+              </div>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <MapFunctions />
             </div>
             {(locationStatus === "denied" || locationStatus === "not_set") && (
-              <div className="ml-3">
-                <EnableLocationButton />
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                Location access is off. Some features are limited.
               </div>
             )}
           </div>
-          {(locationStatus === "denied" || locationStatus === "not_set") && (
-            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-              Location access is off. Some features are limited.
-            </div>
-          )}
         </div>
       </header>
-      {/* --- Map Modal for Location Display --- */}
-      {mapsApiLoaded && geoLocation && (
-        <MapModal
-          show={showMap}
-          onClose={() => setShowMap(false)}
-          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
-          address={gmapsAddress}
-          status={gmapsStatus}
-          mapsApiLoaded={mapsApiLoaded}
-        />
+      {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
+      {isMini && (
+        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
+          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+            <div className="flex items-center gap-2 pb-1">
+              <MapPinIcon className="h-5 w-5 text-blue-600" />
+              <span className="text-sm font-semibold text-gray-800">
+                My Location
+              </span>
+            </div>
+            <div className="-mt-1 flex items-center gap-2">
+              <MapFunctions />
+            </div>
+          </div>
+        </div>
       )}
     </APIProvider>
   );

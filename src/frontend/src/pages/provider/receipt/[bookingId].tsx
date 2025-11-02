@@ -6,6 +6,7 @@ import {
   // CheckBadgeIcon removed
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 
 const ReceiptPage: React.FC = () => {
   const navigate = useNavigate();
@@ -78,6 +79,8 @@ const ReceiptPage: React.FC = () => {
     if (bookingId) navigate(`/provider/rate-client/${bookingId}`);
   };
 
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
+
   const handlePrint = () => {
     window.print();
   };
@@ -117,8 +120,8 @@ const ReceiptPage: React.FC = () => {
     : new Date(booking.updatedAt);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 sm:py-12 print:bg-white">
-      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 sm:p-10 md:p-12 print:border print:border-gray-300 print:shadow-none">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 print:bg-white sm:py-12">
+      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 print:border print:border-gray-300 print:shadow-none sm:p-10 md:p-12">
         <div className="mb-8 flex flex-col items-center">
           <img
             src="/images/srv characters (SVG)/girl.svg"
@@ -231,7 +234,7 @@ const ReceiptPage: React.FC = () => {
           your transaction history.
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row print:hidden">
+        <div className="flex flex-col gap-3 print:hidden sm:flex-row">
           <button
             onClick={handlePrint}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -245,12 +248,30 @@ const ReceiptPage: React.FC = () => {
             <ShareIcon className="h-5 w-5" /> Share
           </button>
         </div>
-        <button
-          onClick={handleRateClient}
-          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
-        >
-          Proceed to Rate Client
-        </button>
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Want to know more about rating clients?
+            </div>
+            <button
+              onClick={() => setShowRatingInfo(true)}
+              className="rounded-md px-3 py-1 text-sm text-blue-600 hover:underline"
+            >
+              About ratings
+            </button>
+          </div>
+          <button
+            onClick={handleRateClient}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
+          >
+            Proceed to Rate Client
+          </button>
+        </div>
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="provider"
+        />
       </main>
     </div>
   );

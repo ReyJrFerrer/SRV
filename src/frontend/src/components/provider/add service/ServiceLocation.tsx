@@ -35,6 +35,17 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     "detected" | "manual"
   >("detected");
 
+  // Google Maps Geocoding integration (prefer Google over OSM-style resolution from store)
+  const mapsApiKey =
+    (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const [mapsApiLoaded, setMapsApiLoaded] = useState<boolean>(false);
+  const [gmapsStatus, setGmapsStatus] = useState<
+    "idle" | "loading" | "ok" | "failed"
+  >("idle");
+  const [gmapsAddress, setGmapsAddress] = useState<string>("");
+  const [gmapsCity, setGmapsCity] = useState<string>("");
+  const [gmapsProvince, setGmapsProvince] = useState<string>("");
+
   // Auto-switch to manual mode if location is blocked
   useEffect(() => {
     if (locationStatus === "denied") {
@@ -86,13 +97,179 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     }
   }, [locationInputMode, requestLocation]);
 
-  // Update form data when Zustand location changes
+  // Load Google Maps JS API if not present
+  useEffect(() => {
+    if (locationStatus === "denied") return; // no need to load if blocked
+
+    const isReady = !!(window as any)?.google?.maps;
+    if (isReady) {
+      setMapsApiLoaded(true);
+      return;
+    }
+
+    const existing = document.getElementById("gmaps-js");
+    if (existing) {
+      existing.addEventListener("load", () => setMapsApiLoaded(true), {
+        once: true,
+      } as any);
+      return;
+    }
+
+    if (mapsApiKey && mapsApiKey !== "REPLACE_WITH_KEY") {
+      const s = document.createElement("script");
+      s.id = "gmaps-js";
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}`;
+      s.async = true;
+      s.defer = true;
+      s.onload = () => setMapsApiLoaded(true);
+      s.onerror = () => setMapsApiLoaded(false);
+      document.head.appendChild(s);
+    }
+  }, [mapsApiKey, locationStatus]);
+
+  // Reset geocoding state when coordinates or mode change
+  useEffect(() => {
+    setGmapsStatus("idle");
+    setGmapsAddress("");
+    setGmapsCity("");
+    setGmapsProvince("");
+  }, [locationInputMode, geoLocation?.latitude, geoLocation?.longitude]);
+
+  // Use Google Maps Geocoder to resolve city and province only
+  useEffect(() => {
+    if (
+      locationInputMode !== "detected" ||
+      !mapsApiLoaded ||
+      !geoLocation ||
+      gmapsStatus !== "idle"
+    )
+      return;
+
+    try {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      setGmapsStatus("loading");
+      geocoder.geocode(
+        {
+          location: {
+            lat: geoLocation.latitude,
+            lng: geoLocation.longitude,
+          },
+        },
+        (results: any, status: string) => {
+          if (status === "OK" && results && results[0]) {
+            const primaryComps = results[0].address_components || [];
+
+            // Find a component in a single result's components
+            const findIn = (comps: any[], type: string) => {
+              const c = comps.find(
+                (cc: any) => cc.types && cc.types.indexOf(type) !== -1,
+              );
+              return c ? c.long_name : undefined;
+            };
+            // Some Google responses omit level_2 in the first result; search across all
+            const findAcross = (type: string) => {
+              for (const r of results) {
+                const val = findIn(r.address_components || [], type);
+                if (val) return val;
+              }
+              return undefined;
+            };
+
+            const locality =
+              findIn(primaryComps, "locality") ||
+              findAcross("locality") ||
+              findIn(primaryComps, "postal_town") ||
+              findAcross("postal_town") ||
+              findIn(primaryComps, "administrative_area_level_3") ||
+              findAcross("administrative_area_level_3") ||
+              findIn(primaryComps, "administrative_area_level_2") ||
+              findAcross("administrative_area_level_2");
+
+            // Prefer province-level (admin_level_2); fall back to region (level_1) only if needed
+            let province =
+              findIn(primaryComps, "administrative_area_level_2") ||
+              findAcross("administrative_area_level_2") ||
+              findIn(primaryComps, "administrative_area_level_1") ||
+              findAcross("administrative_area_level_1");
+
+            // If province resolved to a Region (e.g., "Ilocos Region"), try to infer via dataset by locality
+            const looksLikeRegion = (name?: string) =>
+              !!name && /region/i.test(name);
+
+            if (!province || looksLikeRegion(province)) {
+              try {
+                const ph = phLocations as any;
+                if (locality && ph?.provinces && Array.isArray(ph.provinces)) {
+                  const match = ph.provinces.find(
+                    (p: any) =>
+                      Array.isArray(p.municipalities) &&
+                      p.municipalities.some(
+                        (m: any) =>
+                          typeof m?.name === "string" &&
+                          m.name.toLowerCase() ===
+                            String(locality).toLowerCase(),
+                      ),
+                  );
+                  if (match?.name) {
+                    province = match.name;
+                  }
+                }
+                // Special-case normalization: Baguio -> Benguet
+                if (
+                  locality &&
+                  ["baguio", "baguio city"].includes(locality.toLowerCase())
+                ) {
+                  province = "Benguet";
+                }
+              } catch {}
+            }
+
+            // For this page: display only City/Municipality and Province
+            const displayCityProv = [locality, province]
+              .filter(Boolean)
+              .join(", ");
+
+            setGmapsAddress(displayCityProv);
+            setGmapsCity(locality || "");
+            setGmapsProvince(province || "");
+            setGmapsStatus("ok");
+          } else {
+            setGmapsStatus("failed");
+            setGmapsAddress("Unable to resolve address");
+          }
+        },
+      );
+    } catch {
+      setGmapsStatus("failed");
+      setGmapsAddress("Reverse geocode failed");
+    }
+  }, [locationInputMode, mapsApiLoaded, geoLocation, gmapsStatus]);
+
+  // Update form data when location changes (prefer Google geocode results)
   useEffect(() => {
     if (
       locationInputMode === "detected" &&
       geoLocation &&
+      gmapsStatus === "ok" &&
+      (gmapsCity || userAddress) &&
+      (gmapsProvince || userProvince)
+    ) {
+      setFormData((prev: any) => ({
+        ...prev,
+        locationMunicipalityCity: gmapsCity || userAddress,
+        locationProvince: gmapsProvince || userProvince,
+        locationLatitude: geoLocation.latitude.toString(),
+        locationLongitude: geoLocation.longitude.toString(),
+      }));
+      return;
+    }
+
+    if (
+      locationInputMode === "detected" &&
+      geoLocation &&
       userAddress &&
-      userProvince
+      userProvince &&
+      gmapsStatus !== "ok"
     ) {
       setFormData((prev: any) => ({
         ...prev,
@@ -102,7 +279,16 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
         locationLongitude: geoLocation.longitude.toString(),
       }));
     }
-  }, [locationInputMode, geoLocation, userAddress, userProvince, setFormData]);
+  }, [
+    locationInputMode,
+    geoLocation,
+    userAddress,
+    userProvince,
+    gmapsStatus,
+    gmapsCity,
+    gmapsProvince,
+    setFormData,
+  ]);
 
   const hasGPSCoordinates =
     !!formData.locationLatitude && !!formData.locationLongitude;
@@ -126,13 +312,21 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
       return "Detecting location...";
     }
 
+    // Prefer Google Maps derived address if available
+    if (mapsApiLoaded && gmapsStatus === "ok" && gmapsAddress) {
+      return gmapsAddress;
+    }
+
     if (userAddress && userProvince) {
       return `${userAddress}, ${userProvince}`;
     }
 
-    if (geoLocation) {
-      return `Lat: ${geoLocation.latitude.toFixed(6)}, Lon: ${geoLocation.longitude.toFixed(6)} (address not found)`;
+    if (gmapsStatus === "loading") {
+      return "Detecting location...";
     }
+
+    // Do not show lat/lon on this page; we only display City, Province
+    if (geoLocation) return "City/Province not found";
 
     return "Detecting location...";
   };
@@ -190,7 +384,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             {(locationStatus === "denied" ||
               (locationInputMode === "detected" &&
                 !locationLoading &&
-                !userAddress)) && (
+                !userAddress &&
+                gmapsStatus !== "ok")) && (
               <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
                 {locationStatus === "denied"
                   ? "Location access denied. Please enable location access or choose a different location."

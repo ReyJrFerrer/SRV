@@ -288,6 +288,9 @@ export interface InvoiceStatusResponse {
   paidAt?: string;
   paymentMethod?: string;
   paymentChannel?: string;
+  credited?: boolean;
+  alreadyCredited?: boolean;
+  creditError?: string;
   error?: string;
 }
 

@@ -10,6 +10,12 @@ import { TicketDetailsPage } from "./pages/ticketDetails";
 import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
 import { AnalyticsPage } from "./pages/analytics";
+import UserWalletPage from "./pages/userWallet";
+import { UserChatsPage } from "./pages/userChats";
+import { UserChatHistoryPage } from "./pages/userChatHistory";
+import AdminServiceDetailsWrapper from "./components/AdminServiceDetailsWrapper";
+import ServiceReviewsPage from "./pages/serviceReviews";
+import UserReviewsPage from "./pages/userReviews";
 
 // Login component
 const LoginPage = () => {
@@ -122,10 +128,50 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/user/:userId/services/:serviceId"
+        path="/user/:id/chat"
         element={
           <ProtectedRoute>
-            <ServiceDetailsPage />
+            <UserChatsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/chat/:conversationId"
+        element={
+          <ProtectedRoute>
+            <UserChatHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/wallet"
+        element={
+          <ProtectedRoute>
+            <UserWalletPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:id/reviews"
+        element={
+          <ProtectedRoute>
+            <UserReviewsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user/:userId/services/:id"
+        element={
+          <ProtectedRoute>
+            <AdminServiceDetailsWrapper />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/service/:id/reviews"
+        element={
+          <ProtectedRoute>
+            <ServiceReviewsPage />
           </ProtectedRoute>
         }
       />

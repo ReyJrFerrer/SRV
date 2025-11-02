@@ -6,13 +6,6 @@ import {
   FrontendSystemStats,
 } from "../services/adminServiceCanister";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
-import {
-  remittanceServiceCanister,
-  RemittanceServiceError,
-  ServiceProviderData as RemittanceServiceProviderData,
-  FrontendRemittanceOrder as RemittanceOrder,
-  RemittanceOrdersPage,
-} from "../services/remittanceServiceCanister";
 import { MediaServiceError } from "../services/mediaServiceCanister";
 import {
   serviceCanister,
@@ -43,9 +36,6 @@ interface AdminLoadingStates {
   systemStats: boolean;
   serviceProviders: boolean;
   users: boolean;
-  remittanceOrders: boolean;
-  remittanceProviders: boolean;
-  remittanceStats: boolean;
   services: boolean;
   serviceCategories: boolean;
   bookings: boolean;
@@ -63,20 +53,6 @@ interface UseAdminReturn {
   bookings: any[];
   commissionTransactions: any[];
 
-  // Remittance data states
-  remittanceOrders: RemittanceOrder[];
-  remittanceProviders: RemittanceServiceProviderData[];
-  remittanceStats: {
-    totalOrders: number;
-    totalSettledOrders: number;
-    totalPendingOrders: number;
-    totalCommissionPaid: number;
-    totalServiceAmount: number;
-    totalOverdueOrders: number;
-    averageOrderValue: number;
-    averageCommissionRate: number;
-  } | null;
-
   // Service data states
   services: ServiceData[];
   serviceCategories: CategoryData[];
@@ -92,37 +68,12 @@ interface UseAdminReturn {
   // Service Provider Management
   refreshServiceProviders: (showSuccessToast?: boolean) => Promise<void>;
 
-  // Remittance Management
-  refreshRemittanceOrders: (showSuccessToast?: boolean) => Promise<void>;
-  refreshRemittanceProviders: (showSuccessToast?: boolean) => Promise<void>;
-  refreshRemittanceStats: (showSuccessToast?: boolean) => Promise<void>;
-
   // Service Management
   refreshServices: (showSuccessToast?: boolean) => Promise<void>;
   refreshServiceCategories: (showSuccessToast?: boolean) => Promise<void>;
   refreshBookings: (showSuccessToast?: boolean) => Promise<void>;
   getServicesWithCertificates: () => Promise<any[]>;
   getReportsFromFeedbackCanister: () => Promise<any[]>;
-  queryRemittanceOrders: (
-    filter?: {
-      status?: (
-        | "AwaitingPayment"
-        | "PaymentSubmitted"
-        | "PaymentValidated"
-        | "Cancelled"
-        | "Settled"
-      )[];
-      serviceProviderId?: string;
-      fromDate?: Date;
-      toDate?: Date;
-    },
-    page?: {
-      cursor?: string;
-      size?: number;
-    },
-  ) => Promise<RemittanceOrdersPage>;
-  getRemittanceOrder: (orderId: string) => Promise<RemittanceOrder | null>;
-  cancelRemittanceOrder: (orderId: string) => Promise<void>;
 
   // Utility functions
   refreshAll: () => Promise<void>;
@@ -134,9 +85,6 @@ export const useAdmin = (): UseAdminReturn => {
     systemStats: false,
     serviceProviders: false,
     users: false,
-    remittanceOrders: false,
-    remittanceProviders: false,
-    remittanceStats: false,
     services: false,
     serviceCategories: false,
     bookings: false,
@@ -150,24 +98,6 @@ export const useAdmin = (): UseAdminReturn => {
     ServiceProviderData[]
   >([]);
   const [users, setUsers] = useState<Profile[]>([]);
-
-  // Remittance data states
-  const [remittanceOrders, setRemittanceOrders] = useState<RemittanceOrder[]>(
-    [],
-  );
-  const [remittanceProviders, setRemittanceProviders] = useState<
-    RemittanceServiceProviderData[]
-  >([]);
-  const [remittanceStats, setRemittanceStats] = useState<{
-    totalOrders: number;
-    totalSettledOrders: number;
-    totalPendingOrders: number;
-    totalCommissionPaid: number;
-    totalServiceAmount: number;
-    totalOverdueOrders: number;
-    averageOrderValue: number;
-    averageCommissionRate: number;
-  } | null>(null);
 
   // Service data states
   const [services, setServices] = useState<ServiceData[]>([]);
@@ -209,7 +139,6 @@ export const useAdmin = (): UseAdminReturn => {
   const handleError = useCallback((error: unknown, context: string) => {
     if (
       error instanceof AdminServiceError ||
-      error instanceof RemittanceServiceError ||
       error instanceof MediaServiceError
     ) {
       toast.error(`${context}: ${error.message}`);
@@ -266,8 +195,28 @@ export const useAdmin = (): UseAdminReturn => {
     async (showSuccessToast = false) => {
       updateLoadingState("serviceProviders", true);
       try {
-        const providers =
-          await remittanceServiceCanister.getAllServiceProviders();
+        // Get service providers from users with ServiceProvider role
+        const allUsers = await adminServiceCanister.getAllUsers();
+        const providers = allUsers
+          .filter((user) => {
+            if (typeof user.activeRole === "string") {
+              return user.activeRole === "ServiceProvider";
+            } else if (user.activeRole && typeof user.activeRole === "object") {
+              return "ServiceProvider" in user.activeRole;
+            }
+            return false;
+          })
+          .map((user) => ({
+            id: user.id.toString(),
+            name: user.name,
+            phone: user.phone,
+            totalEarnings: 0,
+            pendingCommission: 0,
+            settledCommission: 0,
+            lastActivity: user.updatedAt
+              ? new Date(Number(user.updatedAt) / 1000000)
+              : new Date(),
+          }));
         setServiceProviders(providers);
         if (showSuccessToast) {
           toast.success("Service provider data updated successfully");
@@ -310,71 +259,6 @@ export const useAdmin = (): UseAdminReturn => {
     [userLockStatus],
   );
 
-  // Remittance Management Functions
-  const refreshRemittanceOrders = useCallback(
-    async (showSuccessToast = false) => {
-      updateLoadingState("remittanceOrders", true);
-      try {
-        console.log("Calling queryOrders...");
-        const ordersPage = await remittanceServiceCanister.queryOrders();
-        console.log("Received remittance orders:", ordersPage);
-        setRemittanceOrders(ordersPage.items);
-        if (showSuccessToast) {
-          toast.success("Remittance orders refreshed successfully");
-        }
-      } catch (error) {
-        console.error("Error refreshing remittance orders:", error);
-        handleError(error, "Failed to refresh remittance orders");
-      } finally {
-        updateLoadingState("remittanceOrders", false);
-      }
-    },
-    [updateLoadingState, handleError],
-  );
-
-  const refreshRemittanceProviders = useCallback(
-    async (showSuccessToast = false) => {
-      updateLoadingState("remittanceProviders", true);
-      try {
-        console.log("Calling getAllServiceProviders...");
-        const providers =
-          await remittanceServiceCanister.getAllServiceProviders();
-        console.log("Received remittance providers:", providers);
-        setRemittanceProviders(providers);
-        if (showSuccessToast) {
-          toast.success("Remittance providers refreshed successfully");
-        }
-      } catch (error) {
-        console.error("Error refreshing remittance providers:", error);
-        handleError(error, "Failed to refresh remittance providers");
-      } finally {
-        updateLoadingState("remittanceProviders", false);
-      }
-    },
-    [updateLoadingState, handleError],
-  );
-
-  const refreshRemittanceStats = useCallback(
-    async (showSuccessToast = false) => {
-      updateLoadingState("remittanceStats", true);
-      try {
-        console.log("Calling getSystemRemittanceStats...");
-        const stats =
-          await remittanceServiceCanister.getSystemRemittanceStats();
-        console.log("Received remittance stats:", stats);
-        setRemittanceStats(stats);
-        if (showSuccessToast) {
-          toast.success("Remittance statistics refreshed successfully");
-        }
-      } catch (error) {
-        console.error("Error refreshing remittance stats:", error);
-        handleError(error, "Failed to refresh remittance statistics");
-      } finally {
-        updateLoadingState("remittanceStats", false);
-      }
-    },
-    [updateLoadingState, handleError],
-  );
 
   // Service Management Functions
   const refreshServices = useCallback(
@@ -424,9 +308,18 @@ export const useAdmin = (): UseAdminReturn => {
             `Successfully loaded ${data.bookings.length} bookings and ${data.commissionTransactions.length} commission transactions`,
           );
         }
-      } catch (error) {
-        console.error("❌ [refreshBookings] Error refreshing bookings:", error);
-        handleError(error, "Failed to refresh bookings");
+      } catch (error: any) {
+        // Suppress CORS/network errors - they're already handled gracefully in getBookingsData
+        const isNetworkError = error?.code === "ERR_FAILED" || 
+                              error?.message?.includes("CORS") ||
+                              error?.name === "FirebaseError" ||
+                              (error?.code && String(error.code).includes("internal"));
+        
+        if (!isNetworkError) {
+          console.error("❌ [refreshBookings] Error refreshing bookings:", error);
+          handleError(error, "Failed to refresh bookings");
+        }
+        // Data gracefully falls back to systemStats, so no action needed
       } finally {
         updateLoadingState("bookings", false);
       }
@@ -477,59 +370,6 @@ export const useAdmin = (): UseAdminReturn => {
     }
   }, [handleError]);
 
-  const queryRemittanceOrders = useCallback(
-    async (
-      filter?: {
-        status?: (
-          | "AwaitingPayment"
-          | "PaymentSubmitted"
-          | "PaymentValidated"
-          | "Cancelled"
-          | "Settled"
-        )[];
-        serviceProviderId?: string;
-        fromDate?: Date;
-        toDate?: Date;
-      },
-      page?: {
-        cursor?: string;
-        size?: number;
-      },
-    ) => {
-      try {
-        return await remittanceServiceCanister.queryOrders(filter as any, page);
-      } catch (error) {
-        handleError(error, "Failed to query remittance orders");
-        throw error;
-      }
-    },
-    [handleError],
-  );
-
-  const getRemittanceOrder = useCallback(
-    async (orderId: string) => {
-      try {
-        return await remittanceServiceCanister.getOrder(orderId);
-      } catch (error) {
-        handleError(error, "Failed to get remittance order");
-        throw error;
-      }
-    },
-    [handleError],
-  );
-
-  const cancelRemittanceOrder = useCallback(
-    async (orderId: string) => {
-      try {
-        await remittanceServiceCanister.cancelOrder(orderId);
-        await refreshRemittanceOrders();
-        toast.success("Order cancelled successfully");
-      } catch (error) {
-        handleError(error, "Failed to cancel order");
-      }
-    },
-    [handleError, refreshRemittanceOrders],
-  );
 
   // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
@@ -538,9 +378,6 @@ export const useAdmin = (): UseAdminReturn => {
       const refreshPromises = [
         refreshUsers(),
         refreshServiceProviders(),
-        refreshRemittanceOrders(),
-        refreshRemittanceProviders(),
-        refreshRemittanceStats(),
         refreshServices(),
         refreshServiceCategories(),
         refreshBookings(),
@@ -557,9 +394,6 @@ export const useAdmin = (): UseAdminReturn => {
     refreshSystemStats,
     refreshUsers,
     refreshServiceProviders,
-    refreshRemittanceOrders,
-    refreshRemittanceProviders,
-    refreshRemittanceStats,
     refreshServices,
     refreshServiceCategories,
     refreshBookings,
@@ -585,11 +419,6 @@ export const useAdmin = (): UseAdminReturn => {
     serviceProviders,
     users,
 
-    // Remittance data states
-    remittanceOrders,
-    remittanceProviders,
-    remittanceStats,
-
     // Service data states
     services,
     serviceCategories,
@@ -606,14 +435,6 @@ export const useAdmin = (): UseAdminReturn => {
 
     // Service Provider Management
     refreshServiceProviders,
-
-    // Remittance Management
-    refreshRemittanceOrders,
-    refreshRemittanceProviders,
-    refreshRemittanceStats,
-    queryRemittanceOrders,
-    getRemittanceOrder,
-    cancelRemittanceOrder,
 
     // Service Management
     refreshServices,

@@ -3,6 +3,7 @@ import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 // Keep some Motoko types for compatibility during migration
 import { notificationCanisterService } from "../../../frontend/src/services/notificationCanisterService";
+import reputationCanisterService from "../../../frontend/src/services/reputationCanisterService";
 
 // Get Firebase instances from singleton
 const auth = getFirebaseAuth();
@@ -140,32 +141,6 @@ export interface FrontendUserRoleAssignment {
   assignedAt: Date;
 }
 
-export interface FrontendRemittanceOrder {
-  id: string;
-  status:
-    | "AwaitingPayment"
-    | "PaymentSubmitted"
-    | "PaymentValidated"
-    | "Cancelled"
-    | "Settled";
-  serviceType: string;
-  serviceProviderId: string;
-  amount: number; // in PHP (converted from centavos)
-  commissionAmount: number; // in PHP (converted from centavos)
-  paymentMethod: string;
-  bookingId?: string;
-  serviceId?: string;
-  commissionRuleId: string;
-  commissionVersion: number;
-  paymentProofMediaIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  paymentSubmittedAt?: Date;
-  validatedAt?: Date;
-  validatedBy?: string;
-  settledAt?: Date;
-}
-
 export interface FrontendMediaItem {
   id: string;
   fileName: string;
@@ -174,7 +149,6 @@ export interface FrontendMediaItem {
   contentType: string;
   mediaType:
     | "ServiceImage"
-    | "RemittancePaymentProof"
     | "UserProfile"
     | "ServiceCertificate";
   fileSize: number;
@@ -193,6 +167,7 @@ export interface FrontendSystemStats {
   settledBookings: number;
   totalRevenue: number;
   totalCommission: number;
+  totalTopups: number;
 }
 
 export class AdminServiceError extends Error {
@@ -726,6 +701,7 @@ export const adminServiceCanister = {
         settledBookings: result.settledBookings,
         totalRevenue: result.totalRevenue,
         totalCommission: result.totalCommission,
+        totalTopups: result.totalTopups || 0,
       };
     } catch (error) {
       if (error instanceof AdminServiceError) throw error;
@@ -806,8 +782,16 @@ export const adminServiceCanister = {
           (result.data as any).message || "Failed to get bookings data",
         );
       }
-    } catch (error) {
-      console.error("❌ [getBookingsData] Error getting bookings data:", error);
+    } catch (error: any) {
+      // Suppress CORS errors in emulator - data gracefully falls back to systemStats
+      const isNetworkError = error?.code === "ERR_FAILED" || 
+                            error?.message?.includes("CORS") ||
+                            error?.name === "FirebaseError" ||
+                            (error?.code && error.code.includes("internal"));
+      
+      if (!isNetworkError) {
+        console.error("❌ [getBookingsData] Error getting bookings data:", error);
+      }
       return { bookings: [], commissionTransactions: [] };
     }
   },
@@ -1143,22 +1127,33 @@ export const adminServiceCanister = {
     completedBookings: number;
   }> {
     try {
-      // Call Firebase function to get reputation data
-      const result = await callFirebaseFunction("getReputationScore", {
-        userId,
-      });
-      const reputation = result.data || result;
+      // Call IC canister directly using frontend service (same as clients/providers)
+      const reputationData =
+        await reputationCanisterService.getReputationScore(userId);
 
-      // Check if we got valid reputation data
-      if (reputation && typeof reputation.trustScore === "number") {
+      if (reputationData) {
+        // Convert the reputation data to match expected format
+        const trustLevel = reputationData.trustLevel?.hasOwnProperty("New")
+          ? "New"
+          : reputationData.trustLevel?.hasOwnProperty("Low")
+            ? "Low"
+            : reputationData.trustLevel?.hasOwnProperty("Medium")
+              ? "Medium"
+              : reputationData.trustLevel?.hasOwnProperty("High")
+                ? "High"
+                : "VeryHigh";
+
         return {
-          reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
-          trustLevel: reputation.trustLevel?.toString() || "New",
-          completedBookings: Number(reputation.completedBookings || 0),
+          reputationScore: Math.round(Number(reputationData.trustScore)),
+          trustLevel: trustLevel,
+          completedBookings: Number(reputationData.completedBookings || 0),
         };
       } else {
         // Fallback to default values if data is invalid
-        console.warn(`Invalid reputation data for user ${userId}:`, reputation);
+        console.warn(
+          `Invalid reputation data for user ${userId}:`,
+          reputationData,
+        );
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
@@ -1167,19 +1162,7 @@ export const adminServiceCanister = {
       }
     } catch (error) {
       logError("Error fetching user reputation", error);
-
-      // If it's a 500 error, try to get reputation from local storage or return default
-      if (error instanceof Error && error.message.includes("INTERNAL")) {
-        console.warn(
-          `Firebase function error for user ${userId}, using default reputation`,
-        );
-        return {
-          reputationScore: 50, // Default score
-          trustLevel: "New",
-          completedBookings: 0,
-        };
-      }
-
+      // Return default reputation on error
       return {
         reputationScore: 50, // Default score
         trustLevel: "New",
@@ -1393,6 +1376,178 @@ export const adminServiceCanister = {
       return [];
     }
   },
+
+  /**
+   * Get conversations for a specific user (admin function)
+   */
+  async getUserConversations(userId: string): Promise<any[]> {
+    try {
+      requireAuth();
+
+      // Use the chat function but with admin override
+      // callFirebaseFunction already extracts the data property from {success: true, data: [...]}
+      const result = await callFirebaseFunction("getMyConversations", {
+        userId, // Pass userId for admin override in backend
+      });
+
+      // The result is already the data array (or message if no data)
+      // If result is an array, return it; otherwise return empty array
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      logError("Error fetching user conversations", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get messages for a specific conversation (admin function)
+   */
+  async getConversationMessages(
+    conversationId: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<any[]> {
+    try {
+      requireAuth();
+
+      const result = await callFirebaseFunction("getConversationMessages", {
+        conversationId,
+        limit,
+        offset,
+      });
+
+      // The result is already the data object { messages, hasMore, nextPageToken }
+      // Extract and adapt messages array
+      const messages = result?.messages || [];
+
+      // Adapt messages to extract content from encrypted format
+      return messages.map((msg: any) => ({
+        ...msg,
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : msg.content?.encryptedText || "",
+      }));
+    } catch (error) {
+      logError("Error fetching conversation messages", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get detailed reviews for a user (received, given as client, given as provider)
+   */
+  async getUserDetailedReviews(userId: string): Promise<{
+    receivedReviews: any[]; // Reviews RECEIVED (what providers wrote about this user)
+    givenAsClientReviews: any[]; // Reviews GIVEN as client (what user wrote about providers/services)
+    givenAsProviderReviews: any[]; // Reviews GIVEN as provider (what user wrote about clients)
+  }> {
+    try {
+      requireAuth();
+
+      // Get all review types in parallel (including hidden reviews for admin)
+      // Note: Payload must be wrapped in { data: {...} } to match client format
+      const [receivedResult, givenAsClientResult, givenAsProviderResult] =
+        await Promise.allSettled([
+          // Reviews RECEIVED: what providers wrote about this user (as client)
+          callFirebaseFunction("getClientProviderReviews", { 
+            data: { clientId: userId, includeHidden: true } 
+          }),
+          // Reviews GIVEN as CLIENT: what this user wrote about providers/services
+          callFirebaseFunction("getUserReviews", { 
+            data: { userId: userId, includeHidden: true } 
+          }),
+          // Reviews GIVEN as PROVIDER: what this user wrote about clients
+          callFirebaseFunction("getProviderReviewsByProvider", { 
+            data: { providerId: userId, includeHidden: true } 
+          }),
+        ]);
+
+      // callFirebaseFunction already extracts data from {success: true, data: [...]}
+      const receivedReviews =
+        receivedResult.status === "fulfilled" &&
+        Array.isArray(receivedResult.value)
+          ? receivedResult.value
+          : [];
+
+      const givenAsClientReviews =
+        givenAsClientResult.status === "fulfilled" &&
+        Array.isArray(givenAsClientResult.value)
+          ? givenAsClientResult.value
+          : [];
+
+      const givenAsProviderReviews =
+        givenAsProviderResult.status === "fulfilled" &&
+        Array.isArray(givenAsProviderResult.value)
+          ? givenAsProviderResult.value
+          : [];
+
+      return {
+        receivedReviews,
+        givenAsClientReviews,
+        givenAsProviderReviews,
+      };
+    } catch (error) {
+      logError("Error fetching user detailed reviews", error);
+      return {
+        receivedReviews: [],
+        givenAsClientReviews: [],
+        givenAsProviderReviews: [],
+      };
+    }
+  },
+
+  /**
+   * Delete a review (admin only - hides the review)
+   */
+  async deleteReview(reviewId: string, reviewType?: "review" | "providerReview"): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("deleteReview", { 
+        data: { reviewId } 
+      });
+    } catch (error) {
+      logError("Error deleting review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Restore a review (admin only - makes hidden review visible)
+   */
+  async restoreReview(reviewId: string): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("restoreReview", { 
+        data: { reviewId } 
+      });
+    } catch (error) {
+      logError("Error restoring review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Bulk update review status (admin only)
+   */
+  async bulkUpdateReviewStatus(reviewIds: string[], status: "Visible" | "Hidden"): Promise<{
+    updated: string[];
+    errors: Array<{reviewId: string; error: string}>;
+  }> {
+    try {
+      requireAuth();
+      const result = await callFirebaseFunction("bulkUpdateReviewStatus", { 
+        data: { reviewIds, status } 
+      });
+      return {
+        updated: result.updated || [],
+        errors: result.errors || [],
+      };
+    } catch (error) {
+      logError("Error bulk updating reviews", error);
+      throw error;
+    }
+  },
 };
 
 // Export individual functions for direct use
@@ -1439,6 +1594,7 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
       description: report.description,
       status: report.status || "open",
       createdAt: report.createdAt || new Date().toISOString(),
+      attachments: report.attachments || [],
     }));
   } catch (error) {
     logError("Error fetching reports from Firebase", error);

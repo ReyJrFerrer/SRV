@@ -154,6 +154,11 @@ function getManualReputationIdl() {
         [ReputationResult],
         [],
       ),
+      setUserReputation: IDL.Func(
+        [IDL.Principal, IDL.Nat],
+        [IDL.Variant({ok: IDL.Text, err: IDL.Text})],
+        [],
+      ),
     });
   };
 }
@@ -849,82 +854,6 @@ exports.processReviewForReputation = functions.https.onCall(async (data, _contex
 exports.processReviewForReputationInternal = processReviewForReputationInternal;
 
 /**
- * Get reputation score for a user
- * Public query function that anyone can call
- */
-exports.getReputationScore = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  console.log("🔄 Get Reputation Score Payload:", {userId});
-
-  if (!userId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "User ID is required",
-    );
-  }
-
-  try {
-    // First, try to get reputation from Firestore (where admin updates are stored)
-    console.log(`🔍 Checking Firestore for reputation data for ${userId}`);
-    const userDoc = await db.collection("users").doc(userId).get();
-
-    if (userDoc.exists && userDoc.data().reputationScore !== undefined) {
-      const userData = userDoc.data();
-      console.log(`✅ Found reputation in Firestore for ${userId}:`, userData.reputationScore);
-      return {
-        success: true,
-        data: {
-          trustScore: userData.reputationScore || 50,
-          trustLevel: userData.reputationLevel || "New",
-          completedBookings: userData.completedBookings || 0,
-        },
-      };
-    }
-
-    // If not in Firestore, try IC canister
-    console.log(`📞 No Firestore data, trying IC canister for ${userId}`);
-    const reputationActor = await createReputationActor();
-    const principal = Principal.fromText(userId);
-
-    const result = await reputationActor.getReputationScore(principal);
-
-    if ("ok" in result) {
-      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
-      return {
-        success: true,
-        data: result.ok,
-      };
-    } else {
-      console.error(`❌ Error from canister: ${result.err}`);
-      // Return default reputation instead of throwing error
-      return {
-        success: true,
-        data: {
-          trustScore: 50,
-          trustLevel: "New",
-          completedBookings: 0,
-        },
-      };
-    }
-  } catch (error) {
-    console.error("Error getting reputation score:", error);
-    // Return default reputation instead of throwing error
-    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
-    return {
-      success: true,
-      data: {
-        trustScore: 50,
-        trustLevel: "New",
-        completedBookings: 0,
-      },
-    };
-  }
-});
-
-/**
  * Internal function to check the user reputation
  * Can be called directly from other cloud functions
  * @param {string} userId -  User principal as text
@@ -980,58 +909,7 @@ async function checkUserReputationInternal(userId) {
 
 exports.checkUserReputationInternal = checkUserReputationInternal;
 
-
-exports.checkUserReputation = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  console.log("🔄 Get Reputation Score Payload:", {userId});
-
-  if (!userId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "User ID is required",
-    );
-  }
-
-  try {
-    // Check reputation score in the canister
-    console.log(`📞 Checking User Reputation in IC canister for ${userId}`);
-    const reputationActor = await createReputationActor();
-    const principal = Principal.fromText(userId);
-
-    const result = await reputationActor.getReputationScore(principal);
-
-    if ("ok" in result) {
-      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
-      return {
-        success: true,
-        data: result.ok,
-      };
-    } else {
-      console.error(`❌ Error from canister: ${result.err}`);
-      // Return default reputation instead of throwing error
-      return {
-        success: true,
-        data: {
-          trustScore: 50,
-          trustLevel: "New",
-          completedBookings: 0,
-        },
-      };
-    }
-  } catch (error) {
-    console.error("Error getting reputation score:", error);
-    // Return default reputation instead of throwing error
-    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
-    return {
-      success: true,
-      data: {
-        trustScore: 50,
-        trustLevel: "New",
-        completedBookings: 0,
-      },
-    };
-  }
-});
+// Export helper functions for use in other modules
+exports.getManualReputationIdl = getManualReputationIdl;
+exports.getCanisterConfig = getCanisterConfig;
+exports.createReputationActor = createReputationActor;

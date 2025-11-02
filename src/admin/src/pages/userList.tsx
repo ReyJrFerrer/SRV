@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
@@ -12,6 +12,7 @@ import {
   LockClosedIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
+import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 // User data interface based on Profile type from backend
 interface UserData {
@@ -30,6 +31,7 @@ interface UserData {
 }
 
 export const UserListPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     loading,
     users: backendUsers,
@@ -76,12 +78,38 @@ export const UserListPage: React.FC = () => {
       servicesCount = 0;
     }
 
+    // Safely convert dates from nanoseconds to Date objects
+    // Handle different types: bigint, number, string, or Date
+    const createdAtValue = profile.createdAt 
+      ? (typeof profile.createdAt === 'bigint' 
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === 'number'
+          ? new Date(profile.createdAt / 1000000)
+          : typeof profile.createdAt === 'string'
+          ? new Date(profile.createdAt)
+          : new Date())
+      : new Date();
+    
+    const updatedAtValue = profile.updatedAt
+      ? (typeof profile.updatedAt === 'bigint'
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === 'number'
+          ? new Date(profile.updatedAt / 1000000)
+          : typeof profile.updatedAt === 'string'
+          ? new Date(profile.updatedAt)
+          : new Date())
+      : new Date();
+
+    // Validate dates - if invalid, use current date as fallback
+    const createdAt = isNaN(createdAtValue.getTime()) ? new Date() : createdAtValue;
+    const updatedAt = isNaN(updatedAtValue.getTime()) ? new Date() : updatedAtValue;
+
     return {
       id: userId.toString(),
       name: profile.name,
       phone: profile.phone,
-      createdAt: new Date(Number(profile.createdAt) / 1000000),
-      updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       profilePicture:
         profile.profilePicture && profile.profilePicture.length > 0
           ? {
@@ -246,6 +274,10 @@ export const UserListPage: React.FC = () => {
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   const formatDate = (date: Date) => {
+    // Check if date is valid
+    if (!date || isNaN(date.getTime())) {
+      return "N/A";
+    }
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "2-digit",
@@ -740,22 +772,15 @@ export const UserListPage: React.FC = () => {
                         <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-12 w-12 flex-shrink-0">
-                              {user.profilePicture ? (
-                                <img
-                                  className="h-12 w-12 rounded-full object-cover shadow-sm ring-2 ring-white"
-                                  src={
-                                    user.profilePicture.thumbnailUrl ||
-                                    user.profilePicture.imageUrl
-                                  }
-                                  alt={user.name}
-                                />
-                              ) : (
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
-                                  <span className="text-sm font-semibold">
-                                    {user.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
+                              <ProfileImage
+                                profilePictureUrl={
+                                  user.profilePicture?.thumbnailUrl ||
+                                  user.profilePicture?.imageUrl
+                                }
+                                userName={user.name}
+                                size="h-12 w-12"
+                                className="shadow-sm ring-2 ring-white"
+                              />
                             </div>
                             <div className="ml-4">
                               <div className="flex items-center space-x-2">
@@ -966,22 +991,15 @@ export const UserListPage: React.FC = () => {
               {/* Summary band */}
               <div className="mb-4 grid grid-cols-[auto,1fr] items-center gap-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
                 <div className="h-16 w-16">
-                  {selectedUser.profilePicture ? (
-                    <img
-                      className="h-16 w-16 rounded-full object-cover shadow-sm ring-2 ring-white"
-                      src={
-                        selectedUser.profilePicture.thumbnailUrl ||
-                        selectedUser.profilePicture.imageUrl
-                      }
-                      alt={selectedUser.name}
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm">
-                      <span className="text-lg font-semibold">
-                        {selectedUser.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+                  <ProfileImage
+                    profilePictureUrl={
+                      selectedUser.profilePicture?.thumbnailUrl ||
+                      selectedUser.profilePicture?.imageUrl
+                    }
+                    userName={selectedUser.name}
+                    size="h-16 w-16"
+                    className="shadow-sm ring-2 ring-white"
+                  />
                 </div>
                 <div>
                   <div className="text-lg font-semibold text-gray-900">
@@ -1046,6 +1064,34 @@ export const UserListPage: React.FC = () => {
             <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
               {/* Account Management Buttons */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    navigate(`/user/${selectedUser.id}`);
+                    setShowUserModal(false);
+                  }}
+                  className="inline-flex items-center rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <svg
+                    className="mr-1 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                  View User
+                </button>
                 {!selectedUser.isLocked ? (
                   <button
                     onClick={handleLockConfirmation}

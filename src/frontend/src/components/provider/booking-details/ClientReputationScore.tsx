@@ -49,7 +49,7 @@ const ClientReputationScore: React.FC<ClientReputationScoreProps> = ({
       style={{ minWidth: 0 }}
     >
       <ShieldCheckIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
-      <span className="mr-1">Reputation:</span>
+      <span className="mr-1">Reputation Score:</span>
       <span className="font-bold">{score}</span>
     </span>
   );

@@ -31,7 +31,6 @@ import HeroSection from "../../../components/provider/service-details/HeroSectio
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =
@@ -1085,15 +1084,8 @@ const ProviderServiceDetailPage: React.FC = () => {
       />
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
-          <button
-            onClick={() => navigate(`/provider/home`)}
-            className="rounded-full p-2 transition-colors hover:bg-blue-100"
-            aria-label="Go to home"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Service Details
           </h1>
         </div>

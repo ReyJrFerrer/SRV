@@ -1524,6 +1524,15 @@ async function initializeCategoriesDirectly() {
       slug: "photographer",
       imageUrl: "/images/Photographer-CoverImage.jpg",
     },
+    {
+      id: "cat-010",
+      name: "Others",
+      description: "Services that don't fit into other categories",
+      parentId: null,
+      slug: "others",
+      imageUrl: "/images/HomeServices-CoverImage.jpg",
+    },
+
   ];
 
   try {
