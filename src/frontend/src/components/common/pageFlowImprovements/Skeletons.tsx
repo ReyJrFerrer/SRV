@@ -76,18 +76,39 @@ export const NotificationListSkeleton: React.FC<{ count?: number }> = ({
 
 // Booking card skeleton (simple, full-width)
 export const BookingCardSkeleton: React.FC = () => (
-  <div className="w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-    <div className="mb-3 flex items-start gap-3">
-      <div className="h-14 w-14 animate-pulse rounded-xl bg-gray-200" />
-      <div className="flex-1">
-        <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-        <div className="mb-1 h-3 w-1/3 animate-pulse rounded bg-gray-200" />
-        <div className="h-3 w-1/4 animate-pulse rounded bg-gray-200" />
+  <div className="block w-full cursor-default overflow-hidden rounded-xl bg-white shadow-lg">
+    <div className="md:flex">
+      {/* Image placeholder matches real card: md:flex-shrink-0, md:w-48, md:h-48 */}
+      <div className="md:flex-shrink-0">
+        <div className="relative h-48 w-full md:w-48">
+          <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-l-xl md:rounded-t-none" />
+        </div>
       </div>
-    </div>
-    <div className="mt-3 grid grid-cols-2 gap-3 border-t pt-3">
-      <div className="h-9 animate-pulse rounded-lg bg-gray-200" />
-      <div className="h-9 animate-pulse rounded-lg bg-gray-200" />
+
+      {/* Content area mirrors real card padding and layout */}
+      <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+        <div>
+          <div className="flex items-start justify-between">
+            <div className="h-4 w-28 animate-pulse rounded bg-gray-200" />
+            <div className="h-6 w-20 animate-pulse rounded bg-gray-200" />
+          </div>
+
+          <div className="mb-2 mt-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+
+          <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+
+          <div className="mt-3 space-y-2 text-xs text-gray-600">
+            <div className="h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200" />
+            <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200" />
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
+          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-40" />
+          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-32" />
+        </div>
+      </div>
     </div>
   </div>
 );

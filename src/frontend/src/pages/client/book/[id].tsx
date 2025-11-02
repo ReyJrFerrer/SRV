@@ -171,6 +171,10 @@ const BookingPage: React.FC = () => {
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
+  // Track whether the user actually interacted with the form (avoids autosaving
+  // when only auto-detected values are present).
+  const userTouchedRef = useRef<boolean>(false);
+  const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
   const saveDraftImmediate = useCallback(() => {
     if (!draftKey) return;
@@ -196,6 +200,34 @@ const BookingPage: React.FC = () => {
         mapDisplayAddress,
         timestamp: Date.now(),
       };
+
+      // Helper to determine if a draft contains meaningful user inputs
+      const isMeaningfulDraft = (d: BookingDraft) => {
+        try {
+          if (d.packages && d.packages.some((p) => p.checked)) return true;
+          if (d.bookingOption) return true;
+          if (d.selectedDate) return true;
+          if (d.selectedTime && d.selectedTime.trim()) return true;
+          if (d.street && d.street.trim()) return true;
+          if (d.houseNumber && d.houseNumber.trim()) return true;
+          if (d.landmark && d.landmark.trim()) return true;
+          if (d.notes && d.notes.trim()) return true;
+          if (d.amountPaid && d.amountPaid.trim()) return true;
+          if (d.selectedBarangay && d.selectedBarangay.trim()) return true;
+          if (d.otherBarangay && d.otherBarangay.trim()) return true;
+          // mapLocation and geocoded/display address are considered auto-detected
+          // and by themselves don't make a draft meaningful.
+          return false;
+        } catch {
+          return false;
+        }
+      };
+
+      // Persist if the user explicitly interacted OR the current state has
+      // meaningful inputs (covers controlled input changes that might not
+      // have bubbled DOM events to the page container).
+      if (!userTouchedRef.current && !isMeaningfulDraft(payload)) return;
+
       localStorage.setItem(draftKey, JSON.stringify(payload));
       setLastSavedAt(Date.now());
     } catch (err) {
@@ -223,6 +255,39 @@ const BookingPage: React.FC = () => {
     mapDisplayAddress,
   ]);
 
+  // Ensure we attempt to save a draft when the component unmounts (SPA
+  // navigation / route change). This will persist any meaningful inputs
+  // right before the booking page is torn down.
+  useEffect(() => {
+    return () => {
+      try {
+        saveDraftImmediate();
+      } catch {
+        // ignore
+      }
+    };
+  }, [saveDraftImmediate]);
+
+  // Mark the page as 'touched' when the user interacts with any input or
+  // interacts with UI inside the booking page. This is intentionally broad
+  // (input/change/click/touchstart) so child components don't need to notify
+  // us individually.
+  useEffect(() => {
+    const el = pageContainerRef.current;
+    if (!el) return;
+    const mark = () => (userTouchedRef.current = true);
+    el.addEventListener("input", mark);
+    el.addEventListener("change", mark);
+    el.addEventListener("click", mark);
+    el.addEventListener("touchstart", mark, { passive: true });
+    return () => {
+      el.removeEventListener("input", mark);
+      el.removeEventListener("change", mark);
+      el.removeEventListener("click", mark);
+      el.removeEventListener("touchstart", mark as any);
+    };
+  }, []);
+
   // Debounced autosave when any form field changes
   useEffect(() => {
     if (!draftKey) return;
@@ -237,15 +302,50 @@ const BookingPage: React.FC = () => {
     return () => window.removeEventListener("beforeunload", onUnload);
   }, [saveDraftImmediate]);
 
-  // On mount, check for existing draft for this service
+  // On mount, check for existing draft for this service. Only treat it as a
+  // draft if the user previously entered meaningful inputs (ignore drafts
+  // that only contain auto-detected values like reverse-geocoded addresses).
   useEffect(() => {
     if (!draftKey) return;
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
         const parsed = JSON.parse(raw) as BookingDraft;
-        setParsedDraft(parsed);
-        setShowRestorePrompt(true);
+
+        // Only consider this a saved draft if it contains meaningful user inputs.
+        const hasInputs = (() => {
+          try {
+            if (parsed.packages && parsed.packages.some((p) => p.checked))
+              return true;
+            if (parsed.bookingOption) return true;
+            if (parsed.selectedDate) return true;
+            if (parsed.selectedTime && parsed.selectedTime.trim()) return true;
+            if (parsed.street && parsed.street.trim()) return true;
+            if (parsed.houseNumber && parsed.houseNumber.trim()) return true;
+            if (parsed.landmark && parsed.landmark.trim()) return true;
+            if (parsed.notes && parsed.notes.trim()) return true;
+            if (parsed.amountPaid && parsed.amountPaid.trim()) return true;
+            if (parsed.selectedBarangay && parsed.selectedBarangay.trim())
+              return true;
+            if (parsed.otherBarangay && parsed.otherBarangay.trim())
+              return true;
+            // mapLocation and geocoded/display address are treated as
+            // auto-detected values and do not by themselves make the draft meaningful.
+            return false;
+          } catch {
+            return false;
+          }
+        })();
+
+        if (hasInputs) {
+          setParsedDraft(parsed);
+          setShowRestorePrompt(true);
+        } else {
+          // Remove trivially empty drafts to avoid false prompts later
+          try {
+            localStorage.removeItem(draftKey);
+          } catch {}
+        }
       }
     } catch (err) {
       // ignore
@@ -351,16 +451,31 @@ const BookingPage: React.FC = () => {
 
   // Manual barangays when province/city changes
   useEffect(() => {
-    if (manualProvince && manualCity) {
+    try {
+      if (!manualProvince) {
+        setManualBarangayOptions([]);
+        setSelectedBarangay("");
+        return;
+      }
+
       const provinceObj = (phLocations as any).provinces.find(
         (prov: any) =>
           prov.name.trim().toLowerCase() ===
           manualProvince.trim().toLowerCase(),
       );
-      const muniObj = provinceObj?.municipalities.find(
+
+      if (!provinceObj || !Array.isArray(provinceObj.municipalities)) {
+        setManualBarangayOptions([]);
+        setSelectedBarangay("");
+        return;
+      }
+
+      // Find municipality match for the current manualCity
+      const muniObj = provinceObj.municipalities.find(
         (muni: any) =>
           muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
       );
+
       if (muniObj && Array.isArray(muniObj.barangays)) {
         setManualBarangayOptions(
           muniObj.barangays.filter(
@@ -368,11 +483,32 @@ const BookingPage: React.FC = () => {
               b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
           ),
         );
+        setSelectedBarangay("");
+        return;
+      }
+
+      // If the current manualCity is not a member of the selected province
+      // (e.g., user switched provinces but city stayed from previous province),
+      // pick a sensible default: select the first municipality for this
+      // province and populate its barangays so the UI shows correct options.
+      const firstMuni = provinceObj.municipalities[0];
+      if (firstMuni && firstMuni.name) {
+        setManualCity(firstMuni.name);
+        if (Array.isArray(firstMuni.barangays)) {
+          setManualBarangayOptions(
+            firstMuni.barangays.filter(
+              (b: string) =>
+                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+            ),
+          );
+        } else {
+          setManualBarangayOptions([]);
+        }
       } else {
         setManualBarangayOptions([]);
       }
       setSelectedBarangay("");
-    } else {
+    } catch {
       setManualBarangayOptions([]);
       setSelectedBarangay("");
     }
@@ -1234,7 +1370,7 @@ const BookingPage: React.FC = () => {
             </div>
           </header>
 
-          <div className="flex-grow pb-2 md:pb-28">
+          <div className="flex-grow pb-2 md:pb-28" ref={pageContainerRef}>
             <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
               <div className="md:flex md:gap-x-8">
                 <div className="space-y-6 md:w-1/2">
