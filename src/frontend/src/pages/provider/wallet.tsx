@@ -656,7 +656,7 @@ const WalletPage: React.FC = () => {
                 </label>
                 <div className="mt-2">
                   <div className="relative">
-                    <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                       ₱
                     </span>
                     <input
@@ -666,7 +666,7 @@ const WalletPage: React.FC = () => {
                       onChange={(e) => handleAmountInputChange(e.target.value)}
                       placeholder="Enter amount"
                       min="100"
-                      className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pr-3 pl-7 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
