@@ -278,10 +278,7 @@ const SearchResultsPage: React.FC = () => {
           </div>
         )}
       </main>
-
-      <div className="lg:hidden">
-        <BottomNavigation />
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

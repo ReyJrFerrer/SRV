@@ -112,6 +112,8 @@ export const getCategoryImage = (categoryName: string): string => {
   if (lowerName.includes("photography"))
     return "/images/Photographer-CoverImage.jpg";
   if (lowerName.includes("tutoring")) return "/images/Tutoring-CoverImage.jpg";
+  if (lowerName.includes("others") || lowerName.includes("others"))
+    return "/images/HomeServices-CoverImage.jpg";
   // Default image
   return "/default-provider.svg";
 };
