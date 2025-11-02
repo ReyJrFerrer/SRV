@@ -8,8 +8,8 @@ import {
 import ServiceListItem from "../../components/client/ServiceListItem";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import SearchBar from "../../components/client/SearchBar";
-import Appear from "../../components/common/Appear";
-import { ServiceGridSkeleton } from "../../components/common/Skeletons";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
 // Hooks
 import {

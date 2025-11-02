@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import ActiveServiceBanner from "../provider/ActiveServiceBanner";
-import RouteTransition from "../common/RouteTransition";
+import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
 
 export default function ProviderLayout() {
   return (

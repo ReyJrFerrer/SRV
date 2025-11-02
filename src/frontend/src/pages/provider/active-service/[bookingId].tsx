@@ -16,7 +16,7 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
 import { useFeedback } from "../../../hooks/useFeedback";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";

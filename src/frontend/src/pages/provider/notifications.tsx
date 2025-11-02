@@ -5,8 +5,8 @@ import {
   useProviderNotifications,
 } from "../../hooks/useProviderNotificationsWithPush";
 import BottomNavigation from "../../components/provider/BottomNavigation";
-import Appear from "../../components/common/Appear";
-import { NotificationListSkeleton } from "../../components/common/Skeletons";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { NotificationListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import {
   BellAlertIcon,
   CheckCircleIcon,

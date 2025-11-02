@@ -5,8 +5,8 @@ import {
   Notification,
 } from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import Appear from "../../components/common/Appear";
-import { NotificationListSkeleton } from "../../components/common/Skeletons";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { NotificationListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import {
   BellAlertIcon,
   CheckCircleIcon,

@@ -16,12 +16,12 @@ import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { useClientRating } from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
-import CancelWithReasonButton from "../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../components/common/canellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
-import Appear from "../../components/common/Appear";
-import { BookingListSkeleton } from "../../components/common/Skeletons";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
 type BookingStatusTab =
   | "ALL"
