@@ -3,6 +3,17 @@
     "default": "srv-3a984",
     "srv": "srv-3a984"
   },
-  "targets": {},
+  "targets": {
+    "srv-3a984": {
+      "hosting": {
+        "client": [
+          "srv-3a984"
+        ],
+        "admin": [
+          "srv-admin"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
