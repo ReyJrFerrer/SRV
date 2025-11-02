@@ -32,7 +32,6 @@ import LocationAvailabilitySection from "../../../components/provider/service-de
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 
-
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =
   import("../../../components/provider/service-details").WeeklyScheduleEntry;

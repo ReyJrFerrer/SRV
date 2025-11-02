@@ -222,7 +222,7 @@ const ActiveServicePage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-       <div className="flex w-full items-center justify-center px-4 py-3">
+        <div className="flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Service InProgress
           </h1>

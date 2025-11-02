@@ -357,7 +357,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           )}
         </>
       ) : (
-        <div className="py-12 text-center text-gray-400">No services found.</div>
+        <div className="py-12 text-center text-gray-400">
+          No services found.
+        </div>
       )}
     </>
   );
