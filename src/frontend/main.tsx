@@ -6,7 +6,6 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 import App from "./src/App";
 import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
-import TopProgressBar from "./src/components/common/pageFlowImprovements/TopProgressBar";
 
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";
@@ -110,7 +109,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         libraries={["places"]}
       >
         <HashRouter>
-          <TopProgressBar />
           <ScrollToTop />
           <AuthProvider>
             <Routes>
