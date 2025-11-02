@@ -201,7 +201,27 @@ const BookingPage: React.FC = () => {
     } catch (err) {
       // ignore storage errors
     }
-  }, [draftKey, packages, bookingOption, selectedDate, selectedTime, street, houseNumber, landmark, notes, paymentMethod, amountPaid, selectedBarangay, otherBarangay, locationInputMode, manualProvince, manualCity, mapLocation, mapPreciseAddress, mapDisplayAddress]);
+  }, [
+    draftKey,
+    packages,
+    bookingOption,
+    selectedDate,
+    selectedTime,
+    street,
+    houseNumber,
+    landmark,
+    notes,
+    paymentMethod,
+    amountPaid,
+    selectedBarangay,
+    otherBarangay,
+    locationInputMode,
+    manualProvince,
+    manualCity,
+    mapLocation,
+    mapPreciseAddress,
+    mapDisplayAddress,
+  ]);
 
   // Debounced autosave when any form field changes
   useEffect(() => {
@@ -243,7 +263,9 @@ const BookingPage: React.FC = () => {
         }),
       );
       setBookingOption(parsedDraft.bookingOption);
-      setSelectedDate(parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null);
+      setSelectedDate(
+        parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null,
+      );
       setSelectedTime(parsedDraft.selectedTime || "");
       setStreet(parsedDraft.street || "");
       setHouseNumber(parsedDraft.houseNumber || "");
@@ -1328,18 +1350,18 @@ const BookingPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
-                    <div className="relative max-w-5xl mx-auto">
-                      {lastSavedAt && (
-                        <div className="absolute left-4 top-3 hidden sm:block text-xs text-gray-600">
-                          Saved • {timeAgo(lastSavedAt)}
-                        </div>
-                      )}
-                      <StickyConfirmBar
-                        formError={formError}
-                        isSubmitting={isSubmitting}
-                        onConfirm={handleConfirmBooking}
-                      />
-                    </div>
+                  <div className="relative mx-auto max-w-5xl">
+                    {lastSavedAt && (
+                      <div className="absolute left-4 top-3 hidden text-xs text-gray-600 sm:block">
+                        Saved • {timeAgo(lastSavedAt)}
+                      </div>
+                    )}
+                    <StickyConfirmBar
+                      formError={formError}
+                      isSubmitting={isSubmitting}
+                      onConfirm={handleConfirmBooking}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
