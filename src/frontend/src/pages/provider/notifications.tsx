@@ -273,7 +273,9 @@ const NotificationsPageSP = () => {
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading notifications…</div>
+          <div className="p-8 text-center text-gray-500">
+            Loading notifications…
+          </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
         ) : notifications.length === 0 ? (
