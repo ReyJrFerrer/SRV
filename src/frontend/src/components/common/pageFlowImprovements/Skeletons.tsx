@@ -93,7 +93,7 @@ export const BookingCardSkeleton: React.FC = () => (
             <div className="h-6 w-20 animate-pulse rounded bg-gray-200" />
           </div>
 
-          <div className="mt-2 mb-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+          <div className="mb-2 mt-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
 
           <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
 
