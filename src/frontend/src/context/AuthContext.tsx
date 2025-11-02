@@ -28,7 +28,7 @@ import {
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
-import LocationPermissionPromptModal from "../components/common/GMapFunctions/LocationPermissionPromptModal";
+import LocationPermissionPromptModal from "../components/common/locationAccessPermission/LocationPermissionPromptModal";
 import LocationBlockedModal from "../components/common/locationAccessPermission/LocationBlockedModal";
 
 // Re-export types for backward compatibility
