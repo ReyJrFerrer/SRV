@@ -223,7 +223,6 @@ const ServiceDetailsPage: React.FC = () => {
           setLoading(false);
           return;
         }
-
       } catch (err) {
         console.error("Error loading service data:", err);
         setError("Failed to load service data");
@@ -254,7 +253,6 @@ const ServiceDetailsPage: React.FC = () => {
       setShowDeleteConfirm(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -435,7 +433,7 @@ const ServiceDetailsPage: React.FC = () => {
             <div className="flex min-w-[180px] flex-col items-center justify-center gap-2">
               <div
                 onClick={() => navigate(`/service/${service.id}/reviews`)}
-                className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md mt-1"
+                className="mt-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -593,7 +591,11 @@ const ServiceDetailsPage: React.FC = () => {
                             + ₱{(pkg.commissionFee || 0).toFixed(2)} commission
                           </div>
                           <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
-                            ₱{((pkg.price || 0) + (pkg.commissionFee || 0)).toFixed(2)} total
+                            ₱
+                            {(
+                              (pkg.price || 0) + (pkg.commissionFee || 0)
+                            ).toFixed(2)}{" "}
+                            total
                           </div>
                         </div>
                       </div>

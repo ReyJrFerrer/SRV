@@ -346,8 +346,9 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
 
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
-  
-  console.log("[getUserReviews] includeHidden:", includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
+  console.log("[getUserReviews] includeHidden:", includeHidden,
+    "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
 
   try {
     // When showing all (including hidden), fetch all and filter client-side to avoid index issues
@@ -357,24 +358,24 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
         .collection("reviews")
         .where("clientId", "==", targetUserId)
         .get();
-      
+
       const allReviews = [];
       allReviewsSnap.forEach((doc) => {
         allReviews.push(doc.data());
       });
-      
+
       // Sort client-side
       const sorted = allReviews.sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bTime - aTime;
       });
-      
+
       return {success: true, data: sorted};
     }
 
     // Normal query for visible reviews only (has proper index)
-    let query = db
+    const query = db
       .collection("reviews")
       .where("clientId", "==", targetUserId)
       .where("status", "==", "Visible");
@@ -399,7 +400,7 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
           .collection("reviews")
           .where("clientId", "==", targetUserId)
           .get();
-        
+
         const allReviews = [];
         allReviewsSnap.forEach((doc) => {
           const reviewData = doc.data();
@@ -407,14 +408,14 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
             allReviews.push(reviewData);
           }
         });
-        
+
         // Sort client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return bTime - aTime;
         });
-        
+
         return {success: true, data: sorted};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
@@ -804,24 +805,24 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
     for (let i = 0; i < reviewIds.length; i += batchSize) {
       const batch = db.batch();
       const batchIds = reviewIds.slice(i, i + batchSize);
-      
+
       // Get all reviews from both collections
       const reviewPromises = batchIds.map(async (id) => {
         const reviewDoc = await db.collection("reviews").doc(id).get();
         if (reviewDoc.exists) {
-          return { id, doc: reviewDoc, collection: "reviews" };
+          return {id, doc: reviewDoc, collection: "reviews"};
         }
         const providerReviewDoc = await db.collection("providerReviews").doc(id).get();
         if (providerReviewDoc.exists) {
-          return { id, doc: providerReviewDoc, collection: "providerReviews" };
+          return {id, doc: providerReviewDoc, collection: "providerReviews"};
         }
-        return { id, doc: null, collection: null };
+        return {id, doc: null, collection: null};
       });
 
       const reviewDocs = await Promise.all(reviewPromises);
 
       // Update each review
-      for (const { id: reviewId, doc: reviewDoc, collection: collectionName } of reviewDocs) {
+      for (const {id: reviewId, doc: reviewDoc, collection: collectionName} of reviewDocs) {
         if (!reviewDoc || !collectionName) {
           errors.push({reviewId, error: "Review not found"});
           continue;
@@ -832,7 +833,7 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
           status: status,
           updatedAt: new Date().toISOString(),
         });
-        
+
         updated.push(reviewId);
       }
 
@@ -1437,11 +1438,12 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
 
   // Authentication check
   const authInfo = getAuthInfo(context, data);
-  
+
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
-  
-  console.log("[getClientProviderReviews] includeHidden:", includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
+  console.log("[getClientProviderReviews] includeHidden:",
+    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
 
   try {
     let query = db
@@ -1475,7 +1477,7 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
           .collection("providerReviews")
           .where("clientId", "==", clientId)
           .get();
-        
+
         const allReviews = [];
         allReviewsSnap.forEach((doc) => {
           const reviewData = doc.data();
@@ -1483,14 +1485,14 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
             allReviews.push(reviewData);
           }
         });
-        
+
         // Sort and paginate client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return bTime - aTime;
         });
-        
+
         const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
         return {success: true, data: paginated};
       } catch (fallbackError) {
@@ -1524,11 +1526,12 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
 
   // Authentication check
   const authInfo = getAuthInfo(context, data);
-  
+
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
-  
-  console.log("[getProviderReviewsByProvider] includeHidden:", includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
+  console.log("[getProviderReviewsByProvider] includeHidden:",
+    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
 
   try {
     let query = db
@@ -1563,7 +1566,7 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
           .collection("providerReviews")
           .where("providerId", "==", providerId)
           .get();
-        
+
         const allReviews = [];
         allReviewsSnap.forEach((doc) => {
           const reviewData = doc.data();
@@ -1571,14 +1574,14 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
             allReviews.push(reviewData);
           }
         });
-        
+
         // Sort and paginate client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return bTime - aTime;
         });
-        
+
         const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
         return {success: true, data: paginated};
       } catch (fallbackError) {

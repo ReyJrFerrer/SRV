@@ -40,10 +40,7 @@ export interface FrontendMediaStorageStats {
   userCount: number;
 }
 
-export type MediaType =
-  | "ServiceImage"
-  | "UserProfile"
-  | "ServiceCertificate";
+export type MediaType = "ServiceImage" | "UserProfile" | "ServiceCertificate";
 
 // Custom error class for media service operations
 export class MediaServiceError extends Error {
