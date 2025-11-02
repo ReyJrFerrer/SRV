@@ -369,7 +369,6 @@ async function cancelConflictingBookings(
 
     const batch = db.batch();
     const notificationPromises = [];
-    const ticketPromises = [];
     let cancelledCount = 0;
 
     conflictingBookingsQuery.forEach((doc) => {
@@ -2644,6 +2643,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
 
     const batch = db.batch();
     const notificationPromises = [];
+    const ticketPromises = [];
     let cancelledCount = 0;
 
     // Process each missed booking
