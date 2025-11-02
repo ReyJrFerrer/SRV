@@ -56,7 +56,7 @@ const ActionButtons: React.FC<Props> = ({
   // If booking is still Requested, hide chat and other non-decision actions; only show Accept/Decline
   const showChat = typeof onChat === "function" && !isRequested;
   const showBookAgain = !!onBookAgain && !isRequested;
-  
+
   const acceptDisabledBecauseCommission =
     booking?.paymentMethod === "CashOnHand" &&
     (commissionValidation.loading ||
@@ -129,8 +129,6 @@ const ActionButtons: React.FC<Props> = ({
     );
   }
 
-  
-
   if (showDecline) {
     buttons.push(
       <button
@@ -157,7 +155,7 @@ const ActionButtons: React.FC<Props> = ({
         disabled={cancelInProgress}
         aria-disabled={cancelInProgress}
         className={`${baseButtonClass} w-full ${color.decline} ${
-          cancelInProgress ? "opacity-60 cursor-not-allowed" : ""
+          cancelInProgress ? "cursor-not-allowed opacity-60" : ""
         }`}
       >
         {cancelInProgress ? (
