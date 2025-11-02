@@ -120,7 +120,7 @@ const BottomNavigation: React.FC = () => {
 
   // Helper function to get icon source
   const getIconSrc = React.useCallback(
-    (label: string, state: "default" | "selected" | "hover") => {
+    (label: string, state: "default" | "selected" | "hover" = "default") => {
       const basePath = `images/navigation icons/${label.toLowerCase()}`;
       let path: string;
       switch (state) {
@@ -133,14 +133,13 @@ const BottomNavigation: React.FC = () => {
         default:
           path = `${basePath}.svg`;
       }
-
       // Encode to ensure spaces and special characters are handled in URLs
       return encodeURI(path);
     },
     [],
   );
 
-  // State for all icon sources
+  // State for all icon sources - simplified to only store default icons
   const [iconStates, setIconStates] = React.useState<Record<string, string>>(
     () => {
       const initialStates: Record<string, string> = {};
@@ -164,7 +163,7 @@ const BottomNavigation: React.FC = () => {
     },
   );
 
-  // Update icon states when location changes
+  // Mark body so pages can offset content for the fixed left sidebar on desktop
   React.useEffect(() => {
     const newStates: Record<string, string> = {};
     // Update main nav items
@@ -256,7 +255,7 @@ const BottomNavigation: React.FC = () => {
                     <Link
                       key={displayItem.label}
                       to={displayItem.to}
-                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                      className="group relative flex min-h-[2px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                       onClick={(e) => {
                         if (isActive) {
                           e.preventDefault();
@@ -268,86 +267,47 @@ const BottomNavigation: React.FC = () => {
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
                     >
-                      <div
-                        className={
-                          isActive
-                            ? "flex w-full flex-1 items-center justify-center"
-                            : "flex w-full items-center justify-center"
-                        }
-                      >
-                        <img
-                          src={iconStates[displayItem.label]}
-                          alt={displayItem.label}
-                          className={`transition-all duration-300 ease-in-out ${
+                      <div className="flex w-full flex-col items-center justify-center">
+                        <div
+                          className={`flex items-center justify-center transition-all duration-300 ${
                             isActive
-                              ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
-                              : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
+                              ? "h-8 w-8 rounded-full bg-blue-600"
+                              : "h-5 w-5"
                           }`}
-                          style={{
-                            margin: "0 auto",
-                            pointerEvents: "none",
-                          }}
-                          draggable={false}
-                        />
+                        >
+                          <img
+                            src={iconStates[displayItem.label]}
+                            alt={displayItem.label}
+                            className={`transition-all duration-300 ease-in-out ${
+                              isActive
+                                ? "h-8 w-8 scale-160 drop-shadow-lg sm:h-10 sm:w-10"
+                                : "h-5 w-5 sm:h-7 sm:w-7"
+                            }`}
+                            style={{
+                              pointerEvents: "none",
+                            }}
+                            draggable={false}
+                          />
+                        </div>
+                        {!isActive && (
+                          <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
+                            {item.label}
+                          </span>
+                        )}
                       </div>
-                      <span
-                        className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                          isActive
-                            ? "scale-105 font-bold text-blue-900"
-                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
-                        }`}
-                        style={{
-                          opacity: isActive ? 1 : 0.9,
-                          transform: isActive ? "scale(1.05)" : undefined,
-                        }}
-                      >
-                        {displayItem.label}
-                      </span>
                       {item.count > 0 && (
-                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                        <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 sm:top-2 sm:right-2"></span>
                       )}
                     </Link>
                   );
                 }
-                return (
-                  <Link
-                    key={displayItem.label}
-                    to={displayItem.to}
-                    className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                    onClick={(e) => {
-                      if (isActive) {
-                        e.preventDefault();
-                        setTimeout(() => {
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }, 120);
-                      }
-                    }}
-                  >
-                    <span
-                      className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                        isActive
-                          ? "scale-105 font-bold text-blue-900"
-                          : "text-gray-500 group-hover:scale-105 group-hover:text-yellow-500"
-                      }`}
-                      style={{
-                        opacity: isActive ? 1 : 0.9,
-                        transform: isActive ? "scale(1.05)" : undefined,
-                      }}
-                    >
-                      {displayItem.label}
-                    </span>
-                    {item.count > 0 && (
-                      <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                    )}
-                  </Link>
-                );
               })}
           </div>
         </nav>
       </div>
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
+      <aside className="safe-area-inset-left fixed top-0 left-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
         {/* Top section: main nav items (Profile in place of Settings) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems.map((item) => {
@@ -360,7 +320,6 @@ const BottomNavigation: React.FC = () => {
                 }));
               }
             };
-
             const handleMouseLeave = () => {
               if (!isActive) {
                 setIconStates((prev) => ({
@@ -389,37 +348,46 @@ const BottomNavigation: React.FC = () => {
                 onMouseLeave={handleMouseLeave}
               >
                 {item.label === "Profile" ? (
-                  <img
-                    src={stableProfileSrc}
-                    alt="Profile"
-                    className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                      isActive
-                        ? "h-10 w-10 ring-2 ring-yellow-500"
-                        : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
-                    }`}
-                    draggable={false}
-                  />
+                  <>
+                    <div
+                      className={`flex items-center justify-center transition-all duration-300 ${
+                        isActive
+                          ? "h-12 w-12 rounded-full bg-blue-600"
+                          : "h-10 w-10"
+                      }`}
+                    >
+                      <img
+                        src={stableProfileSrc}
+                        alt="Profile"
+                        className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
+                          isActive
+                            ? "h-10 w-10 border-2 border-white"
+                            : "h-8 w-8 group-hover:scale-105"
+                        }`}
+                        draggable={false}
+                      />
+                    </div>
+                  </>
                 ) : (
                   <img
                     src={iconStates[item.label]}
                     alt={item.label}
+                    // AFTER
                     className={`transition-all duration-300 ease-in-out ${
-                      isActive ? "h-8 w-8" : "h-6 w-6 group-hover:scale-105"
+                      isActive
+                        ? "h-12 w-12 scale-100 drop-shadow-lg" // <-- Changed to 48px
+                        : "h-6 w-6 group-hover:scale-110"
                     }`}
                     draggable={false}
                   />
                 )}
-                <span
-                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                    isActive
-                      ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {!isActive && (
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 group-hover:text-yellow-500 md:block">
+                    {item.label}
+                  </span>
+                )}
                 {item.count > 0 && (
-                  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500"></span>
                 )}
               </Link>
             );
@@ -427,35 +395,16 @@ const BottomNavigation: React.FC = () => {
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mb-4 mt-auto flex w-full flex-col items-center border-gray-100 pt-2">
+        <div className="mt-auto mb-4 flex w-full flex-col items-center border-gray-100 pt-2">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);
-            const handleMouseEnter = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "hover"),
-                }));
-              }
-            };
-
-            const handleMouseLeave = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "default"),
-                }));
-              }
-            };
 
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
-                  isActive ? "bg-gray-50" : ""
-                }`}
+                className="group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50"
                 onClick={(e) => {
                   if (isActive) {
                     e.preventDefault();
@@ -464,17 +413,25 @@ const BottomNavigation: React.FC = () => {
                     }, 120);
                   }
                 }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
               >
-                <img
-                  src={iconStates[item.label]}
-                  alt={item.label}
-                  className={`transition-all duration-300 ease-in-out ${
-                    isActive ? "h-8 w-8" : "h-6 w-6 group-hover:scale-105"
+                <div
+                  className={`flex items-center justify-center transition-all duration-300 ${
+                    isActive
+                      ? "h-12 w-12 rounded-full bg-blue-600"
+                      : "h-10 w-10"
                   }`}
-                  draggable={false}
-                />
+                >
+                  <img
+                    src={iconStates[item.label]}
+                    alt={item.label}
+                    className={`transition-all duration-300 ease-in-out ${
+                      isActive
+                        ? "h-6 w-6 brightness-0 invert"
+                        : "h-6 w-6 group-hover:scale-110"
+                    }`}
+                    draggable={false}
+                  />
+                </div>
                 <span
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
