@@ -83,12 +83,9 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       return () => window.removeEventListener("resize", updateMainRowCount);
     }, []);
 
-
-
     const isDesktop =
       typeof window !== "undefined" && window.innerWidth >= 1024;
-    const shouldShowMoreButton =
-      !isDesktop && categories.length > mainRowCount;
+    const shouldShowMoreButton = !isDesktop && categories.length > mainRowCount;
     // Reorder categories according to the specified order
     const categoryOrder = [
       "General Repair",

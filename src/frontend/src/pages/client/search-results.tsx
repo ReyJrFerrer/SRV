@@ -278,7 +278,7 @@ const SearchResultsPage: React.FC = () => {
           </div>
         )}
       </main>
-        <BottomNavigation />  
+      <BottomNavigation />
     </div>
   );
 };
