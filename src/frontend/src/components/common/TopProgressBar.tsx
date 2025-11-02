@@ -75,9 +75,8 @@ const TopProgressBar: React.FC = () => {
         style={{
           width: `${progress}%`,
           transition: "width 120ms ease-out",
-          background:
-            "linear-gradient(90deg, #facc15 0%, #fde047 25%, #60a5fa 100%)",
-          boxShadow: "0 0 10px rgba(96,165,250,0.45)",
+          background: "linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)",
+          boxShadow: "0 0 10px rgba(59,130,246,0.45)",
         }}
       />
     </div>

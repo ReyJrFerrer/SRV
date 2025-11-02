@@ -266,6 +266,7 @@ const ConversationPage: React.FC = () => {
           </div>
         ) : (
           messages.map((message) => {
+            console.log("Chat message:", message);
             const fromCurrentUser = isFromCurrentUser(message.senderId);
             return (
               <div
@@ -296,7 +297,9 @@ const ConversationPage: React.FC = () => {
                   style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                 >
                   <p className="overflow-wrap-anywhere break-words text-base leading-snug">
-                    {message.content}
+                    {typeof message.content === "string"
+                      ? message.content
+                      : message.content.encryptedText}
                   </p>
                   <p
                     className={`mt-1 text-right text-xs ${
