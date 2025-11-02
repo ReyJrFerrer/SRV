@@ -17,8 +17,8 @@ export const color = {
   accept: "bg-green-500 hover:bg-green-600",
   decline: "bg-red-500 hover:bg-red-600",
   start: "bg-indigo-500 hover:bg-indigo-600",
-  complete: "bg-teal-500 hover:bg-teal-600",
-  review: "bg-yellow-500 hover:bg-yellow-600 text-yellow-900",
+  complete: "bg-green-500 hover:bg-green-600",
+  review: "bg-yellow-500 hover:bg-yellow-600 ",
   report: "bg-red-600 hover:bg-red-700",
   neutral: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200",
 };
