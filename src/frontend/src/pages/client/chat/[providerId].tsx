@@ -296,7 +296,7 @@ const ConversationPage: React.FC = () => {
                   style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                 >
                   <p className="overflow-wrap-anywhere break-words text-base leading-snug">
-                    {message.content}
+                    {message.content.encryptedText}
                   </p>
                   <p
                     className={`mt-1 text-right text-xs ${

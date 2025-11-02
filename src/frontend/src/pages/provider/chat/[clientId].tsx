@@ -263,7 +263,7 @@ const ConversationPage: React.FC = () => {
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm">{message.content.encryptedText}</p>
                   <p
                     className={`mt-1 text-right text-xs ${
                       fromCurrentUser ? "text-blue-100" : "text-gray-400"
