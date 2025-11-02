@@ -116,45 +116,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <h2 className="not-last:mb-6 mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900">
-          My Services
-        </h2>
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-500">Loading your services...</p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <h2 className="mb-6 mt-5 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
-          My Services
-        </h2>
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="py-12 text-center">
-            <p className="mb-4 text-red-500">{error}</p>
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-              >
-                Try Again
-              </button>
-            )}
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       {/* Centered Delete Confirmation Dialog */}
@@ -221,7 +182,28 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </Tooltip>
       </div>
 
-      {services.length ? (
+      {loading ? (
+        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-500">Loading your services...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
+          <div className="py-12 text-center">
+            <p className="mb-4 text-red-500">{error}</p>
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              >
+                Try Again
+              </button>
+            )}
+          </div>
+        </div>
+      ) : services.length > 0 ? (
         <>
           <div className="grid grid-cols-1 gap-10 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
@@ -375,9 +357,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           )}
         </>
       ) : (
-        <div className="py-12 text-center text-gray-400">
-          No services found.
-        </div>
+        <div className="py-12 text-center text-gray-400">No services found.</div>
       )}
     </>
   );

@@ -1,10 +1,11 @@
 // Media Service for handling file uploads and conversions
 import { authCanisterService } from "./authCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance
-const functions = getFunctions();
+// Get Firebase Functions instance with correct region
+const functions = getFirebaseFunctions();
 
 export interface ImageUploadOptions {
   maxSizeKB?: number;
@@ -901,7 +902,6 @@ export const uploadReportAttachments = async (
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };
-    const functions = getFunctions();
     const uploadMediaFn = httpsCallable<
       {
         fileName: string;

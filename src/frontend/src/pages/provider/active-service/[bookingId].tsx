@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   UserIcon,
   MapPinIcon,
   CalendarIcon,
@@ -223,16 +222,9 @@ const ActiveServicePage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3 lg:ml-20">
-          <button
-            onClick={() => navigate(`/provider/booking/${booking.id}`)}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-2xl font-extrabold tracking-tight text-black">
-            Service In Progress
+       <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            Service InProgress
           </h1>
         </div>
       </header>

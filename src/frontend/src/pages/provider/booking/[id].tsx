@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-//
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -716,15 +714,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <button
-            onClick={() => navigate("/provider/bookings")}
-            className="mr-2 rounded-full p-2 hover:bg-gray-100"
-            aria-label="Back"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Booking Details
           </h1>
         </div>

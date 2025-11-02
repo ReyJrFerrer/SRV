@@ -238,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
-            ? `https://id.ai `
+            ? `https://id.ai`
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
 
         onSuccess: async () => {

@@ -30,3 +30,5 @@ pubsub-debug.log
 
 # Vite PWA build/dev output
 /src/frontend/dev-dist
+
+firebase-debug.1.log
