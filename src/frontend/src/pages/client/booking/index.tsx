@@ -1,13 +1,17 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
 import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
 import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../hooks/bookingManagement"; // Adjust path as needed
+import Appear from "../../../components/common/pageFlowImprovements/Appear";
+import { BookingListSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
+import { reviewCanisterService } from "../../../services/reviewCanisterService";
+import { useReputation } from "../../../hooks/useReputation";
 import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
@@ -165,6 +169,99 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
+  const [serviceStatsMap, setServiceStatsMap] = useState<
+    Record<
+      string,
+      {
+        averageRating: number | null;
+        reviews: any[];
+        loading: boolean;
+        reputation?: {
+          trustScore: number;
+          trustLevel: string;
+          completedBookings: number;
+        } | null;
+      }
+    >
+  >({});
+
+  const { fetchUserReputation } = useReputation();
+
+  useEffect(() => {
+    const fetchStatsForServices = async () => {
+      const serviceIds = Array.from(
+        new Set(
+          filteredBookings.map((b) => b.serviceId).filter(Boolean) as string[],
+        ),
+      );
+
+      const mapCopy = { ...serviceStatsMap };
+      const toFetch = serviceIds.filter((id) => !mapCopy[id]);
+      if (toFetch.length === 0) return;
+
+      await Promise.all(
+        toFetch.map(async (serviceId) => {
+          try {
+            const booking = filteredBookings.find(
+              (b) => b.serviceId === serviceId,
+            );
+
+            // Initialize with loading state
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: true,
+              reputation: null,
+            };
+
+            // Fetch service rating and reviews in parallel
+            const [avg, reviews] = await Promise.all([
+              reviewCanisterService.calculateServiceRating(serviceId),
+              reviewCanisterService.getServiceReviews(serviceId),
+            ]);
+
+            let reputation = null;
+            if (booking?.providerProfile?.id) {
+              try {
+                const rep = await fetchUserReputation(
+                  booking.providerProfile.id,
+                );
+                if (rep) {
+                  reputation = {
+                    trustScore: rep.trustScore,
+                    trustLevel: rep.trustLevel,
+                    completedBookings: rep.completedBookings,
+                  };
+                }
+              } catch (err) {
+                console.error("Error fetching reputation:", err);
+              }
+            }
+
+            // Update the map with all the fetched data
+            mapCopy[serviceId] = {
+              averageRating: avg?.averageRating ?? null,
+              reviews: Array.isArray(reviews) ? reviews : [],
+              loading: false,
+              reputation,
+            };
+          } catch (err) {
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: false,
+            };
+          }
+        }),
+      );
+
+      setServiceStatsMap(mapCopy);
+    };
+
+    if (filteredBookings.length > 0) fetchStatsForServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredBookings]);
+
   const getBookingCountForTab = (tab: BookingStatusTab) => {
     if (!bookingManagement.bookings) return 0;
     if (tab === "ALL") return bookingManagement.bookings.length;
@@ -276,10 +373,7 @@ const MyBookingsPage: React.FC = () => {
           style={{ minHeight: "calc(100vh - 180px)" }}
         >
           {bookingManagement.loading ? (
-            <div className="py-16 text-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-500">Loading bookings...</p>
-            </div>
+            <BookingListSkeleton count={6} />
           ) : bookingManagement.error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
               <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
@@ -304,13 +398,34 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
-                    {sameDayBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {sameDayBookings.map((booking, idx) => (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          loadingStats={
+                            serviceStatsMap[booking.serviceId || ""]?.loading
+                          }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
+                          }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -324,13 +439,34 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {scheduledBookings.map((booking, idx) => (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
                           onCancelClick={setCancellingBooking}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          loadingStats={
+                            serviceStatsMap[booking.serviceId || ""]?.loading
+                          }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
+                          }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>

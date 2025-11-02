@@ -75,7 +75,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
             </p>
           </div>
 
-          <ul className="list-none pl-1">
+          <ol className="list-none pl-1">
             <li>
               <strong>1. Definitions</strong>
               <ul className="mt-1 list-disc pl-5">
@@ -207,7 +207,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
 
             <li>
               <strong>5. User Obligations and Conduct</strong>
-              <ul className="mt-1 list-disc pl-5">
+              <ul className="mt-1 pl-5">
                 <li>
                   <b>All Users Agree To:</b>
                   <ul className="mt-1 list-disc pl-5">
@@ -642,7 +642,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
 
             <li>
               <strong>17. Indemnification</strong>
-              <ul className="mt-1 list-disc pl-5">
+              <ul className="mt-1 pl-5">
                 <li>
                   Users agree to defend, indemnify, and hold harmless SRV, its
                   affiliates, officers, directors, employees, agents, licensors,
@@ -716,7 +716,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
               Contact Information: For any questions about these Terms, please
               contact us at <strong>hello@srvpinoy.com</strong>.
             </li>
-          </ul>
+          </ol>
         </div>
         <div className="mb-4 flex items-center">
           <input

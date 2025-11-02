@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { ProfileImage } from "../../../components/common/ProfileImage";
@@ -241,6 +241,7 @@ const ConversationPage: React.FC = () => {
           </div>
         ) : (
           messages.map((message) => {
+            console.log("Chat message:", message);
             const fromCurrentUser = isFromCurrentUser(message.senderId);
             return (
               <div
@@ -263,7 +264,11 @@ const ConversationPage: React.FC = () => {
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm">
+                    {typeof message.content === "string"
+                      ? message.content
+                      : message.content.encryptedText}
+                  </p>
                   <p
                     className={`mt-1 text-right text-xs ${
                       fromCurrentUser ? "text-blue-100" : "text-gray-400"

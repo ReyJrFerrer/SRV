@@ -173,19 +173,17 @@ const PayoutSettingsPage: React.FC = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-100">
-        <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-          <div className="relative flex items-center justify-center px-4">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <div className="relative flex w-full items-center px-4 py-3">
             <button
               onClick={() => navigate("/provider/home")}
-              className="flex items-center text-blue-600 hover:text-blue-700"
+              className="flex items-center text-gray-600 hover:text-gray-700"
             >
-              <ArrowLeftIcon className="mr-2 h-5 w-5" />
-              Back
+              <ArrowLeftIcon className="mr-2 h-6 w-6" />
             </button>
-            <h1 className="text-xl font-extrabold text-black">
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
               Complete Onboarding
             </h1>
-            <div className="absolute right-4 w-20" />
           </div>
         </header>
 

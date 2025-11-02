@@ -69,7 +69,10 @@ export interface FrontendMessage {
   senderId: string;
   receiverId: string;
   messageType: "Text" | "File";
-  content: string; // Decrypted content
+  content: {
+    encryptedText: string;
+    encryptionKey: string;
+  };
   attachment?: {
     fileName: string;
     fileSize: number;
@@ -93,7 +96,7 @@ export interface FrontendConversation {
 
 export interface FrontendConversationSummary {
   conversation: FrontendConversation;
-  lastMessage?: FrontendMessage;
+  lastMessage?: FrontendMessage[];
 }
 
 export interface FrontendMessagePage {
@@ -123,7 +126,10 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
     senderId: backendMessage.senderId,
     receiverId: backendMessage.receiverId,
     messageType: getMessageType(backendMessage.messageType),
-    content: backendMessage.content?.encryptedText || backendMessage.content,
+    content: {
+      encryptedText: backendMessage.content?.encryptedText || "",
+      encryptionKey: backendMessage.content?.encryptionKey || "",
+    },
     attachment:
       backendMessage.attachment && backendMessage.attachment.length > 0
         ? {
@@ -161,14 +167,47 @@ const adaptBackendConversation = (
 const adaptBackendConversationSummary = (
   backendSummary: any,
 ): FrontendConversationSummary => {
-  return {
+  console.log("🔍 [adaptBackendConversationSummary] Input:", {
+    conversationId: backendSummary.conversation?.id,
+    hasLastMessage: !!backendSummary.lastMessage,
+    lastMessageIsArray: Array.isArray(backendSummary.lastMessage),
+    lastMessageLength: backendSummary.lastMessage?.length,
+    lastMessageContent: backendSummary.lastMessage?.[0]?.content,
+  });
+
+  const adapted = {
     conversation: adaptBackendConversation(backendSummary.conversation),
     lastMessage:
-      backendSummary.lastMessage && backendSummary.lastMessage.length > 0
-        ? adaptBackendMessage(backendSummary.lastMessage[0])
+      backendSummary.lastMessage &&
+      Array.isArray(backendSummary.lastMessage) &&
+      backendSummary.lastMessage.length > 0
+        ? backendSummary.lastMessage.map(adaptBackendMessage).filter(Boolean)
         : undefined,
   };
+
+  console.log("✅ [adaptBackendConversationSummary] Output:", {
+    conversationId: adapted.conversation.id,
+    hasLastMessage: !!adapted.lastMessage && adapted.lastMessage.length > 0,
+    lastMessageCount: adapted.lastMessage?.length || 0,
+    firstMessageContent: adapted.lastMessage?.[0]?.content,
+  });
+
+  return adapted;
 };
+
+// Debounce helper function
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
 
 // Chat Service Functions
 export const chatCanisterService = {
@@ -471,21 +510,22 @@ export const chatCanisterService = {
     let unsubscribed = false;
     const conversationMap = new Map<string, any>();
 
-    try {
-      const updateConversations = () => {
-        if (!unsubscribed) {
-          try {
-            const allConversations = Array.from(conversationMap.values());
-            onUpdate(allConversations);
-          } catch (error) {
-            console.error(
-              "❌ [chatCanisterService] Error in updateConversations callback:",
-              error,
-            );
-          }
+    // Debounce the update function to prevent rapid updates
+    const debouncedUpdate = debounce(() => {
+      if (!unsubscribed) {
+        try {
+          const allConversations = Array.from(conversationMap.values());
+          onUpdate(allConversations);
+        } catch (error) {
+          console.error(
+            "❌ [chatCanisterService] Error in updateConversations callback:",
+            error,
+          );
         }
-      };
+      }
+    }, 200); // 200ms debounce
 
+    try {
       // Query for conversations where user is client
       const clientQuery = query(
         collection(firestore, "conversations"),
@@ -507,7 +547,7 @@ export const chatCanisterService = {
                 conversationMap.delete(change.doc.id);
               }
             });
-            updateConversations();
+            debouncedUpdate();
           } catch (error) {
             console.error(
               "❌ [chatCanisterService] Error processing client conversations snapshot:",
@@ -552,7 +592,7 @@ export const chatCanisterService = {
                 conversationMap.delete(change.doc.id);
               }
             });
-            updateConversations();
+            debouncedUpdate();
           } catch (error) {
             console.error(
               "❌ [chatCanisterService] Error processing provider conversations snapshot:",
@@ -625,6 +665,13 @@ export const chatCanisterService = {
 
     let unsubscribed = false;
 
+    // Debounce the update callback to prevent rapid re-renders
+    const debouncedUpdate = debounce((messages: any[]) => {
+      if (!unsubscribed) {
+        onUpdate(messages);
+      }
+    }, 200); // 200ms debounce
+
     try {
       const messagesQuery = query(
         collection(firestore, "messages"),
@@ -646,9 +693,7 @@ export const chatCanisterService = {
             console.log(
               `✅ [chatCanisterService] Real-time update: ${messages.length} messages`,
             );
-            if (!unsubscribed) {
-              onUpdate(messages);
-            }
+            debouncedUpdate(messages);
           } catch (error) {
             console.error(
               "❌ [chatCanisterService] Error processing messages snapshot:",
@@ -715,7 +760,8 @@ export const chatCanisterService = {
     let messageUnsubscribers = new Map<string, Unsubscribe>();
     let conversationsUnsubscribe: AsyncUnsubscribe | null = null;
 
-    const updateSummaries = () => {
+    // Debounce the update function to prevent too many rapid updates
+    const updateSummaries = debounce(() => {
       if (unsubscribed) return;
 
       try {
@@ -744,7 +790,7 @@ export const chatCanisterService = {
           error,
         );
       }
-    };
+    }, 300); // 300ms debounce
 
     // Subscribe to each conversation's last message
     const subscribeToLastMessage = (conversationId: string) => {

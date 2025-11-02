@@ -8,6 +8,8 @@ import {
 import ServiceListItem from "../../components/client/ServiceListItem";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import SearchBar from "../../components/client/SearchBar";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
 // Hooks
 import {
@@ -165,9 +167,8 @@ const SearchResultsPage: React.FC = () => {
 
       <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
         {loading && (
-          <div className="py-10 text-center text-gray-600">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            Searching...
+          <div className="py-2">
+            <ServiceGridSkeleton count={8} />
           </div>
         )}
         {error && (
@@ -269,21 +270,15 @@ const SearchResultsPage: React.FC = () => {
 
         {!loading && !error && sortedAndFilteredResults.length > 0 && (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
-            {sortedAndFilteredResults.map((service) => (
-              <ServiceListItem
-                key={service.id}
-                service={service}
-                //isGridItem={true}
-                retainMobileLayout={true}
-              />
+            {sortedAndFilteredResults.map((service, idx) => (
+              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                <ServiceListItem service={service} retainMobileLayout={true} />
+              </Appear>
             ))}
           </div>
         )}
       </main>
-
-      <div className="lg:hidden">
-        <BottomNavigation />
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

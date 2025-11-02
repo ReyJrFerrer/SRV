@@ -779,7 +779,7 @@ export const UserListPage: React.FC = () => {
                                 }
                                 userName={user.name}
                                 size="h-12 w-12"
-                                className="ring-2 ring-white shadow-sm"
+                                className="shadow-sm ring-2 ring-white"
                               />
                             </div>
                             <div className="ml-4">
@@ -998,7 +998,7 @@ export const UserListPage: React.FC = () => {
                     }
                     userName={selectedUser.name}
                     size="h-16 w-16"
-                    className="ring-2 ring-white shadow-sm"
+                    className="shadow-sm ring-2 ring-white"
                   />
                 </div>
                 <div>

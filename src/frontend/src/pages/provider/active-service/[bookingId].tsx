@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   UserIcon,
   MapPinIcon,
   CalendarIcon,
@@ -16,7 +15,7 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import CancelWithReasonButton from "../../../components/common/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
 import { useFeedback } from "../../../hooks/useFeedback";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
@@ -222,26 +221,19 @@ const ActiveServicePage: React.FC = () => {
   // --- UI Section ---
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <button
-            onClick={() => navigate(`/provider/booking/${booking.id}`)}
-            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-2xl font-extrabold tracking-tight text-black">
-            Service In Progress
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            Service InProgress
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto flex-grow space-y-8 p-4 pb-24 sm:p-8">
+      <main className="container mx-auto flex-grow space-y-10 px-4 py-16 sm:px-8">
         {/* Timer removed */}
 
         {/* Details and Actions Section */}
-        <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+        <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
           {/* Left Column: Booking Details */}
           <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
             <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">

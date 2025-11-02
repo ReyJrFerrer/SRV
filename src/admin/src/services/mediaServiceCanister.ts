@@ -81,15 +81,15 @@ export const getMediaItem = async (
     const getMediaItemFn = httpsCallable(functions, "getMediaItem");
     const result = await getMediaItemFn({ mediaId });
 
-    const data = result.data as {
+    const response = result.data as {
       success: boolean;
-      mediaItem: FrontendMediaItem;
+      data: FrontendMediaItem;
     };
-    if (data.success && data.mediaItem) {
+    if (response.success && response.data) {
       return {
-        ...data.mediaItem,
-        createdAt: convertToDate(data.mediaItem.createdAt),
-        updatedAt: convertToDate(data.mediaItem.updatedAt),
+        ...response.data,
+        createdAt: convertToDate(response.data.createdAt),
+        updatedAt: convertToDate(response.data.updatedAt),
       };
     }
     return null;

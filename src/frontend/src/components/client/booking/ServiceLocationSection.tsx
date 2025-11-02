@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useLocationStore } from "../../../store/locationStore";
-import LocationMapPicker from "../../common/LocationMapPicker";
+import LocationMapPicker from "../../common/GMapFunctions/LocationMapPicker";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
-import EnableLocationButton from "../../common/EnableLocationButton";
+import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -122,7 +122,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         Service Location <span className="text-red-500">*</span>
       </h3>
 
-      {!showFallbackForms && (
+      {/* When browser location permission is denied, do not show the
+      detected / maps buttons. Show a short banner with a CTA to
+      re-enable location permission so the user can restore detected
+      / map-based selection. */}
+      {!showFallbackForms && locationStatus !== "denied" && (
         <div className="mb-4 flex gap-3 text-xs font-medium">
           <button
             type="button"
@@ -146,6 +150,24 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
           >
             Pin / Search Location
           </button>
+        </div>
+      )}
+
+      {/* Inline banner shown when browser blocks location access */}
+      {locationStatus === "denied" && (
+        <div className="mb-4 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <div>
+            <strong className="block font-semibold">
+              Location permission blocked
+            </strong>
+            <div className="text-xs">
+              Detected / Map options are hidden — please choose your
+              city/province or enable location.
+            </div>
+          </div>
+          <div className="ml-4">
+            <EnableLocationButton />
+          </div>
         </div>
       )}
 
@@ -272,7 +294,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         </div>
       )}
 
-      {!showFallbackForms && (
+      {/* Hide the quick 'Use Manual Address Form' toggle when permission is
+          denied because we immediately show the manual city/province flow */}
+      {!showFallbackForms && locationStatus !== "denied" && (
         <button
           type="button"
           onClick={() => {
@@ -287,38 +311,55 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {showFallbackForms && (
         <div className="mb-4 flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="radio"
-              name="locationInputMode"
-              value="detected"
-              checked={locationInputMode === "detected"}
-              onChange={() => setLocationInputMode("detected")}
-              className="h-4 w-4 text-blue-600"
-            />
-            <span className="text-gray-700">Use Detected</span>
-          </label>
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="radio"
-              name="locationInputMode"
-              value="manual"
-              checked={locationInputMode === "manual"}
-              onChange={() => setLocationInputMode("manual")}
-              className="h-4 w-4 text-blue-600"
-            />
-            <span className="text-gray-700">Manual City/Province</span>
-          </label>
-          <button
-            type="button"
-            onClick={() => {
-              setShowFallbackForms(false);
-              setLocationInputMode("hidden");
-            }}
-            className="ml-auto text-xs text-blue-600 underline"
-          >
-            Use Maps
-          </button>
+          {locationStatus === "denied" ? (
+            // When denied, only show the manual city/province flow option
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="radio"
+                name="locationInputMode"
+                value="manual"
+                checked={true}
+                onChange={() => setLocationInputMode("manual")}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className="text-gray-700">Choose City/Province</span>
+            </label>
+          ) : (
+            <>
+              <label className="flex items-center gap-2 text-xs">
+                <input
+                  type="radio"
+                  name="locationInputMode"
+                  value="detected"
+                  checked={locationInputMode === "detected"}
+                  onChange={() => setLocationInputMode("detected")}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span className="text-gray-700">Use Detected</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs">
+                <input
+                  type="radio"
+                  name="locationInputMode"
+                  value="manual"
+                  checked={locationInputMode === "manual"}
+                  onChange={() => setLocationInputMode("manual")}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span className="text-gray-700">Choose City/Province</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFallbackForms(false);
+                  setLocationInputMode("hidden");
+                }}
+                className="ml-auto text-xs text-blue-600 underline"
+              >
+                Use Maps
+              </button>
+            </>
+          )}
         </div>
       )}
 

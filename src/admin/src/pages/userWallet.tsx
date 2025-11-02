@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import {
+  useParams,
+  // useNavigate,
+  Link,
+} from "react-router-dom";
 import {
   BanknotesIcon,
   ArrowUpIcon,
@@ -12,13 +16,15 @@ import {
   MinusIcon,
 } from "@heroicons/react/24/outline";
 import { CurrencyDollarIcon } from "@heroicons/react/24/solid";
-import { walletCanisterService, Transaction } from "../../../frontend/src/services/walletCanisterService";
+import {
+  walletCanisterService,
+  Transaction,
+} from "../../../frontend/src/services/walletCanisterService";
 import { Toaster, toast } from "sonner";
 
 const UserWalletPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
+  // const navigate = useNavigate();
 
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -30,7 +36,8 @@ const UserWalletPage: React.FC = () => {
   const [showRunningBalance, setShowRunningBalance] = useState(false);
 
   // Update Commission modal state
-  const [showUpdateCommissionModal, setShowUpdateCommissionModal] = useState(false);
+  const [showUpdateCommissionModal, setShowUpdateCommissionModal] =
+    useState(false);
   const [commissionAmount, setCommissionAmount] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateMode, setUpdateMode] = useState<"add" | "deduct">("add");
@@ -63,7 +70,7 @@ const UserWalletPage: React.FC = () => {
       const history = await walletCanisterService.getTransactionHistory(id);
       const sortedTransactions = history.sort(
         (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
       setTransactions(sortedTransactions.slice(0, TRANSACTIONS_PER_PAGE));
       setHasMoreTransactions(sortedTransactions.length > TRANSACTIONS_PER_PAGE);
@@ -84,7 +91,7 @@ const UserWalletPage: React.FC = () => {
       const history = await walletCanisterService.getTransactionHistory(id);
       const sortedTransactions = history.sort(
         (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
       setTransactions(sortedTransactions);
       setHasMoreTransactions(false);
@@ -249,7 +256,7 @@ const UserWalletPage: React.FC = () => {
           id,
           amount,
           "ADMIN_UPDATE",
-          `Admin credit: ₱${amount.toFixed(2)}`
+          `Admin credit: ₱${amount.toFixed(2)}`,
         );
         toast.success(`Successfully added ₱${amount.toFixed(2)} to wallet`);
       } else {
@@ -258,9 +265,11 @@ const UserWalletPage: React.FC = () => {
           id,
           amount,
           `Admin deduction: ₱${amount.toFixed(2)}`,
-          "ADMIN_UPDATE"
+          "ADMIN_UPDATE",
         );
-        toast.success(`Successfully deducted ₱${amount.toFixed(2)} from wallet`);
+        toast.success(
+          `Successfully deducted ₱${amount.toFixed(2)} from wallet`,
+        );
       }
 
       // Refresh wallet data
@@ -282,7 +291,7 @@ const UserWalletPage: React.FC = () => {
 
   if (!id) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <p className="text-gray-500">User ID not provided</p>
       </div>
     );
@@ -332,7 +341,9 @@ const UserWalletPage: React.FC = () => {
               disabled={loading}
               className="rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
             >
-              <ArrowPathIcon className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+              <ArrowPathIcon
+                className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         </div>
@@ -461,7 +472,8 @@ const UserWalletPage: React.FC = () => {
                                 <span className="font-medium text-gray-900">
                                   {display.type}
                                 </span>
-                                {transaction.transaction_type === "Transfer" && (
+                                {transaction.transaction_type ===
+                                  "Transfer" && (
                                   <span className="text-xs text-gray-500">
                                     • Transfer
                                   </span>
@@ -493,7 +505,7 @@ const UserWalletPage: React.FC = () => {
                     })}
                   </div>
                 </div>
-              )
+              ),
             )
           )}
         </div>
@@ -654,4 +666,3 @@ const UserWalletPage: React.FC = () => {
 };
 
 export default UserWalletPage;
-

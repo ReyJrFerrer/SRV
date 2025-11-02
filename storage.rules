@@ -85,6 +85,20 @@ service firebase.storage {
       allow delete: if isOwner(userId) || isAdmin();
     }
     
+    // Report attachments - reports/{userId}/{mediaId}_{filename}
+    match /reports/{userId}/{allPaths=**} {
+      // Allow public read access (admins need to view these)
+      allow read: if true;
+      
+      // Allow write only by owner or admin, with size limit (450KB)
+      allow write: if (isOwner(userId) || isAdmin()) && 
+                      isValidImageType() && 
+                      isValidSize(0.45);
+      
+      // Allow delete only by admin
+      allow delete: if isAdmin();
+    }
+    
     // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

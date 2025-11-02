@@ -1,6 +1,6 @@
 import React from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import GStreetView from "../../common/GStreetView";
+import GStreetView from "../../common/GMapFunctions/GStreetView";
 import { MapPinIcon } from "@heroicons/react/24/solid";
 
 interface Props {

@@ -1,10 +1,17 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useUserProfile } from "../../hooks/useUserProfile";
 
-const BottomNavigation: React.FC = () => {
+type BottomNavigationProps = {
+  /** Optional hook called before navigation. Return false to prevent navigation. */
+  onNavigateAttempt?: (to: string) => boolean | void | Promise<boolean | void>;
+};
+
+const BottomNavigation: React.FC<BottomNavigationProps> = ({
+  onNavigateAttempt,
+}) => {
   const location = useLocation();
   const { unreadChatCount } = useChatNotifications();
   const { unreadCount } = useNotifications();
@@ -103,6 +110,8 @@ const BottomNavigation: React.FC = () => {
     icon: null as null,
     count: 0,
   };
+
+  const navigate = useNavigate();
 
   // Helper function to get icon source
   const getIconSrc = React.useCallback(
@@ -251,13 +260,26 @@ const BottomNavigation: React.FC = () => {
                     key={displayItem.label}
                     to={displayItem.to}
                     className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                    onClick={(e) => {
+                    onClick={async (e) => {
+                      // Always prevent default and control navigation programmatically
+                      e.preventDefault();
                       if (isActive) {
-                        e.preventDefault();
                         setTimeout(() => {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }, 120);
+                        return;
                       }
+                      if (onNavigateAttempt) {
+                        try {
+                          const result = await onNavigateAttempt(
+                            displayItem.to,
+                          );
+                          if (result === false) return; // blocked by caller
+                        } catch (err) {
+                          return; // treat errors as cancel
+                        }
+                      }
+                      navigate(displayItem.to);
                     }}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
@@ -308,13 +330,23 @@ const BottomNavigation: React.FC = () => {
                   key={displayItem.label}
                   to={displayItem.to}
                   className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                  onClick={(e) => {
+                  onClick={async (e) => {
+                    e.preventDefault();
                     if (isActive) {
-                      e.preventDefault();
                       setTimeout(() => {
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }, 120);
+                      return;
                     }
+                    if (onNavigateAttempt) {
+                      try {
+                        const result = await onNavigateAttempt(displayItem.to);
+                        if (result === false) return;
+                      } catch (err) {
+                        return;
+                      }
+                    }
+                    navigate(displayItem.to);
                   }}
                 >
                   <span
@@ -416,6 +448,23 @@ const BottomNavigation: React.FC = () => {
                 ? "bg-gray-50"
                 : ""
             }`}
+            onClick={async (e) => {
+              e.preventDefault();
+              if (location.pathname.startsWith("/provider/notifications")) {
+                return;
+              }
+              if (onNavigateAttempt) {
+                try {
+                  const result = await onNavigateAttempt(
+                    "/provider/notifications",
+                  );
+                  if (result === false) return;
+                } catch {
+                  return;
+                }
+              }
+              navigate("/provider/notifications");
+            }}
             onMouseEnter={() => {
               if (!location.pathname.startsWith("/provider/notifications")) {
                 setIconStates((prev) => ({
@@ -460,16 +509,28 @@ const BottomNavigation: React.FC = () => {
                 ? "bg-gray-50"
                 : ""
             }`}
-            onClick={(e) => {
+            onClick={async (e) => {
+              e.preventDefault();
               const isActive = location.pathname.startsWith(
                 navItems.find((i) => i.label === "Profile")!.to,
               );
               if (isActive) {
-                e.preventDefault();
                 setTimeout(() => {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }, 120);
+                return;
               }
+              if (onNavigateAttempt) {
+                try {
+                  const result = await onNavigateAttempt(
+                    navItems.find((i) => i.label === "Profile")!.to,
+                  );
+                  if (result === false) return;
+                } catch {
+                  return;
+                }
+              }
+              navigate(navItems.find((i) => i.label === "Profile")!.to);
             }}
           >
             <img
@@ -520,13 +581,23 @@ const BottomNavigation: React.FC = () => {
                 className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
                   isActive ? "bg-gray-50" : ""
                 }`}
-                onClick={(e) => {
+                onClick={async (e) => {
+                  e.preventDefault();
                   if (isActive) {
-                    e.preventDefault();
                     setTimeout(() => {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }, 120);
+                    return;
                   }
+                  if (onNavigateAttempt) {
+                    try {
+                      const result = await onNavigateAttempt(item.to);
+                      if (result === false) return;
+                    } catch {
+                      return;
+                    }
+                  }
+                  navigate(item.to);
                 }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}

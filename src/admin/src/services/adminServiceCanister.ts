@@ -1128,7 +1128,8 @@ export const adminServiceCanister = {
   }> {
     try {
       // Call IC canister directly using frontend service (same as clients/providers)
-      const reputationData = await reputationCanisterService.getReputationScore(userId);
+      const reputationData =
+        await reputationCanisterService.getReputationScore(userId);
 
       if (reputationData) {
         // Convert the reputation data to match expected format
@@ -1149,7 +1150,10 @@ export const adminServiceCanister = {
         };
       } else {
         // Fallback to default values if data is invalid
-        console.warn(`Invalid reputation data for user ${userId}:`, reputationData);
+        console.warn(
+          `Invalid reputation data for user ${userId}:`,
+          reputationData,
+        );
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
@@ -1415,13 +1419,14 @@ export const adminServiceCanister = {
       // The result is already the data object { messages, hasMore, nextPageToken }
       // Extract and adapt messages array
       const messages = result?.messages || [];
-      
+
       // Adapt messages to extract content from encrypted format
       return messages.map((msg: any) => ({
         ...msg,
-        content: typeof msg.content === 'string' 
-          ? msg.content 
-          : (msg.content?.encryptedText || ''),
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : msg.content?.encryptedText || "",
       }));
     } catch (error) {
       logError("Error fetching conversation messages", error);
@@ -1589,6 +1594,7 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
       description: report.description,
       status: report.status || "open",
       createdAt: report.createdAt || new Date().toISOString(),
+      attachments: report.attachments || [],
     }));
   } catch (error) {
     logError("Error fetching reports from Firebase", error);

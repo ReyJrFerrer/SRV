@@ -1,7 +1,8 @@
-import React from "react";
-import { PhoneIcon } from "@heroicons/react/24/solid";
+import React, { useState } from "react";
+import { PhoneIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
 import ClientReputationScore from "./ClientReputationScore";
 import ClientRatingSummary from "./ClientRatingSummary";
+import ClientRatingInfoModal from "../../common/ClientRatingInfoModal";
 
 interface Props {
   providerImage: string;
@@ -20,6 +21,7 @@ const ClientInfoCard: React.FC<Props> = ({
   reviews,
   reputation,
 }) => {
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
   return (
     <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
       {/* Header Section */}
@@ -54,9 +56,24 @@ const ClientInfoCard: React.FC<Props> = ({
         {/* Rating Summary (Bottom) */}
         {clientId && (
           <div className="mt-2 border-t border-blue-200 pt-2">
-            <ClientRatingSummary reviews={reviews} />
+            <div className="flex items-center justify-center gap-2">
+              <ClientRatingSummary reviews={reviews} />
+              <button
+                type="button"
+                aria-label="About ratings"
+                className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onClick={() => setShowRatingInfo(true)}
+              >
+                <InformationCircleIcon className="h-5 w-5 text-blue-500" />
+              </button>
+            </div>
           </div>
         )}
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="provider"
+        />
       </div>
     </div>
   );

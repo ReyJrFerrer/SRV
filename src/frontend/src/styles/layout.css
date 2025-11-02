@@ -3,6 +3,23 @@
   body.has-left-sidebar #root {
     padding-left: 5rem; /* matches w-20 on the sidebar */
   }
+
+  /* When a compact mini header appears (fixed overlay), push the page down
+     on desktop so it doesn't visually overlap the left navigation pane. */
+  body.has-left-sidebar.has-mini-header #root {
+    /* safe-area inset + approximate mini header height (4rem = 64px) */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 4rem);
+  }
+
+  /* Also push the fixed left sidebar down so it doesn't get covered by the mini header */
+  /* Avoid moving the fixed left sidebar; instead shift the mini header to the right
+     so it doesn't overlap the sidebar on desktop. */
+  body.has-left-sidebar .mini-header {
+    /* leave a 1rem gutter from the sidebar */
+    left: calc(5rem + 1rem) !important;
+    right: 1rem !important;
+    max-width: calc(100% - (5rem + 2rem));
+  }
 }
 
 /* Ensure mobile bottom bar doesn't overlap main content bottom area */

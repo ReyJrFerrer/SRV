@@ -86,9 +86,9 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     }
   };
 
-  const handleOpenModal = () => {
-    setShowCommissionModal(true);
-  };
+  // const handleOpenModal = () => {
+  //   setShowCommissionModal(true);
+  // };
 
   const handleCloseModal = () => {
     setShowCommissionModal(false);

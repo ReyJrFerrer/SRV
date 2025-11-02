@@ -46,7 +46,9 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "received" | "given">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "received" | "given">(
+    "all",
+  );
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -88,7 +90,7 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
     const total = filteredReviews.length;
     const counts = [1, 2, 3, 4, 5].reduce<Record<number, number>>(
       (acc, r) => ({ ...acc, [r]: 0 }),
-      {}
+      {},
     );
     let sum = 0;
     filteredReviews.forEach((r) => {
@@ -105,8 +107,8 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="mx-4 w-full max-w-4xl rounded-lg bg-white shadow-xl max-h-[90vh] flex flex-col">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="mx-4 flex max-h-[90vh] w-full max-w-4xl flex-col rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h3 className="text-lg font-semibold text-gray-900">User Reviews</h3>
           <button
             onClick={onClose}
@@ -133,7 +135,7 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
           <div className="flex space-x-4">
             <button
               onClick={() => setActiveTab("all")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium ${
                 activeTab === "all"
                   ? "border-indigo-600 text-indigo-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
@@ -143,17 +145,18 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab("received")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium ${
                 activeTab === "received"
                   ? "border-indigo-600 text-indigo-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              Received ({reviews.filter((r: any) => r.type === "received").length})
+              Received (
+              {reviews.filter((r: any) => r.type === "received").length})
             </button>
             <button
               onClick={() => setActiveTab("given")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium ${
                 activeTab === "given"
                   ? "border-indigo-600 text-indigo-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
@@ -181,7 +184,7 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
             <>
               {/* Stats Section */}
               <div className="mb-6 rounded-xl bg-white p-5 shadow">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="mb-4 flex items-center gap-4">
                   <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <StarIcon
@@ -216,9 +219,16 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
               {/* Reviews List */}
               <div className="space-y-3">
                 {filteredReviews
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(b.createdAt).getTime() -
+                      new Date(a.createdAt).getTime(),
+                  )
                   .map((rev) => (
-                    <div key={rev.id} className="rounded-xl bg-white p-5 shadow">
+                    <div
+                      key={rev.id}
+                      className="rounded-xl bg-white p-5 shadow"
+                    >
                       <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="flex items-center">
@@ -234,7 +244,9 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
                             ))}
                           </div>
                           <span className="text-xs text-gray-500">
-                            {(rev as any).type === "received" ? "Received" : "Given"}
+                            {(rev as any).type === "received"
+                              ? "Received"
+                              : "Given"}
                           </span>
                         </div>
                         <div className="text-xs text-gray-500">
@@ -242,7 +254,9 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
                         </div>
                       </div>
                       {rev.comment && (
-                        <p className="mt-2 text-sm text-gray-700">{rev.comment}</p>
+                        <p className="mt-2 text-sm text-gray-700">
+                          {rev.comment}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -254,4 +268,3 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
     </div>
   );
 };
-

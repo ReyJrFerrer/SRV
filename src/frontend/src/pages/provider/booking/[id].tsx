@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-//
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -10,8 +8,9 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
-import CancellationReasons from "../../../components/common/CancellationReasons";
+import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 
 import { useClientRating } from "../../../hooks/useClientRating";
 import { useReputation } from "../../../hooks/useReputation";
@@ -358,19 +357,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   }, [specificBooking]);
 
-  // Contact client handler
-  const handleContactClient = useCallback(() => {
-    if (!specificBooking) return;
-    const phone =
-      specificBooking.clientPhone || specificBooking.clientProfile?.phone || "";
-    if (phone) {
-      window.open(`tel:${phone}`, "_self");
-    } else {
-      alert(
-        `Contact client: ${specificBooking.clientName || "Unknown Client"}`,
-      );
-    }
-  }, [specificBooking]);
+  // contact handler removed; ActionButtons no longer supports a contact action
   // Geocode enhancement state (before early returns to keep hook order stable)
   const [resolvedCoords, setResolvedCoords] = useState<{
     lat: number;
@@ -600,18 +587,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const isLoading = hookLoading || localLoading;
   const displayError = localError || hookError;
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-          <p className="text-gray-600">Loading booking details...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Error state
   if (displayError && !specificBooking) {
     return (
@@ -739,108 +714,116 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <button
-            onClick={() => navigate("/provider/bookings")}
-            className="mr-2 rounded-full p-2 hover:bg-gray-100"
-            aria-label="Back"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Booking Details
           </h1>
         </div>
       </header>
 
       {/* Cancellation reasons (frontend-only / informational) */}
-      <CancellationReasons
-        bookingId={specificBooking?.id}
-        cancelledByClient={specificBooking?.status === "Cancelled"}
-        cancellationReason={(specificBooking as any)?.cancelReason}
-        // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
-      />
+      {/* Add top margin so this block isn't hidden behind the sticky header */}
+      <div className="mt-16">
+        <CancellationReasons
+          bookingId={specificBooking?.id}
+          cancelledByClient={specificBooking?.status === "Cancelled"}
+          cancellationReason={(specificBooking as any)?.cancelReason}
+          // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
+        />
+      </div>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        {/* Side by side layout for provider and service details */}
-        <div className="mt-4 flex flex-col gap-6 md:flex-row">
-          {/* Provider (client) info card - left */}
-          <ClientInfoCard
-            providerImage={providerImage}
-            clientName={clientName}
-            clientContact={clientContact}
-            clientId={clientId || ""}
-            reviews={clientReviews}
-            reputation={clientReputation}
-          />
+        {isLoading ? (
+          <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <p className="text-gray-600">Loading booking details...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Side by side layout for provider and service details */}
+            <div className="mt-4 flex flex-col gap-6 md:flex-row">
+              {/* Provider (client) info card - left */}
+              <ClientInfoCard
+                providerImage={providerImage}
+                clientName={clientName}
+                clientContact={clientContact}
+                clientId={clientId || ""}
+                reviews={clientReviews}
+                reputation={clientReputation}
+              />
 
-          {/* Service and package details - right */}
-          <ServiceDetailsCard
-            serviceName={serviceName}
-            packageTitle={specificBooking?.packageDetails?.title}
-            packageName={specificBooking?.packageName}
-            requestedDate={specificBooking?.requestedDate || ""}
-            scheduledDate={specificBooking?.scheduledDate || ""}
-            bookingLocation={bookingLocation}
-            displayAddress={displayAddress}
-            preciseAddress={preciseAddress}
-            geocodedAddress={geocodedAddress}
-            hasExplicitCoords={hasExplicitCoords}
-            clientLocation={clientLocation}
-            price={
-              price !== undefined
-                ? price + commissionValidation.estimatedCommission
-                : undefined
-            }
-            amountToPay={amountToPay}
-            duration={duration}
-            formatDateRange={formatDateRange}
-          />
-        </div>
+              {/* Service and package details - right */}
+              <ServiceDetailsCard
+                serviceName={serviceName}
+                packageTitle={specificBooking?.packageDetails?.title}
+                packageName={specificBooking?.packageName}
+                requestedDate={specificBooking?.requestedDate || ""}
+                scheduledDate={specificBooking?.scheduledDate || ""}
+                bookingLocation={bookingLocation}
+                displayAddress={displayAddress}
+                preciseAddress={preciseAddress}
+                geocodedAddress={geocodedAddress}
+                hasExplicitCoords={hasExplicitCoords}
+                clientLocation={clientLocation}
+                price={
+                  price !== undefined
+                    ? price + commissionValidation.estimatedCommission
+                    : undefined
+                }
+                amountToPay={amountToPay}
+                duration={duration}
+                formatDateRange={formatDateRange}
+              />
+            </div>
 
-        {/* Booking Progress Section */}
-        <BookingProgressSection status={specificBooking?.status} />
+            {/* Booking Progress Section */}
+            <BookingProgressSection status={specificBooking?.status} />
 
-        {/* Commission Validation Section for Cash Bookings */}
-        <CommissionInfo
-          show={Boolean(
-            specificBooking?.paymentMethod === "CashOnHand" &&
-              specificBooking?.canAccept,
-          )}
-          commissionValidation={commissionValidation}
-        />
+            {/* Commission Validation Section for Cash Bookings */}
+            <CommissionInfo
+              show={Boolean(
+                specificBooking?.paymentMethod === "CashOnHand" &&
+                  specificBooking?.canAccept,
+              )}
+              commissionValidation={commissionValidation}
+            />
 
-        {/* Map Section */}
-        <MapSection
-          mapsReady={mapsReady}
-          resolvedCoords={resolvedCoords}
-          clientLocation={clientLocation}
-          hasExplicitCoords={hasExplicitCoords}
-          bookingLocation={bookingLocation}
-          geocodeStatus={geocodeStatus}
-          displayAddress={displayAddress}
-          preciseAddress={preciseAddress}
-          geocodedAddress={geocodedAddress}
-          mapsApiKey={mapsApiKey}
-          showStreetView={showStreetView}
-          setShowStreetView={setShowStreetView}
-        />
+            {/* Map Section */}
+            <MapSection
+              mapsReady={mapsReady}
+              resolvedCoords={resolvedCoords}
+              clientLocation={clientLocation}
+              hasExplicitCoords={hasExplicitCoords}
+              bookingLocation={bookingLocation}
+              geocodeStatus={geocodeStatus}
+              displayAddress={displayAddress}
+              preciseAddress={preciseAddress}
+              geocodedAddress={geocodedAddress}
+              mapsApiKey={mapsApiKey}
+              showStreetView={showStreetView}
+              setShowStreetView={setShowStreetView}
+            />
 
-        {/* Action Buttons */}
-        {specificBooking && (
-          <ActionButtons
-            booking={specificBooking}
-            onChat={handleChatClient}
-            onContact={handleContactClient}
-            onAccept={handleAcceptBooking}
-            onDecline={handleDeclineBooking}
-            onStart={handleStartService}
-            onComplete={handleCompleteService}
-            canStartServiceNow={canStartServiceNow}
-            isBookingActionInProgress={isBookingActionInProgress}
-            commissionValidation={commissionValidation}
-            navigate={navigate}
-          />
+            {/* Booking Notes Section */}
+            <BookingNotes notes={(specificBooking as any)?.notes} />
+
+            {/* Action Buttons */}
+            {specificBooking && (
+              <ActionButtons
+                booking={specificBooking}
+                onChat={handleChatClient}
+                onAccept={handleAcceptBooking}
+                onDecline={handleDeclineBooking}
+                onStart={handleStartService}
+                onComplete={handleCompleteService}
+                canStartServiceNow={canStartServiceNow}
+                isBookingActionInProgress={isBookingActionInProgress}
+                commissionValidation={commissionValidation}
+              />
+            )}
+          </>
         )}
 
         {(specificBooking?.status === "Completed" ||

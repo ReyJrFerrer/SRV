@@ -21,7 +21,6 @@ import {
   checkInvoiceStatus,
 } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { Principal } from "@dfinity/principal";
 import authCanisterService from "../../services/authCanisterService";
 
 const WalletPage: React.FC = () => {
@@ -38,7 +37,6 @@ const WalletPage: React.FC = () => {
     formatCurrency,
     getTransactionDisplay,
     refreshWalletData,
-    creditWallet,
     loadMoreTransactions,
     isAuthenticated,
   } = useWallet();
@@ -127,7 +125,7 @@ const WalletPage: React.FC = () => {
     setShowTopUpModal(true);
   };
 
-  // Function to check for completed payments and credit wallet
+  // Function to check for completed payments and update UI
   const checkAndCreditCompletedPayments = async () => {
     if (!identity || activeInvoices.size === 0) return;
 
@@ -142,32 +140,32 @@ const WalletPage: React.FC = () => {
             statusResponse.status === "PAID" ||
             statusResponse.status === "SETTLED"
           ) {
-            // Payment completed, credit the wallet
-            const principal = Principal.fromText(
-              identity.getPrincipal().toString(),
-            );
-            const amount = statusResponse.paidAmount || 0;
+            // Payment completed - the backend has already credited the wallet
+            if (statusResponse.credited) {
+              const amount = statusResponse.paidAmount || 0;
 
-            if (amount > 0) {
-              try {
-                // Get payment channel info from the status response
-                const paymentChannel = statusResponse.paymentChannel || "GCash";
-                const description = `Wallet Topup. Transfer from ${paymentChannel}`;
-
-                await creditWallet(
-                  principal,
-                  amount,
-                  paymentChannel,
-                  description,
+              if (statusResponse.alreadyCredited) {
+                // Already credited in a previous check
+                toast.info(
+                  `Payment already processed for ₱${amount.toLocaleString()}`,
                 );
+              } else {
+                // Just credited by the backend
                 toast.success(
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
-                completedInvoices.add(invoiceId);
-              } catch (creditError) {
-                toast.error("Failed to credit wallet. Please try refreshing.");
               }
-            } else {
+
+              completedInvoices.add(invoiceId);
+
+              // Refresh wallet data to show updated balance
+              await refreshWalletData();
+            } else if (statusResponse.creditError) {
+              // Credit failed on backend
+              toast.error(
+                `Payment received but failed to credit wallet: ${statusResponse.creditError}. Please contact support.`,
+              );
+              completedInvoices.add(invoiceId);
             }
           } else if (statusResponse.status === "EXPIRED") {
             // Invoice expired, remove from tracking
@@ -175,11 +173,11 @@ const WalletPage: React.FC = () => {
             toast.warning(
               "A top-up payment has expired. Please create a new top-up if needed.",
             );
-          } else {
           }
-        } else {
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error(`Error checking invoice ${invoiceId}:`, error);
+      }
     }
 
     // Remove completed/expired invoices from tracking

@@ -1,10 +1,11 @@
 // Media Service for handling file uploads and conversions
 import { authCanisterService } from "./authCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance
-const functions = getFunctions();
+// Get Firebase Functions instance with correct region
+const functions = getFirebaseFunctions();
 
 export interface ImageUploadOptions {
   maxSizeKB?: number;
@@ -883,6 +884,107 @@ export const uploadServiceCertificatesWithProcessing = async (
   }
 };
 
+/**
+ * Upload report attachments with automatic processing
+ * Supports images only for report screenshots
+ */
+export const uploadReportAttachments = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<string[]> => {
+  try {
+    if (files.length === 0) {
+      throw new Error("No files to upload");
+    }
+
+    if (files.length > 5) {
+      throw new Error("Maximum 5 attachments allowed per report");
+    }
+
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const uploadMediaFn = httpsCallable<
+      {
+        fileName: string;
+        contentType: string;
+        mediaType: string;
+        fileData: string;
+      },
+      { success: boolean; data: { url: string } }
+    >(functions, "uploadMedia");
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      // Validate file type
+      if (!opts.allowedTypes.includes(file.type)) {
+        throw new Error(
+          `File type ${file.type} is not supported. Only images are allowed for report attachments.`,
+        );
+      }
+
+      // Preserve original filename
+      const originalFileName = file.name;
+      const originalContentType = file.type;
+
+      // Process file - scale down if needed
+      let processedFile = file;
+      const currentSizeKB = file.size / 1024;
+
+      if (currentSizeKB > opts.maxSizeKB) {
+        console.log(
+          `Scaling down report attachment from ${currentSizeKB.toFixed(1)}KB to meet ${opts.maxSizeKB}KB limit`,
+        );
+        processedFile = await intelligentScaleImageTo450KB(
+          file,
+          opts.maxSizeKB,
+        );
+      }
+
+      // Apply dimension limits if specified
+      if (opts.maxWidth || opts.maxHeight) {
+        processedFile = await resizeImage(
+          processedFile,
+          opts.maxWidth,
+          opts.maxHeight,
+        );
+      }
+
+      // Convert to base64
+      const fileData = await fileToUint8Array(processedFile);
+      const base64Data = uint8ArrayToBase64(fileData);
+
+      // Log what we're about to send
+      console.log("📤 Uploading report attachment:", {
+        fileName: originalFileName,
+        contentType: originalContentType,
+        mediaType: "ReportAttachment",
+        fileDataLength: base64Data.length,
+      });
+
+      // Upload via media canister (Cloud Function) - use original filename
+      const result = await uploadMediaFn({
+        fileName: originalFileName,
+        contentType: originalContentType,
+        mediaType: "ReportAttachment",
+        fileData: base64Data,
+      });
+
+      console.log("✅ Upload result:", result);
+
+      if (result.data.success && result.data.data.url) {
+        uploadedUrls.push(result.data.data.url);
+      } else {
+        throw new Error("Failed to upload report attachment");
+      }
+    }
+
+    return uploadedUrls;
+  } catch (error) {
+    console.error("Error uploading report attachments:", error);
+    throw error;
+  }
+};
+
 export const mediaService = {
   // File validation and processing
   validateImageFile,
@@ -895,6 +997,7 @@ export const mediaService = {
   uploadProfilePictureWithDescaling,
   uploadServiceImagesWithDescaling,
   uploadServiceCertificatesWithProcessing,
+  uploadReportAttachments,
 
   // Image retrieval functionality
   getImageDataUrl,

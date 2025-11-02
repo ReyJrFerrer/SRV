@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/solid";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  AdjustmentsHorizontalIcon,
+} from "@heroicons/react/24/solid";
 
 // Components
 import SearchBar from "../../../components/client/SearchBar";
 import ServiceListItem from "../../../components/client/ServiceListItem";
 import BottomNavigation from "../../../components/client/BottomNavigation";
+import Appear from "../../../components/common/pageFlowImprovements/Appear";
+import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
 
 // Hooks
 import {
@@ -27,6 +32,12 @@ interface CategoryState {
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    navigate(-1);
+  };
 
   const [category, setCategory] = useState<CategoryState | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -150,35 +161,25 @@ const CategoryPage: React.FC = () => {
     });
   }, [services, searchTerm, sortBy, maxPrice, minRating]);
 
-  if (servicesLoading || !category) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!category) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div>
-          <p className="mb-4 text-xl text-red-600">Category not found</p>
-          <Link to="/client/home" className="text-blue-500 hover:underline">
-            Return to Home
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="px-4 py-4">
-        <div className="mb-4 flex items-center gap-2">
+      <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <button
+            onClick={handleBackClick}
+            className="rounded-full p-2 hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+          </button>
+          <h1 className="truncate text-xl font-bold">
+            {category ? category.name : "Loading…"}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
           <div className="flex-grow">
             <SearchBar
-              placeholder={`Search in ${category.name}`}
+              placeholder={`Search in ${category ? category.name : "Category"}`}
               onSearch={handleSearch}
             />
           </div>
@@ -263,7 +264,9 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
 
-        {sortedAndFilteredServices.length === 0 && !servicesError ? (
+        {servicesLoading || !category ? (
+          <ServiceGridSkeleton count={8} />
+        ) : sortedAndFilteredServices.length === 0 && !servicesError ? (
           <div className="py-10 text-center">
             <p className="text-gray-500">
               {searchTerm
@@ -273,12 +276,10 @@ const CategoryPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {sortedAndFilteredServices.map((service) => (
-              <ServiceListItem
-                key={service.id}
-                service={service}
-                retainMobileLayout={true}
-              />
+            {sortedAndFilteredServices.map((service, idx) => (
+              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                <ServiceListItem service={service} retainMobileLayout={true} />
+              </Appear>
             ))}
           </div>
         )}
