@@ -830,7 +830,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 canStartServiceNow={canStartServiceNow}
                 isBookingActionInProgress={isBookingActionInProgress}
                 commissionValidation={commissionValidation}
-                navigate={navigate}
               />
             )}
           </>

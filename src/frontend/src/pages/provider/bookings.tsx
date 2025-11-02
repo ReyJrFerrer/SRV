@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
+import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 
 type BookingStatusTab =
   | "ALL"
@@ -224,6 +225,8 @@ const ProviderBookingsPage: React.FC = () => {
     document.title = "My Bookings | SRV Provider";
   }, []);
 
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -418,11 +421,17 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white relative">
           <div className="flex w-full items-center justify-center px-4 py-3">
             <h1 className="text-2xl font-extrabold tracking-tight text-black">
               My Bookings
             </h1>
+            <button
+              onClick={() => setShowRatingInfo(true)}
+              className="absolute right-4 top-3 rounded-md px-2 py-1 text-sm text-blue-600 hover:underline"
+            >
+              About ratings
+            </button>
           </div>
         </header>
 
@@ -591,6 +600,8 @@ const ProviderBookingsPage: React.FC = () => {
         }}
         onConfirm={handleDeclineBooking}
       />
+
+      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="provider" />
 
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton

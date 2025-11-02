@@ -20,6 +20,7 @@ import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 import useClientRating from "../../hooks/useClientRating";
+import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
@@ -535,6 +536,7 @@ const ClientProfilePage: React.FC = () => {
   // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
@@ -951,7 +953,17 @@ const ClientProfilePage: React.FC = () => {
                     <h4 className="text-lg font-bold text-yellow-700">
                       Your Ratings
                     </h4>
-                    <StarIcon className="h-6 w-6 text-yellow-500" />
+                    <div className="flex items-center gap-2">
+                      <StarIcon className="h-6 w-6 text-yellow-500" />
+                      <button
+                        type="button"
+                        aria-label="About ratings"
+                        className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        onClick={() => setShowRatingInfo(true)}
+                      >
+                        <InformationCircleIcon className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
                   </div>
                   {ratingsLoading ? (
                     <div className="flex items-center justify-center py-6 text-sm text-gray-500">
@@ -1010,6 +1022,7 @@ const ClientProfilePage: React.FC = () => {
         </div>
       </main>
       <BottomNavigation />
+      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="client" />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { StarIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import useClientRating from "../../../hooks/useClientRating";
+import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 
 const quickFeedbackOptions = [
   "Paid on Time",
@@ -32,6 +33,7 @@ const ProviderRateClientPage: React.FC = () => {
   const [feedback, setFeedback] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
 
   useEffect(() => {
     document.title = "Rate Client | SRV Provider";
@@ -152,9 +154,13 @@ const ProviderRateClientPage: React.FC = () => {
           {/* Booking Details Card */}
           <div className="mx-auto mb-8 w-full rounded-2xl border border-blue-200 bg-white p-6 shadow-lg">
             <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 font-bold text-white">
+              <button
+                onClick={() => setShowRatingInfo(true)}
+                aria-label="About client ratings"
+                className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 font-bold text-white"
+              >
                 i
-              </span>
+              </button>
               Booking Details
             </h3>
             <div className="grid grid-cols-1 gap-4 text-base text-gray-700 md:grid-cols-2">
@@ -265,6 +271,11 @@ const ProviderRateClientPage: React.FC = () => {
           </div>
         </div>
       </main>
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="provider"
+      />
     </div>
   );
 };

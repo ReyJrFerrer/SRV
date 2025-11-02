@@ -3,8 +3,9 @@ import BottomNavigation from "../../../components/client/BottomNavigation";
 import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";
-import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "../../../context/AuthContext";
+import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   label,
@@ -31,6 +32,7 @@ const ReviewsPage: React.FC = () => {
   const { getClientReviewsByUser, loading } = useClientRating();
   const [reviews, setReviews] = useState<ClientReview[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
 
   useEffect(() => {
     document.title = "Reviews About Me | SRV Client";
@@ -78,6 +80,17 @@ const ReviewsPage: React.FC = () => {
           </h1>
         </div>
       </header>
+      <div className="flex justify-center mt-3">
+        <button
+          type="button"
+          aria-label="About ratings"
+          className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+          onClick={() => setShowRatingInfo(true)}
+        >
+          <InformationCircleIcon className="h-4 w-4 text-blue-500" />
+          About ratings
+        </button>
+      </div>
       <div className="min-h-screen bg-gray-50 pb-20">
         <main className="mx-auto w-full max-w-3xl p-4">
           <section className="mb-6 rounded-xl bg-white p-5 shadow">
@@ -158,6 +171,7 @@ const ReviewsPage: React.FC = () => {
         </main>
 
         <BottomNavigation />
+      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="client" />
       </div>
     </>
   );
