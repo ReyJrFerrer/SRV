@@ -101,6 +101,7 @@ const {
   getAllUsers,
   uploadProfilePicture,
   removeProfilePicture,
+  updateUserActiveStatus,
 } = require("./src/account");
 
 // Import Service Management functions
@@ -284,6 +285,7 @@ exports.getAllServiceProviders = getAllServiceProviders;
 exports.getAllUsers = getAllUsers;
 exports.uploadProfilePicture = uploadProfilePicture;
 exports.removeProfilePicture = removeProfilePicture;
+exports.updateUserActiveStatus = updateUserActiveStatus;
 
 
 // Export Service Management functions
