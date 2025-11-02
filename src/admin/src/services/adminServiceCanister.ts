@@ -147,10 +147,7 @@ export interface FrontendMediaItem {
   url: string;
   thumbnailUrl?: string;
   contentType: string;
-  mediaType:
-    | "ServiceImage"
-    | "UserProfile"
-    | "ServiceCertificate";
+  mediaType: "ServiceImage" | "UserProfile" | "ServiceCertificate";
   fileSize: number;
   ownerId: string;
   validationStatus?: "Pending" | "Validated" | "Rejected"; // Only for ServiceCertificate
@@ -784,13 +781,17 @@ export const adminServiceCanister = {
       }
     } catch (error: any) {
       // Suppress CORS errors in emulator - data gracefully falls back to systemStats
-      const isNetworkError = error?.code === "ERR_FAILED" || 
-                            error?.message?.includes("CORS") ||
-                            error?.name === "FirebaseError" ||
-                            (error?.code && error.code.includes("internal"));
-      
+      const isNetworkError =
+        error?.code === "ERR_FAILED" ||
+        error?.message?.includes("CORS") ||
+        error?.name === "FirebaseError" ||
+        (error?.code && error.code.includes("internal"));
+
       if (!isNetworkError) {
-        console.error("❌ [getBookingsData] Error getting bookings data:", error);
+        console.error(
+          "❌ [getBookingsData] Error getting bookings data:",
+          error,
+        );
       }
       return { bookings: [], commissionTransactions: [] };
     }
@@ -1450,16 +1451,16 @@ export const adminServiceCanister = {
       const [receivedResult, givenAsClientResult, givenAsProviderResult] =
         await Promise.allSettled([
           // Reviews RECEIVED: what providers wrote about this user (as client)
-          callFirebaseFunction("getClientProviderReviews", { 
-            data: { clientId: userId, includeHidden: true } 
+          callFirebaseFunction("getClientProviderReviews", {
+            data: { clientId: userId, includeHidden: true },
           }),
           // Reviews GIVEN as CLIENT: what this user wrote about providers/services
-          callFirebaseFunction("getUserReviews", { 
-            data: { userId: userId, includeHidden: true } 
+          callFirebaseFunction("getUserReviews", {
+            data: { userId: userId, includeHidden: true },
           }),
           // Reviews GIVEN as PROVIDER: what this user wrote about clients
-          callFirebaseFunction("getProviderReviewsByProvider", { 
-            data: { providerId: userId, includeHidden: true } 
+          callFirebaseFunction("getProviderReviewsByProvider", {
+            data: { providerId: userId, includeHidden: true },
           }),
         ]);
 
@@ -1500,11 +1501,14 @@ export const adminServiceCanister = {
   /**
    * Delete a review (admin only - hides the review)
    */
-  async deleteReview(reviewId: string, reviewType?: "review" | "providerReview"): Promise<void> {
+  async deleteReview(
+    reviewId: string,
+    reviewType?: "review" | "providerReview",
+  ): Promise<void> {
     try {
       requireAuth();
-      await callFirebaseFunction("deleteReview", { 
-        data: { reviewId } 
+      await callFirebaseFunction("deleteReview", {
+        data: { reviewId },
       });
     } catch (error) {
       logError("Error deleting review", error);
@@ -1518,8 +1522,8 @@ export const adminServiceCanister = {
   async restoreReview(reviewId: string): Promise<void> {
     try {
       requireAuth();
-      await callFirebaseFunction("restoreReview", { 
-        data: { reviewId } 
+      await callFirebaseFunction("restoreReview", {
+        data: { reviewId },
       });
     } catch (error) {
       logError("Error restoring review", error);
@@ -1530,14 +1534,17 @@ export const adminServiceCanister = {
   /**
    * Bulk update review status (admin only)
    */
-  async bulkUpdateReviewStatus(reviewIds: string[], status: "Visible" | "Hidden"): Promise<{
+  async bulkUpdateReviewStatus(
+    reviewIds: string[],
+    status: "Visible" | "Hidden",
+  ): Promise<{
     updated: string[];
-    errors: Array<{reviewId: string; error: string}>;
+    errors: Array<{ reviewId: string; error: string }>;
   }> {
     try {
       requireAuth();
-      const result = await callFirebaseFunction("bulkUpdateReviewStatus", { 
-        data: { reviewIds, status } 
+      const result = await callFirebaseFunction("bulkUpdateReviewStatus", {
+        data: { reviewIds, status },
       });
       return {
         updated: result.updated || [],

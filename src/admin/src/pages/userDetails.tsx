@@ -186,20 +186,20 @@ export const UserDetailsPage: React.FC = () => {
       }
 
       // Safely convert dates from nanoseconds to Date objects
-      const createdAtValue = profile.createdAt 
-        ? (typeof profile.createdAt === 'bigint' 
-            ? new Date(Number(profile.createdAt) / 1000000)
-            : typeof profile.createdAt === 'number'
+      const createdAtValue = profile.createdAt
+        ? typeof profile.createdAt === "bigint"
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === "number"
             ? new Date(profile.createdAt / 1000000)
-            : new Date())
+            : new Date()
         : new Date();
-      
+
       const updatedAtValue = profile.updatedAt
-        ? (typeof profile.updatedAt === 'bigint'
-            ? new Date(Number(profile.updatedAt) / 1000000)
-            : typeof profile.updatedAt === 'number'
+        ? typeof profile.updatedAt === "bigint"
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === "number"
             ? new Date(profile.updatedAt / 1000000)
-            : new Date())
+            : new Date()
         : new Date();
 
       return {
@@ -243,20 +243,20 @@ export const UserDetailsPage: React.FC = () => {
       console.error("Error fetching real user data, using defaults:", error);
       // Fallback to default values if real data fails
       // Safely convert dates from nanoseconds to Date objects
-      const createdAtValue = profile.createdAt 
-        ? (typeof profile.createdAt === 'bigint' 
-            ? new Date(Number(profile.createdAt) / 1000000)
-            : typeof profile.createdAt === 'number'
+      const createdAtValue = profile.createdAt
+        ? typeof profile.createdAt === "bigint"
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === "number"
             ? new Date(profile.createdAt / 1000000)
-            : new Date())
+            : new Date()
         : new Date();
-      
+
       const updatedAtValue = profile.updatedAt
-        ? (typeof profile.updatedAt === 'bigint'
-            ? new Date(Number(profile.updatedAt) / 1000000)
-            : typeof profile.updatedAt === 'number'
+        ? typeof profile.updatedAt === "bigint"
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === "number"
             ? new Date(profile.updatedAt / 1000000)
-            : new Date())
+            : new Date()
         : new Date();
 
       return {
@@ -661,7 +661,11 @@ export const UserDetailsPage: React.FC = () => {
                     View Chats
                   </button>
                   <button
-                    onClick={() => navigate(`/user/${user.id}/reviews`, { state: { from: "userDetails" } })}
+                    onClick={() =>
+                      navigate(`/user/${user.id}/reviews`, {
+                        state: { from: "userDetails" },
+                      })
+                    }
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <svg
@@ -933,7 +937,6 @@ export const UserDetailsPage: React.FC = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { StarIcon, TrashIcon, ArrowPathIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  TrashIcon,
+  ArrowPathIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/solid";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 
 interface Review {
@@ -41,14 +46,24 @@ const UserReviewsPage: React.FC = () => {
   const location = useLocation();
   const { id: userId } = useParams<{ id: string }>();
   const [receivedReviews, setReceivedReviews] = useState<Review[]>([]);
-  const [givenAsClientReviews, setGivenAsClientReviews] = useState<Review[]>([]);
-  const [givenAsProviderReviews, setGivenAsProviderReviews] = useState<Review[]>([]);
-  const [activeTab, setActiveTab] = useState<"received" | "given-client" | "given-provider">("received");
+  const [givenAsClientReviews, setGivenAsClientReviews] = useState<Review[]>(
+    [],
+  );
+  const [givenAsProviderReviews, setGivenAsProviderReviews] = useState<
+    Review[]
+  >([]);
+  const [activeTab, setActiveTab] = useState<
+    "received" | "given-client" | "given-provider"
+  >("received");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [selectedReviews, setSelectedReviews] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
+  const [selectedReviews, setSelectedReviews] = useState<Set<string>>(
+    new Set(),
+  );
   const [showHiddenOnly, setShowHiddenOnly] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
@@ -61,7 +76,7 @@ const UserReviewsPage: React.FC = () => {
 
   const loadReviews = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -100,10 +115,16 @@ const UserReviewsPage: React.FC = () => {
     if (showHiddenOnly) {
       return reviews.filter((r) => r.status === "Hidden");
     }
-    
+
     // Show all reviews (visible and hidden) but separate them
     return reviews;
-  }, [activeTab, receivedReviews, givenAsClientReviews, givenAsProviderReviews, showHiddenOnly]);
+  }, [
+    activeTab,
+    receivedReviews,
+    givenAsClientReviews,
+    givenAsProviderReviews,
+    showHiddenOnly,
+  ]);
 
   // Separate visible and hidden reviews
   const visibleReviews = useMemo(() => {
@@ -124,7 +145,7 @@ const UserReviewsPage: React.FC = () => {
     const total = reviews.length;
     const counts = [1, 2, 3, 4, 5].reduce<Record<number, number>>(
       (acc, r) => ({ ...acc, [r]: 0 }),
-      {}
+      {},
     );
     let sum = 0;
     reviews.forEach((r) => {
@@ -194,14 +215,19 @@ const UserReviewsPage: React.FC = () => {
       const reviewIds = Array.from(selectedReviews);
       await adminServiceCanister.bulkUpdateReviewStatus(
         reviewIds,
-        action === "delete" ? "Hidden" : "Visible"
+        action === "delete" ? "Hidden" : "Visible",
       );
       // Reload reviews after bulk action
       await loadReviews();
       setSelectedReviews(new Set());
     } catch (e) {
-      console.error(`Error ${action === "delete" ? "deleting" : "restoring"} reviews:`, e);
-      setError(`Failed to ${action === "delete" ? "delete" : "restore"} reviews.`);
+      console.error(
+        `Error ${action === "delete" ? "deleting" : "restoring"} reviews:`,
+        e,
+      );
+      setError(
+        `Failed to ${action === "delete" ? "delete" : "restore"} reviews.`,
+      );
     } finally {
       setBulkActionLoading(false);
     }
@@ -257,11 +283,11 @@ const UserReviewsPage: React.FC = () => {
 
       <main className="mx-auto w-full max-w-3xl p-4">
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200 bg-white rounded-t-xl">
+        <div className="mb-6 rounded-t-xl border-b border-gray-200 bg-white">
           <div className="flex space-x-4 px-4">
             <button
               onClick={() => setActiveTab("received")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === "received"
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
@@ -271,7 +297,7 @@ const UserReviewsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab("given-client")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === "given-client"
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
@@ -281,7 +307,7 @@ const UserReviewsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab("given-provider")}
-              className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === "given-provider"
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
@@ -294,7 +320,7 @@ const UserReviewsPage: React.FC = () => {
 
         {/* Stats Section */}
         <section className="mb-6 rounded-xl bg-white p-5 shadow">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((s) => (
@@ -321,7 +347,7 @@ const UserReviewsPage: React.FC = () => {
               </div>
             </div>
             {/* Filter toggle */}
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={showHiddenOnly}
@@ -347,7 +373,8 @@ const UserReviewsPage: React.FC = () => {
         {selectedReviews.size > 0 && (
           <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
             <div className="text-sm font-medium text-blue-900">
-              {selectedReviews.size} review{selectedReviews.size === 1 ? "" : "s"} selected
+              {selectedReviews.size} review
+              {selectedReviews.size === 1 ? "" : "s"} selected
             </div>
             <div className="flex gap-2">
               <button
@@ -402,7 +429,10 @@ const UserReviewsPage: React.FC = () => {
               <div className="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
                 <input
                   type="checkbox"
-                  checked={selectedReviews.size === displayReviews.length && displayReviews.length > 0}
+                  checked={
+                    selectedReviews.size === displayReviews.length &&
+                    displayReviews.length > 0
+                  }
                   onChange={toggleSelectAll}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
@@ -414,14 +444,20 @@ const UserReviewsPage: React.FC = () => {
               {/* Reviews List */}
               <div className="space-y-3">
                 {displayReviews
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(b.createdAt).getTime() -
+                      new Date(a.createdAt).getTime(),
+                  )
                   .map((rev) => {
                     const isHidden = rev.status === "Hidden";
                     return (
                       <div
                         key={rev.id}
                         className={`rounded-xl bg-white p-5 shadow ${
-                          isHidden ? "border-l-4 border-orange-400 bg-orange-50/30" : ""
+                          isHidden
+                            ? "border-l-4 border-orange-400 bg-orange-50/30"
+                            : ""
                         }`}
                       >
                         <div className="mb-1 flex items-center justify-between">
@@ -437,7 +473,9 @@ const UserReviewsPage: React.FC = () => {
                                 <StarIcon
                                   key={s}
                                   className={`h-4 w-4 ${
-                                    s <= rev.rating ? "text-yellow-400" : "text-gray-200"
+                                    s <= rev.rating
+                                      ? "text-yellow-400"
+                                      : "text-gray-200"
                                   }`}
                                 />
                               ))}
@@ -456,8 +494,11 @@ const UserReviewsPage: React.FC = () => {
                             {isHidden ? (
                               <button
                                 onClick={() => handleRestoreReview(rev.id)}
-                                disabled={deletingReviewId === rev.id || bulkActionLoading}
-                                className="rounded-full p-1.5 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
+                                disabled={
+                                  deletingReviewId === rev.id ||
+                                  bulkActionLoading
+                                }
+                                className="rounded-full p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
                                 title="Restore review"
                               >
                                 <ArrowPathIcon className="h-4 w-4" />
@@ -465,8 +506,11 @@ const UserReviewsPage: React.FC = () => {
                             ) : (
                               <button
                                 onClick={() => setShowDeleteConfirm(rev.id)}
-                                disabled={deletingReviewId === rev.id || bulkActionLoading}
-                                className="rounded-full p-1.5 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                disabled={
+                                  deletingReviewId === rev.id ||
+                                  bulkActionLoading
+                                }
+                                className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                                 title="Delete review"
                               >
                                 <TrashIcon className="h-4 w-4" />
@@ -475,7 +519,9 @@ const UserReviewsPage: React.FC = () => {
                           </div>
                         </div>
                         {rev.comment && (
-                          <p className="mt-2 text-sm text-gray-700">{rev.comment}</p>
+                          <p className="mt-2 text-sm text-gray-700">
+                            {rev.comment}
+                          </p>
                         )}
                       </div>
                     );
@@ -494,7 +540,8 @@ const UserReviewsPage: React.FC = () => {
               Delete Review?
             </h3>
             <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to delete this review? This action will hide the review and cannot be undone.
+              Are you sure you want to delete this review? This action will hide
+              the review and cannot be undone.
             </p>
             <div className="flex gap-2">
               <button
@@ -509,7 +556,9 @@ const UserReviewsPage: React.FC = () => {
                 onClick={() => handleDeleteReview(showDeleteConfirm)}
                 disabled={deletingReviewId === showDeleteConfirm}
               >
-                {deletingReviewId === showDeleteConfirm ? "Deleting..." : "Delete"}
+                {deletingReviewId === showDeleteConfirm
+                  ? "Deleting..."
+                  : "Delete"}
               </button>
             </div>
           </div>
@@ -520,4 +569,3 @@ const UserReviewsPage: React.FC = () => {
 };
 
 export default UserReviewsPage;
-

@@ -259,7 +259,6 @@ export const useAdmin = (): UseAdminReturn => {
     [userLockStatus],
   );
 
-
   // Service Management Functions
   const refreshServices = useCallback(
     async (showSuccessToast = false) => {
@@ -310,13 +309,17 @@ export const useAdmin = (): UseAdminReturn => {
         }
       } catch (error: any) {
         // Suppress CORS/network errors - they're already handled gracefully in getBookingsData
-        const isNetworkError = error?.code === "ERR_FAILED" || 
-                              error?.message?.includes("CORS") ||
-                              error?.name === "FirebaseError" ||
-                              (error?.code && String(error.code).includes("internal"));
-        
+        const isNetworkError =
+          error?.code === "ERR_FAILED" ||
+          error?.message?.includes("CORS") ||
+          error?.name === "FirebaseError" ||
+          (error?.code && String(error.code).includes("internal"));
+
         if (!isNetworkError) {
-          console.error("❌ [refreshBookings] Error refreshing bookings:", error);
+          console.error(
+            "❌ [refreshBookings] Error refreshing bookings:",
+            error,
+          );
           handleError(error, "Failed to refresh bookings");
         }
         // Data gracefully falls back to systemStats, so no action needed
@@ -369,7 +372,6 @@ export const useAdmin = (): UseAdminReturn => {
       return [];
     }
   }, [handleError]);
-
 
   // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
