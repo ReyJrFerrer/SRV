@@ -29,7 +29,7 @@ const ServiceProviderPerformanceTable: React.FC<
   showRefresh: _showRefresh = false,
 }) => {
   const navigate = useNavigate();
-  
+
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
   };
@@ -105,9 +105,9 @@ const ServiceProviderPerformanceTable: React.FC<
               </tr>
             ) : (
               providers.map((provider) => (
-                <tr 
-                  key={provider.id} 
-                  className="hover:bg-blue-50/30 cursor-pointer transition-colors"
+                <tr
+                  key={provider.id}
+                  className="cursor-pointer transition-colors hover:bg-blue-50/30"
                   onClick={() => handleRowClick(provider.id)}
                 >
                   <td className="whitespace-nowrap px-6 py-4">

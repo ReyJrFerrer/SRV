@@ -17,8 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export const ProviderManagementPage: React.FC = () => {
-  const { serviceProviders, loading, refreshServiceProviders } =
-    useAdmin();
+  const { serviceProviders, loading, refreshServiceProviders } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<

@@ -25,22 +25,26 @@ import { walletCanisterService } from "../../../frontend/src/services/walletCani
 // Helper function to check if user is online (active within last 24 hours)
 const isUserOnline = (user: any): boolean => {
   if (!user.updatedAt) return false;
-  const updatedAt = typeof user.updatedAt === "number" 
-    ? new Date(Number(user.updatedAt) / 1000000)
-    : new Date(user.updatedAt);
+  const updatedAt =
+    typeof user.updatedAt === "number"
+      ? new Date(Number(user.updatedAt) / 1000000)
+      : new Date(user.updatedAt);
   const now = new Date();
-  const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+  const hoursSinceUpdate =
+    (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
   return hoursSinceUpdate <= 24;
 };
 
 // Helper function to check if user is dormant (not updated for at least a month)
 const isUserDormant = (user: any): boolean => {
   if (!user.updatedAt) return true; // Consider users without update time as dormant
-  const updatedAt = typeof user.updatedAt === "number" 
-    ? new Date(Number(user.updatedAt) / 1000000)
-    : new Date(user.updatedAt);
+  const updatedAt =
+    typeof user.updatedAt === "number"
+      ? new Date(Number(user.updatedAt) / 1000000)
+      : new Date(user.updatedAt);
   const now = new Date();
-  const daysSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
+  const daysSinceUpdate =
+    (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
   return daysSinceUpdate >= 30; // At least 30 days
 };
 
@@ -71,10 +75,14 @@ export const AnalyticsPage: React.FC = () => {
     "name" | "totalRevenue" | "totalCommission" | "completedBookings"
   >("totalRevenue");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [userFilter, setUserFilter] = useState<"all" | "online" | "dormant">("all");
-  const [walletBalances, setWalletBalances] = useState<Record<string, number>>({});
+  const [userFilter, setUserFilter] = useState<"all" | "online" | "dormant">(
+    "all",
+  );
+  const [walletBalances, setWalletBalances] = useState<Record<string, number>>(
+    {},
+  );
   const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
-  
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -132,14 +140,14 @@ export const AnalyticsPage: React.FC = () => {
     const fetchWalletBalances = async () => {
       // Get all provider IDs from serviceProviderPerformanceData
       const providerIds = new Set<string>();
-      
+
       // Collect provider IDs from various sources
       if (serviceProviders && serviceProviders.length > 0) {
         serviceProviders.forEach((provider) => {
           providerIds.add(provider.id);
         });
       }
-      
+
       if (bookings && bookings.length > 0) {
         bookings.forEach((booking) => {
           const providerId = booking.serviceProviderId || booking.providerId;
@@ -203,7 +211,7 @@ export const AnalyticsPage: React.FC = () => {
   // Filter users based on selected filter
   const filteredUsers = useMemo(() => {
     if (!users) return [];
-    
+
     return users.filter((user) => {
       if (userFilter === "online") {
         return isUserOnline(user);
@@ -517,7 +525,14 @@ export const AnalyticsPage: React.FC = () => {
     });
 
     return result;
-  }, [bookings, serviceProviders, commissionTransactions, users, systemStats, walletBalances]);
+  }, [
+    bookings,
+    serviceProviders,
+    commissionTransactions,
+    users,
+    systemStats,
+    walletBalances,
+  ]);
 
   // Filtered and sorted service provider performance data
   const filteredServiceProviderData = useMemo(() => {
@@ -833,7 +848,7 @@ export const AnalyticsPage: React.FC = () => {
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                   <p className="mt-4 text-sm text-gray-500">Loading users...</p>
                 </div>
-              ) : (totalProviders + totalClients) === 0 ? (
+              ) : totalProviders + totalClients === 0 ? (
                 <div className="py-12 text-center">
                   <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-4 text-sm font-medium text-gray-900">
@@ -1128,8 +1143,8 @@ export const AnalyticsPage: React.FC = () => {
           <ServiceProviderPerformanceTable
             providers={filteredServiceProviderData}
             loading={
-              loading.bookings || 
-              loading.serviceProviders || 
+              loading.bookings ||
+              loading.serviceProviders ||
               !systemStats ||
               loadingWalletBalances
             }
