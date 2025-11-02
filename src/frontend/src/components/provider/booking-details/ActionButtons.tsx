@@ -67,11 +67,13 @@ const ActionButtons: React.FC<Props> = ({
     !isBookingActionInProgress(booking?.id || "", "decline")
   );
 
-  // Show cancel for in-progress bookings when allowed.
-  // Treat an absent `canCancel` flag as allowed (backend may omit it).
+  // Show cancel for in-progress bookings and also allow cancelling accepted/confirmed
+  // bookings. Treat an absent `canCancel` flag as allowed (backend may omit it).
   const canCancelFlag = (booking as any)?.canCancel;
+  const statusNormalized = (booking?.status || "").toString().toUpperCase();
+  const cancelibleStatuses = new Set(["INPROGRESS", "ACCEPTED", "CONFIRMED"]);
   const showCancel = !!(
-    booking?.status === "InProgress" &&
+    cancelibleStatuses.has(statusNormalized) &&
     (canCancelFlag === undefined || canCancelFlag === true) &&
     !isBookingActionInProgress(booking?.id || "", "cancel")
   );
