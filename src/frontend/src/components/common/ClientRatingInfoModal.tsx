@@ -11,10 +11,10 @@ const ClientRatingInfoModal: React.FC<Props> = ({ isOpen, onClose, role }) => {
 
   const providerText = (
     <>
-      As a service provider, you can rate clients after completing a
-      booking. Ratings help other providers and SRV maintain quality and
-      trust across the platform. Be honest and fair — ratings should reflect
-      the client's punctuality, communication, and overall conduct.
+      As a service provider, you can rate clients after completing a booking.
+      Ratings help other providers and SRV maintain quality and trust across the
+      platform. Be honest and fair — ratings should reflect the client's
+      punctuality, communication, and overall conduct.
     </>
   );
 

@@ -80,7 +80,7 @@ const ReviewsPage: React.FC = () => {
           </h1>
         </div>
       </header>
-      <div className="flex justify-center mt-3">
+      <div className="mt-3 flex justify-center">
         <button
           type="button"
           aria-label="About ratings"
@@ -171,7 +171,11 @@ const ReviewsPage: React.FC = () => {
         </main>
 
         <BottomNavigation />
-      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="client" />
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="client"
+        />
       </div>
     </>
   );

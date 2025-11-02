@@ -421,7 +421,7 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white relative">
+        <header className="relative sticky top-0 z-20 border-b border-gray-200 bg-white">
           <div className="flex w-full items-center justify-center px-4 py-3">
             <h1 className="text-2xl font-extrabold tracking-tight text-black">
               My Bookings
@@ -601,7 +601,11 @@ const ProviderBookingsPage: React.FC = () => {
         onConfirm={handleDeclineBooking}
       />
 
-      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="provider" />
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="provider"
+      />
 
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton

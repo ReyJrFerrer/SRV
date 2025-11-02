@@ -267,7 +267,11 @@ const ReceiptPage: React.FC = () => {
             Proceed to Rate Client
           </button>
         </div>
-        <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="provider" />
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="provider"
+        />
       </main>
     </div>
   );

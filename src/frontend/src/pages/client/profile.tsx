@@ -1022,7 +1022,11 @@ const ClientProfilePage: React.FC = () => {
         </div>
       </main>
       <BottomNavigation />
-      <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="client" />
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="client"
+      />
     </div>
   );
 };

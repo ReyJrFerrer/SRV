@@ -69,7 +69,11 @@ const ClientInfoCard: React.FC<Props> = ({
             </div>
           </div>
         )}
-        <ClientRatingInfoModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} role="provider" />
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="provider"
+        />
       </div>
     </div>
   );
