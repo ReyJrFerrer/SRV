@@ -288,7 +288,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
                 <input
                   type="text"
-                  className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                  className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
                   placeholder={placeholder}
                   value={searchQuery}
                   onChange={handleSearchInputChange}
@@ -300,7 +300,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   }
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  <ul className="absolute top-full left-0 z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                     {filteredSuggestions.map((suggestion, idx) => (
                       <li
                         key={idx}
@@ -319,8 +319,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       </header>
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
-        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
+          <div className="w-full rounded-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
@@ -350,11 +350,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 <input
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  className="flex-1 border-none bg-transparent p-0 text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                  className="flex-1 border-none bg-transparent p-0 text-base text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
                   placeholder={placeholder}
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full z-50 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  <ul className="absolute top-full left-0 z-50 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
                     {filteredSuggestions.map((suggestion, idx) => (
                       <li
                         key={idx}

@@ -11,7 +11,7 @@ import MapSection from "../../../components/provider/booking-details/MapSection"
 import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
-
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useClientRating } from "../../../hooks/useClientRating";
 import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
@@ -714,8 +714,15 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+        <div className="relative flex w-full items-center px-4 py-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          </button>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Booking Details
           </h1>
         </div>
@@ -736,7 +743,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {isLoading ? (
           <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
               <p className="text-gray-600">Loading booking details...</p>
             </div>
           </div>

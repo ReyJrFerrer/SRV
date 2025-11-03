@@ -205,7 +205,7 @@ const ProviderHomePage: React.FC = () => {
 
       <NotificationSettings /> */}
 
-      <div className="w-full max-w-full px-4 pb-16 pt-4">
+      <div className="w-full max-w-full pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}
         {/**
          * Make the scrolling container explicit and pass it to the header

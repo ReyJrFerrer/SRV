@@ -45,7 +45,7 @@ const ClientReputationScore: React.FC<ClientReputationScoreProps> = ({
 
   return (
     <span
-      className={`flex items-center rounded-lg px-0 pb-1 text-sm font-medium ${textColor}`}
+      className={`flex items-center rounded-lg text-sm font-medium ${textColor}`}
       style={{ minWidth: 0 }}
     >
       <ShieldCheckIcon className={`mr-2 h-5 w-5 ${iconColor}`} />

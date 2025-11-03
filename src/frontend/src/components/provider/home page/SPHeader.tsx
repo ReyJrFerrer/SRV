@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
-  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
+  // const [setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
   useEffect(() => {
     // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
@@ -115,22 +115,21 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   }, [isMini]);
 
   // Measure header height and keep it as a minHeight when the mini overlay is shown
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
+  // React.useLayoutEffect(() => {
+  //   const measure = () => {
+  //     if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+  //   };
+  //   measure();
+  //   window.addEventListener("resize", measure);
+  //   return () => window.removeEventListener("resize", measure);
+  // }, []);
 
   // --- Render: Header layout ---
   return (
     <APIProvider apiKey={mapsApiKey}>
       <header
         ref={headerRef}
-        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 px-4 shadow-lg backdrop-blur ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -165,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               >
                 <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                     {unreadCount}
                   </span>
                 )}
@@ -191,7 +190,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 >
                   <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
                       {unreadCount}
                     </span>
                   )}
@@ -232,8 +231,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       </header>
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
-        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
+          <div className="w-full rounded-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-semibold text-gray-800">
