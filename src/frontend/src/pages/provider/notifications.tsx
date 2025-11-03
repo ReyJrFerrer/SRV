@@ -89,7 +89,18 @@ const NotificationItem: React.FC<{
   onClick: () => void;
   onDelete: () => void;
   onMarkAsRead: () => void;
-}> = ({ notification, onClick, onDelete, onMarkAsRead }) => {
+  selectable?: boolean;
+  checked?: boolean;
+  onToggleSelect?: () => void;
+}> = ({
+  notification,
+  onClick,
+  onDelete,
+  onMarkAsRead,
+  selectable = false,
+  checked = false,
+  onToggleSelect,
+}) => {
   const timeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -140,7 +151,14 @@ const NotificationItem: React.FC<{
 
   return (
     <div
-      onClick={onClick}
+      onClick={(e) => {
+        if (selectable) {
+          e.stopPropagation();
+          onToggleSelect?.();
+          return;
+        }
+        onClick();
+      }}
       className={`relative flex items-start space-x-4 p-4 transition-colors duration-200 ${
         notification.href ? "cursor-pointer" : "cursor-default"
       } ${
@@ -148,7 +166,22 @@ const NotificationItem: React.FC<{
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
       }`}
+      aria-selected={checked}
     >
+      {selectable && (
+        <div className="flex items-start pt-1">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.();
+            }}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            aria-label="Select notification"
+          />
+        </div>
+      )}
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
       </div>
@@ -326,6 +359,10 @@ const NotificationsPageSP = () => {
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
+  // Edit / selection mode
+  const [editMode, setEditMode] = React.useState(false);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+
   React.useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
@@ -340,6 +377,24 @@ const NotificationsPageSP = () => {
         handler as EventListener,
       );
   }, []);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const bulkMarkAsRead = () => {
+    selectedIds.forEach((id) => markAsRead(id));
+    clearSelection();
+    setEditMode(false);
+  };
+
+  const bulkDeleteSelected = () => {
+    setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
+    clearSelection();
+    setEditMode(false);
+  };
 
   const handleNotificationClick = (notification: ProviderNotification) => {
     if (!notification.read) {
@@ -411,20 +466,67 @@ const NotificationsPageSP = () => {
           >
             Notifications
           </h1>
-          {unreadCount > 0 && (
+          {notifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
-              <button
-                onClick={markAllAsRead}
-                className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-              >
-                <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                Mark all as read
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (!editMode) {
+                      setEditMode(true);
+                      clearSelection();
+                    } else {
+                      setEditMode(false);
+                      clearSelection();
+                    }
+                  }}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </button>
+                <button
+                  onClick={markAllAsRead}
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                >
+                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                  Mark all as read
+                </button>
+              </div>
             </>
           )}
         </div>
       </header>
+
+      {editMode && (
+        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
+          <div className="text-sm text-gray-700">{selectedIds.length} selected</div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={bulkMarkAsRead}
+              disabled={selectedIds.length === 0}
+              className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+            >
+              Mark selected as read
+            </button>
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={selectedIds.length === 0}
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+            >
+              Delete selected
+            </button>
+            <button
+              onClick={() => {
+                setEditMode(false);
+                clearSelection();
+              }}
+              className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (
@@ -461,6 +563,9 @@ const NotificationsPageSP = () => {
                           onClick={() => handleNotificationClick(notif)}
                           onDelete={() => deleteNotification(notif.id)}
                           onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
                         />
                       </Appear>
                     ))}
@@ -485,6 +590,9 @@ const NotificationsPageSP = () => {
                           onClick={() => handleNotificationClick(notif)}
                           onDelete={() => deleteNotification(notif.id)}
                           onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
                         />
                       </Appear>
                     ))}
