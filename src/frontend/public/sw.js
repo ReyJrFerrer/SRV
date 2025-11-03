@@ -22,11 +22,20 @@ function detectBrowser() {
     name: "Unknown",
     version: "Unknown",
     isSafari: /Safari/.test(userAgent) && !/Chrome/.test(userAgent),
-    isChrome: /Chrome/.test(userAgent),
-    isBrave: /Brave/.test(userAgent),
+    isChrome: /Chrome/.test(userAgent) && !/Edg/.test(userAgent) && !/Vivaldi/.test(userAgent) && !/Brave/.test(userAgent),
+    isBrave: /Brave/.test(userAgent) || (navigator.brave && typeof navigator.brave.isBrave === 'function'),
+    isVivaldi: /Vivaldi/.test(userAgent),
     isEdge: /Edg/.test(userAgent),
     isFirefox: /Firefox/.test(userAgent),
   };
+
+  // Set a readable name
+  if (browserInfo.isSafari) browserInfo.name = "Safari";
+  else if (browserInfo.isBrave) browserInfo.name = "Brave";
+  else if (browserInfo.isVivaldi) browserInfo.name = "Vivaldi";
+  else if (browserInfo.isEdge) browserInfo.name = "Edge";
+  else if (browserInfo.isChrome) browserInfo.name = "Chrome";
+  else if (browserInfo.isFirefox) browserInfo.name = "Firefox";
 
   //console.log("🔍 SW: Browser detected:", browserInfo);
   return browserInfo;
@@ -46,6 +55,8 @@ try {
   const messaging = firebase.messaging();
 
   // Handle background messages from FCM
+  // NOTE: This is the ONLY handler needed for FCM push notifications
+  // The manual 'push' event listener below is NOT needed and causes duplicates
   messaging.onBackgroundMessage((payload) => {
     console.log("SW: Received background message from FCM:", payload);
 
@@ -55,7 +66,9 @@ try {
       icon: payload.notification?.icon || "/logo.svg",
       badge: "/logo.svg",
       data: payload.data || {},
-      tag: payload.data?.notificationId || "srv-notification",
+      tag: payload.data?.notificationId || `srv-notification-${Date.now()}`,
+      // Add timestamp for better ordering
+      timestamp: payload.data?.timestamp ? new Date(payload.data.timestamp).getTime() : Date.now(),
     };
 
     return self.registration.showNotification(
@@ -237,71 +250,6 @@ self.addEventListener("fetch", (event) => {
           return new Response("Network error", { status: 504 });
         });
     }),
-  );
-});
-
-// Push notification event handler
-self.addEventListener("push", (event) => {
-  const browser = detectBrowser();
-  //console.log(`🔔 SW: Push event received (${browser.name}):`, event);
-
-  let notificationData = {};
-
-  if (event.data) {
-    try {
-      notificationData = event.data.json();
-    } catch (error) {
-      //console.error("❌ SW: Error parsing push data:", error);
-      notificationData = {
-        title: "SRV Notification",
-        body: event.data.text() || "You have a new notification",
-        icon: "/logo.svg",
-        badge: "/logo.svg",
-      };
-    }
-  } else {
-    notificationData = {
-      title: "SRV Notification",
-      body: "You have a new notification",
-      icon: "/logo.svg",
-      badge: "/logo.svg",
-    };
-  }
-
-  // Browser-specific notification options
-  const options = {
-    body: notificationData.body,
-    icon: notificationData.icon || "/logo.svg",
-    badge: notificationData.badge || "/logo.svg",
-    data: notificationData.data || {},
-    tag: notificationData.tag || "srv-notification",
-    requireInteraction: browser.isSafari
-      ? false
-      : notificationData.requireInteraction || false, // Safari doesn't support requireInteraction well
-    vibrate: browser.isSafari
-      ? undefined
-      : notificationData.vibrate || [100, 50, 100], // Safari doesn't support vibrate
-    timestamp: Date.now(),
-  };
-
-  // Safari doesn't support actions in notifications
-  if (!browser.isSafari && notificationData.actions) {
-    options.actions = notificationData.actions;
-  }
-
-  //console.log(`📱 SW: Showing notification (${browser.name})`, options);
-
-  event.waitUntil(
-    self.registration
-      .showNotification(notificationData.title, options)
-      .catch((error) => {
-        //console.error("❌ SW: Failed to show notification:", error);
-        // Fallback for Safari or other issues
-        return self.registration.showNotification("SRV Notification", {
-          body: "You have a new notification",
-          icon: "/logo.svg",
-        });
-      }),
   );
 });
 
