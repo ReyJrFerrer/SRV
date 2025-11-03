@@ -160,6 +160,29 @@ export async function createProfile(
 }
 
 /**
+ * Call Firebase Cloud Function for validating phone number
+ * @param phone - User's phone number
+ */
+export async function validatePhone(phone: string): Promise<any> {
+  try {
+    const functionsInstance = ensureFunctions();
+    const validatePhoneFn = httpsCallable(
+      functionsInstance,
+      "validatePhoneNumber",
+    );
+
+    const result = await validatePhoneFn({
+      phone,
+    });
+
+    return result.data;
+  } catch (error) {
+    console.error("Error validating phone:", error);
+    throw error;
+  }
+}
+
+/**
  * Call Firebase Cloud Function for getting a profile
  * @param userId - Optional user ID, defaults to current user
  * @returns Profile data

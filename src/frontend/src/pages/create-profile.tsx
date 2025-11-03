@@ -165,6 +165,20 @@ export default function CreateProfilePage() {
     // Start phone verification process
     setIsLoading(true);
     try {
+      // First, validate if phone number is already registered
+      const isPhoneValid = await authCanisterService.validatePhone(
+        formData.phone.trim(),
+      );
+
+      if (!isPhoneValid) {
+        setError(
+          "This phone number is already registered. Please use a different number or contact support.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // If phone is available, proceed with OTP verification
       const result = await phoneVerificationService.startVerification(
         formData.phone.trim(),
         "recaptcha-container-profile",
@@ -259,7 +273,6 @@ export default function CreateProfilePage() {
       setIsLoading(false);
     }
   };
-  //TODO: Fix the isReady
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 text-center">
