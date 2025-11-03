@@ -203,7 +203,7 @@ const NotificationItem: React.FC<{
 
 import { createPortal } from "react-dom";
 
-  // Menu that renders into a portal so it can overlap containers (not be clipped).
+// Menu that renders into a portal so it can overlap containers (not be clipped).
 // Uses a global custom event to ensure only one menu is open at a time.
 const NotificationMenu: React.FC<{
   id: string;
@@ -267,7 +267,8 @@ const NotificationMenu: React.FC<{
     e.stopPropagation();
     onDelete(e);
     setOpen(false);
-  };  const menu = (
+  };
+  const menu = (
     <div
       style={
         coords
