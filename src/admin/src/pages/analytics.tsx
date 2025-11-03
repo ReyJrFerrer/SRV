@@ -254,28 +254,7 @@ export const AnalyticsPage: React.FC = () => {
       return false;
     }).length ?? 0;
 
-  // Calculate total users (for "all" filter) and online users
-  const totalUsers = useMemo(() => {
-    if (!users) return 0;
-    return users.filter((user) => {
-      if (!user.activeRole) return false;
-      if (typeof user.activeRole === "string") {
-        return (
-          user.activeRole === "ServiceProvider" ||
-          user.activeRole === "Provider" ||
-          user.activeRole === "Client"
-        );
-      }
-      if (typeof user.activeRole === "object") {
-        return (
-          "ServiceProvider" in user.activeRole ||
-          "Provider" in user.activeRole ||
-          "Client" in user.activeRole
-        );
-      }
-      return false;
-    }).length;
-  }, [users]);
+  // Calculate online users
 
   const onlineUsers = useMemo(() => {
     if (!users) return 0;

@@ -518,20 +518,20 @@ export const ProviderManagementPage: React.FC = () => {
                         {formatCurrency(provider.totalEarnings)}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                        {formatCurrency(provider.outstandingBalance)}
+                        {formatCurrency(provider.outstandingBalance ?? 0)}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(provider.overdueOrders, provider.pendingOrders)}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(provider.overdueOrders ?? 0, provider.pendingOrders ?? 0)}`}
                         >
                           {getStatusIcon(
-                            provider.overdueOrders,
-                            provider.pendingOrders,
+                            provider.overdueOrders ?? 0,
+                            provider.pendingOrders ?? 0,
                           )}
                           <span className="ml-1">
                             {getStatusText(
-                              provider.overdueOrders,
-                              provider.pendingOrders,
+                              provider.overdueOrders ?? 0,
+                              provider.pendingOrders ?? 0,
                             )}
                           </span>
                         </span>

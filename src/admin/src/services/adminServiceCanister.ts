@@ -1500,7 +1500,7 @@ export const adminServiceCanister = {
   /**
    * Delete a review (admin only - hides the review)
    */
-  async deleteReview(reviewId: string, reviewType?: "review" | "providerReview"): Promise<void> {
+  async deleteReview(reviewId: string): Promise<void> {
     try {
       requireAuth();
       await callFirebaseFunction("deleteReview", { 
