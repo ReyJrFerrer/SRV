@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
 
               // Auto-grant admin role for testing (development only)
-              if (import.meta.env.DEV) {
+              // if (import.meta.env.DEV) {
                 try {
                   console.log(
                     "🔧 [Admin] Auto-creating admin profile and granting role...",
@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   );
                   setIsAdmin(true);
                 }
-              }
+              // }
 
               // Notify user if they need to create a profile
               if (result.needsProfile) {
