@@ -505,7 +505,7 @@ const NotificationsPage = () => {
           <div className="text-sm text-gray-700">
             {selectedIds.length} selected
           </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {unread.length > 0 && (
               <button
                 onClick={bulkMarkAsRead}
