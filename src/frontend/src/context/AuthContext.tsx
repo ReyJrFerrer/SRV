@@ -28,8 +28,8 @@ import {
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
-import LocationPermissionPromptModal from "../components/common/locationAccessPermission/LocationPermissionPromptModal";
-import LocationBlockedModal from "../components/common/locationAccessPermission/LocationBlockedModal";
+// Location prompt UI is rendered by pages (e.g. Home). Helpers/flags are
+// exposed via the context value below.
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -58,6 +58,12 @@ interface AuthContextType {
   pwaState: PWAState;
   enablePushNotifications: (userId: string) => Promise<boolean>;
   disablePushNotifications: (userId: string) => Promise<boolean>;
+  // Post-login location prompt controls (moved UI to pages that want to render it)
+  postLoginLocationPromptVisible: boolean;
+  requestLocationFromPrompt: () => Promise<void>;
+  skipPostLoginLocationPrompt: () => void;
+  postLoginBlockedModalVisible: boolean;
+  acknowledgePostLoginBlockedModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,8 +112,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Post-login location prompt state
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [postLoginLocationPromptVisible, setPostLoginLocationPromptVisible] =
+    useState(false);
+  const [postLoginBlockedModalVisible, setPostLoginBlockedModalVisible] =
+    useState(false);
   const [awaitingGeoResult, setAwaitingGeoResult] = useState(false);
 
   // Initialize location store on mount (does not auto-request geolocation)
@@ -185,7 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       "post_login_location_prompt_shown",
     );
     if (!alreadyShown && locationStore.locationStatus !== "allowed") {
-      setShowLocationPrompt(true);
+      setPostLoginLocationPromptVisible(true);
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     }
   }, [isLoading, isAuthenticated, locationStore.locationStatus]);
@@ -195,7 +203,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!awaitingGeoResult) return;
     const status = locationStore.locationStatus;
     if (status === "denied") {
-      setShowBlockedModal(true);
+      setPostLoginBlockedModalVisible(true);
       setAwaitingGeoResult(false);
     } else if (status === "allowed" || status === "unsupported") {
       setAwaitingGeoResult(false);
@@ -337,6 +345,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateAllActors(null);
   };
 
+  // Helpers exposed for pages to render the post-login prompt UI
+  const requestLocationFromPrompt = async () => {
+    setPostLoginLocationPromptVisible(false);
+    setAwaitingGeoResult(true);
+    try {
+      await locationStore.requestLocation();
+    } catch {
+      // ignore - store handles errors
+    }
+  };
+
+  const skipPostLoginLocationPrompt = () => {
+    setPostLoginLocationPromptVisible(false);
+    // Show the blocked/manual selection modal so the user can pick an address
+    setPostLoginBlockedModalVisible(true);
+  };
+
+  const acknowledgePostLoginBlockedModal = () => {
+    setPostLoginBlockedModalVisible(false);
+  };
+
   const value = {
     authClient,
     isAuthenticated,
@@ -360,36 +389,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     pwaState,
     enablePushNotifications: enablePushNotificationsPWA,
     disablePushNotifications: disablePushNotificationsPWA,
+    // Post-login prompt controls (UI lives in pages)
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
   };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {/* Post-login location permission prompt */}
-      <LocationPermissionPromptModal
-        visible={showLocationPrompt}
-        onEnable={async () => {
-          setShowLocationPrompt(false);
-          setAwaitingGeoResult(true);
-          try {
-            await locationStore.requestLocation();
-          } catch {
-            // ignore - store handles errors
-          }
-        }}
-        onSkip={() => {
-          setShowLocationPrompt(false);
-          setShowBlockedModal(true);
-        }}
-        onClose={() => {
-          setShowLocationPrompt(false);
-        }}
-      />
-      {/* Manual location selection when user declines or denies */}
-      <LocationBlockedModal
-        visible={showBlockedModal}
-        onClose={() => setShowBlockedModal(false)}
-      />
+      {/* Post-login location prompt UI is rendered by pages (e.g. Home) using
+          the exposed flags and helpers from the context value. */}
     </AuthContext.Provider>
   );
 };

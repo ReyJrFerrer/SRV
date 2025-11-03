@@ -9,6 +9,8 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 
 import ClientHeader from "../../components/client/Header";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
+import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { useAuth } from "../../context/AuthContext";
 import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
@@ -48,6 +50,15 @@ const ClientHomePage: React.FC = () => {
     document.title = "Home | SRV";
   }, []);
 
+  // --- Post-login prompt controls from AuthContext ---
+  const {
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+  } = useAuth();
+
   // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-32">
@@ -55,6 +66,25 @@ const ClientHomePage: React.FC = () => {
       <FeedbackPopup />
 
       {/* Show location blocked message if location is denied (dismissible) */}
+      {/* Post-login: friendly permission prompt (rendered here so Home can control messaging/placement) */}
+      <LocationPermissionPromptModal
+        visible={postLoginLocationPromptVisible}
+        onEnable={async () => {
+          // Request device location via the store (AuthContext helper tracks awaiting state)
+          try {
+            await requestLocationFromPrompt();
+          } catch {}
+        }}
+        onSkip={() => {
+          // Hide prompt and show blocked/manual-selection modal
+          skipPostLoginLocationPrompt();
+        }}
+        onClose={() => {
+          skipPostLoginLocationPrompt();
+        }}
+      />
+
+      {/* Manual/blocked modal triggered either by denied status or by the post-login flow */}
       <LocationBlockedModal
         visible={locationStatus === "denied" && !dismissedLocationBlock}
         onClose={() => {
@@ -62,6 +92,12 @@ const ClientHomePage: React.FC = () => {
           try {
             sessionStorage.setItem("dismissedLocationBlock", "1");
           } catch {}
+        }}
+      />
+      <LocationBlockedModal
+        visible={postLoginBlockedModalVisible}
+        onClose={() => {
+          acknowledgePostLoginBlockedModal();
         }}
       />
 
