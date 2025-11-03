@@ -22,8 +22,14 @@ function detectBrowser() {
     name: "Unknown",
     version: "Unknown",
     isSafari: /Safari/.test(userAgent) && !/Chrome/.test(userAgent),
-    isChrome: /Chrome/.test(userAgent) && !/Edg/.test(userAgent) && !/Vivaldi/.test(userAgent) && !/Brave/.test(userAgent),
-    isBrave: /Brave/.test(userAgent) || (navigator.brave && typeof navigator.brave.isBrave === 'function'),
+    isChrome:
+      /Chrome/.test(userAgent) &&
+      !/Edg/.test(userAgent) &&
+      !/Vivaldi/.test(userAgent) &&
+      !/Brave/.test(userAgent),
+    isBrave:
+      /Brave/.test(userAgent) ||
+      (navigator.brave && typeof navigator.brave.isBrave === "function"),
     isVivaldi: /Vivaldi/.test(userAgent),
     isEdge: /Edg/.test(userAgent),
     isFirefox: /Firefox/.test(userAgent),
@@ -68,7 +74,9 @@ try {
       data: payload.data || {},
       tag: payload.data?.notificationId || `srv-notification-${Date.now()}`,
       // Add timestamp for better ordering
-      timestamp: payload.data?.timestamp ? new Date(payload.data.timestamp).getTime() : Date.now(),
+      timestamp: payload.data?.timestamp
+        ? new Date(payload.data.timestamp).getTime()
+        : Date.now(),
     };
 
     return self.registration.showNotification(
