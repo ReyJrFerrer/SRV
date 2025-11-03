@@ -5,7 +5,6 @@ import ProviderStats from "../components/ProviderStats";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
-import { ViewReviewsModal } from "../components/ViewReviewsModal";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 // Reputation Score Component
@@ -22,7 +21,7 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative flex h-48 w-48 items-center justify-center">
+    <div className="relative flex h-60 w-60 items-center justify-center">
       <svg className="absolute h-full w-full" viewBox="0 0 100 100">
         <circle
           className="text-gray-200"
@@ -107,7 +106,6 @@ export const UserDetailsPage: React.FC = () => {
     useState(false);
   const [outstandingCommission, setOutstandingCommission] = useState(0);
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
-  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   // Convert Profile to UserData format with real data
   const convertProfileToUserData = async (
@@ -187,12 +185,29 @@ export const UserDetailsPage: React.FC = () => {
         console.warn("Services data fetch failed:", servicesData.reason);
       }
 
+      // Safely convert dates from nanoseconds to Date objects
+      const createdAtValue = profile.createdAt
+        ? typeof profile.createdAt === "bigint"
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === "number"
+            ? new Date(profile.createdAt / 1000000)
+            : new Date()
+        : new Date();
+
+      const updatedAtValue = profile.updatedAt
+        ? typeof profile.updatedAt === "bigint"
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === "number"
+            ? new Date(profile.updatedAt / 1000000)
+            : new Date()
+        : new Date();
+
       return {
         id: profile.id.toString(),
         name: profile.name,
         phone: profile.phone,
-        createdAt: new Date(Number(profile.createdAt) / 1000000),
-        updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+        createdAt: createdAtValue,
+        updatedAt: updatedAtValue,
         profilePicture:
           profile.profilePicture &&
           profile.profilePicture.length > 0 &&
@@ -213,7 +228,7 @@ export const UserDetailsPage: React.FC = () => {
         averageRating: reviewsData.averageRating,
         totalReviews: reviewsData.totalReviews,
         completionRate: analyticsData.completionRate,
-        lastActivity: new Date(Number(profile.updatedAt) / 1000000),
+        lastActivity: updatedAtValue,
         reputationScore: reputationData.reputationScore,
         reputationLevel: reputationData.trustLevel,
         reputationRing: Math.min(
@@ -227,12 +242,29 @@ export const UserDetailsPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching real user data, using defaults:", error);
       // Fallback to default values if real data fails
+      // Safely convert dates from nanoseconds to Date objects
+      const createdAtValue = profile.createdAt
+        ? typeof profile.createdAt === "bigint"
+          ? new Date(Number(profile.createdAt) / 1000000)
+          : typeof profile.createdAt === "number"
+            ? new Date(profile.createdAt / 1000000)
+            : new Date()
+        : new Date();
+
+      const updatedAtValue = profile.updatedAt
+        ? typeof profile.updatedAt === "bigint"
+          ? new Date(Number(profile.updatedAt) / 1000000)
+          : typeof profile.updatedAt === "number"
+            ? new Date(profile.updatedAt / 1000000)
+            : new Date()
+        : new Date();
+
       return {
         id: profile.id.toString(),
         name: profile.name,
         phone: profile.phone,
-        createdAt: new Date(Number(profile.createdAt) / 1000000),
-        updatedAt: new Date(Number(profile.updatedAt) / 1000000),
+        createdAt: createdAtValue,
+        updatedAt: updatedAtValue,
         profilePicture:
           profile.profilePicture &&
           profile.profilePicture.length > 0 &&
@@ -629,7 +661,11 @@ export const UserDetailsPage: React.FC = () => {
                     View Chats
                   </button>
                   <button
-                    onClick={() => setShowReviewsModal(true)}
+                    onClick={() =>
+                      navigate(`/user/${user.id}/reviews`, {
+                        state: { from: "userDetails" },
+                      })
+                    }
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <svg
@@ -682,10 +718,10 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Provider Details */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Contact Information */}
+            {/* User Information */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Contact Information
+                User Information
               </h3>
               <div className="space-y-4">
                 <div>
@@ -718,18 +754,10 @@ export const UserDetailsPage: React.FC = () => {
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-gray-500">
-                    Services Posted
+                    Total Services
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {user.servicesCount}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    SRV Wallet Balance
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    ₱{user.walletBalance.toFixed(2)}
                   </dd>
                 </div>
               </div>
@@ -908,15 +936,6 @@ export const UserDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* View Reviews Modal */}
-      {user && (
-        <ViewReviewsModal
-          userId={user.id}
-          isOpen={showReviewsModal}
-          onClose={() => setShowReviewsModal(false)}
-        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import LocationMapPicker from "../../common/GMapFunctions/LocationMapPicker";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
+import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -99,7 +100,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   streetRef,
   houseNumberRef,
 }) => {
-  const { locationStatus } = useLocationStore();
+  const { locationStatus, location } = useLocationStore();
   // If permission denied/not_set, default to showing manual forms to guide the user
   useEffect(() => {
     if (locationStatus === "denied") {
@@ -109,6 +110,13 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       } catch {}
     }
   }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
+
+  // Scale reported accuracy for UI (smaller visual circle than reported gps accuracy)
+  const rawAccuracy = location?.accuracy;
+  const scaledAccuracy =
+    typeof rawAccuracy === "number" && rawAccuracy > 0
+      ? Math.min(rawAccuracy * 0.25, 100)
+      : undefined;
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -197,6 +205,16 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                       lng: geoLocation.longitude,
                     }}
                   />
+                  {/* Show a subtle accuracy circle around the detected location when available */}
+                  {typeof scaledAccuracy === "number" && scaledAccuracy > 0 && (
+                    <AccuracyCircle
+                      center={{
+                        lat: geoLocation.latitude,
+                        lng: geoLocation.longitude,
+                      }}
+                      radius={scaledAccuracy}
+                    />
+                  )}
                 </Map>
               ) : (
                 <div className="flex h-64 items-center justify-center text-sm text-gray-500">

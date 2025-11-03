@@ -322,7 +322,7 @@ exports.getBookingReviews = functions.https.onCall(async (data, _context) => {
 exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data.data || data;
-  const {userId} = payload;
+  const {userId, includeHidden = false} = payload;
   console.log("Get User Review Payload", payload);
 
   // Authentication
@@ -344,11 +344,43 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // Only admins can request hidden reviews
+  const showAll = includeHidden && authInfo.isAdmin;
+
+  console.log("[getUserReviews] includeHidden:", includeHidden,
+    "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
   try {
-    const reviewsSnap = await db
+    // When showing all (including hidden), fetch all and filter client-side to avoid index issues
+    if (showAll) {
+      console.log("[getUserReviews] Fetching all reviews (including hidden) for admin");
+      const allReviewsSnap = await db
+        .collection("reviews")
+        .where("clientId", "==", targetUserId)
+        .get();
+
+      const allReviews = [];
+      allReviewsSnap.forEach((doc) => {
+        allReviews.push(doc.data());
+      });
+
+      // Sort client-side
+      const sorted = allReviews.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      return {success: true, data: sorted};
+    }
+
+    // Normal query for visible reviews only (has proper index)
+    const query = db
       .collection("reviews")
       .where("clientId", "==", targetUserId)
-      .where("status", "==", "Visible")
+      .where("status", "==", "Visible");
+
+    const reviewsSnap = await query
       .orderBy("createdAt", "desc")
       .get();
 
@@ -360,6 +392,36 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getUserReviews:", error);
+    // If the query fails due to missing index, try fetching all and filtering client-side
+    if (error.code === 8 || error.message?.includes("index")) {
+      console.log("[getUserReviews] Falling back to client-side filtering due to index issue");
+      try {
+        const allReviewsSnap = await db
+          .collection("reviews")
+          .where("clientId", "==", targetUserId)
+          .get();
+
+        const allReviews = [];
+        allReviewsSnap.forEach((doc) => {
+          const reviewData = doc.data();
+          if (showAll || reviewData.status === "Visible" || !reviewData.status) {
+            allReviews.push(reviewData);
+          }
+        });
+
+        // Sort client-side
+        const sorted = allReviews.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        return {success: true, data: sorted};
+      } catch (fallbackError) {
+        console.error("Error in fallback query:", fallbackError);
+        throw new functions.https.HttpsError("internal", fallbackError.message);
+      }
+    }
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -584,6 +646,208 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in deleteReview:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Restore (unhide) a review
+ */
+exports.restoreReview = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data.data || data;
+  const {reviewId} = payload;
+  console.log("Restore Review Payload", payload);
+
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Admin access required",
+    );
+  }
+
+  if (!reviewId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Review ID is required",
+    );
+  }
+
+  try {
+    // First, try to find the review in either collection
+    const reviewDoc = await db.collection("reviews").doc(reviewId).get();
+    const providerReviewDoc = await db.collection("providerReviews").doc(reviewId).get();
+
+    let reviewCollection = null;
+    let existingReview = null;
+
+    if (reviewDoc.exists) {
+      reviewCollection = "reviews";
+      existingReview = reviewDoc.data();
+    } else if (providerReviewDoc.exists) {
+      reviewCollection = "providerReviews";
+      existingReview = providerReviewDoc.data();
+    } else {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Review not found",
+      );
+    }
+
+    return await db.runTransaction(async (transaction) => {
+      // ===== ALL READ OPERATIONS FIRST =====
+
+      const reviewRef = db.collection(reviewCollection).doc(reviewId);
+
+      // Read service data for rating statistics update (only for regular reviews)
+      let serviceRef = null;
+      let serviceSnap = null;
+      if (reviewCollection === "reviews" && existingReview.serviceId) {
+        serviceRef = db.collection("services").doc(existingReview.serviceId);
+        serviceSnap = await transaction.get(serviceRef);
+      }
+
+      // ===== VALIDATION CHECKS =====
+
+      if (existingReview.status !== "Hidden") {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Review is not hidden",
+        );
+      }
+
+      // ===== ALL WRITE OPERATIONS AFTER =====
+
+      const now = new Date().toISOString();
+      const updatedReview = {
+        ...existingReview,
+        status: "Visible",
+        updatedAt: now,
+      };
+
+      transaction.update(reviewRef, updatedReview);
+
+      // Update service rating statistics (only for regular reviews, not provider reviews)
+      if (reviewCollection === "reviews" && serviceSnap && serviceSnap.exists) {
+        const service = serviceSnap.data();
+        const currentRating = service.averageRating || 0;
+        const currentCount = service.reviewCount || 0;
+        const newCount = currentCount + 1;
+
+        let newAverageRating = 0;
+        if (newCount > 0) {
+          const oldTotal = currentRating * currentCount;
+          const newTotal = oldTotal + existingReview.rating;
+          newAverageRating = newTotal / newCount;
+        }
+
+        transaction.update(serviceRef, {
+          averageRating: newAverageRating,
+          reviewCount: newCount,
+          updatedAt: now,
+        });
+      }
+
+      return {success: true, message: "Review restored successfully"};
+    });
+  } catch (error) {
+    console.error("Error in restoreReview:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Bulk update review status (admin only)
+ */
+exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data.data || data;
+  const {reviewIds, status} = payload;
+  console.log("Bulk Update Review Status Payload", payload);
+
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Admin access required",
+    );
+  }
+
+  if (!reviewIds || !Array.isArray(reviewIds) || reviewIds.length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Review IDs array is required",
+    );
+  }
+
+  if (status !== "Visible" && status !== "Hidden") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Status must be 'Visible' or 'Hidden'",
+    );
+  }
+
+  try {
+    const updated = [];
+    const errors = [];
+
+    // Process reviews in batches to avoid transaction limits
+    const batchSize = 500; // Firestore batch write limit
+    for (let i = 0; i < reviewIds.length; i += batchSize) {
+      const batch = db.batch();
+      const batchIds = reviewIds.slice(i, i + batchSize);
+
+      // Get all reviews from both collections
+      const reviewPromises = batchIds.map(async (id) => {
+        const reviewDoc = await db.collection("reviews").doc(id).get();
+        if (reviewDoc.exists) {
+          return {id, doc: reviewDoc, collection: "reviews"};
+        }
+        const providerReviewDoc = await db.collection("providerReviews").doc(id).get();
+        if (providerReviewDoc.exists) {
+          return {id, doc: providerReviewDoc, collection: "providerReviews"};
+        }
+        return {id, doc: null, collection: null};
+      });
+
+      const reviewDocs = await Promise.all(reviewPromises);
+
+      // Update each review
+      for (const {id: reviewId, doc: reviewDoc, collection: collectionName} of reviewDocs) {
+        if (!reviewDoc || !collectionName) {
+          errors.push({reviewId, error: "Review not found"});
+          continue;
+        }
+
+        const reviewRef = db.collection(collectionName).doc(reviewId);
+        batch.update(reviewRef, {
+          status: status,
+          updatedAt: new Date().toISOString(),
+        });
+
+        updated.push(reviewId);
+      }
+
+      // Commit batch
+      await batch.commit();
+    }
+
+    return {
+      success: true,
+      updated: updated,
+      errors: errors,
+    };
+  } catch (error) {
+    console.error("Error in bulkUpdateReviewStatus:", error);
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
@@ -1156,10 +1420,10 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
  * Get provider reviews for a specific client
  * Shows what providers have said about a client
  */
-exports.getClientProviderReviews = functions.https.onCall(async (data, _context) => {
+exports.getClientProviderReviews = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data.data || data;
-  const {clientId, limit = 20, offset = 0} = payload;
+  const {clientId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!clientId) {
     throw new functions.https.HttpsError(
@@ -1172,11 +1436,26 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, _context)
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
+  // Authentication check
+  const authInfo = getAuthInfo(context, data);
+
+  // Only admins can request hidden reviews
+  const showAll = includeHidden && authInfo.isAdmin;
+
+  console.log("[getClientProviderReviews] includeHidden:",
+    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
   try {
-    const reviewsSnap = await db
+    let query = db
       .collection("providerReviews")
-      .where("clientId", "==", clientId)
-      .where("status", "==", "Visible")
+      .where("clientId", "==", clientId);
+
+    // Only filter by status if not showing all (admin only)
+    if (!showAll) {
+      query = query.where("status", "==", "Visible");
+    }
+
+    const reviewsSnap = await query
       .orderBy("createdAt", "desc")
       .limit(limitInt)
       .offset(offsetInt)
@@ -1190,6 +1469,126 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, _context)
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getClientProviderReviews:", error);
+    // If the query fails due to missing index, try fetching all and filtering client-side
+    if (error.code === 8 || error.message?.includes("index")) {
+      console.log("[getClientProviderReviews] Falling back to client-side filtering");
+      try {
+        const allReviewsSnap = await db
+          .collection("providerReviews")
+          .where("clientId", "==", clientId)
+          .get();
+
+        const allReviews = [];
+        allReviewsSnap.forEach((doc) => {
+          const reviewData = doc.data();
+          if (showAll || reviewData.status === "Visible" || !reviewData.status) {
+            allReviews.push(reviewData);
+          }
+        });
+
+        // Sort and paginate client-side
+        const sorted = allReviews.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
+        return {success: true, data: paginated};
+      } catch (fallbackError) {
+        console.error("Error in fallback query:", fallbackError);
+        throw new functions.https.HttpsError("internal", fallbackError.message);
+      }
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get reviews given by a provider (reviews they wrote about clients)
+ * Shows what a provider has said about clients
+ */
+exports.getProviderReviewsByProvider = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data.data || data;
+  const {providerId, limit = 20, offset = 0, includeHidden = false} = payload;
+
+  if (!providerId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Provider ID is required",
+    );
+  }
+
+  // Convert limit and offset to integers
+  const limitInt = parseInt(limit) || 20;
+  const offsetInt = parseInt(offset) || 0;
+
+  // Authentication check
+  const authInfo = getAuthInfo(context, data);
+
+  // Only admins can request hidden reviews
+  const showAll = includeHidden && authInfo.isAdmin;
+
+  console.log("[getProviderReviewsByProvider] includeHidden:",
+    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
+
+  try {
+    let query = db
+      .collection("providerReviews")
+      .where("providerId", "==", providerId);
+
+    // Only filter by status if not showing all (admin only)
+    if (!showAll) {
+      query = query.where("status", "==", "Visible");
+    }
+
+    query = query
+      .orderBy("createdAt", "desc")
+      .limit(limitInt)
+      .offset(offsetInt);
+
+    const reviewsSnap = await query.get();
+
+    const reviews = [];
+    reviewsSnap.forEach((doc) => {
+      reviews.push(doc.data());
+    });
+
+    return {success: true, data: reviews};
+  } catch (error) {
+    console.error("Error in getProviderReviewsByProvider:", error);
+    // If the query fails due to missing index, try fetching all and filtering client-side
+    if (error.code === 8 || error.message?.includes("index")) {
+      console.log("[getProviderReviewsByProvider] Falling back to client-side filtering");
+      try {
+        const allReviewsSnap = await db
+          .collection("providerReviews")
+          .where("providerId", "==", providerId)
+          .get();
+
+        const allReviews = [];
+        allReviewsSnap.forEach((doc) => {
+          const reviewData = doc.data();
+          if (showAll || reviewData.status === "Visible" || !reviewData.status) {
+            allReviews.push(reviewData);
+          }
+        });
+
+        // Sort and paginate client-side
+        const sorted = allReviews.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
+        return {success: true, data: paginated};
+      } catch (fallbackError) {
+        console.error("Error in fallback query:", fallbackError);
+        throw new functions.https.HttpsError("internal", fallbackError.message);
+      }
+    }
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
