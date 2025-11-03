@@ -743,7 +743,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         {isLoading ? (
           <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
               <p className="text-gray-600">Loading booking details...</p>
             </div>
           </div>

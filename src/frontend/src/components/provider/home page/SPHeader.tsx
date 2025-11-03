@@ -164,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               >
                 <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
                     {unreadCount}
                   </span>
                 )}
@@ -190,7 +190,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 >
                   <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
                       {unreadCount}
                     </span>
                   )}

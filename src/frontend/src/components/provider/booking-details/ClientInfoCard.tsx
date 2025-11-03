@@ -23,7 +23,7 @@ const ClientInfoCard: React.FC<Props> = ({
 }) => {
   const [showRatingInfo, setShowRatingInfo] = useState(false);
   return (
-    <div className="relative max-w-md min-w-[320px] flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
       {/* Header Section */}
       <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 p-8">
         {/* Profile Image */}
@@ -61,7 +61,7 @@ const ClientInfoCard: React.FC<Props> = ({
               <button
                 type="button"
                 aria-label="About ratings"
-                className="rounded-full p-1 hover:bg-gray-100 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 onClick={() => setShowRatingInfo(true)}
               >
                 <InformationCircleIcon className="h-5 w-5 text-blue-500" />
