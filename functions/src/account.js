@@ -548,3 +548,64 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+/**
+ * Update user active status and last activity timestamp
+ * HTTP onCall Cloud Function
+ */
+exports.updateUserActiveStatus = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  const actualData = data.data || data;
+
+  // Check authentication
+  if (!auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to update active status",
+    );
+  }
+
+  const principalId = auth.uid;
+  const {isActive} = actualData;
+
+  // Validate input
+  if (typeof isActive !== "boolean") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "isActive must be a boolean value",
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(principalId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Profile not found",
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    // Update user's active status and last activity timestamp
+    await userRef.update({
+      isActive: isActive,
+      lastActivity: now,
+      updatedAt: now,
+    });
+
+    return {
+      success: true,
+      message: `User active status updated to ${isActive}`,
+    };
+  } catch (error) {
+    console.error("Error updating user active status:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
