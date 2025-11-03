@@ -381,6 +381,31 @@ export const notificationCanisterService = {
   },
 
   /**
+   * Delete a notification
+   */
+  async deleteNotification(notificationId: string): Promise<void> {
+    try {
+      const deleteNotificationFunc = httpsCallable(
+        functions,
+        "deleteNotification",
+      );
+
+      const result = await deleteNotificationFunc({
+        notificationId,
+      });
+
+      const response = result.data as any;
+
+      if (!response.success) {
+        throw new Error("Failed to delete notification");
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      throw new Error(`Failed to delete notification: ${error}`);
+    }
+  },
+
+  /**
    * Check if user can receive notifications (rate limiting check)
    */
   async canReceiveNotification(

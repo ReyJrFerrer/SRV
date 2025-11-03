@@ -233,6 +233,7 @@ const {
   getNotificationStats,
   markAllNotificationsAsRead,
   canReceiveNotification,
+  deleteNotification,
   cleanupNotificationFrequency,
 } = require("./src/notification");
 
@@ -409,6 +410,7 @@ exports.removeFCMToken = removeFCMToken;
 exports.getNotificationStats = getNotificationStats;
 exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 exports.canReceiveNotification = canReceiveNotification;
+exports.deleteNotification = deleteNotification;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
 
 // Export Media Management Functions
