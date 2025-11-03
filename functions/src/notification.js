@@ -1107,6 +1107,79 @@ exports.canReceiveNotification = functions.https.onCall(
 );
 
 /**
+ * Delete a notification
+ * HTTPS Callable Function
+ */
+exports.deleteNotification = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [deleteNotification] called");
+  const safeDataForLog = {notificationId: data.data?.notificationId};
+  console.log("📦 [deleteNotification] Received payload:", JSON.stringify(safeDataForLog, null, 2));
+
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {notificationId} = payload;
+
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  console.log("🔐 [deleteNotification] Auth info:", authInfo);
+
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  // Validation
+  if (!notificationId) {
+    console.error("❌ [deleteNotification] Validation failed: Missing notificationId.");
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Notification ID is required",
+    );
+  }
+
+  try {
+    const notificationRef = db.collection("notifications").doc(notificationId);
+    const notificationDoc = await notificationRef.get();
+
+    if (!notificationDoc.exists) {
+      console.error(`❌ [deleteNotification] Notification ${notificationId} not found.`);
+      throw new functions.https.HttpsError("not-found", "Notification not found");
+    }
+
+    const notification = notificationDoc.data();
+
+    // Security: Only allow user to delete their own notifications or admin
+    if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
+      console.error(
+        `❌ [deleteNotification] User ${authInfo.uid} not authorized ` +
+        `to delete notification ${notificationId}.`,
+      );
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not authorized to delete this notification",
+      );
+    }
+
+    // Delete the notification
+    await notificationRef.delete();
+
+    console.log(`✅ [deleteNotification] Notification ${notificationId} deleted successfully.`);
+    return {success: true};
+  } catch (error) {
+    console.error("Error in deleteNotification:", error);
+
+    // Re-throw HttpsError
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Cleanup expired notifications (scheduled function)
  * Runs daily at midnight UTC
  */
