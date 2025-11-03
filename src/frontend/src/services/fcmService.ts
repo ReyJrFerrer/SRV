@@ -132,46 +132,29 @@ class FCMService {
 
   /**
    * Validate if cached token is still valid with Firebase
+   * Only checks metadata age, doesn't call getToken to avoid duplicate registrations
    */
   private async validateCachedToken(): Promise<boolean> {
     if (!this.currentToken || !this.messaging) {
       return false;
     }
 
-    try {
-      // Try to get token again - if it returns the same token, it's valid
-      // If it returns a different token, the old one was invalid
-      const registration = await navigator.serviceWorker.ready;
-      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-
-      if (!vapidKey) {
-        return false;
-      }
-
-      const token = await getToken(this.messaging, {
-        vapidKey,
-        serviceWorkerRegistration: registration,
-      });
-
-      // If tokens match, it's valid
-      const isValid = token === this.currentToken;
-
-      if (!isValid && token) {
-        console.log(
-          "FCM: Cached token is invalid, got new token from Firebase",
-        );
-        // Update to the new token Firebase gave us
-        this.currentToken = token;
-        this.saveTokenMetadata(token);
-        // Re-register with backend
-        await this.registerToken(token);
-      }
-
-      return isValid;
-    } catch (error) {
-      console.error("FCM: Token validation failed", error);
+    const metadata = this.loadTokenMetadata();
+    if (!metadata) {
       return false;
     }
+
+    // Just check if token isn't too old
+    // Don't call getToken() here as it may create a new registration
+    const isStale = this.isTokenStale(metadata);
+    
+    if (isStale) {
+      console.log("FCM: Cached token is stale, needs refresh");
+      return false;
+    }
+
+    console.log("FCM: Cached token is fresh");
+    return true;
   }
 
   /**
@@ -295,16 +278,6 @@ class FCMService {
         active: !!registration.active,
       });
 
-      // IMPORTANT: Unregister any old token from backend FIRST
-      // This prevents "already registered" errors
-      try {
-        console.log("FCM: Cleaning up any old backend registration...");
-        await this.unregisterToken();
-      } catch (cleanupError) {
-        console.warn("FCM: Cleanup failed (may be first time):", cleanupError);
-        // Continue anyway - this is expected on first run
-      }
-
       // Initialize Firebase Messaging with existing service worker
       this.messaging = getMessaging(getFirebaseApp());
 
@@ -316,22 +289,15 @@ class FCMService {
         return null;
       }
 
-      // Delete any old Firebase token to get a fresh one
-      try {
-        console.log("FCM: Deleting any old Firebase token...");
-        await deleteToken(this.messaging);
-      } catch (deleteError) {
-        console.warn("FCM: No old token to delete:", deleteError);
-        // Continue anyway
-      }
-
-      // Get FRESH FCM token using existing service worker
+      // Get FCM token using existing service worker
+      // Firebase handles token recycling internally
       const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
       if (!vapidKey) {
         console.error("FCM: VAPID key not configured");
         return null;
       }
 
+      console.log("FCM: Requesting FCM token from Firebase...");
       const token = await getToken(this.messaging, {
         vapidKey,
         serviceWorkerRegistration: registration,
@@ -344,7 +310,7 @@ class FCMService {
         // Save token with metadata
         this.saveTokenMetadata(token);
 
-        console.log("FCM: Fresh token obtained successfully");
+        console.log("FCM: Token obtained successfully");
 
         // Setup foreground message listener
         this.setupForegroundListener();
@@ -352,59 +318,86 @@ class FCMService {
         // Setup token refresh listener
         this.setupTokenRefreshListener();
 
-        // Register NEW token with backend
-        console.log("FCM: Registering fresh token with backend...");
-        const registered = await this.registerToken(token);
-        if (!registered) {
+        // Register token with backend (but don't fail if this fails)
+        console.log("FCM: Registering token with backend...");
+        try {
+          const registered = await this.registerToken(token);
+          if (!registered) {
+            console.warn(
+              "FCM: Backend registration failed - will retry later. Token is still valid locally.",
+            );
+            // Don't throw error, token is still valid for Firebase
+          } else {
+            console.log("FCM: Token successfully registered with backend");
+          }
+        } catch (regError) {
           console.error(
-            "FCM: Backend registration failed - will retry on next attempt",
+            "FCM: Backend registration error - will retry later:",
+            regError,
           );
-          // Clear state and force retry
-          await this.resetFCMState();
-          throw new Error("Backend registration failed");
+          // Don't throw error, token is still valid for Firebase
         }
 
-        console.log("FCM: Token successfully registered with backend");
         return token;
       } else {
         console.warn("FCM: No registration token available");
-        // Clear any stale data
-        await this.resetFCMState();
         return null;
       }
     } catch (error: any) {
-      // Handle rate limiting specifically
+      // Handle specific error types with helpful messages
       if (
+        error?.code === "messaging/token-subscribe-failed" ||
+        error?.message?.includes("Registration failed") ||
+        error?.message?.includes("push service error")
+      ) {
+        console.error(
+          "❌ FCM: Registration failed - push service error",
+          "\n",
+          "This usually means:",
+          "\n",
+          "1. Firebase Cloud Messaging API is not enabled in Google Cloud Console",
+          "\n",
+          "2. VAPID key is incorrect or missing",
+          "\n",
+          "3. Firebase project configuration is incomplete",
+          "\n",
+          "Please check your Firebase/Google Cloud configuration.",
+          "\n",
+          "Error details:",
+          error,
+        );
+        return null;
+      } else if (
         error?.code === "messaging/too-many-requests" ||
         error?.message?.includes("429") ||
         error?.message?.includes("Too Many Requests")
       ) {
         console.error(
-          "FCM: Rate limit exceeded. Please wait a few minutes before trying again.",
+          "FCM: Rate limited by Firebase. Please wait before trying again.",
+          error,
         );
-        console.info(
-          "FCM: This usually happens during development with frequent refreshes.",
+        // Don't reset state on rate limit - token might still be valid
+        return this.currentToken;
+      } else if (error?.code === "messaging/token-unsubscribe-failed") {
+        console.warn(
+          "FCM: Token unsubscribe failed, but continuing initialization",
         );
-        // Reset state only on rate limit
-        await this.resetFCMState();
-      } else if (
-        error?.code === "messaging/registration-token-not-registered" ||
-        error?.message?.includes("Registration failed") ||
-        error?.message?.includes("Backend registration failed")
-      ) {
+        // Continue with initialization despite unsubscribe failure
+      } else if (error?.code === "messaging/permission-blocked") {
         console.error(
-          "FCM: Token registration failed. This might be due to an old/invalid token.",
+          "FCM: Notification permission was blocked by user",
+          error,
         );
-        console.info("FCM: Clearing old state and preparing for retry...");
-        // Just clear local state, don't try to unregister again
-        this.currentToken = null;
-        this.isInitialized = false;
-        this.clearTokenMetadata();
+        return null;
+      } else if (error?.code === "messaging/unsupported-browser") {
+        console.error(
+          "FCM: This browser doesn't support push notifications",
+          error,
+        );
+        return null;
       } else {
         console.error("FCM: Initialization failed", error);
-        // Just clear local state on unknown errors
-        this.currentToken = null;
-        this.isInitialized = false;
+        // Only reset on critical errors
       }
       return null;
     }
@@ -470,20 +463,7 @@ class FCMService {
         this.updateRefreshAttempt(metadata);
       }
 
-      // Delete old token first
-      if (this.messaging && this.currentToken) {
-        try {
-          await deleteToken(this.messaging);
-          console.log("FCM: Old token deleted");
-        } catch (deleteError) {
-          console.warn(
-            "FCM: Failed to delete old token, continuing anyway",
-            deleteError,
-          );
-        }
-      }
-
-      // Get new token
+      // Get service worker and VAPID key
       const registration = await navigator.serviceWorker.ready;
       const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
@@ -491,23 +471,27 @@ class FCMService {
         throw new Error("FCM not properly initialized");
       }
 
+      // Delete old token to force refresh
+      if (this.currentToken) {
+        try {
+          await deleteToken(this.messaging);
+          console.log("FCM: Old token deleted");
+        } catch (deleteError) {
+          console.warn(
+            "FCM: Failed to delete old token, will get new one anyway",
+            deleteError,
+          );
+        }
+      }
+
+      // Get new token
       const newToken = await getToken(this.messaging, {
         vapidKey,
         serviceWorkerRegistration: registration,
       });
 
       if (newToken) {
-        // Unregister old token from backend
-        if (this.currentToken && this.currentToken !== newToken) {
-          try {
-            await this.unregisterToken();
-          } catch (error) {
-            console.warn(
-              "FCM: Failed to unregister old token from backend",
-              error,
-            );
-          }
-        }
+        const tokenChanged = this.currentToken !== newToken;
 
         // Update current token
         this.currentToken = newToken;
@@ -515,8 +499,23 @@ class FCMService {
         // Save new token metadata (resets refresh attempts)
         this.saveTokenMetadata(newToken);
 
-        // Register new token with backend
-        await this.registerToken(newToken);
+        // Only unregister old token if it actually changed
+        if (tokenChanged) {
+          console.log("FCM: Token changed, updating backend registration...");
+          // No need to explicitly unregister - just register the new one
+          // The backend will update the token for this user
+        } else {
+          console.log("FCM: Token unchanged after refresh");
+        }
+
+        // Register token with backend (with retry logic)
+        const registered = await this.registerToken(newToken);
+        if (!registered) {
+          console.warn(
+            "FCM: Backend registration failed during refresh - will retry later",
+          );
+          // Don't fail the refresh, token is still valid locally
+        }
 
         console.log("FCM: Token refreshed successfully");
         return newToken;
@@ -574,20 +573,49 @@ class FCMService {
 
   /**
    * Register FCM token with backend
+   * Implements retry logic for better resilience
    */
-  async registerToken(token: string): Promise<boolean> {
-    try {
-      await notificationCanisterService.storePushSubscription({
-        endpoint: token, // FCM uses token as endpoint
-        p256dh: "", // Not used in FCM
-        auth: "", // Not used in FCM
-      });
-      console.log("FCM: Token registered with backend");
-      return true;
-    } catch (error) {
-      console.error("FCM: Failed to register token with backend", error);
-      return false;
+  async registerToken(
+    token: string,
+    retries: number = 2,
+  ): Promise<boolean> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(
+            `FCM: Retrying backend registration (attempt ${attempt + 1}/${retries + 1})...`,
+          );
+          // Wait before retry with exponential backoff
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * Math.pow(2, attempt)),
+          );
+        }
+
+        await notificationCanisterService.storePushSubscription({
+          endpoint: token, // FCM uses token as endpoint
+          p256dh: "", // Not used in FCM
+          auth: "", // Not used in FCM
+        });
+
+        console.log("FCM: Token registered with backend");
+        return true;
+      } catch (error: any) {
+        console.error(
+          `FCM: Failed to register token with backend (attempt ${attempt + 1}/${retries + 1}):`,
+          error,
+        );
+
+        // If this is the last attempt, return false
+        if (attempt === retries) {
+          console.error(
+            "FCM: All registration attempts failed. Will retry on next session.",
+          );
+          return false;
+        }
+      }
     }
+
+    return false;
   }
 
   /**
@@ -769,6 +797,278 @@ class FCMService {
       canRefresh,
       nextRefreshTime,
     };
+  }
+
+  /**
+   * Comprehensive FCM diagnostics
+   * Returns detailed information about FCM configuration and state
+   */
+  async getDiagnostics(): Promise<{
+    browser: string;
+    notificationSupport: boolean;
+    notificationPermission: NotificationPermission;
+    serviceWorkerSupport: boolean;
+    serviceWorkerReady: boolean;
+    serviceWorkerScope: string | null;
+    fcmInitialized: boolean;
+    hasToken: boolean;
+    tokenAge: number | null;
+    tokenHealth: "healthy" | "stale" | "missing";
+    vapidKeyConfigured: boolean;
+    errors: string[];
+  }> {
+    const errors: string[] = [];
+    let serviceWorkerReady = false;
+    let serviceWorkerScope: string | null = null;
+
+    // Check browser support
+    const notificationSupport = "Notification" in window;
+    const serviceWorkerSupport = "serviceWorker" in navigator;
+
+    if (!notificationSupport) {
+      errors.push("Browser does not support notifications");
+    }
+
+    if (!serviceWorkerSupport) {
+      errors.push("Browser does not support service workers");
+    }
+
+    // Check service worker status
+    if (serviceWorkerSupport) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        serviceWorkerReady = !!registration.active;
+        serviceWorkerScope = registration.scope;
+
+        if (!registration.active) {
+          errors.push("Service worker is not active");
+        }
+      } catch (error) {
+        errors.push(`Service worker error: ${error}`);
+      }
+    }
+
+    // Check notification permission
+    const notificationPermission = notificationSupport
+      ? Notification.permission
+      : "denied";
+
+    if (notificationPermission !== "granted") {
+      errors.push(`Notification permission: ${notificationPermission}`);
+    }
+
+    // Check VAPID key
+    const vapidKeyConfigured = !!import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    if (!vapidKeyConfigured) {
+      errors.push("VAPID key not configured in environment");
+    }
+
+    // Check token health
+    const tokenHealth = this.getTokenHealth();
+    let tokenHealthStatus: "healthy" | "stale" | "missing" = "missing";
+
+    if (tokenHealth.hasToken) {
+      tokenHealthStatus = tokenHealth.isStale ? "stale" : "healthy";
+    }
+
+    // Detect browser
+    const userAgent = navigator.userAgent;
+    let browser = "Unknown";
+    if (userAgent.includes("Chrome")) browser = "Chrome";
+    else if (userAgent.includes("Safari")) browser = "Safari";
+    else if (userAgent.includes("Firefox")) browser = "Firefox";
+    else if (userAgent.includes("Edg")) browser = "Edge";
+
+    return {
+      browser,
+      notificationSupport,
+      notificationPermission,
+      serviceWorkerSupport,
+      serviceWorkerReady,
+      serviceWorkerScope,
+      fcmInitialized: this.isInitialized,
+      hasToken: !!this.currentToken,
+      tokenAge: tokenHealth.age,
+      tokenHealth: tokenHealthStatus,
+      vapidKeyConfigured,
+      errors,
+    };
+  }
+
+  /**
+   * Print diagnostics to console
+   */
+  async printDiagnostics(): Promise<void> {
+    const diagnostics = await this.getDiagnostics();
+
+    console.group("🔍 FCM Diagnostics");
+    console.log("Browser:", diagnostics.browser);
+    console.log("Notification Support:", diagnostics.notificationSupport ? "✅" : "❌");
+    console.log("Notification Permission:", diagnostics.notificationPermission);
+    console.log("Service Worker Support:", diagnostics.serviceWorkerSupport ? "✅" : "❌");
+    console.log("Service Worker Ready:", diagnostics.serviceWorkerReady ? "✅" : "❌");
+    console.log("Service Worker Scope:", diagnostics.serviceWorkerScope);
+    console.log("FCM Initialized:", diagnostics.fcmInitialized ? "✅" : "❌");
+    console.log("Has Token:", diagnostics.hasToken ? "✅" : "❌");
+    console.log("Token Age:", diagnostics.tokenAge ? `${Math.floor(diagnostics.tokenAge / 1000 / 60)} minutes` : "N/A");
+    console.log("Token Health:", diagnostics.tokenHealth);
+    console.log("VAPID Key Configured:", diagnostics.vapidKeyConfigured ? "✅" : "❌");
+    
+    if (diagnostics.errors.length > 0) {
+      console.group("⚠️ Errors:");
+      diagnostics.errors.forEach(error => console.log("  -", error));
+      console.groupEnd();
+    } else {
+      console.log("Errors:", "None ✅");
+    }
+    
+    console.groupEnd();
+  }
+
+  /**
+   * Retry backend registration if token exists locally but not on backend
+   * Useful for recovering from backend registration failures
+   */
+  async retryBackendRegistration(): Promise<boolean> {
+    if (!this.currentToken || !this.isInitialized) {
+      console.log("FCM: No token available for backend registration retry");
+      return false;
+    }
+
+    console.log("FCM: Retrying backend registration for existing token...");
+    return await this.registerToken(this.currentToken);
+  }
+
+  /**
+   * Test FCM configuration and connectivity
+   * Comprehensive test that checks all components
+   */
+  async testFCMConfiguration(): Promise<{
+    success: boolean;
+    steps: Array<{ step: string; status: "✅" | "❌"; message: string }>;
+  }> {
+    const steps: Array<{ step: string; status: "✅" | "❌"; message: string }> = [];
+
+    // Step 1: Check browser support
+    const notificationSupport = "Notification" in window;
+    steps.push({
+      step: "Browser Notification Support",
+      status: notificationSupport ? "✅" : "❌",
+      message: notificationSupport
+        ? "Browser supports notifications"
+        : "Browser does not support notifications",
+    });
+
+    const serviceWorkerSupport = "serviceWorker" in navigator;
+    steps.push({
+      step: "Service Worker Support",
+      status: serviceWorkerSupport ? "✅" : "❌",
+      message: serviceWorkerSupport
+        ? "Browser supports service workers"
+        : "Browser does not support service workers",
+    });
+
+    if (!notificationSupport || !serviceWorkerSupport) {
+      return { success: false, steps };
+    }
+
+    // Step 2: Check permission
+    const permission = Notification.permission;
+    steps.push({
+      step: "Notification Permission",
+      status: permission === "granted" ? "✅" : "❌",
+      message: `Permission: ${permission}`,
+    });
+
+    if (permission !== "granted") {
+      const newPermission = await Notification.requestPermission();
+      steps.push({
+        step: "Request Permission",
+        status: newPermission === "granted" ? "✅" : "❌",
+        message: `New permission: ${newPermission}`,
+      });
+
+      if (newPermission !== "granted") {
+        return { success: false, steps };
+      }
+    }
+
+    // Step 3: Check service worker
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      steps.push({
+        step: "Service Worker Ready",
+        status: "✅",
+        message: `Active with scope: ${registration.scope}`,
+      });
+    } catch (error) {
+      steps.push({
+        step: "Service Worker Ready",
+        status: "❌",
+        message: `Error: ${error}`,
+      });
+      return { success: false, steps };
+    }
+
+    // Step 4: Check VAPID key
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    steps.push({
+      step: "VAPID Key Configuration",
+      status: vapidKey ? "✅" : "❌",
+      message: vapidKey
+        ? "VAPID key configured"
+        : "VAPID key missing in environment",
+    });
+
+    if (!vapidKey) {
+      return { success: false, steps };
+    }
+
+    // Step 5: Test FCM initialization
+    try {
+      const token = await this.initialize();
+      steps.push({
+        step: "FCM Token Generation",
+        status: token ? "✅" : "❌",
+        message: token
+          ? `Token obtained: ${token.substring(0, 20)}...`
+          : "Failed to obtain token",
+      });
+
+      if (!token) {
+        return { success: false, steps };
+      }
+    } catch (error: any) {
+      steps.push({
+        step: "FCM Token Generation",
+        status: "❌",
+        message: `Error: ${error?.message || error}`,
+      });
+      return { success: false, steps };
+    }
+
+    // Step 6: Test backend registration
+    if (this.currentToken) {
+      try {
+        const registered = await this.registerToken(this.currentToken);
+        steps.push({
+          step: "Backend Registration",
+          status: registered ? "✅" : "❌",
+          message: registered
+            ? "Token registered with backend"
+            : "Backend registration failed",
+        });
+      } catch (error: any) {
+        steps.push({
+          step: "Backend Registration",
+          status: "❌",
+          message: `Error: ${error?.message || error}`,
+        });
+      }
+    }
+
+    const success = steps.every((s) => s.status === "✅");
+    return { success, steps };
   }
 }
 

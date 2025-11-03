@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots
 - Add provider active service banner that appears across provider pages (except the active-service page) showing current in-progress booking details with quick navigation
 
+### Fixed
+
+- Fix FCM token registration failures across different browsers (Chrome, Brave, Vivaldi, Safari)
+- Improve FCM error handling with specific messages for configuration issues
+- Add comprehensive FCM diagnostics and testing tools
+- Create troubleshooting guide for Firebase Cloud Messaging setup
+
 ## Payment Integration Feature
 
 ### Added
