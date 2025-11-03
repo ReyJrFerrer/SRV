@@ -391,7 +391,9 @@ const NotificationsPage = () => {
 
   // Toggle selection for a notification id
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   };
 
   const clearSelection = () => {
@@ -483,13 +485,15 @@ const NotificationsPage = () => {
                 >
                   {editMode ? "Done" : "Edit"}
                 </button>
-                <button
-                  onClick={markAllAsRead}
-                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-                >
-                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                  Mark all as read
-                </button>
+                {unread.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  >
+                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                    Mark all as read
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -501,20 +505,22 @@ const NotificationsPage = () => {
           <div className="text-sm text-gray-700">
             {selectedIds.length} selected
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={bulkMarkAsRead}
-              disabled={selectedIds.length === 0}
-              className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
-            >
-              Mark selected as read
-            </button>
+            <div className="flex items-center gap-2">
+            {unread.length > 0 && (
+              <button
+                onClick={bulkMarkAsRead}
+                disabled={selectedIds.length === 0}
+                className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+              >
+                Mark as read
+              </button>
+            )}
             <button
               onClick={bulkDeleteSelected}
               disabled={selectedIds.length === 0}
               className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
             >
-              Delete selected
+              Delete
             </button>
             <button
               onClick={() => {
