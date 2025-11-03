@@ -147,7 +147,7 @@ class FCMService {
     // Just check if token isn't too old
     // Don't call getToken() here as it may create a new registration
     const isStale = this.isTokenStale(metadata);
-    
+
     if (isStale) {
       console.log("FCM: Cached token is stale, needs refresh");
       return false;
@@ -575,10 +575,7 @@ class FCMService {
    * Register FCM token with backend
    * Implements retry logic for better resilience
    */
-  async registerToken(
-    token: string,
-    retries: number = 2,
-  ): Promise<boolean> {
+  async registerToken(token: string, retries: number = 2): Promise<boolean> {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         if (attempt > 0) {
@@ -903,25 +900,42 @@ class FCMService {
 
     console.group("🔍 FCM Diagnostics");
     console.log("Browser:", diagnostics.browser);
-    console.log("Notification Support:", diagnostics.notificationSupport ? "✅" : "❌");
+    console.log(
+      "Notification Support:",
+      diagnostics.notificationSupport ? "✅" : "❌",
+    );
     console.log("Notification Permission:", diagnostics.notificationPermission);
-    console.log("Service Worker Support:", diagnostics.serviceWorkerSupport ? "✅" : "❌");
-    console.log("Service Worker Ready:", diagnostics.serviceWorkerReady ? "✅" : "❌");
+    console.log(
+      "Service Worker Support:",
+      diagnostics.serviceWorkerSupport ? "✅" : "❌",
+    );
+    console.log(
+      "Service Worker Ready:",
+      diagnostics.serviceWorkerReady ? "✅" : "❌",
+    );
     console.log("Service Worker Scope:", diagnostics.serviceWorkerScope);
     console.log("FCM Initialized:", diagnostics.fcmInitialized ? "✅" : "❌");
     console.log("Has Token:", diagnostics.hasToken ? "✅" : "❌");
-    console.log("Token Age:", diagnostics.tokenAge ? `${Math.floor(diagnostics.tokenAge / 1000 / 60)} minutes` : "N/A");
+    console.log(
+      "Token Age:",
+      diagnostics.tokenAge
+        ? `${Math.floor(diagnostics.tokenAge / 1000 / 60)} minutes`
+        : "N/A",
+    );
     console.log("Token Health:", diagnostics.tokenHealth);
-    console.log("VAPID Key Configured:", diagnostics.vapidKeyConfigured ? "✅" : "❌");
-    
+    console.log(
+      "VAPID Key Configured:",
+      diagnostics.vapidKeyConfigured ? "✅" : "❌",
+    );
+
     if (diagnostics.errors.length > 0) {
       console.group("⚠️ Errors:");
-      diagnostics.errors.forEach(error => console.log("  -", error));
+      diagnostics.errors.forEach((error) => console.log("  -", error));
       console.groupEnd();
     } else {
       console.log("Errors:", "None ✅");
     }
-    
+
     console.groupEnd();
   }
 
@@ -947,7 +961,8 @@ class FCMService {
     success: boolean;
     steps: Array<{ step: string; status: "✅" | "❌"; message: string }>;
   }> {
-    const steps: Array<{ step: string; status: "✅" | "❌"; message: string }> = [];
+    const steps: Array<{ step: string; status: "✅" | "❌"; message: string }> =
+      [];
 
     // Step 1: Check browser support
     const notificationSupport = "Notification" in window;

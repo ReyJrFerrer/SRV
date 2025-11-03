@@ -8,7 +8,7 @@ Run this first to see what's wrong:
 
 ```javascript
 // Import FCM service (make sure app is loaded)
-const fcmService = (await import('/src/services/fcmService.ts')).default;
+const fcmService = (await import("/src/services/fcmService.ts")).default;
 
 // Print full diagnostics
 await fcmService.printDiagnostics();
@@ -19,12 +19,12 @@ await fcmService.printDiagnostics();
 Test entire FCM flow:
 
 ```javascript
-const fcmService = (await import('/src/services/fcmService.ts')).default;
+const fcmService = (await import("/src/services/fcmService.ts")).default;
 
 // Run full test
 const result = await fcmService.testFCMConfiguration();
 
-console.log('Test Success:', result.success ? '✅' : '❌');
+console.log("Test Success:", result.success ? "✅" : "❌");
 console.table(result.steps);
 ```
 
@@ -38,20 +38,24 @@ async function testRawFCM() {
   try {
     // 1. Check service worker
     const registration = await navigator.serviceWorker.ready;
-    console.log('✅ Service Worker:', registration.scope);
-    
+    console.log("✅ Service Worker:", registration.scope);
+
     // 2. Check permission
     const permission = await Notification.requestPermission();
-    console.log('✅ Permission:', permission);
-    
-    if (permission !== 'granted') {
-      throw new Error('Permission denied');
+    console.log("✅ Permission:", permission);
+
+    if (permission !== "granted") {
+      throw new Error("Permission denied");
     }
-    
+
     // 3. Import Firebase
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
-    
+    const { initializeApp } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
+    );
+    const { getMessaging, getToken } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js"
+    );
+
     // 4. Initialize Firebase
     const app = initializeApp({
       apiKey: "AIzaSyDRyQ38qXdEDDF1gcw33UhyAXocHAtnQzs",
@@ -59,34 +63,34 @@ async function testRawFCM() {
       projectId: "devsrv-rey",
       storageBucket: "devsrv-rey.firebasestorage.app",
       messagingSenderId: "851522429469",
-      appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4"
+      appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4",
     });
-    
+
     const messaging = getMessaging(app);
-    console.log('✅ Firebase initialized');
-    
+    console.log("✅ Firebase initialized");
+
     // 5. Get token
     const token = await getToken(messaging, {
-      vapidKey: 'BJsC4118PVulthWXC7mN1pWkxOG_0ao1my5QwoWj5Hjs7z1j5wOnekEYLeC20YBpbOJdicCRSlfH0adFCNx8vKs',
-      serviceWorkerRegistration: registration
+      vapidKey:
+        "BJsC4118PVulthWXC7mN1pWkxOG_0ao1my5QwoWj5Hjs7z1j5wOnekEYLeC20YBpbOJdicCRSlfH0adFCNx8vKs",
+      serviceWorkerRegistration: registration,
     });
-    
-    console.log('✅ Token obtained:', token);
+
+    console.log("✅ Token obtained:", token);
     return token;
-    
   } catch (error) {
-    console.error('❌ Raw FCM test failed:', error);
-    
+    console.error("❌ Raw FCM test failed:", error);
+
     // Detailed error info
     if (error.code) {
-      console.error('Error code:', error.code);
+      console.error("Error code:", error.code);
     }
     if (error.message) {
-      console.error('Error message:', error.message);
+      console.error("Error message:", error.message);
     }
-    
+
     // Specific error handling
-    if (error.message?.includes('Registration failed')) {
+    if (error.message?.includes("Registration failed")) {
       console.error(`
 ⚠️ REGISTRATION FAILED - PUSH SERVICE ERROR
 
@@ -105,7 +109,7 @@ IMMEDIATE FIXES:
 Then refresh and try again.
       `);
     }
-    
+
     throw error;
   }
 }
@@ -118,7 +122,7 @@ testRawFCM();
 
 ```javascript
 // This will help you construct the URL to check APIs
-const projectId = 'devsrv-rey';
+const projectId = "devsrv-rey";
 const apiUrls = {
   library: `https://console.cloud.google.com/apis/library?project=${projectId}`,
   dashboard: `https://console.cloud.google.com/apis/dashboard?project=${projectId}`,
@@ -126,11 +130,11 @@ const apiUrls = {
   cloudMessaging: `https://console.cloud.google.com/apis/library/googlecloudmessaging.googleapis.com?project=${projectId}`,
 };
 
-console.log('🔗 Google Cloud Console Links:');
-console.log('API Library:', apiUrls.library);
-console.log('API Dashboard:', apiUrls.dashboard);
-console.log('FCM API:', apiUrls.fcmApi);
-console.log('Cloud Messaging:', apiUrls.cloudMessaging);
+console.log("🔗 Google Cloud Console Links:");
+console.log("API Library:", apiUrls.library);
+console.log("API Dashboard:", apiUrls.dashboard);
+console.log("FCM API:", apiUrls.fcmApi);
+console.log("Cloud Messaging:", apiUrls.cloudMessaging);
 ```
 
 ## Reset Everything
@@ -138,44 +142,44 @@ console.log('Cloud Messaging:', apiUrls.cloudMessaging);
 If nothing works, reset all FCM state:
 
 ```javascript
-const fcmService = (await import('/src/services/fcmService.ts')).default;
+const fcmService = (await import("/src/services/fcmService.ts")).default;
 
 // Nuclear option - reset everything
 await fcmService.resetFCMState();
 
-console.log('✅ FCM state reset. Refresh the page and try again.');
+console.log("✅ FCM state reset. Refresh the page and try again.");
 ```
 
 ## Check Token Health
 
 ```javascript
-const fcmService = (await import('/src/services/fcmService.ts')).default;
+const fcmService = (await import("/src/services/fcmService.ts")).default;
 
 const health = fcmService.getTokenHealth();
-console.log('Token Health:', health);
+console.log("Token Health:", health);
 
 if (!health.hasToken) {
-  console.log('❌ No token available');
+  console.log("❌ No token available");
 } else if (health.isStale) {
-  console.log('⚠️ Token is stale (> 7 days old)');
+  console.log("⚠️ Token is stale (> 7 days old)");
   if (health.canRefresh) {
-    console.log('You can refresh now');
+    console.log("You can refresh now");
   } else {
-    console.log('Next refresh available:', health.nextRefreshTime);
+    console.log("Next refresh available:", health.nextRefreshTime);
   }
 } else {
-  console.log('✅ Token is healthy');
-  console.log('Age:', Math.floor(health.age / 1000 / 60), 'minutes');
+  console.log("✅ Token is healthy");
+  console.log("Age:", Math.floor(health.age / 1000 / 60), "minutes");
 }
 ```
 
 ## Force Token Refresh
 
 ```javascript
-const fcmService = (await import('/src/services/fcmService.ts')).default;
+const fcmService = (await import("/src/services/fcmService.ts")).default;
 
 const newToken = await fcmService.forceRefresh();
-console.log('New token:', newToken);
+console.log("New token:", newToken);
 ```
 
 ## Check Service Workers
@@ -194,7 +198,7 @@ registrations.forEach((reg, i) => {
 
 // Check for ready SW
 const ready = await navigator.serviceWorker.ready;
-console.log('Ready SW scope:', ready.scope);
+console.log("Ready SW scope:", ready.scope);
 ```
 
 ## Unregister All Service Workers
@@ -205,20 +209,20 @@ const registrations = await navigator.serviceWorker.getRegistrations();
 
 for (const registration of registrations) {
   await registration.unregister();
-  console.log('Unregistered:', registration.scope);
+  console.log("Unregistered:", registration.scope);
 }
 
-console.log('✅ All service workers unregistered. Refresh the page.');
+console.log("✅ All service workers unregistered. Refresh the page.");
 ```
 
 ## Check Notification Permission
 
 ```javascript
-console.log('Current permission:', Notification.permission);
+console.log("Current permission:", Notification.permission);
 
-if (Notification.permission !== 'granted') {
+if (Notification.permission !== "granted") {
   const newPermission = await Notification.requestPermission();
-  console.log('New permission:', newPermission);
+  console.log("New permission:", newPermission);
 }
 ```
 
@@ -226,13 +230,13 @@ if (Notification.permission !== 'granted') {
 
 ```javascript
 // Test if browser can show notifications
-if (Notification.permission === 'granted') {
-  new Notification('Test Notification', {
-    body: 'If you see this, notifications work!',
-    icon: '/logo.svg'
+if (Notification.permission === "granted") {
+  new Notification("Test Notification", {
+    body: "If you see this, notifications work!",
+    icon: "/logo.svg",
   });
 } else {
-  console.log('Permission not granted. Current:', Notification.permission);
+  console.log("Permission not granted. Current:", Notification.permission);
 }
 ```
 
@@ -240,48 +244,58 @@ if (Notification.permission === 'granted') {
 
 ```javascript
 // Check stored FCM data
-const fcmData = localStorage.getItem('fcm_token_metadata');
+const fcmData = localStorage.getItem("fcm_token_metadata");
 
 if (fcmData) {
   const metadata = JSON.parse(fcmData);
-  console.log('Stored token metadata:');
-  console.log('- Token:', metadata.token?.substring(0, 20) + '...');
-  console.log('- Timestamp:', new Date(metadata.timestamp));
-  console.log('- Age:', Math.floor((Date.now() - metadata.timestamp) / 1000 / 60), 'minutes');
-  console.log('- Refresh attempts:', metadata.refreshAttempts);
+  console.log("Stored token metadata:");
+  console.log("- Token:", metadata.token?.substring(0, 20) + "...");
+  console.log("- Timestamp:", new Date(metadata.timestamp));
+  console.log(
+    "- Age:",
+    Math.floor((Date.now() - metadata.timestamp) / 1000 / 60),
+    "minutes",
+  );
+  console.log("- Refresh attempts:", metadata.refreshAttempts);
 } else {
-  console.log('No token metadata in localStorage');
+  console.log("No token metadata in localStorage");
 }
 ```
 
 ## Clear FCM localStorage
 
 ```javascript
-localStorage.removeItem('fcm_token_metadata');
-console.log('✅ FCM metadata cleared');
+localStorage.removeItem("fcm_token_metadata");
+console.log("✅ FCM metadata cleared");
 ```
 
 ## Full System Check
 
 ```javascript
-console.log('=== FULL SYSTEM CHECK ===\n');
+console.log("=== FULL SYSTEM CHECK ===\n");
 
-console.log('1. Browser:', navigator.userAgent);
-console.log('2. Notification support:', 'Notification' in window ? '✅' : '❌');
-console.log('3. Service Worker support:', 'serviceWorker' in navigator ? '✅' : '❌');
-console.log('4. Current permission:', Notification.permission);
-console.log('5. VAPID key configured:', !!import.meta.env.VITE_FIREBASE_VAPID_KEY ? '✅' : '❌');
+console.log("1. Browser:", navigator.userAgent);
+console.log("2. Notification support:", "Notification" in window ? "✅" : "❌");
+console.log(
+  "3. Service Worker support:",
+  "serviceWorker" in navigator ? "✅" : "❌",
+);
+console.log("4. Current permission:", Notification.permission);
+console.log(
+  "5. VAPID key configured:",
+  !!import.meta.env.VITE_FIREBASE_VAPID_KEY ? "✅" : "❌",
+);
 
 // Service workers
 const registrations = await navigator.serviceWorker.getRegistrations();
-console.log('6. Service workers:', registrations.length);
+console.log("6. Service workers:", registrations.length);
 
 // localStorage
-const fcmData = localStorage.getItem('fcm_token_metadata');
-console.log('7. Token in localStorage:', !!fcmData ? '✅' : '❌');
+const fcmData = localStorage.getItem("fcm_token_metadata");
+console.log("7. Token in localStorage:", !!fcmData ? "✅" : "❌");
 
 // FCM service state
-const fcmService = (await import('/src/services/fcmService.ts')).default;
-console.log('8. FCM initialized:', fcmService.isReady() ? '✅' : '❌');
-console.log('9. Has token:', !!fcmService.getToken() ? '✅' : '❌');
+const fcmService = (await import("/src/services/fcmService.ts")).default;
+console.log("8. FCM initialized:", fcmService.isReady() ? "✅" : "❌");
+console.log("9. Has token:", !!fcmService.getToken() ? "✅" : "❌");
 ```
