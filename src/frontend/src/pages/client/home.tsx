@@ -15,7 +15,7 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLocationStore } from "../../store/locationStore";
 // import PWAInstall from "../../components/PWAInstall";
 // import NotificationSettings from "../../components/NotificationSettings";
@@ -57,7 +57,27 @@ const ClientHomePage: React.FC = () => {
     skipPostLoginLocationPrompt,
     postLoginBlockedModalVisible,
     acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
   } = useAuth();
+
+  const location = useLocation();
+
+  // If we arrived from create-profile with the navigation state asking for the
+  // post-login prompt, trigger it now. This covers the create-profile -> Home
+  // redirect case where the AuthContext decision is owned by auth but the UI
+  // is rendered by Home.
+  useEffect(() => {
+    const shouldShow = (location.state as any)?.postLoginLocationPrompt;
+    if (shouldShow) {
+      showPostLoginLocationPrompt();
+      try {
+        // Clear the navigation state so we don't retrigger on future mounts
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch {
+        // ignore navigation replace errors
+      }
+    }
+  }, [location, showPostLoginLocationPrompt]);
 
   // --- Render: Client Home Page Layout ---
   return (

@@ -64,6 +64,7 @@ interface AuthContextType {
   skipPostLoginLocationPrompt: () => void;
   postLoginBlockedModalVisible: boolean;
   acknowledgePostLoginBlockedModal: () => void;
+  showPostLoginLocationPrompt: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -366,6 +367,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setPostLoginBlockedModalVisible(false);
   };
 
+  const showPostLoginLocationPrompt = () => {
+    try {
+      sessionStorage.setItem("post_login_location_prompt_shown", "1");
+    } catch {}
+    setPostLoginLocationPromptVisible(true);
+  };
+
   const value = {
     authClient,
     isAuthenticated,
@@ -395,6 +403,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     skipPostLoginLocationPrompt,
     postLoginBlockedModalVisible,
     acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
   };
 
   return (
