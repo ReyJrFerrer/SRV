@@ -194,10 +194,10 @@ import { createPortal } from "react-dom";
 // Portal-based menu so it can overlap outside of the notification container.
 const NotificationMenu: React.FC<{
   id: string;
-  onDelete?: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
   onMarkAsRead: (e: React.MouseEvent) => void;
   isRead: boolean;
-}> = ({ id, onDelete: _onDelete, onMarkAsRead, isRead }) => {
+}> = ({ id, onDelete, onMarkAsRead, isRead }) => {
   const [open, setOpen] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const [coords, setCoords] = React.useState<{
@@ -249,9 +249,7 @@ const NotificationMenu: React.FC<{
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.dispatchEvent(
-      new CustomEvent("notification-ui-delete", { detail: { id } }),
-    );
+    onDelete(e);
     setOpen(false);
   };
 
@@ -323,24 +321,6 @@ const NotificationsPageSP = () => {
     document.title = "Notifications | SRV";
   }, []);
 
-  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
-  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
-
-  React.useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
-      const id = detail?.id;
-      if (!id) return;
-      setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    };
-    window.addEventListener("notification-ui-delete", handler as EventListener);
-    return () =>
-      window.removeEventListener(
-        "notification-ui-delete",
-        handler as EventListener,
-      );
-  }, []);
-
   const handleNotificationClick = (notification: ProviderNotification) => {
     if (!notification.read) {
       markAsRead(notification.id);
@@ -374,9 +354,7 @@ const NotificationsPageSP = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    const deletedSet = new Set(deletedIds);
-    const filtered = notifications.filter((n) => !deletedSet.has(n.id));
-    return filtered.reduce<{
+    return notifications.reduce<{
       unread: ProviderNotification[];
       read: ProviderNotification[];
     }>(
@@ -390,7 +368,7 @@ const NotificationsPageSP = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications, deletedIds]);
+  }, [notifications]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
