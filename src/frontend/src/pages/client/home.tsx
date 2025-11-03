@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useUserProfile } from "../../hooks/useUserProfile";
 // feedback popup moved to a separate component
 import FeedbackPopup from "../../components/common/FeedbackPopup";
-import Categories from "../../components/client/Categories";
-import ServiceList from "../../components/client/ServiceListRow";
+import Categories from "../../components/client/home page/Categories";
+import ServiceList from "../../components/client/home page/ServiceListRow";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 
-import ClientHeader from "../../components/client/Header";
+import ClientHeader from "../../components/client/home page/Header";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
 import { useAuth } from "../../context/AuthContext";

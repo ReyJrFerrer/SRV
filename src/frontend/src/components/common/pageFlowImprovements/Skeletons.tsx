@@ -1,4 +1,5 @@
 import React from "react";
+import { ServiceListingCardSkeleton } from "../../client/home page/ServiceListingCard";
 
 interface ServiceCardSkeletonProps {
   className?: string;
@@ -42,7 +43,7 @@ export const ServiceGridSkeleton: React.FC<{ count?: number }> = ({
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
-          <ServiceCardSkeleton />
+          <ServiceListingCardSkeleton />
         </div>
       ))}
     </div>

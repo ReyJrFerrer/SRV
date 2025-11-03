@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useServiceManagement } from "../../hooks/serviceManagement";
-import authCanisterService from "../../services/authCanisterService";
+import { useAuth } from "../../../context/AuthContext";
+import { useServiceManagement } from "../../../hooks/serviceManagement";
+import authCanisterService from "../../../services/authCanisterService";
 import { APIProvider } from "@vis.gl/react-google-maps";
-import MapFunctions from "../common/GMapFunctions/MapFunctions";
-import { useLocationStore } from "../../store/locationStore";
+import MapFunctions from "../../common/GMapFunctions/MapFunctions";
+import { useLocationStore } from "../../../store/locationStore";
 
 // --- Props ---
 export interface HeaderProps {

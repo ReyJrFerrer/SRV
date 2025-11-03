@@ -5,11 +5,11 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
-import useServiceById from "../../hooks/serviceDetail";
-import { useServiceReviews } from "../../hooks/reviewManagement";
-import { EnrichedService } from "../../hooks/serviceInformation";
-import { useUserImage } from "../../hooks/useMediaLoader";
-import { useServiceImages } from "../../hooks/useMediaLoader";
+import useServiceById from "../../../hooks/serviceDetail";
+import { useServiceReviews } from "../../../hooks/reviewManagement";
+import { EnrichedService } from "../../../hooks/serviceInformation";
+import { useUserImage } from "../../../hooks/useMediaLoader";
+import { useServiceImages } from "../../../hooks/useMediaLoader";
 
 interface ServiceListItemProps {
   service: EnrichedService;
@@ -17,6 +17,45 @@ interface ServiceListItemProps {
   isGridItem?: boolean;
   retainMobileLayout?: boolean;
 }
+
+// Skeleton that mirrors the ServiceListItem layout
+export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({ className = "" }) => {
+  return (
+    <div className={`group relative flex flex-col items-center transition-all duration-300 ${className}`}>
+      <div className={`service-card relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg`}>
+        <div className="relative">
+          <div className="h-32 w-full animate-pulse rounded-t-2xl bg-gray-200" />
+          <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
+            <div className="h-8 w-8 animate-pulse rounded-full border border-gray-200 bg-white shadow" />
+            <div className="h-6 w-20 animate-pulse rounded-full bg-gray-200" />
+          </div>
+        </div>
+
+        <div className="service-content relative flex flex-grow flex-col p-4">
+          <div className="flex-grow">
+            <div className="mx-auto mb-2 h-5 w-3/4 animate-pulse rounded bg-gray-200" />
+            <div className="mx-auto mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+            <div className="mb-2 flex items-center text-sm text-blue-700">
+              <div className="h-4 w-4 mr-1 animate-pulse rounded-full bg-gray-200" />
+              <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+            </div>
+          </div>
+
+          <div className="mt-4 grid w-full grid-cols-2 gap-2">
+            <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
+          </div>
+        </div>
+
+        <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
+          <div className="flex h-10 items-center justify-center rounded-xl border border-yellow-300 bg-yellow-200 px-2 shadow-sm">
+            <div className="h-4 w-36 animate-pulse rounded bg-gray-200" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
@@ -166,22 +205,32 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               />
             </div>
             {/* Category icon and availability badge row */}
-            <div className="pointer-events-none absolute left-2 right-2 top-2 flex items-center justify-between">
-              {/* Category icon */}
+            <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
+              {/* Category icon as an action button (small yellow circle with icon) */}
               {service.category?.slug && (
-                <img
-                  src={getCategoryIcon(service.category.slug)}
-                  alt={service.category.name || "Category"}
-                  className="h-8 w-8 rounded-full border border-gray-200 bg-white shadow"
+                <button
+                  aria-label={service.category.name || "Category"}
                   title={service.category.name}
-                  onError={(e) => {
-                    e.currentTarget.src = "/images/categories/others.svg";
+                  className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 shadow-md border border-white"
+                  onClick={(e) => {
+                    // stop propagation so clicking the category icon doesn't navigate the card link
+                    e.stopPropagation();
                   }}
-                />
+                >
+                  <img
+                    src={getCategoryIcon(service.category.slug)}
+                    alt={service.category.name || "Category"}
+                    className="h-5 w-5 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/categories/others.svg";
+                    }}
+                  />
+                </button>
               )}
+
               {/* Availability badge */}
               <div
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
+                className={`rounded-full px-3 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
                 style={{ marginLeft: "auto" }}
               >
                 {availabilityText}
