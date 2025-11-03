@@ -170,47 +170,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
               // Auto-grant admin role for testing (development only)
               // if (import.meta.env.DEV) {
-                try {
+              try {
+                console.log(
+                  "🔧 [Admin] Auto-creating admin profile and granting role...",
+                );
+
+                // Create admin profile with UID and principal
+                const adminResult = await createAdminProfile(
+                  result.user.uid,
+                  principal,
+                  "Admin User",
+                  "",
+                );
+
+                console.log("✅ [Admin] Admin profile created successfully!");
+
+                // Force token refresh to get updated claims
+                if (adminResult.success) {
                   console.log(
-                    "🔧 [Admin] Auto-creating admin profile and granting role...",
+                    "🔄 [Admin] Refreshing token to get admin claims...",
                   );
+                  await result.user.getIdToken(true); // Force refresh
+                  console.log("✅ [Admin] Token refreshed with admin claims!");
 
-                  // Create admin profile with UID and principal
-                  const adminResult = await createAdminProfile(
-                    result.user.uid,
-                    principal,
-                    "Admin User",
-                    "",
-                  );
-
-                  console.log("✅ [Admin] Admin profile created successfully!");
-
-                  // Force token refresh to get updated claims
-                  if (adminResult.success) {
-                    console.log(
-                      "🔄 [Admin] Refreshing token to get admin claims...",
-                    );
-                    await result.user.getIdToken(true); // Force refresh
-                    console.log(
-                      "✅ [Admin] Token refreshed with admin claims!",
-                    );
-
-                    // Update admin status immediately
-                    setIsAdmin(true);
-                  } else {
-                    console.warn(
-                      "⚠️ [Admin] Admin profile creation failed:",
-                      adminResult.message,
-                    );
-                    setIsAdmin(true);
-                  }
-                } catch (adminError) {
+                  // Update admin status immediately
+                  setIsAdmin(true);
+                } else {
                   console.warn(
-                    "⚠️ [Admin] Could not auto-create admin profile:",
-                    adminError,
+                    "⚠️ [Admin] Admin profile creation failed:",
+                    adminResult.message,
                   );
                   setIsAdmin(true);
                 }
+              } catch (adminError) {
+                console.warn(
+                  "⚠️ [Admin] Could not auto-create admin profile:",
+                  adminError,
+                );
+                setIsAdmin(true);
+              }
               // }
 
               // Notify user if they need to create a profile
