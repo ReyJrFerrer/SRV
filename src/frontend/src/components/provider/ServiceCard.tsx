@@ -86,7 +86,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Category image at top left of service image */}
         <img
-          src={getCategoryImage(service.category?.slug || service.category?.name)}
+          src={getCategoryImage(
+            service.category?.slug || service.category?.name,
+          )}
           alt="Category"
           className="absolute left-2 top-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
           onError={(e) => {
@@ -116,7 +118,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <span className="flex items-center gap-1 text-yellow-400">
           <StarIcon className="h-5 w-5" />
           <span className="font-semibold text-yellow-500">
-            {service.averageRating || "0"} / 5 {" "}
+            {service.averageRating || "0"} / 5{" "}
             <span className="text-gray-400">({service.reviewCount})</span>
           </span>
         </span>
@@ -132,7 +134,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         >
           <button
             className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
-              hasActiveBookings(service.id) ? "cursor-not-allowed opacity-50" : ""
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
             } ${
               isActive
                 ? "bg-yellow-500 text-white hover:bg-yellow-600"
@@ -144,7 +148,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 onToggleActive(service.id, isActive);
               }
             }}
-            disabled={updatingId === service.id || hasActiveBookings(service.id)}
+            disabled={
+              updatingId === service.id || hasActiveBookings(service.id)
+            }
           >
             {isActive ? (
               <>
@@ -169,7 +175,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         >
           <button
             className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600 ${
-              hasActiveBookings(service.id) ? "cursor-not-allowed opacity-50" : ""
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -177,7 +185,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 onDelete(service.id);
               }
             }}
-            disabled={deletingId === service.id || hasActiveBookings(service.id)}
+            disabled={
+              deletingId === service.id || hasActiveBookings(service.id)
+            }
           >
             <TrashIcon className="h-5 w-5" />
             <h5 className="text-lg">Delete</h5>

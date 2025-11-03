@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { PlusIcon, WrenchScrewdriverIcon, TrashIcon, LockOpenIcon, LockClosedIcon } from "@heroicons/react/24/solid";
+import {
+  PlusIcon,
+  WrenchScrewdriverIcon,
+  TrashIcon,
+  LockOpenIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/solid";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import ServiceCard from "../../components/provider/ServiceCard";
 import BottomNavigation from "../../components/provider/BottomNavigation";
@@ -11,8 +17,6 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
 // ServiceCard has been extracted to a separate component under components/provider
-
-
 
 // Tooltip now provided by ../../components/common/Tooltip
 

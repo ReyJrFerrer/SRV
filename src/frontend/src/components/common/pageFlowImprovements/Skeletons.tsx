@@ -9,15 +9,15 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`relative flex flex-col items-center w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg p-6 ${className ?? ""}`}
+      className={`relative flex w-full flex-col items-center overflow-hidden rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg ${className ?? ""}`}
     >
       {/* Image placeholder (matches ServiceCard image height & rounded corners) */}
       <div className="relative w-full">
         <div className="h-32 w-full animate-pulse rounded-xl bg-gray-200" />
         {/* category circle (top-left) */}
-        <div className="absolute left-2 top-2 h-10 w-10 animate-pulse rounded-full bg-gray-200 border-2 border-white" />
+        <div className="absolute left-2 top-2 h-10 w-10 animate-pulse rounded-full border-2 border-white bg-gray-200" />
         {/* status badge (top-right) */}
-        <div className="absolute right-2 top-2 h-6 rounded-full px-3 py-1 animate-pulse bg-gray-200" />
+        <div className="absolute right-2 top-2 h-6 animate-pulse rounded-full bg-gray-200 px-3 py-1" />
       </div>
 
       {/* Content placeholder (title + rating) */}
@@ -51,7 +51,7 @@ export const ServiceGridSkeleton: React.FC<{ count?: number }> = ({
 
 export default ServiceCardSkeleton;
 
-// Generic horizontal list item skeleton 
+// Generic horizontal list item skeleton
 export const ListItemSkeleton: React.FC = () => (
   <div className="flex items-start gap-4 p-4">
     <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
