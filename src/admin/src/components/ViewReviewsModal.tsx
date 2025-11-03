@@ -60,13 +60,14 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const { clientReviews, providerReviews } =
+      const { receivedReviews, givenAsClientReviews, givenAsProviderReviews } =
         await adminServiceCanister.getUserDetailedReviews(userId);
 
       // Combine all reviews
       const allReviews = [
-        ...clientReviews.map((r: any) => ({ ...r, type: "received" })),
-        ...providerReviews.map((r: any) => ({ ...r, type: "given" })),
+        ...receivedReviews.map((r: any) => ({ ...r, type: "received" })),
+        ...givenAsClientReviews.map((r: any) => ({ ...r, type: "given" })),
+        ...givenAsProviderReviews.map((r: any) => ({ ...r, type: "given" })),
       ];
 
       setReviews(allReviews);
