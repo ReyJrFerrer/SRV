@@ -73,13 +73,14 @@ const NOTIFICATION_STATUS = {
  * @param {string} notificationType - Type of notification
  * @param {string} userType - Type of user (client/provider)
  * @param {string} entityId - Optional entity ID (booking ID or conversation ID)
- * @return {string} URL href
+ * @return {string} URL href (always returns a string, never null)
  */
 function generateNotificationHref(notificationType, userType, entityId) {
-  // Special handling for ticket notifications - make them non-clickable
+  // Special handling for generic notifications without entityId
+  // Return "/" to make them clickable to homepage instead of null
   if (notificationType === NOTIFICATION_TYPES.GENERIC &&
-      (!entityId|| entityId === null)) {
-    return null; // Return null to make notification non-clickable
+      (!entityId || entityId === null)) {
+    return "/"; // Return "/" instead of null to avoid undefined issues
   }
 
   if (!entityId) return "/";
@@ -218,6 +219,7 @@ async function sendFCMNotification(userId, notification) {
     }
 
     // Prepare FCM message
+    // IMPORTANT: All data fields must be strings for FCM
     const message = {
       token: fcmToken,
       notification: {
@@ -225,12 +227,14 @@ async function sendFCMNotification(userId, notification) {
         body: notification.message,
       },
       data: {
-        notificationId: notification.id,
-        type: notification.notificationType,
-        userType: notification.userType,
-        href: notification.href || "/",
-        bookingId: notification.relatedEntityId || "",
-        timestamp: notification.createdAt.toISOString(),
+        notificationId: String(notification.id || ""),
+        type: String(notification.notificationType || "generic"),
+        userType: String(notification.userType || "client"),
+        href: String(notification.href || "/"),
+        bookingId: String(notification.relatedEntityId || ""),
+        timestamp: notification.createdAt ?
+          notification.createdAt.toISOString() :
+          new Date().toISOString(),
       },
       android: {
         priority: "high",

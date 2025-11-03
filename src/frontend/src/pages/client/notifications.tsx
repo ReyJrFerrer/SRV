@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
@@ -241,10 +241,10 @@ import { createPortal } from "react-dom";
 // Uses a global custom event to ensure only one menu is open at a time.
 const NotificationMenu: React.FC<{
   id: string;
-  onDelete?: (e: React.MouseEvent) => void; // kept for compatibility but not called for now
+  onDelete: (e: React.MouseEvent) => void;
   onMarkAsRead: (e: React.MouseEvent) => void;
   isRead: boolean;
-}> = ({ id, onDelete: _onDelete, onMarkAsRead, isRead }) => {
+}> = ({ id, onDelete, onMarkAsRead, isRead }) => {
   const [open, setOpen] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const [coords, setCoords] = React.useState<{
@@ -297,15 +297,11 @@ const NotificationMenu: React.FC<{
     });
   };
 
-  // Delete should be a frontend-only UI action for now. Dispatch an event the page listens to.
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.dispatchEvent(
-      new CustomEvent("notification-ui-delete", { detail: { id } }),
-    );
+    onDelete(e);
     setOpen(false);
   };
-
   const menu = (
     <div
       style={
@@ -389,49 +385,39 @@ const NotificationsPage = () => {
       );
   }, []);
 
-  // Toggle selection for a notification id
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
-  const clearSelection = () => {
-    setSelectedIds([]);
-  };
+  const clearSelection = () => setSelectedIds([]);
 
-  const bulkMarkAsRead = async () => {
-    // Mark UI optimistic, then call markAsRead for each
+  const bulkMarkAsRead = () => {
     selectedIds.forEach((id) => markAsRead(id));
     clearSelection();
     setEditMode(false);
   };
 
   const bulkDeleteSelected = () => {
-    // UI-only delete for now
     setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
     clearSelection();
     setEditMode(false);
   };
 
-  // Set the document title
-  useEffect(() => {
-    document.title = "Notifications | SRV";
-  }, []);
-
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    // Only navigate if href exists (null href means non-clickable)
-    if (notification.href) {
-      navigate(notification.href);
-    }
+
+    if (!notification.href) return;
+
+    // default navigation behavior
+    navigate(notification.href);
   };
 
   const { unread, read } = useMemo(() => {
-    const deletedSet = new Set(deletedIds);
-    const filtered = notifications.filter((n) => !deletedSet.has(n.id));
+    const filtered = notifications.filter((n) => !deletedIds.includes(n.id));
     return filtered.reduce<{
       unread: Notification[];
       read: Notification[];
@@ -453,14 +439,14 @@ const NotificationsPage = () => {
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div
           className={`w-full px-4 py-3 ${
-            unreadCount <= 0
+            notifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
         >
           <h1
             className={`text-2xl font-extrabold tracking-tight text-black ${
-              unreadCount > 0
+              notifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
             }`}

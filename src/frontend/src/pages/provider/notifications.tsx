@@ -227,10 +227,10 @@ import { createPortal } from "react-dom";
 // Portal-based menu so it can overlap outside of the notification container.
 const NotificationMenu: React.FC<{
   id: string;
-  onDelete?: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
   onMarkAsRead: (e: React.MouseEvent) => void;
   isRead: boolean;
-}> = ({ id, onDelete: _onDelete, onMarkAsRead, isRead }) => {
+}> = ({ id, onDelete, onMarkAsRead, isRead }) => {
   const [open, setOpen] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const [coords, setCoords] = React.useState<{
@@ -282,9 +282,7 @@ const NotificationMenu: React.FC<{
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.dispatchEvent(
-      new CustomEvent("notification-ui-delete", { detail: { id } }),
-    );
+    onDelete(e);
     setOpen(false);
   };
 
@@ -431,8 +429,7 @@ const NotificationsPageSP = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    const deletedSet = new Set(deletedIds);
-    const filtered = notifications.filter((n) => !deletedSet.has(n.id));
+    const filtered = notifications.filter((n) => !deletedIds.includes(n.id));
     return filtered.reduce<{
       unread: ProviderNotification[];
       read: ProviderNotification[];
@@ -454,14 +451,14 @@ const NotificationsPageSP = () => {
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div
           className={`w-full px-4 py-3 ${
-            unreadCount <= 0
+            notifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
         >
           <h1
             className={`text-2xl font-extrabold tracking-tight text-black ${
-              unreadCount > 0
+              notifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
             }`}
