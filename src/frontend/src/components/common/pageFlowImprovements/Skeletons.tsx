@@ -9,20 +9,27 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg ${className ?? ""}`}
+      className={`relative flex flex-col items-center w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg p-6 ${className ?? ""}`}
     >
-      {/* Image placeholder */}
-      <div className="aspect-video w-full animate-pulse bg-gray-200" />
+      {/* Image placeholder (matches ServiceCard image height & rounded corners) */}
+      <div className="relative w-full">
+        <div className="h-32 w-full animate-pulse rounded-xl bg-gray-200" />
+        {/* category circle (top-left) */}
+        <div className="absolute left-2 top-2 h-10 w-10 animate-pulse rounded-full bg-gray-200 border-2 border-white" />
+        {/* status badge (top-right) */}
+        <div className="absolute right-2 top-2 h-6 rounded-full px-3 py-1 animate-pulse bg-gray-200" />
+      </div>
 
-      {/* Content placeholder */}
-      <div className="p-4">
-        <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-gray-200" />
-        <div className="mb-3 h-4 w-1/2 animate-pulse rounded bg-gray-200" />
-        <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-          <div className="h-6 w-24 animate-pulse rounded bg-gray-200" />
-          <div className="h-5 w-20 animate-pulse rounded bg-gray-200" />
-        </div>
+      {/* Content placeholder (title + rating) */}
+      <div className="mt-4 w-full text-center">
+        <div className="mx-auto mb-2 h-5 w-3/4 animate-pulse rounded bg-gray-200" />
+        <div className="mx-auto mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+      </div>
+
+      {/* Action buttons placeholder (two columns) */}
+      <div className="mt-4 grid w-full grid-cols-2 gap-2">
+        <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
       </div>
     </div>
   );
@@ -44,7 +51,7 @@ export const ServiceGridSkeleton: React.FC<{ count?: number }> = ({
 
 export default ServiceCardSkeleton;
 
-// Generic horizontal list item skeleton (e.g., notifications)
+// Generic horizontal list item skeleton 
 export const ListItemSkeleton: React.FC = () => (
   <div className="flex items-start gap-4 p-4">
     <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
