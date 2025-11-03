@@ -143,6 +143,52 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
+    // When viewing ALL bookings, apply a default sort order:
+    // Inprogress, confirmed, pending, completed, cancelled, then others.
+    if (activeTab === "ALL") {
+      const toLower = (s?: string) => (s || "").toLowerCase();
+
+      const inProgress = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "in progress" || s === "in_progress" || s === "inprogress";
+      });
+
+      const confirmed = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "accepted" || s === "confirmed";
+      });
+
+      const pending = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "requested" || s === "pending";
+      });
+
+      const completed = processedBookings.filter((b) => toLower(b.status) === "completed");
+
+      const cancelled = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "cancelled" || s === "declined";
+      });
+
+      const others = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return (
+          s !== "in progress" &&
+          s !== "in_progress" &&
+          s !== "inprogress" &&
+          s !== "accepted" &&
+          s !== "confirmed" &&
+          s !== "requested" &&
+          s !== "pending" &&
+          s !== "completed" &&
+          s !== "cancelled" &&
+          s !== "declined"
+        );
+      });
+
+      return [...inProgress, ...confirmed, ...pending, ...completed, ...cancelled, ...others];
+    }
+
     return processedBookings;
   }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
 

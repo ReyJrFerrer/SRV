@@ -342,22 +342,30 @@ const ProviderBookingsPage: React.FC = () => {
           b.status?.toLowerCase() === "pending" ||
           b.status?.toLowerCase() === "requested",
       );
+      const completed = filteredBookings.filter(
+        (b) => b.status?.toLowerCase() === "completed",
+      );
       const cancelled = filteredBookings.filter(
         (b) =>
           b.status?.toLowerCase() === "cancelled" ||
           b.status?.toLowerCase() === "declined",
       );
       const others = filteredBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() !== "inprogress" &&
-          b.status?.toLowerCase() !== "confirmed" &&
-          b.status?.toLowerCase() !== "accepted" &&
-          b.status?.toLowerCase() !== "pending" &&
-          b.status?.toLowerCase() !== "requested" &&
-          b.status?.toLowerCase() !== "cancelled" &&
-          b.status?.toLowerCase() !== "declined",
+        (b) => {
+          const s = b.status?.toLowerCase();
+          return (
+            s !== "inprogress" &&
+            s !== "confirmed" &&
+            s !== "accepted" &&
+            s !== "pending" &&
+            s !== "requested" &&
+            s !== "completed" &&
+            s !== "cancelled" &&
+            s !== "declined"
+          );
+        },
       );
-      return [...inProgress, ...confirmed, ...pending, ...cancelled, ...others];
+      return [...inProgress, ...confirmed, ...pending, ...completed, ...cancelled, ...others];
     }
 
     return filteredBookings;
