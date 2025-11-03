@@ -186,6 +186,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   ]);
 
   // After login, show a friendly modal asking to enable location access (once per session)
+  // Only show the prompt when the permission state is truly unknown ("not_set").
+  // If permission is already "allowed", "denied" or "unsupported", do not prompt.
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) return;
@@ -193,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const alreadyShown = sessionStorage.getItem(
       "post_login_location_prompt_shown",
     );
-    if (!alreadyShown && locationStore.locationStatus !== "allowed") {
+    if (!alreadyShown && locationStore.locationStatus === "not_set") {
       setPostLoginLocationPromptVisible(true);
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     }
