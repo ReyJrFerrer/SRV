@@ -400,6 +400,16 @@ const NotificationsPage = () => {
   };
 
   const bulkDeleteSelected = () => {
+    // Use the same delete function as the single-item delete (three-dot menu)
+    // Call deleteNotification for each selected id and optimistically hide them
+    selectedIds.forEach((id) => {
+      try {
+        deleteNotification(id);
+      } catch (e) {
+        // swallow; hook should handle errors. Optimistically hide locally anyway.
+        console.error("bulk delete failed for", id, e);
+      }
+    });
     setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
     clearSelection();
     setEditMode(false);
