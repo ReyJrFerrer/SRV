@@ -143,8 +143,8 @@ export const authCanisterService = {
   },
 
   /**
-   * Validate phone number before receiving the OTP 
-   * @param phone User's phone number 
+   * Validate phone number before receiving the OTP
+   * @param phone User's phone number
    */
   async validatePhone(phone: string): Promise<boolean> {
     try {
@@ -155,8 +155,6 @@ export const authCanisterService = {
       return false;
     }
   },
-
-  
 
   /**
    * Update an existing profile (requires authentication)
