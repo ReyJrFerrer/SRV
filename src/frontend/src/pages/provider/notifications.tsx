@@ -18,6 +18,7 @@ import {
   ChatBubbleLeftRightIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
 // Helper to get the right icon for each notification type, with colored backgrounds
 const NotificationIcon: React.FC<{ type: ProviderNotification["type"] }> = ({
@@ -86,7 +87,9 @@ const NotificationIcon: React.FC<{ type: ProviderNotification["type"] }> = ({
 const NotificationItem: React.FC<{
   notification: ProviderNotification;
   onClick: () => void;
-}> = ({ notification, onClick }) => {
+  onDelete: () => void;
+  onMarkAsRead: () => void;
+}> = ({ notification, onClick, onDelete, onMarkAsRead }) => {
   const timeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -138,7 +141,7 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-start space-x-4 p-4 transition-colors duration-200 ${
+      className={`relative flex items-start space-x-4 p-4 transition-colors duration-200 ${
         notification.href ? "cursor-pointer" : "cursor-default"
       } ${
         !notification.read
@@ -163,9 +166,140 @@ const NotificationItem: React.FC<{
           {timeAgo(notification.timestamp)}
         </p>
       </div>
-      {!notification.read && (
-        <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
-      )}
+      <div className="ml-3 flex items-center gap-2">
+        {!notification.read && (
+          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
+        )}
+        <div className="relative">
+          <NotificationMenu
+            id={notification.id}
+            onDelete={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            onMarkAsRead={(e) => {
+              e.stopPropagation();
+              onMarkAsRead();
+            }}
+            isRead={notification.read}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+import { createPortal } from "react-dom";
+
+// Portal-based menu so it can overlap outside of the notification container.
+const NotificationMenu: React.FC<{
+  id: string;
+  onDelete?: (e: React.MouseEvent) => void;
+  onMarkAsRead: (e: React.MouseEvent) => void;
+  isRead: boolean;
+}> = ({ id, onDelete: _onDelete, onMarkAsRead, isRead }) => {
+  const [open, setOpen] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  React.useEffect(() => {
+    const onOtherOpen = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { id?: string } | undefined;
+      if (!detail) return;
+      if (detail.id !== id) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener(
+      "notification-menu-open",
+      onOtherOpen as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "notification-menu-open",
+        onOtherOpen as EventListener,
+      );
+  }, [id]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const btn = buttonRef.current;
+    if (!btn) {
+      setOpen((s) => !s);
+      window.dispatchEvent(
+        new CustomEvent("notification-menu-open", { detail: { id } }),
+      );
+      return;
+    }
+    const rect = btn.getBoundingClientRect();
+    setCoords({ top: rect.bottom + 8, left: rect.right - 160 });
+    setOpen((s) => {
+      const next = !s;
+      if (next) {
+        window.dispatchEvent(
+          new CustomEvent("notification-menu-open", { detail: { id } }),
+        );
+      }
+      return next;
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.dispatchEvent(
+      new CustomEvent("notification-ui-delete", { detail: { id } }),
+    );
+    setOpen(false);
+  };
+
+  const menu = (
+    <div
+      style={
+        coords
+          ? { position: "fixed", top: coords.top, left: coords.left }
+          : undefined
+      }
+      className="z-50 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="py-1">
+        {!isRead && (
+          <button
+            onClick={(e) => {
+              onMarkAsRead(e);
+              setOpen(false);
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Mark as read
+          </button>
+        )}
+        <button
+          onClick={handleDelete}
+          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative inline-block text-left">
+      <button
+        ref={buttonRef}
+        className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
+        onClick={handleToggle}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label="Notification options"
+      >
+        <EllipsisVerticalIcon className="h-5 w-5" />
+      </button>
+      {open && createPortal(menu, document.body)}
     </div>
   );
 };
@@ -180,12 +314,31 @@ const NotificationsPageSP = () => {
     loading,
     error,
     markAsRead,
+    deleteNotification,
     markAllAsRead,
   } = useProviderNotifications();
 
   // Set the document title
   useEffect(() => {
     document.title = "Notifications | SRV";
+  }, []);
+
+  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
+  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
+      const id = detail?.id;
+      if (!id) return;
+      setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    };
+    window.addEventListener("notification-ui-delete", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "notification-ui-delete",
+        handler as EventListener,
+      );
   }, []);
 
   const handleNotificationClick = (notification: ProviderNotification) => {
@@ -221,7 +374,9 @@ const NotificationsPageSP = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    return notifications.reduce<{
+    const deletedSet = new Set(deletedIds);
+    const filtered = notifications.filter((n) => !deletedSet.has(n.id));
+    return filtered.reduce<{
       unread: ProviderNotification[];
       read: ProviderNotification[];
     }>(
@@ -235,7 +390,7 @@ const NotificationsPageSP = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications]);
+  }, [notifications, deletedIds]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
@@ -304,6 +459,8 @@ const NotificationsPageSP = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => deleteNotification(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
                         />
                       </Appear>
                     ))}
@@ -326,6 +483,8 @@ const NotificationsPageSP = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => deleteNotification(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
                         />
                       </Appear>
                     ))}
