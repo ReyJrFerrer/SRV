@@ -143,6 +143,22 @@ export const authCanisterService = {
   },
 
   /**
+   * Validate phone number before receiving the OTP 
+   * @param phone User's phone number 
+   */
+  async validatePhone(phone: string): Promise<boolean> {
+    try {
+      const result = await identityBridge.validatePhone(phone);
+      return result.success;
+    } catch (error) {
+      console.error("Error validating phone:", error);
+      return false;
+    }
+  },
+
+  
+
+  /**
    * Update an existing profile (requires authentication)
    * @param name Optional new name
    * @param phone Optional new phone number

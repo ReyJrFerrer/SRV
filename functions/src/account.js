@@ -94,7 +94,40 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
 
   return true;
 }
+/**
+ * Validates phone number if it exists
+ */
+exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  // Check authentication
+  if (!auth) {
+    console.error("❌ No authentication context found!");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to create a profile",
+    );
+  }
+  const {phone} = data.data || data;
 
+  if (!validatePhone(phone)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid phone format",
+    );
+  }
+
+  // Check if phone is already taken
+  if (await isPhoneTaken(phone)) {
+    throw new functions.https.HttpsError(
+      "already-exists",
+      "Phone number is already registered",
+    );
+  }
+  return {
+    success: true,
+    message: "Phone number is available",
+  };
+});
 /**
  * Create a new user profile
  * HTTP onCall Cloud Function
