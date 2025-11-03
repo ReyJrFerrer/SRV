@@ -253,9 +253,7 @@ export default function CreateProfilePage() {
       setSuccess(true);
       setTimeout(() => {
         navigate(
-          selectedRole === "Client"
-            ? "/client/home"
-            : "/provider/home",
+          selectedRole === "Client" ? "/client/home" : "/provider/home",
           { state: { postLoginLocationPrompt: selectedRole === "Client" } },
         );
       }, 2000);
