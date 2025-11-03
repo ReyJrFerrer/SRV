@@ -1,5 +1,7 @@
 import React from "react";
-import ServiceListItem, { ServiceListingCardSkeleton } from "./home page/ServiceListingCard";
+import ServiceListItem, {
+  ServiceListingCardSkeleton,
+} from "./home page/ServiceListingCard";
 import {
   EnrichedService,
   useAllServicesWithProviders,

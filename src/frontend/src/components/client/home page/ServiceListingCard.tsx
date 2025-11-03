@@ -19,10 +19,16 @@ interface ServiceListItemProps {
 }
 
 // Skeleton that mirrors the ServiceListItem layout
-export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({ className = "" }) => {
+export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
+  className = "",
+}) => {
   return (
-    <div className={`group relative flex flex-col items-center transition-all duration-300 ${className}`}>
-      <div className={`service-card relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg`}>
+    <div
+      className={`group relative flex flex-col items-center transition-all duration-300 ${className}`}
+    >
+      <div
+        className={`service-card relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg`}
+      >
         <div className="relative">
           <div className="h-32 w-full animate-pulse rounded-t-2xl bg-gray-200" />
           <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
@@ -36,7 +42,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({ c
             <div className="mx-auto mb-2 h-5 w-3/4 animate-pulse rounded bg-gray-200" />
             <div className="mx-auto mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
             <div className="mb-2 flex items-center text-sm text-blue-700">
-              <div className="h-4 w-4 mr-1 animate-pulse rounded-full bg-gray-200" />
+              <div className="mr-1 h-4 w-4 animate-pulse rounded-full bg-gray-200" />
               <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
             </div>
           </div>
@@ -211,7 +217,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 <button
                   aria-label={service.category.name || "Category"}
                   title={service.category.name}
-                  className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 shadow-md border border-white"
+                  className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white bg-yellow-100 shadow-md"
                   onClick={(e) => {
                     // stop propagation so clicking the category icon doesn't navigate the card link
                     e.stopPropagation();
