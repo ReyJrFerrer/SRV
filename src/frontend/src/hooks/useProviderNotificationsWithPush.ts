@@ -400,12 +400,30 @@ export const useProviderNotificationsWithPush = () => {
     providerNotificationStore.setCount(0);
   }, [notifications]);
 
+  // Delete a notification from canister and update local state
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    try {
+      await notificationCanisterService.deleteNotification(notificationId);
+    } catch (error) {
+      console.error("Error deleting provider notification:", error);
+      // proceed to update local state even if canister call fails
+    }
+
+    setNotifications((prev) => {
+      const newNotifications = prev.filter((n) => n.id !== notificationId);
+      const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+      providerNotificationStore.setCount(newUnreadCount);
+      return newNotifications;
+    });
+  }, []);
+
   return {
     notifications,
     unreadCount,
     loading: loading || bookingLoading,
     error: error || bookingError,
     markAsRead,
+  deleteNotification,
     markAsUnread,
     markAllAsRead,
     // Additional properties for push notification status
