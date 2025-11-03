@@ -213,9 +213,10 @@ const NotificationMenu: React.FC<{
 }> = ({ id, onDelete: _onDelete, onMarkAsRead, isRead }) => {
   const [open, setOpen] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
-  const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+  } | null>(null);
 
   // Close other menus when another menu opens
   React.useEffect(() => {
@@ -226,8 +227,15 @@ const NotificationMenu: React.FC<{
         setOpen(false);
       }
     };
-    window.addEventListener("notification-menu-open", onOtherOpen as EventListener);
-    return () => window.removeEventListener("notification-menu-open", onOtherOpen as EventListener);
+    window.addEventListener(
+      "notification-menu-open",
+      onOtherOpen as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "notification-menu-open",
+        onOtherOpen as EventListener,
+      );
   }, [id]);
 
   // compute and store button coordinates when opening so the portal can be positioned
@@ -236,7 +244,9 @@ const NotificationMenu: React.FC<{
     const btn = buttonRef.current;
     if (!btn) {
       setOpen((s) => !s);
-      window.dispatchEvent(new CustomEvent("notification-menu-open", { detail: { id } }));
+      window.dispatchEvent(
+        new CustomEvent("notification-menu-open", { detail: { id } }),
+      );
       return;
     }
     const rect = btn.getBoundingClientRect();
@@ -245,7 +255,9 @@ const NotificationMenu: React.FC<{
     setOpen((s) => {
       const next = !s;
       if (next) {
-        window.dispatchEvent(new CustomEvent("notification-menu-open", { detail: { id } }));
+        window.dispatchEvent(
+          new CustomEvent("notification-menu-open", { detail: { id } }),
+        );
       }
       return next;
     });
@@ -254,13 +266,19 @@ const NotificationMenu: React.FC<{
   // Delete should be a frontend-only UI action for now. Dispatch an event the page listens to.
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.dispatchEvent(new CustomEvent("notification-ui-delete", { detail: { id } }));
+    window.dispatchEvent(
+      new CustomEvent("notification-ui-delete", { detail: { id } }),
+    );
     setOpen(false);
   };
 
   const menu = (
     <div
-      style={coords ? { position: "fixed", top: coords.top, left: coords.left } : undefined}
+      style={
+        coords
+          ? { position: "fixed", top: coords.top, left: coords.left }
+          : undefined
+      }
       className="z-50 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
       onClick={(e) => e.stopPropagation()}
     >
@@ -327,7 +345,11 @@ const NotificationsPage = () => {
       setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     };
     window.addEventListener("notification-ui-delete", handler as EventListener);
-    return () => window.removeEventListener("notification-ui-delete", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "notification-ui-delete",
+        handler as EventListener,
+      );
   }, []);
 
   // Set the document title
@@ -363,7 +385,6 @@ const NotificationsPage = () => {
       { unread: [], read: [] },
     );
   }, [notifications, deletedIds]);
-
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">

@@ -423,7 +423,7 @@ export const useProviderNotificationsWithPush = () => {
     loading: loading || bookingLoading,
     error: error || bookingError,
     markAsRead,
-  deleteNotification,
+    deleteNotification,
     markAsUnread,
     markAllAsRead,
     // Additional properties for push notification status
