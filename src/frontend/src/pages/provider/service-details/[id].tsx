@@ -30,7 +30,7 @@ import ImagesSection from "../../../components/provider/service-details/ImagesSe
 import HeroSection from "../../../components/provider/service-details/HeroSection";
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =

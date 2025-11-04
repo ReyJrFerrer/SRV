@@ -7,7 +7,6 @@ import UserServicesPage from "./pages/userServices";
 import { ValidationInboxPage } from "./pages/validationInbox";
 import { TicketInboxPage } from "./pages/ticketInbox";
 import { TicketDetailsPage } from "./pages/ticketDetails";
-import ServiceDetailsPage from "./pages/serviceDetails";
 import { UserBookingsPage } from "./pages/userBookings";
 import { AnalyticsPage } from "./pages/analytics";
 import UserWalletPage from "./pages/userWallet";

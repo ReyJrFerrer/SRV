@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 
 // Components
-import BottomNavigation from "../../components/client/BottomNavigation";
+import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 
 const ClientChatPage: React.FC = () => {

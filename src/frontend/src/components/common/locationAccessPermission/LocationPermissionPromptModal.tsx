@@ -1,5 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
+import { useLocationStore } from "../../../store/locationStore";
+import { useEffect, useState } from "react";
 
 interface Props {
   visible: boolean;
@@ -14,7 +16,49 @@ const LocationPermissionPromptModal: React.FC<Props> = ({
   onSkip,
   onClose,
 }) => {
+  // If the caller marked the modal visible but the browser permission is
+  // already known (allowed/denied/unsupported), don't render the prompt.
+  // This prevents showing the prompt when the user has blocked location.
+  const { locationStatus } = useLocationStore();
+  const [permissionState, setPermissionState] = useState<
+    "prompt" | "granted" | "denied" | null
+  >(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state) setPermissionState(p.state as any);
+            // Also listen for changes so the modal reacts if the user updates
+            // site permissions while the page is open.
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                setPermissionState(p.state as any);
+              };
+            }
+          })
+          .catch(() => {
+            /* ignore permission API errors */
+          });
+      } catch {
+        /* ignore */
+      }
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   if (!visible) return null;
+  // If the store already knows the permission, only show when unknown
+  if (locationStatus !== "not_set") return null;
+  // If the Permissions API reports anything other than 'prompt', don't show
+  if (permissionState && permissionState !== "prompt") return null;
 
   const content = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">

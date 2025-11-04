@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
   useProviderBookingManagement,
@@ -342,22 +342,60 @@ const ProviderBookingsPage: React.FC = () => {
           b.status?.toLowerCase() === "pending" ||
           b.status?.toLowerCase() === "requested",
       );
+      const completed = filteredBookings.filter(
+        (b) => b.status?.toLowerCase() === "completed",
+      );
       const cancelled = filteredBookings.filter(
         (b) =>
           b.status?.toLowerCase() === "cancelled" ||
           b.status?.toLowerCase() === "declined",
       );
-      const others = filteredBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() !== "inprogress" &&
-          b.status?.toLowerCase() !== "confirmed" &&
-          b.status?.toLowerCase() !== "accepted" &&
-          b.status?.toLowerCase() !== "pending" &&
-          b.status?.toLowerCase() !== "requested" &&
-          b.status?.toLowerCase() !== "cancelled" &&
-          b.status?.toLowerCase() !== "declined",
-      );
-      return [...inProgress, ...confirmed, ...pending, ...cancelled, ...others];
+      const others = filteredBookings.filter((b) => {
+        const s = b.status?.toLowerCase();
+        return (
+          s !== "inprogress" &&
+          s !== "confirmed" &&
+          s !== "accepted" &&
+          s !== "pending" &&
+          s !== "requested" &&
+          s !== "completed" &&
+          s !== "cancelled" &&
+          s !== "declined"
+        );
+      });
+
+      // Secondary sort: within each default group, sort by date (scheduledDateTime || createdAt)
+      // We sort newest first so recent bookings appear at the top of each group.
+      const getBookingTime = (b: ProviderEnhancedBooking) => {
+        try {
+          const dateStr =
+            (b as any).scheduledDateTime ||
+            (b as any).requestedDate ||
+            b.createdAt;
+          return new Date(dateStr).getTime() || 0;
+        } catch (err) {
+          return 0;
+        }
+      };
+
+      const sortByDateDesc = (arr: ProviderEnhancedBooking[]) =>
+        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+
+      sortByDateDesc(inProgress);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(pending);
+      sortByDateDesc(completed);
+      sortByDateDesc(cancelled);
+      sortByDateDesc(others);
+
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+        ...others,
+      ];
     }
 
     return filteredBookings;

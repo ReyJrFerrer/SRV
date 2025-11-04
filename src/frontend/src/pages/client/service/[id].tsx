@@ -12,7 +12,7 @@ import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceImages } from "../../../hooks/useMediaLoader";
 import { useReputation } from "../../../hooks/useReputation";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/client/NavigationBar";
 import {
   ServicePackage,
   serviceCanisterService,

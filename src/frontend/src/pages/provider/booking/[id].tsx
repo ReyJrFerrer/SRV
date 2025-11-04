@@ -9,7 +9,7 @@ import {
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
 import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useClientRating } from "../../../hooks/useClientRating";
@@ -20,6 +20,9 @@ import BookingProgressSection from "../../../components/provider/booking-details
 import CommissionInfo from "../../../components/provider/booking-details/CommissionInfo";
 import DeclineConfirmDialog from "../../../components/provider/booking-details/DeclineConfirmDialog";
 import ActionButtons from "../../../components/provider/booking-details/ActionButtons";
+import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
+import { bookingCanisterService } from "../../../services/bookingCanisterService";
+import { toast } from "sonner";
 
 // BookingProgressSection moved to components
 
@@ -35,6 +38,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // State for decline confirmation dialog
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+  // State for cancellation
+  const [cancellingBooking, setCancellingBooking] =
+    useState<ProviderEnhancedBooking | null>(null);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
   // State for client-specific data
   const [clientReviews, setClientReviews] = useState<any[]>([]);
   const [clientReputation, setClientReputation] = useState<any>(null);
@@ -255,6 +262,31 @@ const ProviderBookingDetailsPage: React.FC = () => {
       setShowDeclineConfirm(false);
     }
   }, [specificBooking, declineBookingById, refreshBookings, bookings]);
+
+  // Handle booking cancellation
+  const handleCancelBooking = async (reason: string) => {
+    if (!specificBooking) return;
+
+    try {
+      setIsCancelling(true);
+      await bookingCanisterService.cancelBooking(specificBooking.id, reason);
+      toast.success("Booking has been cancelled.");
+      await refreshBookings();
+      const updatedBooking = bookings.find(
+        (booking) => booking.id === specificBooking.id,
+      );
+      if (updatedBooking) {
+        setSpecificBooking(updatedBooking);
+      }
+      setCancellingBooking(null);
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast.error("Failed to cancel booking. Please try again.");
+      throw error;
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   console.log("From booking details page", specificBooking);
 
@@ -823,6 +855,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 onChat={handleChatClient}
                 onAccept={handleAcceptBooking}
                 onDecline={handleDeclineBooking}
+                onCancel={() => setCancellingBooking(specificBooking)}
                 onStart={handleStartService}
                 onComplete={handleCompleteService}
                 canStartServiceNow={canStartServiceNow}
@@ -862,6 +895,19 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       <div></div>
       <BottomNavigation />
+
+      {/* Cancel Booking Dialog */}
+      <CancelWithReasonButton
+        show={!!cancellingBooking}
+        confirmTitle="Cancel Booking?"
+        confirmDescription="Please provide a reason for cancelling this booking."
+        textareaLabel="Reason for cancellation"
+        submitText={isCancelling ? "Cancelling..." : "Submit"}
+        cancelText="Back"
+        isSubmitting={isCancelling}
+        onSubmit={handleCancelBooking}
+        onCancel={() => setCancellingBooking(null)}
+      />
     </div>
   );
 };

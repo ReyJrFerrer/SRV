@@ -8,7 +8,7 @@ import {
   ExclamationTriangleIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 
 const PayoutSettingsPage: React.FC = () => {
   const { identity } = useAuth();

@@ -14,7 +14,7 @@ if (!admin.apps.length) {
 }
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 10, region: "asia-east1"});
+setGlobalOptions({maxInstances: 10});
 
 /**
  * Initialize categories on startup

@@ -1,16 +1,16 @@
 {
   "projects": {
-    "default": "srv-3a984",
-    "srv": "srv-3a984"
+    "default": "devsrv-rey",
+    "srv": "devsrv-rey"
   },
   "targets": {
-    "srv-3a984": {
+    "devsrv-rey": {
       "hosting": {
         "client": [
-          "srv-3a984"
+          "srvepinoy"
         ],
         "admin": [
-          "srv-admin"
+          "srveadmin"
         ]
       }
     }

@@ -11,7 +11,7 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { CurrencyDollarIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { useWallet } from "../../hooks/useWallet";
 import { Transaction } from "../../services/walletCanisterService";
 import { Toaster, toast } from "sonner";

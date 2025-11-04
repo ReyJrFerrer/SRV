@@ -10,7 +10,7 @@ import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceById } from "../../../../hooks/serviceInformation";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useUserImage } from "../../../../hooks/useMediaLoader";
-import BottomNavigation from "../../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../../components/provider/NavigationBar";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,

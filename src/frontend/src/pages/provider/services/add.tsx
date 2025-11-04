@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import ServiceDrafts from "../../../components/provider/add service/ServiceDrafts";
 import {
   getFilesEntries,

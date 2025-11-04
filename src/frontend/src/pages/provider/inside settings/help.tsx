@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();

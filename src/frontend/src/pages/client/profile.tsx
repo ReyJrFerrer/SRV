@@ -14,7 +14,7 @@ import {
   InformationCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook

@@ -124,6 +124,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     locationStore.initialize();
   }, [locationStore]);
 
+  // If the browser already granted geolocation permission (or the user
+  // enables it while the app is open), proactively request the location so
+  // the store moves to 'allowed' and the UI can display the current address.
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "granted") {
+              // Only request if the store doesn't already have an allowed state
+              if (locationStore.locationStatus !== "allowed") {
+                try {
+                  locationStore.requestLocation().catch(() => {});
+                } catch {}
+              }
+            }
+
+            // Listen for permission changes while the app is open
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                try {
+                  if (
+                    p.state === "granted" &&
+                    locationStore.locationStatus !== "allowed"
+                  ) {
+                    locationStore.requestLocation().catch(() => {});
+                  }
+                } catch {}
+              };
+            }
+          })
+          .catch(() => {
+            /* ignore permission API errors */
+          });
+      } catch {
+        /* ignore */
+      }
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [locationStore]);
+
   // Listen to Firebase auth state changes
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -186,6 +233,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   ]);
 
   // After login, show a friendly modal asking to enable location access (once per session)
+  // Only show the prompt when the permission state is truly unknown ("not_set").
+  // If permission is already "allowed", "denied" or "unsupported", do not prompt.
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) return;
@@ -193,7 +242,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const alreadyShown = sessionStorage.getItem(
       "post_login_location_prompt_shown",
     );
-    if (!alreadyShown && locationStore.locationStatus !== "allowed") {
+    if (!alreadyShown && locationStore.locationStatus === "not_set") {
       setPostLoginLocationPromptVisible(true);
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     }
@@ -210,6 +259,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAwaitingGeoResult(false);
     }
   }, [awaitingGeoResult, locationStore.locationStatus]);
+
+  // If the post-login prompt is visible but the store reports a known permission
+  // state (allowed/denied/unsupported), hide the prompt automatically. This
+  // covers the race where a page triggers the prompt before the location store
+  // has finished initializing and the real permission state becomes known.
+  useEffect(() => {
+    if (!postLoginLocationPromptVisible) return;
+    const status = locationStore.locationStatus;
+    if (status !== "not_set") {
+      setPostLoginLocationPromptVisible(false);
+    }
+  }, [postLoginLocationPromptVisible, locationStore.locationStatus]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -368,6 +429,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const showPostLoginLocationPrompt = () => {
+    // Only show the prompt when we truly don't have a permission state.
+    // This prevents callers (e.g. navigation state or other flows) from forcing
+    // the prompt when the user already allowed/denied location.
+    if (locationStore.locationStatus !== "not_set") {
+      return;
+    }
     try {
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     } catch {}

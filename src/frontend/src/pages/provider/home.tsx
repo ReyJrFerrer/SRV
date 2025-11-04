@@ -1,24 +1,36 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-// Remove Next.js Head import
 
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
 import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import { useLocationStore } from "../../store/locationStore";
 import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
-
-// import PWAInstall from "../../components/PWAInstall";
-// import NotificationSettings from "../../components/NotificationSettings";
+import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { useAuth } from "../../context/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Post-login location prompt helpers
+  const {
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
+  } = useAuth();
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // --- Use Zustand location store for location status ---
   const { locationStatus } = useLocationStore();
@@ -33,6 +45,32 @@ const ProviderHomePage: React.FC = () => {
       }
     },
   );
+
+  // Fallback: Permissions API check for geolocation denied state.
+  const [permissionApiDenied, setPermissionApiDenied] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "denied") setPermissionApiDenied(true);
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                setPermissionApiDenied(p.state === "denied");
+              };
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Use the service management hook
   const {
@@ -86,6 +124,15 @@ const ProviderHomePage: React.FC = () => {
   }, [userProfile]);
 
   useEffect(() => {
+    // If navigation state requests the post-login prompt (e.g. create-profile -> provider/home)
+    const shouldShow = (location.state as any)?.postLoginLocationPrompt;
+    if (shouldShow) {
+      showPostLoginLocationPrompt();
+      try {
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch {}
+    }
+
     const loadProviderData = async () => {
       try {
         // Check authentication first
@@ -186,24 +233,55 @@ const ProviderHomePage: React.FC = () => {
   }
 
   if (locationStatus === "denied" && !dismissedLocationBlock) {
-    return (
-      <LocationBlockedModal
-        visible={true}
-        onClose={() => {
-          setDismissedLocationBlock(true);
-          try {
-            sessionStorage.setItem("providerDismissedLocationBlock", "1");
-          } catch {}
-        }}
-      />
-    );
+    // We'll render the blocked modal below along with the post-login blocked
+    // modal; don't return early here to avoid duplicate modal instances.
   }
 
   return (
     <>
-      {/* <PWAInstall />
+      {/* Only show the friendly permission prompt when the permission state is unknown */}
+      <LocationPermissionPromptModal
+        visible={postLoginLocationPromptVisible && locationStatus === "not_set"}
+        onEnable={async () => {
+          try {
+            await requestLocationFromPrompt();
+          } catch {}
+        }}
+        onSkip={() => {
+          skipPostLoginLocationPrompt();
+        }}
+        onClose={() => {
+          skipPostLoginLocationPrompt();
+        }}
+      />
 
-      <NotificationSettings /> */}
+      {/* Single blocked modal for both denied state and post-login flow */}
+      {(() => {
+        const visible =
+          (locationStatus === "denied" && !dismissedLocationBlock) ||
+          (permissionApiDenied && !dismissedLocationBlock) ||
+          postLoginBlockedModalVisible;
+
+        const handleBlockedClose = () => {
+          // Always mark dismissed for provider as well so the modal doesn't
+          // immediately reappear after manual save/close.
+          setDismissedLocationBlock(true);
+          try {
+            sessionStorage.setItem("providerDismissedLocationBlock", "1");
+          } catch {}
+
+          if (postLoginBlockedModalVisible) {
+            acknowledgePostLoginBlockedModal();
+          }
+        };
+
+        return (
+          <LocationBlockedModal
+            visible={visible}
+            onClose={handleBlockedClose}
+          />
+        );
+      })()}
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}

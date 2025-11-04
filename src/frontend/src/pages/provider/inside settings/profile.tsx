@@ -10,7 +10,7 @@ import {
   InformationCircleIcon,
   ExclamationTriangleIcon, // Import the new icon
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/provider/BottomNavigation"; // Changed to provider bottom nav
+import BottomNavigation from "../../../components/provider/NavigationBar"; // Changed to provider bottom nav
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";

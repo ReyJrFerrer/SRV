@@ -19,7 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "jsx": "react-jsx",
-    "types": ["node", "vite/client", "vitest/globals"]
+    "types": ["node", "vite/client", "vitest/globals", "google.maps"]
   },
   "include": ["./"]
 }

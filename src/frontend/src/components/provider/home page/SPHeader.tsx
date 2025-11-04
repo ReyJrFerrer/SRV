@@ -22,7 +22,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { unreadCount } = useProviderNotifications();
-  const { locationStatus } = useLocationStore();
+  // location status is handled by MapFunctions; no direct usage here
+  useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const mapsApiKey =
@@ -221,11 +222,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             <div className="mt-2 flex items-center gap-2">
               <MapFunctions />
             </div>
-            {(locationStatus === "denied" || locationStatus === "not_set") && (
-              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-                Location access is off. Some features are limited.
-              </div>
-            )}
           </div>
         </div>
       </header>

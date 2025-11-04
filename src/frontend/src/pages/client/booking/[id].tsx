@@ -13,7 +13,7 @@ import {
   useBookingManagement,
 } from "../../../hooks/bookingManagement";
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/client/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";

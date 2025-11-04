@@ -26,6 +26,40 @@ const MapFunctions: React.FC = () => {
     "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
   >("idle");
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
+  const [lastRefreshTs, setLastRefreshTs] = useState<number>(0);
+
+  useEffect(() => {
+    // Refresh location when the page becomes visible again or on mount if stale.
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+    const tryRefresh = async (force = false) => {
+      try {
+        // Only attempt refresh when permission is allowed.
+        if (locationStatus !== "allowed") return;
+
+        const now = Date.now();
+        if (!force && now - lastRefreshTs < REFRESH_INTERVAL_MS) return;
+
+        // Force a fresh geolocation request (bypass cached early-return)
+        await (useLocationStore.getState().requestLocation as any)(true);
+        setLastRefreshTs(now);
+      } catch {
+        // ignore refresh errors
+      }
+    };
+
+    // on mount try a refresh (non-forced)
+    tryRefresh(false);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        tryRefresh(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [locationStatus, lastRefreshTs]);
 
   useEffect(() => {
     try {
@@ -159,7 +193,28 @@ const MapFunctions: React.FC = () => {
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          <EnableLocationButton />
+          {/* Only show the enable button when permission is unknown (not_set).
+              If the permission is denied (blocked), hide the enable button and
+              keep the manual "Change location" action available. */}
+          {locationStatus === "not_set" && <EnableLocationButton />}
+          {/* Manual refresh control */}
+          <button
+            type="button"
+            className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
+            onClick={async () => {
+              try {
+                setLastRefreshTs(Date.now());
+                // force a fresh geolocation request
+                await useLocationStore.getState().requestLocation(true);
+              } catch {
+                // ignore
+              }
+            }}
+            disabled={locationLoading}
+            title="Refresh location"
+          >
+            {locationLoading ? "Refreshing..." : "Refresh"}
+          </button>
           {addressMode === "manual" && userAddress && userProvince && (
             <button
               type="button"

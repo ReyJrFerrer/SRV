@@ -4,7 +4,7 @@ import {
   useNotifications,
   Notification,
 } from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   BellAlertIcon,
@@ -441,7 +441,17 @@ const NotificationsPage = () => {
   };
 
   const bulkDeleteSelected = () => {
-    selectedIds.forEach((id) => handleLocalDelete(id));
+    // Use the same delete function as the single-item delete (three-dot menu)
+    // Call deleteNotification for each selected id and optimistically hide them
+    selectedIds.forEach((id) => {
+      try {
+        deleteNotification(id);
+      } catch (e) {
+        // swallow; hook should handle errors. Optimistically hide locally anyway.
+        console.error("bulk delete failed for", id, e);
+      }
+    });
+    setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
     clearSelection();
     setEditMode(false);
   };

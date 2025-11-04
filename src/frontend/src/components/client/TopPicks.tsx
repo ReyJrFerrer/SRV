@@ -1,7 +1,7 @@
 import React from "react";
 /* Use standard React and HTML elements, styling with Tailwind CSS v4 */
 // SVG icons will use standard SVG elements below
-import ServiceListItem from "./ServiceListItem";
+import ServiceListItem from "./home page/ServiceListingCard";
 import {
   EnrichedService,
   useTopPickServices,

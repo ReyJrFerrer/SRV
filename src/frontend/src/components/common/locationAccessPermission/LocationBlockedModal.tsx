@@ -78,6 +78,11 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             Your browser blocked location access. Select your City/Municipality
             and Province so we can show nearby services.
           </p>
+          <p className="mb-3 text-center text-xs text-gray-500">
+            Note: If you want the app to use your device GPS instead of manual
+            selection, enable location access for this site in your browser
+            settings (Site settings → Location).
+          </p>
 
           <div className="space-y-4">
             <div>
