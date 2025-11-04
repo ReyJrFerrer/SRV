@@ -136,7 +136,7 @@ const ClientHomePage: React.FC = () => {
        * <NotificationSettings />
        */}
 
-      <div className="w-full max-w-full px-4 pb-16 pt-4">
+      <div className="w-full max-w-full px-4 pt-4 pb-16">
         {/* Header: displays welcome and location */}
         <ClientHeader className="mb-6 w-full max-w-full" />
         {/* Categories section */}
@@ -161,7 +161,7 @@ const ClientHomePage: React.FC = () => {
             add more to your City/Municipality!
           </p>
           <button
-            className="group flex w-full items-center justify-between rounded-2xl bg-yellow-300 p-5 text-left transition-all hover:bg-blue-600"
+            className="group flex w-full items-center justify-between rounded-2xl bg-yellow-300 p-4 text-left transition-all hover:bg-blue-600"
             onClick={async () => {
               setBeProviderLoading(true);
               const success = await switchRole();
@@ -178,7 +178,7 @@ const ClientHomePage: React.FC = () => {
                 className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${beProviderLoading ? "animate-spin" : ""}`}
               />
               <span
-                className={`text-lg font-semibold text-gray-800 group-hover:text-white ${beProviderLoading ? "opacity-70" : ""}`}
+                className={`text-sm font-semibold text-gray-800 group-hover:text-white md:text-lg lg:text-xl ${beProviderLoading ? "opacity-70" : ""}`}
               >
                 {beProviderLoading ? "Switching..." : "Be a SRVice Provider"}
               </span>

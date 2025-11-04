@@ -4,7 +4,7 @@ import { DocumentCheckIcon } from "@heroicons/react/24/outline";
 const CredentialsSection: React.FC<{ isVerified: boolean }> = ({
   isVerified,
 }) => (
-  <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+  <div className="mt-8 rounded-xl bg-white p-4 shadow-lg">
     <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
       <DocumentCheckIcon className="h-6 w-6 text-blue-400" /> Credentials
     </h3>
