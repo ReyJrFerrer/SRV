@@ -370,6 +370,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const showPostLoginLocationPrompt = () => {
+    // Only show the prompt when we truly don't have a permission state.
+    // This prevents callers (e.g. navigation state or other flows) from forcing
+    // the prompt when the user already allowed/denied location.
+    if (locationStore.locationStatus !== "not_set") {
+      return;
+    }
     try {
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     } catch {}

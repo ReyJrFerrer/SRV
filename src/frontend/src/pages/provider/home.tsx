@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-// Remove Next.js Head import
 
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
@@ -11,14 +10,27 @@ import { useLocationStore } from "../../store/locationStore";
 import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
-
-// import PWAInstall from "../../components/PWAInstall";
-// import NotificationSettings from "../../components/NotificationSettings";
+import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { useAuth } from "../../context/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Post-login location prompt helpers
+  const {
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
+  } = useAuth();
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // --- Use Zustand location store for location status ---
   const { locationStatus } = useLocationStore();
@@ -86,6 +98,15 @@ const ProviderHomePage: React.FC = () => {
   }, [userProfile]);
 
   useEffect(() => {
+    // If navigation state requests the post-login prompt (e.g. create-profile -> provider/home)
+    const shouldShow = (location.state as any)?.postLoginLocationPrompt;
+    if (shouldShow) {
+      showPostLoginLocationPrompt();
+      try {
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch {}
+    }
+
     const loadProviderData = async () => {
       try {
         // Check authentication first
@@ -201,9 +222,27 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
-      {/* <PWAInstall />
+      <LocationPermissionPromptModal
+        visible={postLoginLocationPromptVisible}
+        onEnable={async () => {
+          try {
+            await requestLocationFromPrompt();
+          } catch {}
+        }}
+        onSkip={() => {
+          skipPostLoginLocationPrompt();
+        }}
+        onClose={() => {
+          skipPostLoginLocationPrompt();
+        }}
+      />
 
-      <NotificationSettings /> */}
+      <LocationBlockedModal
+        visible={postLoginBlockedModalVisible}
+        onClose={() => {
+          acknowledgePostLoginBlockedModal();
+        }}
+      />
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}
