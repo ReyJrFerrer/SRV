@@ -442,7 +442,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                     href="https://forms.gle/o3KjDDCkcr5KGE2R8"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-blue-500 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 md:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
                     aria-label="Request Service Category"
                   >
                     Request Service Category
@@ -537,7 +537,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgPrice-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Price (PHP) <span className="text-red-500">*</span>
+                            Price <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text" // Changed from "number" to "text" for stricter control

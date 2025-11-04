@@ -143,6 +143,81 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
+    // When viewing ALL bookings, apply a default sort order:
+    // Inprogress, confirmed, pending, completed, cancelled, then others.
+    if (activeTab === "ALL") {
+      const toLower = (s?: string) => (s || "").toLowerCase();
+
+      const inProgress = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "in progress" || s === "in_progress" || s === "inprogress";
+      });
+
+      const confirmed = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "accepted" || s === "confirmed";
+      });
+
+      const pending = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "requested" || s === "pending";
+      });
+
+      const completed = processedBookings.filter(
+        (b) => toLower(b.status) === "completed",
+      );
+
+      const cancelled = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "cancelled" || s === "declined";
+      });
+
+      const others = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return (
+          s !== "in progress" &&
+          s !== "in_progress" &&
+          s !== "inprogress" &&
+          s !== "accepted" &&
+          s !== "confirmed" &&
+          s !== "requested" &&
+          s !== "pending" &&
+          s !== "completed" &&
+          s !== "cancelled" &&
+          s !== "declined"
+        );
+      });
+
+      // Secondary sort: within each default group, sort by date (requestedDate || createdAt)
+      // Assumption: we want newest bookings first. If a different order is desired, change subtraction order.
+      const getBookingTime = (b: EnhancedBooking) => {
+        try {
+          return new Date(b.requestedDate || b.createdAt).getTime() || 0;
+        } catch (err) {
+          return 0;
+        }
+      };
+
+      const sortByDateDesc = (arr: EnhancedBooking[]) =>
+        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+
+      sortByDateDesc(inProgress);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(pending);
+      sortByDateDesc(completed);
+      sortByDateDesc(cancelled);
+      sortByDateDesc(others);
+
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+        ...others,
+      ];
+    }
+
     return processedBookings;
   }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
 

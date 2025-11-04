@@ -412,7 +412,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 {price !== undefined && (
                   <p className="flex items-center">
                     <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    <span className="font-semibold text-green-600">
+                    <span className="font-bold text-gray-600">
                       Price: ₱{price.toFixed(2)}
                     </span>
                   </p>
@@ -420,7 +420,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                 {amountToPay !== undefined && (
                   <p className="flex items-center">
                     <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    <span className="font-semibold text-green-600">
+                    <span className="font-bold text-gray-600">
                       Client's amount to pay: ₱{amountToPay.toFixed(2)}
                     </span>
                   </p>
@@ -431,7 +431,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             {/* Payment Method */}
             <p className="flex items-center">
               <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-              <span className="font-semibold text-green-600">
+              <span className="font-bold text-gray-600">
                 Payment:{" "}
                 {booking.paymentMethod === "CashOnHand"
                   ? "Cash on Hand"
@@ -457,7 +457,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         </div>
 
         {/* Action Buttons Section - use shared ActionButtons component */}
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+        <div className="mt-5 flex flex-col gap-2 border-t border-gray-200 pt-4">
           <ActionButtons
             booking={booking}
             onChat={handleChatClient}

@@ -40,7 +40,7 @@ const ClientInfoCard: React.FC<Props> = ({
         <h2 className="mt-2 text-2xl font-bold text-slate-800">{clientName}</h2>
 
         {/* Reputation and Contact (Side-by-Side) */}
-        <div className="mt-2 flex w-full items-center justify-center gap-4">
+        <div className="mt-2 flex w-full flex-col items-center justify-center gap-2">
           {/* Reputation Score */}
           {clientId && <ClientReputationScore reputation={reputation} />}
 
@@ -56,7 +56,7 @@ const ClientInfoCard: React.FC<Props> = ({
         {/* Rating Summary (Bottom) */}
         {clientId && (
           <div className="mt-2 border-t border-blue-200 pt-2">
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-between gap-2">
               <ClientRatingSummary reviews={reviews} />
               <button
                 type="button"
