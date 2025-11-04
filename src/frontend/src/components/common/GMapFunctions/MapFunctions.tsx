@@ -159,7 +159,10 @@ const MapFunctions: React.FC = () => {
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          <EnableLocationButton />
+          {/* Only show the enable button when permission is unknown (not_set).
+              If the permission is denied (blocked), hide the enable button and
+              keep the manual "Change location" action available. */}
+          {locationStatus === "not_set" && <EnableLocationButton />}
           {addressMode === "manual" && userAddress && userProvince && (
             <button
               type="button"

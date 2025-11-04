@@ -46,6 +46,32 @@ const ProviderHomePage: React.FC = () => {
     },
   );
 
+  // Fallback: Permissions API check for geolocation denied state.
+  const [permissionApiDenied, setPermissionApiDenied] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "denied") setPermissionApiDenied(true);
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                setPermissionApiDenied(p.state === "denied");
+              };
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Use the service management hook
   const {
     userServices,
@@ -207,23 +233,15 @@ const ProviderHomePage: React.FC = () => {
   }
 
   if (locationStatus === "denied" && !dismissedLocationBlock) {
-    return (
-      <LocationBlockedModal
-        visible={true}
-        onClose={() => {
-          setDismissedLocationBlock(true);
-          try {
-            sessionStorage.setItem("providerDismissedLocationBlock", "1");
-          } catch {}
-        }}
-      />
-    );
+    // We'll render the blocked modal below along with the post-login blocked
+    // modal; don't return early here to avoid duplicate modal instances.
   }
 
   return (
     <>
+      {/* Only show the friendly permission prompt when the permission state is unknown */}
       <LocationPermissionPromptModal
-        visible={postLoginLocationPromptVisible}
+        visible={postLoginLocationPromptVisible && locationStatus === "not_set"}
         onEnable={async () => {
           try {
             await requestLocationFromPrompt();
@@ -237,12 +255,28 @@ const ProviderHomePage: React.FC = () => {
         }}
       />
 
-      <LocationBlockedModal
-        visible={postLoginBlockedModalVisible}
-        onClose={() => {
-          acknowledgePostLoginBlockedModal();
-        }}
-      />
+      {/* Single blocked modal for both denied state and post-login flow */}
+      {(() => {
+        const visible =
+          (locationStatus === "denied" && !dismissedLocationBlock) ||
+          (permissionApiDenied && !dismissedLocationBlock) ||
+          postLoginBlockedModalVisible;
+
+        const handleBlockedClose = () => {
+          // Always mark dismissed for provider as well so the modal doesn't
+          // immediately reappear after manual save/close.
+          setDismissedLocationBlock(true);
+          try {
+            sessionStorage.setItem("providerDismissedLocationBlock", "1");
+          } catch {}
+
+          if (postLoginBlockedModalVisible) {
+            acknowledgePostLoginBlockedModal();
+          }
+        };
+
+        return <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />;
+      })()}
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}

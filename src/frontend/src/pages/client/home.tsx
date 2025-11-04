@@ -45,6 +45,34 @@ const ClientHomePage: React.FC = () => {
     },
   );
 
+  // Fallback: Permissions API check for geolocation denied state.
+  // This covers cases where the location store hasn't initialized but the
+  // browser already has location blocked for the site.
+  const [permissionApiDenied, setPermissionApiDenied] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "denied") setPermissionApiDenied(true);
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                setPermissionApiDenied(p.state === "denied");
+              };
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // --- Effect: Set page title on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
@@ -79,7 +107,6 @@ const ClientHomePage: React.FC = () => {
     }
   }, [location, showPostLoginLocationPrompt]);
 
-  // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-32">
       {/* Feedback popup after first completed booking (extracted) */}
@@ -87,8 +114,9 @@ const ClientHomePage: React.FC = () => {
 
       {/* Show location blocked message if location is denied (dismissible) */}
       {/* Post-login: friendly permission prompt (rendered here so Home can control messaging/placement) */}
+      {/* Only show the friendly permission prompt when the permission state is unknown */}
       <LocationPermissionPromptModal
-        visible={postLoginLocationPromptVisible}
+        visible={postLoginLocationPromptVisible && locationStatus === "not_set"}
         onEnable={async () => {
           // Request device location via the store (AuthContext helper tracks awaiting state)
           try {
@@ -104,22 +132,38 @@ const ClientHomePage: React.FC = () => {
         }}
       />
 
-      {/* Manual/blocked modal triggered either by denied status or by the post-login flow */}
-      <LocationBlockedModal
-        visible={locationStatus === "denied" && !dismissedLocationBlock}
-        onClose={() => {
-          setDismissedLocationBlock(true);
-          try {
-            sessionStorage.setItem("dismissedLocationBlock", "1");
-          } catch {}
-        }}
-      />
-      <LocationBlockedModal
-        visible={postLoginBlockedModalVisible}
-        onClose={() => {
-          acknowledgePostLoginBlockedModal();
-        }}
-      />
+      {/* Manual/blocked modal triggered either by denied status or by the post-login flow.
+          Render a single modal to avoid duplicates and handle close for both cases. */}
+      {
+        (() => {
+          const visible =
+            (locationStatus === "denied" && !dismissedLocationBlock) ||
+            (permissionApiDenied && !dismissedLocationBlock) ||
+            postLoginBlockedModalVisible;
+
+          const handleBlockedClose = () => {
+            // Always mark the blocked modal as dismissed for this session so it
+            // doesn't immediately reappear after the user picks a manual
+            // location or closes the modal. Previously we only set this when
+            // `locationStatus === 'denied'`, which missed cases where the
+            // Permissions API reported denied but the store hadn't updated yet.
+            setDismissedLocationBlock(true);
+            try {
+              sessionStorage.setItem("dismissedLocationBlock", "1");
+            } catch {}
+
+            // Also acknowledge any post-login blocked modal flag so the
+            // AuthContext flow doesn't reopen the modal.
+            if (postLoginBlockedModalVisible) {
+              acknowledgePostLoginBlockedModal();
+            }
+          };
+
+          return (
+            <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />
+          );
+        })()
+      }
 
       {/* Error: Service categories failed to load */}
       {error && (

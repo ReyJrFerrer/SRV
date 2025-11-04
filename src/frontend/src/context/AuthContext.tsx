@@ -124,6 +124,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     locationStore.initialize();
   }, [locationStore]);
 
+  // If the browser already granted geolocation permission (or the user
+  // enables it while the app is open), proactively request the location so
+  // the store moves to 'allowed' and the UI can display the current address.
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "granted") {
+              // Only request if the store doesn't already have an allowed state
+              if (locationStore.locationStatus !== "allowed") {
+                try {
+                  locationStore.requestLocation().catch(() => {});
+                } catch {}
+              }
+            }
+
+            // Listen for permission changes while the app is open
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                try {
+                  if (p.state === "granted" && locationStore.locationStatus !== "allowed") {
+                    locationStore.requestLocation().catch(() => {});
+                  }
+                } catch {}
+              };
+            }
+          })
+          .catch(() => {
+            /* ignore permission API errors */
+          });
+      } catch {
+        /* ignore */
+      }
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [locationStore]);
+
   // Listen to Firebase auth state changes
   useEffect(() => {
     const auth = getFirebaseAuth();
