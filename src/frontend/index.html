@@ -17,7 +17,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="SRV" />
-    <link rel="apple-touch-icon" href="/logo.svg" />
+    <!-- Apple touch icons: iOS prefers PNGs at fixed sizes. If you don't have
+      these PNGs yet, run `npm run generate:icons` in src/frontend to
+      convert the existing /logo.svg into the recommended PNG sizes. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120.png" />
+    <!-- Fallback for older devices -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Safari pinned tab (optional): provide a monochrome SVG and a color -->
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2563eb" />
 
     <!-- Additional PWA Meta Tags -->
     <meta name="msapplication-TileImage" content="/logo.svg" />

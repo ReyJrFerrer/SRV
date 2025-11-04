@@ -7,7 +7,8 @@
   "scripts": {
     "start": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate:icons": "node ./scripts/generate-apple-icons.js"
   },
   "dependencies": {
     "@dfinity/auth-client": "^2.4.1",
@@ -35,6 +36,7 @@
     "dotenv": "^16.3.1",
     "jsdom": "^26.1.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "sharp": "^0.34.4",
     "tailwindcss": "^4.1.7",
     "vite-plugin-pwa": "^1.1.0",
     "workbox-window": "^7.3.0"
