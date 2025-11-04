@@ -368,7 +368,10 @@ const ProviderBookingsPage: React.FC = () => {
       // We sort newest first so recent bookings appear at the top of each group.
       const getBookingTime = (b: ProviderEnhancedBooking) => {
         try {
-          const dateStr = (b as any).scheduledDateTime || (b as any).requestedDate || b.createdAt;
+          const dateStr =
+            (b as any).scheduledDateTime ||
+            (b as any).requestedDate ||
+            b.createdAt;
           return new Date(dateStr).getTime() || 0;
         } catch (err) {
           return 0;
