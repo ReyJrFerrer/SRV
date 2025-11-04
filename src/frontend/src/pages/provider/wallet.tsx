@@ -359,18 +359,20 @@ const WalletPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-md px-4 py-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <div className="flex w-full items-center justify-center px-4 py-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-black">
+              My Wallet
+            </h1>
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+              className="absolute right-4 rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
           </div>
-        </div>
+        </header>
       </div>
 
       <div className="mx-auto max-w-md px-4 py-6">
@@ -589,7 +591,7 @@ const WalletPage: React.FC = () => {
         )}
 
         {/* Refresh Button */}
-        {transactions.length > 0 && (
+        {/* {transactions.length > 0 && (
           <div className="mt-4 text-center">
             <button
               onClick={handleRefresh}
@@ -599,7 +601,7 @@ const WalletPage: React.FC = () => {
               {transactionLoading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Top-Up Modal */}

@@ -319,8 +319,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       </header>
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
-        <div className="mini-header fixed inset-x-0 top-0 z-50 px-3 pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto max-w-screen-md rounded-2xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
+          <div className="w-full rounded-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${

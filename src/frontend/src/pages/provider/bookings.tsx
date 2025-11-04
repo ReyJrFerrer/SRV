@@ -426,12 +426,6 @@ const ProviderBookingsPage: React.FC = () => {
             <h1 className="text-2xl font-extrabold tracking-tight text-black">
               My Bookings
             </h1>
-            <button
-              onClick={() => setShowRatingInfo(true)}
-              className="absolute right-4 top-3 rounded-md px-2 py-1 text-sm text-blue-600 hover:underline"
-            >
-              About ratings
-            </button>
           </div>
         </header>
 

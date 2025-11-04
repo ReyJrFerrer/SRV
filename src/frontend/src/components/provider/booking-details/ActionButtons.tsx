@@ -113,8 +113,8 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onChat)}
         className={`${baseButtonClass} w-full ${color.chat}`}
       >
-        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat{" "}
-        {booking?.clientName?.split(" ")[0] || "Client"}
+        <ChatBubbleLeftRightIcon className="hidden h-5 w-5 md:mr-2" />
+        Chat {booking?.clientName?.split(" ")[0] || "Client"}
       </button>,
     );
   }
@@ -161,9 +161,9 @@ const ActionButtons: React.FC<Props> = ({
         }`}
       >
         {cancelInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+          <ArrowPathIcon className="hidden h-5 w-5 animate-spin md:mr-2" />
         ) : (
-          <XCircleIcon className="mr-2 h-5 w-5" />
+          <XCircleIcon className="hidden h-5 w-5 md:mr-2" />
         )}
         Cancel
       </button>,
@@ -223,7 +223,8 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onStart)}
         className={`${baseButtonClass} w-full ${color.start}`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> Start Service
+        <ArrowPathIcon className="hidden h-5 w-5 md:mr-2" />
+        Start Service
       </button>,
     );
   }

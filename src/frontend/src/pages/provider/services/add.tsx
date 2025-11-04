@@ -979,7 +979,7 @@ const AddServicePage: React.FC = () => {
       />
       {/* Header */}
       <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 lg:ml-20">
+        <div className="flex max-w-4xl items-center px-4 py-3 md:ml-20 lg:ml-20">
           <button
             onClick={handleHeaderBack}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
@@ -1003,7 +1003,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleBack}
               disabled={isSubmitting}
-              className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+              className="rounded-md bg-gray-200 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
             >
               Back
             </button>
@@ -1012,7 +1012,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleNext}
               disabled={isSubmitting || isProcessingImages}
-              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-auto rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isProcessingImages ? "Processing Images..." : "Next"}
             </button>
