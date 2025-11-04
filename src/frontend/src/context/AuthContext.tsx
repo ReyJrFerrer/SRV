@@ -149,7 +149,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               p.onchange = () => {
                 if (!mounted) return;
                 try {
-                  if (p.state === "granted" && locationStore.locationStatus !== "allowed") {
+                  if (
+                    p.state === "granted" &&
+                    locationStore.locationStatus !== "allowed"
+                  ) {
                     locationStore.requestLocation().catch(() => {});
                   }
                 } catch {}

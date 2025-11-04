@@ -223,7 +223,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             <div className="mt-2 flex items-center gap-2">
               <MapFunctions />
             </div>
-          
           </div>
         </div>
       </header>

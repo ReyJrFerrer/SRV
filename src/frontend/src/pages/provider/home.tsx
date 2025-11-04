@@ -275,7 +275,12 @@ const ProviderHomePage: React.FC = () => {
           }
         };
 
-        return <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />;
+        return (
+          <LocationBlockedModal
+            visible={visible}
+            onClose={handleBlockedClose}
+          />
+        );
       })()}
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">

@@ -134,36 +134,37 @@ const ClientHomePage: React.FC = () => {
 
       {/* Manual/blocked modal triggered either by denied status or by the post-login flow.
           Render a single modal to avoid duplicates and handle close for both cases. */}
-      {
-        (() => {
-          const visible =
-            (locationStatus === "denied" && !dismissedLocationBlock) ||
-            (permissionApiDenied && !dismissedLocationBlock) ||
-            postLoginBlockedModalVisible;
+      {(() => {
+        const visible =
+          (locationStatus === "denied" && !dismissedLocationBlock) ||
+          (permissionApiDenied && !dismissedLocationBlock) ||
+          postLoginBlockedModalVisible;
 
-          const handleBlockedClose = () => {
-            // Always mark the blocked modal as dismissed for this session so it
-            // doesn't immediately reappear after the user picks a manual
-            // location or closes the modal. Previously we only set this when
-            // `locationStatus === 'denied'`, which missed cases where the
-            // Permissions API reported denied but the store hadn't updated yet.
-            setDismissedLocationBlock(true);
-            try {
-              sessionStorage.setItem("dismissedLocationBlock", "1");
-            } catch {}
+        const handleBlockedClose = () => {
+          // Always mark the blocked modal as dismissed for this session so it
+          // doesn't immediately reappear after the user picks a manual
+          // location or closes the modal. Previously we only set this when
+          // `locationStatus === 'denied'`, which missed cases where the
+          // Permissions API reported denied but the store hadn't updated yet.
+          setDismissedLocationBlock(true);
+          try {
+            sessionStorage.setItem("dismissedLocationBlock", "1");
+          } catch {}
 
-            // Also acknowledge any post-login blocked modal flag so the
-            // AuthContext flow doesn't reopen the modal.
-            if (postLoginBlockedModalVisible) {
-              acknowledgePostLoginBlockedModal();
-            }
-          };
+          // Also acknowledge any post-login blocked modal flag so the
+          // AuthContext flow doesn't reopen the modal.
+          if (postLoginBlockedModalVisible) {
+            acknowledgePostLoginBlockedModal();
+          }
+        };
 
-          return (
-            <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />
-          );
-        })()
-      }
+        return (
+          <LocationBlockedModal
+            visible={visible}
+            onClose={handleBlockedClose}
+          />
+        );
+      })()}
 
       {/* Error: Service categories failed to load */}
       {error && (
