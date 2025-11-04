@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
@@ -14,6 +14,7 @@ import {
   EnvelopeOpenIcon,
   InboxIcon,
 } from "@heroicons/react/24/solid";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
 // Helper to get the right icon for each notification type, with colored backgrounds
 const NotificationIcon: React.FC<{ type: Notification["type"] }> = ({
@@ -90,7 +91,20 @@ const NotificationIcon: React.FC<{ type: Notification["type"] }> = ({
 const NotificationItem: React.FC<{
   notification: Notification;
   onClick: () => void;
-}> = ({ notification, onClick }) => {
+  onDelete: () => void;
+  onMarkAsRead: () => void;
+  selectable?: boolean;
+  checked?: boolean;
+  onToggleSelect?: () => void;
+}> = ({
+  notification,
+  onClick,
+  onDelete,
+  onMarkAsRead,
+  selectable = false,
+  checked = false,
+  onToggleSelect,
+}) => {
   const timeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -145,8 +159,16 @@ const NotificationItem: React.FC<{
 
   return (
     <div
-      onClick={onClick}
-      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
+      onClick={(e) => {
+        // In edit/select mode we want clicks to toggle selection instead of navigating.
+        if (selectable) {
+          e.stopPropagation();
+          onToggleSelect?.();
+          return;
+        }
+        onClick();
+      }}
+      className={`relative flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
         notification.href
           ? "cursor-pointer hover:border-blue-200"
           : "cursor-default"
@@ -155,7 +177,22 @@ const NotificationItem: React.FC<{
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
       }`}
+      aria-selected={checked}
     >
+      {selectable && (
+        <div className="flex items-start pt-1">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.();
+            }}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            aria-label="Select notification"
+          />
+        </div>
+      )}
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
       </div>
@@ -175,9 +212,141 @@ const NotificationItem: React.FC<{
           {timeAgo(notification.timestamp)}
         </p>
       </div>
-      {!notification.read && (
-        <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
-      )}
+      <div className="ml-3 flex items-center gap-2">
+        {!notification.read && (
+          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
+        )}
+        <div className="relative">
+          <NotificationMenu
+            id={notification.id}
+            onDelete={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            onMarkAsRead={(e) => {
+              e.stopPropagation();
+              onMarkAsRead();
+            }}
+            isRead={notification.read}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+import { createPortal } from "react-dom";
+
+// Menu that renders into a portal so it can overlap containers (not be clipped).
+// Uses a global custom event to ensure only one menu is open at a time.
+const NotificationMenu: React.FC<{
+  id: string;
+  onDelete: (e: React.MouseEvent) => void;
+  onMarkAsRead: (e: React.MouseEvent) => void;
+  isRead: boolean;
+}> = ({ id, onDelete, onMarkAsRead, isRead }) => {
+  const [open, setOpen] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  // Close other menus when another menu opens
+  React.useEffect(() => {
+    const onOtherOpen = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { id?: string } | undefined;
+      if (!detail) return;
+      if (detail.id !== id) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener(
+      "notification-menu-open",
+      onOtherOpen as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "notification-menu-open",
+        onOtherOpen as EventListener,
+      );
+  }, [id]);
+
+  // compute and store button coordinates when opening so the portal can be positioned
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const btn = buttonRef.current;
+    if (!btn) {
+      setOpen((s) => !s);
+      window.dispatchEvent(
+        new CustomEvent("notification-menu-open", { detail: { id } }),
+      );
+      return;
+    }
+    const rect = btn.getBoundingClientRect();
+    // position menu below the button and right-aligned
+    setCoords({ top: rect.bottom + 8, left: rect.right - 160 });
+    setOpen((s) => {
+      const next = !s;
+      if (next) {
+        window.dispatchEvent(
+          new CustomEvent("notification-menu-open", { detail: { id } }),
+        );
+      }
+      return next;
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(e);
+    setOpen(false);
+  };
+  const menu = (
+    <div
+      style={
+        coords
+          ? { position: "fixed", top: coords.top, left: coords.left }
+          : undefined
+      }
+      className="z-50 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="py-1">
+        {!isRead && (
+          <button
+            onClick={(e) => {
+              onMarkAsRead(e);
+              setOpen(false);
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Mark as read
+          </button>
+        )}
+        <button
+          onClick={handleDelete}
+          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative inline-block text-left">
+      <button
+        ref={buttonRef}
+        className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
+        onClick={handleToggle}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label="Notification options"
+      >
+        <EllipsisVerticalIcon className="h-5 w-5" />
+      </button>
+      {open && createPortal(menu, document.body)}
     </div>
   );
 };
@@ -188,28 +357,78 @@ const NotificationsPage = () => {
     loading,
     error,
     markAsRead,
+    deleteNotification,
     markAllAsRead,
     unreadCount,
   } = useNotifications();
   const navigate = useNavigate();
 
-  // Set the document title
-  useEffect(() => {
-    document.title = "Notifications | SRV";
+  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
+  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+  // Edit / selection mode
+  const [editMode, setEditMode] = React.useState(false);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+
+  // Listen for UI delete events dispatched by NotificationMenu and hide locally
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
+      const id = detail?.id;
+      if (!id) return;
+      setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    };
+    window.addEventListener("notification-ui-delete", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "notification-ui-delete",
+        handler as EventListener,
+      );
   }, []);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const bulkMarkAsRead = () => {
+    selectedIds.forEach((id) => markAsRead(id));
+    clearSelection();
+    setEditMode(false);
+  };
+
+  const bulkDeleteSelected = () => {
+    // Use the same delete function as the single-item delete (three-dot menu)
+    // Call deleteNotification for each selected id and optimistically hide them
+    selectedIds.forEach((id) => {
+      try {
+        deleteNotification(id);
+      } catch (e) {
+        // swallow; hook should handle errors. Optimistically hide locally anyway.
+        console.error("bulk delete failed for", id, e);
+      }
+    });
+    setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
+    clearSelection();
+    setEditMode(false);
+  };
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    // Only navigate if href exists (null href means non-clickable)
-    if (notification.href) {
-      navigate(notification.href);
-    }
+
+    if (!notification.href) return;
+
+    // default navigation behavior
+    navigate(notification.href);
   };
 
   const { unread, read } = useMemo(() => {
-    return notifications.reduce<{
+    const filtered = notifications.filter((n) => !deletedIds.includes(n.id));
+    return filtered.reduce<{
       unread: Notification[];
       read: Notification[];
     }>(
@@ -223,41 +442,94 @@ const NotificationsPage = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications]);
+  }, [notifications, deletedIds]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div
           className={`w-full px-4 py-3 ${
-            unreadCount <= 0
+            notifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
         >
           <h1
             className={`text-2xl font-extrabold tracking-tight text-black ${
-              unreadCount > 0
+              notifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
             }`}
           >
             Notifications
           </h1>
-          {unreadCount > 0 && (
+          {notifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
-              <button
-                onClick={markAllAsRead}
-                className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-              >
-                <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                Mark all as read
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (!editMode) {
+                      setEditMode(true);
+                      clearSelection();
+                    } else {
+                      setEditMode(false);
+                      clearSelection();
+                    }
+                  }}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </button>
+                {unread.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  >
+                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                    Mark all as read
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
       </header>
+
+      {editMode && (
+        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
+          <div className="text-sm text-gray-700">
+            {selectedIds.length} selected
+          </div>
+          <div className="flex items-center gap-2">
+            {unread.length > 0 && (
+              <button
+                onClick={bulkMarkAsRead}
+                disabled={selectedIds.length === 0}
+                className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+              >
+                Mark as read
+              </button>
+            )}
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={selectedIds.length === 0}
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => {
+                setEditMode(false);
+                clearSelection();
+              }}
+              className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
         {loading ? (
@@ -292,6 +564,11 @@ const NotificationsPage = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => deleteNotification(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
                         />
                       </Appear>
                     ))}
@@ -314,6 +591,11 @@ const NotificationsPage = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => deleteNotification(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
                         />
                       </Appear>
                     ))}

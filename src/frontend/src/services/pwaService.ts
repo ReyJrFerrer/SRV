@@ -410,13 +410,16 @@ class PWAService {
           //   "⚠️ PWA: Safari notification permission denied - check browser settings",
           // );
         }
-      } else if (browserInfo.name.toLowerCase().includes("brave")) {
-        //console.log("🦁 PWA: Requesting Brave notification permission");
+      } else if (
+        browserInfo.name.toLowerCase().includes("brave") ||
+        browserInfo.name.toLowerCase().includes("vivaldi")
+      ) {
+        //console.log("🦁 PWA: Requesting Brave/Vivaldi notification permission");
         permission = await Notification.requestPermission();
 
         if (permission === "denied") {
           //console.warn(
-          //   "⚠️ PWA: Brave blocks notifications by default. Enable in Settings > Shields & Privacy > Notifications",
+          //   "⚠️ PWA: Brave/Vivaldi may block notifications by default. Check browser settings (Shields or Ad/Tracker blocker).",
           // );
         }
       } else {

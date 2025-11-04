@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useServiceManagement } from "../../hooks/serviceManagement"; // Adjust the import path as needed
-import { ServiceCategory } from "../../services/serviceCanisterService"; // Adjust the import path as needed
+import { useServiceManagement } from "../../../hooks/serviceManagement"; // Adjust the import path as needed
+import { ServiceCategory } from "../../../services/serviceCanisterService"; // Adjust the import path as needed
 
 interface CategoriesProps {
   className?: string;

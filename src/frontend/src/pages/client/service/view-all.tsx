@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // Components
 import SearchBar from "../../../components/client/SearchBar";
-import ServiceListItem from "../../../components/client/ServiceListItem";
+import ServiceListItem from "../../../components/client/home page/ServiceListingCard";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
