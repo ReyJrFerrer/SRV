@@ -40,7 +40,7 @@ interface ServiceManagementProps {
   maxItemsToShow?: number;
 }
 
-const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
+const   ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   services = [],
   loading = false,
   error = null,
@@ -205,7 +205,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       ) : services.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-10 py-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 w-full sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
               const categoryImage = getCategoryImage(
@@ -218,7 +218,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
               return (
                 <div
                   key={service.id}
-                  className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative flex flex-col mt-8 items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
                   {/* Make the entire card a button */}
                   <button

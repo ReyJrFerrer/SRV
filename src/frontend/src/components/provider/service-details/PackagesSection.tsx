@@ -65,7 +65,7 @@ const PackagesSection: React.FC<Props> = ({
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
       <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+        <h3 className="text-md flex items-center gap-2 font-bold text-blue-800 lg:text-xl">
           <BriefcaseIcon className="h-6 w-6 text-blue-400" />
           Service Packages ({packages.length})
         </h3>
@@ -93,8 +93,8 @@ const PackagesSection: React.FC<Props> = ({
               }`}
               disabled={hasActiveBookings || packages.length >= 5}
             >
-              <PlusIcon className="mr-1 h-4 w-4" />
-              <span className="hidden sm:inline">
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden lg:inline">
                 {packages.length >= 5 ? "Limit Reached" : "Add Package"}
               </span>
             </button>
@@ -201,23 +201,24 @@ const PackagesSection: React.FC<Props> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-rows-2">
           {packages.length > 0 ? (
             packages.map((pkg) => (
               <div
                 key={pkg.id}
                 className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
               >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="mb-2 line-clamp-2 text-xl font-bold text-gray-900">
+                <div className="mb-4">
+                  <div className="min-w-0">
+                    <h3 className="mb-2 text-xl font-bold text-gray-900">
                       {pkg.title}
                     </h3>
                     <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
                       {pkg.description}
                     </p>
                   </div>
-                  <div className="ml-4 flex-shrink-0 text-right">
+
+                  <div className="mt-3">
                     <div className="mb-1 text-xl font-bold text-blue-600">
                       ₱{pkg.price.toFixed(2)}
                     </div>
@@ -231,7 +232,7 @@ const PackagesSection: React.FC<Props> = ({
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-4 lg:flex-row">
                   <Tooltip
                     content="Cannot edit when another package form is open."
                     showWhenDisabled={isAddingOrEditingPackage}
@@ -241,7 +242,7 @@ const PackagesSection: React.FC<Props> = ({
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
                           : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
@@ -264,7 +265,7 @@ const PackagesSection: React.FC<Props> = ({
                           ? undefined
                           : onDeletePackage(pkg.id)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
                         hasActiveBookings ||
                         isAddingOrEditingPackage ||
                         packages.length <= 1

@@ -205,7 +205,7 @@ const ProviderHomePage: React.FC = () => {
 
       <NotificationSettings /> */}
 
-      <div className="w-full max-w-full pb-16 pt-4">
+      <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}
         {/**
          * Make the scrolling container explicit and pass it to the header
@@ -218,7 +218,7 @@ const ProviderHomePage: React.FC = () => {
           <SPHeader
             scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
           />
-          <div className="mx-auto max-w-7xl p-4">
+          <div className="mx-auto max-w-7xl">
             {/* Use legacyProvider for components that still need the old interface */}
             {provider && (
               <ProviderStatsNextjs

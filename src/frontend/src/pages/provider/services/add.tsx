@@ -986,7 +986,7 @@ const AddServicePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-2xl font-extrabold tracking-tight text-black sm:text-xl md:text-2xl">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black sm:text-xl md:text-lg">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>
