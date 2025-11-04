@@ -81,15 +81,18 @@ class FirebaseAuthService {
         // Clear existing recaptcha completely
         this.clearRecaptcha();
 
-        // Check if container exists and clear its content
+        // Check if container exists
         const container = document.getElementById(containerId);
         if (!container) {
           reject(new Error(`Container ${containerId} not found`));
           return;
         }
 
-        // Clear any existing content in the container
+        // Aggressively clear container to prevent re-render errors
         container.innerHTML = "";
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
 
         // Wait a bit to ensure DOM is clean
         setTimeout(() => {
