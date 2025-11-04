@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import ServiceCard from "../../components/provider/ServiceCard";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import Tooltip from "../../components/common/Tooltip";

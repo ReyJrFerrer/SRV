@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/client/NavigationBar";
 import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";

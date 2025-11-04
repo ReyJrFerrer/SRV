@@ -4,7 +4,7 @@ import {
   useNotifications,
   Notification,
 } from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   BellAlertIcon,

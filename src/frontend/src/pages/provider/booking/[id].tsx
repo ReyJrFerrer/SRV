@@ -9,7 +9,7 @@ import {
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
 import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useClientRating } from "../../../hooks/useClientRating";

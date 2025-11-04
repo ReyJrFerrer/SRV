@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { ProfileImage } from "../../../components/common/ProfileImage";

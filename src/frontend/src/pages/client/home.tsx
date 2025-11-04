@@ -4,7 +4,7 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import FeedbackPopup from "../../components/common/FeedbackPopup";
 import Categories from "../../components/client/home page/Categories";
 import ServiceList from "../../components/client/home page/ServiceListRow";
-import BottomNavigation from "../../components/client/BottomNavigation";
+import BottomNavigation from "../../components/client/NavigationBar";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 
 import ClientHeader from "../../components/client/home page/Header";

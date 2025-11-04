@@ -4,7 +4,7 @@ import {
   ProviderNotification,
   useProviderNotifications,
 } from "../../hooks/useProviderNotificationsWithPush";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   BellAlertIcon,

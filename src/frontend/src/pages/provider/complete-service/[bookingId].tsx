@@ -15,7 +15,7 @@ import {
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 

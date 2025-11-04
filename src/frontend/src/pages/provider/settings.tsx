@@ -10,7 +10,7 @@ import {
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/provider/NavigationBar"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";

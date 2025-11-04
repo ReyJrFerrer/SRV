@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
   useProviderBookingManagement,

@@ -168,7 +168,7 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
             className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
             disabled={!destinationHasCoords}
           >
-            I've Arrived - Start Service
+            Start Service
           </button>
         </div>
       </div>
