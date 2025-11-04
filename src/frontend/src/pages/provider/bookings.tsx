@@ -350,22 +350,49 @@ const ProviderBookingsPage: React.FC = () => {
           b.status?.toLowerCase() === "cancelled" ||
           b.status?.toLowerCase() === "declined",
       );
-      const others = filteredBookings.filter(
-        (b) => {
-          const s = b.status?.toLowerCase();
-          return (
-            s !== "inprogress" &&
-            s !== "confirmed" &&
-            s !== "accepted" &&
-            s !== "pending" &&
-            s !== "requested" &&
-            s !== "completed" &&
-            s !== "cancelled" &&
-            s !== "declined"
-          );
-        },
-      );
-      return [...inProgress, ...confirmed, ...pending, ...completed, ...cancelled, ...others];
+      const others = filteredBookings.filter((b) => {
+        const s = b.status?.toLowerCase();
+        return (
+          s !== "inprogress" &&
+          s !== "confirmed" &&
+          s !== "accepted" &&
+          s !== "pending" &&
+          s !== "requested" &&
+          s !== "completed" &&
+          s !== "cancelled" &&
+          s !== "declined"
+        );
+      });
+
+      // Secondary sort: within each default group, sort by date (scheduledDateTime || createdAt)
+      // We sort newest first so recent bookings appear at the top of each group.
+      const getBookingTime = (b: ProviderEnhancedBooking) => {
+        try {
+          const dateStr = (b as any).scheduledDateTime || (b as any).requestedDate || b.createdAt;
+          return new Date(dateStr).getTime() || 0;
+        } catch (err) {
+          return 0;
+        }
+      };
+
+      const sortByDateDesc = (arr: ProviderEnhancedBooking[]) =>
+        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+
+      sortByDateDesc(inProgress);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(pending);
+      sortByDateDesc(completed);
+      sortByDateDesc(cancelled);
+      sortByDateDesc(others);
+
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+        ...others,
+      ];
     }
 
     return filteredBookings;

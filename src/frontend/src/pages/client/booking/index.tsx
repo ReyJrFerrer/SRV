@@ -163,7 +163,9 @@ const MyBookingsPage: React.FC = () => {
         return s === "requested" || s === "pending";
       });
 
-      const completed = processedBookings.filter((b) => toLower(b.status) === "completed");
+      const completed = processedBookings.filter(
+        (b) => toLower(b.status) === "completed",
+      );
 
       const cancelled = processedBookings.filter((b) => {
         const s = toLower(b.status);
@@ -186,7 +188,34 @@ const MyBookingsPage: React.FC = () => {
         );
       });
 
-      return [...inProgress, ...confirmed, ...pending, ...completed, ...cancelled, ...others];
+      // Secondary sort: within each default group, sort by date (requestedDate || createdAt)
+      // Assumption: we want newest bookings first. If a different order is desired, change subtraction order.
+      const getBookingTime = (b: EnhancedBooking) => {
+        try {
+          return new Date(b.requestedDate || b.createdAt).getTime() || 0;
+        } catch (err) {
+          return 0;
+        }
+      };
+
+      const sortByDateDesc = (arr: EnhancedBooking[]) =>
+        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+
+      sortByDateDesc(inProgress);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(pending);
+      sortByDateDesc(completed);
+      sortByDateDesc(cancelled);
+      sortByDateDesc(others);
+
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+        ...others,
+      ];
     }
 
     return processedBookings;
