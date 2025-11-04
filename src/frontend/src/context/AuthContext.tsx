@@ -213,6 +213,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [awaitingGeoResult, locationStore.locationStatus]);
 
+  // If the post-login prompt is visible but the store reports a known permission
+  // state (allowed/denied/unsupported), hide the prompt automatically. This
+  // covers the race where a page triggers the prompt before the location store
+  // has finished initializing and the real permission state becomes known.
+  useEffect(() => {
+    if (!postLoginLocationPromptVisible) return;
+    const status = locationStore.locationStatus;
+    if (status !== "not_set") {
+      setPostLoginLocationPromptVisible(false);
+    }
+  }, [postLoginLocationPromptVisible, locationStore.locationStatus]);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -370,6 +382,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const showPostLoginLocationPrompt = () => {
+    // Only show the prompt when we truly don't have a permission state.
+    // This prevents callers (e.g. navigation state or other flows) from forcing
+    // the prompt when the user already allowed/denied location.
+    if (locationStore.locationStatus !== "not_set") {
+      return;
+    }
     try {
       sessionStorage.setItem("post_login_location_prompt_shown", "1");
     } catch {}
