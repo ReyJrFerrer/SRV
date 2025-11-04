@@ -43,7 +43,7 @@ interface LocationState {
   setAddressMode: (mode: "context" | "manual") => void;
   setDisplayAddress: (address: string) => void;
   setManualFields: (fields: ManualFields) => void;
-  requestLocation: () => Promise<void>;
+  requestLocation: (force?: boolean) => Promise<void>;
   clearLocation: () => void;
   initialize: () => Promise<void>;
 }
@@ -202,7 +202,7 @@ export const useLocationStore = create<LocationState>()(
         set({ manualFields: fields });
       },
 
-      requestLocation: async () => {
+      requestLocation: async (force: boolean = false) => {
         const state = get();
         // Even in manual mode, we still try to detect GPS so maps can work.
         // We will NOT overwrite manual address fields when addressMode === "manual".
@@ -230,7 +230,9 @@ export const useLocationStore = create<LocationState>()(
         }
 
         // If we already have location data and it's not expired, don't refetch
+        // unless the caller explicitly requests a forced refresh.
         if (
+          !force &&
           state.location &&
           state.userAddress &&
           state.locationStatus === "allowed"
