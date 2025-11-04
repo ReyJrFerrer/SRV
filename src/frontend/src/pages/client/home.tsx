@@ -136,7 +136,7 @@ const ClientHomePage: React.FC = () => {
        * <NotificationSettings />
        */}
 
-      <div className="w-full max-w-full px-4 pt-4 pb-16">
+      <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Header: displays welcome and location */}
         <ClientHeader className="mb-6 w-full max-w-full" />
         {/* Categories section */}

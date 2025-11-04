@@ -530,7 +530,7 @@ const NotificationsPage = () => {
                 <button
                   ref={mobileMenuButtonRef}
                   onClick={() => setMobileMenuOpen((s) => !s)}
-                  className="rounded-full p-2 text-black-600 hover:bg-gray-100"
+                  className="text-black-600 rounded-full p-2 hover:bg-gray-100"
                   aria-haspopup="true"
                   aria-expanded={mobileMenuOpen}
                 >
@@ -666,9 +666,7 @@ const NotificationsPage = () => {
                   </div>
                 </section>
               )}
-              {unread.length > 0 && read.length > 0 && (
-                <div className="my-4" />
-              )}
+              {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
                   <h2 className="bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 text-sm font-semibold tracking-wide text-gray-700 shadow-sm">

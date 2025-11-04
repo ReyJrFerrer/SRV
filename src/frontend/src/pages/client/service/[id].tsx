@@ -233,7 +233,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   if (serviceLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -402,7 +402,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                       />
                     </div>
                     <div className="mt-2 flex items-center">
-                      <h2 className="m-0 p-0 text-2xl leading-tight font-extrabold text-gray-900 drop-shadow-sm">
+                      <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
                         {providerName}
                       </h2>
                       {service.isActive && (
@@ -481,12 +481,12 @@ const ClientServiceDetailsPage: React.FC = () => {
                       <h4 className="truncate text-lg font-bold text-gray-900">
                         {pkg.title}
                       </h4>
-                      <p className="mt-1 text-sm break-words text-gray-600 md:line-clamp-2">
+                      <p className="mt-1 break-words text-sm text-gray-600 md:line-clamp-2">
                         {pkg.description}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-4 ml-0 flex min-w-[120px] flex-col items-end justify-between md:mt-0 md:ml-6">
+                  <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
                     <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
                       ₱
                       {Number(pkg.price + pkg.commissionFee).toLocaleString(
@@ -498,7 +498,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                       )}
                     </span>
                   </div>
-                  <span className="absolute top-0 right-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
+                  <span className="absolute right-0 top-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
                 </div>
               ))}
             </div>
@@ -520,7 +520,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <ReviewsSection serviceId={service.id} />
       </main>
 
-      <div className="shadow-t-lg fixed bottom-11 left-0 z-40 flex flex-col w-full border-t border-gray-200 bg-white p-3 md:bottom-0 lg:bottom-0">
+      <div className="shadow-t-lg fixed bottom-11 left-0 z-40 flex w-full flex-col border-t border-gray-200 bg-white p-3 md:bottom-0 lg:bottom-0">
         <div className="mx-auto flex w-full items-center justify-between gap-3">
           <button
             onClick={handleChatProviderClick}
@@ -541,7 +541,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               </span>
             )}
             {isOwnService && (
-              <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 You cannot chat with your own service.
               </span>
             )}
@@ -570,12 +570,12 @@ const ClientServiceDetailsPage: React.FC = () => {
                     : "Reputation Too Low"
                   : "Service Unavailable"}
               {isOwnService && (
-                <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   You cannot book your own service.
                 </span>
               )}
               {reputationError && (
-                <span className="pointer-events-none absolute top-0 left-1/2 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-red-100 px-3 py-2 text-xs font-semibold text-red-800 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-red-100 px-3 py-2 text-xs font-semibold text-red-800 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   {reputationError}
                 </span>
               )}
