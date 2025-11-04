@@ -110,19 +110,19 @@ const ImagesSection: React.FC<Props> = ({
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-blue-400"></div>
                     </div>
                   )}
                   <button
                     onClick={() => onRemove(index)}
-                    className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                    className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                     aria-label="Remove image"
                     type="button"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
                   {image.isNew && (
-                    <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                    <div className="absolute left-1 top-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
                       NEW
                     </div>
                   )}

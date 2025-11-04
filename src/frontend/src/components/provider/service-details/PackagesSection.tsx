@@ -242,7 +242,7 @@ const PackagesSection: React.FC<Props> = ({
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
                           : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
@@ -265,7 +265,7 @@ const PackagesSection: React.FC<Props> = ({
                           ? undefined
                           : onDeletePackage(pkg.id)
                       }
-                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
                         hasActiveBookings ||
                         isAddingOrEditingPackage ||
                         packages.length <= 1
