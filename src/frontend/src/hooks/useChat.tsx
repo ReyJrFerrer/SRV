@@ -386,8 +386,11 @@ export const useChat = () => {
           );
 
         // Setup polling fallback (3 seconds)
-        console.log("⏰ [useChat] Starting polling mechanism for:", conversationId);
-        
+        console.log(
+          "⏰ [useChat] Starting polling mechanism for:",
+          conversationId,
+        );
+
         // Clear any existing polling interval
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
@@ -404,16 +407,20 @@ export const useChat = () => {
 
           try {
             console.log("🔄 [useChat] Polling for new messages...");
-            const messagePage = await chatCanisterService.getConversationMessages(
-              conversationId,
-              50,
-              0,
-            );
+            const messagePage =
+              await chatCanisterService.getConversationMessages(
+                conversationId,
+                50,
+                0,
+              );
 
             if (isMountedRef.current && messagePage.messages.length > 0) {
-              const adaptedMessages = messagePage.messages.map(adaptBackendMessage);
+              const adaptedMessages =
+                messagePage.messages.map(adaptBackendMessage);
               setMessages(adaptedMessages);
-              console.log(`✅ [useChat] Polling update: ${adaptedMessages.length} messages`);
+              console.log(
+                `✅ [useChat] Polling update: ${adaptedMessages.length} messages`,
+              );
             }
           } catch (error) {
             console.error("❌ [useChat] Error polling messages:", error);
