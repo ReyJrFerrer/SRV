@@ -386,7 +386,7 @@ const NotificationsPage = () => {
     markAsRead,
     markAllAsRead,
     unreadCount,
-    deleteNotification
+    deleteNotification,
   } = useNotifications();
   const navigate = useNavigate();
 
