@@ -41,11 +41,11 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
     const adminRolesSnapshot = await db.collection("userRoles")
       .where("role", "==", "ADMIN")
       .get();
-    
+
     const adminCount = adminRolesSnapshot.size;
     const adminNumber = String(adminCount).padStart(2, "0");
     const adminName = `admin${adminNumber}`;
-    
+
     console.log(`🔢 [Admin] Found ${adminCount} existing admin(s), assigning name: ${adminName}`);
 
     // Check if profile already exists
@@ -71,7 +71,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       console.log(`✅ [Admin] Profile created for UID: ${uid} with name: ${newProfile.name}`);
     } else {
       console.log(`ℹ️  [Admin] Profile already exists for UID: ${uid}`);
-      
+
       // If profile exists but doesn't have a numbered admin name, update it
       const existingData = profileDoc.data();
       if (existingData.isAdmin || existingData.name === "Admin User") {
@@ -79,7 +79,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
         if (!existingData.name.match(/^admin\d{2}$/)) {
           // Find the correct admin number by checking if this user already has a role
           const existingRole = await db.collection("userRoles").doc(uid).get();
-          
+
           if (existingRole.exists) {
             // User already has admin role - find their position in the ordered list
             // Get all admin roles ordered by assignedAt
@@ -87,7 +87,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
               .where("role", "==", "ADMIN")
               .orderBy("assignedAt", "asc")
               .get();
-            
+
             // Find this user's index in the ordered list
             let adminIndex = 0;
             for (let i = 0; i < allAdminRoles.docs.length; i++) {
@@ -96,15 +96,15 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
                 break;
               }
             }
-            
+
             const adminNumber = String(adminIndex).padStart(2, "0");
             const correctAdminName = `admin${adminNumber}`;
-            
+
             await profileRef.update({
               name: correctAdminName,
               updatedAt: FieldValue.serverTimestamp(),
             });
-            
+
             console.log(`🔄 [Admin] Updated existing admin profile name to: ${correctAdminName}`);
           } else {
             // No role yet, will be assigned below - use the calculated name
@@ -112,7 +112,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
               name: adminName,
               updatedAt: FieldValue.serverTimestamp(),
             });
-            
+
             console.log(`🔄 [Admin] Updated existing admin profile name to: ${adminName}`);
           }
         }

@@ -722,7 +722,8 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     });
 
     const allUsers = Array.from(userMap.values());
-    console.log(`✅ [getAllUsers] Found ${allUsers.length} users (${profiles.length} from profiles, ${users.length} from users)`);
+    console.log(`✅ [getAllUsers] Found ${allUsers.length} users (${profiles.length}
+      from profiles, ${users.length} from users)`);
 
     return {success: true, users: allUsers};
   } catch (error) {
@@ -841,7 +842,8 @@ exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
  * @param {Object} data - Request data
  * @param {string} data.userId - User ID to lock/unlock
  * @param {boolean} data.locked - Whether to lock the account
- * @param {number|null} data.suspensionDurationDays - Duration in days (7, 30, custom number, or null for indefinite)
+ * @param {number|null} data.suspensionDurationDays
+ * Duration in days (7, 30, custom number, or null for indefinite)
  */
 exports.lockUserAccount = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -882,14 +884,14 @@ exports.lockUserAccount = functions.https.onCall(async (data, context) => {
     await admin.auth().updateUser(userId, {disabled: locked});
 
     const action = locked ? "locked" : "unlocked";
-    const durationText = locked 
-      ? (suspensionDurationDays === null 
-          ? "indefinitely" 
-          : `for ${suspensionDurationDays} day${suspensionDurationDays !== 1 ? 's' : ''}`)
-      : "";
-    
+    const durationText = locked ?
+      (suspensionDurationDays === null ?
+        "indefinitely" :
+        `for ${suspensionDurationDays} day${suspensionDurationDays !== 1 ? "s" : ""}`) :
+      "";
+
     return {
-      success: true, 
+      success: true,
       message: `User account ${action} ${durationText}`.trim(),
       suspensionEndDate: updateData.suspensionEndDate || null,
     };
@@ -976,8 +978,9 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
   try {
     // Import internal function to update media collection
     const {updateCertificateValidationStatusInternal} = require("./media");
-    
-    // Update certificate validation status in media collection (this is what getServicesWithCertificates queries)
+
+    // Update certificate validation status in media collection
+    // (this is what getServicesWithCertificates queries)
     await updateCertificateValidationStatusInternal(certificateId, status);
 
     // Also update or create validation record in certificateValidations collection
@@ -990,7 +993,8 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
       updatedAt: now,
     };
 
-    await db.collection("certificateValidations").doc(certificateId).set(validationData, {merge: true});
+    await db.collection("certificateValidations").doc(certificateId).set(validationData,
+      {merge: true});
 
     return {success: true, message: `Certificate ${status.toLowerCase()} successfully`};
   } catch (error) {
@@ -1302,7 +1306,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
       .where("suspensionEndDate", "<=", now.toISOString())
       .get();
 
-    console.log(`📊 [autoReactivateSuspendedAccounts] Found ${expiredSuspensionsQuery.size} expired suspensions.`);
+    console.log(`📊 [autoReactivateSuspendedAccounts] Found ${expiredSuspensionsQuery.size}
+      expired suspensions.`);
 
     if (expiredSuspensionsQuery.empty) {
       console.log("✅ [autoReactivateSuspendedAccounts] No expired suspensions found.");
@@ -1316,7 +1321,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
     for (const doc of expiredSuspensionsQuery.docs) {
       const user = doc.data();
 
-      console.log(`📝 [autoReactivateSuspendedAccounts] Reactivating account for user ${user.id}...`);
+      console.log(`📝 [autoReactivateSuspendedAccounts]
+        Reactivating account for user ${user.id}...`);
       console.log(`   Suspension end date: ${user.suspensionEndDate}`);
 
       // Update user's locked status in Firestore
@@ -1331,7 +1337,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
         await admin.auth().updateUser(user.id, {disabled: false});
         console.log(`✅ [autoReactivateSuspendedAccounts] Enabled user ${user.id} in Firebase Auth`);
       } catch (authError) {
-        console.error(`⚠️ [autoReactivateSuspendedAccounts] Failed to enable user ${user.id} in Firebase Auth: ${authError.message}`);
+        console.error(`⚠️ [autoReactivateSuspendedAccounts]
+          Failed to enable user ${user.id} in Firebase Auth: ${authError.message}`);
         // Continue with Firestore update even if Auth update fails
       }
 
@@ -1345,7 +1352,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
 
     return {success: true, count: reactivatedCount};
   } catch (error) {
-    console.error("❌ [autoReactivateSuspendedAccounts] Error reactivating suspended accounts:", error);
+    console.error("❌ [autoReactivateSuspendedAccounts]Error reactivating suspended accounts:",
+      error);
     console.error("Stack trace:", error.stack);
     throw error;
   }

@@ -246,8 +246,9 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       // Only check if this review is bad (rating <= 2)
       if (rating <= 2) {
-        console.log(`📊 [submitReview] Checking for consecutive bad reviews for provider ${providerId}`);
-        
+        console.log(`📊 [submitReview] Checking for
+          consecutive bad reviews for provider ${providerId}`);
+
         let recentReviewsSnap;
         try {
           // Get the last 5 reviews for this provider, ordered by createdAt desc
@@ -266,19 +267,19 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
               .collection("reviews")
               .where("providerId", "==", providerId)
               .get();
-            
+
             const allReviews = [];
             allReviewsSnap.forEach((doc) => {
               allReviews.push(doc.data());
             });
-            
+
             // Sort by createdAt desc and take first 5
             const sortedReviews = allReviews.sort((a, b) => {
               const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
               const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
               return bTime - aTime;
             });
-            
+
             // Create a mock snapshot-like structure
             recentReviewsSnap = {
               size: Math.min(5, sortedReviews.length),
@@ -306,13 +307,13 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
           });
 
           if (allBad) {
-            console.log(`⚠️ [submitReview] Detected 5 consecutive bad reviews for provider ${providerId}. Creating auto-report.`);
+            console.log(`⚠️ [submitReview] Detected 5 consecutive bad reviews
+              for provider ${providerId}. Creating auto-report.`);
 
             // Get provider profile for report details
             const providerDoc = await db.collection("users").doc(providerId).get();
             const providerProfile = providerDoc.exists ? providerDoc.data() : null;
             const providerName = providerProfile?.name || "Unknown Provider";
-            const providerPhone = providerProfile?.phone || "Unknown";
 
             // Get service name for context
             let serviceName = "Unknown Service";
@@ -327,7 +328,8 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
             const reportId = generateReportId();
             const ticketDescription = JSON.stringify({
               title: `5 Consecutive Bad Reviews - ${providerName}`,
-              description: `Provider ${providerName} has received 5 consecutive bad reviews (rating <= 2).\n\nThis is an automatically generated report.`,
+              description: `Provider ${providerName} has received 5
+              consecutive bad reviews (rating <= 2).\n\nThis is an automatically generated report.`,
               category: "bad_reviews",
               timestamp: new Date().toISOString(),
               source: "system_auto_report_consecutive_bad_reviews",
@@ -351,13 +353,15 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
             // Save report to Firestore
             await db.collection("app_reports").doc(reportId).set(newReport);
-            console.log(`✅ [submitReview] Automatically created ticket ${reportId} for 5 consecutive bad reviews.`);
+            console.log(`✅ [submitReview] Automatically created
+              ticket ${reportId} for 5 consecutive bad reviews.`);
           }
         }
       }
     } catch (reportError) {
       // Don't fail the review submission if report creation fails - just log it
-      console.error(`⚠️ [submitReview] Failed to check/create auto-report for consecutive bad reviews: ${reportError.message}`);
+      console.error(`⚠️ [submitReview] Failed to check/create auto-report
+        for consecutive bad reviews: ${reportError.message}`);
     }
 
     return result;
