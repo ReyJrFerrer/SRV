@@ -386,10 +386,10 @@ const NotificationsPage = () => {
     markAsRead,
     markAllAsRead,
     unreadCount,
+    deleteNotification
   } = useNotifications();
   const navigate = useNavigate();
 
-  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
   // Edit / selection mode
   const [editMode, setEditMode] = React.useState(false);
@@ -422,8 +422,7 @@ const NotificationsPage = () => {
   // This function locally "hides" a notification, respecting your comment.
   const handleLocalDelete = (id: string) => {
     setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    // You can also call the hook here if you want to delete from backend
-    // deleteNotification(id);
+    deleteNotification(id);
   };
 
   const toggleSelect = (id: string) => {
