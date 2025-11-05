@@ -77,6 +77,7 @@ const ProviderDirectionsPage: React.FC = () => {
   const routePolylineRef = useRef<google.maps.Polyline | null>(null);
   const altRoutePolylinesRef = useRef<google.maps.Polyline[]>([]);
   const altRouteListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   // Allow user to toggle auto-centering on their current location
   const [followMe, setFollowMe] = useState<boolean>(false);
@@ -472,17 +473,44 @@ const ProviderDirectionsPage: React.FC = () => {
       const { idx, path } = altInfos[i];
       const pl = altRoutePolylinesRef.current[i];
       pl.setPath(path as any);
+      // Use the same base blue color as the main route for visual consistency
       pl.setOptions({
-        strokeColor: altStrokeColorRef.current,
+        strokeColor: mainStrokeColorRef.current,
         strokeOpacity: 0,
         strokeWeight: 4,
         icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
         clickable: true,
       });
-      const listener = google.maps.event.addListener(pl, "click", () => {
+
+      // attach listeners: click selects route and shows an info window; hover/touch highlight
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current) altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResponse?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng ? ev.latLng : (path && path[Math.floor(path.length / 2)]);
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
       });
-      altRouteListenersRef.current.push(listener);
+
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
     }
 
     // Add missing alts
@@ -494,18 +522,43 @@ const ProviderDirectionsPage: React.FC = () => {
       const { idx, path } = altInfos[i];
       const pl = new google.maps.Polyline({
         path,
-        strokeColor: altStrokeColorRef.current,
+        strokeColor: mainStrokeColorRef.current,
         strokeOpacity: 0,
         strokeWeight: 4,
         clickable: true,
         icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
       });
       pl.setMap(map);
-      const listener = google.maps.event.addListener(pl, "click", () => {
+
+      // listeners for newly created alternate polyline
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current) altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResponse?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng ? ev.latLng : (path && path[Math.floor(path.length / 2)]);
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
       });
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
       altRoutePolylinesRef.current.push(pl);
-      altRouteListenersRef.current.push(listener);
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
     }
   }, [directionsResponse, selectedRouteIndex]);
 
@@ -687,7 +740,9 @@ const ProviderDirectionsPage: React.FC = () => {
         deviceHeading={deviceHeading}
         setMapRef={(m) => (mapRef.current = m)}
         destinationName={
-          (booking as any)?.formattedLocation || (booking as any)?.location || null
+          (booking as any)?.formattedLocation ||
+          (booking as any)?.location ||
+          null
         }
       />
 
@@ -707,7 +762,11 @@ const ProviderDirectionsPage: React.FC = () => {
         mapRef={mapRef}
         providerLocation={providerLocation}
         navigateBack={() => navigate(-1)}
-        destinationName={(booking as any)?.formattedLocation || (booking as any)?.location || null}
+        destinationName={
+          (booking as any)?.formattedLocation ||
+          (booking as any)?.location ||
+          null
+        }
       />
 
       <StreetViewModal

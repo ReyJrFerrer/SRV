@@ -87,7 +87,13 @@ const MapView: React.FC<MapViewProps> = ({
              * destination name when available. Keep styling minimal so it
              * works on mobile and desktop.
              */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               {/** label pill */}
               {/** Use Tailwind classes where available; fall back to inline styles if not loaded */}
               <div
@@ -112,7 +118,16 @@ const MapView: React.FC<MapViewProps> = ({
               </div>
 
               {/** Small pin indicator */}
-              <div style={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "8px solid rgba(37,99,235,0.95)", marginTop: 4 }} />
+              <div
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: "6px solid transparent",
+                  borderRight: "6px solid transparent",
+                  borderTop: "8px solid rgba(37,99,235,0.95)",
+                  marginTop: 4,
+                }}
+              />
             </div>
           </AdvancedMarker>
         )}

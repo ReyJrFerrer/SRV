@@ -125,11 +125,12 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
                     </div>
                   </div>
                   {/** Destination name shown under ETA/distance */}
-                  {typeof destinationName === "string" && destinationName.trim() !== "" && (
-                    <div className="mt-1 max-w-[90%] text-sm text-gray-600">
-                      {destinationName}
-                    </div>
-                  )}
+                  {typeof destinationName === "string" &&
+                    destinationName.trim() !== "" && (
+                      <div className="mt-1 max-w-[90%] text-sm text-gray-600">
+                        {destinationName}
+                      </div>
+                    )}
                 </div>
               );
             })()}
