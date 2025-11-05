@@ -6,6 +6,7 @@ import {
   EnhancedBooking,
 } from "../../../../hooks/bookingManagement"; // Adjust path as needed
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
+import useNoBackNavigation from "../../../../hooks/useNoBackNavigation";
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
@@ -21,6 +22,9 @@ const ReceiptPage: React.FC = () => {
   const userRating = location.state?.userRating;
   const { bookings, loading: bookingLoading } = useBookingManagement();
   const { checkCommissionValidation } = useProviderBookingManagement();
+
+  // Prevent going back to the booking flow via browser back button
+  useNoBackNavigation("/client/booking");
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {

@@ -31,6 +31,7 @@ import HeroSection from "../../../components/provider/service-details/HeroSectio
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
 import BottomNavigation from "../../../components/provider/NavigationBar";
+import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
 type WeeklyScheduleEntry =
@@ -39,6 +40,8 @@ type WeeklyScheduleEntry =
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  // When viewing a service's details, avoid going back into the add/edit wizard with browser back.
+  useNoBackNavigation("/provider/services");
 
   // State for image/certificate preview modal
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

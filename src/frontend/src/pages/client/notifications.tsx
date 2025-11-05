@@ -439,6 +439,23 @@ const NotificationsPage = () => {
     deleteNotification(id);
   };
 
+  const handleSelectAll = () => {
+    const visibleIds = notifications
+      .filter((n) => !deletedIds.includes(n.id))
+      .map((n) => n.id);
+    if (!editMode) {
+      setSelectedIds(visibleIds);
+      setEditMode(true);
+      return;
+    }
+    // If already in edit mode, toggle between select all and clear
+    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(visibleIds);
+    }
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -537,6 +554,17 @@ const NotificationsPage = () => {
                 >
                   {editMode ? "Done" : "Edit"}
                 </button>
+                <button
+                  onClick={handleSelectAll}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {selectedIds.length > 0 &&
+                  selectedIds.length ===
+                    notifications.filter((n) => !deletedIds.includes(n.id))
+                      .length
+                    ? "Clear"
+                    : "Select all"}
+                </button>
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
@@ -583,6 +611,23 @@ const NotificationsPage = () => {
                         role="menuitem"
                       >
                         {editMode ? "Done" : "Edit"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          handleSelectAll();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {selectedIds.length > 0 &&
+                        selectedIds.length ===
+                          notifications.filter(
+                            (n) => !deletedIds.includes(n.id),
+                          ).length
+                          ? "Clear selection"
+                          : "Select all"}
                       </button>
 
                       {/* Mark all as read Button */}
