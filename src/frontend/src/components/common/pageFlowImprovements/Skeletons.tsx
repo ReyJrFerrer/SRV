@@ -10,7 +10,7 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`relative flex w-full flex-col items-center overflow-hidden rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg pointer-events-none cursor-default ${className ?? ""}`}
+      className={`pointer-events-none relative flex w-full cursor-default flex-col items-center overflow-hidden rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg ${className ?? ""}`}
     >
       {/* Image placeholder (matches ServiceCard image height & rounded corners) */}
       <div className="relative w-full">
@@ -40,7 +40,7 @@ export const ServiceGridSkeleton: React.FC<{ count?: number }> = ({
   count = 8,
 }) => {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 pointer-events-none cursor-default">
+    <div className="pointer-events-none grid cursor-default grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
           <ServiceListingCardSkeleton />
@@ -54,7 +54,7 @@ export default ServiceCardSkeleton;
 
 // Generic horizontal list item skeleton
 export const ListItemSkeleton: React.FC = () => (
-  <div className="flex items-start gap-4 p-4 cursor-default pointer-events-none">
+  <div className="pointer-events-none flex cursor-default items-start gap-4 p-4">
     <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
     <div className="min-w-0 flex-1">
       <div className="mb-2 h-4 w-3/4 animate-pulse rounded bg-gray-200" />
@@ -68,8 +68,8 @@ export const ListItemSkeleton: React.FC = () => (
 export const NotificationListSkeleton: React.FC<{ count?: number }> = ({
   count = 6,
 }) => (
-  <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0 pointer-events-none cursor-default">
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md pointer-events-none">
+  <div className="pointer-events-none mx-auto mt-6 max-w-2xl cursor-default px-2 md:px-0">
+    <div className="pointer-events-none overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
       <div className="border-b bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2">
         <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
       </div>
@@ -84,7 +84,7 @@ export const NotificationListSkeleton: React.FC<{ count?: number }> = ({
 
 // Booking card skeleton (simple, full-width)
 export const BookingCardSkeleton: React.FC = () => (
-  <div className="block w-full cursor-default pointer-events-none overflow-hidden rounded-xl bg-white shadow-lg">
+  <div className="pointer-events-none block w-full cursor-default overflow-hidden rounded-xl bg-white shadow-lg">
     <div className="md:flex">
       {/* Image placeholder matches real card: md:flex-shrink-0, md:w-48, md:h-48 */}
       <div className="md:flex-shrink-0">
@@ -124,7 +124,7 @@ export const BookingCardSkeleton: React.FC = () => (
 export const BookingListSkeleton: React.FC<{ count?: number }> = ({
   count = 5,
 }) => (
-  <div className="space-y-4 pointer-events-none cursor-default">
+  <div className="pointer-events-none cursor-default space-y-4">
     {Array.from({ length: count }).map((_, i) => (
       <BookingCardSkeleton key={i} />
     ))}
