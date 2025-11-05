@@ -33,6 +33,11 @@ const MapView: React.FC<MapViewProps> = ({
         style={containerStyle}
         defaultZoom={isInNavigationMode ? 23 : 15}
         defaultCenter={providerLocation}
+        // Primary map-ready hooks: use onIdle and onTilesLoaded which tend to
+        // fire reliably across desktop and mobile. Keep onCameraChanged as a
+        // fallback for cases where camera movement is the earliest signal.
+        onIdle={(ev) => setMapRef(ev.map)}
+        onTilesLoaded={(ev) => setMapRef(ev.map)}
         onCameraChanged={(ev) => setMapRef(ev.map)}
         gestureHandling={isInNavigationMode ? "none" : "greedy"}
         disableDefaultUI={true}
