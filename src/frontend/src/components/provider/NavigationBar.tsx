@@ -269,6 +269,16 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       />
                     </div>
                   </div>
+                  <span
+                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
+                      active
+                        ? "scale-105 font-bold text-blue-900"
+                        : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                    }`}
+                    style={{ opacity: active ? 1 : 0.9 }}
+                  >
+                    Notifications
+                  </span>
                   {unreadCount > 0 && (
                     <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                   )}
@@ -321,6 +331,16 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       />
                     </div>
                   </div>
+                  <span
+                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
+                      active
+                        ? "scale-105 font-bold text-blue-900"
+                        : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                    }`}
+                    style={{ opacity: active ? 1 : 0.9 }}
+                  >
+                    Settings
+                  </span>
                 </Link>
               );
             })()}
