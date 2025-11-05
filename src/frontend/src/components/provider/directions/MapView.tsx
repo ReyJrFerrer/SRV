@@ -8,6 +8,7 @@ interface MapViewProps {
   isInNavigationMode: boolean;
   deviceHeading: number | null;
   setMapRef: (m: google.maps.Map | null) => void;
+  destinationName?: string | null;
 }
 
 const containerStyle: React.CSSProperties = {
@@ -24,6 +25,7 @@ const MapView: React.FC<MapViewProps> = ({
   isInNavigationMode,
   deviceHeading,
   setMapRef,
+  destinationName,
 }) => {
   if (!providerLocation) return null;
 
@@ -78,7 +80,42 @@ const MapView: React.FC<MapViewProps> = ({
           </AdvancedMarker>
         )}
 
-        {destinationCoords && <AdvancedMarker position={destinationCoords} />}
+        {destinationCoords && (
+          <AdvancedMarker position={destinationCoords}>
+            {/**
+             * Render a small label above the destination marker showing the
+             * destination name when available. Keep styling minimal so it
+             * works on mobile and desktop.
+             */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {/** label pill */}
+              {/** Use Tailwind classes where available; fall back to inline styles if not loaded */}
+              <div
+                className="hidden sm:block"
+                style={{
+                  background: "rgba(255,255,255,0.95)",
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#1f2937",
+                  maxWidth: 220,
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+                title={destinationName || undefined}
+              >
+                {destinationName || "Destination"}
+              </div>
+
+              {/** Small pin indicator */}
+              <div style={{ width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "8px solid rgba(37,99,235,0.95)", marginTop: 4 }} />
+            </div>
+          </AdvancedMarker>
+        )}
       </Map>
     </APIProvider>
   );

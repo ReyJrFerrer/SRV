@@ -7,6 +7,7 @@ interface ControlsOverlayProps {
   destResolveStatus: "idle" | "pending" | "ok" | "failed";
   directionsResponse: google.maps.DirectionsResult | null;
   selectedRouteIndex: number;
+  destinationName?: string | null;
 
   setShowStreetView: (v: boolean) => void;
   followMe: boolean;
@@ -36,6 +37,7 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
   mapRef,
   providerLocation,
   navigateBack,
+  destinationName,
 }) => {
   return (
     <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
@@ -112,14 +114,22 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
                 directionsResponse.routes[selectedRouteIndex]?.legs[0] ||
                 directionsResponse.routes[0].legs[0];
               return (
-                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                  <div className="text-lg font-extrabold text-gray-900">
-                    {leg.duration?.text || "N/A"}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <div className="text-lg font-extrabold text-gray-900">
+                      {leg.duration?.text || "N/A"}
+                    </div>
+                    <span className="text-gray-300">•</span>
+                    <div className="text-base font-semibold text-gray-700">
+                      {leg.distance?.text || "N/A"}
+                    </div>
                   </div>
-                  <span className="text-gray-300">•</span>
-                  <div className="text-base font-semibold text-gray-700">
-                    {leg.distance?.text || "N/A"}
-                  </div>
+                  {/** Destination name shown under ETA/distance */}
+                  {typeof destinationName === "string" && destinationName.trim() !== "" && (
+                    <div className="mt-1 max-w-[90%] text-sm text-gray-600">
+                      {destinationName}
+                    </div>
+                  )}
                 </div>
               );
             })()}

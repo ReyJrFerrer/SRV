@@ -224,7 +224,7 @@ const ActionButtons: React.FC<Props> = ({
         className={`${baseButtonClass} w-full ${color.start}`}
       >
         <ArrowPathIcon className="hidden h-5 w-5 md:mr-2" />
-        Start Service
+        Start Driving
       </button>,
     );
   }

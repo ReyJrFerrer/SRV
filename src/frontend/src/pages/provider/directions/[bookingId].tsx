@@ -686,6 +686,9 @@ const ProviderDirectionsPage: React.FC = () => {
         isInNavigationMode={isInNavigationMode}
         deviceHeading={deviceHeading}
         setMapRef={(m) => (mapRef.current = m)}
+        destinationName={
+          (booking as any)?.formattedLocation || (booking as any)?.location || null
+        }
       />
 
       <ControlsOverlay
@@ -704,6 +707,7 @@ const ProviderDirectionsPage: React.FC = () => {
         mapRef={mapRef}
         providerLocation={providerLocation}
         navigateBack={() => navigate(-1)}
+        destinationName={(booking as any)?.formattedLocation || (booking as any)?.location || null}
       />
 
       <StreetViewModal
