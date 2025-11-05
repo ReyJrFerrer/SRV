@@ -111,7 +111,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   );
 
   return (
-    <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl">
+    <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleIcon />

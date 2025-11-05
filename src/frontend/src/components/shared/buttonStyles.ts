@@ -1,6 +1,6 @@
 // Shared Tailwind class constants for booking action buttons (client + provider)
 export const containerDefault =
-  "mb-6 flex flex-wrap gap-3 rounded-xl bg-white p-3 shadow-sm justify-end";
+  "mb-6 flex flex-col gap-3 rounded-xl bg-white p-3 shadow-sm justify-end";
 export const containerCompact = "flex flex-wrap gap-2 items-center justify-end";
 
 export const baseButtonDefault =

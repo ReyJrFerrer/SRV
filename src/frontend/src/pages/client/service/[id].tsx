@@ -331,7 +331,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-40">
+    <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
       <div className="relative h-60 w-full">
         <img
           src={
@@ -350,7 +350,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         />
       </div>
 
-      <div className="relative z-10 -mt-24 p-4">
+      <main className="relative z-10 -mt-24 p-4">
         {chatErrorMessage && (
           <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             <span className="block sm:inline">{chatErrorMessage}</span>
@@ -365,7 +365,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <div className="mx-auto mt-6 w-full max-w-5xl">
           {/* --- This is the new single card wrapper --- */}
           {/* It uses your styles: rounded-3xl, bg-white/70, backdrop-blur-md */}
-          <div className="rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
+          <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-2xl backdrop-blur-md">
             {/* --- This grid controls the layout --- */}
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
               {/* --- Column 1: Provider Info --- */}
@@ -460,7 +460,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl bg-white p-6 shadow-2xl backdrop-blur-md">
+        <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
             <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
             Offered
@@ -518,9 +518,10 @@ const ClientServiceDetailsPage: React.FC = () => {
         />
         <CredentialsSection isVerified={isVerified} />
         <ReviewsSection serviceId={service.id} />
-      </div>
-      <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3 md:bottom-0">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+      </main>
+
+      <div className="shadow-t-lg fixed bottom-11 left-0 z-40 flex w-full flex-col border-t border-gray-200 bg-white p-3 md:bottom-0 lg:bottom-0">
+        <div className="mx-auto flex w-full items-center justify-between gap-3">
           <button
             onClick={handleChatProviderClick}
             disabled={
@@ -535,7 +536,9 @@ const ClientServiceDetailsPage: React.FC = () => {
                 <span className="text-base font-semibold">Creating Chat</span>
               </>
             ) : (
-              <span className="text-base font-semibold">Chat</span>
+              <span className="text-sm font-semibold md:text-lg lg:text-xl">
+                Chat
+              </span>
             )}
             {isOwnService && (
               <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -556,8 +559,8 @@ const ClientServiceDetailsPage: React.FC = () => {
                 !hasSufficientReputation ||
                 isCheckingReputation
               }
-              className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
-              style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
+              className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 text-sm font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400 md:text-lg lg:text-xl"
+              // style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
               {isCheckingReputation
                 ? "Checking..."

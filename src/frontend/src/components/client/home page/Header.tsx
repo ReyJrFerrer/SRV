@@ -49,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- Sticky mini header behavior with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
-  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
+  // const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
   const [showMiniLocation, setShowMiniLocation] = useState(false);
   useEffect(() => {
@@ -95,15 +95,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   }, [isMini]);
 
   // Measure header height and keep it as a minHeight when the mini overlay is shown
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
-    };
-    // Measure once after mount
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
+  // React.useLayoutEffect(() => {
+  //   const measure = () => {
+  //     if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+  //   };
+  //   // Measure once after mount
+  //   measure();
+  //   window.addEventListener("resize", measure);
+  //   return () => window.removeEventListener("resize", measure);
+  // }, []);
 
   // maps logic has been extracted into MapFunctions component
   const mapsApiKey =
@@ -193,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     <APIProvider apiKey={mapsApiKey}>
       <header
         ref={headerRef}
-        style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
+        // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
@@ -285,10 +285,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 }
               }}
             >
-              <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
+              <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
                 <input
                   type="text"
-                  className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                  className="w-full border-none bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-lg lg:text-xl"
                   placeholder={placeholder}
                   value={searchQuery}
                   onChange={handleSearchInputChange}
@@ -319,8 +319,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       </header>
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
-        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
-          <div className="w-full rounded-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]">
+          <div className="w-full rounded-b-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
@@ -350,7 +350,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 <input
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  className="flex-1 border-none bg-transparent p-0 text-base text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0"
+                  className="w-full border-none bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-lg lg:text-xl"
                   placeholder={placeholder}
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (

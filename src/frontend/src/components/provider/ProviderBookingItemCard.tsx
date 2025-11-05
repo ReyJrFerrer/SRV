@@ -457,7 +457,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         </div>
 
         {/* Action Buttons Section - use shared ActionButtons component */}
-        <div className="mt-5 flex flex-col gap-2 border-t border-gray-200 pt-4">
+        <div className="mt-5 grid grid-cols-1 gap-2 border-t border-gray-200 pt-4 sm:auto-cols-fr sm:grid-flow-col">
           <ActionButtons
             booking={booking}
             onChat={handleChatClient}
