@@ -8,7 +8,6 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 
 interface ProviderStatsProps {
   className?: string;
@@ -42,7 +41,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [newCommissionAmount, setNewCommissionAmount] = useState("");
   const [balance, setBalance] = useState(outstandingCommission);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Update balance when outstandingCommission changes
   useEffect(() => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
 import { Link, useNavigate } from "react-router-dom";
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
   ArrowLeftIcon,
@@ -459,10 +458,6 @@ export const UserListPage: React.FC = () => {
     }
   };
 
-  // Check if a user is an admin
-  const isUserAdmin = (userId: string): boolean => {
-    return adminUserIds.has(userId);
-  };
 
   // Handle lock/unlock user
   const handleSuspendUser = async (user: UserData, suspend: boolean) => {

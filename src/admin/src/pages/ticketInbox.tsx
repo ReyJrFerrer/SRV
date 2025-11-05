@@ -217,8 +217,7 @@ export const TicketInboxPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
-  const [loading, setLoading] = useState(false);
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [, setLoadingReports] = useState(false);
 
   // Mobile bottom action bar visibility
   const [showMobileBar, setShowMobileBar] = useState(false);

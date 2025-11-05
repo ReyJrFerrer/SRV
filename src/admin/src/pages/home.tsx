@@ -28,7 +28,6 @@ export const AdminHomePage: React.FC = () => {
     // Action functions
     getServicesWithCertificates,
     getReportsFromFeedbackCanister,
-    refreshAll,
   } = useAdmin();
 
   // Mobile bottom action bar visibility
@@ -242,12 +241,6 @@ export const AdminHomePage: React.FC = () => {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const isRefreshing =
-    loading.systemStats ||
-    loading.serviceProviders ||
-    loading.services ||
-    loading.bookings;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gray-50">
