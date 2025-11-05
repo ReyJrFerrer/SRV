@@ -81,7 +81,6 @@ module {
         profilePicture: ?ProfileImage;
         biography: ?Text;
         isLocked: ?Bool; // Account lock status
-        suspensionEndDate: ?Time.Time; // When suspension expires (null for indefinite)
     };
 
     // Service types
