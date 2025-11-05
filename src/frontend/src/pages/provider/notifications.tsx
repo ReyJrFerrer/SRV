@@ -398,6 +398,22 @@ const NotificationsPageSP = () => {
 
   const clearSelection = () => setSelectedIds([]);
 
+  const handleSelectAll = () => {
+    const visibleIds = notifications
+      .filter((n) => !deletedIds.includes(n.id))
+      .map((n) => n.id);
+    if (!editMode) {
+      setSelectedIds(visibleIds);
+      setEditMode(true);
+      return;
+    }
+    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(visibleIds);
+    }
+  };
+
   const bulkMarkAsRead = () => {
     selectedIds.forEach((id) => markAsRead(id));
     clearSelection();
@@ -505,6 +521,16 @@ const NotificationsPageSP = () => {
                   className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                 >
                   {editMode ? "Done" : "Edit"}
+                </button>
+                <button
+                  onClick={handleSelectAll}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {selectedIds.length > 0 &&
+                  selectedIds.length ===
+                    notifications.filter((n) => !deletedIds.includes(n.id)).length
+                    ? "Clear"
+                    : "Select all"}
                 </button>
                 {unread.length > 0 && (
                   <button
