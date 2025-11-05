@@ -486,12 +486,15 @@ const ProviderDirectionsPage: React.FC = () => {
       const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
         try {
-          if (!altInfoWindowRef.current) altInfoWindowRef.current = new google.maps.InfoWindow();
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
           const route = directionsResponse?.routes[idx];
           const leg = route?.legs?.[0];
           const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
           altInfoWindowRef.current.setContent(content);
-          const pos = ev?.latLng ? ev.latLng : (path && path[Math.floor(path.length / 2)]);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
           try {
             if (pos) altInfoWindowRef.current.setPosition(pos as any);
             altInfoWindowRef.current.open(map);
@@ -534,12 +537,15 @@ const ProviderDirectionsPage: React.FC = () => {
       const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
         try {
-          if (!altInfoWindowRef.current) altInfoWindowRef.current = new google.maps.InfoWindow();
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
           const route = directionsResponse?.routes[idx];
           const leg = route?.legs?.[0];
           const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
           altInfoWindowRef.current.setContent(content);
-          const pos = ev?.latLng ? ev.latLng : (path && path[Math.floor(path.length / 2)]);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
           try {
             if (pos) altInfoWindowRef.current.setPosition(pos as any);
             altInfoWindowRef.current.open(map);
