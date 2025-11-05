@@ -181,7 +181,7 @@ const PayoutSettingsPage: React.FC = () => {
             >
               <ArrowLeftIcon className="mr-2 h-6 w-6" />
             </button>
-            <h1 className="absolute left-1/2 -translate-x-1/2 font-extrabold tracking-tight text-black lg:text-2xl">
+            <h1 className="absolute left-1/2 -translate-x-1/2 font-extrabold tracking-tight text-black text-md text-black sm:text-xl lg:text-2xl">
               Complete Onboarding
             </h1>
           </div>
@@ -223,11 +223,11 @@ const PayoutSettingsPage: React.FC = () => {
         <div className="flex items-center justify-between px-4">
           <button
             onClick={() => navigate("/provider/home")}
-            className="flex items-center text-blue-600 hover:text-blue-700"
+            className="flex items-center text-gray-600 hover:text-blue-700"
           >
-            <ArrowLeftIcon className="mr-2 h-5 w-5" />
+            <ArrowLeftIcon className="mr-2 h-6 w-6" />
           </button>
-          <h1 className="text-xl font-extrabold text-black">
+          <h1 className="text-md text-black sm:text-xl lg:text-2xll font-extrabold text-black">
             Complete Onboarding
           </h1>
           <div className="w-16" /> {/* Spacer */}

@@ -179,7 +179,7 @@ const MyServicesPage: React.FC = () => {
 
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-3.5 py-2.5">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg text-black sm:text-xl lg:text-2xl font-extrabold tracking-tight text-black">
             My Services
           </h1>
           <div className="flex flex-1 justify-end">

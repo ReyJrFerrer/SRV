@@ -466,7 +466,7 @@ const NotificationsPageSP = () => {
           }`}
         >
           <h1
-            className={`text-2xl font-extrabold tracking-tight text-black ${
+            className={`text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl ${
               notifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
