@@ -560,7 +560,8 @@ const NotificationsPage = () => {
                 >
                   {selectedIds.length > 0 &&
                   selectedIds.length ===
-                    notifications.filter((n) => !deletedIds.includes(n.id)).length
+                    notifications.filter((n) => !deletedIds.includes(n.id))
+                      .length
                     ? "Clear"
                     : "Select all"}
                 </button>
@@ -612,20 +613,22 @@ const NotificationsPage = () => {
                         {editMode ? "Done" : "Edit"}
                       </button>
 
-                        <button
-                          onClick={() => {
-                            handleSelectAll();
-                            setMobileMenuOpen(false);
-                          }}
-                          className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
-                          role="menuitem"
-                        >
-                          {selectedIds.length > 0 &&
-                          selectedIds.length ===
-                            notifications.filter((n) => !deletedIds.includes(n.id)).length
-                            ? "Clear selection"
-                            : "Select all"}
-                        </button>
+                      <button
+                        onClick={() => {
+                          handleSelectAll();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {selectedIds.length > 0 &&
+                        selectedIds.length ===
+                          notifications.filter(
+                            (n) => !deletedIds.includes(n.id),
+                          ).length
+                          ? "Clear selection"
+                          : "Select all"}
+                      </button>
 
                       {/* Mark all as read Button */}
                       {unread.length > 0 && (

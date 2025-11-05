@@ -528,7 +528,8 @@ const NotificationsPageSP = () => {
                 >
                   {selectedIds.length > 0 &&
                   selectedIds.length ===
-                    notifications.filter((n) => !deletedIds.includes(n.id)).length
+                    notifications.filter((n) => !deletedIds.includes(n.id))
+                      .length
                     ? "Clear"
                     : "Select all"}
                 </button>
