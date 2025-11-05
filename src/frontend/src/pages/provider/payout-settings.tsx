@@ -181,7 +181,7 @@ const PayoutSettingsPage: React.FC = () => {
             >
               <ArrowLeftIcon className="mr-2 h-6 w-6" />
             </button>
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            <h1 className="absolute left-1/2 -translate-x-1/2 font-extrabold tracking-tight text-black lg:text-2xl">
               Complete Onboarding
             </h1>
           </div>

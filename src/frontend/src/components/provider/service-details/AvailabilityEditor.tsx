@@ -102,7 +102,8 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
         <h4 className="mb-2 text-sm font-semibold text-blue-800">
           Apply a Time Slot to Multiple Days
         </h4>
-        <div className="mb-3 flex items-center gap-2 text-sm">
+
+        <div className="mb-3 flex flex-col gap-2 text-sm md:items-center lg:flex-row">
           <input
             type="time"
             value={templateTimeSlot.startTime}
@@ -119,7 +120,7 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
             }}
             className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
           />
-          <span>-</span>
+          <span className="mx-auto md:mx-0">-</span>
           <input
             type="time"
             value={templateTimeSlot.endTime}
@@ -236,7 +237,8 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                   className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
                   aria-label={`Add time slot for ${dayEntry.day}`}
                 >
-                  <PlusCircleIcon className="mr-1 h-4 w-4" /> Add Slot
+                  <PlusCircleIcon className="h-4 w-4 lg:mr-1" />
+                  <span className="hidden lg:inline">Add Slot</span>
                 </button>
               )}
             </div>
@@ -265,54 +267,58 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                           }`}
                         >
                           <div className="flex items-center gap-2 text-sm">
-                            <input
-                              type="time"
-                              value={slot.startTime}
-                              onChange={(e) => {
-                                const newStartTime = e.target.value;
-                                const newSchedule = [...weeklySchedule];
-                                const dayIndex = weeklySchedule.findIndex(
-                                  (d) => d.day === dayEntry.day,
-                                );
-                                newSchedule[dayIndex].availability.slots![
-                                  slotIndex
-                                ].startTime = newStartTime;
-                                if (newStartTime === slot.endTime) {
+                            <div className="flex flex-1 flex-col gap-2 md:items-center lg:flex-row">
+                              <input
+                                type="time"
+                                value={slot.startTime}
+                                onChange={(e) => {
+                                  const newStartTime = e.target.value;
+                                  const newSchedule = [...weeklySchedule];
+                                  const dayIndex = weeklySchedule.findIndex(
+                                    (d) => d.day === dayEntry.day,
+                                  );
                                   newSchedule[dayIndex].availability.slots![
                                     slotIndex
-                                  ].endTime = addHoursToTime(newStartTime, 1);
-                                }
-                                setWeeklySchedule(newSchedule);
-                              }}
-                              className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
-                                isSameTime || isStartAfterEnd
-                                  ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                                  : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
-                              }`}
-                            />
-                            <span className="text-gray-500">to</span>
-                            <input
-                              type="time"
-                              value={slot.endTime}
-                              onChange={(e) => {
-                                const newEndTime = e.target.value;
-                                if (newEndTime !== slot.startTime) {
-                                  const newSchedule = [...weeklySchedule];
-                                  newSchedule[
-                                    weeklySchedule.findIndex(
-                                      (d) => d.day === dayEntry.day,
-                                    )
-                                  ].availability.slots![slotIndex].endTime =
-                                    newEndTime;
+                                  ].startTime = newStartTime;
+                                  if (newStartTime === slot.endTime) {
+                                    newSchedule[dayIndex].availability.slots![
+                                      slotIndex
+                                    ].endTime = addHoursToTime(newStartTime, 1);
+                                  }
                                   setWeeklySchedule(newSchedule);
-                                }
-                              }}
-                              className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
-                                isSameTime || isStartAfterEnd
-                                  ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                                  : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
-                              }`}
-                            />
+                                }}
+                                className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                                  isSameTime || isStartAfterEnd
+                                    ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                    : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                                }`}
+                              />
+                              <span className="mx-auto text-gray-500 md:mx-0">
+                                to
+                              </span>
+                              <input
+                                type="time"
+                                value={slot.endTime}
+                                onChange={(e) => {
+                                  const newEndTime = e.target.value;
+                                  if (newEndTime !== slot.startTime) {
+                                    const newSchedule = [...weeklySchedule];
+                                    newSchedule[
+                                      weeklySchedule.findIndex(
+                                        (d) => d.day === dayEntry.day,
+                                      )
+                                    ].availability.slots![slotIndex].endTime =
+                                      newEndTime;
+                                    setWeeklySchedule(newSchedule);
+                                  }
+                                }}
+                                className={`w-full rounded-md border px-2 py-1 focus:ring-2 ${
+                                  isSameTime || isStartAfterEnd
+                                    ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
+                                    : "border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-200"
+                                }`}
+                              />
+                            </div>
                             <button
                               onClick={() => {
                                 const newSchedule = [...weeklySchedule];

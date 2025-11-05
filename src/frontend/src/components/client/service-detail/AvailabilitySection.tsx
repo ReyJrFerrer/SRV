@@ -50,7 +50,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
   );
 
   return (
-    <div className="mt-8 rounded-xl bg-white p-6 shadow-xl backdrop-blur-md">
+    <div className="mt-8 rounded-xl bg-white p-4 shadow-xl backdrop-blur-md">
       <div className="mb-4 flex items-center gap-2">
         <CalendarIcon />
         <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
@@ -101,13 +101,13 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                     {isOpen && (
                       <div
                         id={`availability-panel-${day}`}
-                        className="mb-4 mt-2 flex flex-wrap items-center gap-2 px-3"
+                        className="mb-2 mt-2 flex flex-wrap items-center gap-2 px-3"
                       >
                         {slots.length > 0 ? (
                           slots.map((slot, idx) => (
                             <span
                               key={slot + idx}
-                              className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md"
+                              className="inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md"
                             >
                               {slot}
                             </span>
@@ -155,7 +155,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                           >
                             {slot ? (
                               <span
-                                className={` inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
+                                className={` inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
                               >
                                 {slot}
                               </span>

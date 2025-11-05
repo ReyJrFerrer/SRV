@@ -58,7 +58,7 @@ const ImagesSection: React.FC<Props> = ({
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
       <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+        <h3 className="text-md flex items-center gap-2 font-bold text-blue-800 lg:text-xl">
           <PhotoIcon className="h-6 w-6 text-blue-400" />
           Service Images
         </h3>
