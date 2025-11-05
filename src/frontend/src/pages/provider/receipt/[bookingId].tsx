@@ -7,11 +7,14 @@ import {
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
+import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 const ReceiptPage: React.FC = () => {
   const navigate = useNavigate();
   const { bookingId } = useParams<{ bookingId: string }>();
   const [searchParams] = useSearchParams();
+  // Prevent navigating back to completion/active pages once on receipt
+  useNoBackNavigation("/provider/bookings");
 
   // Payment details from query params
   const serviceTotal = parseFloat(searchParams.get("price") || "0");

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
+import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 // Interface for the booking details passed via navigation state
 interface BookingDetails {
@@ -27,6 +28,9 @@ const BookingConfirmationPage: React.FC = () => {
   useEffect(() => {
     document.title = "Booking Confirmed - SRV Client";
   }, []);
+
+  // Prevent returning to payment/creation pages using browser back
+  useNoBackNavigation("/client/booking");
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
