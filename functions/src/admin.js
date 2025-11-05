@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
@@ -689,12 +690,72 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const usersSnapshot = await db.collection("profiles").get();
-    const users = usersSnapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    // Query both "profiles" and "users" collections to get all users
+    const [profilesSnapshot, usersSnapshot] = await Promise.all([
+      db.collection("profiles").get(),
+      db.collection("users").get(),
+    ]);
 
-    return {success: true, users: users};
+    // Combine users from both collections
+    const profiles = profilesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    const users = usersSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Merge and deduplicate by id (users collection takes precedence if duplicate)
+    const userMap = new Map();
+    profiles.forEach((user) => {
+      const userId = user.id || user.uid || user.principal;
+      if (userId) {
+        userMap.set(userId, user);
+      }
+    });
+    users.forEach((user) => {
+      const userId = user.id || user.uid || user.principal;
+      if (userId) {
+        userMap.set(userId, user);
+      }
+    });
+
+    const allUsers = Array.from(userMap.values());
+    console.log(`✅ [getAllUsers] Found ${allUsers.length} users (${profiles.length} from profiles, ${users.length} from users)`);
+
+    return {success: true, users: allUsers};
   } catch (error) {
     console.error("Error in getAllUsers:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Get all user lock statuses from users collection
+ */
+exports.getAllUserLockStatuses = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can get user lock statuses",
+    );
+  }
+
+  try {
+    const usersSnapshot = await db.collection("users").get();
+    const lockStatuses = {};
+    usersSnapshot.docs.forEach((doc) => {
+      const userData = doc.data();
+      if (userData.locked !== undefined) {
+        lockStatuses[doc.id] = userData.locked;
+      }
+    });
+
+    return {success: true, lockStatuses: lockStatuses};
+  } catch (error) {
+    console.error("Error in getAllUserLockStatuses:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -776,11 +837,15 @@ exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Lock or unlock user account
+ * Lock or unlock user account with optional time-based suspension
+ * @param {Object} data - Request data
+ * @param {string} data.userId - User ID to lock/unlock
+ * @param {boolean} data.locked - Whether to lock the account
+ * @param {number|null} data.suspensionDurationDays - Duration in days (7, 30, custom number, or null for indefinite)
  */
 exports.lockUserAccount = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {userId, locked} = payload;
+  const {userId, locked, suspensionDurationDays} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -791,72 +856,45 @@ exports.lockUserAccount = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Update user's locked status in Firestore
-    await db.collection("users").doc(userId).update({
+    const updateData = {
       locked: locked,
       updatedAt: new Date().toISOString(),
       updatedBy: authInfo.uid,
-    });
+    };
+
+    // If locking, calculate suspension end date based on duration
+    if (locked && suspensionDurationDays !== undefined && suspensionDurationDays !== null) {
+      const suspensionEndDate = new Date();
+      suspensionEndDate.setDate(suspensionEndDate.getDate() + suspensionDurationDays);
+      updateData.suspensionEndDate = suspensionEndDate.toISOString();
+    } else if (locked && suspensionDurationDays === null) {
+      // Indefinite suspension
+      updateData.suspensionEndDate = null;
+    } else if (!locked) {
+      // Unlocking - clear suspension end date
+      updateData.suspensionEndDate = null;
+    }
+
+    // Update user's locked status in Firestore
+    await db.collection("users").doc(userId).update(updateData);
 
     // Disable/enable user in Firebase Auth
     await admin.auth().updateUser(userId, {disabled: locked});
 
     const action = locked ? "locked" : "unlocked";
-    return {success: true, message: `User account ${action} successfully`};
+    const durationText = locked 
+      ? (suspensionDurationDays === null 
+          ? "indefinitely" 
+          : `for ${suspensionDurationDays} day${suspensionDurationDays !== 1 ? 's' : ''}`)
+      : "";
+    
+    return {
+      success: true, 
+      message: `User account ${action} ${durationText}`.trim(),
+      suspensionEndDate: updateData.suspensionEndDate || null,
+    };
   } catch (error) {
     console.error("Error in lockUserAccount:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Delete user account
- */
-exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can delete user accounts",
-    );
-  }
-
-  try {
-    const batch = db.batch();
-
-    // Delete user profile
-    batch.delete(db.collection("users").doc(userId));
-
-    // Delete user role if exists
-    batch.delete(db.collection("userRoles").doc(userId));
-
-    // Delete user's services
-    const servicesSnapshot = await db.collection("services")
-      .where("providerId", "==", userId)
-      .get();
-    servicesSnapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-
-    // Delete user's bookings
-    const bookingsSnapshot = await db.collection("bookings")
-      .where("clientId", "==", userId)
-      .get();
-    bookingsSnapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    // Delete from Firebase Auth
-    await admin.auth().deleteUser(userId);
-
-    return {success: true, message: "User account deleted successfully"};
-  } catch (error) {
-    console.error("Error in deleteUserAccount:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -907,6 +945,7 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
 
 /**
  * Update certificate validation status
+ * Updates both the media collection (for filtering) and certificateValidations collection
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -920,7 +959,28 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
     );
   }
 
+  if (!certificateId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Media ID is required",
+    );
+  }
+
+  if (!["Pending", "Validated", "Rejected"].includes(status)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid validation status",
+    );
+  }
+
   try {
+    // Import internal function to update media collection
+    const {updateCertificateValidationStatusInternal} = require("./media");
+    
+    // Update certificate validation status in media collection (this is what getServicesWithCertificates queries)
+    await updateCertificateValidationStatusInternal(certificateId, status);
+
+    // Also update or create validation record in certificateValidations collection
     const now = new Date().toISOString();
     const validationData = {
       status: status, // "Validated" or "Rejected"
@@ -930,8 +990,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
       updatedAt: now,
     };
 
-    await
-    db.collection("certificateValidations").doc(certificateId).set(validationData, {merge: true});
+    await db.collection("certificateValidations").doc(certificateId).set(validationData, {merge: true});
 
     return {success: true, message: `Certificate ${status.toLowerCase()} successfully`};
   } catch (error) {
@@ -1223,6 +1282,72 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error("Error in getBookingsData:", error);
     throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Auto-reactivate user accounts when suspension period expires
+ * Scheduled function that runs every hour to check for expired suspensions
+ */
+exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event) => {
+  console.log("🚀 [autoReactivateSuspendedAccounts] Scheduled function running...");
+  console.log(`📅 [autoReactivateSuspendedAccounts] Current time: ${new Date().toISOString()}`);
+
+  try {
+    const now = new Date();
+
+    // Find all locked users with suspensionEndDate that has passed
+    const expiredSuspensionsQuery = await db.collection("users")
+      .where("locked", "==", true)
+      .where("suspensionEndDate", "<=", now.toISOString())
+      .get();
+
+    console.log(`📊 [autoReactivateSuspendedAccounts] Found ${expiredSuspensionsQuery.size} expired suspensions.`);
+
+    if (expiredSuspensionsQuery.empty) {
+      console.log("✅ [autoReactivateSuspendedAccounts] No expired suspensions found.");
+      return {success: true, count: 0};
+    }
+
+    const batch = db.batch();
+    let reactivatedCount = 0;
+
+    // Process each expired suspension
+    for (const doc of expiredSuspensionsQuery.docs) {
+      const user = doc.data();
+
+      console.log(`📝 [autoReactivateSuspendedAccounts] Reactivating account for user ${user.id}...`);
+      console.log(`   Suspension end date: ${user.suspensionEndDate}`);
+
+      // Update user's locked status in Firestore
+      batch.update(doc.ref, {
+        locked: false,
+        suspensionEndDate: null,
+        updatedAt: now.toISOString(),
+      });
+
+      // Enable user in Firebase Auth
+      try {
+        await admin.auth().updateUser(user.id, {disabled: false});
+        console.log(`✅ [autoReactivateSuspendedAccounts] Enabled user ${user.id} in Firebase Auth`);
+      } catch (authError) {
+        console.error(`⚠️ [autoReactivateSuspendedAccounts] Failed to enable user ${user.id} in Firebase Auth: ${authError.message}`);
+        // Continue with Firestore update even if Auth update fails
+      }
+
+      reactivatedCount++;
+    }
+
+    if (reactivatedCount > 0) {
+      await batch.commit();
+      console.log(`✅ [autoReactivateSuspendedAccounts] Reactivated ${reactivatedCount} accounts.`);
+    }
+
+    return {success: true, count: reactivatedCount};
+  } catch (error) {
+    console.error("❌ [autoReactivateSuspendedAccounts] Error reactivating suspended accounts:", error);
+    console.error("Stack trace:", error.stack);
+    throw error;
   }
 });
 

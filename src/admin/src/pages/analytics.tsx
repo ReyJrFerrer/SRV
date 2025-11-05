@@ -5,7 +5,6 @@ import { ServiceProviderPerformanceTable } from "../components";
 import {
   ChartBarIcon,
   CurrencyDollarIcon,
-  ArrowPathIcon,
   UserIcon,
   ArrowLeftIcon,
   XMarkIcon,
@@ -69,7 +68,6 @@ export const AnalyticsPage: React.FC = () => {
   const [providerAnalytics, setProviderAnalytics] = useState<any | null>(null);
   const [showProviderDetails, setShowProviderDetails] = useState(false);
   const [showMobileBar, setShowMobileBar] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
     "name" | "totalRevenue" | "totalCommission" | "completedBookings"
@@ -82,17 +80,6 @@ export const AnalyticsPage: React.FC = () => {
     {},
   );
   const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refreshAll();
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -634,16 +621,6 @@ export const AnalyticsPage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
-                <button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                  {isRefreshing ? "Refreshing..." : "Refresh"}
-                </button>
                 <Link
                   to="/dashboard"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
@@ -667,16 +644,6 @@ export const AnalyticsPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              {isRefreshing ? "Refreshing..." : "Refresh"}
-            </button>
             <Link
               to="/dashboard"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
@@ -1128,7 +1095,7 @@ export const AnalyticsPage: React.FC = () => {
               loadingWalletBalances
             }
             onRefresh={() => refreshBookings(true)}
-            showRefresh={true}
+            showRefresh={false}
           />
         </div>
       </main>

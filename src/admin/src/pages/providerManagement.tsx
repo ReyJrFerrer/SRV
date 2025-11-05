@@ -6,7 +6,6 @@ import {
   CurrencyDollarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  ArrowPathIcon,
   PhoneIcon,
   UserIcon,
   CheckCircleIcon,
@@ -169,14 +168,6 @@ export const ProviderManagementPage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
-                <button
-                  onClick={() => refreshServiceProviders(true)}
-                  disabled={loading.serviceProviders}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon className="mr-2 h-4 w-4" />
-                  Refresh
-                </button>
                 <Link
                   to="/analytics"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
@@ -207,14 +198,6 @@ export const ProviderManagementPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={() => refreshServiceProviders(true)}
-              disabled={loading.serviceProviders}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              <ArrowPathIcon className="mr-2 h-4 w-4" />
-              Refresh
-            </button>
             <Link
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"

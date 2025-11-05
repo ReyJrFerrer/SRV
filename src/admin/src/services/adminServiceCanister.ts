@@ -229,6 +229,7 @@ const requireAuth = () => {
 
 /**
  * Helper function to send ticket status update notification
+ * Sends to both client and provider if ticket is related to a booking
  */
 const sendTicketStatusNotification = async (
   userId: string,
@@ -245,9 +246,49 @@ const sendTicketStatusNotification = async (
     const title = "Ticket Status Updated";
     const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatus} to ${statusText}.`;
 
+    // Fetch the report to check if it's related to a booking and determine user type
+    let relatedProviderId: string | undefined;
+    let relatedClientId: string | undefined;
+    let userType: "client" | "provider" = "client";
+
+    try {
+      // Use getReportById instead of getAllReports for better performance
+      // The Firebase function expects: data.data.data || data, so we wrap in data
+      const result = await callFirebaseFunction("getReportById", {
+        data: { reportId: ticketId },
+      });
+      if (result) {
+        const report = result as any;
+        // Parse the description to check for booking-related data and source
+        try {
+          const parsedData = JSON.parse(report.description || "{}");
+          
+          // Determine user type based on source (always check this)
+          if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+            userType = "provider";
+          } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+            userType = "client";
+          }
+          
+          // If ticket is related to a booking, get the related parties
+          if (parsedData.bookingId) {
+            relatedProviderId = parsedData.providerId;
+            relatedClientId = parsedData.clientId;
+          }
+        } catch (e) {
+          // Description might not be JSON, default to client
+          console.warn("Could not parse report description:", e);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch report data for notification:", e);
+      // Continue with default userType if we can't fetch the report
+    }
+
+    // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
       userId,
-      "client", // Assuming tickets are submitted by clients
+      userType,
       "generic",
       title,
       message,
@@ -261,8 +302,45 @@ const sendTicketStatusNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
+
+    // If ticket is related to a booking, send notification to the other party
+    if (relatedProviderId && relatedClientId) {
+      const otherPartyId = userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyType = userId === relatedClientId ? "provider" : "client";
+      
+      if (otherPartyId && otherPartyId !== userId) {
+        // Add a small delay to avoid rate limiting when sending multiple notifications
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          await notificationCanisterService.createNotification(
+            otherPartyId,
+            otherPartyType,
+            "generic",
+            title,
+            message,
+            undefined,
+            {
+              ticketId,
+              oldStatus,
+              newStatus,
+              ticketTitle,
+            },
+          );
+          console.log(
+            `✅ [sendTicketStatusNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+          );
+        } catch (otherPartyError) {
+          console.error(
+            `⚠️ [sendTicketStatusNotification] Failed to notify related party ${otherPartyId}:`,
+            otherPartyError,
+          );
+          // Don't throw - the main notification was sent successfully
+        }
+      }
+    }
   } catch (error) {
     console.error(
       "❌ [sendTicketStatusNotification] Error sending notification:",
@@ -274,6 +352,7 @@ const sendTicketStatusNotification = async (
 
 /**
  * Helper function to send ticket comment notification
+ * Sends to both client and provider if ticket is related to a booking
  */
 const sendTicketCommentNotification = async (
   userId: string,
@@ -288,9 +367,49 @@ const sendTicketCommentNotification = async (
       ? `An internal comment has been added to your ticket "${ticketTitle}".`
       : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
 
+    // Fetch the report to check if it's related to a booking and determine user type
+    let relatedProviderId: string | undefined;
+    let relatedClientId: string | undefined;
+    let userType: "client" | "provider" = "client";
+
+    try {
+      // Use getReportById instead of getAllReports for better performance
+      // The Firebase function expects: data.data.data || data, so we wrap in data
+      const result = await callFirebaseFunction("getReportById", {
+        data: { reportId: ticketId },
+      });
+      if (result) {
+        const report = result as any;
+        // Parse the description to check for booking-related data and source
+        try {
+          const parsedData = JSON.parse(report.description || "{}");
+          
+          // Determine user type based on source (always check this)
+          if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+            userType = "provider";
+          } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+            userType = "client";
+          }
+          
+          // If ticket is related to a booking, get the related parties
+          if (parsedData.bookingId) {
+            relatedProviderId = parsedData.providerId;
+            relatedClientId = parsedData.clientId;
+          }
+        } catch (e) {
+          // Description might not be JSON, default to client
+          console.warn("Could not parse report description:", e);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch report data for notification:", e);
+      // Continue with default userType if we can't fetch the report
+    }
+
+    // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
       userId,
-      "client", // Assuming tickets are submitted by clients
+      userType,
       "generic",
       title,
       message,
@@ -304,8 +423,45 @@ const sendTicketCommentNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
+
+    // If ticket is related to a booking, send notification to the other party
+    if (relatedProviderId && relatedClientId) {
+      const otherPartyId = userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyType = userId === relatedClientId ? "provider" : "client";
+      
+      if (otherPartyId && otherPartyId !== userId) {
+        // Add a small delay to avoid rate limiting when sending multiple notifications
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          await notificationCanisterService.createNotification(
+            otherPartyId,
+            otherPartyType,
+            "generic",
+            title,
+            message,
+            undefined,
+            {
+              ticketId,
+              ticketTitle,
+              commentText,
+              isInternal,
+            },
+          );
+          console.log(
+            `✅ [sendTicketCommentNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+          );
+        } catch (otherPartyError) {
+          console.error(
+            `⚠️ [sendTicketCommentNotification] Failed to notify related party ${otherPartyId}:`,
+            otherPartyError,
+          );
+          // Don't throw - the main notification was sent successfully
+        }
+      }
+    }
   } catch (error) {
     console.error(
       "❌ [sendTicketCommentNotification] Error sending notification:",
@@ -591,7 +747,8 @@ export const adminServiceCanister = {
       if (!result || !Array.isArray(result)) return [];
 
       return result.map((assignment: any) => ({
-        userId: assignment.userId,
+        // Handle both userId field and id field (id is the document ID)
+        userId: assignment.userId || assignment.id,
         role: "ADMIN" as const,
         scope: assignment.scope,
         assignedBy: assignment.assignedBy,
@@ -946,16 +1103,20 @@ export const adminServiceCanister = {
   // User Management Functions
 
   /**
-   * Lock or unlock a user account
+   * Lock or unlock a user account with optional time-based suspension
+   * @param userId - User ID to lock/unlock
+   * @param locked - Whether to lock the account
+   * @param suspensionDurationDays - Duration in days (7, 30, custom number, or null for indefinite)
    */
-  async lockUserAccount(userId: string, locked: boolean): Promise<string> {
+  async lockUserAccount(userId: string, locked: boolean, suspensionDurationDays?: number | null): Promise<string> {
     try {
       requireAuth();
 
-      console.log("lockUserAccount called with:", { userId, locked });
+      console.log("lockUserAccount called with:", { userId, locked, suspensionDurationDays });
       const result = await callFirebaseFunction("lockUserAccount", {
         userId,
         locked,
+        suspensionDurationDays: locked ? (suspensionDurationDays !== undefined ? suspensionDurationDays : null) : undefined,
       });
       return result || "User account updated successfully";
     } catch (error) {
@@ -969,24 +1130,27 @@ export const adminServiceCanister = {
   },
 
   /**
-   * Delete a user account
+   * Get all user lock statuses from Firestore
    */
-  async deleteUserAccount(userId: string): Promise<string> {
+  async getAllUserLockStatuses(): Promise<Record<string, boolean>> {
     try {
       requireAuth();
-      console.log("Calling deleteUserAccount with userId:", userId);
 
-      const result = await callFirebaseFunction("deleteUserAccount", {
-        userId,
-      });
-      console.log("Delete user account result:", result);
-      return result || "User account deleted successfully";
+      const callable = httpsCallable(functions, "getAllUserLockStatuses");
+      const result = await callable({ data: {} });
+
+      if ((result.data as any).success) {
+        return (result.data as any).lockStatuses || {};
+      } else {
+        throw new Error(
+          (result.data as any).message || "Failed to get user lock statuses",
+        );
+      }
     } catch (error) {
-      console.error("Error in deleteUserAccount:", error);
-      if (error instanceof AdminServiceError) throw error;
+      console.error("Error getting user lock statuses:", error);
       throw new AdminServiceError({
-        message: `Failed to delete user account: ${error}`,
-        code: "DELETE_USER_ACCOUNT_ERROR",
+        message: `Failed to get user lock statuses: ${error}`,
+        code: "GET_USER_LOCK_STATUSES_ERROR",
         details: error,
       });
     }
@@ -1189,6 +1353,7 @@ export const adminServiceCanister = {
       completedAt?: string;
       rating?: number;
       review?: string;
+      location?: string;
     }>
   > {
     try {
@@ -1256,6 +1421,7 @@ export const adminServiceCanister = {
             completedAt: booking.completedDate || undefined,
             rating: booking.rating ? Number(booking.rating) : undefined,
             review: booking.review || undefined,
+            location: booking.location || undefined,
           };
         }),
       );
@@ -1574,7 +1740,7 @@ export const {
   getUserServicesAndBookings,
   getUserServiceCount,
   lockUserAccount,
-  deleteUserAccount,
+  getAllUserLockStatuses,
   updateUserReputation,
   updateCertificateValidationStatus,
   getValidatedCertificates,

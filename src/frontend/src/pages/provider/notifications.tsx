@@ -17,15 +17,28 @@ import {
   CurrencyDollarIcon,
   ChatBubbleLeftRightIcon,
   UserIcon,
+  TicketIcon,
 } from "@heroicons/react/24/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
 // Helper to get the right icon for each notification type, with colored backgrounds
-const NotificationIcon: React.FC<{ type: ProviderNotification["type"] }> = ({
+const NotificationIcon: React.FC<{ 
+  type: ProviderNotification["type"];
+  metadata?: any;
+}> = ({
   type,
+  metadata,
 }) => {
+  // Check if this is a ticket notification by looking for ticketId in metadata
+  const isTicketNotification = metadata?.ticketId !== undefined;
+  
   let icon, bg;
-  switch (type) {
+  
+  // Ticket notifications get special icon
+  if (isTicketNotification) {
+    icon = <TicketIcon className="h-6 w-6 text-orange-600" />;
+    bg = "bg-orange-100";
+  } else switch (type) {
     case "new_booking_request":
       icon = <UserIcon className="h-6 w-6 text-blue-600" />;
       bg = "bg-blue-100";
@@ -183,7 +196,7 @@ const NotificationItem: React.FC<{
         </div>
       )}
       <div className="mt-1 flex-shrink-0">
-        <NotificationIcon type={notification.type} />
+        <NotificationIcon type={notification.type} metadata={notification.metadata} />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-blue-900">

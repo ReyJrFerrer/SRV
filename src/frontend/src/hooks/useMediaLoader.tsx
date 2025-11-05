@@ -400,10 +400,10 @@ export const useServiceCertificates = (
       return await Promise.all(certificatePromises);
     },
     enabled: !!serviceId && validUrls.length > 0,
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 30, // 30 seconds - shorter to reflect admin approval/rejection changes
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: true, // Refetch when window regains focus to show updated status
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   return {

@@ -5,7 +5,6 @@ import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
   ArrowLeftIcon,
-  ArrowPathIcon,
   ChevronRightIcon,
   CurrencyDollarIcon,
   UserIcon,
@@ -28,6 +27,9 @@ interface UserData {
   biography?: string;
   isLocked?: boolean;
   servicesCount?: number;
+  // Firebase fields for online/offline status
+  isActive?: boolean;
+  lastActivity?: string | Date;
 }
 
 export const UserListPage: React.FC = () => {
@@ -37,6 +39,7 @@ export const UserListPage: React.FC = () => {
     users: backendUsers,
     refreshUsers,
     getUserLockStatus,
+    updateUserLockStatus,
   } = useAdmin();
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
@@ -48,16 +51,25 @@ export const UserListPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [showMobileBar, setShowMobileBar] = useState(false);
+  const [showOnlyAdmins, setShowOnlyAdmins] = useState(false);
+  const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
+  const [loadingAdminIds, setLoadingAdminIds] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Convert Profile to UserData format
   const convertProfileToUserData = async (
-    profile: Profile,
+    profile: any,
   ): Promise<UserData> => {
-    // Check if profile has required id field
-    const userId = profile.id;
+    // Get user identifier from id, principal, or uid field (in that order)
+    const userId = profile.id
+      ? profile.id
+      : (profile as any).principal
+        ? (profile as any).principal
+        : (profile as any).uid;
+
     if (!userId) {
-      console.warn("Profile missing id/uid, skipping:", profile);
-      throw new Error("Profile missing required id or uid field");
+      console.warn("Profile missing id/principal/uid, skipping:", profile);
+      throw new Error("Profile missing required id, principal, or uid field");
     }
 
     // Get lock status from local store (Profile doesn't have locked property)
@@ -108,10 +120,20 @@ export const UserListPage: React.FC = () => {
       ? new Date()
       : updatedAtValue;
 
+    // Get Firebase online status fields if available
+    const isActive = profile.isActive !== undefined ? profile.isActive : undefined;
+    const lastActivity = profile.lastActivity 
+      ? (typeof profile.lastActivity === "string" 
+          ? new Date(profile.lastActivity) 
+          : profile.lastActivity instanceof Date 
+            ? profile.lastActivity 
+            : new Date(profile.lastActivity))
+      : undefined;
+
     return {
-      id: userId.toString(),
-      name: profile.name,
-      phone: profile.phone,
+      id: typeof userId === "string" ? userId : userId.toString(),
+      name: profile.name || "Unknown",
+      phone: profile.phone || "",
       createdAt: createdAt,
       updatedAt: updatedAt,
       profilePicture:
@@ -127,6 +149,8 @@ export const UserListPage: React.FC = () => {
           : undefined,
       isLocked: lockStatus,
       servicesCount: servicesCount,
+      isActive: isActive,
+      lastActivity: lastActivity,
     };
   };
 
@@ -142,6 +166,34 @@ export const UserListPage: React.FC = () => {
     initializeAndLoadUsers();
   }, [refreshUsers]);
 
+  // Fetch admin user IDs when backendUsers change
+  useEffect(() => {
+    const fetchAdminUserIds = async () => {
+      setLoadingAdminIds(true);
+      try {
+        const userRoles = await adminServiceCanister.listUserRoles();
+        // Extract userId from role assignments
+        const adminIds = new Set<string>(
+          userRoles.map((role) => role.userId).filter(Boolean),
+        );
+        setAdminUserIds(adminIds);
+        console.log(
+          `✅ Loaded ${adminIds.size} admin user IDs:`,
+          Array.from(adminIds),
+        );
+      } catch (error) {
+        console.error("Failed to fetch admin user IDs:", error);
+        setAdminUserIds(new Set());
+      } finally {
+        setLoadingAdminIds(false);
+      }
+    };
+
+    if (backendUsers.length > 0) {
+      fetchAdminUserIds();
+    }
+  }, [backendUsers]);
+
   // Show mobile bottom action bar when header scrolls out
   useEffect(() => {
     const onScroll = () => setShowMobileBar(window.scrollY > 80);
@@ -153,32 +205,89 @@ export const UserListPage: React.FC = () => {
   useEffect(() => {
     const convertUsers = async () => {
       if (backendUsers.length > 0) {
+        setLoadingUsers(true);
         try {
-          // Filter out profiles without id/uid and exclude admin users
-          const validProfiles = backendUsers.filter((profile) => {
-            if (!profile.id) return false;
+          // Wait for adminUserIds to be loaded before filtering
+          // If still loading, skip filtering for now
+          if (loadingAdminIds) {
+            console.log("⏳ Waiting for admin IDs to load...");
+            setLoadingUsers(false);
+            return;
+          }
 
-            // Check if role is Admin (handle both string and object types)
-            const isAdminRole =
-              typeof profile.role === "string"
-                ? profile.role === "Admin"
-                : typeof profile.role === "object" &&
-                  profile.role !== null &&
-                  "Admin" in profile.role;
+          // If adminUserIds is empty, we need to wait for it to load
+          // This prevents showing all users (including admins) when admin IDs haven't loaded yet
+          if (adminUserIds.size === 0 && backendUsers.length > 0 && !showOnlyAdmins) {
+            console.log("⏳ Admin IDs not loaded yet, waiting to filter out admins...");
+            setLoadingUsers(false);
+            return;
+          }
 
-            // Check if activeRole is Admin (handle both string and object types)
-            const isAdminActiveRole =
-              typeof profile.activeRole === "string"
-                ? profile.activeRole === "Admin"
-                : typeof profile.activeRole === "object" &&
-                  profile.activeRole !== null &&
-                  "Admin" in profile.activeRole;
+          // Debug: Log first profile ID format
+          if (backendUsers.length > 0) {
+            const firstProfile: any = backendUsers[0];
+            console.log("🔍 First profile:", {
+              id: firstProfile?.id,
+              idType: typeof firstProfile?.id,
+              idToString: firstProfile?.id?.toString(),
+              principal: firstProfile?.principal,
+              principalType: typeof firstProfile?.principal,
+              uid: firstProfile?.uid,
+              allKeys: Object.keys(firstProfile || {}),
+            });
+            console.log("🔍 Admin user IDs:", Array.from(adminUserIds));
+            console.log("🔍 showOnlyAdmins:", showOnlyAdmins);
+          }
 
-            return !isAdminRole && !isAdminActiveRole;
+          // Filter profiles based on admin toggle
+          const validProfiles = backendUsers.filter((profile: any) => {
+            // Get user identifier from id, principal, or uid field (in that order)
+            const userId = profile.id
+              ? typeof profile.id === "string"
+                ? profile.id
+                : profile.id.toString()
+              : profile.principal
+                ? typeof profile.principal === "string"
+                  ? profile.principal
+                  : profile.principal.toString()
+                : profile.uid
+                  ? typeof profile.uid === "string"
+                    ? profile.uid
+                    : profile.uid.toString()
+                  : null;
+
+            // Skip if no valid identifier found
+            if (!userId) {
+              console.warn("⚠️ Profile missing id/principal/uid:", profile);
+              return false;
+            }
+
+            // Check if userId matches any admin ID
+            let isAdmin = adminUserIds.has(userId);
+            
+            // If no direct match, try to find by comparing as strings
+            if (!isAdmin && adminUserIds.size > 0) {
+              // Check if any admin ID matches this profile identifier
+              for (const adminId of adminUserIds) {
+                if (
+                  adminId === userId ||
+                  adminId.toString() === userId.toString()
+                ) {
+                  isAdmin = true;
+                  break;
+                }
+              }
+            }
+
+            // If showOnlyAdmins is true, show only admin users
+            // If showOnlyAdmins is false, exclude admin users
+            const shouldInclude = showOnlyAdmins ? isAdmin : !isAdmin;
+            console.log(`🔍 User ${userId}: isAdmin=${isAdmin}, showOnlyAdmins=${showOnlyAdmins}, shouldInclude=${shouldInclude}`);
+            return shouldInclude;
           });
 
           console.log(
-            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total`,
+            `Converting ${validProfiles.length} valid profiles out of ${backendUsers.length} total (${adminUserIds.size} admin users found)`,
           );
 
           const convertedUsers = await Promise.all(
@@ -190,39 +299,65 @@ export const UserListPage: React.FC = () => {
           console.error("Failed to convert users:", error);
           setUsers([]);
           setFilteredUsers([]);
+        } finally {
+          setLoadingUsers(false);
         }
       } else {
         setUsers([]);
         setFilteredUsers([]);
+        setLoadingUsers(false);
       }
     };
 
     convertUsers();
-  }, [backendUsers, getUserLockStatus]);
+  }, [backendUsers, getUserLockStatus, showOnlyAdmins, adminUserIds, loadingAdminIds]);
 
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (!document.hidden && backendUsers.length > 0) {
         try {
-          // Filter out admin users same as main useEffect
-          const validProfiles = backendUsers.filter((profile) => {
-            if (!profile.id) return false;
+          // Filter profiles based on admin toggle (same as main useEffect)
+          const validProfiles = backendUsers.filter((profile: any) => {
+            // Get user identifier from id, principal, or uid field (in that order)
+            const userId = profile.id
+              ? typeof profile.id === "string"
+                ? profile.id
+                : profile.id.toString()
+              : profile.principal
+                ? typeof profile.principal === "string"
+                  ? profile.principal
+                  : profile.principal.toString()
+                : profile.uid
+                  ? typeof profile.uid === "string"
+                    ? profile.uid
+                    : profile.uid.toString()
+                  : null;
 
-            const isAdminRole =
-              typeof profile.role === "string"
-                ? profile.role === "Admin"
-                : typeof profile.role === "object" &&
-                  profile.role !== null &&
-                  "Admin" in profile.role;
+            // Skip if no valid identifier found
+            if (!userId) {
+              return false;
+            }
 
-            const isAdminActiveRole =
-              typeof profile.activeRole === "string"
-                ? profile.activeRole === "Admin"
-                : typeof profile.activeRole === "object" &&
-                  profile.activeRole !== null &&
-                  "Admin" in profile.activeRole;
+            // Check if userId matches any admin ID
+            let isAdmin = adminUserIds.has(userId);
+            
+            // If no direct match, try to find by comparing as strings
+            if (!isAdmin && adminUserIds.size > 0) {
+              // Check if any admin ID matches this profile identifier
+              for (const adminId of adminUserIds) {
+                if (
+                  adminId === userId ||
+                  adminId.toString() === userId.toString()
+                ) {
+                  isAdmin = true;
+                  break;
+                }
+              }
+            }
 
-            return !isAdminRole && !isAdminActiveRole;
+            // If showOnlyAdmins is true, show only admin users
+            // If showOnlyAdmins is false, exclude admin users
+            return showOnlyAdmins ? isAdmin : !isAdmin;
           });
 
           const convertedUsers = await Promise.all(
@@ -239,7 +374,7 @@ export const UserListPage: React.FC = () => {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [backendUsers, getUserLockStatus]);
+  }, [backendUsers, getUserLockStatus, showOnlyAdmins, adminUserIds]);
 
   // Filter and sort users
   useEffect(() => {
@@ -289,137 +424,81 @@ export const UserListPage: React.FC = () => {
     });
   };
 
-  const handleRefresh = () => {
-    refreshUsers();
+  // Helper function to check if user is online
+  // Priority: isActive (Firebase) > lastActivity (Firebase) > updatedAt (Motoko backend)
+  const isUserOnline = (user: UserData): boolean => {
+    // First check Firebase isActive field (most accurate)
+    if (user.isActive !== undefined) {
+      return user.isActive;
+    }
+    
+    // Fallback to lastActivity from Firebase (within last 15 minutes = online)
+    if (user.lastActivity) {
+      const lastActivityDate = user.lastActivity instanceof Date 
+        ? user.lastActivity 
+        : new Date(user.lastActivity);
+      const now = new Date();
+      const minutesSinceActivity = (now.getTime() - lastActivityDate.getTime()) / (1000 * 60);
+      return minutesSinceActivity <= 15;
+    }
+    
+    // Final fallback to updatedAt from Motoko backend (within last 24 hours)
+    if (user.updatedAt) {
+      const now = new Date();
+      const hoursSinceUpdate = (now.getTime() - user.updatedAt.getTime()) / (1000 * 60 * 60);
+      return hoursSinceUpdate <= 24;
+    }
+    
+    return false;
   };
 
   const handleUserClick = (user: UserData) => {
-    // Open details modal instead of navigating
-    setSelectedUser(user);
-    setShowUserModal(true);
-  };
-
-  // Account management functions
-  const handleLockConfirmation = () => {
-    setShowLockConfirmation(true);
-  };
-
-  const handleDeleteConfirmation = () => {
-    setShowDeleteConfirmation(true);
-  };
-
-  const handleActivateAccount = async () => {
-    if (!selectedUser) return;
-
-    try {
-      // Call Firebase function to unlock the account
-      await adminServiceCanister.lockUserAccount(selectedUser.id, false);
-
-      // Update local state
-      setSelectedUser((prev) => (prev ? { ...prev, isLocked: false } : null));
-
-      // Update the users list
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
-        ),
-      );
-      setFilteredUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, isLocked: false } : user,
-        ),
-      );
-
-      console.log("Account activated successfully");
-    } catch (error) {
-      console.error("Failed to activate account:", error);
-      alert("Failed to activate account. Please try again.");
+    // Navigate to user details page (only if not showing admins only)
+    if (!showOnlyAdmins) {
+      navigate(`/user/${user.id}`);
     }
   };
 
-  const confirmLockAccount = async () => {
-    if (!selectedUser) return;
-
-    console.log("Attempting to lock account for user:", selectedUser.id);
-    console.log("Selected user object:", selectedUser);
-
-    try {
-      // Call Firebase function to lock the account
-      await adminServiceCanister.lockUserAccount(selectedUser.id, true);
-
-      // Update local state
-      setSelectedUser((prev) => (prev ? { ...prev, isLocked: true } : null));
-
-      // Update the users list
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
-        ),
-      );
-      setFilteredUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, isLocked: true } : user,
-        ),
-      );
-
-      console.log("Account locked successfully");
-    } catch (error) {
-      console.error("Failed to lock account:", error);
-      alert("Failed to lock account. Please try again.");
-    }
-
-    setShowLockConfirmation(false);
+  // Check if a user is an admin
+  const isUserAdmin = (userId: string): boolean => {
+    return adminUserIds.has(userId);
   };
 
-  const confirmDeleteAccount = async () => {
-    if (!selectedUser) {
-      console.error("No selected user for deletion");
+  // Handle lock/unlock user
+  const handleSuspendUser = async (user: UserData, suspend: boolean) => {
+    if (!confirm(`Are you sure you want to ${suspend ? "lock" : "unlock"} this admin account?`)) {
       return;
     }
 
-    console.log("Attempting to delete account for user:", selectedUser.id);
-    console.log("Selected user object:", selectedUser);
-
     try {
-      // Call Firebase function to delete the account
-      const result = await adminServiceCanister.deleteUserAccount(
-        selectedUser.id,
+      await adminServiceCanister.lockUserAccount(user.id, suspend, suspend ? null : undefined);
+      updateUserLockStatus(user.id, suspend);
+      
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === user.id ? { ...u, isLocked: suspend } : u
+        )
       );
-      console.log("Delete result:", result);
-
-      console.log("Account deleted successfully");
-      alert("Account deleted successfully");
-
-      // Remove user from local state
-      setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
-      setFilteredUsers((prev) =>
-        prev.filter((user) => user.id !== selectedUser.id),
+      setFilteredUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === user.id ? { ...u, isLocked: suspend } : u
+        )
       );
 
-      // Close modals
-      setShowUserModal(false);
-      setSelectedUser(null);
-      setShowDeleteConfirmation(false);
+      alert(`Admin account ${suspend ? "locked" : "unlocked"} successfully`);
     } catch (error) {
-      console.error("Failed to delete account:", error);
-      console.error("Error details:", error);
-      alert(
-        `Failed to delete account: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      console.error("Failed to lock/unlock account:", error);
+      alert(`Failed to ${suspend ? "lock" : "unlock"} account. Please try again.`);
     }
   };
+
 
   // Determine if viewport is mobile (< sm)
   const isMobileViewport =
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 639px)").matches
       : true;
-
-  // User details modal state
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [showLockConfirmation, setShowLockConfirmation] = useState(false);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Stats for header cards
   const stats = useMemo(() => {
@@ -453,13 +532,6 @@ export const UserListPage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
-                <button
-                  onClick={handleRefresh}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon className="mr-2 h-4 w-4" />
-                  Refresh
-                </button>
                 <Link
                   to="/dashboard"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
@@ -483,13 +555,6 @@ export const UserListPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={handleRefresh}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
-            >
-              <ArrowPathIcon className="mr-2 h-4 w-4" />
-              Refresh
-            </button>
             <Link
               to="/dashboard"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -684,12 +749,51 @@ export const UserListPage: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900">
                   Users ({filteredUsers.length})
                 </h2>
-                <div className="ml-4 flex items-center space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-green-400"></div>
-                  <span className="text-sm text-gray-500">All Active</span>
-                </div>
               </div>
-              <div className="flex items-center space-x-2"></div>
+              <div className="flex items-center space-x-2">
+                {/* Show Admins Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowOnlyAdmins(!showOnlyAdmins)}
+                  disabled={loadingAdminIds || loadingUsers || loading.users}
+                  className={`inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    loadingAdminIds || loadingUsers || loading.users
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : showOnlyAdmins
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500"
+                  }`}
+                  aria-label={showOnlyAdmins ? "Show all users" : "Show only admin users"}
+                >
+                  {loadingAdminIds || loadingUsers || loading.users ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Loading...
+                    </>
+                  ) : (
+                    showOnlyAdmins ? "Showing Admins" : "Show Admins"
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -721,13 +825,17 @@ export const UserListPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {loading.users ? (
+                  {loading.users || loadingUsers || loadingAdminIds ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="flex items-center justify-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-2">
                           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div>
-                          <span className="ml-2 text-sm text-gray-500">
-                            Loading users...
+                          <span className="text-sm text-gray-500">
+                            {loadingAdminIds
+                              ? "Loading admin users..."
+                              : loadingUsers
+                                ? "Processing users..."
+                                : "Loading users..."}
                           </span>
                         </div>
                       </td>
@@ -744,14 +852,6 @@ export const UserListPage: React.FC = () => {
                             This could mean no users are registered or there's a
                             configuration issue.
                           </p>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={handleRefresh}
-                              className="mt-2 rounded bg-blue-100 px-3 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-200"
-                            >
-                              Refresh
-                            </button>
-                          </div>
                         </div>
                       </td>
                     </tr>
@@ -761,13 +861,15 @@ export const UserListPage: React.FC = () => {
                         key={user.id}
                         className="cursor-pointer hover:bg-gray-50 sm:cursor-default sm:hover:bg-transparent"
                         onClick={() => {
-                          if (isMobileViewport) handleUserClick(user);
+                          if (isMobileViewport && !showOnlyAdmins) {
+                            handleUserClick(user);
+                          }
                         }}
                         role={isMobileViewport ? "button" : undefined}
                         tabIndex={isMobileViewport ? 0 : -1}
                         onKeyDown={(e) => {
                           if (!isMobileViewport) return;
-                          if (e.key === "Enter" || e.key === " ") {
+                          if ((e.key === "Enter" || e.key === " ") && !showOnlyAdmins) {
                             e.preventDefault();
                             handleUserClick(user);
                           }
@@ -839,26 +941,43 @@ export const UserListPage: React.FC = () => {
                         <td className="whitespace-nowrap px-6 py-4">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                              user.isLocked
-                                ? "bg-red-100 text-red-800"
-                                : "bg-green-100 text-green-800"
+                              isUserOnline(user)
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {user.isLocked ? "Suspended" : "Active"}
+                            {isUserOnline(user) ? "Online" : "Offline"}
                           </span>
                         </td>
                         {/* Actions cell (desktop only) */}
                         <td className="hidden whitespace-nowrap px-6 py-4 text-sm font-medium sm:table-cell">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedUser(user);
-                              setShowUserModal(true);
-                            }}
-                            className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          >
-                            View Details
-                          </button>
+                          {showOnlyAdmins ? (
+                            // Show Lock/Unlock button for admin users
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSuspendUser(user, !user.isLocked);
+                              }}
+                              className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                user.isLocked
+                                  ? "border-green-300 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
+                                  : "border-red-300 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
+                              }`}
+                            >
+                              {user.isLocked ? "Unlock" : "Lock"}
+                            </button>
+                          ) : (
+                            // Show View Details button for regular users
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/user/${user.id}`);
+                              }}
+                              className="inline-flex items-center rounded-md border bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                              View Details
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -948,316 +1067,6 @@ export const UserListPage: React.FC = () => {
           </div>
         </div>
       </main>
-      {/* User Details Modal */}
-      {showUserModal && selectedUser && (
-        <div
-          className="fixed inset-0 z-50 flex h-full w-full items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-xl border border-blue-100 bg-white shadow-xl sm:max-w-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                  <UserIcon className="h-6 w-6 text-blue-600" />
-                </span>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">
-                    User Details
-                  </h3>
-                  <p className="text-xs text-gray-500">{selectedUser.id}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                aria-label="Close"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="max-h-[80vh] overflow-y-auto px-5 py-4">
-              {/* Summary band */}
-              <div className="mb-4 grid grid-cols-[auto,1fr] items-center gap-4 rounded-lg border border-yellow-100 bg-yellow-50/30 p-4">
-                <div className="h-16 w-16">
-                  <ProfileImage
-                    profilePictureUrl={
-                      selectedUser.profilePicture?.thumbnailUrl ||
-                      selectedUser.profilePicture?.imageUrl
-                    }
-                    userName={selectedUser.name}
-                    size="h-16 w-16"
-                    className="shadow-sm ring-2 ring-white"
-                  />
-                </div>
-                <div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    {selectedUser.name}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {selectedUser.phone}
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    Member since {formatDate(selectedUser.createdAt)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Details sections */}
-              <div className="space-y-4">
-                <div className="rounded-lg border border-gray-100 p-4">
-                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
-                    Profile
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                    <div>
-                      <p className="text-gray-500">User ID</p>
-                      <p className="font-medium text-gray-900">
-                        {selectedUser.id}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Status</p>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${selectedUser.isLocked ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
-                      >
-                        {selectedUser.isLocked ? "Locked" : "Active"}
-                      </span>
-                    </div>
-                    {selectedUser.biography && (
-                      <div className="sm:col-span-2">
-                        <p className="text-gray-500">Bio</p>
-                        <p className="text-gray-900">
-                          {selectedUser.biography}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-gray-100 p-4">
-                  <h4 className="mb-2 text-sm font-semibold text-gray-900">
-                    Services
-                  </h4>
-                  <div className="text-sm text-gray-700">
-                    Total services posted:{" "}
-                    <span className="font-semibold text-blue-600">
-                      {selectedUser.servicesCount ?? 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
-              {/* Account Management Buttons */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    navigate(`/user/${selectedUser.id}`);
-                    setShowUserModal(false);
-                  }}
-                  className="inline-flex items-center rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  <svg
-                    className="mr-1 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                  View User
-                </button>
-                {!selectedUser.isLocked ? (
-                  <button
-                    onClick={handleLockConfirmation}
-                    className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                  >
-                    <svg
-                      className="mr-1 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
-                    Lock Account
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleActivateAccount}
-                    className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  >
-                    <svg
-                      className="mr-1 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Activate Account
-                  </button>
-                )}
-                <button
-                  onClick={handleDeleteConfirmation}
-                  className="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                >
-                  <svg
-                    className="mr-1 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                  Delete Account
-                </button>
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Lock Account Confirmation Modal */}
-      {showLockConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Lock Account
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to lock this account? The user will not be
-                able to access their account until it's unlocked.
-              </p>
-            </div>
-            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
-              <button
-                onClick={() => setShowLockConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmLockAccount}
-                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-              >
-                Lock Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Account Confirmation Modal */}
-      {showDeleteConfirmation && selectedUser && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <svg
-                  className="h-6 w-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delete Account
-                </h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Are you sure you want to permanently delete{" "}
-                  <span className="font-semibold">{selectedUser.name}'s</span>{" "}
-                  account? This action cannot be undone and will delete:
-                </p>
-                <ul className="mt-2 list-inside list-disc text-sm text-gray-600">
-                  <li>User profile and personal information</li>
-                  <li>All services posted by this user</li>
-                  <li>All bookings (as client and provider)</li>
-                  <li>All reviews and feedback</li>
-                  <li>All associated records</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirmation(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteAccount}
-                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              >
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -16,7 +16,6 @@ import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
-import { useFeedback } from "../../../hooks/useFeedback";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
 
@@ -39,7 +38,6 @@ const ActiveServicePage: React.FC = () => {
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
-  const { submitReport } = useFeedback();
 
   const booking = useMemo(() => {
     if (bookingId && typeof bookingId === "string") {
@@ -104,20 +102,13 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-  // Special cancel: file a complaint ticket to admin and cancel booking
+  // Special cancel: cancel booking (ticket is automatically created by cancelBooking)
   const handleCancelActiveService = async (reason: string) => {
     if (!booking) return;
     try {
-      // Prefix reason to make it clear in admin reports
-      const reportDescription = `Active Service Cancel [Booking ${booking.id}]: ${reason}`;
-      const reportOk = await submitReport(reportDescription);
-      if (!reportOk) {
-        toast.error("Failed to submit complaint to admin.");
-        return;
-      }
-      // Actually cancel the booking
+      // Cancel the booking - this automatically creates a ticket with structured data
       await bookingCanisterService.cancelBooking(booking.id, reason);
-      toast.success("Complaint filed and booking cancelled.");
+      toast.success("Booking cancelled successfully.");
       setIsCancelModalOpen(false);
       navigate("/provider/bookings");
     } catch (err) {
