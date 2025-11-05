@@ -197,7 +197,7 @@ const MapFunctions: React.FC = () => {
               If the permission is denied (blocked), hide the enable button and
               keep the manual "Change location" action available. */}
           {locationStatus === "not_set" && <EnableLocationButton />}
-        
+
           {addressMode === "manual" && userAddress && userProvince && (
             <button
               type="button"

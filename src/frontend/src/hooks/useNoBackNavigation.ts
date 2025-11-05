@@ -17,7 +17,11 @@ export function useNoBackNavigation(fallbackPath: string) {
   useEffect(() => {
     // Mark current entry so a back action triggers popstate while mounted
     try {
-      window.history.pushState({ __noback: true }, "", location.pathname + location.search + location.hash);
+      window.history.pushState(
+        { __noback: true },
+        "",
+        location.pathname + location.search + location.hash,
+      );
     } catch {}
 
     const onPopState = () => {
@@ -29,7 +33,13 @@ export function useNoBackNavigation(fallbackPath: string) {
     return () => {
       window.removeEventListener("popstate", onPopState);
     };
-  }, [navigate, fallbackPath, location.pathname, location.search, location.hash]);
+  }, [
+    navigate,
+    fallbackPath,
+    location.pathname,
+    location.search,
+    location.hash,
+  ]);
 }
 
 export default useNoBackNavigation;
