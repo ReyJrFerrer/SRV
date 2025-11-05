@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 interface ServiceProviderPerformanceData {
   id: string;
@@ -61,15 +60,6 @@ const ServiceProviderPerformanceTable: React.FC<
         <h3 className="text-lg font-semibold text-gray-900">
           Service Provider Records
         </h3>
-        {_showRefresh && (
-          <button
-            onClick={_onRefresh}
-            className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            <ArrowPathIcon className="h-4 w-4" />
-            Refresh
-          </button>
-        )}
       </div>
 
       <div className="overflow-x-auto">

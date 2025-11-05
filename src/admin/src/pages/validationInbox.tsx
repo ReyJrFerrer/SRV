@@ -8,7 +8,6 @@ import {
 } from "@heroicons/react/24/solid";
 import {
   ArrowLeftIcon,
-  ArrowPathIcon,
   DocumentTextIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -568,18 +567,124 @@ export const ValidationInboxPage: React.FC = () => {
     certificateUrl: string,
   ) => {
     try {
-      const mediaId = certificateUrl.split("/media/")[1];
+      // Extract media ID from URL - handle Firebase Storage (production and emulator)
+      // File path format: certificates/{ownerId}/{mediaId}_{filename}
+      let mediaId: string | null = null;
 
-      if (mediaId) {
-        // Update validation status in media canister
-        const { adminServiceCanister } = await import(
-          "../services/adminServiceCanister"
+      try {
+        // Handle Firebase Storage Emulator URLs: http://127.0.0.1:9199/v0/b/{bucket}/o/{encodedPath}?alt=media
+        if (
+          certificateUrl.includes("127.0.0.1:9199") ||
+          certificateUrl.includes("localhost:9199")
+        ) {
+          // Extract the encoded path from the URL: /o/{encodedPath}
+          const urlMatch = certificateUrl.match(/\/o\/([^?]+)/);
+          if (urlMatch) {
+            const encodedPath = urlMatch[1];
+            // Decode URL-encoded path: certificates%2FownerId%2FmediaId_filename -> certificates/ownerId/mediaId_filename
+            const decodedPath = decodeURIComponent(encodedPath);
+            // Split path: ["certificates", "ownerId", "mediaId_filename"]
+            const pathParts = decodedPath.split("/");
+            const filename = pathParts[pathParts.length - 1];
+            // MediaId is the first part before underscore: {mediaId}_{filename}
+            mediaId = filename?.split("_")[0] || null;
+          }
+        }
+        // Handle Firebase Storage Production URLs: https://storage.googleapis.com/{bucket}/{path}
+        else if (certificateUrl.includes("storage.googleapis.com")) {
+          // Extract from URL like: https://storage.googleapis.com/.../certificates/uid/mediaId_filename
+          const parts = certificateUrl.split("/");
+          const filename = parts[parts.length - 1]?.split("?")[0]; // Remove query params
+          // MediaId is typically the first part before underscore: {mediaId}_{filename}
+          mediaId = filename?.split("_")[0] || null;
+        }
+        // Handle old format: /media/{mediaId}
+        else if (certificateUrl.includes("/media/")) {
+          mediaId =
+            certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
+            null;
+        }
+        // Handle media:// format
+        else if (certificateUrl.startsWith("media://")) {
+          mediaId =
+            certificateUrl.replace("media://", "").split("/").pop() || null;
+        }
+
+        // If extraction failed, try querying Firestore by URL as fallback
+        if (!mediaId) {
+          console.warn(
+            "Could not extract mediaId from URL, querying Firestore by URL:",
+            certificateUrl,
+          );
+          try {
+            const { collection, query, where, getDocs } = await import(
+              "firebase/firestore"
+            );
+            const { getFirebaseFirestore } = await import(
+              "../services/firebaseApp"
+            );
+            const firestore = getFirebaseFirestore();
+            const mediaCollection = collection(firestore, "media");
+            const q = query(
+              mediaCollection,
+              where("url", "==", certificateUrl),
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+              mediaId = querySnapshot.docs[0].id;
+              console.log("Found mediaId by URL query:", mediaId);
+            } else {
+              console.error(
+                "No media document found with URL:",
+                certificateUrl,
+              );
+              throw new Error(
+                "Could not find media document for certificate URL",
+              );
+            }
+          } catch (queryError) {
+            console.error(
+              "Error querying Firestore for media by URL:",
+              queryError,
+            );
+            throw new Error(
+              `Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`,
+            );
+          }
+        }
+      } catch (extractError) {
+        console.error(
+          "Error extracting media ID from certificate URL:",
+          certificateUrl,
+          extractError,
         );
-        await adminServiceCanister.updateCertificateValidationStatus(
-          mediaId,
-          "Validated",
+        throw new Error(
+          `Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`,
         );
       }
+
+      // Final validation - ensure we have a mediaId
+      if (!mediaId || mediaId.trim() === "") {
+        console.error("Media ID is empty or invalid:", mediaId);
+        throw new Error("Media ID is required but was empty or invalid");
+      }
+
+      console.log(
+        "Using mediaId for certificate update:",
+        mediaId,
+        "from URL:",
+        certificateUrl,
+      );
+
+      // Update validation status in media collection
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
+      await adminServiceCanister.updateCertificateValidationStatus(
+        mediaId,
+        "Validated",
+      );
 
       // Remove the certificate from the pending list immediately
       setServicesWithCertificates(
@@ -610,8 +715,10 @@ export const ValidationInboxPage: React.FC = () => {
       setApprovedCertificates((prev) => [...prev, certificateData]);
       console.log("Certificate approved:", certificateData);
 
-      // Note: Backend refresh removed to prevent duplication
-      // The local state update above is sufficient for immediate UI feedback
+      // Reload pending certificates to reflect the change
+      await loadServicesWithCertificates();
+      // Also reload validated certificates to show in completed section
+      await loadValidatedCertificates();
     } catch (error) {
       console.error("Error approving certificate:", error);
     }
@@ -624,17 +731,124 @@ export const ValidationInboxPage: React.FC = () => {
     certificateUrl: string,
   ) => {
     try {
-      const mediaId = certificateUrl.split("/media/")[1];
+      // Extract media ID from URL - handle Firebase Storage (production and emulator)
+      // File path format: certificates/{ownerId}/{mediaId}_{filename}
+      let mediaId: string | null = null;
 
-      if (mediaId) {
-        const { adminServiceCanister } = await import(
-          "../services/adminServiceCanister"
+      try {
+        // Handle Firebase Storage Emulator URLs: http://127.0.0.1:9199/v0/b/{bucket}/o/{encodedPath}?alt=media
+        if (
+          certificateUrl.includes("127.0.0.1:9199") ||
+          certificateUrl.includes("localhost:9199")
+        ) {
+          // Extract the encoded path from the URL: /o/{encodedPath}
+          const urlMatch = certificateUrl.match(/\/o\/([^?]+)/);
+          if (urlMatch) {
+            const encodedPath = urlMatch[1];
+            // Decode URL-encoded path: certificates%2FownerId%2FmediaId_filename -> certificates/ownerId/mediaId_filename
+            const decodedPath = decodeURIComponent(encodedPath);
+            // Split path: ["certificates", "ownerId", "mediaId_filename"]
+            const pathParts = decodedPath.split("/");
+            const filename = pathParts[pathParts.length - 1];
+            // MediaId is the first part before underscore: {mediaId}_{filename}
+            mediaId = filename?.split("_")[0] || null;
+          }
+        }
+        // Handle Firebase Storage Production URLs: https://storage.googleapis.com/{bucket}/{path}
+        else if (certificateUrl.includes("storage.googleapis.com")) {
+          // Extract from URL like: https://storage.googleapis.com/.../certificates/uid/mediaId_filename
+          const parts = certificateUrl.split("/");
+          const filename = parts[parts.length - 1]?.split("?")[0]; // Remove query params
+          // MediaId is typically the first part before underscore: {mediaId}_{filename}
+          mediaId = filename?.split("_")[0] || null;
+        }
+        // Handle old format: /media/{mediaId}
+        else if (certificateUrl.includes("/media/")) {
+          mediaId =
+            certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
+            null;
+        }
+        // Handle media:// format
+        else if (certificateUrl.startsWith("media://")) {
+          mediaId =
+            certificateUrl.replace("media://", "").split("/").pop() || null;
+        }
+
+        // If extraction failed, try querying Firestore by URL as fallback
+        if (!mediaId) {
+          console.warn(
+            "Could not extract mediaId from URL, querying Firestore by URL:",
+            certificateUrl,
+          );
+          try {
+            const { collection, query, where, getDocs } = await import(
+              "firebase/firestore"
+            );
+            const { getFirebaseFirestore } = await import(
+              "../services/firebaseApp"
+            );
+            const firestore = getFirebaseFirestore();
+            const mediaCollection = collection(firestore, "media");
+            const q = query(
+              mediaCollection,
+              where("url", "==", certificateUrl),
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+              mediaId = querySnapshot.docs[0].id;
+              console.log("Found mediaId by URL query:", mediaId);
+            } else {
+              console.error(
+                "No media document found with URL:",
+                certificateUrl,
+              );
+              throw new Error(
+                "Could not find media document for certificate URL",
+              );
+            }
+          } catch (queryError) {
+            console.error(
+              "Error querying Firestore for media by URL:",
+              queryError,
+            );
+            throw new Error(
+              `Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`,
+            );
+          }
+        }
+      } catch (extractError) {
+        console.error(
+          "Error extracting media ID from certificate URL:",
+          certificateUrl,
+          extractError,
         );
-        await adminServiceCanister.updateCertificateValidationStatus(
-          mediaId,
-          "Rejected",
+        throw new Error(
+          `Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`,
         );
       }
+
+      // Final validation - ensure we have a mediaId
+      if (!mediaId || mediaId.trim() === "") {
+        console.error("Media ID is empty or invalid:", mediaId);
+        throw new Error("Media ID is required but was empty or invalid");
+      }
+
+      console.log(
+        "Using mediaId for certificate update:",
+        mediaId,
+        "from URL:",
+        certificateUrl,
+      );
+
+      // Update validation status in media collection
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
+      await adminServiceCanister.updateCertificateValidationStatus(
+        mediaId,
+        "Rejected",
+      );
 
       // Remove the certificate from the pending list immediately
       setServicesWithCertificates(
@@ -665,8 +879,10 @@ export const ValidationInboxPage: React.FC = () => {
       setRejectedCertificates((prev) => [...prev, certificateData]);
       console.log("Certificate rejected:", certificateData);
 
-      // Note: Backend refresh removed to prevent duplication
-      // The local state update above is sufficient for immediate UI feedback
+      // Reload pending certificates to reflect the change
+      await loadServicesWithCertificates();
+      // Also reload rejected certificates to show in rejected section
+      await loadRejectedCertificates();
     } catch (error) {
       console.error("Error rejecting certificate:", error);
     }
@@ -693,6 +909,9 @@ export const ValidationInboxPage: React.FC = () => {
       setRejectedCertificates((prev) =>
         prev.filter((cert) => cert.id !== certificate.id),
       );
+
+      // Reload pending certificates to show the undone certificate
+      await loadServicesWithCertificates();
 
       // Add the certificate back to pending list
       setServicesWithCertificates((prev) => {
@@ -760,13 +979,6 @@ export const ValidationInboxPage: React.FC = () => {
     });
   };
 
-  // Handle refresh
-  const handleRefresh = async () => {
-    await loadServicesWithCertificates();
-    await loadValidatedCertificates();
-    await loadRejectedCertificates();
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Media View Modal */}
@@ -796,16 +1008,6 @@ export const ValidationInboxPage: React.FC = () => {
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
-                  onClick={handleRefresh}
-                  disabled={certificateLoading}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${certificateLoading ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </button>
-                <button
                   onClick={() => navigate("/dashboard")}
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
@@ -828,16 +1030,6 @@ export const ValidationInboxPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={certificateLoading}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`mr-2 h-4 w-4 ${certificateLoading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </button>
             <button
               onClick={() => navigate("/dashboard")}
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"

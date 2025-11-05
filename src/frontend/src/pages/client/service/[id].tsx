@@ -10,7 +10,10 @@ import useServiceById from "../../../hooks/serviceDetail";
 import { useServiceReviews } from "../../../hooks/reviewManagement";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
-import { useServiceImages } from "../../../hooks/useMediaLoader";
+import {
+  useServiceImages,
+  useServiceCertificates,
+} from "../../../hooks/useMediaLoader";
 import { useReputation } from "../../../hooks/useReputation";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import {
@@ -57,6 +60,12 @@ const ClientServiceDetailsPage: React.FC = () => {
     service?.id,
     service?.media || [],
   );
+
+  // Load service certificates to check validation status
+  const {
+    certificates: serviceCertificates,
+    isLoading: isLoadingCertificates,
+  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
 
   const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
@@ -255,7 +264,22 @@ const ClientServiceDetailsPage: React.FC = () => {
   }
 
   const { providerName, name, category, location } = service;
-  const isVerified = service.isVerified;
+
+  // Check certificate status for credentials section
+  // A service is verified only if it has at least one certificate with validationStatus === "Validated"
+  // If certificates are still loading, default to false (not verified)
+  const hasCertificates =
+    !isLoadingCertificates &&
+    serviceCertificates &&
+    serviceCertificates.length > 0;
+  const isVerified = hasCertificates
+    ? serviceCertificates.some((cert) => cert.validationStatus === "Validated")
+    : false;
+  const hasPendingCertificates = hasCertificates
+    ? serviceCertificates.some(
+        (cert) => cert.validationStatus === "Pending" || !cert.validationStatus,
+      )
+    : false;
   const visibleReviews = reviews.filter((r) => r.status === "Visible");
   const averageRating = getAverageRating(visibleReviews);
   const reviewCount = visibleReviews.length;
@@ -516,7 +540,11 @@ const ClientServiceDetailsPage: React.FC = () => {
           serviceId={service.id}
           imageUrls={service.media || []}
         />
-        <CredentialsSection isVerified={isVerified} />
+        <CredentialsSection
+          isVerified={isVerified}
+          hasCertificates={hasCertificates}
+          hasPendingCertificates={hasPendingCertificates}
+        />
         <ReviewsSection serviceId={service.id} />
       </main>
 

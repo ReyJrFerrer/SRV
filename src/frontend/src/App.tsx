@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
@@ -19,6 +19,7 @@ type CurrentView = "main" | "about" | "contact";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, identity, firebaseUser, login, isLoading } =
     useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
@@ -36,11 +37,37 @@ const LandingPage = () => {
 
           // Check if account is suspended
           if (profile && profile.locked) {
+            // Check sessionStorage flag - if user has already seen modal, don't show again
+            const hasShownSuspension = sessionStorage.getItem(
+              "hasShownSuspensionModal",
+            );
+            const isOnLandingPage = location.pathname === "/";
+
+            // If user has already seen the modal, never show it again (especially on landing page)
+            if (hasShownSuspension === "true") {
+              if (isOnLandingPage) {
+                console.log(
+                  "Account is suspended but user has already seen the modal and returned to landing page - not showing again",
+                );
+              } else {
+                console.log(
+                  "Account is suspended but user has already seen the modal - not showing again",
+                );
+              }
+              setIsCheckingProfile(false);
+              return;
+            }
+
+            // Only show modal if we haven't shown it yet
             console.log("Account is suspended, showing suspension modal");
             setShowSuspensionModal(true);
+            sessionStorage.setItem("hasShownSuspensionModal", "true");
             setIsCheckingProfile(false);
             return;
           }
+
+          // Reset the flag if account is not suspended
+          sessionStorage.removeItem("hasShownSuspensionModal");
 
           // If profile exists, redirect based on role
           if (profile && profile.name && profile.phone) {
@@ -79,7 +106,7 @@ const LandingPage = () => {
       }
     };
     checkProfileAndRedirect();
-  }, [isAuthenticated, identity, firebaseUser, navigate]);
+  }, [isAuthenticated, identity, firebaseUser, navigate, location.pathname]);
 
   // Show a loading indicator while checking the user's session.
   if (isCheckingProfile) {
@@ -134,7 +161,11 @@ const LandingPage = () => {
       {/* Suspension Modal */}
       <SuspensionModal
         isOpen={showSuspensionModal}
-        onClose={() => setShowSuspensionModal(false)}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          // Mark that we've handled the suspension modal, so it won't show again
+          sessionStorage.setItem("hasShownSuspensionModal", "true");
+        }}
       />
     </main>
   );

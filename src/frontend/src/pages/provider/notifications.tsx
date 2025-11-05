@@ -17,63 +17,74 @@ import {
   CurrencyDollarIcon,
   ChatBubbleLeftRightIcon,
   UserIcon,
+  TicketIcon,
 } from "@heroicons/react/24/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
 // Helper to get the right icon for each notification type, with colored backgrounds
-const NotificationIcon: React.FC<{ type: ProviderNotification["type"] }> = ({
-  type,
-}) => {
+const NotificationIcon: React.FC<{
+  type: ProviderNotification["type"];
+  metadata?: any;
+}> = ({ type, metadata }) => {
+  // Check if this is a ticket notification by looking for ticketId in metadata
+  const isTicketNotification = metadata?.ticketId !== undefined;
+
   let icon, bg;
-  switch (type) {
-    case "new_booking_request":
-      icon = <UserIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-      break;
-    case "booking_confirmation":
-      icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
-      bg = "bg-green-100";
-      break;
-    case "payment_completed":
-      icon = <CurrencyDollarIcon className="h-6 w-6 text-green-700" />;
-      bg = "bg-green-200";
-      break;
-    case "service_completion_reminder":
-      icon = <ClockIcon className="h-6 w-6 text-orange-600" />;
-      bg = "bg-orange-100";
-      break;
-    case "review_request":
-      icon = <StarIcon className="h-6 w-6 text-purple-600" />;
-      bg = "bg-purple-100";
-      break;
-    case "chat_message":
-      icon = <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-      break;
-    case "booking_cancelled":
-      icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
-      bg = "bg-red-100";
-      break;
-    case "booking_rescheduled":
-      icon = <ClockIcon className="h-6 w-6 text-yellow-600" />;
-      bg = "bg-yellow-100";
-      break;
-    case "client_no_show":
-      icon = <UserIcon className="h-6 w-6 text-red-500" />;
-      bg = "bg-red-100";
-      break;
-    case "payment_issue":
-      icon = <CurrencyDollarIcon className="h-6 w-6 text-red-700" />;
-      bg = "bg-red-200";
-      break;
-    case "service_reminder":
-      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-      break;
-    default:
-      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-  }
+
+  // Ticket notifications get special icon
+  if (isTicketNotification) {
+    icon = <TicketIcon className="h-6 w-6 text-orange-600" />;
+    bg = "bg-orange-100";
+  } else
+    switch (type) {
+      case "new_booking_request":
+        icon = <UserIcon className="h-6 w-6 text-blue-600" />;
+        bg = "bg-blue-100";
+        break;
+      case "booking_confirmation":
+        icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
+        bg = "bg-green-100";
+        break;
+      case "payment_completed":
+        icon = <CurrencyDollarIcon className="h-6 w-6 text-green-700" />;
+        bg = "bg-green-200";
+        break;
+      case "service_completion_reminder":
+        icon = <ClockIcon className="h-6 w-6 text-orange-600" />;
+        bg = "bg-orange-100";
+        break;
+      case "review_request":
+        icon = <StarIcon className="h-6 w-6 text-purple-600" />;
+        bg = "bg-purple-100";
+        break;
+      case "chat_message":
+        icon = <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />;
+        bg = "bg-blue-100";
+        break;
+      case "booking_cancelled":
+        icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
+        bg = "bg-red-100";
+        break;
+      case "booking_rescheduled":
+        icon = <ClockIcon className="h-6 w-6 text-yellow-600" />;
+        bg = "bg-yellow-100";
+        break;
+      case "client_no_show":
+        icon = <UserIcon className="h-6 w-6 text-red-500" />;
+        bg = "bg-red-100";
+        break;
+      case "payment_issue":
+        icon = <CurrencyDollarIcon className="h-6 w-6 text-red-700" />;
+        bg = "bg-red-200";
+        break;
+      case "service_reminder":
+        icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
+        bg = "bg-blue-100";
+        break;
+      default:
+        icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
+        bg = "bg-blue-100";
+    }
   return (
     <span
       className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
@@ -183,7 +194,10 @@ const NotificationItem: React.FC<{
         </div>
       )}
       <div className="mt-1 flex-shrink-0">
-        <NotificationIcon type={notification.type} />
+        <NotificationIcon
+          type={notification.type}
+          metadata={notification.metadata}
+        />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-blue-900">

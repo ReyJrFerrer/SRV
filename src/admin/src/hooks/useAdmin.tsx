@@ -178,6 +178,35 @@ export const useAdmin = (): UseAdminReturn => {
       try {
         const allUsers = await adminServiceCanister.getAllUsers();
         setUsers(allUsers);
+
+        // Also fetch and sync lock statuses from Firestore
+        try {
+          const lockStatuses =
+            await adminServiceCanister.getAllUserLockStatuses();
+          // Batch update localStorage with lock statuses from Firestore
+          setUserLockStatus((prevStatus) => {
+            const newStatus = { ...prevStatus, ...lockStatuses };
+            try {
+              localStorage.setItem(
+                "adminUserLockStatus",
+                JSON.stringify(newStatus),
+              );
+            } catch (error) {
+              console.error(
+                "Failed to save lock statuses to localStorage:",
+                error,
+              );
+            }
+            return newStatus;
+          });
+        } catch (error) {
+          // If fetching lock statuses fails, log but don't fail the whole refresh
+          console.warn(
+            "Failed to fetch user lock statuses, continuing with cached data:",
+            error,
+          );
+        }
+
         if (showSuccessToast) {
           toast.success("Users updated successfully");
         }

@@ -363,87 +363,87 @@ async function handleDirectPaymentPaid(webhookData) {
  * @param {Object} paymentData - Payment record data
  * @param {number} _paidAmount - Amount that was actually paid (unused for now)
  */
-async function _processProviderPayout(paymentData, _paidAmount) {
-  const {
-    providerId,
-    providerAmount,
-    bookingId,
-    invoiceId,
-    providerPayoutInfo,
-  } = paymentData;
+// async function _processProviderPayout(paymentData, _paidAmount) {
+//   const {
+//     providerId,
+//     providerAmount,
+//     bookingId,
+//     invoiceId,
+//     providerPayoutInfo,
+//   } = paymentData;
 
-  try {
-    // Check if Xendit client is available and provider has payout info
-    if (!xendit || !providerPayoutInfo) {
-      console.error(
-        "Cannot process payout: missing Xendit client or " +
-          "provider payout info",
-      );
-      return;
-    }
+//   try {
+//     // Check if Xendit client is available and provider has payout info
+//     if (!xendit || !providerPayoutInfo) {
+//       console.error(
+//         "Cannot process payout: missing Xendit client or " +
+//           "provider payout info",
+//       );
+//       return;
+//     }
 
-    // Create payout using Xendit Payout API
-    const {Payout} = xendit;
-    const payoutData = {
-      referenceId: `payout-${bookingId}-${Date.now()}`,
-      channelCode: providerPayoutInfo.channelCode || "PH_GCASH",
-      channelProperties: {
-        accountNumber: providerPayoutInfo.gcashNumber,
-        accountHolderName: providerPayoutInfo.accountHolderName,
-      },
-      amount: providerAmount,
-      description: `Service payment for booking ${bookingId}`,
-      currency: "PHP",
-      type: "DIRECT_DISBURSEMENT",
-    };
+//     // Create payout using Xendit Payout API
+//     const {Payout} = xendit;
+//     const payoutData = {
+//       referenceId: `payout-${bookingId}-${Date.now()}`,
+//       channelCode: providerPayoutInfo.channelCode || "PH_GCASH",
+//       channelProperties: {
+//         accountNumber: providerPayoutInfo.gcashNumber,
+//         accountHolderName: providerPayoutInfo.accountHolderName,
+//       },
+//       amount: providerAmount,
+//       description: `Service payment for booking ${bookingId}`,
+//       currency: "PHP",
+//       type: "DIRECT_DISBURSEMENT",
+//     };
 
-    console.log("Creating payout to provider:", payoutData);
-    const payout = await Payout.createPayout({
-      idempotencyKey: `payout-${invoiceId}-${Date.now()}`,
-      data: payoutData,
-    });
+//     console.log("Creating payout to provider:", payoutData);
+//     const payout = await Payout.createPayout({
+//       idempotencyKey: `payout-${invoiceId}-${Date.now()}`,
+//       data: payoutData,
+//     });
 
-    // Store payout record
-    await admin
-      .firestore()
-      .collection("payouts")
-      .doc(payout.id)
-      .set({
-        providerId,
-        bookingId,
-        invoiceId,
-        payoutId: payout.id,
-        referenceId: payout.referenceId,
-        amount: providerAmount,
-        status: payout.status,
-        channelCode: payoutData.channelCode,
-        accountNumber: providerPayoutInfo.gcashNumber,
-        accountHolderName: providerPayoutInfo.accountHolderName,
-        createdAt: new Date().toISOString(),
-        estimatedArrival: payout.estimatedArrivalTime ?
-          new Date(payout.estimatedArrivalTime).toISOString() :
-          null,
-      });
+//     // Store payout record
+//     await admin
+//       .firestore()
+//       .collection("payouts")
+//       .doc(payout.id)
+//       .set({
+//         providerId,
+//         bookingId,
+//         invoiceId,
+//         payoutId: payout.id,
+//         referenceId: payout.referenceId,
+//         amount: providerAmount,
+//         status: payout.status,
+//         channelCode: payoutData.channelCode,
+//         accountNumber: providerPayoutInfo.gcashNumber,
+//         accountHolderName: providerPayoutInfo.accountHolderName,
+//         createdAt: new Date().toISOString(),
+//         estimatedArrival: payout.estimatedArrivalTime ?
+//           new Date(payout.estimatedArrivalTime).toISOString() :
+//           null,
+//       });
 
-    console.log(
-      `Payout initiated for provider ${providerId}: ` +
-        `₱${providerAmount} (Payout ID: ${payout.id})`,
-    );
-  } catch (error) {
-    console.error(`Error processing payout for provider ${providerId}:`, error);
+//     console.log(
+//       `Payout initiated for provider ${providerId}: ` +
+//         `₱${providerAmount} (Payout ID: ${payout.id})`,
+//     );
+//   } catch (error) {
+//     console.error(`Error processing payout for provider ${providerId}:`, error);
 
-    // Store failed payout attempt for manual processing
-    await admin.firestore().collection("failed_payouts").add({
-      providerId,
-      bookingId,
-      invoiceId,
-      amount: providerAmount,
-      error: error.message,
-      createdAt: new Date().toISOString(),
-      payoutInfo: providerPayoutInfo,
-    });
-  }
-}
+//     // Store failed payout attempt for manual processing
+//     await admin.firestore().collection("failed_payouts").add({
+//       providerId,
+//       bookingId,
+//       invoiceId,
+//       amount: providerAmount,
+//       error: error.message,
+//       createdAt: new Date().toISOString(),
+//       payoutInfo: providerPayoutInfo,
+//     });
+//   }
+// }
 
 /**
  * Handle expired invoice
@@ -537,79 +537,79 @@ async function sendTopupNotification(providerId, amount) {
  * @param {string} providerId - Provider ID
  * @param {number} amount - Payment amount
  */
-async function _sendPaymentNotifications(
-  bookingId,
-  clientId,
-  providerId,
-  amount,
-) {
-  try {
-    // Send notification to client
-    const clientDoc = await admin
-      .firestore()
-      .collection("users")
-      .doc(clientId)
-      .get();
+// async function _sendPaymentNotifications(
+//   bookingId,
+//   clientId,
+//   providerId,
+//   amount,
+// ) {
+//   try {
+//     // Send notification to client
+//     const clientDoc = await admin
+//       .firestore()
+//       .collection("users")
+//       .doc(clientId)
+//       .get();
 
-    if (clientDoc.exists) {
-      const clientData = clientDoc.data();
-      const clientFcmToken = clientData.fcmToken;
+//     if (clientDoc.exists) {
+//       const clientData = clientDoc.data();
+//       const clientFcmToken = clientData.fcmToken;
 
-      if (clientFcmToken) {
-        const clientMessage = {
-          token: clientFcmToken,
-          notification: {
-            title: "Payment Confirmed",
-            body:
-              `Your payment of ₱${amount.toLocaleString()} ` +
-              "has been confirmed",
-          },
-          data: {
-            type: "PAYMENT_CONFIRMED",
-            bookingId: bookingId,
-            amount: amount.toString(),
-          },
-        };
+//       if (clientFcmToken) {
+//         const clientMessage = {
+//           token: clientFcmToken,
+//           notification: {
+//             title: "Payment Confirmed",
+//             body:
+//               `Your payment of ₱${amount.toLocaleString()} ` +
+//               "has been confirmed",
+//           },
+//           data: {
+//             type: "PAYMENT_CONFIRMED",
+//             bookingId: bookingId,
+//             amount: amount.toString(),
+//           },
+//         };
 
-        await admin.messaging().send(clientMessage);
-      }
-    }
+//         await admin.messaging().send(clientMessage);
+//       }
+//     }
 
-    // Send notification to provider
-    const providerDoc = await admin
-      .firestore()
-      .collection("providers")
-      .doc(providerId)
-      .get();
+//     // Send notification to provider
+//     const providerDoc = await admin
+//       .firestore()
+//       .collection("providers")
+//       .doc(providerId)
+//       .get();
 
-    if (providerDoc.exists) {
-      const providerData = providerDoc.data();
-      const providerFcmToken = providerData.fcmToken;
+//     if (providerDoc.exists) {
+//       const providerData = providerDoc.data();
+//       const providerFcmToken = providerData.fcmToken;
 
-      if (providerFcmToken) {
-        const providerMessage = {
-          token: providerFcmToken,
-          notification: {
-            title: "Payment Received",
-            body: `You received ₱${amount.toLocaleString()} for your service`,
-          },
-          data: {
-            type: "PAYMENT_RECEIVED",
-            bookingId: bookingId,
-            amount: amount.toString(),
-          },
-        };
+//       if (providerFcmToken) {
+//         const providerMessage = {
+//           token: providerFcmToken,
+//           notification: {
+//             title: "Payment Received",
+//             body: `You received ₱${amount.toLocaleString()} for your service`,
+//           },
+//           data: {
+//             type: "PAYMENT_RECEIVED",
+//             bookingId: bookingId,
+//             amount: amount.toString(),
+//           },
+//         };
 
-        await admin.messaging().send(providerMessage);
-      }
-    }
-  } catch (error) {
-    console.error(
-      `Error sending payment notifications for booking ${bookingId}:`,
-      error,
-    );
-  }
-}
+//         await admin.messaging().send(providerMessage);
+//       }
+//     }
+//   } catch (error) {
+//     console.error(
+//       `Error sending payment notifications for booking ${bookingId}:`,
+//       error,
+//     );
+//   }
+// }
 
 /**
  * Send held payment notifications to client and provider

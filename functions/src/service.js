@@ -894,6 +894,84 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
       await deleteImagesFromStorage(service.certificateMedia);
     }
 
+    // Delete all associated bookings for this service
+    console.log(`🗑️ [deleteService] Deleting bookings for service ${serviceId}...`);
+    const bookingsSnapshot = await db.collection("bookings")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!bookingsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = bookingsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${bookingsSnapshot.size}
+        bookings for service ${serviceId}`);
+    }
+
+    // Delete all associated reviews for this service (client reviews)
+    console.log(`🗑️ [deleteService] Deleting reviews for service ${serviceId}...`);
+    const reviewsSnapshot = await db.collection("reviews")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!reviewsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = reviewsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${reviewsSnapshot.size}
+        reviews for service ${serviceId}`);
+    }
+
+    // Delete all associated provider reviews for this service
+    console.log(`🗑️ [deleteService] Deleting provider reviews for service ${serviceId}...`);
+    const providerReviewsSnapshot = await db.collection("providerReviews")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!providerReviewsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = providerReviewsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${providerReviewsSnapshot.size}
+        provider reviews for service ${serviceId}`);
+    }
+
     // Delete the service document
     await serviceRef.delete();
 

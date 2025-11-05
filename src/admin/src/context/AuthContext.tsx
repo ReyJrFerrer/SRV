@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
@@ -12,7 +13,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { getFirebaseAuth } from "../services/firebaseApp";
+import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { updateMediaActor } from "../services/mediaServiceCanister";
@@ -61,32 +62,133 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Logout function (defined early so it can be used in useEffect)
+  // Using useCallback to make it stable
+  const logout = useCallback(async () => {
+    // Get current authClient from state when called
+    const currentAuthClient = authClient;
+    if (!currentAuthClient) return;
+
+    // Update user active status to false before logout
+    try {
+      await authCanisterService.updateUserActiveStatus(false);
+    } catch (error) {
+      console.error(
+        "[Admin] Error updating user active status on logout:",
+        error,
+      );
+      // Continue with logout even if this fails
+    }
+
+    // Logout from Firebase
+    const auth = getFirebaseAuth();
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error("[Admin] Error signing out from Firebase:", error);
+    }
+
+    // Logout from Internet Identity
+    if (currentAuthClient) {
+      await currentAuthClient.logout();
+    }
+    setIsAuthenticated(false);
+    setIdentity(null);
+    setFirebaseUser(null);
+    setIsAdmin(false);
+    updateAllAdminActors(null);
+  }, [authClient]);
+
   // Listen to Firebase auth state changes
   useEffect(() => {
     const auth = getFirebaseAuth();
+    let firestoreUnsubscribe: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
         console.log("[Admin] Firebase user authenticated:", user.uid);
 
-        // Check if user has admin custom claim
+        // Clean up previous listener if exists
+        if (firestoreUnsubscribe) {
+          firestoreUnsubscribe();
+          firestoreUnsubscribe = null;
+        }
+
+        // Check if user is disabled (suspended) - try to get token, if it fails, user is disabled
         try {
-          const tokenResult = await user.getIdTokenResult(true); // Force refresh to get latest claims
+          await user.getIdToken(true); // This will throw if user is disabled
+
+          // Check if user has admin custom claim
+          const tokenResult = await user.getIdTokenResult(true);
           const isAdminUser = tokenResult.claims.isAdmin === true;
           setIsAdmin(isAdminUser);
           console.log("[Admin] Admin status from token:", isAdminUser);
-        } catch (error) {
+
+          // Set up real-time listener for Firestore locked status
+          // Note: This is a backup listener - NavigationGuard also has one
+          try {
+            const db = getFirebaseFirestore();
+            // Use modular API from firebase/firestore
+            const { doc, onSnapshot } = await import("firebase/firestore");
+            const userRef = doc(db, "users", user.uid);
+
+            firestoreUnsubscribe = onSnapshot(
+              userRef,
+              (snapshot) => {
+                if (snapshot.exists()) {
+                  const userData = snapshot.data();
+                  if (userData?.locked === true) {
+                    console.log(
+                      "[Admin] User account is locked - showing suspension modal",
+                    );
+                    // Suspension is handled by NavigationGuard, which shows the modal
+                    // No automatic logout here
+                  }
+                }
+              },
+              (error: any) => {
+                console.error("[Admin] Error listening to lock status:", error);
+              },
+            );
+          } catch (firestoreError: any) {
+            console.error(
+              "[Admin] Error setting up lock status listener:",
+              firestoreError,
+            );
+          }
+        } catch (error: any) {
+          // If getIdToken fails, user might be disabled
+          if (
+            error?.code === "auth/user-disabled" ||
+            error?.message?.includes("disabled")
+          ) {
+            console.log("[Admin] User is disabled - account suspended");
+            // Suspension is handled by NavigationGuard, which shows the modal
+            // No automatic logout here
+            return;
+          }
           console.error("[Admin] Error checking admin status:", error);
           setIsAdmin(false);
         }
       } else {
         console.log("[Admin] No Firebase user");
         setIsAdmin(false);
+        // Clean up listener when user logs out
+        if (firestoreUnsubscribe) {
+          firestoreUnsubscribe();
+          firestoreUnsubscribe = null;
+        }
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribe();
+      if (firestoreUnsubscribe) {
+        firestoreUnsubscribe();
+      }
+    };
+  }, [logout]); // Include logout in dependencies
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -176,10 +278,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 );
 
                 // Create admin profile with UID and principal
+                // Don't pass name - let the backend generate sequential admin name (admin00, admin01, etc.)
                 const adminResult = await createAdminProfile(
                   result.user.uid,
                   principal,
-                  "Admin User",
+                  undefined, // Let backend generate sequential name
                   "",
                 );
 
@@ -252,37 +355,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
       setIsLoading(false);
     }
-  };
-
-  const logout = async () => {
-    if (!authClient) return;
-
-    // Update user active status to false before logout
-    try {
-      await authCanisterService.updateUserActiveStatus(false);
-    } catch (error) {
-      console.error(
-        "[Admin] Error updating user active status on logout:",
-        error,
-      );
-      // Continue with logout even if this fails
-    }
-
-    // Logout from Firebase
-    const auth = getFirebaseAuth();
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error("[Admin] Error signing out from Firebase:", error);
-    }
-
-    // Logout from Internet Identity
-    await authClient.logout();
-    setIsAuthenticated(false);
-    setIdentity(null);
-    setFirebaseUser(null);
-    setIsAdmin(false);
-    updateAllAdminActors(null);
   };
 
   const value = {

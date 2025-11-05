@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -28,7 +28,6 @@ export const AdminHomePage: React.FC = () => {
     // Action functions
     getServicesWithCertificates,
     getReportsFromFeedbackCanister,
-    refreshAll,
   } = useAdmin();
 
   // Mobile bottom action bar visibility
@@ -243,12 +242,6 @@ export const AdminHomePage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const isRefreshing =
-    loading.systemStats ||
-    loading.serviceProviders ||
-    loading.services ||
-    loading.bookings;
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-gray-50">
       {/* Header */}
@@ -275,17 +268,6 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full min-w-0 flex-row flex-wrap gap-2 sm:ml-4 sm:w-auto sm:min-w-[unset] sm:flex-nowrap sm:space-x-4">
-                {/* Refresh button (header) */}
-                <button
-                  onClick={refreshAll}
-                  disabled={isRefreshing}
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </button>
                 <Link
                   to="/analytics"
                   className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
@@ -504,14 +486,6 @@ export const AdminHomePage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={refreshAll}
-              disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
-            >
-              <ArrowPathIcon className="mr-2 h-4 w-4" />
-              Refresh
-            </button>
             <Link
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
