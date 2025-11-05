@@ -197,20 +197,20 @@ const BottomNavigation: React.FC = () => {
                               displayItem.label === "Home"
                                 ? HomeIcon
                                 : displayItem.label === "Booking"
-                                ? CalendarDaysIcon
-                                : displayItem.label === "Notifications"
-                                ? BellIcon
-                                : displayItem.label === "Chat"
-                                ? ChatBubbleOvalLeftEllipsisIcon
-                                : displayItem.label === "Settings"
-                                ? Cog6ToothIcon
-                                : HomeIcon;
+                                  ? CalendarDaysIcon
+                                  : displayItem.label === "Notifications"
+                                    ? BellIcon
+                                    : displayItem.label === "Chat"
+                                      ? ChatBubbleOvalLeftEllipsisIcon
+                                      : displayItem.label === "Settings"
+                                        ? Cog6ToothIcon
+                                        : HomeIcon;
                             return (
                               <Icon
                                 className={
                                   isActive
                                     ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                    : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 group-hover:text-yellow-500"
+                                    : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
                                 }
                               />
                             );
@@ -282,16 +282,16 @@ const BottomNavigation: React.FC = () => {
                       item.label === "Home"
                         ? HomeIcon
                         : item.label === "Booking"
-                        ? CalendarDaysIcon
-                        : item.label === "Ratings"
-                        ? StarIcon
-                        : item.label === "Notifications"
-                        ? BellIcon
-                        : item.label === "Chat"
-                        ? ChatBubbleOvalLeftEllipsisIcon
-                        : item.label === "Settings"
-                        ? Cog6ToothIcon
-                        : HomeIcon;
+                          ? CalendarDaysIcon
+                          : item.label === "Ratings"
+                            ? StarIcon
+                            : item.label === "Notifications"
+                              ? BellIcon
+                              : item.label === "Chat"
+                                ? ChatBubbleOvalLeftEllipsisIcon
+                                : item.label === "Settings"
+                                  ? Cog6ToothIcon
+                                  : HomeIcon;
                     return (
                       <div
                         className={

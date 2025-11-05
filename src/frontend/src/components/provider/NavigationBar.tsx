@@ -152,7 +152,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <div className="grid w-full grid-cols-6 font-medium">
             {/* Mobile: show Home, Booking, Chat, Services first */}
             {navItems
-              .filter((it) => ["Home", "Booking", "Chat", "Services"].includes(it.label))
+              .filter((it) =>
+                ["Home", "Booking", "Chat", "Services"].includes(it.label),
+              )
               .map((item) => {
                 const active = isActivePath(item.to);
                 const onClick = async (e: React.MouseEvent) => {
@@ -177,10 +179,10 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   item.label === "Home"
                     ? HomeIcon
                     : item.label === "Booking"
-                    ? CalendarDaysIcon
-                    : item.label === "Chat"
-                    ? ChatBubbleOvalLeftEllipsisIcon
-                    : WrenchScrewdriverIcon; // Services
+                      ? CalendarDaysIcon
+                      : item.label === "Chat"
+                        ? ChatBubbleOvalLeftEllipsisIcon
+                        : WrenchScrewdriverIcon; // Services
                 return (
                   <Link
                     key={item.label}
@@ -355,12 +357,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       item.label === "Home"
                         ? HomeIcon
                         : item.label === "Booking"
-                        ? CalendarDaysIcon
-                        : item.label === "Chat"
-                        ? ChatBubbleOvalLeftEllipsisIcon
-                        : item.label === "Services"
-                        ? WrenchScrewdriverIcon
-                        : HomeIcon;
+                          ? CalendarDaysIcon
+                          : item.label === "Chat"
+                            ? ChatBubbleOvalLeftEllipsisIcon
+                            : item.label === "Services"
+                              ? WrenchScrewdriverIcon
+                              : HomeIcon;
                     return (
                       <div
                         className={
