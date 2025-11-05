@@ -60,6 +60,7 @@ export const useChat = () => {
   // Real-time listener unsubscribe functions (now async)
   const conversationsUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
   const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Get user name from cache or fetch from auth service
@@ -308,7 +309,7 @@ export const useChat = () => {
   );
 
   /**
-   * Load messages for the current conversation with real-time listener
+   * Load messages for the current conversation with real-time listener + polling fallback
    * @param conversationId The ID of the conversation
    */
   const loadConversation = useCallback(
@@ -383,6 +384,42 @@ export const useChat = () => {
               }
             },
           );
+
+        // Setup polling fallback (3 seconds)
+        console.log("⏰ [useChat] Starting polling mechanism for:", conversationId);
+        
+        // Clear any existing polling interval
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+
+        pollingIntervalRef.current = setInterval(async () => {
+          if (!isMountedRef.current) {
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            return;
+          }
+
+          try {
+            console.log("🔄 [useChat] Polling for new messages...");
+            const messagePage = await chatCanisterService.getConversationMessages(
+              conversationId,
+              50,
+              0,
+            );
+
+            if (isMountedRef.current && messagePage.messages.length > 0) {
+              const adaptedMessages = messagePage.messages.map(adaptBackendMessage);
+              setMessages(adaptedMessages);
+              console.log(`✅ [useChat] Polling update: ${adaptedMessages.length} messages`);
+            }
+          } catch (error) {
+            console.error("❌ [useChat] Error polling messages:", error);
+            // Don't set error state for polling failures, just log it
+          }
+        }, 3000);
 
         // Fetch conversation details after setting up listener
         const conversation =
@@ -561,6 +598,13 @@ export const useChat = () => {
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(async () => {
+    // Clear polling interval
+    if (pollingIntervalRef.current) {
+      console.log("⏹️ [useChat] Stopping polling mechanism");
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
     // Cleanup messages listener
     try {
       if (messagesUnsubscribe.current) {
