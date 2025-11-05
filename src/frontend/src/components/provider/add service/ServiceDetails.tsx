@@ -356,7 +356,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
+        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
           <div className="space-y-8">
             {/* Service Title */}
             <section>
@@ -378,7 +378,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   onChange={handleTitleChange}
                   required
                   ref={titleRef}
-                  className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                  className={`lg:text-md mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
                     validationErrors.serviceOfferingTitle && !hideTitleError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
                       : "border-gray-300 bg-gray-50 focus:border-blue-500"
@@ -437,12 +437,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 </select>
                 {/* Removed optional custom category input */}
                 {/* Request Service Category button - opens Google Form in new tab */}
-                <div className="mt-3">
+                <div className="mt-3 flex items-center justify-center">
                   <a
                     href="https://forms.gle/o3KjDDCkcr5KGE2R8"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
+                    className="inline-flex px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
                     aria-label="Request Service Category"
                   >
                     Request Service Category
@@ -460,7 +460,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
         {/* Right: Service Packages */}
         <div>
-          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
+          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
             <h2 className="mb-4 text-xl font-bold text-blue-700">
               Service Packages <span className="text-red-500">*</span>
             </h2>
@@ -476,7 +476,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ref={(el) => {
                         packageRefs.current[pkg.id] = el;
                       }}
-                      className={`relative rounded-xl border bg-white p-6 shadow-md transition-shadow hover:shadow-lg ${
+                      className={`relative rounded-xl border bg-white p-4 shadow-md transition-shadow hover:shadow-lg ${
                         pkgError ? "border-red-400" : "border-gray-200"
                       }`}
                     >
@@ -515,7 +515,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                               )
                             }
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 text-sm ${
                               pkgError &&
                               pkgError.name &&
                               !hidePackageFieldError[pkg.id]?.name
