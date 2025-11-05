@@ -8,7 +8,6 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 
 interface ProviderStatsProps {
   className?: string;
@@ -42,7 +41,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [newCommissionAmount, setNewCommissionAmount] = useState("");
   const [balance, setBalance] = useState(outstandingCommission);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Update balance when outstandingCommission changes
   useEffect(() => {
@@ -55,22 +53,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       setNewCommissionAmount(balance.toFixed(2));
     }
   }, [showCommissionModal, balance]);
-
-  const handleRefreshBalance = async () => {
-    if (!providerId) return;
-    try {
-      setRefreshing(true);
-      const newBalance = await walletCanisterService.getBalanceOf(providerId);
-      setBalance(newBalance);
-      if (onUpdateCommission) {
-        onUpdateCommission(newBalance);
-      }
-    } catch (error) {
-      console.error("Failed to refresh balance:", error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   const handleViewWallet = () => {
     if (providerId) {
@@ -175,26 +157,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
-            <button
-              onClick={handleRefreshBalance}
-              disabled={refreshing}
-              className="rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50"
-              title="Refresh balance"
-            >
-              <svg
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
           </div>
           <p className="text-3xl font-extrabold tracking-tight text-gray-900">
             ₱{balance.toFixed(2)}

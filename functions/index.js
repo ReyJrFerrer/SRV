@@ -74,14 +74,15 @@ const {
   getSystemStats,
   getUserServicesAndBookings,
   getUserServiceCount,
+  getAllUserLockStatuses,
   lockUserAccount,
-  deleteUserAccount,
   updateUserReputation,
   getValidatedCertificates,
   getRejectedCertificates,
   getServicesWithCertificates,
   getPendingCertificateValidations,
   validateCertificate,
+  autoReactivateSuspendedAccounts,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -192,6 +193,7 @@ const {
   getServiceReviews,
   submitProviderReview,
   getClientProviderReviews,
+  getProviderReviewsByProvider,
 } = require("./src/review");
 
 // Import Feedback Management functions
@@ -374,6 +376,7 @@ exports.getProviderReviews = getProviderReviews;
 exports.getServiceReviews = getServiceReviews;
 exports.submitProviderReview = submitProviderReview;
 exports.getClientProviderReviews = getClientProviderReviews;
+exports.getProviderReviewsByProvider = getProviderReviewsByProvider;
 
 
 // Export Feedback Management Functions
@@ -443,14 +446,17 @@ exports.getSettings = getSettings;
 exports.getSystemStats = getSystemStats;
 exports.getUserServicesAndBookings = getUserServicesAndBookings;
 exports.getUserServiceCount = getUserServiceCount;
+exports.getAllUserLockStatuses = getAllUserLockStatuses;
 exports.lockUserAccount = lockUserAccount;
-exports.deleteUserAccount = deleteUserAccount;
 exports.updateUserReputation = updateUserReputation;
 exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
+
+// Export Scheduled Admin Functions
+exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
 
 // Export Admin Authentication Helper
 const {createAdminProfile} = require("./src/adminAuth");

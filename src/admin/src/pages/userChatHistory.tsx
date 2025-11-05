@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { authCanisterService } from "../../../frontend/src/services/authCanisterService";
-import { ArrowLeftIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 interface Message {
@@ -131,10 +131,6 @@ export const UserChatHistoryPage: React.FC = () => {
     }
   };
 
-  const handleRefresh = async () => {
-    await loadMessages();
-  };
-
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
@@ -197,16 +193,6 @@ export const UserChatHistoryPage: React.FC = () => {
               </h1>
             </div>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="rounded-full p-2 text-gray-400 hover:text-gray-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            title="Refresh messages"
-          >
-            <ArrowPathIcon
-              className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
-            />
-          </button>
         </div>
       </header>
 

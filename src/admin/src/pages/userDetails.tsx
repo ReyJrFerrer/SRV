@@ -92,6 +92,7 @@ export const UserDetailsPage: React.FC = () => {
     users: backendUsers,
     refreshUsers,
     getUserLockStatus,
+    updateUserLockStatus,
   } = useAdmin();
 
   // Check if accessed from a ticket
@@ -106,6 +107,11 @@ export const UserDetailsPage: React.FC = () => {
     useState(false);
   const [outstandingCommission, setOutstandingCommission] = useState(0);
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
+  const [showLockConfirmation, setShowLockConfirmation] = useState(false);
+  const [suspensionDuration, setSuspensionDuration] = useState<
+    "7" | "30" | "custom" | "indefinite"
+  >("7");
+  const [customDays, setCustomDays] = useState<number>(7);
 
   // Convert Profile to UserData format with real data
   const convertProfileToUserData = async (
@@ -307,6 +313,85 @@ export const UserDetailsPage: React.FC = () => {
 
   const handleReputationChange = (newScore: number) => {
     setPendingReputationScore(newScore);
+  };
+
+  // Account management functions
+  const handleLockConfirmation = () => {
+    setShowLockConfirmation(true);
+  };
+
+  const handleActivateAccount = async () => {
+    if (!user) return;
+
+    try {
+      // Call Firebase function to unlock the account
+      await adminServiceCanister.lockUserAccount(user.id, false);
+
+      // Update localStorage via useAdmin hook
+      updateUserLockStatus(user.id, false);
+
+      // Update local state
+      setUser((prev) => (prev ? { ...prev, isLocked: false } : null));
+
+      console.log("Account activated successfully");
+      alert("Account activated successfully");
+    } catch (error) {
+      console.error("Failed to activate account:", error);
+      alert("Failed to activate account. Please try again.");
+    }
+  };
+
+  const confirmLockAccount = async () => {
+    if (!user) return;
+
+    // Determine suspension duration in days
+    let suspensionDurationDays: number | null;
+    if (suspensionDuration === "indefinite") {
+      suspensionDurationDays = null;
+    } else if (suspensionDuration === "custom") {
+      if (customDays <= 0 || !Number.isInteger(customDays)) {
+        alert(
+          "Please enter a valid number of days (must be a positive integer).",
+        );
+        return;
+      }
+      suspensionDurationDays = customDays;
+    } else {
+      suspensionDurationDays = parseInt(suspensionDuration);
+    }
+
+    console.log("Attempting to lock account for user:", user.id);
+    console.log(
+      "Suspension duration:",
+      suspensionDurationDays === null
+        ? "indefinite"
+        : `${suspensionDurationDays} days`,
+    );
+
+    try {
+      // Call Firebase function to lock the account with suspension duration
+      await adminServiceCanister.lockUserAccount(
+        user.id,
+        true,
+        suspensionDurationDays,
+      );
+
+      // Update localStorage via useAdmin hook
+      updateUserLockStatus(user.id, true);
+
+      // Update local state
+      setUser((prev) => (prev ? { ...prev, isLocked: true } : null));
+
+      console.log("Account locked successfully");
+      setShowLockConfirmation(false);
+      // Reset suspension duration to default
+      setSuspensionDuration("7");
+      setCustomDays(7);
+      alert("Account locked successfully");
+    } catch (error) {
+      console.error("Failed to lock account:", error);
+      alert("Failed to lock account. Please try again.");
+    }
   };
 
   const handleSaveReputation = () => {
@@ -683,6 +768,47 @@ export const UserDetailsPage: React.FC = () => {
                     </svg>
                     View Reviews
                   </button>
+                  {!user.isLocked ? (
+                    <button
+                      onClick={handleLockConfirmation}
+                      className="inline-flex items-center rounded-md border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 shadow-sm hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                    >
+                      <svg
+                        className="mr-2 h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
+                      </svg>
+                      Lock Account
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleActivateAccount}
+                      className="inline-flex items-center rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                      <svg
+                        className="mr-2 h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Activate Account
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -932,6 +1058,145 @@ export const UserDetailsPage: React.FC = () => {
                 className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lock Account Confirmation Modal */}
+      {showLockConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Lock Account
+              </h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="mb-4 text-sm text-gray-600">
+                Are you sure you want to lock this account? Select the lock
+                duration:
+              </p>
+
+              {/* Suspension Duration Options */}
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="suspension-7"
+                    name="suspensionDuration"
+                    value="7"
+                    checked={suspensionDuration === "7"}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
+                    className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                  />
+                  <label
+                    htmlFor="suspension-7"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    7 days
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="suspension-30"
+                    name="suspensionDuration"
+                    value="30"
+                    checked={suspensionDuration === "30"}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
+                    className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                  />
+                  <label
+                    htmlFor="suspension-30"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    30 days
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="suspension-custom"
+                    name="suspensionDuration"
+                    value="custom"
+                    checked={suspensionDuration === "custom"}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
+                    className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                  />
+                  <label
+                    htmlFor="suspension-custom"
+                    className="ml-2 flex items-center gap-2 text-sm text-gray-700"
+                  >
+                    Custom:
+                    <input
+                      type="number"
+                      min="1"
+                      value={customDays}
+                      onChange={(e) =>
+                        setCustomDays(parseInt(e.target.value) || 1)
+                      }
+                      disabled={suspensionDuration !== "custom"}
+                      className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                    days
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="suspension-indefinite"
+                    name="suspensionDuration"
+                    value="indefinite"
+                    checked={suspensionDuration === "indefinite"}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
+                    className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                  />
+                  <label
+                    htmlFor="suspension-indefinite"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Indefinite (until manually reactivated)
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => {
+                  setShowLockConfirmation(false);
+                  setSuspensionDuration("7");
+                  setCustomDays(7);
+                }}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLockAccount}
+                className="rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              >
+                Lock Account
               </button>
             </div>
           </div>

@@ -213,7 +213,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: process.env.CANISTER_ID_REPUTATION || "bd3sg-teaaa-aaaaa-qaaba-cai",
+    reputation: "bd3sg-teaaa-aaaaa-qaaba-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION,

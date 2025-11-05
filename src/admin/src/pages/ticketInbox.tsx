@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   ArrowLeftIcon,
-  ArrowPathIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon as ExclamationTriangleOutlineIcon,
   WrenchScrewdriverIcon,
@@ -218,8 +217,7 @@ export const TicketInboxPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
-  const [loading, setLoading] = useState(false);
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [, setLoadingReports] = useState(false);
 
   // Mobile bottom action bar visibility
   const [showMobileBar, setShowMobileBar] = useState(false);
@@ -317,26 +315,6 @@ export const TicketInboxPage: React.FC = () => {
     setFilteredTickets(filtered);
   }, [tickets, searchTerm, statusFilter, categoryFilter, sortBy]);
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      // Refresh users first
-      await refreshUsers();
-
-      if (backendUsers.length > 0) {
-        // Load real reports only (removed mock tickets)
-        const reportTickets = await loadReportsAsTickets();
-
-        setTickets(reportTickets);
-        setFilteredTickets(reportTickets);
-      }
-    } catch (error) {
-      console.error("Error refreshing tickets:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleViewTicket = (ticket: Ticket) => {
     navigate(`/ticket/${ticket.id}`);
   };
@@ -368,16 +346,6 @@ export const TicketInboxPage: React.FC = () => {
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
-                  onClick={handleRefresh}
-                  disabled={loading || loadingReports}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
-                  />
-                  {loadingReports ? "Loading Reports..." : "Refresh"}
-                </button>
-                <button
                   onClick={() => navigate("/dashboard")}
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
@@ -400,16 +368,6 @@ export const TicketInboxPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={loading || loadingReports}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
-              />
-              {loadingReports ? "Loading Reports..." : "Refresh"}
-            </button>
             <button
               onClick={() => navigate("/dashboard")}
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"

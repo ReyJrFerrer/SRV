@@ -16,6 +16,7 @@ interface Booking {
   completedAt?: string;
   rating?: number;
   review?: string;
+  location?: string;
 }
 
 export const UserBookingsPage: React.FC = () => {
@@ -385,20 +386,16 @@ export const UserBookingsPage: React.FC = () => {
                       {
                         filteredBookings.filter((b) => {
                           if (!b.status) return false;
-                          if (typeof b.status === "string") {
-                            return (
-                              b.status.toLowerCase() === "pending" ||
-                              b.status.toLowerCase() === "requested"
-                            );
-                          }
-                          if (typeof b.status === "object") {
-                            return Object.keys(b.status).some(
-                              (key) =>
-                                key.toLowerCase() === "pending" ||
-                                key.toLowerCase() === "requested",
-                            );
-                          }
-                          return false;
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
+                          return (
+                            normalizedStatus === "pending" ||
+                            normalizedStatus === "requested" ||
+                            normalizedStatus === "accepted" ||
+                            normalizedStatus === "in_progress" ||
+                            normalizedStatus === "inprogress"
+                          );
                         }).length
                       }
                     </dd>
@@ -413,7 +410,7 @@ export const UserBookingsPage: React.FC = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-6 w-6 text-blue-400"
+                    className="h-6 w-6 text-red-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -422,20 +419,29 @@ export const UserBookingsPage: React.FC = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Spent
+                      Canceled
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      ₱
-                      {filteredBookings
-                        .reduce((sum, b) => sum + b.price, 0)
-                        .toLocaleString()}
+                      {
+                        filteredBookings.filter((b) => {
+                          if (!b.status) return false;
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
+                          return (
+                            normalizedStatus === "cancelled" ||
+                            normalizedStatus === "canceled" ||
+                            normalizedStatus === "declined"
+                          );
+                        }).length
+                      }
                     </dd>
                   </dl>
                 </div>
@@ -577,6 +583,13 @@ export const UserBookingsPage: React.FC = () => {
                         <span className="mx-2">•</span>
                         <p>Created: {formatDate(booking.createdAt)}</p>
                       </div>
+                      {booking.location && (
+                        <div className="mt-1 text-sm text-gray-500">
+                          <p className="truncate">
+                            Location: {booking.location}
+                          </p>
+                        </div>
+                      )}
                       {booking.scheduledDate && (
                         <div className="mt-1 text-sm text-gray-500">
                           <p>Scheduled: {formatDate(booking.scheduledDate)}</p>

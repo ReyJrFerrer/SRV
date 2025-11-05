@@ -197,24 +197,7 @@ const MapFunctions: React.FC = () => {
               If the permission is denied (blocked), hide the enable button and
               keep the manual "Change location" action available. */}
           {locationStatus === "not_set" && <EnableLocationButton />}
-          {/* Manual refresh control */}
-          <button
-            type="button"
-            className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
-            onClick={async () => {
-              try {
-                setLastRefreshTs(Date.now());
-                // force a fresh geolocation request
-                await useLocationStore.getState().requestLocation(true);
-              } catch {
-                // ignore
-              }
-            }}
-            disabled={locationLoading}
-            title="Refresh location"
-          >
-            {locationLoading ? "Refreshing..." : "Refresh"}
-          </button>
+
           {addressMode === "manual" && userAddress && userProvince && (
             <button
               type="button"
