@@ -40,6 +40,8 @@ export interface Notification {
   providerName?: string;
   clientName?: string;
   bookingId?: string;
+  metadata?: any;
+  title?: string;
 }
 
 // In-memory store for unread count

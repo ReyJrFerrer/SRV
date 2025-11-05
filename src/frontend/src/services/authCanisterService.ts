@@ -26,6 +26,7 @@ export interface FrontendProfile {
   createdAt: Date;
   updatedAt: Date;
   locked?: boolean; // Account suspension status
+  suspensionEndDate?: Date | null; // When suspension expires (null for indefinite)
   isOnboarded?: boolean; // Provider onboarding status for payment functionality
 }
 
@@ -51,6 +52,9 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
     createdAt: new Date(firestoreProfile.createdAt),
     updatedAt: new Date(firestoreProfile.updatedAt),
     locked: firestoreProfile.locked || false, // Default to false if not specified
+    suspensionEndDate: firestoreProfile.suspensionEndDate 
+      ? new Date(firestoreProfile.suspensionEndDate) 
+      : firestoreProfile.suspensionEndDate === null ? null : undefined,
     isOnboarded: firestoreProfile.isOnboarded || false, // Default to false if not specified
   };
 }

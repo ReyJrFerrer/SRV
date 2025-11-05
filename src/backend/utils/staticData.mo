@@ -192,6 +192,7 @@ module {
                 };
                 biography = ?"Experienced house maid with over 10 years of experience in residential cleaning and organizing.";
                 isLocked = null;
+                suspensionEndDate = null;
             }),
             (Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"), {
                 id = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
@@ -207,6 +208,7 @@ module {
                 };
                 biography = ?"Emergency plumbing specialist with expertise in fixing leaks, clogs, and plumbing installations. Available 24/7 for urgent calls.";
                 isLocked = null;
+                suspensionEndDate = null;
             }),
             (Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), {
                 id = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
@@ -222,6 +224,7 @@ module {
                 };
                 biography = ?"Skilled appliance repair technician with experience fixing refrigerators, washing machines, dryers, and other major household appliances.";
                 isLocked = null;
+                suspensionEndDate = null;
             }),
             (Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai"), {
                 id = Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai");
@@ -237,6 +240,7 @@ module {
                 };
                 biography = ?"Professional hairstylist specializing in cuts, colors, and styling for all hair types.";
                 isLocked = null;
+                suspensionEndDate = null;
             }),
             // Sample client accounts
             (Principal.fromText("uxrrr-q7777-77774-qaaaq-cai"), {
@@ -250,6 +254,7 @@ module {
                 profilePicture = null;
                 biography = null;
                 isLocked = null;
+                suspensionEndDate = null;
             })
         ];
     };

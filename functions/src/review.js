@@ -40,6 +40,16 @@ function generateId() {
 }
 
 /**
+ * Generate a unique report ID
+ * @return {string} Unique report ID
+ */
+function generateReportId() {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `report_${timestamp}_${random}`;
+}
+
+/**
  * Validate rating is within acceptable range
  * @param {number} rating - Rating to validate
  * @return {boolean} True if rating is valid
@@ -226,6 +236,130 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
     console.log(`🌟 [submitReview] Processing review for reputation with AI`);
     await processReviewForReputationInternal(result.data, true);
     console.log(`✅ [submitReview] Review processed for reputation successfully`);
+
+    // Check for 5 consecutive bad reviews and auto-create report if needed
+    // This is done outside the transaction to avoid long-running operations
+    try {
+      const newReview = result.data;
+      const providerId = newReview.providerId;
+      const rating = newReview.rating;
+
+      // Only check if this review is bad (rating <= 2)
+      if (rating <= 2) {
+        console.log(`📊 [submitReview] Checking for consecutive bad reviews for provider ${providerId}`);
+        
+        let recentReviewsSnap;
+        try {
+          // Get the last 5 reviews for this provider, ordered by createdAt desc
+          recentReviewsSnap = await db
+            .collection("reviews")
+            .where("providerId", "==", providerId)
+            .orderBy("createdAt", "desc")
+            .limit(5)
+            .get();
+        } catch (queryError) {
+          // If query fails due to missing index, try fallback approach
+          if (queryError.code === 8 || queryError.message?.includes("index")) {
+            console.log(`⚠️ [submitReview] Query failed due to index, using fallback approach`);
+            // Fallback: get all reviews for provider and filter/sort client-side
+            const allReviewsSnap = await db
+              .collection("reviews")
+              .where("providerId", "==", providerId)
+              .get();
+            
+            const allReviews = [];
+            allReviewsSnap.forEach((doc) => {
+              allReviews.push(doc.data());
+            });
+            
+            // Sort by createdAt desc and take first 5
+            const sortedReviews = allReviews.sort((a, b) => {
+              const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return bTime - aTime;
+            });
+            
+            // Create a mock snapshot-like structure
+            recentReviewsSnap = {
+              size: Math.min(5, sortedReviews.length),
+              forEach: (callback) => {
+                sortedReviews.slice(0, 5).forEach((review) => {
+                  callback({data: () => review});
+                });
+              },
+            };
+          } else {
+            throw queryError;
+          }
+        }
+
+        if (recentReviewsSnap.size === 5) {
+          // Check if all 5 reviews are bad (rating <= 2)
+          let allBad = true;
+          const reviews = [];
+          recentReviewsSnap.forEach((doc) => {
+            const review = doc.data();
+            reviews.push(review);
+            if (review.rating > 2) {
+              allBad = false;
+            }
+          });
+
+          if (allBad) {
+            console.log(`⚠️ [submitReview] Detected 5 consecutive bad reviews for provider ${providerId}. Creating auto-report.`);
+
+            // Get provider profile for report details
+            const providerDoc = await db.collection("users").doc(providerId).get();
+            const providerProfile = providerDoc.exists ? providerDoc.data() : null;
+            const providerName = providerProfile?.name || "Unknown Provider";
+            const providerPhone = providerProfile?.phone || "Unknown";
+
+            // Get service name for context
+            let serviceName = "Unknown Service";
+            if (newReview.serviceId) {
+              const serviceDoc = await db.collection("services").doc(newReview.serviceId).get();
+              if (serviceDoc.exists) {
+                serviceName = serviceDoc.data()?.name || "Unknown Service";
+              }
+            }
+
+            // Create ticket description with structured data
+            const reportId = generateReportId();
+            const ticketDescription = JSON.stringify({
+              title: `5 Consecutive Bad Reviews - ${providerName}`,
+              description: `Provider ${providerName} has received 5 consecutive bad reviews (rating <= 2).\n\nThis is an automatically generated report.`,
+              category: "bad_reviews",
+              timestamp: new Date().toISOString(),
+              source: "system_auto_report_consecutive_bad_reviews",
+              providerId: providerId,
+              providerName: providerName,
+              serviceId: newReview.serviceId,
+              serviceName: serviceName,
+              reviewIds: reviews.map((r) => r.id),
+              ratings: reviews.map((r) => r.rating),
+            });
+
+            const newReport = {
+              id: reportId,
+              userId: "system",
+              userName: "System",
+              userPhone: "N/A",
+              description: ticketDescription,
+              status: "open",
+              createdAt: new Date().toISOString(),
+            };
+
+            // Save report to Firestore
+            await db.collection("app_reports").doc(reportId).set(newReport);
+            console.log(`✅ [submitReview] Automatically created ticket ${reportId} for 5 consecutive bad reviews.`);
+          }
+        }
+      }
+    } catch (reportError) {
+      // Don't fail the review submission if report creation fails - just log it
+      console.error(`⚠️ [submitReview] Failed to check/create auto-report for consecutive bad reviews: ${reportError.message}`);
+    }
+
     return result;
   } catch (error) {
     console.error("Error in submitReview:", error);

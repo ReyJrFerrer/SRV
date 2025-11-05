@@ -417,6 +417,34 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     const userProfile = userSnap.data();
     console.log("User profile data for report:", userProfile);
 
+    // Determine user's actual role from profile
+    const userActiveRole = userProfile?.activeRole || "Client";
+    const isProvider = userActiveRole === "ServiceProvider";
+    const correctSource = isProvider ? "provider_report" : "client_report";
+
+    // Parse and validate the description to ensure source matches user's role
+    let finalDescription = String(description);
+    try {
+      // Try to parse description as JSON (structured report format)
+      const parsedDesc = JSON.parse(description);
+      if (parsedDesc && typeof parsedDesc === "object") {
+        // Override source field to match user's actual role
+        parsedDesc.source = correctSource;
+        console.log(`✅ [submitReport] Corrected source from "${parsedDesc.source || "missing"}" to "${correctSource}" for user ${authInfo.uid} (activeRole: ${userActiveRole})`);
+        finalDescription = JSON.stringify(parsedDesc);
+      }
+    } catch (e) {
+      // Description is not JSON, create structured format with correct source
+      console.log(`⚠️ [submitReport] Description is not JSON, creating structured format with correct source: ${correctSource}`);
+      finalDescription = JSON.stringify({
+        title: "User Report",
+        description: String(description),
+        category: "other",
+        timestamp: new Date().toISOString(),
+        source: correctSource,
+      });
+    }
+
     // Extract media IDs from URLs if needed
     // Attachments should be media IDs, but support both URL and ID formats
     const mediaIds = [];
@@ -448,7 +476,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
       userId: authInfo.uid,
       userName: userProfile?.name || "Unknown",
       userPhone: userProfile?.phone || "Unknown",
-      description: String(description), // Ensure it's a string
+      description: finalDescription, // Use corrected description with proper source
       attachments: mediaIds, // Store media IDs instead of URLs
       status: "open", // Default status for new reports
       createdAt: new Date().toISOString(),

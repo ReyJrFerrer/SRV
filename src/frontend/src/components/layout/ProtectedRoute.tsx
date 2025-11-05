@@ -81,7 +81,11 @@ export default function ProtectedRoute({
       {children}
       <SuspensionModal
         isOpen={showSuspensionModal}
-        onClose={() => setShowSuspensionModal(false)}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          // Mark that we've handled the suspension modal
+          sessionStorage.setItem("hasShownSuspensionModal", "true");
+        }}
       />
     </>
   );

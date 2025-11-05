@@ -213,13 +213,39 @@ const UserReviewsPage: React.FC = () => {
     setError(null);
     try {
       const reviewIds = Array.from(selectedReviews);
-      await adminServiceCanister.bulkUpdateReviewStatus(
-        reviewIds,
-        action === "delete" ? "Hidden" : "Visible",
+      
+      // Use the same individual functions as the icon buttons
+      // Process reviews in parallel for better performance
+      const results = await Promise.allSettled(
+        reviewIds.map((reviewId) =>
+          action === "delete"
+            ? adminServiceCanister.deleteReview(reviewId)
+            : adminServiceCanister.restoreReview(reviewId),
+        ),
       );
+
+      // Collect any errors
+      const errors: string[] = [];
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          console.error(
+            `Error ${action === "delete" ? "deleting" : "restoring"} review ${reviewIds[index]}:`,
+            result.reason,
+          );
+          errors.push(reviewIds[index]);
+        }
+      });
+
       // Reload reviews after bulk action
       await loadReviews();
       setSelectedReviews(new Set());
+
+      // Show error if any failed
+      if (errors.length > 0) {
+        setError(
+          `Failed to ${action === "delete" ? "delete" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
+        );
+      }
     } catch (e) {
       console.error(
         `Error ${action === "delete" ? "deleting" : "restoring"} reviews:`,

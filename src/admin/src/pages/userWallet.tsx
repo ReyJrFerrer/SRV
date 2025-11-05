@@ -5,7 +5,6 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ArrowRightIcon,
-  ArrowPathIcon,
   ClockIcon,
   XCircleIcon,
   PlusIcon,
@@ -32,7 +31,7 @@ const UserWalletPage: React.FC = () => {
   const [hasMoreTransactions, setHasMoreTransactions] = useState(false);
   const [showRunningBalance, setShowRunningBalance] = useState(false);
 
-  // Update Commission modal state
+  // Update Wallet Balance modal state
   const [showUpdateCommissionModal, setShowUpdateCommissionModal] =
     useState(false);
   const [commissionAmount, setCommissionAmount] = useState("");
@@ -208,14 +207,14 @@ const UserWalletPage: React.FC = () => {
     return groups;
   };
 
-  // Handle Update Commission
+  // Handle Update Wallet Balance
   const handleUpdateCommissionClick = (mode: "add" | "deduct") => {
     setUpdateMode(mode);
     setCommissionAmount("");
     setShowUpdateCommissionModal(true);
   };
 
-  // Handle commission amount input
+  // Handle wallet balance amount input
   const handleAmountInputChange = (value: string) => {
     let numericValue = value.replace(/[^0-9]/g, "");
     if (numericValue.length > 1 && numericValue.startsWith("0")) {
@@ -230,7 +229,7 @@ const UserWalletPage: React.FC = () => {
     setCommissionAmount(numericValue);
   };
 
-  // Handle commission update submit
+  // Handle wallet balance update submit
   const handleCommissionUpdateSubmit = async () => {
     if (!id) return;
 
@@ -274,17 +273,13 @@ const UserWalletPage: React.FC = () => {
       setShowUpdateCommissionModal(false);
       setCommissionAmount("");
     } catch (error: any) {
-      console.error("Failed to update commission:", error);
+      console.error("Failed to update wallet balance:", error);
       toast.error(error.message || "Failed to update wallet");
     } finally {
       setUpdateLoading(false);
     }
   };
 
-  const handleRefresh = async () => {
-    await refreshWalletData();
-    toast.success("Wallet data refreshed");
-  };
 
   if (!id) {
     return (
@@ -333,15 +328,6 @@ const UserWalletPage: React.FC = () => {
               </button>
               <h1 className="text-2xl font-bold text-gray-900">User Wallet</h1>
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
-              />
-            </button>
           </div>
         </div>
       </div>
@@ -370,7 +356,7 @@ const UserWalletPage: React.FC = () => {
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/30"
             >
               <PlusIcon className="h-4 w-4" />
-              Update Commission
+              Update Wallet Balance
             </button>
           </div>
         </div>
@@ -521,13 +507,13 @@ const UserWalletPage: React.FC = () => {
         )}
       </div>
 
-      {/* Update Commission Modal */}
+      {/* Update Wallet Balance Modal */}
       {showUpdateCommissionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/95 p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
-                Update Commission
+                Update Wallet Balance
               </h3>
               <button
                 onClick={() => {
@@ -597,7 +583,7 @@ const UserWalletPage: React.FC = () => {
               {/* Custom amount input */}
               <div>
                 <label
-                  htmlFor="commission-amount"
+                  htmlFor="wallet-balance-amount"
                   className="text-sm font-medium text-gray-700"
                 >
                   Or enter custom amount
@@ -608,7 +594,7 @@ const UserWalletPage: React.FC = () => {
                       ₱
                     </span>
                     <input
-                      id="commission-amount"
+                      id="wallet-balance-amount"
                       type="text"
                       value={commissionAmount}
                       onChange={(e) => handleAmountInputChange(e.target.value)}

@@ -4,6 +4,9 @@ import {
   DocumentIcon,
   PencilIcon,
   XMarkIcon,
+  CheckBadgeIcon,
+  XCircleIcon,
+  ClockIcon,
 } from "@heroicons/react/24/solid";
 import Tooltip from "../../common/Tooltip";
 
@@ -19,6 +22,7 @@ interface CertItem {
   url?: string;
   dataUrl?: string | null;
   error?: string | null;
+  validationStatus?: "Pending" | "Validated" | "Rejected";
 }
 
 interface Props {
@@ -189,13 +193,41 @@ const CertificationsSection: React.FC<Props> = ({
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {serviceCertificates && serviceCertificates.length > 0 ? (
-            serviceCertificates.map((certificate: any, index: number) => {
+            serviceCertificates.map((certificate: CertItem, index: number) => {
               const url = certificate.dataUrl || certificate.url;
               if (!url) return null;
+              
+              // Determine validation status badge
+              const validationStatus = certificate.validationStatus;
+              let statusBadge: React.ReactElement | null = null;
+              
+              if (validationStatus === "Validated") {
+                statusBadge = (
+                  <div className="absolute left-1 top-1 flex items-center gap-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white shadow-md">
+                    <CheckBadgeIcon className="h-3 w-3" />
+                    <span>Approved</span>
+                  </div>
+                );
+              } else if (validationStatus === "Rejected") {
+                statusBadge = (
+                  <div className="absolute left-1 top-1 flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white shadow-md">
+                    <XCircleIcon className="h-3 w-3" />
+                    <span>Rejected</span>
+                  </div>
+                );
+              } else if (validationStatus === "Pending" || !validationStatus) {
+                statusBadge = (
+                  <div className="absolute left-1 top-1 flex items-center gap-1 rounded-full bg-yellow-500 px-2 py-0.5 text-xs font-bold text-white shadow-md">
+                    <ClockIcon className="h-3 w-3" />
+                    <span>Pending</span>
+                  </div>
+                );
+              }
+              
               return (
                 <button
                   key={index}
-                  className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
+                  className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
                   onClick={() =>
                     onPreview(url, isPdfFile(url) ? "pdf" : "image")
                   }
@@ -203,6 +235,7 @@ const CertificationsSection: React.FC<Props> = ({
                   tabIndex={0}
                   aria-label="Inspect certificate"
                 >
+                  {statusBadge}
                   {certificate.error ? (
                     <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
                       <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />

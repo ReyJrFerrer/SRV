@@ -22,13 +22,16 @@ export interface ProviderNotification {
     | "booking_rescheduled"
     | "client_no_show"
     | "payment_issue"
-    | "service_reminder";
+    | "service_reminder"
+    | "generic";
   timestamp: string;
   read: boolean;
   href: string;
   clientName?: string;
   bookingId?: string;
   amount?: number;
+  metadata?: any;
+  title?: string;
 }
 
 // In-memory store for provider unread count
