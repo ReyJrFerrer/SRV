@@ -1,5 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import {
+  HomeIcon,
+  CalendarDaysIcon,
+  StarIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  BellIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/solid";
 import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 import { useUserProfile } from "../../hooks/useUserProfile";
@@ -118,72 +126,7 @@ const BottomNavigation: React.FC = () => {
     count: 0,
   };
 
-  // Helper function to get icon source
-  const getIconSrc = React.useCallback(
-    (label: string, state: "default" | "selected" | "hover" = "default") => {
-      const basePath = `images/navigation icons/${label.toLowerCase()}`;
-      let path: string;
-      switch (state) {
-        case "selected":
-          path = `${basePath}-selected.svg`;
-          break;
-        case "hover":
-          path = `${basePath}-hover.svg`;
-          break;
-        default:
-          path = `${basePath}.svg`;
-      }
-      // Encode to ensure spaces and special characters are handled in URLs
-      return encodeURI(path);
-    },
-    [],
-  );
-
-  // State for all icon sources - simplified to only store default icons
-  const [iconStates, setIconStates] = React.useState<Record<string, string>>(
-    () => {
-      const initialStates: Record<string, string> = {};
-      // Include main nav items
-      navItems.forEach((item) => {
-        const isActive = isRouteActive(item.label, item.to);
-        initialStates[item.label] = getIconSrc(
-          item.label,
-          isActive ? "selected" : "default",
-        );
-      });
-      // Include bottom settings item
-      {
-        const isActive = isRouteActive(settingsItem.label, settingsItem.to);
-        initialStates[settingsItem.label] = getIconSrc(
-          settingsItem.label,
-          isActive ? "selected" : "default",
-        );
-      }
-      return initialStates;
-    },
-  );
-
-  // Mark body so pages can offset content for the fixed left sidebar on desktop
-  React.useEffect(() => {
-    const newStates: Record<string, string> = {};
-    // Update main nav items
-    navItems.forEach((item) => {
-      const isActive = isRouteActive(item.label, item.to);
-      newStates[item.label] = getIconSrc(
-        item.label,
-        isActive ? "selected" : "default",
-      );
-    });
-    // Update bottom settings item
-    {
-      const isActive = isRouteActive(settingsItem.label, settingsItem.to);
-      newStates[settingsItem.label] = getIconSrc(
-        settingsItem.label,
-        isActive ? "selected" : "default",
-      );
-    }
-    setIconStates(newStates);
-  }, [location.pathname, getIconSrc]);
+  // No image sprite swapping; color and "active ring" handled via classes
 
   // Mark body so pages can offset content for the fixed left sidebar on desktop
   React.useEffect(() => {
@@ -227,30 +170,6 @@ const BottomNavigation: React.FC = () => {
                     "Chat",
                   ].includes(displayItem.label)
                 ) {
-                  const handleMouseEnter = () => {
-                    if (!isActive) {
-                      setIconStates((prev) => ({
-                        ...prev,
-                        [displayItem.label]: getIconSrc(
-                          displayItem.label,
-                          "hover",
-                        ),
-                      }));
-                    }
-                  };
-
-                  const handleMouseLeave = () => {
-                    if (!isActive) {
-                      setIconStates((prev) => ({
-                        ...prev,
-                        [displayItem.label]: getIconSrc(
-                          displayItem.label,
-                          "default",
-                        ),
-                      }));
-                    }
-                  };
-
                   return (
                     <Link
                       key={displayItem.label}
@@ -264,30 +183,38 @@ const BottomNavigation: React.FC = () => {
                           }, 120);
                         }
                       }}
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
                     >
                       <div className="flex w-full flex-col items-center justify-center">
                         <div
                           className={`flex items-center justify-center transition-all duration-300 ${
                             isActive
-                              ? "h-8 w-8 rounded-full bg-blue-600"
-                              : "h-5 w-5"
+                              ? "h-9 w-9 rounded-full bg-blue-600"
+                              : "h-6 w-6"
                           }`}
                         >
-                          <img
-                            src={iconStates[displayItem.label]}
-                            alt={displayItem.label}
-                            className={`transition-all duration-300 ease-in-out ${
-                              isActive
-                                ? "scale-160 h-8 w-8 drop-shadow-lg sm:h-10 sm:w-10"
-                                : "h-5 w-5 sm:h-7 sm:w-7"
-                            }`}
-                            style={{
-                              pointerEvents: "none",
-                            }}
-                            draggable={false}
-                          />
+                          {(() => {
+                            const Icon =
+                              displayItem.label === "Home"
+                                ? HomeIcon
+                                : displayItem.label === "Booking"
+                                ? CalendarDaysIcon
+                                : displayItem.label === "Notifications"
+                                ? BellIcon
+                                : displayItem.label === "Chat"
+                                ? ChatBubbleOvalLeftEllipsisIcon
+                                : displayItem.label === "Settings"
+                                ? Cog6ToothIcon
+                                : HomeIcon;
+                            return (
+                              <Icon
+                                className={
+                                  isActive
+                                    ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                                    : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 group-hover:text-yellow-500"
+                                }
+                              />
+                            );
+                          })()}
                         </div>
                         {!isActive && (
                           <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
@@ -312,23 +239,6 @@ const BottomNavigation: React.FC = () => {
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems.map((item) => {
             const isActive = isRouteActive(item.label, item.to);
-            const handleMouseEnter = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "hover"),
-                }));
-              }
-            };
-            const handleMouseLeave = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "default"),
-                }));
-              }
-            };
-
             return (
               <Link
                 key={item.label}
@@ -344,8 +254,6 @@ const BottomNavigation: React.FC = () => {
                     }, 120);
                   }
                 }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
               >
                 {item.label === "Profile" ? (
                   <>
@@ -369,17 +277,39 @@ const BottomNavigation: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <img
-                    src={iconStates[item.label]}
-                    alt={item.label}
-                    // AFTER
-                    className={`transition-all duration-300 ease-in-out ${
-                      isActive
-                        ? "h-12 w-12 scale-100 drop-shadow-lg" // <-- Changed to 48px
-                        : "h-6 w-6 group-hover:scale-110"
-                    }`}
-                    draggable={false}
-                  />
+                  (() => {
+                    const Icon =
+                      item.label === "Home"
+                        ? HomeIcon
+                        : item.label === "Booking"
+                        ? CalendarDaysIcon
+                        : item.label === "Ratings"
+                        ? StarIcon
+                        : item.label === "Notifications"
+                        ? BellIcon
+                        : item.label === "Chat"
+                        ? ChatBubbleOvalLeftEllipsisIcon
+                        : item.label === "Settings"
+                        ? Cog6ToothIcon
+                        : HomeIcon;
+                    return (
+                      <div
+                        className={
+                          isActive
+                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-600"
+                            : ""
+                        }
+                      >
+                        <Icon
+                          className={
+                            isActive
+                              ? "h-6 w-6 text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                          }
+                        />
+                      </div>
+                    );
+                  })()
                 )}
                 {!isActive && (
                   <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 group-hover:text-yellow-500 md:block">
@@ -421,15 +351,12 @@ const BottomNavigation: React.FC = () => {
                       : "h-10 w-10"
                   }`}
                 >
-                  <img
-                    src={iconStates[item.label]}
-                    alt={item.label}
-                    className={`transition-all duration-300 ease-in-out ${
+                  <Cog6ToothIcon
+                    className={
                       isActive
-                        ? "h-6 w-6 brightness-0 invert"
-                        : "h-6 w-6 group-hover:scale-110"
-                    }`}
-                    draggable={false}
+                        ? "h-6 w-6 text-yellow-400"
+                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                    }
                   />
                 </div>
                 <span

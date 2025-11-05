@@ -1,5 +1,13 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  HomeIcon,
+  CalendarDaysIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  WrenchScrewdriverIcon,
+  BellIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/solid";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useUserProfile } from "../../hooks/useUserProfile";
@@ -113,90 +121,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   const navigate = useNavigate();
 
-  // Helper function to get icon source
-  const getIconSrc = React.useCallback(
-    (label: string, state: "default" | "selected" | "hover") => {
-      const basePath = `images/navigation icons/${label.toLowerCase()}`;
-      let path: string;
-      switch (state) {
-        case "selected":
-          path = `${basePath}-selected.svg`;
-          break;
-        case "hover":
-          path = `${basePath}-hover.svg`;
-          break;
-        default:
-          path = `${basePath}.svg`;
-      }
-      // Encode to ensure spaces and special characters are handled in URLs
-      return encodeURI(path);
-    },
-    [],
+  // Helper to determine active state
+  const isActivePath = React.useCallback(
+    (to: string) => location.pathname.startsWith(to),
+    [location.pathname],
   );
-
-  // State for all icon sources
-  const [iconStates, setIconStates] = React.useState<Record<string, string>>(
-    () => {
-      const initialStates: Record<string, string> = {};
-      // Include main nav items
-      navItems.forEach((item) => {
-        const isActive = location.pathname.startsWith(item.to);
-        initialStates[item.label] = getIconSrc(
-          item.label,
-          isActive ? "selected" : "default",
-        );
-      });
-      // Include provider notifications (desktop-only button)
-      {
-        const isActive = location.pathname.startsWith(
-          "/provider/notifications",
-        );
-        initialStates["Notifications"] = getIconSrc(
-          "Notifications",
-          isActive ? "selected" : "default",
-        );
-      }
-      // Include bottom settings item
-      {
-        const isActive = location.pathname.startsWith(settingsItem.to);
-        initialStates[settingsItem.label] = getIconSrc(
-          settingsItem.label,
-          isActive ? "selected" : "default",
-        );
-      }
-      return initialStates;
-    },
-  );
-
-  // Update icon states when location changes
-  React.useEffect(() => {
-    const newStates: Record<string, string> = {};
-    // Update main nav items
-    navItems.forEach((item) => {
-      const isActive = location.pathname.startsWith(item.to);
-      newStates[item.label] = getIconSrc(
-        item.label,
-        isActive ? "selected" : "default",
-      );
-    });
-    // Update provider notifications icon state
-    {
-      const isActive = location.pathname.startsWith("/provider/notifications");
-      newStates["Notifications"] = getIconSrc(
-        "Notifications",
-        isActive ? "selected" : "default",
-      );
-    }
-    // Update bottom settings item
-    {
-      const isActive = location.pathname.startsWith(settingsItem.to);
-      newStates[settingsItem.label] = getIconSrc(
-        settingsItem.label,
-        isActive ? "selected" : "default",
-      );
-    }
-    setIconStates(newStates);
-  }, [location.pathname, getIconSrc]);
 
   // Mark body so pages can offset content for the fixed left sidebar on desktop
   React.useEffect(() => {
@@ -220,154 +149,179 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {/* Mobile bottom bar */}
       <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
         <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
-          <div className="grid w-full grid-cols-5 font-medium">
-            {navItems.map((item) => {
-              // On mobile, show Settings instead of Profile
-              const displayItem =
-                item.label === "Profile" ? settingsItem : item;
-              const isActive = location.pathname.startsWith(displayItem.to);
-              if (
-                ["Home", "Booking", "Settings", "Chat", "Services"].includes(
-                  displayItem.label,
-                )
-              ) {
-                const handleMouseEnter = () => {
-                  if (!isActive) {
-                    setIconStates((prev) => ({
-                      ...prev,
-                      [displayItem.label]: getIconSrc(
-                        displayItem.label,
-                        "hover",
-                      ),
-                    }));
+          <div className="grid w-full grid-cols-6 font-medium">
+            {/* Mobile: show Home, Booking, Chat, Services first */}
+            {navItems
+              .filter((it) => ["Home", "Booking", "Chat", "Services"].includes(it.label))
+              .map((item) => {
+                const active = isActivePath(item.to);
+                const onClick = async (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  if (active) {
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 120);
+                    return;
                   }
-                };
-
-                const handleMouseLeave = () => {
-                  if (!isActive) {
-                    setIconStates((prev) => ({
-                      ...prev,
-                      [displayItem.label]: getIconSrc(
-                        displayItem.label,
-                        "default",
-                      ),
-                    }));
+                  if (onNavigateAttempt) {
+                    try {
+                      const result = await onNavigateAttempt(item.to);
+                      if (result === false) return;
+                    } catch {
+                      return;
+                    }
                   }
+                  navigate(item.to);
                 };
-
+                const Icon =
+                  item.label === "Home"
+                    ? HomeIcon
+                    : item.label === "Booking"
+                    ? CalendarDaysIcon
+                    : item.label === "Chat"
+                    ? ChatBubbleOvalLeftEllipsisIcon
+                    : WrenchScrewdriverIcon; // Services
                 return (
                   <Link
-                    key={displayItem.label}
-                    to={displayItem.to}
+                    key={item.label}
+                    to={item.to}
                     className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                    onClick={async (e) => {
-                      // Always prevent default and control navigation programmatically
-                      e.preventDefault();
-                      if (isActive) {
-                        setTimeout(() => {
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }, 120);
-                        return;
-                      }
-                      if (onNavigateAttempt) {
-                        try {
-                          const result = await onNavigateAttempt(
-                            displayItem.to,
-                          );
-                          if (result === false) return; // blocked by caller
-                        } catch (err) {
-                          return; // treat errors as cancel
-                        }
-                      }
-                      navigate(displayItem.to);
-                    }}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
+                    onClick={onClick}
                   >
-                    <div
-                      className={
-                        isActive
-                          ? "flex w-full flex-1 items-center justify-center"
-                          : "flex w-full items-center justify-center"
-                      }
-                    >
-                      <img
-                        src={iconStates[displayItem.label]}
-                        alt={displayItem.label}
-                        className={`transition-all duration-300 ease-in-out ${
-                          isActive
-                            ? "h-8 w-8 scale-110 drop-shadow-lg sm:h-10 sm:w-10"
-                            : "h-5 w-5 group-hover:scale-105 group-hover:drop-shadow-md sm:h-7 sm:w-7"
-                        }`}
-                        style={{
-                          margin: "0 auto",
-                          pointerEvents: "none",
-                        }}
-                        draggable={false}
-                      />
+                    <div className="flex w-full items-center justify-center">
+                      <div
+                        className={
+                          active
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            : ""
+                        }
+                      >
+                        <Icon
+                          className={
+                            active
+                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                          }
+                        />
+                      </div>
                     </div>
                     <span
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                        isActive
+                        active
                           ? "scale-105 font-bold text-blue-900"
                           : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
                       }`}
-                      style={{
-                        opacity: isActive ? 1 : 0.9,
-                        transform: isActive ? "scale(1.05)" : undefined,
-                      }}
+                      style={{ opacity: active ? 1 : 0.9 }}
                     >
-                      {displayItem.label}
+                      {item.label}
                     </span>
                     {item.count > 0 && (
                       <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                     )}
                   </Link>
                 );
-              }
+              })}
+            {/* Mobile: Notifications button (left of Settings) */}
+            {(() => {
+              const to = "/provider/notifications";
+              const active = isActivePath(to);
+              const onClick = async (e: React.MouseEvent) => {
+                e.preventDefault();
+                if (active) {
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }, 120);
+                  return;
+                }
+                if (onNavigateAttempt) {
+                  try {
+                    const result = await onNavigateAttempt(to);
+                    if (result === false) return;
+                  } catch {
+                    return;
+                  }
+                }
+                navigate(to);
+              };
               return (
                 <Link
-                  key={displayItem.label}
-                  to={displayItem.to}
-                  className="group relative inline-flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    if (isActive) {
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 120);
-                      return;
-                    }
-                    if (onNavigateAttempt) {
-                      try {
-                        const result = await onNavigateAttempt(displayItem.to);
-                        if (result === false) return;
-                      } catch (err) {
-                        return;
-                      }
-                    }
-                    navigate(displayItem.to);
-                  }}
+                  key="Notifications-mobile"
+                  to={to}
+                  className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                  onClick={onClick}
                 >
-                  <span
-                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                      isActive
-                        ? "scale-105 font-bold text-blue-900"
-                        : "text-gray-500 group-hover:scale-105 group-hover:text-yellow-500"
-                    }`}
-                    style={{
-                      opacity: isActive ? 1 : 0.9,
-                      transform: isActive ? "scale(1.05)" : undefined,
-                    }}
-                  >
-                    {displayItem.label}
-                  </span>
-                  {item.count > 0 && (
+                  <div className="flex w-full items-center justify-center">
+                    <div
+                      className={
+                        active
+                          ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                          : ""
+                      }
+                    >
+                      <BellIcon
+                        className={
+                          active
+                            ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                            : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                        }
+                      />
+                    </div>
+                  </div>
+                  {unreadCount > 0 && (
                     <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                   )}
                 </Link>
               );
-            })}
+            })()}
+            {/* Mobile: Settings button (replaces Profile on mobile) */}
+            {(() => {
+              const to = settingsItem.to;
+              const active = isActivePath(to);
+              const onClick = async (e: React.MouseEvent) => {
+                e.preventDefault();
+                if (active) {
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }, 120);
+                  return;
+                }
+                if (onNavigateAttempt) {
+                  try {
+                    const result = await onNavigateAttempt(to);
+                    if (result === false) return;
+                  } catch {
+                    return;
+                  }
+                }
+                navigate(to);
+              };
+              return (
+                <Link
+                  key="Settings-mobile"
+                  to={to}
+                  className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                  onClick={onClick}
+                >
+                  <div className="flex w-full items-center justify-center">
+                    <div
+                      className={
+                        active
+                          ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                          : ""
+                      }
+                    >
+                      <Cog6ToothIcon
+                        className={
+                          active
+                            ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                            : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                        }
+                      />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })()}
           </div>
         </nav>
       </div>
@@ -380,24 +334,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             .filter((it) => it.label !== "Profile")
             .map((item) => {
               const isActive = location.pathname.startsWith(item.to);
-              const handleMouseEnter = () => {
-                if (!isActive) {
-                  setIconStates((prev) => ({
-                    ...prev,
-                    [item.label]: getIconSrc(item.label, "hover"),
-                  }));
-                }
-              };
-
-              const handleMouseLeave = () => {
-                if (!isActive) {
-                  setIconStates((prev) => ({
-                    ...prev,
-                    [item.label]: getIconSrc(item.label, "default"),
-                  }));
-                }
-              };
-
               return (
                 <Link
                   key={item.label}
@@ -413,17 +349,36 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       }, 120);
                     }
                   }}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
                 >
-                  <img
-                    src={iconStates[item.label]}
-                    alt={item.label}
-                    className={`transition-all duration-300 ease-in-out ${
-                      isActive ? "h-8 w-8" : "h-6 w-6 group-hover:scale-105"
-                    }`}
-                    draggable={false}
-                  />
+                  {(() => {
+                    const Icon =
+                      item.label === "Home"
+                        ? HomeIcon
+                        : item.label === "Booking"
+                        ? CalendarDaysIcon
+                        : item.label === "Chat"
+                        ? ChatBubbleOvalLeftEllipsisIcon
+                        : item.label === "Services"
+                        ? WrenchScrewdriverIcon
+                        : HomeIcon;
+                    return (
+                      <div
+                        className={
+                          isActive
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                            : ""
+                        }
+                      >
+                        <Icon
+                          className={
+                            isActive
+                              ? "h-6 w-6 text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                          }
+                        />
+                      </div>
+                    );
+                  })()}
                   <span
                     className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                       isActive
@@ -465,29 +420,24 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               navigate("/provider/notifications");
             }}
-            onMouseEnter={() => {
-              if (!location.pathname.startsWith("/provider/notifications")) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  ["Notifications"]: getIconSrc("Notifications", "hover"),
-                }));
-              }
-            }}
-            onMouseLeave={() => {
-              if (!location.pathname.startsWith("/provider/notifications")) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  ["Notifications"]: getIconSrc("Notifications", "default"),
-                }));
-              }
-            }}
+            onMouseEnter={() => {}}
+            onMouseLeave={() => {}}
           >
-            <img
-              src={iconStates["Notifications"]}
-              alt="Notifications"
-              className="h-6 w-6 transition-all duration-300 ease-in-out group-hover:scale-105"
-              draggable={false}
-            />
+            <div
+              className={
+                location.pathname.startsWith("/provider/notifications")
+                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                  : ""
+              }
+            >
+              <BellIcon
+                className={
+                  location.pathname.startsWith("/provider/notifications")
+                    ? "h-6 w-6 text-yellow-400"
+                    : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                }
+              />
+            </div>
             <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
               Notifications
             </span>
@@ -556,23 +506,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);
-            const handleMouseEnter = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "hover"),
-                }));
-              }
-            };
-
-            const handleMouseLeave = () => {
-              if (!isActive) {
-                setIconStates((prev) => ({
-                  ...prev,
-                  [item.label]: getIconSrc(item.label, "default"),
-                }));
-              }
-            };
 
             return (
               <Link
@@ -599,17 +532,22 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   }
                   navigate(item.to);
                 }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
               >
-                <img
-                  src={iconStates[item.label]}
-                  alt={item.label}
-                  className={`transition-all duration-300 ease-in-out ${
-                    isActive ? "h-8 w-8" : "h-6 w-6 group-hover:scale-105"
-                  }`}
-                  draggable={false}
-                />
+                <div
+                  className={
+                    isActive
+                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                      : ""
+                  }
+                >
+                  <Cog6ToothIcon
+                    className={
+                      isActive
+                        ? "h-6 w-6 text-yellow-400"
+                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                    }
+                  />
+                </div>
                 <span
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
