@@ -52,9 +52,11 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
     createdAt: new Date(firestoreProfile.createdAt),
     updatedAt: new Date(firestoreProfile.updatedAt),
     locked: firestoreProfile.locked || false, // Default to false if not specified
-    suspensionEndDate: firestoreProfile.suspensionEndDate 
-      ? new Date(firestoreProfile.suspensionEndDate) 
-      : firestoreProfile.suspensionEndDate === null ? null : undefined,
+    suspensionEndDate: firestoreProfile.suspensionEndDate
+      ? new Date(firestoreProfile.suspensionEndDate)
+      : firestoreProfile.suspensionEndDate === null
+        ? null
+        : undefined,
     isOnboarded: firestoreProfile.isOnboarded || false, // Default to false if not specified
   };
 }

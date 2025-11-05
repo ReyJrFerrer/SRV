@@ -12,7 +12,9 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
   onClose,
 }) => {
   const navigate = useNavigate();
-  const [suspensionEndDate, setSuspensionEndDate] = useState<Date | null | undefined>(undefined);
+  const [suspensionEndDate, setSuspensionEndDate] = useState<
+    Date | null | undefined
+  >(undefined);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
@@ -35,21 +37,31 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
         const diff = end.getTime() - now.getTime();
 
         if (diff <= 0) {
-          setTimeRemaining("Suspension expired - account should be reactivated");
+          setTimeRemaining(
+            "Suspension expired - account should be reactivated",
+          );
         } else {
           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const hours = Math.floor(
+            (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
           if (days > 0) {
-            setTimeRemaining(`${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${days} day${days !== 1 ? "s" : ""}, ${hours} hour${hours !== 1 ? "s" : ""}`,
+            );
           } else if (hours > 0) {
-            setTimeRemaining(`${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${hours} hour${hours !== 1 ? "s" : ""}, ${minutes} minute${minutes !== 1 ? "s" : ""}`,
+            );
           } else if (minutes > 0) {
-            setTimeRemaining(`${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${minutes} minute${minutes !== 1 ? "s" : ""}, ${seconds} second${seconds !== 1 ? "s" : ""}`,
+            );
           } else {
-            setTimeRemaining(`${seconds} second${seconds !== 1 ? 's' : ''}`);
+            setTimeRemaining(`${seconds} second${seconds !== 1 ? "s" : ""}`);
           }
         }
       }, 1000);
@@ -97,11 +109,12 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
               Your account has been suspended by an administrator. You are
               unable to access your dashboard or any account features.
             </p>
-            
+
             {isIndefinite && (
               <div className="mt-3 rounded-md bg-yellow-50 p-3">
                 <p className="text-sm font-medium text-yellow-800">
-                  This suspension is indefinite and will remain until manually reactivated by an administrator.
+                  This suspension is indefinite and will remain until manually
+                  reactivated by an administrator.
                 </p>
               </div>
             )}
@@ -109,7 +122,8 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
             {hasEndDate && (
               <div className="mt-3 rounded-md bg-blue-50 p-3">
                 <p className="text-sm font-medium text-blue-800">
-                  <strong>Suspension ends:</strong> {new Date(suspensionEndDate).toLocaleString()}
+                  <strong>Suspension ends:</strong>{" "}
+                  {new Date(suspensionEndDate).toLocaleString()}
                 </p>
                 {timeRemaining && (
                   <p className="mt-1 text-sm text-blue-700">

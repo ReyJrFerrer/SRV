@@ -196,11 +196,11 @@ const CertificationsSection: React.FC<Props> = ({
             serviceCertificates.map((certificate: CertItem, index: number) => {
               const url = certificate.dataUrl || certificate.url;
               if (!url) return null;
-              
+
               // Determine validation status badge
               const validationStatus = certificate.validationStatus;
               let statusBadge: React.ReactElement | null = null;
-              
+
               if (validationStatus === "Validated") {
                 statusBadge = (
                   <div className="absolute left-1 top-1 flex items-center gap-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white shadow-md">
@@ -223,7 +223,7 @@ const CertificationsSection: React.FC<Props> = ({
                   </div>
                 );
               }
-              
+
               return (
                 <button
                   key={index}

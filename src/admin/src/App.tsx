@@ -57,8 +57,8 @@ const LoginPage = () => {
 };
 
 // Admin Suspension Modal Component
-const AdminSuspensionModal: React.FC<{ 
-  isOpen: boolean; 
+const AdminSuspensionModal: React.FC<{
+  isOpen: boolean;
   suspensionEndDate: Date | null | undefined;
 }> = ({ isOpen, suspensionEndDate }) => {
   const [timeRemaining, setTimeRemaining] = React.useState<string>("");
@@ -72,21 +72,31 @@ const AdminSuspensionModal: React.FC<{
         const diff = end.getTime() - now.getTime();
 
         if (diff <= 0) {
-          setTimeRemaining("Suspension expired - account should be reactivated");
+          setTimeRemaining(
+            "Suspension expired - account should be reactivated",
+          );
         } else {
           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const hours = Math.floor(
+            (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
           if (days > 0) {
-            setTimeRemaining(`${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${days} day${days !== 1 ? "s" : ""}, ${hours} hour${hours !== 1 ? "s" : ""}`,
+            );
           } else if (hours > 0) {
-            setTimeRemaining(`${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${hours} hour${hours !== 1 ? "s" : ""}, ${minutes} minute${minutes !== 1 ? "s" : ""}`,
+            );
           } else if (minutes > 0) {
-            setTimeRemaining(`${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`);
+            setTimeRemaining(
+              `${minutes} minute${minutes !== 1 ? "s" : ""}, ${seconds} second${seconds !== 1 ? "s" : ""}`,
+            );
           } else {
-            setTimeRemaining(`${seconds} second${seconds !== 1 ? 's' : ''}`);
+            setTimeRemaining(`${seconds} second${seconds !== 1 ? "s" : ""}`);
           }
         }
       }, 1000);
@@ -101,13 +111,13 @@ const AdminSuspensionModal: React.FC<{
   const hasEndDate = suspensionEndDate instanceof Date;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-75"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.preventDefault()}
-      style={{ pointerEvents: 'auto' }}
+      style={{ pointerEvents: "auto" }}
     >
-      <div 
+      <div
         className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -132,14 +142,16 @@ const AdminSuspensionModal: React.FC<{
               Admin Account Suspended
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Your admin account has been suspended by another administrator. You are
-              unable to access the admin dashboard or any admin features.
+              Your admin account has been suspended by another administrator.
+              You are unable to access the admin dashboard or any admin
+              features.
             </p>
-            
+
             {isIndefinite && (
               <div className="mt-3 rounded-md bg-yellow-50 p-3">
                 <p className="text-sm font-medium text-yellow-800">
-                  This suspension is indefinite and will remain until manually reactivated by another administrator.
+                  This suspension is indefinite and will remain until manually
+                  reactivated by another administrator.
                 </p>
               </div>
             )}
@@ -147,7 +159,8 @@ const AdminSuspensionModal: React.FC<{
             {hasEndDate && (
               <div className="mt-3 rounded-md bg-blue-50 p-3">
                 <p className="text-sm font-medium text-blue-800">
-                  <strong>Suspension ends:</strong> {new Date(suspensionEndDate).toLocaleString()}
+                  <strong>Suspension ends:</strong>{" "}
+                  {new Date(suspensionEndDate).toLocaleString()}
                 </p>
                 {timeRemaining && (
                   <p className="mt-1 text-sm text-blue-700">
@@ -157,9 +170,10 @@ const AdminSuspensionModal: React.FC<{
               </div>
             )}
 
-             <p className="mt-2 text-sm text-gray-600">
-               If you believe this is an error, please contact another administrator.
-             </p>
+            <p className="mt-2 text-sm text-gray-600">
+              If you believe this is an error, please contact another
+              administrator.
+            </p>
           </div>
         </div>
       </div>
@@ -173,7 +187,9 @@ const NavigationGuard = () => {
   const { firebaseUser, isAuthenticated, isAdmin } = useAuth();
   const [isSuspended, setIsSuspended] = React.useState(false);
   const [showSuspensionModal, setShowSuspensionModal] = React.useState(false);
-  const [suspensionEndDate, setSuspensionEndDate] = React.useState<Date | null | undefined>(undefined);
+  const [suspensionEndDate, setSuspensionEndDate] = React.useState<
+    Date | null | undefined
+  >(undefined);
 
   // Real-time listener for immediate suspension detection
   // This catches suspension changes immediately, even between page navigations
@@ -190,48 +206,67 @@ const NavigationGuard = () => {
         // Use doc and onSnapshot from firebase/firestore
         const { doc, onSnapshot } = await import("firebase/firestore");
         const userRef = doc(db, "users", firebaseUser.uid);
-        
-        unsubscribe = onSnapshot(userRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.data();
-            const isLocked = userData?.locked === true;
-            
-             if (isLocked) {
-               console.log("[Admin Navigation Guard] Real-time listener detected suspension");
-               setIsSuspended(true);
-               setShowSuspensionModal(true);
-               
-               if (userData?.suspensionEndDate) {
-                 setSuspensionEndDate(new Date(userData.suspensionEndDate));
-               } else {
-                 setSuspensionEndDate(null);
-               }
 
-               // Show suspension modal - user is blocked but not automatically logged out
-             }
-          }
-        }, (error: any) => {
-          console.error("[Admin Navigation Guard] Error in real-time listener:", error);
-        });
+        unsubscribe = onSnapshot(
+          userRef,
+          (snapshot) => {
+            if (snapshot.exists()) {
+              const userData = snapshot.data();
+              const isLocked = userData?.locked === true;
+
+              if (isLocked) {
+                console.log(
+                  "[Admin Navigation Guard] Real-time listener detected suspension",
+                );
+                setIsSuspended(true);
+                setShowSuspensionModal(true);
+
+                if (userData?.suspensionEndDate) {
+                  setSuspensionEndDate(new Date(userData.suspensionEndDate));
+                } else {
+                  setSuspensionEndDate(null);
+                }
+
+                // Show suspension modal - user is blocked but not automatically logged out
+              }
+            }
+          },
+          (error: any) => {
+            console.error(
+              "[Admin Navigation Guard] Error in real-time listener:",
+              error,
+            );
+          },
+        );
       } catch (error: any) {
-        console.error("[Admin Navigation Guard] Error setting up real-time listener:", error);
+        console.error(
+          "[Admin Navigation Guard] Error setting up real-time listener:",
+          error,
+        );
       }
-     };
- 
-     setupRealtimeListener();
- 
-     return () => {
-       if (unsubscribe) {
-         unsubscribe();
-       }
-     };
-   }, [firebaseUser, isAuthenticated, isAdmin]);
+    };
+
+    setupRealtimeListener();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [firebaseUser, isAuthenticated, isAdmin]);
 
   // Render modal if suspended - this blocks all content
   if (isSuspended || showSuspensionModal) {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'auto' }}>
-        <AdminSuspensionModal 
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          pointerEvents: "auto",
+        }}
+      >
+        <AdminSuspensionModal
           isOpen={showSuspensionModal}
           suspensionEndDate={suspensionEndDate}
         />
@@ -269,138 +304,138 @@ const AppRoutes = () => {
     <>
       <NavigationGuard />
       <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <AdminHomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <UserListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/provider/:id"
-        element={
-          <ProtectedRoute>
-            <UserDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id"
-        element={
-          <ProtectedRoute>
-            <UserDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/services"
-        element={
-          <ProtectedRoute>
-            <UserServicesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:userId/bookings"
-        element={
-          <ProtectedRoute>
-            <UserBookingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/chat"
-        element={
-          <ProtectedRoute>
-            <UserChatsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/chat/:conversationId"
-        element={
-          <ProtectedRoute>
-            <UserChatHistoryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/wallet"
-        element={
-          <ProtectedRoute>
-            <UserWalletPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:id/reviews"
-        element={
-          <ProtectedRoute>
-            <UserReviewsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/:userId/services/:id"
-        element={
-          <ProtectedRoute>
-            <AdminServiceDetailsWrapper />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/service/:id/reviews"
-        element={
-          <ProtectedRoute>
-            <ServiceReviewsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/validation-inbox"
-        element={
-          <ProtectedRoute>
-            <ValidationInboxPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ticket-inbox"
-        element={
-          <ProtectedRoute>
-            <TicketInboxPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ticket/:id"
-        element={
-          <ProtectedRoute>
-            <TicketDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      {/* Analytics Route */}
-      <Route
-        path="/analytics"
-        element={
-          <ProtectedRoute>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        }
-      />
-      {/* Future routes can be added here */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UserListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/provider/:id"
+          element={
+            <ProtectedRoute>
+              <UserDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id"
+          element={
+            <ProtectedRoute>
+              <UserDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id/services"
+          element={
+            <ProtectedRoute>
+              <UserServicesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:userId/bookings"
+          element={
+            <ProtectedRoute>
+              <UserBookingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id/chat"
+          element={
+            <ProtectedRoute>
+              <UserChatsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id/chat/:conversationId"
+          element={
+            <ProtectedRoute>
+              <UserChatHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id/wallet"
+          element={
+            <ProtectedRoute>
+              <UserWalletPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:id/reviews"
+          element={
+            <ProtectedRoute>
+              <UserReviewsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/:userId/services/:id"
+          element={
+            <ProtectedRoute>
+              <AdminServiceDetailsWrapper />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/service/:id/reviews"
+          element={
+            <ProtectedRoute>
+              <ServiceReviewsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/validation-inbox"
+          element={
+            <ProtectedRoute>
+              <ValidationInboxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ticket-inbox"
+          element={
+            <ProtectedRoute>
+              <TicketInboxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ticket/:id"
+          element={
+            <ProtectedRoute>
+              <TicketDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Analytics Route */}
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Future routes can be added here */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>
   );

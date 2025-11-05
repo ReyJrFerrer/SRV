@@ -108,7 +108,9 @@ export const UserDetailsPage: React.FC = () => {
   const [outstandingCommission, setOutstandingCommission] = useState(0);
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
   const [showLockConfirmation, setShowLockConfirmation] = useState(false);
-  const [suspensionDuration, setSuspensionDuration] = useState<"7" | "30" | "custom" | "indefinite">("7");
+  const [suspensionDuration, setSuspensionDuration] = useState<
+    "7" | "30" | "custom" | "indefinite"
+  >("7");
   const [customDays, setCustomDays] = useState<number>(7);
 
   // Convert Profile to UserData format with real data
@@ -348,7 +350,9 @@ export const UserDetailsPage: React.FC = () => {
       suspensionDurationDays = null;
     } else if (suspensionDuration === "custom") {
       if (customDays <= 0 || !Number.isInteger(customDays)) {
-        alert("Please enter a valid number of days (must be a positive integer).");
+        alert(
+          "Please enter a valid number of days (must be a positive integer).",
+        );
         return;
       }
       suspensionDurationDays = customDays;
@@ -357,11 +361,20 @@ export const UserDetailsPage: React.FC = () => {
     }
 
     console.log("Attempting to lock account for user:", user.id);
-    console.log("Suspension duration:", suspensionDurationDays === null ? "indefinite" : `${suspensionDurationDays} days`);
+    console.log(
+      "Suspension duration:",
+      suspensionDurationDays === null
+        ? "indefinite"
+        : `${suspensionDurationDays} days`,
+    );
 
     try {
       // Call Firebase function to lock the account with suspension duration
-      await adminServiceCanister.lockUserAccount(user.id, true, suspensionDurationDays);
+      await adminServiceCanister.lockUserAccount(
+        user.id,
+        true,
+        suspensionDurationDays,
+      );
 
       // Update localStorage via useAdmin hook
       updateUserLockStatus(user.id, true);
@@ -1062,9 +1075,10 @@ export const UserDetailsPage: React.FC = () => {
             </div>
             <div className="px-6 py-4">
               <p className="mb-4 text-sm text-gray-600">
-                Are you sure you want to lock this account? Select the lock duration:
+                Are you sure you want to lock this account? Select the lock
+                duration:
               </p>
-              
+
               {/* Suspension Duration Options */}
               <div className="space-y-3">
                 <div className="flex items-center">
@@ -1074,14 +1088,21 @@ export const UserDetailsPage: React.FC = () => {
                     name="suspensionDuration"
                     value="7"
                     checked={suspensionDuration === "7"}
-                    onChange={(e) => setSuspensionDuration(e.target.value as "7" | "30" | "custom" | "indefinite")}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
                   />
-                  <label htmlFor="suspension-7" className="ml-2 text-sm text-gray-700">
+                  <label
+                    htmlFor="suspension-7"
+                    className="ml-2 text-sm text-gray-700"
+                  >
                     7 days
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="radio"
@@ -1089,14 +1110,21 @@ export const UserDetailsPage: React.FC = () => {
                     name="suspensionDuration"
                     value="30"
                     checked={suspensionDuration === "30"}
-                    onChange={(e) => setSuspensionDuration(e.target.value as "7" | "30" | "custom" | "indefinite")}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
                   />
-                  <label htmlFor="suspension-30" className="ml-2 text-sm text-gray-700">
+                  <label
+                    htmlFor="suspension-30"
+                    className="ml-2 text-sm text-gray-700"
+                  >
                     30 days
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="radio"
@@ -1104,23 +1132,32 @@ export const UserDetailsPage: React.FC = () => {
                     name="suspensionDuration"
                     value="custom"
                     checked={suspensionDuration === "custom"}
-                    onChange={(e) => setSuspensionDuration(e.target.value as "7" | "30" | "custom" | "indefinite")}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
                   />
-                  <label htmlFor="suspension-custom" className="ml-2 flex items-center gap-2 text-sm text-gray-700">
+                  <label
+                    htmlFor="suspension-custom"
+                    className="ml-2 flex items-center gap-2 text-sm text-gray-700"
+                  >
                     Custom:
                     <input
                       type="number"
                       min="1"
                       value={customDays}
-                      onChange={(e) => setCustomDays(parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        setCustomDays(parseInt(e.target.value) || 1)
+                      }
                       disabled={suspensionDuration !== "custom"}
                       className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
                     />
                     days
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="radio"
@@ -1128,10 +1165,17 @@ export const UserDetailsPage: React.FC = () => {
                     name="suspensionDuration"
                     value="indefinite"
                     checked={suspensionDuration === "indefinite"}
-                    onChange={(e) => setSuspensionDuration(e.target.value as "7" | "30" | "custom" | "indefinite")}
+                    onChange={(e) =>
+                      setSuspensionDuration(
+                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                      )
+                    }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
                   />
-                  <label htmlFor="suspension-indefinite" className="ml-2 text-sm text-gray-700">
+                  <label
+                    htmlFor="suspension-indefinite"
+                    className="ml-2 text-sm text-gray-700"
+                  >
                     Indefinite (until manually reactivated)
                   </label>
                 </div>

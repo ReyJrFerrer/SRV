@@ -570,10 +570,13 @@ export const ValidationInboxPage: React.FC = () => {
       // Extract media ID from URL - handle Firebase Storage (production and emulator)
       // File path format: certificates/{ownerId}/{mediaId}_{filename}
       let mediaId: string | null = null;
-      
+
       try {
         // Handle Firebase Storage Emulator URLs: http://127.0.0.1:9199/v0/b/{bucket}/o/{encodedPath}?alt=media
-        if (certificateUrl.includes("127.0.0.1:9199") || certificateUrl.includes("localhost:9199")) {
+        if (
+          certificateUrl.includes("127.0.0.1:9199") ||
+          certificateUrl.includes("localhost:9199")
+        ) {
           // Extract the encoded path from the URL: /o/{encodedPath}
           const urlMatch = certificateUrl.match(/\/o\/([^?]+)/);
           if (urlMatch) {
@@ -597,39 +600,68 @@ export const ValidationInboxPage: React.FC = () => {
         }
         // Handle old format: /media/{mediaId}
         else if (certificateUrl.includes("/media/")) {
-          mediaId = certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] || null;
+          mediaId =
+            certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
+            null;
         }
         // Handle media:// format
         else if (certificateUrl.startsWith("media://")) {
-          mediaId = certificateUrl.replace("media://", "").split("/").pop() || null;
+          mediaId =
+            certificateUrl.replace("media://", "").split("/").pop() || null;
         }
 
         // If extraction failed, try querying Firestore by URL as fallback
         if (!mediaId) {
-          console.warn("Could not extract mediaId from URL, querying Firestore by URL:", certificateUrl);
+          console.warn(
+            "Could not extract mediaId from URL, querying Firestore by URL:",
+            certificateUrl,
+          );
           try {
-            const { collection, query, where, getDocs } = await import("firebase/firestore");
-            const { getFirebaseFirestore } = await import("../services/firebaseApp");
+            const { collection, query, where, getDocs } = await import(
+              "firebase/firestore"
+            );
+            const { getFirebaseFirestore } = await import(
+              "../services/firebaseApp"
+            );
             const firestore = getFirebaseFirestore();
             const mediaCollection = collection(firestore, "media");
-            const q = query(mediaCollection, where("url", "==", certificateUrl));
+            const q = query(
+              mediaCollection,
+              where("url", "==", certificateUrl),
+            );
             const querySnapshot = await getDocs(q);
-            
+
             if (!querySnapshot.empty) {
               mediaId = querySnapshot.docs[0].id;
               console.log("Found mediaId by URL query:", mediaId);
             } else {
-              console.error("No media document found with URL:", certificateUrl);
-              throw new Error("Could not find media document for certificate URL");
+              console.error(
+                "No media document found with URL:",
+                certificateUrl,
+              );
+              throw new Error(
+                "Could not find media document for certificate URL",
+              );
             }
           } catch (queryError) {
-            console.error("Error querying Firestore for media by URL:", queryError);
-            throw new Error(`Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`);
+            console.error(
+              "Error querying Firestore for media by URL:",
+              queryError,
+            );
+            throw new Error(
+              `Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`,
+            );
           }
         }
       } catch (extractError) {
-        console.error("Error extracting media ID from certificate URL:", certificateUrl, extractError);
-        throw new Error(`Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`);
+        console.error(
+          "Error extracting media ID from certificate URL:",
+          certificateUrl,
+          extractError,
+        );
+        throw new Error(
+          `Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`,
+        );
       }
 
       // Final validation - ensure we have a mediaId
@@ -637,8 +669,13 @@ export const ValidationInboxPage: React.FC = () => {
         console.error("Media ID is empty or invalid:", mediaId);
         throw new Error("Media ID is required but was empty or invalid");
       }
-      
-      console.log("Using mediaId for certificate update:", mediaId, "from URL:", certificateUrl);
+
+      console.log(
+        "Using mediaId for certificate update:",
+        mediaId,
+        "from URL:",
+        certificateUrl,
+      );
 
       // Update validation status in media collection
       const { adminServiceCanister } = await import(
@@ -697,10 +734,13 @@ export const ValidationInboxPage: React.FC = () => {
       // Extract media ID from URL - handle Firebase Storage (production and emulator)
       // File path format: certificates/{ownerId}/{mediaId}_{filename}
       let mediaId: string | null = null;
-      
+
       try {
         // Handle Firebase Storage Emulator URLs: http://127.0.0.1:9199/v0/b/{bucket}/o/{encodedPath}?alt=media
-        if (certificateUrl.includes("127.0.0.1:9199") || certificateUrl.includes("localhost:9199")) {
+        if (
+          certificateUrl.includes("127.0.0.1:9199") ||
+          certificateUrl.includes("localhost:9199")
+        ) {
           // Extract the encoded path from the URL: /o/{encodedPath}
           const urlMatch = certificateUrl.match(/\/o\/([^?]+)/);
           if (urlMatch) {
@@ -724,39 +764,68 @@ export const ValidationInboxPage: React.FC = () => {
         }
         // Handle old format: /media/{mediaId}
         else if (certificateUrl.includes("/media/")) {
-          mediaId = certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] || null;
+          mediaId =
+            certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
+            null;
         }
         // Handle media:// format
         else if (certificateUrl.startsWith("media://")) {
-          mediaId = certificateUrl.replace("media://", "").split("/").pop() || null;
+          mediaId =
+            certificateUrl.replace("media://", "").split("/").pop() || null;
         }
 
         // If extraction failed, try querying Firestore by URL as fallback
         if (!mediaId) {
-          console.warn("Could not extract mediaId from URL, querying Firestore by URL:", certificateUrl);
+          console.warn(
+            "Could not extract mediaId from URL, querying Firestore by URL:",
+            certificateUrl,
+          );
           try {
-            const { collection, query, where, getDocs } = await import("firebase/firestore");
-            const { getFirebaseFirestore } = await import("../services/firebaseApp");
+            const { collection, query, where, getDocs } = await import(
+              "firebase/firestore"
+            );
+            const { getFirebaseFirestore } = await import(
+              "../services/firebaseApp"
+            );
             const firestore = getFirebaseFirestore();
             const mediaCollection = collection(firestore, "media");
-            const q = query(mediaCollection, where("url", "==", certificateUrl));
+            const q = query(
+              mediaCollection,
+              where("url", "==", certificateUrl),
+            );
             const querySnapshot = await getDocs(q);
-            
+
             if (!querySnapshot.empty) {
               mediaId = querySnapshot.docs[0].id;
               console.log("Found mediaId by URL query:", mediaId);
             } else {
-              console.error("No media document found with URL:", certificateUrl);
-              throw new Error("Could not find media document for certificate URL");
+              console.error(
+                "No media document found with URL:",
+                certificateUrl,
+              );
+              throw new Error(
+                "Could not find media document for certificate URL",
+              );
             }
           } catch (queryError) {
-            console.error("Error querying Firestore for media by URL:", queryError);
-            throw new Error(`Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`);
+            console.error(
+              "Error querying Firestore for media by URL:",
+              queryError,
+            );
+            throw new Error(
+              `Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`,
+            );
           }
         }
       } catch (extractError) {
-        console.error("Error extracting media ID from certificate URL:", certificateUrl, extractError);
-        throw new Error(`Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`);
+        console.error(
+          "Error extracting media ID from certificate URL:",
+          certificateUrl,
+          extractError,
+        );
+        throw new Error(
+          `Could not extract media ID from certificate URL: ${extractError instanceof Error ? extractError.message : String(extractError)}`,
+        );
       }
 
       // Final validation - ensure we have a mediaId
@@ -764,8 +833,13 @@ export const ValidationInboxPage: React.FC = () => {
         console.error("Media ID is empty or invalid:", mediaId);
         throw new Error("Media ID is required but was empty or invalid");
       }
-      
-      console.log("Using mediaId for certificate update:", mediaId, "from URL:", certificateUrl);
+
+      console.log(
+        "Using mediaId for certificate update:",
+        mediaId,
+        "from URL:",
+        certificateUrl,
+      );
 
       // Update validation status in media collection
       const { adminServiceCanister } = await import(
@@ -904,7 +978,6 @@ export const ValidationInboxPage: React.FC = () => {
       error: null,
     });
   };
-
 
   return (
     <div className="min-h-screen bg-gray-50">

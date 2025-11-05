@@ -56,9 +56,7 @@ export const UserListPage: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Convert Profile to UserData format
-  const convertProfileToUserData = async (
-    profile: any,
-  ): Promise<UserData> => {
+  const convertProfileToUserData = async (profile: any): Promise<UserData> => {
     // Get user identifier from id, principal, or uid field (in that order)
     const userId = profile.id
       ? profile.id
@@ -120,13 +118,14 @@ export const UserListPage: React.FC = () => {
       : updatedAtValue;
 
     // Get Firebase online status fields if available
-    const isActive = profile.isActive !== undefined ? profile.isActive : undefined;
-    const lastActivity = profile.lastActivity 
-      ? (typeof profile.lastActivity === "string" 
-          ? new Date(profile.lastActivity) 
-          : profile.lastActivity instanceof Date 
-            ? profile.lastActivity 
-            : new Date(profile.lastActivity))
+    const isActive =
+      profile.isActive !== undefined ? profile.isActive : undefined;
+    const lastActivity = profile.lastActivity
+      ? typeof profile.lastActivity === "string"
+        ? new Date(profile.lastActivity)
+        : profile.lastActivity instanceof Date
+          ? profile.lastActivity
+          : new Date(profile.lastActivity)
       : undefined;
 
     return {
@@ -216,8 +215,14 @@ export const UserListPage: React.FC = () => {
 
           // If adminUserIds is empty, we need to wait for it to load
           // This prevents showing all users (including admins) when admin IDs haven't loaded yet
-          if (adminUserIds.size === 0 && backendUsers.length > 0 && !showOnlyAdmins) {
-            console.log("⏳ Admin IDs not loaded yet, waiting to filter out admins...");
+          if (
+            adminUserIds.size === 0 &&
+            backendUsers.length > 0 &&
+            !showOnlyAdmins
+          ) {
+            console.log(
+              "⏳ Admin IDs not loaded yet, waiting to filter out admins...",
+            );
             setLoadingUsers(false);
             return;
           }
@@ -263,7 +268,7 @@ export const UserListPage: React.FC = () => {
 
             // Check if userId matches any admin ID
             let isAdmin = adminUserIds.has(userId);
-            
+
             // If no direct match, try to find by comparing as strings
             if (!isAdmin && adminUserIds.size > 0) {
               // Check if any admin ID matches this profile identifier
@@ -281,7 +286,9 @@ export const UserListPage: React.FC = () => {
             // If showOnlyAdmins is true, show only admin users
             // If showOnlyAdmins is false, exclude admin users
             const shouldInclude = showOnlyAdmins ? isAdmin : !isAdmin;
-            console.log(`🔍 User ${userId}: isAdmin=${isAdmin}, showOnlyAdmins=${showOnlyAdmins}, shouldInclude=${shouldInclude}`);
+            console.log(
+              `🔍 User ${userId}: isAdmin=${isAdmin}, showOnlyAdmins=${showOnlyAdmins}, shouldInclude=${shouldInclude}`,
+            );
             return shouldInclude;
           });
 
@@ -309,7 +316,13 @@ export const UserListPage: React.FC = () => {
     };
 
     convertUsers();
-  }, [backendUsers, getUserLockStatus, showOnlyAdmins, adminUserIds, loadingAdminIds]);
+  }, [
+    backendUsers,
+    getUserLockStatus,
+    showOnlyAdmins,
+    adminUserIds,
+    loadingAdminIds,
+  ]);
 
   useEffect(() => {
     const handleVisibilityChange = async () => {
@@ -339,7 +352,7 @@ export const UserListPage: React.FC = () => {
 
             // Check if userId matches any admin ID
             let isAdmin = adminUserIds.has(userId);
-            
+
             // If no direct match, try to find by comparing as strings
             if (!isAdmin && adminUserIds.size > 0) {
               // Check if any admin ID matches this profile identifier
@@ -430,24 +443,27 @@ export const UserListPage: React.FC = () => {
     if (user.isActive !== undefined) {
       return user.isActive;
     }
-    
+
     // Fallback to lastActivity from Firebase (within last 15 minutes = online)
     if (user.lastActivity) {
-      const lastActivityDate = user.lastActivity instanceof Date 
-        ? user.lastActivity 
-        : new Date(user.lastActivity);
+      const lastActivityDate =
+        user.lastActivity instanceof Date
+          ? user.lastActivity
+          : new Date(user.lastActivity);
       const now = new Date();
-      const minutesSinceActivity = (now.getTime() - lastActivityDate.getTime()) / (1000 * 60);
+      const minutesSinceActivity =
+        (now.getTime() - lastActivityDate.getTime()) / (1000 * 60);
       return minutesSinceActivity <= 15;
     }
-    
+
     // Final fallback to updatedAt from Motoko backend (within last 24 hours)
     if (user.updatedAt) {
       const now = new Date();
-      const hoursSinceUpdate = (now.getTime() - user.updatedAt.getTime()) / (1000 * 60 * 60);
+      const hoursSinceUpdate =
+        (now.getTime() - user.updatedAt.getTime()) / (1000 * 60 * 60);
       return hoursSinceUpdate <= 24;
     }
-    
+
     return false;
   };
 
@@ -458,36 +474,44 @@ export const UserListPage: React.FC = () => {
     }
   };
 
-
   // Handle lock/unlock user
   const handleSuspendUser = async (user: UserData, suspend: boolean) => {
-    if (!confirm(`Are you sure you want to ${suspend ? "lock" : "unlock"} this admin account?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to ${suspend ? "lock" : "unlock"} this admin account?`,
+      )
+    ) {
       return;
     }
 
     try {
-      await adminServiceCanister.lockUserAccount(user.id, suspend, suspend ? null : undefined);
+      await adminServiceCanister.lockUserAccount(
+        user.id,
+        suspend,
+        suspend ? null : undefined,
+      );
       updateUserLockStatus(user.id, suspend);
-      
+
       // Update local state
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === user.id ? { ...u, isLocked: suspend } : u
-        )
+          u.id === user.id ? { ...u, isLocked: suspend } : u,
+        ),
       );
       setFilteredUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.id === user.id ? { ...u, isLocked: suspend } : u
-        )
+          u.id === user.id ? { ...u, isLocked: suspend } : u,
+        ),
       );
 
       alert(`Admin account ${suspend ? "locked" : "unlocked"} successfully`);
     } catch (error) {
       console.error("Failed to lock/unlock account:", error);
-      alert(`Failed to ${suspend ? "lock" : "unlock"} account. Please try again.`);
+      alert(
+        `Failed to ${suspend ? "lock" : "unlock"} account. Please try again.`,
+      );
     }
   };
-
 
   // Determine if viewport is mobile (< sm)
   const isMobileViewport =
@@ -753,17 +777,19 @@ export const UserListPage: React.FC = () => {
                   disabled={loadingAdminIds || loadingUsers || loading.users}
                   className={`inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                     loadingAdminIds || loadingUsers || loading.users
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      ? "cursor-not-allowed bg-gray-300 text-gray-500"
                       : showOnlyAdmins
                         ? "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500"
+                        : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500"
                   }`}
-                  aria-label={showOnlyAdmins ? "Show all users" : "Show only admin users"}
+                  aria-label={
+                    showOnlyAdmins ? "Show all users" : "Show only admin users"
+                  }
                 >
                   {loadingAdminIds || loadingUsers || loading.users ? (
                     <>
                       <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4"
+                        className="-ml-1 mr-2 h-4 w-4 animate-spin"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -784,8 +810,10 @@ export const UserListPage: React.FC = () => {
                       </svg>
                       Loading...
                     </>
+                  ) : showOnlyAdmins ? (
+                    "Showing Admins"
                   ) : (
-                    showOnlyAdmins ? "Showing Admins" : "Show Admins"
+                    "Show Admins"
                   )}
                 </button>
               </div>
@@ -864,7 +892,10 @@ export const UserListPage: React.FC = () => {
                         tabIndex={isMobileViewport ? 0 : -1}
                         onKeyDown={(e) => {
                           if (!isMobileViewport) return;
-                          if ((e.key === "Enter" || e.key === " ") && !showOnlyAdmins) {
+                          if (
+                            (e.key === "Enter" || e.key === " ") &&
+                            !showOnlyAdmins
+                          ) {
                             e.preventDefault();
                             handleUserClick(user);
                           }

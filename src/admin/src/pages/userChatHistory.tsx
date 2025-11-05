@@ -131,7 +131,6 @@ export const UserChatHistoryPage: React.FC = () => {
     }
   };
 
-
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;

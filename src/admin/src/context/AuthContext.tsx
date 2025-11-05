@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Check if user is disabled (suspended) - try to get token, if it fails, user is disabled
         try {
           await user.getIdToken(true); // This will throw if user is disabled
-          
+
           // Check if user has admin custom claim
           const tokenResult = await user.getIdTokenResult(true);
           const isAdminUser = tokenResult.claims.isAdmin === true;
@@ -132,25 +132,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Use modular API from firebase/firestore
             const { doc, onSnapshot } = await import("firebase/firestore");
             const userRef = doc(db, "users", user.uid);
-            
-            firestoreUnsubscribe = onSnapshot(userRef, (snapshot) => {
-              if (snapshot.exists()) {
-                const userData = snapshot.data();
-                if (userData?.locked === true) {
-                  console.log("[Admin] User account is locked - showing suspension modal");
-                  // Suspension is handled by NavigationGuard, which shows the modal
-                  // No automatic logout here
+
+            firestoreUnsubscribe = onSnapshot(
+              userRef,
+              (snapshot) => {
+                if (snapshot.exists()) {
+                  const userData = snapshot.data();
+                  if (userData?.locked === true) {
+                    console.log(
+                      "[Admin] User account is locked - showing suspension modal",
+                    );
+                    // Suspension is handled by NavigationGuard, which shows the modal
+                    // No automatic logout here
+                  }
                 }
-              }
-            }, (error: any) => {
-              console.error("[Admin] Error listening to lock status:", error);
-            });
+              },
+              (error: any) => {
+                console.error("[Admin] Error listening to lock status:", error);
+              },
+            );
           } catch (firestoreError: any) {
-            console.error("[Admin] Error setting up lock status listener:", firestoreError);
+            console.error(
+              "[Admin] Error setting up lock status listener:",
+              firestoreError,
+            );
           }
         } catch (error: any) {
           // If getIdToken fails, user might be disabled
-          if (error?.code === "auth/user-disabled" || error?.message?.includes("disabled")) {
+          if (
+            error?.code === "auth/user-disabled" ||
+            error?.message?.includes("disabled")
+          ) {
             console.log("[Admin] User is disabled - account suspended");
             // Suspension is handled by NavigationGuard, which shows the modal
             // No automatic logout here
@@ -344,7 +356,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   };
-
 
   const value = {
     authClient,

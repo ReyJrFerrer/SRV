@@ -262,14 +262,20 @@ const sendTicketStatusNotification = async (
         // Parse the description to check for booking-related data and source
         try {
           const parsedData = JSON.parse(report.description || "{}");
-          
+
           // Determine user type based on source (always check this)
-          if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+          if (
+            parsedData.source === "provider_report" ||
+            parsedData.source === "provider_cancellation"
+          ) {
             userType = "provider";
-          } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+          } else if (
+            parsedData.source === "client_report" ||
+            parsedData.source === "client_cancellation"
+          ) {
             userType = "client";
           }
-          
+
           // If ticket is related to a booking, get the related parties
           if (parsedData.bookingId) {
             relatedProviderId = parsedData.providerId;
@@ -307,13 +313,14 @@ const sendTicketStatusNotification = async (
 
     // If ticket is related to a booking, send notification to the other party
     if (relatedProviderId && relatedClientId) {
-      const otherPartyId = userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyId =
+        userId === relatedClientId ? relatedProviderId : relatedClientId;
       const otherPartyType = userId === relatedClientId ? "provider" : "client";
-      
+
       if (otherPartyId && otherPartyId !== userId) {
         // Add a small delay to avoid rate limiting when sending multiple notifications
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         try {
           await notificationCanisterService.createNotification(
             otherPartyId,
@@ -383,14 +390,20 @@ const sendTicketCommentNotification = async (
         // Parse the description to check for booking-related data and source
         try {
           const parsedData = JSON.parse(report.description || "{}");
-          
+
           // Determine user type based on source (always check this)
-          if (parsedData.source === "provider_report" || parsedData.source === "provider_cancellation") {
+          if (
+            parsedData.source === "provider_report" ||
+            parsedData.source === "provider_cancellation"
+          ) {
             userType = "provider";
-          } else if (parsedData.source === "client_report" || parsedData.source === "client_cancellation") {
+          } else if (
+            parsedData.source === "client_report" ||
+            parsedData.source === "client_cancellation"
+          ) {
             userType = "client";
           }
-          
+
           // If ticket is related to a booking, get the related parties
           if (parsedData.bookingId) {
             relatedProviderId = parsedData.providerId;
@@ -428,13 +441,14 @@ const sendTicketCommentNotification = async (
 
     // If ticket is related to a booking, send notification to the other party
     if (relatedProviderId && relatedClientId) {
-      const otherPartyId = userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyId =
+        userId === relatedClientId ? relatedProviderId : relatedClientId;
       const otherPartyType = userId === relatedClientId ? "provider" : "client";
-      
+
       if (otherPartyId && otherPartyId !== userId) {
         // Add a small delay to avoid rate limiting when sending multiple notifications
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         try {
           await notificationCanisterService.createNotification(
             otherPartyId,
@@ -1108,15 +1122,27 @@ export const adminServiceCanister = {
    * @param locked - Whether to lock the account
    * @param suspensionDurationDays - Duration in days (7, 30, custom number, or null for indefinite)
    */
-  async lockUserAccount(userId: string, locked: boolean, suspensionDurationDays?: number | null): Promise<string> {
+  async lockUserAccount(
+    userId: string,
+    locked: boolean,
+    suspensionDurationDays?: number | null,
+  ): Promise<string> {
     try {
       requireAuth();
 
-      console.log("lockUserAccount called with:", { userId, locked, suspensionDurationDays });
+      console.log("lockUserAccount called with:", {
+        userId,
+        locked,
+        suspensionDurationDays,
+      });
       const result = await callFirebaseFunction("lockUserAccount", {
         userId,
         locked,
-        suspensionDurationDays: locked ? (suspensionDurationDays !== undefined ? suspensionDurationDays : null) : undefined,
+        suspensionDurationDays: locked
+          ? suspensionDurationDays !== undefined
+            ? suspensionDurationDays
+            : null
+          : undefined,
       });
       return result || "User account updated successfully";
     } catch (error) {

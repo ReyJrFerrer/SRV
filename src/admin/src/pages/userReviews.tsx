@@ -213,7 +213,7 @@ const UserReviewsPage: React.FC = () => {
     setError(null);
     try {
       const reviewIds = Array.from(selectedReviews);
-      
+
       // Use the same individual functions as the icon buttons
       // Process reviews in parallel for better performance
       const results = await Promise.allSettled(

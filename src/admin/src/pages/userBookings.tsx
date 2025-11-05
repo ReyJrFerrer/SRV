@@ -386,7 +386,9 @@ export const UserBookingsPage: React.FC = () => {
                       {
                         filteredBookings.filter((b) => {
                           if (!b.status) return false;
-                          const normalizedStatus = normalizeBookingStatus(b.status);
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
                           return (
                             normalizedStatus === "pending" ||
                             normalizedStatus === "requested" ||
@@ -430,7 +432,9 @@ export const UserBookingsPage: React.FC = () => {
                       {
                         filteredBookings.filter((b) => {
                           if (!b.status) return false;
-                          const normalizedStatus = normalizeBookingStatus(b.status);
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
                           return (
                             normalizedStatus === "cancelled" ||
                             normalizedStatus === "canceled" ||

@@ -38,20 +38,26 @@ const LandingPage = () => {
           // Check if account is suspended
           if (profile && profile.locked) {
             // Check sessionStorage flag - if user has already seen modal, don't show again
-            const hasShownSuspension = sessionStorage.getItem("hasShownSuspensionModal");
+            const hasShownSuspension = sessionStorage.getItem(
+              "hasShownSuspensionModal",
+            );
             const isOnLandingPage = location.pathname === "/";
-            
+
             // If user has already seen the modal, never show it again (especially on landing page)
             if (hasShownSuspension === "true") {
               if (isOnLandingPage) {
-                console.log("Account is suspended but user has already seen the modal and returned to landing page - not showing again");
+                console.log(
+                  "Account is suspended but user has already seen the modal and returned to landing page - not showing again",
+                );
               } else {
-                console.log("Account is suspended but user has already seen the modal - not showing again");
+                console.log(
+                  "Account is suspended but user has already seen the modal - not showing again",
+                );
               }
               setIsCheckingProfile(false);
               return;
             }
-            
+
             // Only show modal if we haven't shown it yet
             console.log("Account is suspended, showing suspension modal");
             setShowSuspensionModal(true);
@@ -59,7 +65,7 @@ const LandingPage = () => {
             setIsCheckingProfile(false);
             return;
           }
-          
+
           // Reset the flag if account is not suspended
           sessionStorage.removeItem("hasShownSuspensionModal");
 

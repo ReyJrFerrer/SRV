@@ -204,7 +204,6 @@ const UserServicesPage: React.FC = () => {
     loadUser();
   }, [id, backendUsers, navigate, refreshUsers]);
 
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":

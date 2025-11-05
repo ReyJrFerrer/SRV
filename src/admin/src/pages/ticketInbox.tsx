@@ -315,7 +315,6 @@ export const TicketInboxPage: React.FC = () => {
     setFilteredTickets(filtered);
   }, [tickets, searchTerm, statusFilter, categoryFilter, sortBy]);
 
-
   const handleViewTicket = (ticket: Ticket) => {
     navigate(`/ticket/${ticket.id}`);
   };
