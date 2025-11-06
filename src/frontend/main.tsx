@@ -23,7 +23,9 @@ const CreateProfile = lazy(() => import("./src/pages/create-profile"));
 const ClientHome = lazy(() => import("./src/pages/client/home"));
 const ClientChat = lazy(() => import("./src/pages/client/chat"));
 const SearchResults = lazy(() => import("./src/pages/client/search-results"));
-const NotificationsPage = lazy(() => import("./src/pages/client/notifications"));
+const NotificationsPage = lazy(
+  () => import("./src/pages/client/notifications"),
+);
 
 // Client Service Pages
 const ClientServiceViewAll = lazy(
@@ -52,9 +54,7 @@ const ClientPaymentPending = lazy(
 const ReceiptPage = lazy(
   () => import("./src/pages/client/booking/receipt/[id]"),
 );
-const ClientBookService = lazy(
-  () => import("./src/pages/client/book/[id]"),
-);
+const ClientBookService = lazy(() => import("./src/pages/client/book/[id]"));
 
 // Client Category & Review Pages
 const ClientCategory = lazy(
@@ -135,9 +135,7 @@ const ProviderTermsAndConditionsPage = lazy(
   () => import("./src/pages/provider/inside settings/terms"),
 );
 const ProviderReportIssuePage = lazy(() => import("./src/pages/report"));
-const ProviderHelpSupportPage = lazy(
-  () => import("./src/pages/provider/help"),
-);
+const ProviderHelpSupportPage = lazy(() => import("./src/pages/provider/help"));
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";
@@ -168,129 +166,141 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <AuthProvider>
             <Suspense fallback={null}>
               <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<App />} />
-              <Route path="/create-profile" element={<CreateProfile />} />
+                {/* Public Routes */}
+                <Route path="/" element={<App />} />
+                <Route path="/create-profile" element={<CreateProfile />} />
 
-              <Route path="/client" element={<ClientLayout />}>
-                <Route index element={<ClientRedirect />} />
-                <Route path="home" element={<ClientHome />} />
-                <Route path="chat" element={<ClientChat />} />
-                <Route path="chat/:providerId" element={<ConversationPage />} />
-                <Route path="settings" element={<SettingsPageC />} />
-                <Route path="profile" element={<ClientProfilePage />} />
-                <Route
-                  path="profile/reviews"
-                  element={<ClientProfileReviews />}
-                />
-                <Route path="search-results" element={<SearchResults />} />
-                <Route path="terms" element={<TermsAndConditionsPage />} />
-                <Route path="report" element={<ReportIssuePage />} />
-                <Route path="help" element={<HelpSupportPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="/client" element={<ClientLayout />}>
+                  <Route index element={<ClientRedirect />} />
+                  <Route path="home" element={<ClientHome />} />
+                  <Route path="chat" element={<ClientChat />} />
+                  <Route
+                    path="chat/:providerId"
+                    element={<ConversationPage />}
+                  />
+                  <Route path="settings" element={<SettingsPageC />} />
+                  <Route path="profile" element={<ClientProfilePage />} />
+                  <Route
+                    path="profile/reviews"
+                    element={<ClientProfileReviews />}
+                  />
+                  <Route path="search-results" element={<SearchResults />} />
+                  <Route path="terms" element={<TermsAndConditionsPage />} />
+                  <Route path="report" element={<ReportIssuePage />} />
+                  <Route path="help" element={<HelpSupportPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
 
-                {/* Service Routes */}
-                <Route
-                  path="service/view-all"
-                  element={<ClientServiceViewAll />}
-                />
-                <Route path="service/:id" element={<ClientServiceDetails />} />
-                <Route
-                  path="service/reviews/:id"
-                  element={<ClientServiceReviews />}
-                />
+                  {/* Service Routes */}
+                  <Route
+                    path="service/view-all"
+                    element={<ClientServiceViewAll />}
+                  />
+                  <Route
+                    path="service/:id"
+                    element={<ClientServiceDetails />}
+                  />
+                  <Route
+                    path="service/reviews/:id"
+                    element={<ClientServiceReviews />}
+                  />
 
-                {/* Booking Routes */}
-                <Route path="booking" element={<ClientBookingIndex />} />
-                <Route path="booking/:id" element={<ClientBookingDetails />} />
-                <Route
-                  path="booking/confirmation"
-                  element={<ClientBookingConfirmation />}
-                />
-                <Route
-                  path="booking/payment-pending"
-                  element={<ClientPaymentPending />}
-                />
-                <Route path="booking/receipt/:id" element={<ReceiptPage />} />
-                <Route path="book/:id" element={<ClientBookService />} />
+                  {/* Booking Routes */}
+                  <Route path="booking" element={<ClientBookingIndex />} />
+                  <Route
+                    path="booking/:id"
+                    element={<ClientBookingDetails />}
+                  />
+                  <Route
+                    path="booking/confirmation"
+                    element={<ClientBookingConfirmation />}
+                  />
+                  <Route
+                    path="booking/payment-pending"
+                    element={<ClientPaymentPending />}
+                  />
+                  <Route path="booking/receipt/:id" element={<ReceiptPage />} />
+                  <Route path="book/:id" element={<ClientBookService />} />
 
-                {/* Category & Review Routes */}
-                <Route path="categories/:slug" element={<ClientCategory />} />
-                <Route path="review/:id" element={<ClientReview />} />
-              </Route>
+                  {/* Category & Review Routes */}
+                  <Route path="categories/:slug" element={<ClientCategory />} />
+                  <Route path="review/:id" element={<ClientReview />} />
+                </Route>
 
-              {/* Provider Routes with Nested Layout */}
-              <Route path="/provider" element={<ProviderLayout />}>
-                <Route index element={<ProviderRedirect />} />
-                <Route path="home" element={<ProviderHome />} />
-                <Route path="bookings" element={<ProviderBookings />} />
-                <Route path="chat" element={<ProviderChat />} />
-                <Route
-                  path="chat/:clientId"
-                  element={<ProviderConversationPage />}
-                />
-                <Route path="settings" element={<SettingsPageSP />} />
-                <Route path="profile" element={<ProviderProfilePage />} />
-                <Route path="notifications" element={<NotificationsPageSP />} />
-                <Route path="wallet" element={<WalletPage />} />
-                <Route
-                  path="payout-settings"
-                  element={<PayoutSettingsPage />}
-                />
+                {/* Provider Routes with Nested Layout */}
+                <Route path="/provider" element={<ProviderLayout />}>
+                  <Route index element={<ProviderRedirect />} />
+                  <Route path="home" element={<ProviderHome />} />
+                  <Route path="bookings" element={<ProviderBookings />} />
+                  <Route path="chat" element={<ProviderChat />} />
+                  <Route
+                    path="chat/:clientId"
+                    element={<ProviderConversationPage />}
+                  />
+                  <Route path="settings" element={<SettingsPageSP />} />
+                  <Route path="profile" element={<ProviderProfilePage />} />
+                  <Route
+                    path="notifications"
+                    element={<NotificationsPageSP />}
+                  />
+                  <Route path="wallet" element={<WalletPage />} />
+                  <Route
+                    path="payout-settings"
+                    element={<PayoutSettingsPage />}
+                  />
 
-                {/* Service Management Routes */}
-                <Route path="services" element={<ProviderServices />} />
-                <Route path="services/add" element={<ProviderAddService />} />
+                  {/* Service Management Routes */}
+                  <Route path="services" element={<ProviderServices />} />
+                  <Route path="services/add" element={<ProviderAddService />} />
 
-                {/* Service Details Routes */}
-                <Route
-                  path="service-details/:id"
-                  element={<ProviderServiceDetails />}
-                />
-                <Route
-                  path="service-details/reviews/:id"
-                  element={<ProviderServiceReviews />}
-                />
+                  {/* Service Details Routes */}
+                  <Route
+                    path="service-details/:id"
+                    element={<ProviderServiceDetails />}
+                  />
+                  <Route
+                    path="service-details/reviews/:id"
+                    element={<ProviderServiceReviews />}
+                  />
 
-                {/* Booking Management Routes */}
-                <Route
-                  path="booking/:id"
-                  element={<ProviderBookingDetails />}
-                />
-                <Route
-                  path="active-service/:bookingId"
-                  element={<ProviderActiveService />}
-                />
-                <Route
-                  path="directions/:bookingId"
-                  element={<ProviderDirectionsPage />}
-                />
-                <Route
-                  path="complete-service/:bookingId"
-                  element={<ProviderCompleteService />}
-                />
-                <Route
-                  path="receipt/:bookingId"
-                  element={<ProviderReceipt />}
-                />
+                  {/* Booking Management Routes */}
+                  <Route
+                    path="booking/:id"
+                    element={<ProviderBookingDetails />}
+                  />
+                  <Route
+                    path="active-service/:bookingId"
+                    element={<ProviderActiveService />}
+                  />
+                  <Route
+                    path="directions/:bookingId"
+                    element={<ProviderDirectionsPage />}
+                  />
+                  <Route
+                    path="complete-service/:bookingId"
+                    element={<ProviderCompleteService />}
+                  />
+                  <Route
+                    path="receipt/:bookingId"
+                    element={<ProviderReceipt />}
+                  />
 
-                {/* Rate Client after receipt */}
-                <Route
-                  path="rate-client/:bookingId"
-                  element={<ProviderRateClientPage />}
-                />
+                  {/* Rate Client after receipt */}
+                  <Route
+                    path="rate-client/:bookingId"
+                    element={<ProviderRateClientPage />}
+                  />
 
-                {/* Review Routes */}
-                <Route path="review/:id" element={<ProviderReview />} />
+                  {/* Review Routes */}
+                  <Route path="review/:id" element={<ProviderReview />} />
 
-                {/* Provider Info Pages */}
-                <Route
-                  path="terms"
-                  element={<ProviderTermsAndConditionsPage />}
-                />
-                <Route path="report" element={<ProviderReportIssuePage />} />
-                <Route path="help" element={<ProviderHelpSupportPage />} />
-              </Route>
+                  {/* Provider Info Pages */}
+                  <Route
+                    path="terms"
+                    element={<ProviderTermsAndConditionsPage />}
+                  />
+                  <Route path="report" element={<ProviderReportIssuePage />} />
+                  <Route path="help" element={<ProviderHelpSupportPage />} />
+                </Route>
               </Routes>
             </Suspense>
           </AuthProvider>

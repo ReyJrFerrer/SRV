@@ -43,18 +43,19 @@ export default defineConfig({
       },
     },
     rollupOptions: {
-      plugins: visualizer && process.env.ANALYZE
-        ? [
-            visualizer({
-              filename: "dist/stats.html",
-              title: "Bundle Analysis",
-              template: "treemap",
-              gzipSize: true,
-              brotliSize: true,
-              open: false,
-            }),
-          ]
-        : [],
+      plugins:
+        visualizer && process.env.ANALYZE
+          ? [
+              visualizer({
+                filename: "dist/stats.html",
+                title: "Bundle Analysis",
+                template: "treemap",
+                gzipSize: true,
+                brotliSize: true,
+                open: false,
+              }),
+            ]
+          : [],
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {

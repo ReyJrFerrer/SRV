@@ -190,7 +190,11 @@ self.addEventListener("fetch", (event) => {
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((response) => {
-          if (response && response.status === 200 && response.type !== "opaque") {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
+          ) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               try {
@@ -207,7 +211,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response && response.status === 200 && response.type !== "opaque") {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
+          ) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               try {
@@ -217,7 +225,9 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request).then((r) => r || caches.match("/"))),
+        .catch(() =>
+          caches.match(event.request).then((r) => r || caches.match("/")),
+        ),
     );
 
   // Navigations (HTML): prefer fresh content, fallback to cache
