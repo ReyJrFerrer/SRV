@@ -1,8 +1,8 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
-// Interface for the booking details passed via navigation state
 interface BookingDetails {
   serviceName: string;
   providerName: string;
@@ -20,16 +20,10 @@ interface BookingDetails {
 
 const BookingConfirmationPage: React.FC = () => {
   const location = useLocation();
-
-  // Safely access the booking details from the navigation state
   const bookingDetails: BookingDetails | null = location.state?.details || null;
-
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Booking Confirmed - SRV Client";
   }, []);
-
-  // Prevent returning to payment/creation pages using browser back
   useNoBackNavigation("/client/booking");
 
   return (
@@ -44,7 +38,6 @@ const BookingConfirmationPage: React.FC = () => {
         {bookingDetails ? (
           <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
             <div className="relative mx-auto mb-4 h-24 w-24">
-              {/* Use standard <img> tag instead of Next.js <Image> */}
               <img
                 src="/images/srv characters (SVG)/girl.svg"
                 alt="Success"
@@ -65,17 +58,14 @@ const BookingConfirmationPage: React.FC = () => {
               </h3>
 
               <div className="space-y-2 text-sm">
-                {/* Provider first */}
                 <p>
                   <span className="font-bold text-gray-700">Provider:</span>{" "}
                   {bookingDetails.providerName}
                 </p>
-                {/* Service next */}
                 <p>
                   <span className="font-bold text-gray-700">Service:</span>{" "}
                   {bookingDetails.serviceName}
                 </p>
-                {/* Packages */}
                 {bookingDetails.packages &&
                   bookingDetails.packages.length > 0 && (
                     <div>
@@ -89,7 +79,6 @@ const BookingConfirmationPage: React.FC = () => {
                       </ul>
                     </div>
                   )}
-                {/* Grouped: Type, Date, Time, Location */}
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">
                     Booking Details:
@@ -128,7 +117,6 @@ const BookingConfirmationPage: React.FC = () => {
                     )}
                   </ul>
                 </div>
-                {/* Payment group */}
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">Payment:</span>
                   <ul className="ml-4 mt-1 list-inside list-disc">
@@ -160,7 +148,6 @@ const BookingConfirmationPage: React.FC = () => {
                           )}
                         </li>
                       )}
-                    {/* Show expected change if present, otherwise fallback to calculation */}
                     {bookingDetails.expectedChange &&
                     bookingDetails.expectedChange !== "0.00" ? (
                       <li>
@@ -200,7 +187,6 @@ const BookingConfirmationPage: React.FC = () => {
                     )}
                   </ul>
                 </div>
-                {/* Notes for Provider */}
                 {bookingDetails.notes && (
                   <p>
                     <span className="font-bold text-gray-700">
@@ -211,8 +197,6 @@ const BookingConfirmationPage: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Use Link from react-router-dom */}
             <Link
               to="/client/home"
               className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"

@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef } from "react";
 import Toast from "../../components/ToastNotifications";
 import { useNavigate } from "react-router-dom";
@@ -10,15 +11,15 @@ import {
   CurrencyEuroIcon,
   CalendarIcon,
   ArrowPathRoundedSquareIcon,
-  ChevronRightIcon, // Added for the switch button
+  ChevronRightIcon,
   InformationCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
+import BottomNavigation from "../../components/client/NavigationBar";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import { useLogout } from "../../hooks/logout";
-import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
-import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
+import { useReputation } from "../../hooks/useReputation";
+import { useClientAnalytics } from "../../hooks/useClientAnalytics";
 import useClientRating from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 interface AboutReputationScoreModalProps {
@@ -27,6 +28,7 @@ interface AboutReputationScoreModalProps {
   reputationDisplay: any;
 }
 
+// SECTION: AboutReputationScoreModal — modal explaining reputation score
 const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   show,
   onClose,
@@ -96,7 +98,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   );
 };
 
-// TrustLevelBadge: Displays the user's trust level badge in the profile reputation section
+// SECTION: TrustLevelBadge — trust level display with info button
 interface TrustLevelBadgeProps {
   trustLevel: string;
   onInfoClick?: () => void;
@@ -196,7 +198,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   );
 };
 
-// TrustLevelInfoModal: Modal popup for badge level information (opened from TrustLevelBadge)
+// SECTION: TrustLevelInfoModal — modal with badge levels information
 const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   show,
   onClose,
@@ -302,7 +304,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   );
 };
 
-// ClientStats: Displays booking and activity summary stats in the profile right column
+// SECTION: ClientStats — booking and activity summary
 const ClientStats: React.FC = () => {
   const {
     loading: analyticsLoading,
@@ -412,7 +414,7 @@ const ClientStats: React.FC = () => {
   );
 };
 
-// ProfilePictureModal: Displays and allows editing/viewing of profile picture in left column
+// SECTION: ProfilePictureModal — profile image with preview modal
 interface ProfilePictureModalProps {
   src: string | null | undefined;
   isLoading: boolean;
@@ -423,7 +425,6 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   isLoading,
 }) => {
   const [showModal, setShowModal] = React.useState(false);
-  // Profile picture modal and trigger (centered, top of left column)
   return (
     <>
       <div
@@ -452,7 +453,6 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
           />
         )}
       </div>
-      {/* Modal: Large profile picture preview (centered overlay) */}
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -494,7 +494,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   );
 };
 
-// ClientProfilePage: Main profile view for clients, includes profile info, reputation, stats, and navigation
+// SECTION: ClientProfilePage — main profile view and interactions
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -540,19 +540,16 @@ const ClientProfilePage: React.FC = () => {
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
-  // Ratings summary state (average + count)
   const { getClientReviewsByUser } = useClientRating();
   const [ratingsLoading, setRatingsLoading] = useState(false);
   const [ratingsError, setRatingsError] = useState<string | null>(null);
   const [avgRating, setAvgRating] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
 
-  // Set page title on mount
   useEffect(() => {
     document.title = "My Profile | SRV";
   }, []);
 
-  // Update name/phone fields when profile changes
   useEffect(() => {
     if (profile) {
       setName(profile.name);
@@ -560,7 +557,6 @@ const ClientProfilePage: React.FC = () => {
     }
   }, [profile]);
 
-  // Fetch ratings summary for this user when profile is available
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -591,7 +587,6 @@ const ClientProfilePage: React.FC = () => {
     fetchSummary();
   }, [profile, getClientReviewsByUser]);
 
-  // Handlers for profile editing, image upload, and role switching
   const handleImageUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -603,12 +598,10 @@ const ClientProfilePage: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
-    // Validation logic
     setNameError("");
     setPhoneError("");
     setEditError("");
     let valid = true;
-    // Name: at least 2 words
     const nameTrimmed = name.trim();
     const nameWords = nameTrimmed.split(/\s+/);
     if (!nameTrimmed) {
@@ -618,7 +611,6 @@ const ClientProfilePage: React.FC = () => {
       setNameError("Please enter your full name (first and last).");
       valid = false;
     }
-    // Phone: must be exactly 11 digits and start with '09'
     const phoneTrimmed = phone.trim();
     const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
     if (!phoneTrimmed) {
@@ -635,9 +627,6 @@ const ClientProfilePage: React.FC = () => {
       setEditError("Please fix the errors above before saving.");
       return;
     }
-    // updateProfile currently expects { name, imageFile } — omit phone here to match the declared type
-    // If phone must be updated, add a dedicated phone update function in the hook (recommended),
-    // or update the hook's type to accept phone as well.
     const success = await updateProfile({ name, imageFile });
     if (success) {
       setIsEditing(false);
@@ -689,12 +678,9 @@ const ClientProfilePage: React.FC = () => {
         </div>
       </header>
 
-      {/* ===================== Main Profile Page Layout ===================== */}
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
           <div className="flex flex-col space-y-4 lg:col-span-1">
-            {/* Profile Info Card (top left) */}
             <div className="rounded-xl bg-white p-6 shadow-md">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
@@ -720,8 +706,6 @@ const ClientProfilePage: React.FC = () => {
                     </>
                   )}
                 </div>
-
-                {/* Name and phone display or edit fields */}
                 {!isEditing ? (
                   <>
                     <h2 className="text-2xl font-bold text-gray-800">
@@ -776,8 +760,6 @@ const ClientProfilePage: React.FC = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Edit/Save/Cancel Buttons */}
                 <div className="mt-6">
                   {!isEditing ? (
                     <button
@@ -807,7 +789,6 @@ const ClientProfilePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Switch to Provider Button (below profile info) */}
             <div className="rounded-lg bg-yellow-300 shadow-sm">
               <button
                 onClick={handleSwitchToProvider}
@@ -837,8 +818,6 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </button>
             </div>
-            {/* Ratings button moved into right column summary */}
-            {/* Desktop Logout Button (bottom of left column) */}
             <div className="hidden lg:block">
               <button
                 onClick={logout}
@@ -848,8 +827,6 @@ const ClientProfilePage: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* --- Right Column: Reputation and Stats --- */}
           <div className="mt-1 lg:col-span-2 lg:mt-0">
             <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <div className="mb-6 flex items-center justify-center gap-2">
@@ -870,7 +847,6 @@ const ClientProfilePage: React.FC = () => {
                   reputationDisplay={reputationDisplay}
                 />
               </div>
-              {/* Reputation Score, Trust Level, and About Info */}
               {reputationLoading ? (
                 <div className="flex justify-center">
                   <div className="flex h-48 w-48 items-center justify-center">
@@ -914,15 +890,7 @@ const ClientProfilePage: React.FC = () => {
                 <div className="flex flex-col items-center gap-6">
                   <div className="mb-2 flex items-center justify-center gap-2">
                     <ReputationScore score={reputationScore} />
-                    {/* <button
-                      onClick={forceRefreshReputation}
-                      className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                      title="Refresh reputation score"
-                    >
-                      <ArrowPathRoundedSquareIcon className="h-4 w-4" />
-                    </button> */}
                   </div>
-                  {/* Trust Level Badge and About Info (right column) */}
                   {reputationDisplay && (
                     <>
                       <div className="flex w-full justify-center">
@@ -945,9 +913,7 @@ const ClientProfilePage: React.FC = () => {
                   )}
                 </div>
               )}
-              {/* Client statistics (bottom of right column) */}
               <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
-                {/* Ratings Summary Card */}
                 <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
                   <div className="mb-4 flex items-center justify-between">
                     <h4 className="text-lg font-bold text-yellow-700">
@@ -1000,15 +966,12 @@ const ClientProfilePage: React.FC = () => {
                     View Reviews & Ratings
                   </button>
                 </div>
-
-                {/* Booking & Activity Summary below ratings */}
                 <div>
                   <ClientStats />
                 </div>
               </div>
             </div>
           </div>
-          {/* Error messages (bottom of grid) */}
           {editError && (
             <p className="mt-4 text-center text-red-500">{editError}</p>
           )}
@@ -1018,7 +981,6 @@ const ClientProfilePage: React.FC = () => {
               Reputation: {reputationError}
             </p>
           )}
-          {/* End grid container */}
         </div>
       </main>
       <BottomNavigation />
@@ -1031,7 +993,7 @@ const ClientProfilePage: React.FC = () => {
   );
 };
 
-// Reusable component for the reputation score visualization (restored advanced version)
+// SECTION: ReputationScore — radial score visualization
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const getScoreColor = (value: number) => {
     if (value >= 80) return "#2563eb"; // blue-600

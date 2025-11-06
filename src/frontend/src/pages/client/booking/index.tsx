@@ -1,13 +1,14 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
-import BottomNavigation from "../../../components/client/NavigationBar"; // Adjusted import
-import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
+import BottomNavigation from "../../../components/client/NavigationBar";
+import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {
   useBookingManagement,
   EnhancedBooking,
-} from "../../../hooks/bookingManagement"; // Adjust path as needed
+} from "../../../hooks/bookingManagement";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
@@ -48,7 +49,6 @@ const MyBookingsPage: React.FC = () => {
     useState<EnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Effect to sync the active tab with the URL query parameter
   useEffect(() => {
     const queryTab = searchParams.get("tab");
     if (queryTab && typeof queryTab === "string") {
@@ -58,7 +58,6 @@ const MyBookingsPage: React.FC = () => {
       if (TAB_ITEMS.includes(upperCaseQueryTab)) {
         setActiveTab(upperCaseQueryTab);
       } else {
-        // If the tab in the URL is invalid, reset to 'all'
         setSearchParams({ tab: "all" });
       }
     } else {
@@ -66,7 +65,6 @@ const MyBookingsPage: React.FC = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  // Set the document title
   useEffect(() => {
     document.title = "My Bookings | SRV";
   }, []);
@@ -143,8 +141,6 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
-    // When viewing ALL bookings, apply a default sort order:
-    // Inprogress, confirmed, pending, completed, cancelled, then others.
     if (activeTab === "ALL") {
       const toLower = (s?: string) => (s || "").toLowerCase();
 
@@ -188,8 +184,6 @@ const MyBookingsPage: React.FC = () => {
         );
       });
 
-      // Secondary sort: within each default group, sort by date (requestedDate || createdAt)
-      // Assumption: we want newest bookings first. If a different order is desired, change subtraction order.
       const getBookingTime = (b: EnhancedBooking) => {
         try {
           return new Date(b.requestedDate || b.createdAt).getTime() || 0;
@@ -281,7 +275,6 @@ const MyBookingsPage: React.FC = () => {
               (b) => b.serviceId === serviceId,
             );
 
-            // Initialize with loading state
             mapCopy[serviceId] = {
               averageRating: null,
               reviews: [],
@@ -289,7 +282,6 @@ const MyBookingsPage: React.FC = () => {
               reputation: null,
             };
 
-            // Fetch service rating and reviews in parallel
             const [avg, reviews] = await Promise.all([
               reviewCanisterService.calculateServiceRating(serviceId),
               reviewCanisterService.getServiceReviews(serviceId),
@@ -313,7 +305,6 @@ const MyBookingsPage: React.FC = () => {
               }
             }
 
-            // Update the map with all the fetched data
             mapCopy[serviceId] = {
               averageRating: avg?.averageRating ?? null,
               reviews: Array.isArray(reviews) ? reviews : [],
@@ -334,7 +325,6 @@ const MyBookingsPage: React.FC = () => {
     };
 
     if (filteredBookings.length > 0) fetchStatsForServices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredBookings]);
 
   const getBookingCountForTab = (tab: BookingStatusTab) => {
@@ -388,7 +378,7 @@ const MyBookingsPage: React.FC = () => {
       </header>
 
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
-        {/* Search/Filter Bar */}
+  {/* SECTION: Search and filter bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
           <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
             <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
