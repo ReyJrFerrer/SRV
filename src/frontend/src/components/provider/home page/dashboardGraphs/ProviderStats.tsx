@@ -274,12 +274,20 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       ) : (
         <>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
               <BookingStatusPieChart analytics={analytics} />
             </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
               <MonthlyRevenueLineChart
                 analytics={analytics}
                 getMonthlyRevenue={getMonthlyRevenue}
@@ -287,7 +295,11 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
               <DailyBookingsBarChart
                 getBookingCountByDay={getBookingCountByDay}
               />
