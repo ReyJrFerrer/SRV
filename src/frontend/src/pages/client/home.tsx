@@ -78,8 +78,7 @@ const ClientHomePage: React.FC = () => {
       showPostLoginLocationPrompt();
       try {
         navigate(location.pathname, { replace: true, state: {} });
-      } catch {
-      }
+      } catch {}
     }
   }, [location, showPostLoginLocationPrompt]);
 

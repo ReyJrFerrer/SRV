@@ -68,7 +68,10 @@ const PaymentPendingPage: React.FC = () => {
 
           console.log(`📋 Invoice status: ${statusResponse.status}`);
 
-          if (statusResponse.status === "PAID" || statusResponse.status === "SETTLED") {
+          if (
+            statusResponse.status === "PAID" ||
+            statusResponse.status === "SETTLED"
+          ) {
             if (!isCreatingBooking && paymentStatus === "pending") {
               setPaymentStatus("completed");
               setStatusMessage("Payment successful! Creating your booking...");

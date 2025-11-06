@@ -96,8 +96,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImage(profile.profilePicture.imageUrl);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
