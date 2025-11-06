@@ -1,6 +1,10 @@
-import React from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import React, { Suspense } from "react";
+// Lazy-load react-datepicker and its CSS only when needed
+const LazyDatePicker = React.lazy(async () => {
+  const mod = await import("react-datepicker");
+  await import("react-datepicker/dist/react-datepicker.css");
+  return { default: mod.default } as { default: typeof mod.default };
+});
 
 type TimeSlot = {
   timeSlot: { startTime: string; endTime: string };
@@ -195,7 +199,14 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
       {bookingOption === "scheduled" && (
         <div className="space-y-4">
           <div className="booking-calendar-wrapper">
-            <DatePicker
+            <Suspense
+              fallback={
+                <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                  Loading calendar...
+                </div>
+              }
+            >
+              <LazyDatePicker
               selected={selectedDate}
               onChange={onDateChange}
               minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
@@ -284,7 +295,8 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
               }}
               calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
               wrapperClassName="w-full"
-            />
+              />
+            </Suspense>
           </div>
           {selectedDate && (
             <div>

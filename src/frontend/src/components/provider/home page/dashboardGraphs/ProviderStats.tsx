@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -8,9 +8,15 @@ import {
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
 // Import your new chart components
-import BookingStatusPieChart from "./BookingStatusPieChart";
-import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
-import DailyBookingsBarChart from "./DailyBookingsBarChart";
+const BookingStatusPieChart = React.lazy(
+  () => import("./BookingStatusPieChart"),
+);
+const MonthlyRevenueLineChart = React.lazy(
+  () => import("./MonthlyRevenueLineChart"),
+);
+const DailyBookingsBarChart = React.lazy(
+  () => import("./DailyBookingsBarChart"),
+);
 import CustomerRatingStars from "./CustomerRatingStars";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../../../hooks/useWallet";
@@ -268,18 +274,24 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       ) : (
         <>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <BookingStatusPieChart analytics={analytics} />
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+              <BookingStatusPieChart analytics={analytics} />
+            </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <MonthlyRevenueLineChart
-              analytics={analytics}
-              getMonthlyRevenue={getMonthlyRevenue}
-            />
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+              <MonthlyRevenueLineChart
+                analytics={analytics}
+                getMonthlyRevenue={getMonthlyRevenue}
+              />
+            </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <DailyBookingsBarChart
-              getBookingCountByDay={getBookingCountByDay}
-            />
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />}> 
+              <DailyBookingsBarChart
+                getBookingCountByDay={getBookingCountByDay}
+              />
+            </Suspense>
           </div>
           <div className="flex h-80 items-center justify-center rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
             <CustomerRatingStars analytics={ratingData} />

@@ -3,10 +3,21 @@ import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { APIProvider } from "@vis.gl/react-google-maps";
 import App from "./src/App";
 import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
+// Local wrapper to provide Google Maps context only where needed
+import { APIProvider } from "@vis.gl/react-google-maps";
+const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  return (
+    <APIProvider apiKey={apiKey} libraries={["places"]}>
+      {children}
+    </APIProvider>
+  );
+};
 
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";
@@ -157,10 +168,6 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <APIProvider
-        apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
-        libraries={["places"]}
-      >
         <HashRouter>
           <ScrollToTop />
           <AuthProvider>
@@ -219,7 +226,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     element={<ClientPaymentPending />}
                   />
                   <Route path="booking/receipt/:id" element={<ReceiptPage />} />
-                  <Route path="book/:id" element={<ClientBookService />} />
+                  <Route
+                    path="book/:id"
+                    element={
+                      // Scope Google Maps only to booking flow pages that need it
+                      <MapsProviderWrapper>
+                        <ClientBookService />
+                      </MapsProviderWrapper>
+                    }
+                  />
 
                   {/* Category & Review Routes */}
                   <Route path="categories/:slug" element={<ClientCategory />} />
@@ -265,7 +280,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   {/* Booking Management Routes */}
                   <Route
                     path="booking/:id"
-                    element={<ProviderBookingDetails />}
+                    element={
+                      // Provider booking details uses interactive Map + geocoding
+                      <MapsProviderWrapper>
+                        <ProviderBookingDetails />
+                      </MapsProviderWrapper>
+                    }
                   />
                   <Route
                     path="active-service/:bookingId"
@@ -305,7 +325,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             </Suspense>
           </AuthProvider>
         </HashRouter>
-      </APIProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
+// end
