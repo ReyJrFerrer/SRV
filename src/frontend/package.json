@@ -7,6 +7,7 @@
   "scripts": {
     "start": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc && vite build",
+    "analyze": "cross-env ANALYZE=true vite build && (test -f dist/stats.html && echo 'Open dist/stats.html to view bundle analysis' || true)",
     "test": "vitest run",
     "generate:icons": "node ./scripts/generate-apple-icons.js"
   },
@@ -37,6 +38,8 @@
     "dotenv": "^16.3.1",
     "jsdom": "^26.1.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "cross-env": "^7.0.3",
     "sharp": "^0.34.4",
     "tailwindcss": "^4.1.7",
     "vite-plugin-pwa": "^1.1.0",

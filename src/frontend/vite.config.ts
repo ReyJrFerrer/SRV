@@ -1,6 +1,18 @@
 /// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+// Optional bundle analyzer: loaded only when ANALYZE env is set
+// We avoid a hard import to keep typecheck simple when the plugin isn't installed in some envs.
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+let visualizer: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // @ts-ignore - optional dev dependency not typed in this context
+  visualizer = require("rollup-plugin-visualizer").visualizer;
+} catch (_) {
+  // plugin not installed or not needed
+}
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "@tailwindcss/vite";
@@ -15,8 +27,46 @@ export default defineConfig({
     outDir: "dist/",
     emptyOutDir: true,
     assetsDir: "assets",
+    target: "es2020",
+    cssCodeSplit: true,
+    modulePreload: { polyfill: true },
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        passes: 2,
+        pure_getters: true,
+      },
+      format: {
+        comments: false,
+      },
+    },
     rollupOptions: {
+      plugins:
+        visualizer && process.env.ANALYZE
+          ? [
+              visualizer({
+                filename: "dist/stats.html",
+                title: "Bundle Analysis",
+                template: "treemap",
+                gzipSize: true,
+                brotliSize: true,
+                open: false,
+              }),
+            ]
+          : [],
       output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react")) return "vendor-react";
+            if (id.includes("@heroicons")) return "vendor-heroicons";
+            if (id.includes("firebase")) return "vendor-firebase";
+            if (id.includes("@dfinity")) return "vendor-dfinity";
+            if (id.includes("leaflet")) return "vendor-leaflet";
+            return "vendor";
+          }
+        },
         assetFileNames: (assetInfo) => {
           // Keep original structure for images and fonts
           if (assetInfo.name?.match(/\.(png|jpe?g|svg|gif|webp)$/)) {
@@ -32,6 +82,19 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@heroicons/react",
+      "firebase/app",
+      "firebase/messaging",
+      "firebase/auth",
+      "firebase/firestore",
+      "firebase/analytics",
+      "leaflet",
+      "react-leaflet",
+    ],
     esbuildOptions: {
       define: {
         global: "globalThis",
@@ -74,8 +137,9 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    environment("all", { prefix: "CANISTER_" }),
-    environment("all", { prefix: "DFX_" }),
+    // Cast to any to avoid type conflicts when multiple vite versions are present in monorepo
+    environment("all", { prefix: "CANISTER_" }) as unknown as any,
+    environment("all", { prefix: "DFX_" }) as unknown as any,
     {
       name: "configure-service-worker",
       configureServer(server) {
@@ -102,6 +166,7 @@ export default defineConfig({
     ],
     dedupe: ["@dfinity/agent"],
   },
+  // @ts-ignore - Allow vitest config block without strict type coupling to vite version
   test: {
     environment: "jsdom",
     setupFiles: "frontend-test-setup.ts",

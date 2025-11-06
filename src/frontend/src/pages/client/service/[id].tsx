@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -29,7 +30,6 @@ import AvailabilitySection, {
   Availability,
 } from "../../../components/client/service-detail/AvailabilitySection";
 
-// --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
 function formatTime12Hour(time: string): string {
   if (!time) return "";
   const [hourStr, minuteStr] = time.split(":");
@@ -55,13 +55,11 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
 
-  // Load service gallery images for hero image (must be top-level)
   const { images: heroImages } = useServiceImages(
     service?.id,
     service?.media || [],
   );
 
-  // Load service certificates to check validation status
   const {
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
@@ -79,7 +77,6 @@ const ClientServiceDetailsPage: React.FC = () => {
   const { fetchUserReputation } = useReputation();
   const [providerRep, setProviderRep] = useState<any | null>(null);
 
-  // Check reputations when service and identity are available
   useEffect(() => {
     const checkReputations = async () => {
       if (!service?.providerId || !identity) {
@@ -91,17 +88,13 @@ const ClientServiceDetailsPage: React.FC = () => {
         setIsCheckingReputation(true);
         setReputationError(null);
 
-        // Get current user's reputation
         const currentUserRep = await fetchUserReputation(
           identity.getPrincipal().toString(),
         );
-        // Get provider's reputation
         const fetchedProviderRep = await fetchUserReputation(
           service.providerId,
         );
         setProviderRep(fetchedProviderRep);
-
-        // Check if both reputations are sufficient (>= 5)
         const isCurrentUserEligible =
           currentUserRep && currentUserRep.trustScore >= 5;
         const isProviderEligible =
@@ -141,14 +134,12 @@ const ClientServiceDetailsPage: React.FC = () => {
     }
   }, [service]);
 
-  // Refetch provider avatar if changed
   useEffect(() => {
     if (userImageUrl) {
       refetch();
     }
   }, [userImageUrl, refetch]);
 
-  // Subscribe to service packages with realtime updates
   useEffect(() => {
     if (!service?.id) {
       setPackages([]);
@@ -265,9 +256,6 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const { providerName, name, category, location } = service;
 
-  // Check certificate status for credentials section
-  // A service is verified only if it has at least one certificate with validationStatus === "Validated"
-  // If certificates are still loading, default to false (not verified)
   const hasCertificates =
     !isLoadingCertificates &&
     serviceCertificates &&
@@ -387,12 +375,8 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         )}
         <div className="mx-auto mt-6 w-full max-w-5xl">
-          {/* --- This is the new single card wrapper --- */}
-          {/* It uses your styles: rounded-3xl, bg-white/70, backdrop-blur-md */}
           <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-2xl backdrop-blur-md">
-            {/* --- This grid controls the layout --- */}
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
-              {/* --- Column 1: Provider Info --- */}
               <div className="flex flex-col justify-center">
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex flex-col items-center">
@@ -588,7 +572,6 @@ const ClientServiceDetailsPage: React.FC = () => {
                 isCheckingReputation
               }
               className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 text-sm font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400 md:text-lg lg:text-xl"
-              // style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
               {isCheckingReputation
                 ? "Checking..."

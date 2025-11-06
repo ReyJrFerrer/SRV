@@ -1,9 +1,8 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
-
-// Components
 import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 
@@ -12,7 +11,6 @@ const ClientChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { conversations, loading, error, markAsRead } = useChat();
 
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Messages | SRV";
   }, []);
@@ -24,13 +22,8 @@ const ClientChatPage: React.FC = () => {
     otherUserImageUrl?: string,
   ) => {
     try {
-      // Mark conversation as read when clicked
       await markAsRead(conversationId);
-
-      // Use default image if none is provided
       const imageToUse = otherUserImageUrl || DEFAULT_USER_IMAGE;
-
-      // Navigate to the specific chat page and pass conversation info in the state
       navigate(`/client/chat/${conversationId}`, {
         state: {
           conversationId,
@@ -70,9 +63,8 @@ const ClientChatPage: React.FC = () => {
           ) : conversations.length > 0 ? (
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
-                {/* Sort conversations by most recent message (received or replied) */}
                 {conversations
-                  .slice() // copy array to avoid mutating original
+                  .slice()
                   .sort((a, b) => {
                     const aTime = a.lastMessage?.[0]?.createdAt
                       ? new Date(a.lastMessage[0].createdAt).getTime()
@@ -86,26 +78,19 @@ const ClientChatPage: React.FC = () => {
                     const conversation = conversationSummary.conversation;
                     const lastMessage =
                       conversationSummary.lastMessage?.[0] || undefined;
-
-                    // Use the enhanced data from useChat hook
                     const currentUserId =
                       identity?.getPrincipal().toString() || "";
                     const otherUserId = conversationSummary.otherUserId;
                     const otherUserName =
                       conversationSummary.otherUserName ||
                       `User ${otherUserId.slice(0, 8)}...`;
-                    // Use otherUserImageUrl (profile image) if available, fallback to default-provider image
                     const otherUserImageUrl =
                       conversationSummary.otherUserImageUrl &&
                       conversationSummary.otherUserImageUrl !== ""
                         ? conversationSummary.otherUserImageUrl
                         : "";
-
-                    // Get unread count for current user (unreadCount is now an object)
                     const unreadCount =
                       conversation.unreadCount[currentUserId] || 0;
-
-                    // Format timestamp (accepts string or Date)
                     const formatTimestamp = (dateStr?: string | Date) => {
                       if (!dateStr) return "";
                       const date =

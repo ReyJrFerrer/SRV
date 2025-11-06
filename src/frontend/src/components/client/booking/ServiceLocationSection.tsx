@@ -1,6 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useLocationStore } from "../../../store/locationStore";
-import LocationMapPicker from "../../common/GMapFunctions/LocationMapPicker";
+const LocationMapPicker = React.lazy(
+  () => import("../../common/GMapFunctions/LocationMapPicker"),
+);
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
@@ -249,28 +251,36 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {mapMode === "custom" && !showFallbackForms && (
         <div className="mb-4">
-          <LocationMapPicker
-            value={
-              mapLocation
-                ? { ...mapLocation, address: mapLocation.address ?? "" }
-                : null
+          <Suspense
+            fallback={
+              <div className="flex h-72 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">
+                Loading map…
+              </div>
             }
-            onChange={(loc: any) => {
-              setMapLocation(loc);
-              const preciseAddressForDB =
-                loc.formatted_address || loc.address || "";
-              const placeName = loc.rawName;
-              let displayAddress = preciseAddressForDB;
-              if (placeName && !preciseAddressForDB.startsWith(placeName)) {
-                displayAddress = `${placeName}, ${preciseAddressForDB}`;
+          >
+            <LocationMapPicker
+              value={
+                mapLocation
+                  ? { ...mapLocation, address: mapLocation.address ?? "" }
+                  : null
               }
-              setMapPreciseAddress(preciseAddressForDB);
-              setMapDisplayAddress(displayAddress);
-            }}
-            persistKey="booking:lastLocation"
-            highlight={highlight}
-            label="Pin / Search Location"
-          />
+              onChange={(loc: any) => {
+                setMapLocation(loc);
+                const preciseAddressForDB =
+                  loc.formatted_address || loc.address || "";
+                const placeName = loc.rawName;
+                let displayAddress = preciseAddressForDB;
+                if (placeName && !preciseAddressForDB.startsWith(placeName)) {
+                  displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                }
+                setMapPreciseAddress(preciseAddressForDB);
+                setMapDisplayAddress(displayAddress);
+              }}
+              persistKey="booking:lastLocation"
+              highlight={highlight}
+              label="Pin / Search Location"
+            />
+          </Suspense>
           {(mapDisplayAddress || mapPreciseAddress) && (
             <div className="mt-2 space-y-1">
               {mapDisplayAddress && (

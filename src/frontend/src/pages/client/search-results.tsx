@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -10,8 +11,6 @@ import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
-
-// Hooks
 import {
   useAllServicesWithProviders,
   EnrichedService,
@@ -25,25 +24,20 @@ const SearchResultsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [results, setResults] = useState<EnrichedService[]>([]);
 
-  // --- State for sorting and filtering ---
-  const [showFilters, setShowFilters] = useState(false); // NEW: Toggle for filter visibility
-  // Pending (unapplied) filter state
+  const [showFilters, setShowFilters] = useState(false);
   const [pendingSortBy, setPendingSortBy] = useState("rating");
   const [pendingMaxPrice, setPendingMaxPrice] = useState(0);
   const [pendingMinRating, setPendingMinRating] = useState(0);
-  // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
   const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
-  // Sync pending state with applied state when opening filter panel
   useEffect(() => {
     if (showFilters) {
       setPendingSortBy(sortBy);
       setPendingMaxPrice(maxPrice);
       setPendingMinRating(minRating);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showFilters]);
 
   const {
@@ -92,7 +86,6 @@ const SearchResultsPage: React.FC = () => {
       : "SRV | Search Results";
   }, [searchQuery]);
 
-  // --- REFACTORED: Memoized sorting and filtering logic ---
   const sortedAndFilteredResults = useMemo(() => {
     const safeResults = results.map((service) => ({
       ...service,
@@ -179,7 +172,7 @@ const SearchResultsPage: React.FC = () => {
           </div>
         )}
 
-        {/* --- Collapsible Filter and Sort Controls --- */}
+        {/* SECTION: Filter and sort controls */}
         {showFilters && !loading && !error && results.length > 0 && (
           <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -226,7 +219,6 @@ const SearchResultsPage: React.FC = () => {
                   className="mt-2 block w-full"
                 />
               </div>
-              {/* Apply Filters button in the same row */}
               <div className="flex justify-end">
                 <button
                   onClick={() => {

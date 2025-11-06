@@ -1,24 +1,19 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
-
-// Components
 import SearchBar from "../../../components/client/SearchBar";
 import ServiceListItem from "../../../components/client/home page/ServiceListingCard";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
-
-// Hooks
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
 } from "../../../hooks/serviceInformation";
-
-// Services & Utilities
 import serviceCanisterService from "../../../services/serviceCanisterService";
 import { getCategoryIcon } from "../../../utils/serviceHelpers";
 
@@ -42,25 +37,20 @@ const CategoryPage: React.FC = () => {
   const [category, setCategory] = useState<CategoryState | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // --- NEW: State for sorting and filtering ---
   const [showFilters, setShowFilters] = useState(false);
-  // Pending (unapplied) filter state
   const [pendingSortBy, setPendingSortBy] = useState("rating");
   const [pendingMaxPrice, setPendingMaxPrice] = useState(10000);
   const [pendingMinRating, setPendingMinRating] = useState(0);
-  // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
   const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
-  // Sync pending state with applied state when opening filter panel
   useEffect(() => {
     if (showFilters) {
       setPendingSortBy(sortBy);
       setPendingMaxPrice(maxPrice);
       setPendingMinRating(minRating);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showFilters]);
 
   const categoryId = category?.id || "";
@@ -121,25 +111,19 @@ const CategoryPage: React.FC = () => {
 
   const handleSearch = (term: string) => setSearchTerm(term);
 
-  // --- REFACTORED: Memoized sorting and filtering logic ---
   const sortedAndFilteredServices = useMemo(() => {
-    // 1. Filter by search term first
     let processedServices = services.filter(
       (service) =>
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-
-    // 2. Apply advanced filters (using applied state)
     processedServices = processedServices.filter((service) => {
       const safeRating = service.rating?.average ?? 0;
       const priceMatch = service.price.amount <= maxPrice;
       const ratingMatch = safeRating >= minRating;
       return priceMatch && ratingMatch;
     });
-
-    // 3. Apply sorting
     return processedServices.sort((a, b) => {
       const safeRatingA = a.rating?.average ?? 0;
       const safeRatingB = b.rating?.average ?? 0;
@@ -192,9 +176,9 @@ const CategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Services List */}
+      {/* SECTION: Services list and filters */}
       <div className="p-2 sm:p-4">
-        {/* --- Collapsible Filter Panel --- */}
+        {/* SECTION: Collapsible filter panel */}
         {showFilters && (
           <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">

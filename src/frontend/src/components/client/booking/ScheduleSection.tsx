@@ -1,6 +1,10 @@
-import React from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import React, { Suspense } from "react";
+// Lazy-load react-datepicker and its CSS only when needed
+const LazyDatePicker = React.lazy(async () => {
+  const mod = await import("react-datepicker");
+  await import("react-datepicker/dist/react-datepicker.css");
+  return { default: mod.default } as { default: typeof mod.default };
+});
 
 type TimeSlot = {
   timeSlot: { startTime: string; endTime: string };
@@ -195,96 +199,104 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
       {bookingOption === "scheduled" && (
         <div className="space-y-4">
           <div className="booking-calendar-wrapper">
-            <DatePicker
-              selected={selectedDate}
-              onChange={onDateChange}
-              minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
-              filterDate={(date: Date) => {
-                const dayName = dayIndexToName(date.getDay());
-                return serviceWeeklySchedule
-                  ? serviceWeeklySchedule.some(
-                      (s) => s.day === dayName && s.availability.isAvailable,
-                    )
-                  : false;
-              }}
-              inline
-              renderCustomHeader={({
-                date,
-                decreaseMonth,
-                increaseMonth,
-                prevMonthButtonDisabled,
-                nextMonthButtonDisabled,
-              }) => (
-                <div className="flex items-center justify-between rounded-t-lg bg-gray-100 px-2 py-2">
-                  <button
-                    onClick={decreaseMonth}
-                    disabled={prevMonthButtonDisabled}
-                    className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
-                    type="button"
-                    aria-label="Previous Month"
-                  >
-                    <svg
-                      className="h-5 w-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                  </button>
-                  <span className="text-base font-semibold text-gray-800">
-                    {date.toLocaleString("default", { month: "long" })}{" "}
-                    {date.getFullYear()}
-                  </span>
-                  <button
-                    onClick={increaseMonth}
-                    disabled={nextMonthButtonDisabled}
-                    className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
-                    type="button"
-                    aria-label="Next Month"
-                  >
-                    <svg
-                      className="h-5 w-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
+            <Suspense
+              fallback={
+                <div className="flex h-64 items-center justify-center text-sm text-gray-500">
+                  Loading calendar...
                 </div>
-              )}
-              dayClassName={(date: Date) => {
-                const isSelected =
-                  selectedDate &&
-                  date.toDateString() === selectedDate.toDateString();
-                const dayName = dayIndexToName(date.getDay());
-                const isAvailable = serviceWeeklySchedule
-                  ? serviceWeeklySchedule.some(
-                      (s) => s.day === dayName && s.availability.isAvailable,
-                    )
-                  : false;
-                return [
-                  "transition-colors duration-150",
-                  isSelected ? "!bg-blue-600 !text-white !font-bold" : "",
-                  isAvailable
-                    ? "hover:bg-blue-100 cursor-pointer"
-                    : "opacity-40 cursor-not-allowed",
-                ].join(" ");
-              }}
-              calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
-              wrapperClassName="w-full"
-            />
+              }
+            >
+              <LazyDatePicker
+                selected={selectedDate}
+                onChange={onDateChange}
+                minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
+                filterDate={(date: Date) => {
+                  const dayName = dayIndexToName(date.getDay());
+                  return serviceWeeklySchedule
+                    ? serviceWeeklySchedule.some(
+                        (s) => s.day === dayName && s.availability.isAvailable,
+                      )
+                    : false;
+                }}
+                inline
+                renderCustomHeader={({
+                  date,
+                  decreaseMonth,
+                  increaseMonth,
+                  prevMonthButtonDisabled,
+                  nextMonthButtonDisabled,
+                }) => (
+                  <div className="flex items-center justify-between rounded-t-lg bg-gray-100 px-2 py-2">
+                    <button
+                      onClick={decreaseMonth}
+                      disabled={prevMonthButtonDisabled}
+                      className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                      type="button"
+                      aria-label="Previous Month"
+                    >
+                      <svg
+                        className="h-5 w-5 text-gray-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                    <span className="text-base font-semibold text-gray-800">
+                      {date.toLocaleString("default", { month: "long" })}{" "}
+                      {date.getFullYear()}
+                    </span>
+                    <button
+                      onClick={increaseMonth}
+                      disabled={nextMonthButtonDisabled}
+                      className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                      type="button"
+                      aria-label="Next Month"
+                    >
+                      <svg
+                        className="h-5 w-5 text-gray-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                dayClassName={(date: Date) => {
+                  const isSelected =
+                    selectedDate &&
+                    date.toDateString() === selectedDate.toDateString();
+                  const dayName = dayIndexToName(date.getDay());
+                  const isAvailable = serviceWeeklySchedule
+                    ? serviceWeeklySchedule.some(
+                        (s) => s.day === dayName && s.availability.isAvailable,
+                      )
+                    : false;
+                  return [
+                    "transition-colors duration-150",
+                    isSelected ? "!bg-blue-600 !text-white !font-bold" : "",
+                    isAvailable
+                      ? "hover:bg-blue-100 cursor-pointer"
+                      : "opacity-40 cursor-not-allowed",
+                  ].join(" ");
+                }}
+                calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
+                wrapperClassName="w-full"
+              />
+            </Suspense>
           </div>
           {selectedDate && (
             <div>

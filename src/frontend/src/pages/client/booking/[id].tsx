@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import { useUserImage } from "../../../hooks/useMediaLoader";
@@ -141,7 +142,6 @@ const BookingDetailsPage: React.FC = () => {
       const updatedBooking = bookings.find((b) => b.id === bookingId);
       if (updatedBooking) setSpecificBooking(updatedBooking);
     } catch (error) {
-      console.error("Error updating booking status:", error);
       throw error;
     }
   };
@@ -269,7 +269,6 @@ const BookingDetailsPage: React.FC = () => {
   } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
-  // Determine loading state
   const isLoading = hookLoading || localLoading || loadingStats;
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">

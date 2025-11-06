@@ -153,7 +153,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Skip chrome-extension and other non-http requests
+  // Skip non-http requests
   if (!event.request.url.startsWith("http")) {
     return;
   }
@@ -168,97 +168,98 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Bypass third-party requests that can be blocked (e.g., Google Maps telemetry) so we don't
-  // intercept them and cause console noise when blocked by the network or extensions.
+  // Bypass third-party Google Maps requests to avoid interference
   try {
     const reqUrl = new URL(event.request.url);
-    const isThirdParty = reqUrl.origin !== self.location.origin;
     const isGoogleMapsDomain =
       reqUrl.hostname === "maps.googleapis.com" ||
       reqUrl.hostname === "maps.gstatic.com";
     const isMapsTelemetry =
       isGoogleMapsDomain &&
       reqUrl.pathname.includes("/maps/api/js/QuotaService.RecordEvent");
-
     if (isMapsTelemetry || isGoogleMapsDomain) {
-      // Let the browser handle it (no caching, no SW respondWith)
       return;
     }
-  } catch (_) {
-    // If URL parsing fails, continue to default handler below
-  }
+  } catch (_) {}
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached response if found
-      if (response) {
-        return response;
-      }
+  const reqUrl = new URL(event.request.url);
+  const sameOrigin = reqUrl.origin === self.location.origin;
 
-      // Clone the request because it's a stream
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest)
-        .then((response) => {
-          // Check if valid response
+  const cacheFirst = () =>
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
           if (
-            !response ||
-            response.status !== 200 ||
-            response.type !== "basic"
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
           ) {
-            return response;
-          }
-
-          // Clone the response because it's a stream
-          const responseToCache = response.clone();
-
-          // Add successful responses to cache (with browser-specific handling)
-          caches.open(CACHE_NAME).then((cache) => {
-            // Safari sometimes has issues with certain cache operations
-            try {
-              cache.put(event.request, responseToCache);
-            } catch (cacheError) {
-              if (browser.isSafari) {
-                //console.warn(
-                //  "⚠️ SW: Safari cache put failed (expected):",
-                //  cacheError,
-                //);
-              } else {
-                //console.error("❌ SW: Cache put failed:", cacheError);
-              }
-            }
-          });
-
-          return response;
-        })
-        .catch((error) => {
-          //console.error("❌ SW: Fetch failed:", error);
-          // For navigation requests return an offline fallback if we have it
-          if (event.request.mode === "navigate") {
-            return caches.match("/").then((fallbackResponse) => {
-              if (fallbackResponse) return fallbackResponse;
-              return new Response(
-                "App is offline. Please check your connection.",
-                {
-                  status: 503,
-                  headers: { "Content-Type": "text/plain" },
-                },
-              );
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              try {
+                cache.put(event.request, copy);
+              } catch (_) {}
             });
           }
-          // For third-party or opaque requests, avoid rejecting the promise to silence console noise
-          try {
-            const reqUrl = new URL(event.request.url);
-            if (reqUrl.origin !== self.location.origin) {
-              // Return an empty 204 to satisfy callers expecting a response (e.g., telemetry beacons)
-              return new Response(null, { status: 204 });
-            }
-          } catch (_) {}
-          // Otherwise, return a generic 504 response
-          return new Response("Network error", { status: 504 });
+          return response;
         });
-    }),
-  );
+      }),
+    );
+
+  const networkFirst = () =>
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
+          ) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              try {
+                cache.put(event.request, copy);
+              } catch (_) {}
+            });
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then((r) => r || caches.match("/")),
+        ),
+    );
+
+  // Navigations (HTML): prefer fresh content, fallback to cache
+  if (event.request.mode === "navigate") {
+    return networkFirst();
+  }
+
+  if (sameOrigin) {
+    const pathname = reqUrl.pathname;
+
+    // Service workers: always fetch latest
+    if (pathname === "/sw.js" || pathname === "/firebase-messaging-sw.js") {
+      return event.respondWith(fetch(event.request));
+    }
+
+    // Built assets (JS/CSS)
+    if (
+      pathname.startsWith("/assets/") ||
+      pathname.endsWith(".js") ||
+      pathname.endsWith(".css")
+    ) {
+      return cacheFirst();
+    }
+
+    // Fonts and images
+    if (pathname.startsWith("/fonts/") || pathname.startsWith("/images/")) {
+      return cacheFirst();
+    }
+  }
+
+  // Default: cache-first for other GETs
+  return cacheFirst();
 });
 
 // Notification click event handler
