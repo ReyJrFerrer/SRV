@@ -33,4 +33,3 @@ export const ImageAttachmentModal: React.FC<ImageAttachmentModalProps> = ({
     </div>
   </div>
 );
-

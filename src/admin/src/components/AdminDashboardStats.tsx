@@ -89,7 +89,10 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     },
     {
       title: "App Feedback",
-      value: stats.appFeedbackAverageRating > 0 ? stats.appFeedbackAverageRating.toFixed(1) : "0.0",
+      value:
+        stats.appFeedbackAverageRating > 0
+          ? stats.appFeedbackAverageRating.toFixed(1)
+          : "0.0",
       subtitle: `${formatNumber(stats.appFeedbackCount)} feedback${stats.appFeedbackCount !== 1 ? "s" : ""}`,
       icon: StarIcon,
     },

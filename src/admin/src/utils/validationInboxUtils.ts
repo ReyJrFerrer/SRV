@@ -67,8 +67,7 @@ export const extractMediaIdFromUrl = async (
     }
     // Handle media:// format
     else if (certificateUrl.startsWith("media://")) {
-      mediaId =
-        certificateUrl.replace("media://", "").split("/").pop() || null;
+      mediaId = certificateUrl.replace("media://", "").split("/").pop() || null;
     }
 
     // If extraction failed, try querying Firestore by URL as fallback
@@ -86,29 +85,18 @@ export const extractMediaIdFromUrl = async (
         );
         const firestore = getFirebaseFirestore();
         const mediaCollection = collection(firestore, "media");
-        const q = query(
-          mediaCollection,
-          where("url", "==", certificateUrl),
-        );
+        const q = query(mediaCollection, where("url", "==", certificateUrl));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
           mediaId = querySnapshot.docs[0].id;
           console.log("Found mediaId by URL query:", mediaId);
         } else {
-          console.error(
-            "No media document found with URL:",
-            certificateUrl,
-          );
-          throw new Error(
-            "Could not find media document for certificate URL",
-          );
+          console.error("No media document found with URL:", certificateUrl);
+          throw new Error("Could not find media document for certificate URL");
         }
       } catch (queryError) {
-        console.error(
-          "Error querying Firestore for media by URL:",
-          queryError,
-        );
+        console.error("Error querying Firestore for media by URL:", queryError);
         throw new Error(
           `Could not extract or find media ID from certificate URL: ${queryError instanceof Error ? queryError.message : String(queryError)}`,
         );
@@ -214,7 +202,9 @@ export const addCertificateToServices = (
 };
 
 // Extract media ID from certificate URL (simple version for undo)
-export const extractMediaIdFromUrlSimple = (certificateUrl: string): string | null => {
+export const extractMediaIdFromUrlSimple = (
+  certificateUrl: string,
+): string | null => {
   return certificateUrl.split("/media/")[1] || null;
 };
 
@@ -242,4 +232,3 @@ export const createClosedMediaModalState = () => {
     error: null,
   };
 };
-

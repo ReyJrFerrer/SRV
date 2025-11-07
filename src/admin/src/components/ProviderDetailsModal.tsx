@@ -51,7 +51,10 @@ interface ProviderDetailsModalProps {
   formatCurrency: (amount: number) => string;
   formatDate?: (date: Date) => string;
   getStatusColor?: (overdueOrders: number, pendingOrders: number) => string;
-  getStatusIcon?: (overdueOrders: number, pendingOrders: number) => React.ReactNode;
+  getStatusIcon?: (
+    overdueOrders: number,
+    pendingOrders: number,
+  ) => React.ReactNode;
   getStatusText?: (overdueOrders: number, pendingOrders: number) => string;
 }
 
@@ -74,34 +77,43 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
   if (!isOpen || !provider) return null;
 
   // Default formatDate if not provided
-  const defaultFormatDate = formatDate || ((date: Date) => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  });
+  const defaultFormatDate =
+    formatDate ||
+    ((date: Date) => {
+      return new Intl.DateTimeFormat("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    });
 
   // Default status helpers if not provided
-  const defaultGetStatusColor = getStatusColor || ((overdueOrders: number, pendingOrders: number) => {
-    if (overdueOrders > 0) return "bg-red-100 text-red-800";
-    if (pendingOrders > 0) return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
-  });
+  const defaultGetStatusColor =
+    getStatusColor ||
+    ((overdueOrders: number, pendingOrders: number) => {
+      if (overdueOrders > 0) return "bg-red-100 text-red-800";
+      if (pendingOrders > 0) return "bg-yellow-100 text-yellow-800";
+      return "bg-green-100 text-green-800";
+    });
 
-  const defaultGetStatusIcon = getStatusIcon || ((overdueOrders: number, pendingOrders: number) => {
-    if (overdueOrders > 0) return <ExclamationTriangleIcon className="h-4 w-4" />;
-    if (pendingOrders > 0) return <ClockIcon className="h-4 w-4" />;
-    return <CheckCircleIcon className="h-4 w-4" />;
-  });
+  const defaultGetStatusIcon =
+    getStatusIcon ||
+    ((overdueOrders: number, pendingOrders: number) => {
+      if (overdueOrders > 0)
+        return <ExclamationTriangleIcon className="h-4 w-4" />;
+      if (pendingOrders > 0) return <ClockIcon className="h-4 w-4" />;
+      return <CheckCircleIcon className="h-4 w-4" />;
+    });
 
-  const defaultGetStatusText = getStatusText || ((overdueOrders: number, pendingOrders: number) => {
-    if (overdueOrders > 0) return `${overdueOrders} overdue`;
-    if (pendingOrders > 0) return `${pendingOrders} pending`;
-    return "All clear";
-  });
+  const defaultGetStatusText =
+    getStatusText ||
+    ((overdueOrders: number, pendingOrders: number) => {
+      if (overdueOrders > 0) return `${overdueOrders} overdue`;
+      if (pendingOrders > 0) return `${pendingOrders} pending`;
+      return "All clear";
+    });
 
   return (
     <div
@@ -152,15 +164,21 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                     {provider.phone}
                   </span>
                   <span className="text-gray-400">•</span>
-                      <span className="font-mono text-gray-700">{provider.id}</span>
+                  <span className="font-mono text-gray-700">{provider.id}</span>
                   {typeof provider.overdueOrders === "number" &&
                     typeof provider.pendingOrders === "number" && (
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${defaultGetStatusColor(provider.overdueOrders, provider.pendingOrders)}`}
                       >
-                        {defaultGetStatusIcon(provider.overdueOrders, provider.pendingOrders)}
+                        {defaultGetStatusIcon(
+                          provider.overdueOrders,
+                          provider.pendingOrders,
+                        )}
                         <span className="ml-1">
-                          {defaultGetStatusText(provider.overdueOrders, provider.pendingOrders)}
+                          {defaultGetStatusText(
+                            provider.overdueOrders,
+                            provider.pendingOrders,
+                          )}
                         </span>
                       </span>
                     )}
@@ -201,7 +219,7 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
           )}
 
           {/* Content */}
-          {(!onModeChange || analyticsMode === "details") ? (
+          {!onModeChange || analyticsMode === "details" ? (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {/* Provider Info */}
               <div className="rounded-lg border border-blue-50 bg-white p-5">
@@ -211,15 +229,21 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Name:</span>
-                    <span className="font-medium text-gray-900">{provider.name}</span>
+                    <span className="font-medium text-gray-900">
+                      {provider.name}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Phone:</span>
-                    <span className="font-medium text-gray-900">{provider.phone}</span>
+                    <span className="font-medium text-gray-900">
+                      {provider.phone}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Provider ID:</span>
-                    <span className="font-mono text-gray-900">{provider.id}</span>
+                    <span className="font-mono text-gray-900">
+                      {provider.id}
+                    </span>
                   </div>
                   {provider.lastActivity && (
                     <div className="flex justify-between">
@@ -260,7 +284,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                   )}
                   {provider.outstandingBalance !== undefined && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Outstanding Balance:</span>
+                      <span className="text-gray-500">
+                        Outstanding Balance:
+                      </span>
                       <span className="font-medium text-gray-900">
                         {formatCurrency(provider.outstandingBalance)}
                       </span>
@@ -276,7 +302,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                   )}
                   {provider.averageOrderValue !== undefined && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Average Order Value:</span>
+                      <span className="text-gray-500">
+                        Average Order Value:
+                      </span>
                       <span className="font-medium text-gray-900">
                         {formatCurrency(provider.averageOrderValue)}
                       </span>
@@ -293,7 +321,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                 <div className="space-y-2 text-sm">
                   {provider.totalOrdersCompleted !== undefined && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Total Bookings Completed:</span>
+                      <span className="text-gray-500">
+                        Total Bookings Completed:
+                      </span>
                       <span className="font-medium text-gray-900">
                         {provider.totalOrdersCompleted}
                       </span>
@@ -328,7 +358,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Bookings Awaiting Payment:</span>
+                      <span className="text-gray-500">
+                        Bookings Awaiting Payment:
+                      </span>
                       <span className="font-medium text-gray-900">
                         {providerDashboard.ordersAwaitingPayment?.length || 0}
                       </span>
@@ -341,25 +373,27 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                         {providerDashboard.ordersPendingValidation?.length || 0}
                       </span>
                     </div>
-                        {providerDashboard.nextDeadline && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Next Deadline:</span>
-                            <span className="font-medium text-gray-900">
-                              {defaultFormatDate(
-                                typeof providerDashboard.nextDeadline === "string"
-                                  ? new Date(providerDashboard.nextDeadline)
-                                  : providerDashboard.nextDeadline,
-                              )}
-                            </span>
-                          </div>
-                        )}
+                    {providerDashboard.nextDeadline && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Next Deadline:</span>
+                        <span className="font-medium text-gray-900">
+                          {defaultFormatDate(
+                            typeof providerDashboard.nextDeadline === "string"
+                              ? new Date(providerDashboard.nextDeadline)
+                              : providerDashboard.nextDeadline,
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           ) : (
             <div>
-              {analyticsLoading || !providerAnalytics || Object.keys(providerAnalytics).length === 0 ? (
+              {analyticsLoading ||
+              !providerAnalytics ||
+              Object.keys(providerAnalytics).length === 0 ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                   <p className="mt-4 text-sm text-gray-500">
@@ -383,7 +417,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                       )}
                       {providerAnalytics.settledOrders !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Settled Bookings:</span>
+                          <span className="text-gray-500">
+                            Settled Bookings:
+                          </span>
                           <span className="font-medium text-gray-900">
                             {providerAnalytics.settledOrders}
                           </span>
@@ -391,7 +427,9 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                       )}
                       {providerAnalytics.pendingOrders !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Pending Bookings:</span>
+                          <span className="text-gray-500">
+                            Pending Bookings:
+                          </span>
                           <span className="font-medium text-gray-900">
                             {providerAnalytics.pendingOrders}
                           </span>
@@ -406,25 +444,37 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
                     <div className="space-y-2 text-sm">
                       {providerAnalytics.totalCommissionPaid !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Total Commission Paid:</span>
+                          <span className="text-gray-500">
+                            Total Commission Paid:
+                          </span>
                           <span className="font-medium text-gray-900">
-                            {formatCurrency(providerAnalytics.totalCommissionPaid)}
+                            {formatCurrency(
+                              providerAnalytics.totalCommissionPaid,
+                            )}
                           </span>
                         </div>
                       )}
                       {providerAnalytics.totalServiceAmount !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Total Service Amount:</span>
+                          <span className="text-gray-500">
+                            Total Service Amount:
+                          </span>
                           <span className="font-medium text-gray-900">
-                            {formatCurrency(providerAnalytics.totalServiceAmount)}
+                            {formatCurrency(
+                              providerAnalytics.totalServiceAmount,
+                            )}
                           </span>
                         </div>
                       )}
                       {providerAnalytics.averageOrderValue !== undefined && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Average Booking Value:</span>
+                          <span className="text-gray-500">
+                            Average Booking Value:
+                          </span>
                           <span className="font-medium text-gray-900">
-                            {formatCurrency(providerAnalytics.averageOrderValue)}
+                            {formatCurrency(
+                              providerAnalytics.averageOrderValue,
+                            )}
                           </span>
                         </div>
                       )}

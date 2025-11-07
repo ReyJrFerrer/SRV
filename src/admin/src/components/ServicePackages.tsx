@@ -48,8 +48,7 @@ export const ServicePackages: React.FC<ServicePackagesProps> = ({
                     + ₱{(pkg.commissionFee || 0).toFixed(2)} commission
                   </div>
                   <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
-                    ₱
-                    {((pkg.price || 0) + (pkg.commissionFee || 0)).toFixed(2)}{" "}
+                    ₱{((pkg.price || 0) + (pkg.commissionFee || 0)).toFixed(2)}{" "}
                     total
                   </div>
                 </div>
@@ -66,4 +65,3 @@ export const ServicePackages: React.FC<ServicePackagesProps> = ({
     </section>
   );
 };
-

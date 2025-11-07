@@ -41,13 +41,14 @@ export const LocationAvailability: React.FC<LocationAvailabilityProps> = ({
     "Saturday",
   ];
 
-  const availableDays = weeklySchedule?.filter((day) => {
-    const availability = day.availability || {
-      isAvailable: false,
-      slots: [],
-    };
-    return availability.isAvailable;
-  }) || [];
+  const availableDays =
+    weeklySchedule?.filter((day) => {
+      const availability = day.availability || {
+        isAvailable: false,
+        slots: [],
+      };
+      return availability.isAvailable;
+    }) || [];
 
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
@@ -121,4 +122,3 @@ export const LocationAvailability: React.FC<LocationAvailabilityProps> = ({
     </section>
   );
 };
-

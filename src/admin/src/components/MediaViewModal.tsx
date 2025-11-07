@@ -153,4 +153,3 @@ export const MediaViewModal: React.FC<MediaViewModalProps> = ({
     </div>
   );
 };
-

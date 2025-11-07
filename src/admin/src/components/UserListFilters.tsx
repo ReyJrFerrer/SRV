@@ -109,4 +109,3 @@ export const UserListFilters: React.FC<UserListFiltersProps> = ({
     </div>
   );
 };
-

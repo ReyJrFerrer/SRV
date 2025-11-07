@@ -45,4 +45,3 @@ export const TicketStatusActions: React.FC<TicketStatusActionsProps> = ({
     </div>
   );
 };
-

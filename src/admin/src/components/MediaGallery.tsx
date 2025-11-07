@@ -1,5 +1,9 @@
 import React from "react";
-import { PhotoIcon, AcademicCapIcon, CameraIcon } from "@heroicons/react/24/solid";
+import {
+  PhotoIcon,
+  AcademicCapIcon,
+  CameraIcon,
+} from "@heroicons/react/24/solid";
 
 export interface MediaItem {
   dataUrl?: string | null;
@@ -92,4 +96,3 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
     </section>
   );
 };
-

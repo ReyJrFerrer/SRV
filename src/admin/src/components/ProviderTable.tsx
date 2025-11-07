@@ -26,7 +26,10 @@ interface ProviderTableProps {
   formatCurrency: (amount: number) => string;
   formatRelativeTime: (date: Date) => string;
   getStatusColor: (overdueOrders: number, pendingOrders: number) => string;
-  getStatusIcon: (overdueOrders: number, pendingOrders: number) => React.ReactNode;
+  getStatusIcon: (
+    overdueOrders: number,
+    pendingOrders: number,
+  ) => React.ReactNode;
   getStatusText: (overdueOrders: number, pendingOrders: number) => string;
   isMobileViewport: boolean;
   onViewProvider: (provider: Provider) => void;
@@ -198,4 +201,3 @@ export const ProviderTable: React.FC<ProviderTableProps> = ({
     </div>
   );
 };
-

@@ -91,11 +91,7 @@ export const AdminHomePage: React.FC = () => {
   // Charts: period filter
   const [period, setPeriod] = useState<Period>("7d");
   const lineData = useMemo(() => {
-    return generateBookingsChartData(
-      bookings || [],
-      totalBookings,
-      period,
-    );
+    return generateBookingsChartData(bookings || [], totalBookings, period);
   }, [bookings, totalBookings, period]);
 
   // Revenue per Day chart data with vertical grids
@@ -106,12 +102,7 @@ export const AdminHomePage: React.FC = () => {
       systemStats,
       period,
     );
-  }, [
-    bookings,
-    commissionTransactions,
-    systemStats,
-    period,
-  ]);
+  }, [bookings, commissionTransactions, systemStats, period]);
 
   // Load services with certificates for pending validations count
   useEffect(() => {

@@ -9,8 +9,7 @@ export default function ScrollToTop() {
     if ("scrollRestoration" in window.history) {
       try {
         window.history.scrollRestoration = "manual";
-      } catch {
-      }
+      } catch {}
     }
   }, []);
 

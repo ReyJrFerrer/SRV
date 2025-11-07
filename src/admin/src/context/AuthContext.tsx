@@ -254,9 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               const result = await signInWithInternetIdentity(principal);
               setFirebaseUser(result.user);
 
-              console.log(
-                "[Admin] Successfully authenticated with Firebase!",
-              );
+              console.log("[Admin] Successfully authenticated with Firebase!");
               console.log("[Admin] Firebase UID:", result.user.uid);
 
               // Update user active status to true on successful login

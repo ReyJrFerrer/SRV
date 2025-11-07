@@ -395,4 +395,3 @@ export const UserListTable: React.FC<UserListTableProps> = ({
     </div>
   );
 };
-

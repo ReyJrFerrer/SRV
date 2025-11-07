@@ -25,4 +25,3 @@ export const ServiceDetailsHeader: React.FC<ServiceDetailsHeaderProps> = ({
     </header>
   );
 };
-

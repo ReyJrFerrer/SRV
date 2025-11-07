@@ -123,8 +123,7 @@ export const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
                   </Pie>
                   <Tooltip
                     formatter={
-                      tooltipFormatter ||
-                      ((v: number) => v.toLocaleString())
+                      tooltipFormatter || ((v: number) => v.toLocaleString())
                     }
                     contentStyle={{
                       backgroundColor: "#fff",
@@ -163,4 +162,3 @@ export const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
     </div>
   );
 };
-

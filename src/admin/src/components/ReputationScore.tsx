@@ -51,4 +51,3 @@ export const ReputationScore: React.FC<ReputationScoreProps> = ({ score }) => {
     </div>
   );
 };
-

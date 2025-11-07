@@ -149,7 +149,6 @@ const getCategoryColor = (category: string) => {
   }
 };
 
-
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

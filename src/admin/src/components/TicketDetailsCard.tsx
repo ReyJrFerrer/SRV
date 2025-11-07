@@ -59,8 +59,7 @@ export const TicketDetailsCard: React.FC<TicketDetailsCardProps> = ({
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {ticket.attachments.map((attachment, index) => {
                 const displayUrl = imageDataUrls[attachment] || "";
-                const isLoading =
-                  loadingImages && !imageDataUrls[attachment];
+                const isLoading = loadingImages && !imageDataUrls[attachment];
 
                 return isLoading ? (
                   <div
@@ -81,14 +80,11 @@ export const TicketDetailsCard: React.FC<TicketDetailsCardProps> = ({
                       className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        console.error(
-                          `❌ Image ${index + 1} failed to load:`,
-                          {
-                            attachment,
-                            displayUrl,
-                            src: img.src,
-                          },
-                        );
+                        console.error(`❌ Image ${index + 1} failed to load:`, {
+                          attachment,
+                          displayUrl,
+                          src: img.src,
+                        });
                       }}
                     />
                     <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20"></div>
@@ -115,4 +111,3 @@ export const TicketDetailsCard: React.FC<TicketDetailsCardProps> = ({
     </div>
   );
 };
-

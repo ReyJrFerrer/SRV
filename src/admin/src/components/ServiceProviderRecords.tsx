@@ -143,4 +143,3 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
     </div>
   );
 };
-

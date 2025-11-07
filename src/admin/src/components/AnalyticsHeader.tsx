@@ -63,4 +63,3 @@ export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
     </>
   );
 };
-

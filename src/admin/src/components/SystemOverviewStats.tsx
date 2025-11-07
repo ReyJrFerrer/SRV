@@ -106,4 +106,3 @@ export const SystemOverviewStats: React.FC<SystemOverviewStatsProps> = ({
     </div>
   );
 };
-

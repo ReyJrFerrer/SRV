@@ -66,4 +66,3 @@ export const ValidationInboxHeader: React.FC<ValidationInboxHeaderProps> = ({
     </>
   );
 };
-

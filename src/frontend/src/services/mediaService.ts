@@ -62,7 +62,10 @@ export const extractMediaIdFromUrl = (url: string): string | null => {
     }
 
     // Handle Firebase Storage production URLs
-    if (url.includes("storage.googleapis.com") || url.includes("firebasestorage.googleapis.com")) {
+    if (
+      url.includes("storage.googleapis.com") ||
+      url.includes("firebasestorage.googleapis.com")
+    ) {
       const parts = url.split("/");
       const filename = parts[parts.length - 1].split("?")[0];
       const mediaId = filename.split("_")[0];

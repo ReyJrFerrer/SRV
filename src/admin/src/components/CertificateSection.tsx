@@ -76,4 +76,3 @@ export const CertificateSection: React.FC<CertificateSectionProps> = ({
     </div>
   );
 };
-

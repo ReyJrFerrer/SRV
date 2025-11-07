@@ -5,7 +5,10 @@ import {
   StarIcon as StarSolid,
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
-import { getAllFeedback, getFeedbackStats } from "../services/adminServiceCanister";
+import {
+  getAllFeedback,
+  getFeedbackStats,
+} from "../services/adminServiceCanister";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -392,4 +395,3 @@ const AppFeedbackPage: React.FC = () => {
 };
 
 export default AppFeedbackPage;
-

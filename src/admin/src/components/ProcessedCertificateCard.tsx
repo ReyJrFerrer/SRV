@@ -55,7 +55,11 @@ export const ProcessedCertificateCard: React.FC<
     <div
       className={`flex flex-col gap-2 border p-3 ${borderColor} rounded-lg ${bgColor} relative cursor-pointer shadow-sm transition-all hover:shadow-md`}
       onClick={() =>
-        onCardClick?.(certificate.service, certificate.certificateIndex, certificate.certificateUrl)
+        onCardClick?.(
+          certificate.service,
+          certificate.certificateIndex,
+          certificate.certificateUrl,
+        )
       }
     >
       {/* Undo button */}
@@ -123,4 +127,3 @@ export const ProcessedCertificateCard: React.FC<
     </div>
   );
 };
-

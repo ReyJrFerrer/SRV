@@ -111,4 +111,3 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
     </>
   );
 };
-

@@ -50,4 +50,3 @@ export const TicketDetailsHeader: React.FC<TicketDetailsHeaderProps> = ({
     </header>
   );
 };
-

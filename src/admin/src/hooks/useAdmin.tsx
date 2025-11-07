@@ -345,10 +345,7 @@ export const useAdmin = (): UseAdminReturn => {
           (error?.code && String(error.code).includes("internal"));
 
         if (!isNetworkError) {
-          console.error(
-            "[refreshBookings] Error refreshing bookings:",
-            error,
-          );
+          console.error("[refreshBookings] Error refreshing bookings:", error);
           handleError(error, "Failed to refresh bookings");
         }
         // Data gracefully falls back to systemStats, so no action needed

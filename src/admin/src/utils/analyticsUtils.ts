@@ -73,17 +73,15 @@ export const isClient = (user: any): boolean => {
 // Check if user has a valid role (Provider, ServiceProvider, or Client)
 export const hasValidRole = (user: any): boolean => {
   if (!user.activeRole) return false;
-  return (
-    typeof user.activeRole === "string"
-      ? user.activeRole === "ServiceProvider" ||
+  return typeof user.activeRole === "string"
+    ? user.activeRole === "ServiceProvider" ||
         user.activeRole === "Provider" ||
         user.activeRole === "Client"
-      : typeof user.activeRole === "object"
-        ? "ServiceProvider" in user.activeRole ||
-          "Provider" in user.activeRole ||
-          "Client" in user.activeRole
-        : false
-  );
+    : typeof user.activeRole === "object"
+      ? "ServiceProvider" in user.activeRole ||
+        "Provider" in user.activeRole ||
+        "Client" in user.activeRole
+      : false;
 };
 
 // Filter users based on filter type
@@ -370,8 +368,7 @@ export const processServiceCategoryData = (
   // Count services by category from actual services
   if (services && Array.isArray(services)) {
     services.forEach((service: any) => {
-      const categoryId =
-        service.category?.id || service.category || "Unknown";
+      const categoryId = service.category?.id || service.category || "Unknown";
       const categoryName = categoryNameMap[categoryId] || categoryId;
       categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
     });
@@ -402,4 +399,3 @@ export const processServiceCategoryData = (
 
   return result;
 };
-

@@ -240,4 +240,3 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
     </>
   );
 };
-

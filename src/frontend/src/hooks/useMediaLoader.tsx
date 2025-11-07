@@ -403,7 +403,10 @@ export const useServiceCertificates = (
               url,
               dataUrl: null,
               validationStatus: undefined,
-              error: err instanceof Error ? err.message : "Failed to load certificate",
+              error:
+                err instanceof Error
+                  ? err.message
+                  : "Failed to load certificate",
             };
           }
         });
@@ -413,7 +416,9 @@ export const useServiceCertificates = (
         setIsLoading(false);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to load certificates"));
+        setError(
+          err instanceof Error ? err : new Error("Failed to load certificates"),
+        );
         setIsLoading(false);
       }
     };

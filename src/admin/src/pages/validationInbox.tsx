@@ -132,7 +132,6 @@ export const ValidationInboxPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-
   // Handle certificate approval
   const handleApproveCertificate = async (
     service: any,
@@ -347,11 +346,7 @@ export const ValidationInboxPage: React.FC = () => {
                 onViewCertificate={handleViewCertificate}
                 onUndo={handleUndoCertificate}
                 isApproved={true}
-                onCardClick={(
-                  service,
-                  certificateIndex,
-                  certificateUrl,
-                ) => {
+                onCardClick={(service, certificateIndex, certificateUrl) => {
                   console.log("Validated certificate card clicked:", {
                     service,
                     certificateIndex,
@@ -382,11 +377,7 @@ export const ValidationInboxPage: React.FC = () => {
                 onViewCertificate={handleViewCertificate}
                 onUndo={handleUndoCertificate}
                 isApproved={false}
-                onCardClick={(
-                  service,
-                  certificateIndex,
-                  certificateUrl,
-                ) => {
+                onCardClick={(service, certificateIndex, certificateUrl) => {
                   console.log("Rejected certificate card clicked:", {
                     service,
                     certificateIndex,

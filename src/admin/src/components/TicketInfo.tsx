@@ -82,4 +82,3 @@ export const TicketInfo: React.FC<TicketInfoProps> = ({
     </div>
   );
 };
-

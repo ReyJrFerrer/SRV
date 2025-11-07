@@ -87,7 +87,9 @@ export const ProviderFilters: React.FC<ProviderFiltersProps> = ({
             id="sortOrder"
             className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
             value={sortOrder}
-            onChange={(e) => onSortOrderChange(e.target.value as "asc" | "desc")}
+            onChange={(e) =>
+              onSortOrderChange(e.target.value as "asc" | "desc")
+            }
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
@@ -97,4 +99,3 @@ export const ProviderFilters: React.FC<ProviderFiltersProps> = ({
     </div>
   );
 };
-

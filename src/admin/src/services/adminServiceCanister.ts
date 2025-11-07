@@ -1541,7 +1541,10 @@ export const adminServiceCanister = {
         reason: reason || undefined,
       };
 
-      console.log("Calling updateCertificateValidationStatus with payload:", payload);
+      console.log(
+        "Calling updateCertificateValidationStatus with payload:",
+        payload,
+      );
 
       const result = await callFirebaseFunction(
         "updateCertificateValidationStatus",

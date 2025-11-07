@@ -4,10 +4,7 @@ import {
   useServiceImages,
   useServiceCertificates,
 } from "../../../frontend/src/hooks/useMediaLoader";
-import {
-  PhotoIcon,
-  AcademicCapIcon,
-} from "@heroicons/react/24/solid";
+import { PhotoIcon, AcademicCapIcon } from "@heroicons/react/24/solid";
 import {
   adminServiceCanister,
   ServiceData,

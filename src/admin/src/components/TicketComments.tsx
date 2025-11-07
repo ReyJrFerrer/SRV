@@ -113,4 +113,3 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({
     </div>
   );
 };
-
