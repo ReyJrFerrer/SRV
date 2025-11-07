@@ -12,7 +12,7 @@ const {
   generateNotificationHref,
   isSpamming,
   updateNotificationFrequency,
-  sendFCMNotification,
+  sendOneSignalNotification,
 } = require("./notification");
 
 // Import reputation bridge for updating reputations after booking completion
@@ -305,12 +305,12 @@ async function createNotification(
     // Update notification frequency tracking
     await updateNotificationFrequency(targetUserId, notificationType);
 
-    // Send FCM push notification asynchronously (don't wait for it)
-    sendFCMNotification(targetUserId, {
+    // Send OneSignal push notification asynchronously (don't wait for it)
+    sendOneSignalNotification(targetUserId, {
       ...notification,
       createdAt: now,
     }).catch((error) => {
-      console.error("Failed to send FCM notification:", error);
+      console.error("Failed to send OneSignal notification:", error);
     });
 
     console.log(`✅ [createNotification] Successfully created notification for ${targetUserId}`);
@@ -2675,6 +2675,22 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         }
       } catch (error) {
         console.error(`Error fetching service for booking ${booking.id}:`, error);
+      }
+
+      // Deduct reputation for provider missing the time slot
+      try {
+        console.log(
+          `⚠️ [cancelMissedBookings] Deducting reputation points for provider ` +
+          `${booking.providerId} for missing time slot.`,
+        );
+        await deductReputationForCancellationInternal(booking.providerId);
+        console.log(
+          `✅ [cancelMissedBookings] Successfully deducted reputation points for provider ` +
+          `${booking.providerId}.`,
+        );
+      } catch (error) {
+        console.error(`❌ [cancelMissedBookings] Failed to deduct reputation points:`, error);
+        // Don't fail the cancellation if reputation update fails, just log it
       }
 
       // Update booking status to Cancelled

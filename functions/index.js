@@ -238,6 +238,8 @@ const {
   canReceiveNotification,
   deleteNotification,
   cleanupNotificationFrequency,
+  storeOneSignalPlayerId,
+  removeOneSignalPlayerId,
 } = require("./src/notification");
 
 // Import Media Management functions
@@ -415,6 +417,8 @@ exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 exports.canReceiveNotification = canReceiveNotification;
 exports.deleteNotification = deleteNotification;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
+exports.storeOneSignalPlayerId = storeOneSignalPlayerId;
+exports.removeOneSignalPlayerId = removeOneSignalPlayerId;
 
 // Export Media Management Functions
 exports.uploadMedia = uploadMedia;

@@ -131,6 +131,18 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
+import oneSignalService from "./src/services/oneSignalService";
+
+// Initialize OneSignal when SDK is loaded
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+window.OneSignalDeferred.push(async function () {
+  await oneSignalService.initialize({
+    appId: "6ca84c57-1e6b-466d-b792-64df97dea60b",
+    safariWebId: "web.onesignal.auto.514888af-c9d7-482b-90d4-9de98d872128",
+    allowLocalhostAsSecureOrigin: true, // Enable for local development
+  });
+});
+
 const ConversationPage = lazy(
   () => import("./src/pages/client/chat/[providerId]"),
 );

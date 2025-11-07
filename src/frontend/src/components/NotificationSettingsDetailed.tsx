@@ -69,6 +69,12 @@ export const NotificationSettingsDetailed: React.FC<
   };
 
   if (!pwaState.pushNotificationSupported) {
+    const browserInfo = pwaState.browserInfo;
+    const isMobile =
+      browserInfo.name.toLowerCase().includes("safari") ||
+      browserInfo.name.toLowerCase().includes("chrome") ||
+      browserInfo.name.toLowerCase().includes("firefox");
+
     return (
       <div
         className={`rounded-lg border border-yellow-200 bg-yellow-50 p-4 ${className}`}
@@ -77,8 +83,9 @@ export const NotificationSettingsDetailed: React.FC<
           Push Notifications Unavailable
         </h3>
         <p className="text-sm text-yellow-700">
-          Your browser doesn't support push notifications. You'll still receive
-          in-app notifications when using SRV.
+          {!pwaState.isPWA && isMobile
+            ? "Please install the app as a PWA to enable push notifications. You'll still receive in-app notifications when using SRV."
+            : "Your browser doesn't support push notifications. You'll still receive in-app notifications when using SRV."}
         </p>
       </div>
     );

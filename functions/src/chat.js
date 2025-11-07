@@ -4,7 +4,7 @@ const {
   NOTIFICATION_TYPES,
   USER_TYPES,
   generateNotificationHref,
-  sendFCMNotification,
+  sendOneSignalNotification,
 } = require("./notification");
 
 const db = admin.firestore();
@@ -297,9 +297,9 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 
         await db.collection("notifications").doc(notificationId).set(notificationData);
 
-        // Send FCM push notification (non-blocking)
-        sendFCMNotification(receiverId, notificationData).catch((error) => {
-          console.error("Failed to send FCM notification for chat message:", error);
+        // Send OneSignal push notification (non-blocking)
+        sendOneSignalNotification(receiverId, notificationData).catch((error) => {
+          console.error("Failed to send OneSignal notification for chat message:", error);
         });
 
         console.log(`Chat notification created and sent to ${receiverId}`);
