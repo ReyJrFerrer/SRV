@@ -28,7 +28,8 @@ const REVIEW_WINDOW_DAYS = 30;
 const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1; // Number of consecutive bad reviews to trigger auto-report
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
+// Number of consecutive bad reviews to trigger auto-report
 const BAD_REVIEW_RATING_THRESHOLD = 2; // Rating <= this value is considered "bad"
 
 /**
@@ -96,12 +97,12 @@ function calculateQualityScore(review) {
  * @return {Promise<boolean>} True if a report was created, false otherwise
  */
 async function checkConsecutiveBadReviews(
-    collectionName,
-    filterField,
-    userId,
-    newReview,
-    scenarioType,
-    userType,
+  collectionName,
+  filterField,
+  userId,
+  newReview,
+  scenarioType,
+  userType,
 ) {
   try {
     // Only check if this review is bad (rating <= threshold)
@@ -115,20 +116,20 @@ async function checkConsecutiveBadReviews(
     try {
       // Get the last N reviews, ordered by createdAt desc
       recentReviewsSnap = await db
-          .collection(collectionName)
-          .where(filterField, "==", userId)
-          .orderBy("createdAt", "desc")
-          .limit(CONSECUTIVE_BAD_REVIEWS_THRESHOLD)
-          .get();
+        .collection(collectionName)
+        .where(filterField, "==", userId)
+        .orderBy("createdAt", "desc")
+        .limit(CONSECUTIVE_BAD_REVIEWS_THRESHOLD)
+        .get();
     } catch (queryError) {
       // If query fails due to missing index, try fallback approach
       if (queryError.code === 8 || queryError.message?.includes("index")) {
         console.log(`⚠️ Query failed due to index, using fallback approach`);
         // Fallback: get all reviews and filter/sort client-side
         const allReviewsSnap = await db
-            .collection(collectionName)
-            .where(filterField, "==", userId)
-            .get();
+          .collection(collectionName)
+          .where(filterField, "==", userId)
+          .get();
 
         const allReviews = [];
         allReviewsSnap.forEach((doc) => {
@@ -194,7 +195,8 @@ async function checkConsecutiveBadReviews(
         // Create ticket description with structured data
         const title = `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} Consecutive Bad Reviews - ` +
           `${displayName} (${action} by ${userType})`;
-        const description = `${userName} ${displayName} has ${action} ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
+        const description = `${userName} ${displayName} has ${action}
+        ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
           `consecutive bad reviews (rating <= ${BAD_REVIEW_RATING_THRESHOLD}).\n\n` +
           `This is an automatically generated report.`;
 
@@ -409,22 +411,22 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       // Scenario 1: Provider receives consecutive bad reviews
       await checkConsecutiveBadReviews(
-          "reviews",
-          "providerId",
-          providerId,
-          newReview,
-          "received",
-          "provider",
+        "reviews",
+        "providerId",
+        providerId,
+        newReview,
+        "received",
+        "provider",
       );
 
       // Scenario 2: Client gives consecutive bad reviews
       await checkConsecutiveBadReviews(
-          "reviews",
-          "clientId",
-          clientId,
-          newReview,
-          "given",
-          "client",
+        "reviews",
+        "clientId",
+        clientId,
+        newReview,
+        "given",
+        "client",
       );
     } catch (reportError) {
       // Don't fail the review submission if report creation fails - just log it
@@ -1626,22 +1628,22 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
 
       // Scenario 1: Provider gives consecutive bad reviews
       await checkConsecutiveBadReviews(
-          "providerReviews",
-          "providerId",
-          providerId,
-          newReview,
-          "given",
-          "provider",
+        "providerReviews",
+        "providerId",
+        providerId,
+        newReview,
+        "given",
+        "provider",
       );
 
       // Scenario 2: Client receives consecutive bad reviews
       await checkConsecutiveBadReviews(
-          "providerReviews",
-          "clientId",
-          clientId,
-          newReview,
-          "received",
-          "client",
+        "providerReviews",
+        "clientId",
+        clientId,
+        newReview,
+        "received",
+        "client",
       );
     } catch (reportError) {
       // Don't fail the review submission if report creation fails - just log it
