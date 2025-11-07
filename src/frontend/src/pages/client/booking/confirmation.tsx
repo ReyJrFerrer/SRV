@@ -18,6 +18,52 @@ interface BookingDetails {
   expectedChange?: string;
 }
 
+function formatTo12Hour(timeStr?: string): string {
+  if (!timeStr) return "";
+  const raw = timeStr.trim();
+  const formatSingle = (seg: string, forcedPeriod?: string): string => {
+    const s = seg.trim();
+    const hasAmpm = /\b(am|pm)\b/i.test(s);
+    if (hasAmpm) {
+      return s
+        .replace(/\s+/g, " ")
+        .replace(/\b(am|pm)\b/i, (m) => m.toUpperCase());
+    }
+
+    const m = s.match(/(\d{1,2})(?::(\d{2}))?/);
+    if (!m) return s;
+    let hh = parseInt(m[1], 10);
+    const mm = m[2] ? parseInt(m[2], 10) : 0;
+    if (isNaN(hh) || isNaN(mm)) return s;
+
+    const period = forcedPeriod
+      ? forcedPeriod.toUpperCase()
+      : hh >= 12
+        ? "PM"
+        : "AM";
+    const hour12 = ((hh + 11) % 12) + 1;
+    const minutePadded = mm < 10 ? `0${mm}` : String(mm);
+    return `${hour12}:${minutePadded} ${period}`;
+  };
+
+  const rangeSepRegex = /\s*(?:[-–—]|to)\s*/i;
+  if (rangeSepRegex.test(raw)) {
+    const parts = raw
+      .split(rangeSepRegex)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const trailingMatch = raw.match(/\b(am|pm)\b\s*$/i);
+    const trailing = trailingMatch ? trailingMatch[1].toUpperCase() : undefined;
+    const formatted = parts.map((p) => {
+      const has = /\b(am|pm)\b/i.test(p);
+      return formatSingle(p, !has ? trailing : undefined);
+    });
+    return formatted.join(" - ");
+  }
+
+  return formatSingle(raw);
+}
+
 const BookingConfirmationPage: React.FC = () => {
   const location = useLocation();
   const bookingDetails: BookingDetails | null = location.state?.details || null;
@@ -70,7 +116,7 @@ const BookingConfirmationPage: React.FC = () => {
                   bookingDetails.packages.length > 0 && (
                     <div>
                       <span className="font-bold text-gray-700">Packages:</span>
-                      <ul className="ml-4 mt-1 list-inside list-disc">
+                      <ul className="mt-1 ml-4 list-inside list-disc">
                         {bookingDetails.packages.map((pkg) => (
                           <li key={pkg.id} className="text-gray-600">
                             {pkg.title}
@@ -83,7 +129,7 @@ const BookingConfirmationPage: React.FC = () => {
                   <span className="font-bold text-gray-700">
                     Booking Details:
                   </span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="mt-1 ml-4 list-inside list-disc">
                     <li>
                       <span className="font-semibold">Type:</span>{" "}
                       {bookingDetails.bookingType === "sameday"
@@ -96,7 +142,7 @@ const BookingConfirmationPage: React.FC = () => {
                     </li>
                     <li>
                       <span className="font-semibold">Time:</span>{" "}
-                      {bookingDetails.time}
+                      {formatTo12Hour(bookingDetails.time)}
                     </li>
                     {bookingDetails.location && (
                       <li>
@@ -119,7 +165,7 @@ const BookingConfirmationPage: React.FC = () => {
                 </div>
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">Payment:</span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="mt-1 ml-4 list-inside list-disc">
                     {bookingDetails.packagePrice && (
                       <li>
                         <span className="font-semibold">Package Price:</span> ₱{" "}

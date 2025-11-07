@@ -223,7 +223,7 @@ const NotificationItem: React.FC<{
           notification.type !== "system_announcement" &&
           notification.type !== "promo_offer" &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
+            <p className="mt-1 text-xs text-gray-600 italic">
               {notification.message}
             </p>
           )}
@@ -232,9 +232,6 @@ const NotificationItem: React.FC<{
         </p>
       </div>
       <div className="ml-3 flex items-center gap-2">
-        {!notification.read && !selectable && (
-          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
-        )}
         <div className="relative">
           <NotificationMenu
             id={notification.id}
@@ -550,7 +547,7 @@ const NotificationsPage = () => {
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                    className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                   >
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
@@ -572,7 +569,7 @@ const NotificationsPage = () => {
                 {mobileMenuOpen && (
                   <div
                     ref={mobileMenuRef}
-                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                    className="ring-opacity-5 absolute top-full right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500"
                   >
                     <div className="py-1" role="menu">
                       <button
