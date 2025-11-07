@@ -205,7 +205,7 @@ const NotificationItem: React.FC<{
         </p>
         {notification.message &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs text-gray-600 italic">
+            <p className="mt-1 text-xs italic text-gray-600">
               {notification.message}
             </p>
           )}
@@ -533,7 +533,7 @@ const NotificationsPageSP = () => {
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                   >
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
