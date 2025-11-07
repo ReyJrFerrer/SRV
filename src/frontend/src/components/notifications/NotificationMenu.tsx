@@ -30,7 +30,10 @@ const NotificationMenu: React.FC<Props> = ({
         setOpen(false);
       }
     };
-    window.addEventListener("notification-menu-open", onOtherOpen as EventListener);
+    window.addEventListener(
+      "notification-menu-open",
+      onOtherOpen as EventListener,
+    );
     return () =>
       window.removeEventListener(
         "notification-menu-open",
@@ -61,7 +64,9 @@ const NotificationMenu: React.FC<Props> = ({
     const btn = buttonRef.current;
     if (!btn) {
       setOpen((s) => !s);
-      window.dispatchEvent(new CustomEvent("notification-menu-open", { detail: { id } }));
+      window.dispatchEvent(
+        new CustomEvent("notification-menu-open", { detail: { id } }),
+      );
       return;
     }
     const rect = btn.getBoundingClientRect();
@@ -69,7 +74,9 @@ const NotificationMenu: React.FC<Props> = ({
     setOpen((s) => {
       const next = !s;
       if (next) {
-        window.dispatchEvent(new CustomEvent("notification-menu-open", { detail: { id } }));
+        window.dispatchEvent(
+          new CustomEvent("notification-menu-open", { detail: { id } }),
+        );
       }
       return next;
     });
@@ -85,7 +92,9 @@ const NotificationMenu: React.FC<Props> = ({
     <div
       ref={menuRef}
       style={
-        coords ? { position: "fixed", top: coords.top, left: coords.left } : undefined
+        coords
+          ? { position: "fixed", top: coords.top, left: coords.left }
+          : undefined
       }
       className="z-50 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
       onClick={(e) => e.stopPropagation()}

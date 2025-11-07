@@ -39,7 +39,9 @@ const NotificationItemClient: React.FC<Props> = ({
   };
 
   const getEnhancedMessage = () => {
-    const providerName = notification.providerName ? ` by ${notification.providerName}` : "";
+    const providerName = notification.providerName
+      ? ` by ${notification.providerName}`
+      : "";
 
     switch (notification.type) {
       case "booking_accepted":
@@ -84,9 +86,13 @@ const NotificationItemClient: React.FC<Props> = ({
       className={`relative flex items-start gap-4 p-4 transition-all duration-200 ${
         selectable ? "" : "hover:border-blue-200"
       } ${
-        !notification.read ? "bg-blue-50 hover:bg-blue-100" : "bg-white hover:bg-gray-50"
+        !notification.read
+          ? "bg-blue-50 hover:bg-blue-100"
+          : "bg-white hover:bg-gray-50"
       } ${
-        notification.href && !selectable ? "cursor-pointer border border-transparent" : "cursor-default border border-transparent"
+        notification.href && !selectable
+          ? "cursor-pointer border border-transparent"
+          : "cursor-default border border-transparent"
       }`}
       aria-selected={checked}
     >
@@ -106,17 +112,26 @@ const NotificationItemClient: React.FC<Props> = ({
         </div>
       )}
       <div className="mt-1 flex-shrink-0">
-        <NotificationIconClient type={notification.type} metadata={notification.metadata} />
+        <NotificationIconClient
+          type={notification.type}
+          metadata={notification.metadata}
+        />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">{getEnhancedMessage()}</p>
+        <p className="text-sm font-medium text-blue-900">
+          {getEnhancedMessage()}
+        </p>
         {notification.message &&
           notification.type !== "system_announcement" &&
           notification.type !== "promo_offer" &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">{notification.message}</p>
+            <p className="mt-1 text-xs italic text-gray-600">
+              {notification.message}
+            </p>
           )}
-        <p className="mt-1 text-xs text-gray-500">{timeAgo(notification.timestamp)}</p>
+        <p className="mt-1 text-xs text-gray-500">
+          {timeAgo(notification.timestamp)}
+        </p>
       </div>
       <div className="ml-3 flex items-center gap-2">
         {!notification.read && !selectable && (

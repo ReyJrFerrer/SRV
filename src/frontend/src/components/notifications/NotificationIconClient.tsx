@@ -81,7 +81,9 @@ const NotificationIconClient: React.FC<{
     }
 
   return (
-    <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}>
+    <span
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
+    >
       {icon}
     </span>
   );

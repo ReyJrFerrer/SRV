@@ -103,17 +103,29 @@ const NotificationItem: React.FC<Props> = ({
         </div>
       )}
       <div className="mt-1 flex-shrink-0">
-        <NotificationIcon type={notification.type} metadata={notification.metadata} />
+        <NotificationIcon
+          type={notification.type}
+          metadata={notification.metadata}
+        />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">{getEnhancedMessage()}</p>
-        {notification.message && notification.message !== getEnhancedMessage() && (
-          <p className="mt-1 text-xs italic text-gray-600">{notification.message}</p>
-        )}
-        <p className="mt-1 text-xs text-gray-500">{timeAgo(notification.timestamp)}</p>
+        <p className="text-sm font-medium text-blue-900">
+          {getEnhancedMessage()}
+        </p>
+        {notification.message &&
+          notification.message !== getEnhancedMessage() && (
+            <p className="mt-1 text-xs italic text-gray-600">
+              {notification.message}
+            </p>
+          )}
+        <p className="mt-1 text-xs text-gray-500">
+          {timeAgo(notification.timestamp)}
+        </p>
       </div>
       <div className="ml-3 flex items-center gap-2">
-        {!notification.read && <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>}
+        {!notification.read && (
+          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
+        )}
         <div className="relative">
           <NotificationMenu
             id={notification.id}

@@ -1,10 +1,17 @@
 // SECTION: Imports — dependencies for this page
 import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useNotifications, Notification } from "../../hooks/useNotificationsWithPush";
+import {
+  useNotifications,
+  Notification,
+} from "../../hooks/useNotificationsWithPush";
 import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import { EnvelopeOpenIcon, InboxIcon, EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import {
+  EnvelopeOpenIcon,
+  InboxIcon,
+  EllipsisVerticalIcon,
+} from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/client/NotificationItemClient";
 
 // NotificationItem and NotificationMenu moved to components/notifications
