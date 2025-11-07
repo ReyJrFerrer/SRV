@@ -67,7 +67,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pt-0 pl-4">
+        <div className="pl-4 pt-0">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>

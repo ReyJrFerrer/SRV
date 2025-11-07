@@ -807,7 +807,7 @@ const ClientProfilePage: React.FC = () => {
                         : "text-black group-hover:text-white"
                     }`}
                   />
-                  <span className="text-sm md:text-base font-medium text-gray-800 group-hover:text-white">
+                  <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
                     {isSwitchingRole
                       ? "Switching Role..."
                       : "Switch into SRVice Provider"}

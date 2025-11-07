@@ -448,7 +448,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               Provided by: {providerName}
             </p>
             {/* Reputation + Rating (real frontend display using shared components) */}
-            <div className="flex items-center flex-col gap-3 lg:flex-row">
+            <div className="flex flex-col items-center gap-3 lg:flex-row">
               <div className="flex-shrink-0">
                 <ReputationScore reputation={reputation} />
               </div>
