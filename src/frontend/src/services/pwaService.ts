@@ -529,24 +529,29 @@ class PWAService {
     }
 
     if (Notification.permission !== "granted") {
-      //console.error("❌ PWA: Notification permission not granted");
-      throw new Error("Notification permission not granted");
+      //console.log("🔔 PWA: Requesting notification permission before subscribing");
+      try {
+        const permission = await this.requestNotificationPermission();
+        if (permission !== "granted") {
+          throw new Error("Notification permission not granted");
+        }
+      } catch (error) {
+        //console.error("❌ PWA: Failed to get notification permission", error);
+        throw error;
+      }
     }
 
     try {
-      // Check if OneSignal is ready
       if (!oneSignalService.isReady()) {
         throw new Error("OneSignal not initialized");
       }
 
-      // Subscribe to OneSignal
       const playerId = await oneSignalService.subscribe();
 
       if (!playerId) {
         throw new Error("Failed to get OneSignal player ID");
       }
 
-      // Return player ID directly
       return playerId;
     } catch (error) {
       //console.error("❌ PWA: OneSignal subscription failed", error);
