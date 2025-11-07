@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -44,15 +45,12 @@ const PaymentPendingPage: React.FC = () => {
   >(null);
   const [isCreatingBooking, setIsCreatingBooking] = useState<boolean>(false);
 
-  // Get data from navigation state
   const state = location.state as PaymentPendingState | null;
 
-  // Set document title
   useEffect(() => {
     document.title = "Payment Pending | SRV";
   }, []);
 
-  // Check for payment completion using real invoice status from Xendit API
   useEffect(() => {
     const checkPaymentStatus = async () => {
       if (state?.invoiceId && paymentStatus === "pending") {
@@ -74,33 +72,24 @@ const PaymentPendingPage: React.FC = () => {
             statusResponse.status === "PAID" ||
             statusResponse.status === "SETTLED"
           ) {
-            // Only proceed if we haven't already started creating booking
             if (!isCreatingBooking && paymentStatus === "pending") {
               setPaymentStatus("completed");
               setStatusMessage("Payment successful! Creating your booking...");
-
-              // Now create the actual booking in the ICP canister
               await createActualBooking();
             }
           } else if (statusResponse.status === "EXPIRED") {
             setPaymentStatus("failed");
             setStatusMessage("Payment expired. Please create a new booking.");
           }
-          // For PENDING status, continue polling
         } catch (error) {
           console.error("Error checking payment status:", error);
         }
       }
     };
 
-    // Only start checking if payment is still pending
     if (paymentStatus === "pending") {
-      // Check immediately
       checkPaymentStatus();
-
-      // Poll every 10 seconds for payment status updates
       const interval = setInterval(() => {
-        // Double-check status before making API call
         if (paymentStatus === "pending") {
           checkPaymentStatus();
         }
@@ -108,11 +97,9 @@ const PaymentPendingPage: React.FC = () => {
 
       return () => clearInterval(interval);
     }
-  }, [state?.invoiceId]); // Remove paymentStatus from dependency array
+  }, [state?.invoiceId]);
 
-  // Function to create the actual booking after payment success
   const createActualBooking = async () => {
-    // Prevent duplicate booking creation
     if (
       isCreatingBooking ||
       paymentStatus === "creating_booking" ||
@@ -127,7 +114,6 @@ const PaymentPendingPage: React.FC = () => {
       setPaymentStatus("creating_booking");
       setStatusMessage("Creating your booking...");
 
-      // Get the booking data from Firestore using the invoice ID
       if (!state?.invoiceId) {
         throw new Error("Invoice ID not found. Please try again.");
       }
@@ -142,7 +128,6 @@ const PaymentPendingPage: React.FC = () => {
       const { bookingData } = paymentDataResponse;
       console.log("✅ Retrieved booking data:", bookingData);
 
-      // Convert the payment data back to BookingRequest format
       const bookingRequest: BookingRequest = {
         serviceId: bookingData.serviceId,
         serviceName: bookingData.serviceName,
@@ -152,7 +137,7 @@ const PaymentPendingPage: React.FC = () => {
         bookingType: bookingData.bookingType,
         scheduledDate: bookingData.scheduledDate
           ? new Date(bookingData.scheduledDate)
-          : new Date(), // Default to current date if no scheduled date
+          : new Date(),
         scheduledTime: bookingData.scheduledTime
           ? bookingData.scheduledTime
           : "",
@@ -160,15 +145,13 @@ const PaymentPendingPage: React.FC = () => {
         notes: bookingData.notes,
         amountToPay: bookingData.amountToPay,
         paymentMethod: bookingData.paymentMethod,
-        paymentId: state.invoiceId, // Pass the invoice ID for e-wallet payment tracking
+        paymentId: state.invoiceId,
       };
 
-      // Ensure we have valid identity
       if (!identity) {
         throw new Error("Authentication required. Please log in again.");
       }
 
-      // Create the booking in the ICP canister
       const booking = await createBookingRequest(bookingRequest);
 
       if (booking) {
@@ -176,13 +159,12 @@ const PaymentPendingPage: React.FC = () => {
         setStatusMessage("Booking created successfully!");
         console.log(booking);
 
-        // Navigate to confirmation page after a short delay
         setTimeout(() => {
           navigate("/client/booking/confirmation", {
             state: {
               details: {
                 serviceName: bookingData.serviceName,
-                providerName: "Provider", // We could fetch this if needed
+                providerName: "Provider",
                 packages: bookingData.packages,
                 bookingType: bookingData.bookingType,
                 date: bookingData.scheduledDate
@@ -191,7 +173,7 @@ const PaymentPendingPage: React.FC = () => {
                 time: bookingData.scheduledTime || "",
                 location: bookingData.location,
                 notes: bookingData.notes || "",
-                amountToPay: "0.00", // GCash payment already processed
+                amountToPay: "0.00",
                 packagePrice: bookingData.totalPrice.toFixed(2),
                 landmark: "",
                 paymentMethod: "GCash",
@@ -214,7 +196,6 @@ const PaymentPendingPage: React.FC = () => {
     }
   };
 
-  // Set document title
   useEffect(() => {
     document.title = "Payment Pending | SRV";
   }, []);
@@ -243,7 +224,6 @@ const PaymentPendingPage: React.FC = () => {
   };
 
   const handleCancelPayment = () => {
-    // Navigate back to booking page
     navigate(-1);
   };
 
@@ -266,7 +246,6 @@ const PaymentPendingPage: React.FC = () => {
       <main className="mx-auto max-w-md p-4">
         <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
           <div className="p-6">
-            {/* Status Icon and Message */}
             <div className="mb-6 text-center">
               {paymentStatus === "pending" && (
                 <>
@@ -336,7 +315,6 @@ const PaymentPendingPage: React.FC = () => {
               )}
             </div>
 
-            {/* Booking Summary */}
             <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <h3 className="mb-3 font-semibold text-gray-900">
                 Booking Summary
@@ -370,7 +348,6 @@ const PaymentPendingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="space-y-3">
               {paymentStatus === "pending" && (
                 <>
@@ -458,7 +435,6 @@ const PaymentPendingPage: React.FC = () => {
               )}
             </div>
 
-            {/* Instructions */}
             {paymentStatus === "pending" && (
               <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-3">
                 <p className="text-xs text-blue-700">

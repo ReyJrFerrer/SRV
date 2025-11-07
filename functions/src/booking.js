@@ -2625,9 +2625,9 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
   console.log(`📅 [cancelMissedBookings] Current time: ${new Date().toISOString()}`);
 
   try {
-    const now = new Date();
+    const now = new Date(); // Current time
 
-    console.log(`📝 [cancelMissedBookings] Looking for bookings with a scheduledDate ` +
+    console.log(`📝 [cancelMissedBookings] Looking for ACCEPTED bookings with a scheduledDate ` +
       `(end time) before the current time: ${now.toISOString()}...`);
 
     // Find all "Accepted" bookings whose scheduled date (end time) has passed
@@ -2636,17 +2636,27 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
       .where("scheduledDate", "<=", now.toISOString())
       .get();
 
-    console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size} missed bookings.`);
+    // Find all "Requested" bookings whose scheduled date (end time) has passed
+    const expiredRequestedBookingsQuery = await db.collection("bookings")
+      .where("status", "==", "Requested")
+      .where("scheduledDate", "<=", now.toISOString())
+      .get();
 
-    if (missedBookingsQuery.empty) {
-      console.log("✅ [cancelMissedBookings] No missed bookings found.");
+    console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size}
+      missed 'Accepted' bookings.`);
+    console.log(`📊 [cancelMissedBookings] Found ${expiredRequestedBookingsQuery.size}
+      expired 'Requested' bookings.`);
+
+    if (missedBookingsQuery.empty && expiredRequestedBookingsQuery.empty) {
+      console.log("✅ [cancelMissedBookings] No missed or expired bookings found.");
       return {success: true, count: 0};
     }
 
     const batch = db.batch();
     const notificationPromises = [];
     const ticketPromises = [];
-    let cancelledCount = 0;
+    let cancelledAcceptedCount = 0;
+    let cancelledRequestedCount = 0;
 
     // Process each missed booking
     for (const doc of missedBookingsQuery.docs) {
@@ -2734,17 +2744,80 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         console.error(`⚠️ [cancelMissedBookings] Ticket creation error: ${ticketError.message}`);
       }
 
-      cancelledCount++;
+      cancelledAcceptedCount++;
     }
 
-    if (cancelledCount > 0) {
+    // Process each expired "Requested" booking
+    for (const doc of expiredRequestedBookingsQuery.docs) {
+      const booking = doc.data();
+
+      console.log(`📝 [cancelMissedBookings] Cancelling expired '
+        Requested' booking ${booking.id}...`);
+
+      // Fetch service details for notification
+      let serviceName = "your service";
+      try {
+        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+        if (serviceDoc.exists) {
+          serviceName = serviceDoc.data().title || "your service";
+        }
+      } catch (error) {
+        console.error(`Error fetching service for booking ${booking.id}:`, error);
+      }
+
+      // Update booking status to Cancelled
+      batch.update(doc.ref, {
+        status: "Cancelled",
+        updatedAt: now.toISOString(),
+        cancellationReason: "auto_cancelled_request_expired",
+      });
+
+      // Send notification to the client
+      const notificationMessage = `Your booking request for "${serviceName}" has expired ` +
+        `as the provider did not respond in time. 
+        Please feel free to book another time or provider.`;
+
+      notificationPromises.push(
+        createNotification(
+          booking.clientId,
+          USER_TYPES.CLIENT,
+          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN, // Re-using this type
+          "Booking Request Expired",
+          notificationMessage,
+          booking.id,
+          {
+            serviceId: booking.serviceId,
+            serviceName,
+            providerId: booking.providerId,
+            requestedDate: booking.requestedDate,
+            scheduledDate: booking.scheduledDate,
+          },
+        ),
+      );
+
+      cancelledRequestedCount++;
+    }
+
+    const totalCancelled = cancelledAcceptedCount + cancelledRequestedCount;
+
+    if (totalCancelled > 0) {
       await batch.commit();
       await Promise.allSettled(notificationPromises);
       await Promise.allSettled(ticketPromises);
-      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
+      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledAcceptedCount}
+        missed 'Accepted' bookings.`);
+      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledRequestedCount}
+        expired 'Requested' bookings.`);
     }
 
-    return {success: true, count: cancelledCount};
+    return {
+      success: true,
+      cancelledCounts: {
+        missedAccepted: cancelledAcceptedCount,
+        expiredRequested: cancelledRequestedCount,
+        total: totalCancelled,
+      },
+    };
   } catch (error) {
     console.error("❌ [cancelMissedBookings] Error cancelling missed bookings:", error);
     console.error("Stack trace:", error.stack);

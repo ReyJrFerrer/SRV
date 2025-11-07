@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import LocationMapModal from "./LocationMapModal";
+import React, { Suspense, useEffect, useState } from "react";
+const LocationMapModal = React.lazy(() => import("./LocationMapModal"));
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
 import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
@@ -210,16 +210,24 @@ const MapFunctions: React.FC = () => {
         </div>
       )}
 
-      {mapsApiLoaded && geoLocation && (
-        <LocationMapModal
-          show={showMap}
-          onClose={() => setShowMap(false)}
-          center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
-          address={gmapsAddress}
-          status={gmapsStatus}
-          mapsApiLoaded={mapsApiLoaded}
-          accuracy={geoLocation.accuracy}
-        />
+      {mapsApiLoaded && geoLocation && showMap && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+            </div>
+          }
+        >
+          <LocationMapModal
+            show={showMap}
+            onClose={() => setShowMap(false)}
+            center={{ lat: geoLocation.latitude, lng: geoLocation.longitude }}
+            address={gmapsAddress}
+            status={gmapsStatus}
+            mapsApiLoaded={mapsApiLoaded}
+            accuracy={geoLocation.accuracy}
+          />
+        </Suspense>
       )}
 
       <LocationBlockedModal

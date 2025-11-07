@@ -1,396 +1,20 @@
+// SECTION: Imports — dependencies for this page
 import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
   Notification,
-} from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
-import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
+} from "../../hooks/useNotificationsWithPush";
+import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
-  BellAlertIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  StarIcon,
   EnvelopeOpenIcon,
   InboxIcon,
-  TicketIcon,
   EllipsisVerticalIcon,
 } from "@heroicons/react/24/solid";
-import { createPortal } from "react-dom";
+import NotificationItem from "../../components/client/NotificationItemClient";
 
-// Helper to get the right icon for each notification type, with colored backgrounds
-const NotificationIcon: React.FC<{
-  type: Notification["type"];
-  metadata?: any;
-}> = ({ type, metadata }) => {
-  // Check if this is a ticket notification by looking for ticketId in metadata
-  const isTicketNotification = metadata?.ticketId !== undefined;
-
-  let icon, bg;
-
-  // Ticket notifications get special icon
-  if (isTicketNotification) {
-    icon = <TicketIcon className="h-6 w-6 text-orange-600" />;
-    bg = "bg-orange-100";
-  } else
-    switch (type) {
-      case "booking_accepted":
-        icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
-        bg = "bg-green-100";
-        break;
-      case "booking_declined":
-        icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
-        bg = "bg-red-100";
-        break;
-      case "booking_cancelled":
-        icon = <XCircleIcon className="h-6 w-6 text-orange-500" />;
-        bg = "bg-orange-100";
-        break;
-      case "booking_completed":
-        icon = <CheckCircleIcon className="h-6 w-6 text-blue-600" />;
-        bg = "bg-blue-100";
-        break;
-      case "payment_received":
-        icon = <CheckCircleIcon className="h-6 w-6 text-green-700" />;
-        bg = "bg-green-200";
-        break;
-      case "payment_failed":
-        icon = <XCircleIcon className="h-6 w-6 text-red-700" />;
-        bg = "bg-red-200";
-        break;
-      case "provider_message":
-        icon = <EnvelopeOpenIcon className="h-6 w-6 text-purple-600" />;
-        bg = "bg-purple-100";
-        break;
-      case "system_announcement":
-        icon = <BellAlertIcon className="h-6 w-6 text-gray-700" />;
-        bg = "bg-gray-200";
-        break;
-      case "service_rescheduled":
-        icon = <BellAlertIcon className="h-6 w-6 text-yellow-700" />;
-        bg = "bg-yellow-200";
-        break;
-      case "service_reminder":
-        icon = <StarIcon className="h-6 w-6 text-blue-500" />;
-        bg = "bg-blue-100";
-        break;
-      case "promo_offer":
-        icon = <StarIcon className="h-6 w-6 text-pink-500" />;
-        bg = "bg-pink-100";
-        break;
-      case "provider_on_the_way":
-        icon = <BellAlertIcon className="h-6 w-6 text-teal-600" />;
-        bg = "bg-teal-100";
-        break;
-      case "review_reminder":
-        icon = <StarIcon className="h-6 w-6 text-yellow-500" />;
-        bg = "bg-yellow-100";
-        break;
-      default:
-        icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
-        bg = "bg-blue-100";
-    }
-  return (
-    <span
-      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
-    >
-      {icon}
-    </span>
-  );
-};
-
-// Reusable component for a single notification item
-const NotificationItem: React.FC<{
-  notification: Notification;
-  onClick: () => void;
-  onDelete: () => void;
-  onMarkAsRead: () => void;
-  selectable?: boolean;
-  checked?: boolean;
-  onToggleSelect?: () => void;
-}> = ({
-  notification,
-  onClick,
-  onDelete,
-  onMarkAsRead,
-  selectable = false,
-  checked = false,
-  onToggleSelect,
-}) => {
-  const timeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + "y ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + "mo ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + "d ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + "h ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + "m ago";
-    return Math.floor(seconds) + "s ago";
-  };
-
-  // Enhanced notification message formatting
-  const getEnhancedMessage = () => {
-    const providerName = notification.providerName
-      ? ` by ${notification.providerName}`
-      : "";
-
-    switch (notification.type) {
-      case "booking_accepted":
-        return `Your booking has been accepted${providerName}. Service is confirmed and scheduled.`;
-      case "booking_declined":
-        return `Your booking was declined${providerName}. Please try booking with another provider.`;
-      case "booking_cancelled":
-        return `Your booking has been cancelled${providerName}. You can book again anytime.`;
-      case "booking_completed":
-        return `Service completed${providerName}. Thank you for using our platform!`;
-      case "payment_received":
-        return `Payment received successfully${providerName}. Your transaction is complete.`;
-      case "payment_failed":
-        return `Payment failed${providerName}. Please check your payment method and try again.`;
-      case "chat_message":
-        return `New message${providerName}. Tap to view and respond.`;
-      case "system_announcement":
-        return `System announcement: ${
-          notification.message || "Important update from SRV team."
-        }`;
-      case "service_rescheduled":
-        return `Service rescheduled${providerName}. Your appointment has been moved to a new time.`;
-      case "promo_offer":
-        return `Special offer available! ${
-          notification.message || "Check out our latest promotions."
-        }`;
-      case "provider_on_the_way":
-        return `Provider is on the way${providerName}. They should arrive shortly.`;
-      case "review_reminder":
-        return `Please review your experience${providerName}. Your feedback helps improve our service.`;
-      default:
-        return notification.message || "New notification from SRV";
-    }
-  };
-
-  return (
-    <div
-      onClick={(e) => {
-        // In edit/select mode we want clicks to toggle selection instead of navigating.
-        if (selectable) {
-          e.stopPropagation();
-          onToggleSelect?.();
-          return;
-        }
-        onClick();
-      }}
-      className={`relative flex items-start gap-4 p-4 transition-all duration-200 ${
-        selectable ? "" : "hover:border-blue-200"
-      } ${
-        !notification.read
-          ? "bg-blue-50 hover:bg-blue-100"
-          : "bg-white hover:bg-gray-50"
-      } ${
-        notification.href && !selectable
-          ? "cursor-pointer border border-transparent"
-          : "cursor-default border border-transparent"
-      }`}
-      aria-selected={checked}
-    >
-      {selectable && (
-        <div className="flex items-start pt-1">
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={(e) => {
-              e.stopPropagation();
-              onToggleSelect?.();
-            }}
-            onClick={(e) => e.stopPropagation()} // Prevent click-through when clicking checkbox
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            aria-label="Select notification"
-          />
-        </div>
-      )}
-      <div className="mt-1 flex-shrink-0">
-        <NotificationIcon
-          type={notification.type}
-          metadata={notification.metadata}
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">
-          {getEnhancedMessage()}
-        </p>
-        {notification.message &&
-          notification.type !== "system_announcement" &&
-          notification.type !== "promo_offer" &&
-          notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
-              {notification.message}
-            </p>
-          )}
-        <p className="mt-1 text-xs text-gray-500">
-          {timeAgo(notification.timestamp)}
-        </p>
-      </div>
-      <div className="ml-3 flex items-center gap-2">
-        {!notification.read && !selectable && (
-          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
-        )}
-        <div className="relative">
-          <NotificationMenu
-            id={notification.id}
-            onDelete={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            onMarkAsRead={(e) => {
-              e.stopPropagation();
-              onMarkAsRead();
-            }}
-            isRead={notification.read}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Menu that renders into a portal so it can overlap containers (not be clipped).
-// Uses a global custom event to ensure only one menu is open at a time.
-const NotificationMenu: React.FC<{
-  id: string;
-  onDelete: (e: React.MouseEvent) => void;
-  onMarkAsRead: (e: React.MouseEvent) => void;
-  isRead: boolean;
-}> = ({ id, onDelete, onMarkAsRead, isRead }) => {
-  const [open, setOpen] = React.useState(false);
-  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
-  const menuRef = React.useRef<HTMLDivElement | null>(null);
-  const [coords, setCoords] = React.useState<{
-    top: number;
-    left: number;
-  } | null>(null);
-
-  // Close other menus when another menu opens
-  React.useEffect(() => {
-    const onOtherOpen = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { id?: string } | undefined;
-      if (!detail) return;
-      if (detail.id !== id) {
-        setOpen(false);
-      }
-    };
-    window.addEventListener(
-      "notification-menu-open",
-      onOtherOpen as EventListener,
-    );
-    return () =>
-      window.removeEventListener(
-        "notification-menu-open",
-        onOtherOpen as EventListener,
-      );
-  }, [id]);
-
-  // Add "Click Outside" to Close Menu
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
-
-  // compute and store button coordinates when opening so the portal can be positioned
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const btn = buttonRef.current;
-    if (!btn) {
-      setOpen((s) => !s);
-      window.dispatchEvent(
-        new CustomEvent("notification-menu-open", { detail: { id } }),
-      );
-      return;
-    }
-    const rect = btn.getBoundingClientRect();
-    // position menu below the button and right-aligned
-    setCoords({ top: rect.bottom + 8, left: rect.right - 160 });
-    setOpen((s) => {
-      const next = !s;
-      if (next) {
-        window.dispatchEvent(
-          new CustomEvent("notification-menu-open", { detail: { id } }),
-        );
-      }
-      return next;
-    });
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete(e);
-    setOpen(false);
-  };
-  const menu = (
-    <div
-      ref={menuRef}
-      style={
-        coords
-          ? { position: "fixed", top: coords.top, left: coords.left }
-          : undefined
-      }
-      className="z-50 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="py-1">
-        {!isRead && (
-          <button
-            onClick={(e) => {
-              onMarkAsRead(e);
-              setOpen(false);
-            }}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Mark as read
-          </button>
-        )}
-        <button
-          onClick={handleDelete}
-          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
-        onClick={handleToggle}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label="Notification options"
-      >
-        <EllipsisVerticalIcon className="h-5 w-5" />
-      </button>
-      {open && createPortal(menu, document.body)}
-    </>
-  );
-};
+// NotificationItem and NotificationMenu moved to components/notifications
 
 const NotificationsPage = () => {
   const {
@@ -405,16 +29,13 @@ const NotificationsPage = () => {
   const navigate = useNavigate();
 
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
-  // Edit / selection mode
   const [editMode, setEditMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
-  // --- Refinement: State and refs for the new mobile header menu ---
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const mobileMenuRef = React.useRef<HTMLDivElement | null>(null);
   const mobileMenuButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
-  // --- Refinement: Add "Click Outside" to Close Mobile Menu ---
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -433,7 +54,6 @@ const NotificationsPage = () => {
     };
   }, [mobileMenuOpen]);
 
-  // This function locally "hides" a notification, respecting your comment.
   const handleLocalDelete = (id: string) => {
     setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     deleteNotification(id);
@@ -448,7 +68,6 @@ const NotificationsPage = () => {
       setEditMode(true);
       return;
     }
-    // If already in edit mode, toggle between select all and clear
     if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
       setSelectedIds([]);
     } else {
@@ -471,13 +90,10 @@ const NotificationsPage = () => {
   };
 
   const bulkDeleteSelected = () => {
-    // Use the same delete function as the single-item delete (three-dot menu)
-    // Call deleteNotification for each selected id and optimistically hide them
     selectedIds.forEach((id) => {
       try {
         deleteNotification(id);
       } catch (e) {
-        // swallow; hook should handle errors. Optimistically hide locally anyway.
         console.error("bulk delete failed for", id, e);
       }
     });
@@ -493,7 +109,6 @@ const NotificationsPage = () => {
 
     if (!notification.href) return;
 
-    // default navigation behavior
     navigate(notification.href);
   };
 
@@ -538,7 +153,6 @@ const NotificationsPage = () => {
             <>
               <div className="hidden sm:block" aria-hidden="true" />
 
-              {/* --- Refinement: Desktop Buttons (hidden on mobile) --- */}
               <div className="hidden items-center gap-2 sm:flex">
                 <button
                   onClick={() => {
@@ -576,7 +190,6 @@ const NotificationsPage = () => {
                 )}
               </div>
 
-              {/* --- Refinement: Mobile 3-Dot Menu (visible on mobile only) --- */}
               <div className="relative sm:hidden">
                 <button
                   ref={mobileMenuButtonRef}
@@ -588,14 +201,12 @@ const NotificationsPage = () => {
                   <EllipsisVerticalIcon className="h-6 w-6" />
                 </button>
 
-                {/* Mobile Dropdown Menu */}
                 {mobileMenuOpen && (
                   <div
                     ref={mobileMenuRef}
                     className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
                   >
                     <div className="py-1" role="menu">
-                      {/* Edit/Done Button */}
                       <button
                         onClick={() => {
                           if (!editMode) {
@@ -605,7 +216,7 @@ const NotificationsPage = () => {
                             setEditMode(false);
                             clearSelection();
                           }
-                          setMobileMenuOpen(false); // Close menu on click
+                          setMobileMenuOpen(false);
                         }}
                         className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
                         role="menuitem"
@@ -630,12 +241,11 @@ const NotificationsPage = () => {
                           : "Select all"}
                       </button>
 
-                      {/* Mark all as read Button */}
                       {unread.length > 0 && (
                         <button
                           onClick={() => {
                             markAllAsRead();
-                            setMobileMenuOpen(false); // Close menu on click
+                            setMobileMenuOpen(false);
                           }}
                           className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
                           role="menuitem"
@@ -688,7 +298,6 @@ const NotificationsPage = () => {
         </div>
       )}
 
-      {/* Main content, padding fixed */}
       <main className="flex-1 px-4 pb-24">
         {loading ? (
           <div className="p-8 text-center text-gray-500">
@@ -705,7 +314,6 @@ const NotificationsPage = () => {
             </p>
           </div>
         ) : (
-          // Container for the list
           <div className="mx-auto mt-6 max-w-2xl">
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (

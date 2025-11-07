@@ -1,18 +1,19 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Adjust path as needed
+import { useAuth } from "../../context/AuthContext";
 import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
-  ArrowPathRoundedSquareIcon, // Icon for the new switch button
+  ArrowPathRoundedSquareIcon,
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/client/NavigationBar"; // Adjust path as needed
-import { useLogout } from "../../hooks/logout"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
+import BottomNavigation from "../../components/client/NavigationBar";
+import { useLogout } from "../../hooks/logout";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
@@ -28,12 +29,10 @@ const SettingsPage: React.FC = () => {
     refetchImage,
   } = useUserProfile();
 
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Settings | SRV";
   }, []);
 
-  // Menu items, with "Profile" removed as it now has its own section
   const menuItems = [
     {
       name: "Terms & Conditions",
@@ -82,7 +81,7 @@ const SettingsPage: React.FC = () => {
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
           <div className="space-y-6">
-            {/* --- Enhanced Profile Section --- */}
+            {/* SECTION: Profile header */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <button
                 onClick={() => navigate("/client/profile")}
@@ -109,7 +108,7 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* --- Switch to Service Provider Button --- */}
+            {/* SECTION: Switch to service provider */}
             <div className="rounded-2xl border border-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-200 shadow-md">
               <button
                 onClick={handleSwitchToProvider}
@@ -132,14 +131,13 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* --- App Settings Section --- */}
+            {/* SECTION: App settings */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <div className="p-5">
                 <h2 className="mb-4 text-lg font-semibold text-blue-900">
                   App Settings
                 </h2>
-
-                {/* PWA Install Section */}
+                {/* SECTION: PWA install */}
                 <div className="mb-6">
                   <div className="mb-3 flex items-center">
                     <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
@@ -147,8 +145,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <PWAInstallDetailed />
                 </div>
-
-                {/* Notification Settings Section */}
+                {/* SECTION: Notification settings */}
                 <div>
                   <div className="mb-3 flex items-center">
                     <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
@@ -160,8 +157,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* --- Other Menu Items --- */}
+            {/* SECTION: Other menu items */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
                 {menuItems.map((item) => (
