@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface TermsAndConditionsModalProps {
   open: boolean;
@@ -27,16 +28,18 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative w-full max-w-lg rounded-lg bg-white p-8 shadow-xl">
+      <div className="relative w-9/10 max-w-lg rounded-lg bg-white p-5 shadow-xl md:w-full">
         {/* Close Button */}
         <button
-          className="absolute right-4 top-4 text-2xl font-bold text-gray-500 hover:text-gray-700"
+          type="button" // Good practice to prevent form submissions
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
           onClick={onClose}
           aria-label="Close"
         >
-          &times;
+          <span className="sr-only">Close</span> {/* Extra accessibility */}
+          <XMarkIcon className="sm:h-6 h-5 sm:w-6 w-5" />
         </button>
-        <h2 className="mb-4 text-xl font-bold text-gray-900">
+        <h2 className="my-3 text-xl font-bold text-gray-900">
           Terms and Conditions for SRV
         </h2>
         <div
@@ -729,7 +732,7 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
           />
           <label
             htmlFor="agree"
-            className={`text-sm text-gray-800 ${!canAgree ? "opacity-50" : ""}`}
+            className={`text-xs text-gray-800 md:text-sm ${!canAgree ? "opacity-50" : ""}`}
           >
             I agree with the terms and conditions
           </label>

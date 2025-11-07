@@ -45,7 +45,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         : "border border-gray-100"
     }`}
   >
-    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
       Payment Method
     </h3>
@@ -67,7 +67,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-0">
+        <div className="pt-0 pl-4">
           <label className="text-sm font-medium text-gray-700">
             Change for how much?
           </label>

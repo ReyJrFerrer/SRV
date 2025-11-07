@@ -380,8 +380,8 @@ const MyBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
         {/* SECTION: Search and filter bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-          <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-            <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+          <div className=" flex justify-start overflow-x-auto whitespace-nowrap sm:justify-center">
+            <nav className="flex space-x-4 overflow-x-auto px-4 py-3 border-b border-gray-200">
               {TAB_ITEMS.map((tab) => (
                 <button
                   key={tab}

@@ -123,7 +123,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
           onFocus={() => handleFocus(index)}
           onPaste={handlePaste}
           disabled={disabled}
-          className={`h-12 w-12 rounded-lg border-2 text-center text-lg font-semibold transition-all duration-200 focus:outline-none ${
+          className={`h-8 w-8 rounded-lg border-2 text-center text-lg font-semibold transition-all duration-200 focus:outline-none md:h-12 md:w-12 ${
             error
               ? "border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-red-500"
               : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500"

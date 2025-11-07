@@ -127,7 +127,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
           : "border-gray-100"
       }`}
     >
-      <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
         <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
         Service Location <span className="text-red-500">*</span>
       </h3>
@@ -406,7 +406,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   type="text"
                   value={displayMunicipality || ""}
                   readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                  className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                   placeholder="Municipality/City"
                 />
               </div>
@@ -418,7 +418,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   type="text"
                   value={displayProvince || ""}
                   readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                  className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                   placeholder="Province"
                 />
               </div>
@@ -456,7 +456,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+              className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                 highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||
@@ -606,7 +606,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+              className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                 highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||
