@@ -63,8 +63,6 @@ export const AdminHomePage: React.FC = () => {
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
 
-
-
   // Calculate dashboard stats from current data
   const dashboardStats = useMemo(() => {
     return calculateDashboardStats(

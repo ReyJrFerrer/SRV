@@ -1,7 +1,5 @@
 import React from "react";
-import {
-  CameraIcon,
-} from "@heroicons/react/24/solid";
+import { CameraIcon } from "@heroicons/react/24/solid";
 
 export interface MediaItem {
   dataUrl?: string | null;

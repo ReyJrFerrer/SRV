@@ -131,9 +131,7 @@ export const ValidationInboxPage: React.FC = () => {
   }, []);
 
   // Handle certificate approval
-  const handleApproveCertificate = async (
-    certificateUrl: string,
-  ) => {
+  const handleApproveCertificate = async (certificateUrl: string) => {
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
@@ -171,9 +169,7 @@ export const ValidationInboxPage: React.FC = () => {
   };
 
   // Handle certificate rejection
-  const handleRejectCertificate = async (
-    certificateUrl: string,
-  ) => {
+  const handleRejectCertificate = async (certificateUrl: string) => {
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
