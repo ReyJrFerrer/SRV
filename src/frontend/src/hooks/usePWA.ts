@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import pwaService from "../services/pwaService";
-import fcmService from "../services/fcmService";
+import oneSignalService from "../services/oneSignalService";
 import browserDetectionService from "../services/browserDetectionService";
 
 export interface PWAState {
@@ -277,46 +277,45 @@ export const usePWA = () => {
           );
         }
 
-        // FCM handles initialization internally, no need for explicit init check
+        // OneSignal handles initialization in main.tsx, no need for explicit init check
 
-        // Request permission with improved error handling
-        // console.log("📋 PWA Hook: Requesting notification permission");
-        const permission = await pwaService.requestNotificationPermission();
+        // Subscribe to push notifications (OneSignal handles permission request internally)
+        // console.log("� PWA Hook: Subscribing to push notifications via OneSignal");
+        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
+        const playerId = await pwaService.subscribeToPushNotifications(vapidKey);
 
-        // Update state immediately
-        setPwaState((prev) => ({ ...prev, pushPermission: permission }));
-
-        // console.log("📊 PWA Hook: Permission result:", permission);
-
-        if (permission === "denied") {
-          throw new Error(
-            "Notifications are blocked. Please enable notifications for this app in your device or browser settings.",
-          );
-        }
-
-        if (permission !== "granted") {
-          // For mobile PWAs, permission might still be 'default' even if user granted it
-          if (pwaState.browserInfo.canReceivePushNotifications) {
-            // console.warn(
-            //   "⚠️ PWA Hook: Permission not granted but browser supports push notifications",
-            // );
+        if (!playerId) {
+          // Check what went wrong
+          const permission = await pwaService.getNotificationPermission();
+          
+          setPwaState((prev) => ({ ...prev, pushPermission: permission }));
+          
+          if (permission === "denied") {
             throw new Error(
-              "Please enable notifications for this app. Check your device settings if you believe you already enabled them.",
+              "Notifications are blocked. Please enable notifications for this app in your device or browser settings.",
+            );
+          } else if (permission === "default") {
+            throw new Error(
+              "Notification permission not granted. Please try again and allow notifications when prompted.",
             );
           } else {
-            throw new Error("Push notification permission was not granted");
+            throw new Error(
+              "Failed to get OneSignal player ID. This may happen on mobile browsers. Please ensure you tapped a button to trigger this action, then try again.",
+            );
           }
         }
 
-        // Subscribe to push notifications (FCM handles this internally)
-        // console.log("🔐 PWA Hook: Subscribing to push notifications");
-        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
-        await pwaService.subscribeToPushNotifications(vapidKey);
+        // Subscription successful
+        // console.log("� PWA Hook: Push subscription created with player ID:", playerId);
 
-        // Subscription is automatically stored by fcmService
-        // console.log("💾 PWA Hook: Push subscription created");
-
-        setPwaState((prev) => ({ ...prev, pushSubscribed: true }));
+        // Update permission state
+        const permission = await pwaService.getNotificationPermission();
+        setPwaState((prev) => ({ 
+          ...prev, 
+          pushSubscribed: true,
+          pushPermission: permission
+        }));
+        
         // console.log("✅ PWA Hook: Push notifications enabled successfully");
         return true;
       } catch (err) {
@@ -385,8 +384,8 @@ export const usePWA = () => {
    */
   const sendTestNotification = useCallback(async (): Promise<boolean> => {
     try {
-      // Test notification via FCM - display a local notification
-      if (fcmService.isReady()) {
+      // Test notification via OneSignal - display a local notification
+      if (oneSignalService.isReady()) {
         await pwaService.showLocalNotification("Test Notification", {
           body: "Push notifications are working!",
           icon: "/logo.svg",

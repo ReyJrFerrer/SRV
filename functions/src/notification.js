@@ -5,6 +5,11 @@ const {FieldValue} = require("firebase-admin/firestore");
 
 const db = admin.firestore();
 
+// OneSignal Configuration
+// Get from Firebase Functions config or environment variables
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b792-64df97dea60b";
+const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
+
 /**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
@@ -195,102 +200,85 @@ async function updateNotificationFrequency(userId, notificationType) {
   }
 }
 
+
 /**
- * Send FCM push notification
+ * Send OneSignal push notification
  * @param {string} userId - User ID to send notification to
  * @param {object} notification - Notification data
  * @return {Promise<boolean>} True if sent successfully
  */
-async function sendFCMNotification(userId, notification) {
+async function sendOneSignalNotification(userId, notification) {
   try {
-    // Get user's FCM token from Firestore
+    // Get user's OneSignal player IDs from Firestore
     const userDoc = await db.collection("users").doc(userId).get();
 
     if (!userDoc.exists) {
-      console.warn(`User ${userId} not found for FCM notification`);
+      console.log(`OneSignal: User ${userId} not found`);
       return false;
     }
 
-    const fcmToken = userDoc.data().fcmToken;
+    const userData = userDoc.data();
+    const playerIds = userData.oneSignalPlayerIds || [];
 
-    if (!fcmToken) {
-      console.info(`User ${userId} has no FCM token registered`);
+    if (playerIds.length === 0) {
+      console.log(`OneSignal: User ${userId} has no registered player IDs`);
       return false;
     }
 
-    // Prepare FCM message
-    // IMPORTANT: All data fields must be strings for FCM
-    const message = {
-      token: fcmToken,
-      notification: {
-        title: notification.title,
-        body: notification.message,
-      },
+    // Check if we have the REST API key
+    if (!ONESIGNAL_REST_API_KEY) {
+      console.error("OneSignal: REST API key not configured");
+      return false;
+    }
+
+    // Prepare notification payload
+    const payload = {
+      app_id: ONESIGNAL_APP_ID,
+      include_player_ids: playerIds,
+      headings: {en: notification.title},
+      contents: {en: notification.message},
       data: {
-        notificationId: String(notification.id || ""),
-        type: String(notification.notificationType || "generic"),
-        userType: String(notification.userType || "client"),
-        href: String(notification.href || "/"),
-        bookingId: String(notification.relatedEntityId || ""),
-        timestamp: notification.createdAt ?
-          notification.createdAt.toISOString() :
-          new Date().toISOString(),
-      },
-      android: {
-        priority: "high",
-        notification: {
-          icon: "logo",
-          sound: "default",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-            badge: 1,
-          },
-        },
-      },
-      webpush: {
-        notification: {
-          icon: "/logo.svg",
-          badge: "/logo.svg",
-          requireInteraction:
-            notification.notificationType ===
-              NOTIFICATION_TYPES.NEW_BOOKING_REQUEST ||
-            notification.notificationType ===
-              NOTIFICATION_TYPES.BOOKING_ACCEPTED ||
-            notification.notificationType === NOTIFICATION_TYPES.PAYMENT_COMPLETED,
-        },
-        fcmOptions: {
-          link: notification.href || "/",
-        },
+        notificationId: notification.id,
+        type: notification.notificationType,
+        relatedEntityId: notification.relatedEntityId,
+        metadata: notification.metadata,
+        href: notification.href,
       },
     };
 
-    // Send via FCM
-    await admin.messaging().send(message);
-    console.log(`FCM notification sent to user ${userId}`);
+    // Add URL if available
+    if (notification.href) {
+      payload.url = notification.href;
+    }
+
+    // Send notification via OneSignal REST API
+    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("OneSignal: Failed to send notification", result);
+      return false;
+    }
+
+    console.log(`OneSignal: Notification sent to ${playerIds.length} device(s)`, result);
+
+    // Update notification status to push_sent
+    await db.collection("notifications").doc(notification.id).update({
+      status: "push_sent",
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
     return true;
   } catch (error) {
-    console.error("Error sending FCM notification:", error);
-
-    // If token is invalid, remove it from user document
-    if (
-      error.code === "messaging/invalid-registration-token" ||
-      error.code === "messaging/registration-token-not-registered"
-    ) {
-      try {
-        await db.collection("users").doc(userId).update({
-          fcmToken: FieldValue.delete(),
-        });
-        console.log(`Removed invalid FCM token for user ${userId}`);
-      } catch (updateError) {
-        console.error("Error removing invalid FCM token:", updateError);
-      }
-    }
-
+    console.error("OneSignal: Failed to send push notification", error);
     return false;
   }
 }
@@ -431,12 +419,12 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     // Update notification frequency tracking
     await updateNotificationFrequency(targetUserId, notificationType);
 
-    // Send FCM push notification asynchronously (don't wait for it)
-    sendFCMNotification(targetUserId, {
+    // Send OneSignal push notification asynchronously (don't wait for it)
+    sendOneSignalNotification(targetUserId, {
       ...notification,
       createdAt: now,
     }).catch((error) => {
-      console.error("Failed to send FCM notification:", error);
+      console.error("Failed to send OneSignal notification:", error);
     });
 
     console.log("✅ [createNotification] Function finished successfully.");
@@ -792,21 +780,22 @@ exports.getNotificationsForPush = functions.https.onCall(
 );
 
 /**
- * Store FCM token for user
+ * Store OneSignal Player ID for user
  * HTTPS Callable Function
  */
-exports.storeFCMToken = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [storeFCMToken] called");
-  const safeDataForLog = {fcmToken: data.data?.fcmToken ? "Present" : "Missing"};
-  console.log("📦 [storeFCMToken] Received payload:", JSON.stringify(safeDataForLog, null, 2));
+exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [storeOneSignalPlayerId] called");
+  const safeDataForLog = {playerId: data.data?.playerId ? "Present" : "Missing"};
+  console.log("📦 [storeOneSignalPlayerId] Received payload:",
+    JSON.stringify(safeDataForLog, null, 2));
 
   // Extract payload from data.data
   const payload = data.data || data;
-  const {fcmToken} = payload;
+  const {playerId} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [storeFCMToken] Auth info:", authInfo);
+  console.log("🔐 [storeOneSignalPlayerId] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
@@ -816,58 +805,57 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
   }
 
   // Validation
-  if (!fcmToken) {
-    console.error("❌ [storeFCMToken] Validation failed: Missing fcmToken.");
+  if (!playerId) {
+    console.error("❌ [storeOneSignalPlayerId] Validation failed: Missing playerId.");
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "FCM token is required",
+      "Player ID is required",
     );
   }
 
   try {
-    console.log(`📝 [storeFCMToken] Storing FCM token for user ${authInfo.uid}...`);
+    console.log(`📝 [storeOneSignalPlayerId] Storing player ID for user ${authInfo.uid}...`);
 
     const userRef = db.collection("users").doc(authInfo.uid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      // User document doesn't exist, create it with the token
-      console.log(`📝 [storeFCMToken] Creating user document with FCM token...`);
+      // User document doesn't exist, create it with the player ID
+      console.log(`📝 [storeOneSignalPlayerId] Creating user document with player ID...`);
       await userRef.set({
-        fcmToken,
-        fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+        oneSignalPlayerIds: [playerId],
+        oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       }, {merge: true});
     } else {
-      // User document exists, check if token is different
-      const existingToken = userDoc.data().fcmToken;
+      // User document exists, add player ID to array if not already present
+      const existingPlayerIds = userDoc.data().oneSignalPlayerIds || [];
 
-      if (existingToken === fcmToken) {
-        console.log(`📝 [storeFCMToken] Token unchanged, skipping update.`);
-        return {success: true, message: "Token already registered"};
+      if (existingPlayerIds.includes(playerId)) {
+        console.log(`📝 [storeOneSignalPlayerId] Player ID already registered, skipping update.`);
+        return {success: true, message: "Player ID already registered"};
       }
 
-      // Token is different, update it
-      console.log(`📝 [storeFCMToken] Updating FCM token (old token will be replaced)...`);
+      // Add new player ID to array
+      console.log(`📝 [storeOneSignalPlayerId] Adding new player ID...`);
       await userRef.update({
-        fcmToken,
-        fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+        oneSignalPlayerIds: FieldValue.arrayUnion(playerId),
+        oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       });
     }
 
-    console.log("✅ [storeFCMToken] Function finished successfully.");
+    console.log("✅ [storeOneSignalPlayerId] Function finished successfully.");
     return {success: true};
   } catch (error) {
-    console.error("Error in storeFCMToken:", error);
+    console.error("Error in storeOneSignalPlayerId:", error);
 
     // Handle specific Firestore errors
     if (error.code === "not-found") {
-      // Document doesn't exist, create it
       try {
         await db.collection("users").doc(authInfo.uid).set({
-          fcmToken,
-          fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
+          oneSignalPlayerIds: [playerId],
+          oneSignalUpdatedAt: FieldValue.serverTimestamp(),
         }, {merge: true});
-        console.log("✅ [storeFCMToken] Created user document with token.");
+        console.log("✅ [storeOneSignalPlayerId] Created user document with player ID.");
         return {success: true};
       } catch (createError) {
         console.error("Error creating user document:", createError);
@@ -880,15 +868,22 @@ exports.storeFCMToken = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Remove FCM token for user
+ * Remove OneSignal Player ID for user
  * HTTPS Callable Function
  */
-exports.removeFCMToken = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [removeFCMToken] called");
+exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
+  console.log("🚀 [removeOneSignalPlayerId] called");
+  const safeDataForLog = {playerId: data.data?.playerId};
+  console.log("📦 [removeOneSignalPlayerId] Received payload:",
+    JSON.stringify(safeDataForLog, null, 2));
+
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {playerId} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [removeFCMToken] Auth info:", authInfo);
+  console.log("🔐 [removeOneSignalPlayerId] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
@@ -898,33 +893,28 @@ exports.removeFCMToken = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    console.log(`📝 [removeFCMToken] Removing FCM token for user ${authInfo.uid}...`);
+    console.log(`📝 [removeOneSignalPlayerId] Removing player ID for user ${authInfo.uid}...`);
 
-    // Check if document exists first
-    const userDoc = await db.collection("users").doc(authInfo.uid).get();
+    const userRef = db.collection("users").doc(authInfo.uid);
 
-    if (!userDoc.exists) {
-      console.log("⚠️ [removeFCMToken] User document doesn't exist, nothing to remove.");
-      return {success: true, message: "No token to remove"};
+    if (playerId) {
+      // Remove specific player ID
+      await userRef.update({
+        oneSignalPlayerIds: FieldValue.arrayRemove(playerId),
+        oneSignalUpdatedAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Remove all player IDs
+      await userRef.update({
+        oneSignalPlayerIds: [],
+        oneSignalUpdatedAt: FieldValue.serverTimestamp(),
+      });
     }
 
-    // Only update if document exists
-    await db.collection("users").doc(authInfo.uid).update({
-      fcmToken: FieldValue.delete(),
-      fcmTokenUpdatedAt: FieldValue.serverTimestamp(),
-    });
-
-    console.log("✅ [removeFCMToken] Function finished successfully.");
+    console.log("✅ [removeOneSignalPlayerId] Function finished successfully.");
     return {success: true};
   } catch (error) {
-    console.error("Error in removeFCMToken:", error);
-
-    // Handle NOT_FOUND error gracefully
-    if (error.code === 5 || error.code === "not-found") {
-      console.log("⚠️ [removeFCMToken] Document not found, treating as success.");
-      return {success: true, message: "No token to remove"};
-    }
-
+    console.error("Error in removeOneSignalPlayerId:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -1263,4 +1253,4 @@ exports.NOTIFICATION_STATUS = NOTIFICATION_STATUS;
 exports.generateNotificationHref = generateNotificationHref;
 exports.isSpamming = isSpamming;
 exports.updateNotificationFrequency = updateNotificationFrequency;
-exports.sendFCMNotification = sendFCMNotification;
+exports.sendOneSignalNotification = sendOneSignalNotification;
