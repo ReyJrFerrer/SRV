@@ -70,10 +70,11 @@ export const NotificationSettingsDetailed: React.FC<
 
   if (!pwaState.pushNotificationSupported) {
     const browserInfo = pwaState.browserInfo;
-    const isMobile = browserInfo.name.toLowerCase().includes('safari') || 
-                     browserInfo.name.toLowerCase().includes('chrome') ||
-                     browserInfo.name.toLowerCase().includes('firefox');
-    
+    const isMobile =
+      browserInfo.name.toLowerCase().includes("safari") ||
+      browserInfo.name.toLowerCase().includes("chrome") ||
+      browserInfo.name.toLowerCase().includes("firefox");
+
     return (
       <div
         className={`rounded-lg border border-yellow-200 bg-yellow-50 p-4 ${className}`}
