@@ -10,6 +10,9 @@ const db = admin.firestore();
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b792-64df97dea60b";
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
+// Base URL for building absolute push URLs (used only for push payloads)
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvepinoy.web.app";
+
 /**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
@@ -78,14 +81,14 @@ const NOTIFICATION_STATUS = {
  * @param {string} notificationType - Type of notification
  * @param {string} userType - Type of user (client/provider)
  * @param {string} entityId - Optional entity ID (booking ID or conversation ID)
- * @return {string} URL href (always returns a string, never null)
+ * @return {string} URL path (no hash) for in-app navigation
  */
 function generateNotificationHref(notificationType, userType, entityId) {
   // Special handling for generic notifications without entityId
-  // Return "/" to make them clickable to homepage instead of null
+  // Return "/" to make them clickable to homepage (used for in-app navigation)
   if (notificationType === NOTIFICATION_TYPES.GENERIC &&
       (!entityId || entityId === null)) {
-    return "/"; // Return "/" instead of null to avoid undefined issues
+    return "/";
   }
 
   if (!entityId) return "/";
@@ -95,7 +98,7 @@ function generateNotificationHref(notificationType, userType, entityId) {
   switch (notificationType) {
   case NOTIFICATION_TYPES.CHAT_MESSAGE:
     // For chat messages, entityId is the conversation ID
-    // Redirect to the specific chat conversation page
+    // Return a path without hash for in-app navigation
     return isProvider ?
       `/provider/chat/${entityId}` :
       `/client/chat/${entityId}`;
@@ -110,7 +113,9 @@ function generateNotificationHref(notificationType, userType, entityId) {
     return `/provider/receipt/${entityId}`;
 
   case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
-    return `/provider/active-service/${entityId}`;
+    return isProvider ?
+      `/provider/active-service/${entityId}` :
+      `/client/booking/${entityId}`;
 
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
@@ -232,6 +237,18 @@ async function sendOneSignalNotification(userId, notification) {
     }
 
     // Prepare notification payload
+    // Normalize href: keep path without hash for in-app navigation (data.href)
+    // and build an absolute URL with a hash for push opens (payload.url)
+    let hrefPath = notification.href || "/";
+    if (typeof hrefPath === "string") {
+      // strip an existing leading '/#' or '#' if present
+      hrefPath = hrefPath.replace(/^\/?#/, "");
+      // ensure leading slash for in-app path
+      if (!hrefPath.startsWith("/")) hrefPath = "/" + hrefPath;
+    } else {
+      hrefPath = "/";
+    }
+
     const payload = {
       app_id: ONESIGNAL_APP_ID,
       include_player_ids: playerIds,
@@ -242,13 +259,15 @@ async function sendOneSignalNotification(userId, notification) {
         type: notification.notificationType,
         relatedEntityId: notification.relatedEntityId,
         metadata: notification.metadata,
-        href: notification.href,
+        href: hrefPath, // in-app path (no hash)
       },
     };
 
-    // Add URL if available
-    if (notification.href) {
-      payload.url = notification.href;
+    // Add URL if available: use base URL + '/#' + hrefPath so push opens with hash routing
+    if (hrefPath) {
+      // Ensure APP_BASE_URL doesn't end with a slash
+      const base = APP_BASE_URL.replace(/\/$/, "");
+      payload.url = `${base}/#${hrefPath}`;
     }
 
     // Send notification via OneSignal REST API

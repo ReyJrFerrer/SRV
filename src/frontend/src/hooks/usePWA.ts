@@ -282,14 +282,15 @@ export const usePWA = () => {
         // Subscribe to push notifications (OneSignal handles permission request internally)
         // console.log("� PWA Hook: Subscribing to push notifications via OneSignal");
         const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
-        const playerId = await pwaService.subscribeToPushNotifications(vapidKey);
+        const playerId =
+          await pwaService.subscribeToPushNotifications(vapidKey);
 
         if (!playerId) {
           // Check what went wrong
           const permission = await pwaService.getNotificationPermission();
-          
+
           setPwaState((prev) => ({ ...prev, pushPermission: permission }));
-          
+
           if (permission === "denied") {
             throw new Error(
               "Notifications are blocked. Please enable notifications for this app in your device or browser settings.",
@@ -310,12 +311,12 @@ export const usePWA = () => {
 
         // Update permission state
         const permission = await pwaService.getNotificationPermission();
-        setPwaState((prev) => ({ 
-          ...prev, 
+        setPwaState((prev) => ({
+          ...prev,
           pushSubscribed: true,
-          pushPermission: permission
+          pushPermission: permission,
         }));
-        
+
         // console.log("✅ PWA Hook: Push notifications enabled successfully");
         return true;
       } catch (err) {

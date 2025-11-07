@@ -41,7 +41,10 @@
           "source": "/OneSignalSDKWorker.js",
           "headers": [
             { "key": "Cache-Control", "value": "no-cache" },
-            { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+            {
+              "key": "Content-Type",
+              "value": "application/javascript; charset=utf-8"
+            }
           ]
         }
       ],
@@ -93,7 +96,10 @@
           "source": "/OneSignalSDKWorker.js",
           "headers": [
             { "key": "Cache-Control", "value": "no-cache" },
-            { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+            {
+              "key": "Content-Type",
+              "value": "application/javascript; charset=utf-8"
+            }
           ]
         }
       ],

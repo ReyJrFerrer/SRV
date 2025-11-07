@@ -135,9 +135,9 @@ class OneSignalService {
       // Check if user is already subscribed (but don't fetch player ID yet - wait for user gesture)
       const isSubscribed = await window.OneSignal.User.PushSubscription.optedIn;
       if (isSubscribed) {
-        console.log("OneSignal: User previously subscribed, will restore on next action");
-        // Don't fetch player ID here - it requires user gesture on some browsers
-        // It will be fetched when the user interacts with the app
+        console.log(
+          "OneSignal: User previously subscribed, will restore on next action",
+        );
       }
 
       return true;
@@ -230,24 +230,25 @@ class OneSignalService {
       console.log("OneSignal: Opting in to push notifications...");
       await window.OneSignal.User.PushSubscription.optIn();
 
-      // Wait a bit for subscription to be fully set up (especially important on mobile)
       console.log("OneSignal: Waiting for subscription to be ready...");
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Get player ID with retry logic for mobile browsers
       let playerId: string | null = null;
       let attempts = 0;
       const maxAttempts = 5;
-      
+
       while (attempts < maxAttempts && !playerId) {
         attempts++;
-        console.log(`OneSignal: Attempting to get player ID (attempt ${attempts}/${maxAttempts})...`);
-        
+        console.log(
+          `OneSignal: Attempting to get player ID (attempt ${attempts}/${maxAttempts})...`,
+        );
+
         playerId = await this.getPlayerId();
-        
+
         if (!playerId && attempts < maxAttempts) {
           // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
@@ -258,7 +259,11 @@ class OneSignalService {
         await this.registerPlayerId(playerId);
         return playerId;
       } else {
-        console.error("OneSignal: Failed to get player ID after", maxAttempts, "attempts");
+        console.error(
+          "OneSignal: Failed to get player ID after",
+          maxAttempts,
+          "attempts",
+        );
         // Even if we don't have player ID yet, subscription might still work
         // The event listener will catch it when it becomes available
         return null;
@@ -428,19 +433,24 @@ class OneSignalService {
 
     try {
       // Import Firebase functions
-      const { getFunctions, httpsCallable } = await import("firebase/functions");
+      const { getFunctions, httpsCallable } = await import(
+        "firebase/functions"
+      );
       const functions = getFunctions();
       const storePlayerId = httpsCallable(functions, "storeOneSignalPlayerId");
 
       console.log("OneSignal: Registering player ID with backend:", playerId);
-      
+
       const result = await storePlayerId({ playerId });
       const data = result.data as { success: boolean };
-      
+
       console.log("OneSignal: Player ID registered successfully");
       return data.success;
     } catch (error) {
-      console.error("OneSignal: Failed to register player ID with backend", error);
+      console.error(
+        "OneSignal: Failed to register player ID with backend",
+        error,
+      );
       return false;
     }
   }
@@ -451,23 +461,28 @@ class OneSignalService {
   private async unregisterPlayerId(): Promise<boolean> {
     try {
       const playerId = this.currentPlayerId;
-      
+
       if (!playerId) {
         console.warn("OneSignal: No player ID to unregister");
         return true; // Not an error, just nothing to do
       }
 
       // Import Firebase functions
-      const { getFunctions, httpsCallable } = await import("firebase/functions");
+      const { getFunctions, httpsCallable } = await import(
+        "firebase/functions"
+      );
       const functions = getFunctions();
-      const removePlayerId = httpsCallable(functions, "removeOneSignalPlayerId");
+      const removePlayerId = httpsCallable(
+        functions,
+        "removeOneSignalPlayerId",
+      );
 
       console.log("OneSignal: Unregistering player ID from backend");
-      
+
       // httpsCallable automatically wraps parameters in { data: ... }
       const result = await removePlayerId({ playerId });
       const data = result.data as { success: boolean };
-      
+
       console.log("OneSignal: Player ID unregistered successfully");
       return data.success;
     } catch (error) {
@@ -491,7 +506,8 @@ class OneSignalService {
     errors: string[];
   }> {
     const errors: string[] = [];
-    const browserSupport = "Notification" in window && "serviceWorker" in navigator;
+    const browserSupport =
+      "Notification" in window && "serviceWorker" in navigator;
 
     if (!browserSupport) {
       errors.push("Browser does not support notifications or service workers");

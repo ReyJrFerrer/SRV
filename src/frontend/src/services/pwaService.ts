@@ -560,7 +560,7 @@ class PWAService {
   async unsubscribeFromPushNotifications(): Promise<boolean> {
     try {
       return await oneSignalService.unsubscribe();
-    } catch (error) { 
+    } catch (error) {
       console.error("Failed to unsubscribe from OneSignal:", error);
       return false;
     }
