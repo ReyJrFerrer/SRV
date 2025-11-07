@@ -82,6 +82,7 @@ const {
   getServicesWithCertificates,
   getPendingCertificateValidations,
   validateCertificate,
+  updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
 } = require("./src/admin");
 
@@ -251,7 +252,6 @@ const {
   getStorageStats,
   validateMediaItems,
   getRemittanceMediaItems,
-  updateCertificateValidationStatus,
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
@@ -427,7 +427,6 @@ exports.updateMediaMetadata = updateMediaMetadata;
 exports.getStorageStats = getStorageStats;
 exports.validateMediaItems = validateMediaItems;
 exports.getRemittanceMediaItems = getRemittanceMediaItems;
-exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
@@ -454,6 +453,7 @@ exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
+exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 
 // Export Scheduled Admin Functions
 exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;

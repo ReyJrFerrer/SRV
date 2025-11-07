@@ -6,7 +6,7 @@ import {
   TicketIcon,
   ShieldCheckIcon,
   CalendarDaysIcon,
-  CheckCircleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 
 interface AdminDashboardStatsProps {
@@ -16,7 +16,8 @@ interface AdminDashboardStatsProps {
     totalPendingTickets: number;
     totalAdminUsers: number;
     totalBookings: number;
-    settledBookings: number;
+    appFeedbackAverageRating: number;
+    appFeedbackCount: number;
   };
   loading?: boolean;
 }
@@ -87,10 +88,10 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       icon: CalendarDaysIcon,
     },
     {
-      title: "Completed Bookings",
-      value: formatNumber(stats.settledBookings),
-      subtitle: "Completed bookings only",
-      icon: CheckCircleIcon,
+      title: "App Feedback",
+      value: stats.appFeedbackAverageRating > 0 ? stats.appFeedbackAverageRating.toFixed(1) : "0.0",
+      subtitle: `${formatNumber(stats.appFeedbackCount)} feedback${stats.appFeedbackCount !== 1 ? "s" : ""}`,
+      icon: StarIcon,
     },
   ];
 
@@ -107,7 +108,8 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             <div
               className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-white p-6 shadow-sm transition-all hover:shadow-md ${
                 card.title === "Pending Validations" ||
-                card.title === "Pending Tickets"
+                card.title === "Pending Tickets" ||
+                card.title === "App Feedback"
                   ? "cursor-pointer"
                   : ""
               }`}
@@ -148,6 +150,10 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             </Link>
           ) : card.title === "Pending Tickets" ? (
             <Link key={index} to="/ticket-inbox">
+              {CardContent}
+            </Link>
+          ) : card.title === "App Feedback" ? (
+            <Link key={index} to="/feedback">
               {CardContent}
             </Link>
           ) : (

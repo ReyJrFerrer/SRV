@@ -16,6 +16,7 @@ import { UserChatHistoryPage } from "./pages/userChatHistory";
 import AdminServiceDetailsWrapper from "./components/AdminServiceDetailsWrapper";
 import ServiceReviewsPage from "./pages/serviceReviews";
 import UserReviewsPage from "./pages/userReviews";
+import AppFeedbackPage from "./pages/appFeedback";
 import { getFirebaseFirestore } from "./services/firebaseApp";
 
 // Login component
@@ -431,6 +432,15 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* App Feedback Route */}
+        <Route
+          path="/feedback"
+          element={
+            <ProtectedRoute>
+              <AppFeedbackPage />
             </ProtectedRoute>
           }
         />

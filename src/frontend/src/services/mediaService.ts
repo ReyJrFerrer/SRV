@@ -48,12 +48,23 @@ const imageCache = new Map<string, string>();
  */
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
-    // Handle Firebase Storage URLs
-    if (url.includes("storage.googleapis.com")) {
-      // Extract from URL like: https://storage.googleapis.com/.../users/uid/mediaId_filename
+    // Handle Firebase Storage emulator URLs: http://127.0.0.1:9199/v0/b/bucket/o/path?alt=media
+    if (url.includes("127.0.0.1:9199") || url.includes("localhost:9199")) {
+      const urlObj = new URL(url);
+      const pathMatch = urlObj.pathname.match(/\/o\/(.+)$/);
+      if (pathMatch) {
+        const fullPath = decodeURIComponent(pathMatch[1]);
+        const parts = fullPath.split("/");
+        const filename = parts[parts.length - 1];
+        const mediaId = filename.split("_")[0];
+        return mediaId || null;
+      }
+    }
+
+    // Handle Firebase Storage production URLs
+    if (url.includes("storage.googleapis.com") || url.includes("firebasestorage.googleapis.com")) {
       const parts = url.split("/");
-      const filename = parts[parts.length - 1];
-      // Extract mediaId from filename (format: {mediaId}_{filename})
+      const filename = parts[parts.length - 1].split("?")[0];
       const mediaId = filename.split("_")[0];
       return mediaId || null;
     }
@@ -69,7 +80,6 @@ export const extractMediaIdFromUrl = (url: string): string | null => {
 
     return null;
   } catch (error) {
-    //console.error("Error extracting media ID from URL:", error);
     return null;
   }
 };

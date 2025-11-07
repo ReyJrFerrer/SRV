@@ -123,7 +123,7 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Initial data loading
   useEffect(() => {
-    console.log("🚀 [useAdmin] Initial data loading...");
+    console.log("[useAdmin] Initial data loading...");
     refreshAll();
   }, []);
 
@@ -152,17 +152,17 @@ export const useAdmin = (): UseAdminReturn => {
   // System Statistics
   const refreshSystemStats = useCallback(
     async (showSuccessToast = false) => {
-      console.log("🔄 [refreshSystemStats] Starting system stats refresh...");
+      console.log("[refreshSystemStats] Starting system stats refresh...");
       updateLoadingState("systemStats", true);
       try {
         const stats = await adminServiceCanister.getSystemStats();
-        console.log("🔄 [refreshSystemStats] Received stats:", stats);
+        console.log("[refreshSystemStats] Received stats:", stats);
         setSystemStats(stats);
         if (showSuccessToast) {
           toast.success("System statistics updated successfully");
         }
       } catch (error) {
-        console.error("❌ [refreshSystemStats] Error:", error);
+        console.error("[refreshSystemStats] Error:", error);
         handleError(error, "Failed to refresh system statistics");
       } finally {
         updateLoadingState("systemStats", false);
@@ -311,22 +311,22 @@ export const useAdmin = (): UseAdminReturn => {
     async (showSuccessToast = false) => {
       updateLoadingState("bookings", true);
       try {
-        console.log("🔍 [refreshBookings] Calling getBookingsData...");
+        console.log("[refreshBookings] Calling getBookingsData...");
         const data = await adminServiceCanister.getBookingsData();
         console.log(
-          "🔍 [refreshBookings] Raw bookings data from service:",
+          "[refreshBookings] Raw bookings data from service:",
           data.bookings,
         );
         console.log(
-          "🔍 [refreshBookings] Raw commission transactions:",
+          "[refreshBookings] Raw commission transactions:",
           data.commissionTransactions,
         );
         console.log(
-          "🔍 [refreshBookings] Bookings length:",
+          "[refreshBookings] Bookings length:",
           data.bookings?.length || 0,
         );
         console.log(
-          "🔍 [refreshBookings] Commission transactions length:",
+          "[refreshBookings] Commission transactions length:",
           data.commissionTransactions?.length || 0,
         );
         setBookings(data.bookings);
@@ -346,7 +346,7 @@ export const useAdmin = (): UseAdminReturn => {
 
         if (!isNetworkError) {
           console.error(
-            "❌ [refreshBookings] Error refreshing bookings:",
+            "[refreshBookings] Error refreshing bookings:",
             error,
           );
           handleError(error, "Failed to refresh bookings");
@@ -435,7 +435,7 @@ export const useAdmin = (): UseAdminReturn => {
   useEffect(() => {
     if (bookings.length > 0 || commissionTransactions.length > 0) {
       console.log(
-        "🔄 [useAdmin] Bookings or commission transactions changed, refreshing system stats...",
+        "[useAdmin] Bookings or commission transactions changed, refreshing system stats...",
       );
       refreshSystemStats();
     }
