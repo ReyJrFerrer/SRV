@@ -1,7 +1,5 @@
 import React from "react";
 import {
-  PhotoIcon,
-  AcademicCapIcon,
   CameraIcon,
 } from "@heroicons/react/24/solid";
 

@@ -15,7 +15,6 @@ import {
 } from "recharts";
 import {
   countActiveServiceProviders,
-  calculateSettledBookings,
   calculateDashboardStats,
   generateBookingsChartData,
   generateRevenueChartData,
@@ -64,10 +63,7 @@ export const AdminHomePage: React.FC = () => {
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
 
-  // Calculate settled bookings with fallback to systemStats when bookings array is empty
-  const settledBookings = useMemo(() => {
-    return calculateSettledBookings(bookings || [], systemStats);
-  }, [bookings, systemStats]);
+
 
   // Calculate dashboard stats from current data
   const dashboardStats = useMemo(() => {

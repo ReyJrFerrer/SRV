@@ -18,7 +18,6 @@ interface ServiceHeroCardProps {
 export const ServiceHeroCard: React.FC<ServiceHeroCardProps> = ({
   service,
   heroImageUrl,
-  isLoadingImages,
 }) => {
   const navigate = useNavigate();
 

@@ -3,9 +3,6 @@ import {
   UserIcon,
   PhoneIcon,
   ChevronRightIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 
 interface Provider {

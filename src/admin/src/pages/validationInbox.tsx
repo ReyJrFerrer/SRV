@@ -11,8 +11,6 @@ import {
 import {
   calculateStats,
   extractMediaIdFromUrl,
-  removeCertificateFromServices,
-  createCertificateData,
   addCertificateToServices,
   extractMediaIdFromUrlSimple,
   createMediaModalState,
@@ -134,8 +132,6 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Handle certificate approval
   const handleApproveCertificate = async (
-    service: any,
-    certificateIndex: number,
     certificateUrl: string,
   ) => {
     try {
@@ -176,8 +172,6 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Handle certificate rejection
   const handleRejectCertificate = async (
-    service: any,
-    certificateIndex: number,
     certificateUrl: string,
   ) => {
     try {

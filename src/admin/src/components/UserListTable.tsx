@@ -42,7 +42,6 @@ interface UserListTableProps {
 }
 
 export const UserListTable: React.FC<UserListTableProps> = ({
-  users,
   filteredUsers,
   currentUsers,
   currentPage,
