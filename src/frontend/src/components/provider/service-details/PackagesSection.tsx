@@ -201,7 +201,7 @@ const PackagesSection: React.FC<Props> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-rows-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-rows-1">
           {packages.length > 0 ? (
             packages.map((pkg) => (
               <div

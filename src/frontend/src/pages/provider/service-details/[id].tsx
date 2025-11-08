@@ -1216,8 +1216,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           onToggleStatus={handleStatusToggle}
           onDeleteClick={() => setShowDeleteConfirm(true)}
         />
-        {/* Add space below the buttons */}
-        <div className="h-8" />
       </main>
       <BottomNavigation />
     </div>

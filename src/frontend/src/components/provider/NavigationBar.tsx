@@ -146,17 +146,86 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <>
-      {/* Mobile bottom bar */}
-      <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
-        <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
-          <div className="grid w-full grid-cols-6 font-medium">
-            {/* Mobile: show Home, Booking, Chat, Services first */}
-            {navItems
-              .filter((it) =>
-                ["Home", "Booking", "Chat", "Services"].includes(it.label),
-              )
-              .map((item) => {
-                const active = isActivePath(item.to);
+      {!location.pathname.startsWith("/provider/chat") && (
+        <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
+          <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
+            <div className="grid w-full grid-cols-6 font-medium">
+              {navItems
+                .filter((it) =>
+                  ["Home", "Booking", "Chat", "Services"].includes(it.label),
+                )
+                .map((item) => {
+                  const active = isActivePath(item.to);
+                  const onClick = async (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    if (active) {
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }, 120);
+                      return;
+                    }
+                    if (onNavigateAttempt) {
+                      try {
+                        const result = await onNavigateAttempt(item.to);
+                        if (result === false) return;
+                      } catch {
+                        return;
+                      }
+                    }
+                    navigate(item.to);
+                  };
+                  const Icon =
+                    item.label === "Home"
+                      ? HomeIcon
+                      : item.label === "Booking"
+                        ? CalendarDaysIcon
+                        : item.label === "Chat"
+                          ? ChatBubbleOvalLeftEllipsisIcon
+                          : WrenchScrewdriverIcon;
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                      onClick={onClick}
+                    >
+                      <div className="flex w-full items-center justify-center">
+                        <div
+                          className={
+                            active
+                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                              : ""
+                          }
+                        >
+                          <Icon
+                            className={
+                              active
+                                ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                                : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                            }
+                          />
+                        </div>
+                      </div>
+                      <span
+                        className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
+                          active
+                            ? "scale-105 font-bold text-blue-900"
+                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                        }`}
+                        style={{ opacity: active ? 1 : 0.9 }}
+                      >
+                        {item.label}
+                      </span>
+                      {item.count > 0 && (
+                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      )}
+                    </Link>
+                  );
+                })}
+              {/* Mobile: Notifications button (left of Settings) */}
+              {(() => {
+                const to = "/provider/notifications";
+                const active = isActivePath(to);
                 const onClick = async (e: React.MouseEvent) => {
                   e.preventDefault();
                   if (active) {
@@ -167,26 +236,18 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   }
                   if (onNavigateAttempt) {
                     try {
-                      const result = await onNavigateAttempt(item.to);
+                      const result = await onNavigateAttempt(to);
                       if (result === false) return;
                     } catch {
                       return;
                     }
                   }
-                  navigate(item.to);
+                  navigate(to);
                 };
-                const Icon =
-                  item.label === "Home"
-                    ? HomeIcon
-                    : item.label === "Booking"
-                      ? CalendarDaysIcon
-                      : item.label === "Chat"
-                        ? ChatBubbleOvalLeftEllipsisIcon
-                        : WrenchScrewdriverIcon; // Services
                 return (
                   <Link
-                    key={item.label}
-                    to={item.to}
+                    key="Notifications-mobile"
+                    to={to}
                     className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
                     onClick={onClick}
                   >
@@ -198,7 +259,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             : ""
                         }
                       >
-                        <Icon
+                        <BellIcon
                           className={
                             active
                               ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
@@ -215,138 +276,77 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       }`}
                       style={{ opacity: active ? 1 : 0.9 }}
                     >
-                      {item.label}
+                      Notifications
                     </span>
-                    {item.count > 0 && (
+                    {unreadCount > 0 && (
                       <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
                     )}
                   </Link>
                 );
-              })}
-            {/* Mobile: Notifications button (left of Settings) */}
-            {(() => {
-              const to = "/provider/notifications";
-              const active = isActivePath(to);
-              const onClick = async (e: React.MouseEvent) => {
-                e.preventDefault();
-                if (active) {
-                  setTimeout(() => {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }, 120);
-                  return;
-                }
-                if (onNavigateAttempt) {
-                  try {
-                    const result = await onNavigateAttempt(to);
-                    if (result === false) return;
-                  } catch {
+              })()}
+              {/* Mobile: Settings button (replaces Profile on mobile) */}
+              {(() => {
+                const to = settingsItem.to;
+                const active = isActivePath(to);
+                const onClick = async (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  if (active) {
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 120);
                     return;
                   }
-                }
-                navigate(to);
-              };
-              return (
-                <Link
-                  key="Notifications-mobile"
-                  to={to}
-                  className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                  onClick={onClick}
-                >
-                  <div className="flex w-full items-center justify-center">
-                    <div
-                      className={
-                        active
-                          ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                          : ""
-                      }
-                    >
-                      <BellIcon
-                        className={
-                          active
-                            ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                            : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
-                        }
-                      />
-                    </div>
-                  </div>
-                  <span
-                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                      active
-                        ? "scale-105 font-bold text-blue-900"
-                        : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
-                    }`}
-                    style={{ opacity: active ? 1 : 0.9 }}
-                  >
-                    Notifications
-                  </span>
-                  {unreadCount > 0 && (
-                    <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                  )}
-                </Link>
-              );
-            })()}
-            {/* Mobile: Settings button (replaces Profile on mobile) */}
-            {(() => {
-              const to = settingsItem.to;
-              const active = isActivePath(to);
-              const onClick = async (e: React.MouseEvent) => {
-                e.preventDefault();
-                if (active) {
-                  setTimeout(() => {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }, 120);
-                  return;
-                }
-                if (onNavigateAttempt) {
-                  try {
-                    const result = await onNavigateAttempt(to);
-                    if (result === false) return;
-                  } catch {
-                    return;
+                  if (onNavigateAttempt) {
+                    try {
+                      const result = await onNavigateAttempt(to);
+                      if (result === false) return;
+                    } catch {
+                      return;
+                    }
                   }
-                }
-                navigate(to);
-              };
-              return (
-                <Link
-                  key="Settings-mobile"
-                  to={to}
-                  className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                  onClick={onClick}
-                >
-                  <div className="flex w-full items-center justify-center">
-                    <div
-                      className={
-                        active
-                          ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                          : ""
-                      }
-                    >
-                      <Cog6ToothIcon
+                  navigate(to);
+                };
+                return (
+                  <Link
+                    key="Settings-mobile"
+                    to={to}
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    onClick={onClick}
+                  >
+                    <div className="flex w-full items-center justify-center">
+                      <div
                         className={
                           active
-                            ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                            : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            : ""
                         }
-                      />
+                      >
+                        <Cog6ToothIcon
+                          className={
+                            active
+                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <span
-                    className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                      active
-                        ? "scale-105 font-bold text-blue-900"
-                        : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
-                    }`}
-                    style={{ opacity: active ? 1 : 0.9 }}
-                  >
-                    Settings
-                  </span>
-                </Link>
-              );
-            })()}
-          </div>
-        </nav>
-      </div>
+                    <span
+                      className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
+                        active
+                          ? "scale-105 font-bold text-blue-900"
+                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                      }`}
+                      style={{ opacity: active ? 1 : 0.9 }}
+                    >
+                      Settings
+                    </span>
+                  </Link>
+                );
+              })()}
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Desktop left sidebar */}
       <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
