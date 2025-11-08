@@ -349,7 +349,7 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     // Otherwise, wrap it in an internal error
     throw new functions.https.HttpsError(
       "internal",
-      error.message || "Internal server error",
+      error.message || "Server error, please try again at another time ",
     );
   }
 });

@@ -52,7 +52,7 @@ const CredentialsSection: React.FC<CredentialsSectionProps> = ({
     // No certificates uploaded
     statusText = "No Credentials Yet";
     statusDescription =
-      "This provider has not uploaded any credentials yet. Once credentials are submitted and verified, they will be displayed here.";
+      "This provider has not uploaded any credentials yet. Once credentials are submitted and verified, they will have a badge here.";
     borderColor = "border-gray-200";
     bgColor = "bg-gray-50";
     iconColor = "text-gray-400";

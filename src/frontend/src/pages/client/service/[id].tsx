@@ -532,7 +532,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <ReviewsSection serviceId={service.id} />
       </main>
 
-      <div className="shadow-t-lg fixed bottom-11 left-0 z-40 flex w-full flex-col border-t border-gray-200 bg-white p-3 md:bottom-0 lg:bottom-0">
+      <div className="shadow-t-lg fixed bottom-12 left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
         <div className="mx-auto flex w-full items-center justify-between gap-3">
           <button
             onClick={handleChatProviderClick}

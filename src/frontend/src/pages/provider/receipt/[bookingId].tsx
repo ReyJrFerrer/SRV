@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   PrinterIcon,
@@ -6,6 +6,7 @@ import {
   // CheckBadgeIcon removed
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
@@ -29,16 +30,33 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const { getBookingById, loading, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
-  // Get booking data from hook
-  const booking = useMemo(() => {
-    if (bookingId && typeof bookingId === "string") {
-      return getBookingById(bookingId);
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
     }
-    return null;
-  }, [bookingId, getBookingById]);
+
+    if (!booking) {
+      console.warn("Receipt: booking not found");
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Completed") {
+      console.warn(
+        `Receipt: booking status is ${booking.status}, not Completed`,
+      );
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {
@@ -101,14 +119,6 @@ const ReceiptPage: React.FC = () => {
       alert("Web Share API not supported. You can copy the URL.");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   if (!booking) {
     return (

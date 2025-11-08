@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { StarIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import {
+  StarIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useClientRating from "../../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 
@@ -14,16 +18,36 @@ const quickFeedbackOptions = [
 const ProviderRateClientPage: React.FC = () => {
   const navigate = useNavigate();
   const { bookingId } = useParams<{ bookingId: string }>();
-  const { getBookingById, loading: bookingLoading } =
-    useProviderBookingManagement();
-  const booking = React.useMemo(
-    () => (bookingId ? getBookingById(bookingId) : null),
-    [bookingId, getBookingById],
-  );
+
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (!booking) {
+      console.warn("Rate client: booking not found");
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Completed") {
+      console.warn(
+        `Rate client: booking status is ${booking.status}, not Completed`,
+      );
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   const {
     submitClientReview,
-    loading: reviewLoading,
+    getClientReviews,
     error: reviewError,
     clearError,
   } = useClientRating(bookingId || undefined);
@@ -34,12 +58,59 @@ const ProviderRateClientPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
+  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(
+    null,
+  );
+  const [, setCheckingReview] = useState(true);
 
   useEffect(() => {
     document.title = "Rate Client | SRV Provider";
   }, []);
 
-  const isLoading = bookingLoading || reviewLoading;
+  // Check if provider has already reviewed this booking
+  useEffect(() => {
+    const checkExistingReview = async () => {
+      if (!bookingId) return;
+
+      if (!booking) {
+        console.warn("Cannot rate client: booking not found");
+        navigate("/provider/bookings", { replace: true });
+        return;
+      }
+
+      // Only allow rating if booking is completed
+      if (booking.status !== "Completed") {
+        console.warn("Cannot rate client: booking status is not Completed");
+        navigate("/provider/bookings", { replace: true });
+        return;
+      }
+
+      try {
+        setCheckingReview(true);
+        const reviews = await getClientReviews(bookingId);
+
+        // Check if provider has already submitted a review
+        if (reviews && reviews.length > 0) {
+          console.warn("Provider has already reviewed this client");
+          setHasExistingReview(true);
+          // Redirect after a brief moment to show the message
+          setTimeout(() => {
+            navigate("/provider/bookings?tab=Completed", { replace: true });
+          }, 2000);
+        } else {
+          setHasExistingReview(false);
+        }
+      } catch (error) {
+        console.error("Error checking existing review:", error);
+        setHasExistingReview(false);
+      } finally {
+        setCheckingReview(false);
+      }
+    };
+
+    checkExistingReview();
+  }, [bookingId, booking, isLoadingBooking, navigate]);
+  // Removed getClientReviews from dependencies to prevent re-runs
 
   const handleRating = useCallback((value: number) => setRating(value), []);
 
@@ -99,12 +170,24 @@ const ProviderRateClientPage: React.FC = () => {
     navigate,
   ]);
 
-  if (isLoading && !booking)
+  // Show message if provider has already reviewed this booking
+  if (hasExistingReview === true) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <div className="mb-4 text-blue-500">
+            <CheckCircleIcon className="mx-auto h-16 w-16" />
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-gray-900">
+            Already Reviewed
+          </h2>
+          <p className="mb-4 text-gray-600">
+            You have already submitted a review for this client. Redirecting...
+          </p>
+        </div>
       </div>
     );
+  }
 
   if (!booking)
     return (

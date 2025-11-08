@@ -1370,8 +1370,8 @@ const BookingPage: React.FC = () => {
             </div>
           </header>
 
-          <div className="flex-grow pb-2 md:pb-28" ref={pageContainerRef}>
-            <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
+          <div className="flex-grow pb-28" ref={pageContainerRef}>
+            <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
               <div className="md:flex md:gap-x-8">
                 <div className="space-y-6 md:w-1/2">
                   <PackagesSection

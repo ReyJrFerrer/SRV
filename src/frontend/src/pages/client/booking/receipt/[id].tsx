@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUturnLeftIcon, ShareIcon } from "@heroicons/react/24/solid";
 import {
   useBookingManagement,
@@ -11,6 +11,7 @@ import useNoBackNavigation from "../../../../hooks/useNoBackNavigation";
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
   const location = useLocation();
+  const navigate = useNavigate();
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
@@ -46,6 +47,28 @@ const ReceiptPage: React.FC = () => {
       setBooking(foundBooking || null);
     }
   }, [id, bookings, bookingLoading]);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!id) {
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+
+    if (!booking) {
+      console.warn("Client receipt: booking not found");
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Completed") {
+      console.warn(
+        `Client receipt: booking status is ${booking.status}, not Completed`,
+      );
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+  }, [booking, bookingLoading, id, navigate]);
 
   // Check commission validation for cash bookings
   useEffect(() => {

@@ -448,12 +448,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               Provided by: {providerName}
             </p>
             {/* Reputation + Rating (real frontend display using shared components) */}
-            <div className="flex items-center gap-3">
+            <div className="left-0 flex flex-col items-start lg:flex-row">
               <div className="flex-shrink-0">
                 <ReputationScore reputation={reputation} />
               </div>
 
-              <div className="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
+              <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
                 {loadingStats ? (
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
@@ -481,7 +481,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             </p>
 
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              <p className="flex items-center">
+              <p className="flex items-start">
                 <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                 {booking.scheduledDate
                   ? formatDateRange(
@@ -491,13 +491,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   : formatDate(booking.requestedDate || booking.createdAt)}
               </p>
 
-              <p className="flex items-center">
+              <p className="flex items-start">
                 <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                 <span className="truncate">{bookingLocation}</span>
               </p>
 
               {booking.price && (
-                <p className="flex items-center">
+                <p className="flex items-start">
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-green-600">
                     ₱

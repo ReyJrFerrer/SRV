@@ -38,7 +38,37 @@ export default function CreateProfilePage() {
   // Set document title using React 19 approach
   useEffect(() => {
     document.title = "Create Profile | SRV";
-  }, []);
+
+    // Prevent back navigation to create-profile after profile is created
+    // This adds a state marker to detect forward navigation attempts
+    const handlePopState = () => {
+      // If user tries to go back, check if they have a profile
+      authCanisterService
+        .getMyProfile()
+        .then((profile) => {
+          if (profile && profile.name && profile.phone) {
+            // User has a profile, redirect to their dashboard instead of allowing back
+            console.log(
+              "Preventing navigation back to create-profile - user already has profile",
+            );
+            if (profile.activeRole === "Client") {
+              navigate("/client/home", { replace: true });
+            } else if (profile.activeRole === "ServiceProvider") {
+              navigate("/provider/home", { replace: true });
+            }
+          }
+        })
+        .catch(() => {
+          // No profile or error - allow normal navigation
+        });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [navigate]);
 
   // Initialize phone verification service
   useEffect(() => {
@@ -49,19 +79,48 @@ export default function CreateProfilePage() {
     initPhoneVerification();
   }, []);
 
+  // Check if user already has a profile and redirect accordingly
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isAuthenticated) {
-        //console.warn("Not authenticated, redirecting to login...");
-        navigate("/client");
-      } else {
-        setReauthRequired(false);
-        setError(null);
+    const checkExistingProfile = async () => {
+      if (!isAuthenticated || !identity) {
+        // Not authenticated - redirect to landing page after delay
+        const timer = setTimeout(() => {
+          console.warn("Not authenticated, redirecting to landing page...");
+          navigate("/");
+        }, 1500);
+        return () => clearTimeout(timer);
       }
-    }, 1500);
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, navigate]);
+      try {
+        // Check if user already has a profile
+        const profile = await authCanisterService.getMyProfile();
+
+        if (profile && profile.name && profile.phone) {
+          // User already has a complete profile - redirect based on their role
+          console.log(
+            "User already has a profile, redirecting to dashboard...",
+          );
+          if (profile.activeRole === "Client") {
+            navigate("/client/home", { replace: true });
+          } else if (profile.activeRole === "ServiceProvider") {
+            navigate("/provider/home", { replace: true });
+          } else {
+            // Has profile but no valid role - stay on create profile page
+            console.log("Profile exists but no valid role set");
+          }
+        }
+      } catch (err) {
+        // Profile not found or error - user can stay on create-profile page
+        console.log("No existing profile found, user can create one");
+      }
+
+      // Reset any reauth requirements
+      setReauthRequired(false);
+      setError(null);
+    };
+
+    checkExistingProfile();
+  }, [isAuthenticated, identity, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

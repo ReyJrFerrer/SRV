@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   UserIcon,
@@ -7,11 +7,13 @@ import {
   CurrencyDollarIcon,
   // CameraIcon,
   CheckCircleIcon,
+  XCircleIcon,
   PaperAirplaneIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import BottomNavigation from "../../../components/provider/NavigationBar";
@@ -33,18 +35,36 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { getBookingById, loading, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
+
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (!booking) {
+      console.warn("Active service: booking not found");
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "InProgress") {
+      console.warn(
+        `Active service: booking status is ${booking.status}, not InProgress`,
+      );
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
-
-  const booking = useMemo(() => {
-    if (bookingId && typeof bookingId === "string") {
-      return getBookingById(bookingId);
-    }
-    return null;
-  }, [bookingId, getBookingById]);
 
   useEffect(() => {
     if (booking) {
@@ -168,29 +188,6 @@ const ActiveServicePage: React.FC = () => {
       );
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // if (error) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-  //       Error: {error}
-  //     </div>
-  //   );
-  // }
-  // if (!isProviderAuthenticated()) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-  //       Please log in as a service provider to access this page.
-  //     </div>
-  //   );
-  // }
 
   if (!booking) {
     return (
@@ -352,8 +349,9 @@ const ActiveServicePage: React.FC = () => {
               </button>
               <button
                 onClick={() => setIsCancelModalOpen(true)}
-                className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
               >
+                <XCircleIcon className="h-5 w-5" />
                 Cancel Service
               </button>
             </div>

@@ -371,7 +371,7 @@ const MyBookingsPage: React.FC = () => {
     <>
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Bookings
           </h1>
         </div>
@@ -380,8 +380,8 @@ const MyBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
         {/* SECTION: Search and filter bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-          <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-            <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+          <div className="flex justify-start overflow-x-auto whitespace-nowrap sm:justify-center">
+            <nav className="flex space-x-4 overflow-x-auto border-b border-gray-200 px-4 py-3">
               {TAB_ITEMS.map((tab) => (
                 <button
                   key={tab}
@@ -538,7 +538,7 @@ const MyBookingsPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className=" rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
+            <div className="rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
               <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <p className="px-3 text-lg text-gray-500">
                 No bookings found with the current filters.
