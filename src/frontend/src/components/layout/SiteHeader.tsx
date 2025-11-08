@@ -59,7 +59,10 @@ export function SiteHeader({
           className="flex flex-1 items-center justify-center"
           aria-label="Primary"
         >
-          <ul className="nav-list flex items-center gap-2 xl:gap-4">
+          <ul
+            className="nav-list flex flex-nowrap items-center gap-2 xl:gap-4"
+            style={{ flexDirection: "row" }}
+          >
             <li>
               <a
                 href="#"

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useProviderNotifications,
@@ -31,6 +31,19 @@ const NotificationsPageSP = () => {
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
+  // Tabs for categorizing notifications
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
+
+  const TAB_ITEMS: NotificationTab[] = [
+    "All",
+    "Bookings",
+    "Chat",
+    "Ratings",
+    "From Admin",
+  ];
+
+  const [activeTab, setActiveTab] = useState<NotificationTab>("All");
+
   // Edit / selection mode
   const [editMode, setEditMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -54,6 +67,36 @@ const NotificationsPageSP = () => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+  };
+
+  // Helper to map notification type to a UI category
+  const categoryOfType = (type: string) => {
+    const bookingTypes = [
+      "new_booking_request",
+      "booking_confirmation",
+      "booking_cancelled",
+      "booking_rescheduled",
+      "client_no_show",
+      "service_completion_reminder",
+      "service_reminder",
+    ];
+    const adminTypes = [
+      "system_announcement",
+      "admin_message",
+      "admin_announcement",
+      "platform_update",
+    ];
+    if (bookingTypes.includes(type)) return "Bookings";
+    if (type === "chat_message") return "Chat";
+    if (type === "review_request") return "Ratings";
+    if (adminTypes.includes(type)) return "From Admin";
+    return "All";
+  };
+
+  const getCountForTab = (tab: NotificationTab) => {
+    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+    if (tab === "All") return visible.length;
+    return visible.filter((n) => categoryOfType(n.type) === tab).length;
   };
 
   const clearSelection = () => setSelectedIds([]);
@@ -128,8 +171,16 @@ const NotificationsPageSP = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    const filtered = notifications.filter((n) => !deletedIds.includes(n.id));
-    return filtered.reduce<{
+    // First filter out locally deleted items
+    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+
+    // Then filter by active tab (category) if not 'All'
+    const byTab =
+      activeTab === "All"
+        ? visible
+        : visible.filter((n) => categoryOfType(n.type) === activeTab);
+
+    return byTab.reduce<{
       unread: ProviderNotification[];
       read: ProviderNotification[];
     }>(
@@ -143,7 +194,7 @@ const NotificationsPageSP = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications, deletedIds]);
+  }, [notifications, deletedIds, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
@@ -207,6 +258,27 @@ const NotificationsPageSP = () => {
           )}
         </div>
       </header>
+
+      {/* Tabs navigation for notification categories */}
+      <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
+          <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+            {TAB_ITEMS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${
+                  activeTab === tab
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-600 hover:bg-yellow-200"
+                }`}
+              >
+                {tab} ({getCountForTab(tab)})
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
 
       {editMode && (
         <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
