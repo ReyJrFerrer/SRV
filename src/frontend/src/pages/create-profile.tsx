@@ -33,6 +33,7 @@ export default function CreateProfilePage() {
   const [isPhoneVerificationInitialized, setIsPhoneVerificationInitialized] =
     useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   // Set document title using React 19 approach
   useEffect(() => {
@@ -227,7 +228,7 @@ export default function CreateProfilePage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsCreatingProfile(true);
     setSuccess(false);
     setError("");
     setReauthRequired(false);
@@ -235,7 +236,7 @@ export default function CreateProfilePage() {
     if (!isAuthenticated || !identity) {
       setError("Authentication session not found.");
       setReauthRequired(true);
-      setIsLoading(false);
+      setIsCreatingProfile(false);
       return;
     }
 
@@ -273,7 +274,7 @@ export default function CreateProfilePage() {
       }
       //console.error("Profile creation error:", err);
     } finally {
-      setIsLoading(false);
+      setIsCreatingProfile(false);
     }
   };
   if (!isAuthenticated) {
@@ -460,10 +461,15 @@ export default function CreateProfilePage() {
                     {selectedRole && (
                       <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || isCreatingProfile}
                         className="flex w-full transform items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-yellow-500 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
                       >
-                        {isLoading && !reauthRequired ? (
+                        {isCreatingProfile ? (
+                          <>
+                            <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                            <span>Creating Profile...</span>
+                          </>
+                        ) : isLoading && !reauthRequired ? (
                           <>
                             <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
                             <span>Sending Verification...</span>

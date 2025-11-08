@@ -1,8 +1,8 @@
-import fcmService from "./fcmService";
+import oneSignalService from "./oneSignalService";
 
 /**
  * Thin integration layer for notification system
- * Delegates to FCM service for push notifications
+ * Delegates to OneSignal service for push notifications
  * All notification creation and business logic is handled by backend Cloud Functions
  */
 class NotificationIntegrationService {
@@ -22,31 +22,40 @@ class NotificationIntegrationService {
 
   /**
    * Initialize the notification integration service
-   * @param _userId - User ID (deprecated - FCM handles auth via Firebase Auth)
+   * @param userId - User ID for linking with OneSignal
    * @param isPushEnabled - Whether push notifications are enabled
    */
-  async initialize(_userId: string, isPushEnabled: boolean): Promise<void> {
+  async initialize(userId: string, isPushEnabled: boolean): Promise<void> {
     this.isInitialized = true;
     this.pushEnabled = isPushEnabled;
 
     if (isPushEnabled) {
-      await this.enablePushNotifications();
+      await this.enablePushNotifications(userId);
     }
   }
 
   /**
    * Enable push notifications
    */
-  async enablePushNotifications(): Promise<boolean> {
+  async enablePushNotifications(userId?: string): Promise<boolean> {
     try {
-      // Initialize FCM and get token
-      const token = await fcmService.initialize();
+      // Check if OneSignal is ready
+      if (!oneSignalService.isReady()) {
+        console.error("OneSignal not initialized");
+        return false;
+      }
 
-      if (token) {
-        // Register token with backend
-        const registered = await fcmService.registerToken(token);
-        this.pushEnabled = registered;
-        return registered;
+      // Subscribe to push notifications
+      const playerId = await oneSignalService.subscribe();
+
+      if (playerId) {
+        // Link with backend user if userId provided
+        if (userId) {
+          await oneSignalService.setExternalUserId(userId);
+        }
+
+        this.pushEnabled = true;
+        return true;
       }
 
       return false;
@@ -61,14 +70,15 @@ class NotificationIntegrationService {
    */
   async disablePushNotifications(): Promise<boolean> {
     try {
-      // Unregister token from backend
-      await fcmService.unregisterToken();
+      // Unsubscribe from OneSignal
+      const success = await oneSignalService.unsubscribe();
 
-      // Delete FCM token
-      await fcmService.deleteToken();
+      if (success) {
+        this.pushEnabled = false;
+        return true;
+      }
 
-      this.pushEnabled = false;
-      return true;
+      return false;
     } catch (error) {
       console.error("Failed to disable push notifications:", error);
       return false;
@@ -78,9 +88,9 @@ class NotificationIntegrationService {
   /**
    * Update push notification status
    */
-  async updatePushStatus(enabled: boolean): Promise<void> {
+  async updatePushStatus(enabled: boolean, userId?: string): Promise<void> {
     if (enabled) {
-      await this.enablePushNotifications();
+      await this.enablePushNotifications(userId);
     } else {
       await this.disablePushNotifications();
     }
@@ -89,8 +99,12 @@ class NotificationIntegrationService {
   /**
    * Check if push notifications are enabled
    */
-  isPushEnabled(): boolean {
-    return this.pushEnabled && fcmService.isReady();
+  async isPushEnabled(): Promise<boolean> {
+    if (!oneSignalService.isReady()) {
+      return false;
+    }
+    const isSubscribed = await oneSignalService.isSubscribed();
+    return this.pushEnabled && isSubscribed;
   }
 
   /**
@@ -103,8 +117,8 @@ class NotificationIntegrationService {
   /**
    * Get notification permission status
    */
-  getPermissionStatus(): NotificationPermission {
-    return fcmService.getPermissionStatus();
+  async getPermissionStatus(): Promise<NotificationPermission> {
+    return await oneSignalService.getPermissionStatus();
   }
 }
 

@@ -237,7 +237,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             updateAllAdminActors(identity);
 
             console.log(
-              "✅ [Admin] Successfully authenticated with Internet Identity",
+              "[Admin] Successfully authenticated with Internet Identity",
             );
             console.log(
               "[Admin] Principal:",
@@ -248,15 +248,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const principal = identity.getPrincipal().toString();
               console.log(
-                "🔄 [Admin] Attempting to authenticate with Firebase...",
+                "[Admin] Attempting to authenticate with Firebase...",
               );
 
               const result = await signInWithInternetIdentity(principal);
               setFirebaseUser(result.user);
 
-              console.log(
-                "✅ [Admin] Successfully authenticated with Firebase!",
-              );
+              console.log("[Admin] Successfully authenticated with Firebase!");
               console.log("[Admin] Firebase UID:", result.user.uid);
 
               // Update user active status to true on successful login
@@ -274,7 +272,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // if (import.meta.env.DEV) {
               try {
                 console.log(
-                  "🔧 [Admin] Auto-creating admin profile and granting role...",
+                  "[Admin] Auto-creating admin profile and granting role...",
                 );
 
                 // Create admin profile with UID and principal
@@ -286,28 +284,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   "",
                 );
 
-                console.log("✅ [Admin] Admin profile created successfully!");
+                console.log("[Admin] Admin profile created successfully!");
 
                 // Force token refresh to get updated claims
                 if (adminResult.success) {
                   console.log(
-                    "🔄 [Admin] Refreshing token to get admin claims...",
+                    "[Admin] Refreshing token to get admin claims...",
                   );
                   await result.user.getIdToken(true); // Force refresh
-                  console.log("✅ [Admin] Token refreshed with admin claims!");
+                  console.log("[Admin] Token refreshed with admin claims!");
 
                   // Update admin status immediately
                   setIsAdmin(true);
                 } else {
                   console.warn(
-                    "⚠️ [Admin] Admin profile creation failed:",
+                    "[Admin] Admin profile creation failed:",
                     adminResult.message,
                   );
                   setIsAdmin(true);
                 }
               } catch (adminError) {
                 console.warn(
-                  "⚠️ [Admin] Could not auto-create admin profile:",
+                  "[Admin] Could not auto-create admin profile:",
                   adminError,
                 );
                 setIsAdmin(true);
@@ -317,15 +315,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Notify user if they need to create a profile
               if (result.needsProfile) {
                 console.log(
-                  "📝 [Admin] New user detected - profile creation required",
+                  "[Admin] New user detected - profile creation required",
                 );
                 console.log("[Admin] Message:", result.message);
               } else {
-                console.log("👤 [Admin] User has existing profile");
+                console.log("[Admin] User has existing profile");
               }
             } catch (fbError) {
               console.error(
-                "❌ [Admin] Failed to authenticate with Firebase:",
+                "[Admin] Failed to authenticate with Firebase:",
                 fbError,
               );
             }
@@ -341,13 +339,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         },
         onError: (err?: string) => {
-          console.error("❌ [Admin] Login error:", err);
+          console.error("[Admin] Login error:", err);
           setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
-      console.error("❌ [Admin] Login exception:", e);
+      console.error("[Admin] Login exception:", e);
       setError(
         e instanceof Error
           ? e.message

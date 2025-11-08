@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
+import {
+  TicketDetailsHeader,
+  TicketDetailsCard,
+  TicketComments,
+  TicketStatusActions,
+  TicketInfo,
+  ImageAttachmentModal,
+} from "../components";
 
 // Function to parse structured report data (same as ticketInbox)
 const parseReportData = (description: string) => {
@@ -141,34 +148,6 @@ const getCategoryColor = (category: string) => {
       return "bg-gray-100 text-gray-800";
   }
 };
-
-export const ImageAttachmentModal: React.FC<{
-  src: string;
-  onClose: () => void;
-}> = ({ src, onClose }) => (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-    onClick={onClose}
-  >
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
-      <img
-        src={src}
-        alt="Ticket Attachment Full Size"
-        className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = "/default-provider.svg";
-        }}
-      />
-      <button
-        className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
-        onClick={onClose}
-        aria-label="Close"
-      >
-        <XMarkIcon className="h-6 w-6" />
-      </button>
-    </div>
-  </div>
-);
 
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -509,340 +488,43 @@ export const TicketDetailsPage: React.FC = () => {
         />
       )}
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Ticket #{ticket.id}
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">{ticket.title}</p>
-              </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => navigate("/ticket-inbox")}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
-                  Back to Tickets
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <TicketDetailsHeader ticketId={ticket.id} ticketTitle={ticket.title} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            {/* Ticket Details */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Details
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(ticket.status)}`}
-                    >
-                      {ticket.status.replace("_", " ").toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <TicketDetailsCard
+              ticket={ticket}
+              imageDataUrls={imageDataUrls}
+              loadingImages={loadingImages}
+              onImageClick={(url) => setModalImage(url)}
+              getStatusColor={getStatusColor}
+            />
 
-              <div className="px-6 py-4">
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap text-gray-700">
-                    {ticket.description}
-                  </p>
-                </div>
-
-                {/* Attachments Section */}
-                {ticket.attachments && ticket.attachments.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="mb-3 text-sm font-medium text-gray-900">
-                      Attachments ({ticket.attachments.length})
-                      {loadingImages && (
-                        <span className="ml-2 text-xs text-gray-500">
-                          Loading images...
-                        </span>
-                      )}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                      {ticket.attachments.map((attachment, index) => {
-                        const displayUrl = imageDataUrls[attachment] || "";
-                        const isLoading =
-                          loadingImages && !imageDataUrls[attachment];
-
-                        return isLoading ? (
-                          <div className="flex h-32 w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-100">
-                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                          </div>
-                        ) : (
-                          <button
-                            key={index}
-                            className="group relative h-32 w-full cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            onClick={() => setModalImage(displayUrl)}
-                          >
-                            <img
-                              src={displayUrl}
-                              alt={`Attachment ${index + 1}`}
-                              className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
-                              onLoad={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                console.log(
-                                  `✅ Image ${index + 1} loaded successfully:`,
-                                  {
-                                    attachment,
-                                    naturalWidth: img.naturalWidth,
-                                    naturalHeight: img.naturalHeight,
-                                    displayUrl,
-                                  },
-                                );
-                              }}
-                              onError={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                console.error(
-                                  `❌ Image ${index + 1} failed to load:`,
-                                  {
-                                    attachment,
-                                    displayUrl,
-                                    src: img.src,
-                                    error: e,
-                                  },
-                                );
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20"></div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {ticket.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {ticket.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Comments
-                </h2>
-              </div>
-
-              <div className="px-6 py-4">
-                {ticket.comments && ticket.comments.length > 0 ? (
-                  <div className="space-y-4">
-                    {ticket.comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className={`rounded-lg p-4 ${
-                          comment.isInternal
-                            ? "border-l-4 border-blue-400 bg-blue-50"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-900">
-                              {comment.author}
-                            </span>
-                            {comment.isInternal && (
-                              <span className="inline-flex items-center rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                                Internal
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {formatDate(comment.timestamp)}
-                          </span>
-                        </div>
-                        <p className="whitespace-pre-wrap text-sm text-gray-700">
-                          {comment.content}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No comments yet.</p>
-                )}
-
-                {/* Add Comment Form */}
-                <div className="mt-6 border-t border-gray-200 pt-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Add Comment
-                      </label>
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={3}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                        placeholder="Add a comment..."
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={isInternal}
-                          onChange={(e) => setIsInternal(e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">
-                          Internal comment (not visible to user)
-                        </span>
-                      </label>
-
-                      <button
-                        onClick={handleAddComment}
-                        disabled={!newComment.trim()}
-                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Add Comment
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TicketComments
+              comments={ticket.comments}
+              newComment={newComment}
+              isInternal={isInternal}
+              onCommentChange={setNewComment}
+              onInternalChange={setIsInternal}
+              onAddComment={handleAddComment}
+              formatDate={formatDate}
+            />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Status Actions */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
-              </div>
+            <TicketStatusActions
+              status={ticket.status}
+              updatingStatus={updatingStatus}
+              onStatusChange={handleStatusChange}
+            />
 
-              <div className="space-y-3 px-6 py-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Update Status
-                  </label>
-                  <select
-                    value={ticket.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    disabled={updatingStatus}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
-                  >
-                    <option value="open">Open</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-
-                {updatingStatus && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-indigo-600"></div>
-                    Updating status...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ticket Info */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Ticket Info
-                </h3>
-              </div>
-
-              <div className="space-y-4 px-6 py-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Category
-                  </dt>
-                  <dd className="mt-1">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(ticket.category)}`}
-                    >
-                      {ticket.category.toUpperCase()}
-                    </span>
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Submitted By
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    <Link
-                      to={`/user/${ticket.submittedById}?from=ticket&ticketId=${ticket.id}`}
-                      className="cursor-pointer text-indigo-600 hover:text-indigo-500 hover:underline"
-                    >
-                      {ticket.submittedBy}
-                    </Link>
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Submitted At
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {formatDate(ticket.submittedAt)}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Last Updated
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {formatDate(ticket.lastUpdated)}
-                  </dd>
-                </div>
-
-                {ticket.assignedTo && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">
-                      Assigned To
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {ticket.assignedTo}
-                    </dd>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons card removed - status is now managed via dropdown above */}
+            <TicketInfo
+              ticket={ticket}
+              formatDate={formatDate}
+              getCategoryColor={getCategoryColor}
+            />
           </div>
         </div>
       </main>

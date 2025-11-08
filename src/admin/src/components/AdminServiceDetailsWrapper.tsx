@@ -11,10 +11,6 @@ const AdminServiceDetailsWrapper: React.FC = () => {
   if (!serviceId || !userId) {
     return <Navigate to="/dashboard" replace />;
   }
-
-  // Pass serviceId and userId to ServiceDetailsPage
-  // Since ServiceDetailsPage uses useParams internally, we need to ensure
-  // the route params match what it expects
   return <ServiceDetailsPage />;
 };
 

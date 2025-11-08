@@ -1526,13 +1526,29 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
+      // Validate certificateId is provided
+      if (!certificateId || certificateId.trim() === "") {
+        throw new AdminServiceError({
+          message: "Certificate ID (mediaId) is required",
+          code: "INVALID_CERTIFICATE_ID",
+        } as AdminServiceError);
+      }
+
+      // Pass payload directly - backend handles both data.data || data formats
+      const payload = {
+        certificateId: certificateId.trim(),
+        status,
+        reason: reason || undefined,
+      };
+
+      console.log(
+        "Calling updateCertificateValidationStatus with payload:",
+        payload,
+      );
+
       const result = await callFirebaseFunction(
         "updateCertificateValidationStatus",
-        {
-          certificateId,
-          status,
-          reason,
-        },
+        payload,
       );
       return result || `Certificate ${status.toLowerCase()} successfully`;
     } catch (error) {
@@ -1794,6 +1810,72 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
     }));
   } catch (error) {
     logError("Error fetching reports from Firebase", error);
+    return [];
+  }
+};
+
+// Get feedback statistics
+export const getFeedbackStats = async (): Promise<{
+  totalFeedback: number;
+  averageRating: number;
+  ratingDistribution: Array<[number, number]>;
+  totalWithComments: number;
+  latestFeedback: any | null;
+}> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("getFeedbackStats", {});
+
+    if (!result) {
+      return {
+        totalFeedback: 0,
+        averageRating: 0,
+        ratingDistribution: [],
+        totalWithComments: 0,
+        latestFeedback: null,
+      };
+    }
+
+    return {
+      totalFeedback: result.totalFeedback || 0,
+      averageRating: result.averageRating || 0,
+      ratingDistribution: result.ratingDistribution || [],
+      totalWithComments: result.totalWithComments || 0,
+      latestFeedback: result.latestFeedback || null,
+    };
+  } catch (error) {
+    logError("Error fetching feedback stats from Firebase", error);
+    return {
+      totalFeedback: 0,
+      averageRating: 0,
+      ratingDistribution: [],
+      totalWithComments: 0,
+      latestFeedback: null,
+    };
+  }
+};
+
+// Get all feedback (admin function)
+export const getAllFeedback = async (): Promise<any[]> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("getAllFeedback", {});
+
+    if (!result || !Array.isArray(result)) return [];
+
+    return result.map((feedback: any) => ({
+      id: feedback.id,
+      userId: feedback.userId,
+      userName: feedback.userName || "Unknown User",
+      userPhone: feedback.userPhone || "",
+      rating: feedback.rating || 0,
+      comment: feedback.comment || null,
+      createdAt: feedback.createdAt || new Date().toISOString(),
+    }));
+  } catch (error) {
+    logError("Error fetching feedback from Firebase", error);
     return [];
   }
 };

@@ -947,11 +947,12 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
 
 /**
  * Update certificate validation status
- * Updates both the media collection (for filtering) and certificateValidations collection
+ * Simple function that updates the media collection validationStatus field
+ * This updates the provider pill and client indicator
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {certificateId, status, reason} = payload;
+  const {certificateId, status} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -964,47 +965,60 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
   if (!certificateId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Media ID is required",
+      "Certificate ID is required",
     );
   }
 
   if (!["Pending", "Validated", "Rejected"].includes(status)) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Invalid validation status",
+      "Invalid validation status. Must be Pending, Validated, or Rejected",
     );
   }
 
   try {
-    // Import internal function to update media collection
-    const {updateCertificateValidationStatusInternal} = require("./media");
+    // Get the media document
+    const mediaDoc = await db.collection("media").doc(certificateId).get();
 
-    // Update certificate validation status in media collection
-    // (this is what getServicesWithCertificates queries)
-    await updateCertificateValidationStatusInternal(certificateId, status);
+    if (!mediaDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Certificate not found",
+      );
+    }
 
-    // Also update or create validation record in certificateValidations collection
-    const now = new Date().toISOString();
-    const validationData = {
-      status: status, // "Validated" or "Rejected"
-      validatedBy: authInfo.uid,
-      validatedAt: now,
-      reason: reason || null,
-      updatedAt: now,
+    const mediaData = mediaDoc.data();
+
+    // Verify it's a certificate
+    if (mediaData.mediaType !== "ServiceCertificate") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "This media item is not a service certificate",
+      );
+    }
+
+    // Update the validation status - this updates the provider pill and client indicator
+    await db.collection("media").doc(certificateId).update({
+      validationStatus: status,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      message: `Certificate ${status.toLowerCase()} successfully`,
     };
-
-    await db.collection("certificateValidations").doc(certificateId).set(validationData,
-      {merge: true});
-
-    return {success: true, message: `Certificate ${status.toLowerCase()} successfully`};
   } catch (error) {
     console.error("Error in updateCertificateValidationStatus:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get validated certificates
+ * Returns certificates with their service information
  */
 exports.getValidatedCertificates = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1016,11 +1030,46 @@ exports.getValidatedCertificates = functions.https.onCall(async (data, context) 
   }
 
   try {
-    const snapshot = await db.collection("certificateValidations")
-      .where("status", "==", "Validated")
+    // Get all validated certificates from media collection
+    const certSnapshot = await db.collection("media")
+      .where("mediaType", "==", "ServiceCertificate")
+      .where("validationStatus", "==", "Validated")
       .get();
 
-    const certificates = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    const validatedCerts = certSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Get all services to match certificates to services
+    const {getAllServicesInternal} = require("./service");
+    const services = await getAllServicesInternal();
+
+    // Match certificates to services and format
+    const certificates = [];
+    for (const cert of validatedCerts) {
+      // Find service that contains this certificate URL
+      const service = services.find((s) =>
+        s.certificateUrls && s.certificateUrls.includes(cert.url),
+      );
+
+      if (service) {
+        const certificateIndex = service.certificateUrls.indexOf(cert.url);
+        certificates.push({
+          id: `${service.id}-${cert.url}-${cert.updatedAt || Date.now()}`,
+          service: {
+            serviceId: service.id,
+            serviceTitle: service.title,
+            providerId: service.providerId,
+            certificateUrls: service.certificateUrls,
+          },
+          certificateIndex,
+          certificateUrl: cert.url,
+          approvedAt: cert.updatedAt || new Date().toISOString(),
+        });
+      }
+    }
+
     return {success: true, data: certificates};
   } catch (error) {
     console.error("Error in getValidatedCertificates:", error);
@@ -1030,6 +1079,7 @@ exports.getValidatedCertificates = functions.https.onCall(async (data, context) 
 
 /**
  * Get rejected certificates
+ * Returns certificates with their service information
  */
 exports.getRejectedCertificates = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1041,11 +1091,46 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
   }
 
   try {
-    const snapshot = await db.collection("certificateValidations")
-      .where("status", "==", "Rejected")
+    // Get all rejected certificates from media collection
+    const certSnapshot = await db.collection("media")
+      .where("mediaType", "==", "ServiceCertificate")
+      .where("validationStatus", "==", "Rejected")
       .get();
 
-    const certificates = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    const rejectedCerts = certSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Get all services to match certificates to services
+    const {getAllServicesInternal} = require("./service");
+    const services = await getAllServicesInternal();
+
+    // Match certificates to services and format
+    const certificates = [];
+    for (const cert of rejectedCerts) {
+      // Find service that contains this certificate URL
+      const service = services.find((s) =>
+        s.certificateUrls && s.certificateUrls.includes(cert.url),
+      );
+
+      if (service) {
+        const certificateIndex = service.certificateUrls.indexOf(cert.url);
+        certificates.push({
+          id: `${service.id}-${cert.url}-${cert.updatedAt || Date.now()}`,
+          service: {
+            serviceId: service.id,
+            serviceTitle: service.title,
+            providerId: service.providerId,
+            certificateUrls: service.certificateUrls,
+          },
+          certificateIndex,
+          certificateUrl: cert.url,
+          rejectedAt: cert.updatedAt || new Date().toISOString(),
+        });
+      }
+    }
+
     return {success: true, data: certificates};
   } catch (error) {
     console.error("Error in getRejectedCertificates:", error);
