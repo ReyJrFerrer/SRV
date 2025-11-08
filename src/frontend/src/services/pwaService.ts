@@ -697,7 +697,6 @@ class PWAService {
       });
     }
   }
-
 }
 
 // Export singleton instance

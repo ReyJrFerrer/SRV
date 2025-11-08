@@ -38,9 +38,7 @@ const LandingPage = () => {
       );
       if (oneSignalScript) {
         oneSignalScript.addEventListener("error", () => {
-          console.error(
-            "OneSignal SDK blocked by browser or extension",
-          );
+          console.error("OneSignal SDK blocked by browser or extension");
           setShowOneSignalBlockedModal(true);
         });
       }
@@ -48,9 +46,7 @@ const LandingPage = () => {
       // Also check if window.OneSignal is undefined after a delay
       setTimeout(() => {
         if (typeof window.OneSignal === "undefined") {
-          console.error(
-            "OneSignal SDK not loaded - may be blocked",
-          );
+          console.error("OneSignal SDK not loaded - may be blocked");
           setShowOneSignalBlockedModal(true);
         }
       }, 5000); // Give it 5 seconds to load

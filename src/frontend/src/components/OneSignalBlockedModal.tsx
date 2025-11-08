@@ -88,8 +88,8 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
         {/* Note */}
         <div className="mb-6 rounded-lg bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Push notifications help you stay updated
-            with real-time alerts for bookings, messages, and important account
+            <strong>Note:</strong> Push notifications help you stay updated with
+            real-time alerts for bookings, messages, and important account
             activities.
           </p>
         </div>

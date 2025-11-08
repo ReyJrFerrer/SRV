@@ -232,8 +232,8 @@ export const NotificationSettingsDetailed: React.FC<
           <p>• Respects your device's Do Not Disturb mode</p>
           {pwaState.pushPermission === "denied" && (
             <p className="mt-2 font-medium text-red-700">
-              To re-enable, click the lock icon in your browser's address
-              bar and change notification permissions
+              To re-enable, click the lock icon in your browser's address bar
+              and change notification permissions
             </p>
           )}
         </div>
