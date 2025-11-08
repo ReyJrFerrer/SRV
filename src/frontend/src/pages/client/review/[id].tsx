@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { StarIcon, ExclamationCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import {
+  StarIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useBookingRating } from "../../../hooks/reviewManagement"; // Adjust path as needed
 import { useBookingManagement } from "../../../hooks/bookingManagement"; // Adjust path as needed
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
@@ -28,16 +32,16 @@ export const BookingReviewPage: React.FC = () => {
   }>({
     estimatedCommission: 0,
   });
-  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(null);
+  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(
+    null,
+  );
   const [, setCheckingReview] = useState(true);
 
   // Use cached booking hook
-  const { booking, isLoading: isLoadingBooking } = useCachedClientBooking(bookingId);
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedClientBooking(bookingId);
 
-  const {
-    formatBookingDate,
-    formatLocationString,
-  } = useBookingManagement();
+  const { formatBookingDate, formatLocationString } = useBookingManagement();
 
   const { checkCommissionValidation } = useProviderBookingManagement();
 
@@ -59,15 +63,17 @@ export const BookingReviewPage: React.FC = () => {
       navigate("/client/booking", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Review: booking not found");
       navigate("/client/booking", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "Completed") {
-      console.warn(`Review: booking status is ${booking.status}, not Completed`);
+      console.warn(
+        `Review: booking status is ${booking.status}, not Completed`,
+      );
       navigate("/client/booking", { replace: true });
       return;
     }
@@ -77,37 +83,39 @@ export const BookingReviewPage: React.FC = () => {
   useEffect(() => {
     const checkExistingReview = async () => {
       if (!bookingId || typeof bookingId !== "string") return;
-      
+
       // Wait for booking to load first
       if (isLoadingBooking) return;
-      
+
       if (!booking) return;
 
       try {
         setCheckingReview(true);
         const bookingReviews = await getBookingReviews(bookingId);
-        
+
         // Check if client has already submitted a review
         if (bookingReviews && bookingReviews.length > 0) {
           const userReview = bookingReviews[0];
-          
+
           // If review already exists, show it and prevent resubmission
           if (userReview.rating && userReview.rating > 0) {
             console.warn("Client has already reviewed this booking");
             setHasExistingReview(true);
             // Redirect after a brief moment to show the message
             setTimeout(() => {
-              navigate(`/client/booking/receipt/${bookingId}`, { replace: true });
+              navigate(`/client/booking/receipt/${bookingId}`, {
+                replace: true,
+              });
             }, 2000);
             return;
           }
-          
+
           // If review exists but empty, allow editing
           setExistingReview(userReview);
           setRating(userReview.rating || 0);
           setFeedback(userReview.comment || "");
         }
-        
+
         setHasExistingReview(false);
       } catch (error) {
         console.error("Error checking existing review:", error);
@@ -124,10 +132,10 @@ export const BookingReviewPage: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!booking) return;
-      
+
       // Skip if already checked for existing review
       if (hasExistingReview !== null) return;
-      
+
       try {
         setProviderName(
           booking.providerProfile?.name ||
@@ -220,7 +228,6 @@ export const BookingReviewPage: React.FC = () => {
     booking,
   ]);
 
-
   const isFormValid = useMemo(() => {
     const trimmedFeedback = feedback.trim();
     return rating > 0 && trimmedFeedback.length <= 500;
@@ -243,8 +250,6 @@ export const BookingReviewPage: React.FC = () => {
     }
   }, [rating]);
 
-
-
   // Show message if client has already reviewed this booking
   if (hasExistingReview === true) {
     return (
@@ -257,7 +262,8 @@ export const BookingReviewPage: React.FC = () => {
             Already Reviewed
           </h2>
           <p className="mb-4 text-gray-600">
-            You have already submitted a review for this booking. Redirecting to receipt...
+            You have already submitted a review for this booking. Redirecting to
+            receipt...
           </p>
         </div>
       </div>

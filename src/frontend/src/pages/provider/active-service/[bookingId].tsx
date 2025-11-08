@@ -35,11 +35,11 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { checkCommissionValidation } =
-    useProviderBookingManagement();
-  
+  const { checkCommissionValidation } = useProviderBookingManagement();
+
   // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } = useCachedProviderBooking(bookingId);
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -47,15 +47,17 @@ const ActiveServicePage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Active service: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "InProgress") {
-      console.warn(`Active service: booking status is ${booking.status}, not InProgress`);
+      console.warn(
+        `Active service: booking status is ${booking.status}, not InProgress`,
+      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -186,7 +188,6 @@ const ActiveServicePage: React.FC = () => {
       );
     }
   };
-
 
   if (!booking) {
     return (
@@ -350,7 +351,8 @@ const ActiveServicePage: React.FC = () => {
                 onClick={() => setIsCancelModalOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
               >
-                <XCircleIcon className="h-5 w-5" />Cancel Service
+                <XCircleIcon className="h-5 w-5" />
+                Cancel Service
               </button>
             </div>
           </section>

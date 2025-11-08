@@ -49,20 +49,22 @@ const ReceiptPage: React.FC = () => {
   }, [id, bookings, bookingLoading]);
 
   // Redirect if booking doesn't exist or wrong status
-  useEffect(() => {  
+  useEffect(() => {
     if (!id) {
       navigate("/client/booking", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Client receipt: booking not found");
       navigate("/client/booking", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "Completed") {
-      console.warn(`Client receipt: booking status is ${booking.status}, not Completed`);
+      console.warn(
+        `Client receipt: booking status is ${booking.status}, not Completed`,
+      );
       navigate("/client/booking", { replace: true });
       return;
     }

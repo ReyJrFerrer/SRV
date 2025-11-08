@@ -130,7 +130,9 @@ interface ProviderBookingManagementHook {
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
   // Individual booking lookup and action functions
-  getBookingById: (bookingId: string) => Promise<ProviderEnhancedBooking | null>;
+  getBookingById: (
+    bookingId: string,
+  ) => Promise<ProviderEnhancedBooking | null>;
   getBookingWithClientData: (
     bookingId: string,
   ) => Promise<ProviderEnhancedBooking | null>;

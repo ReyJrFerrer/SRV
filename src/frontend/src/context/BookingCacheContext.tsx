@@ -31,20 +31,26 @@ interface BookingCacheContextValue {
   clearCache: () => void;
 }
 
-const BookingCacheContext = createContext<
-  BookingCacheContextValue | undefined
->(undefined);
+const BookingCacheContext = createContext<BookingCacheContextValue | undefined>(
+  undefined,
+);
 
 export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   // Provider booking management
-  const { getBookingById: getProviderBookingById, bookings: providerBookings, loading: providerLoading } =
-    useProviderBookingManagement();
+  const {
+    getBookingById: getProviderBookingById,
+    bookings: providerBookings,
+    loading: providerLoading,
+  } = useProviderBookingManagement();
 
   // Client booking management
-  const { getBookingById: getClientBookingById, bookings: clientBookings, loading: clientLoading } =
-    useBookingManagement();
+  const {
+    getBookingById: getClientBookingById,
+    bookings: clientBookings,
+    loading: clientLoading,
+  } = useBookingManagement();
 
   // Track initialization - true after first load completes (even if empty)
   const [isProviderBookingsReady, setIsProviderBookingsReady] = useState(false);

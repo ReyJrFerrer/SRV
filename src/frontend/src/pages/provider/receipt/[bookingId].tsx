@@ -30,28 +30,29 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const { checkCommissionValidation } =
-    useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } = useCachedProviderBooking(bookingId);
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
-    
     if (!bookingId) {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Receipt: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "Completed") {
-      console.warn(`Receipt: booking status is ${booking.status}, not Completed`);
+      console.warn(
+        `Receipt: booking status is ${booking.status}, not Completed`,
+      );
       navigate("/provider/bookings", { replace: true });
       return;
     }

@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { StarIcon, ExclamationCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import {
+  StarIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useClientRating from "../../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
@@ -16,7 +20,8 @@ const ProviderRateClientPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
 
   // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } = useCachedProviderBooking(bookingId);
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -24,15 +29,17 @@ const ProviderRateClientPage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Rate client: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "Completed") {
-      console.warn(`Rate client: booking status is ${booking.status}, not Completed`);
+      console.warn(
+        `Rate client: booking status is ${booking.status}, not Completed`,
+      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -51,7 +58,9 @@ const ProviderRateClientPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
-  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(null);
+  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(
+    null,
+  );
   const [, setCheckingReview] = useState(true);
 
   useEffect(() => {
@@ -62,13 +71,13 @@ const ProviderRateClientPage: React.FC = () => {
   useEffect(() => {
     const checkExistingReview = async () => {
       if (!bookingId) return;
-      
+
       if (!booking) {
         console.warn("Cannot rate client: booking not found");
         navigate("/provider/bookings", { replace: true });
         return;
       }
-      
+
       // Only allow rating if booking is completed
       if (booking.status !== "Completed") {
         console.warn("Cannot rate client: booking status is not Completed");
@@ -79,7 +88,7 @@ const ProviderRateClientPage: React.FC = () => {
       try {
         setCheckingReview(true);
         const reviews = await getClientReviews(bookingId);
-        
+
         // Check if provider has already submitted a review
         if (reviews && reviews.length > 0) {
           console.warn("Provider has already reviewed this client");

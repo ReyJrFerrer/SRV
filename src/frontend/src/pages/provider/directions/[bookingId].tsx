@@ -42,7 +42,8 @@ const ProviderDirectionsPage: React.FC = () => {
   const { loading, error, startBookingById } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } = useCachedProviderBooking(bookingId);
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -50,15 +51,17 @@ const ProviderDirectionsPage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (!booking) {
       console.warn("Directions: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
-    
+
     if (booking.status !== "Accepted") {
-      console.warn(`Directions: booking status is ${booking.status}, not Accepted`);
+      console.warn(
+        `Directions: booking status is ${booking.status}, not Accepted`,
+      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
