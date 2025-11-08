@@ -32,12 +32,7 @@ const NotificationsPageSP = () => {
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
-  type NotificationTab =
-    | "All"
-    | "Bookings"
-    | "Chat"
-    | "Ratings"
-    | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",

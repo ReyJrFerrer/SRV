@@ -94,7 +94,7 @@ const PackagesSection: React.FC<Props> = ({
               disabled={hasActiveBookings || packages.length >= 5}
             >
               <PlusIcon className="h-4 w-4" />
-              <span className="hidden lg:inline">
+              <span className="hidden xl:inline">
                 {packages.length >= 5 ? "Limit Reached" : "Add Package"}
               </span>
             </button>
@@ -201,7 +201,7 @@ const PackagesSection: React.FC<Props> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-rows-1">
+  <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           {packages.length > 0 ? (
             packages.map((pkg) => (
               <div
@@ -232,7 +232,7 @@ const PackagesSection: React.FC<Props> = ({
                 </div>
                 <div className="my-4 border-t border-gray-100"></div>
 
-                <div className="flex flex-col gap-4 lg:flex-row">
+                <div className="flex flex-col gap-4 xl:flex-row">
                   <Tooltip
                     content="Cannot edit when another package form is open."
                     showWhenDisabled={isAddingOrEditingPackage}
