@@ -1,6 +1,7 @@
 // Service Worker for SRV PWA - Enhanced for cross-browser compatibility
 // Note: OneSignal handles push notifications via OneSignalSDKWorker.js
-// This service worker focuses on PWA caching and offline functionality
+// This service worker focuses ONLY on PWA caching and offline functionality
+// Both service workers can coexist with proper scoping
 
 const CACHE_NAME = "srv-pwa-v1";
 const STATIC_CACHE_URLS = [
@@ -216,8 +217,15 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Notification click event handler
+// Note: OneSignal handles most notification events, but we keep this for compatibility
 self.addEventListener("notificationclick", (event) => {
-  //console.log("Notification clicked:", event);
+  console.log("SW: Notification clicked:", event);
+
+  // Only handle notifications that are not from OneSignal
+  if (event.notification.tag && event.notification.tag.startsWith("onesignal")) {
+    // Let OneSignal handle its own notifications
+    return;
+  }
 
   event.notification.close();
 
@@ -252,7 +260,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Background sync event (for offline actions)
 self.addEventListener("sync", (event) => {
-  //console.log("Background sync:", event.tag);
+  console.log("SW: Background sync:", event.tag);
 
   if (event.tag === "background-notification-sync") {
     event.waitUntil(

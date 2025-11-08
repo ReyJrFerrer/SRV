@@ -285,11 +285,27 @@ export const usePWA = () => {
         const playerId =
           await pwaService.subscribeToPushNotifications(vapidKey);
 
-        if (!playerId) {
-          // Check what went wrong
+        if (!playerId || playerId === "pending") {
+          // Check what went wrong or if it's pending
           const permission = await pwaService.getNotificationPermission();
 
           setPwaState((prev) => ({ ...prev, pushPermission: permission }));
+
+          if (playerId === "pending") {
+            // Subscription is in progress, player ID will come via event listener
+            console.log(
+              "✅ PWA Hook: Subscription in progress, player ID will be available soon",
+            );
+
+            // Update state to show as subscribed
+            setPwaState((prev) => ({
+              ...prev,
+              pushSubscribed: true,
+              pushPermission: permission,
+            }));
+
+            return true;
+          }
 
           if (permission === "denied") {
             throw new Error(
@@ -369,10 +385,12 @@ export const usePWA = () => {
 
   /**
    * Update the PWA
+   * Note: Disabled since custom service worker is not active
    */
   const updatePWA = useCallback(async () => {
     try {
-      await pwaService.updateServiceWorker();
+      // Custom SW is disabled, OneSignal handles its own updates
+      console.log("PWA: OneSignal service worker updates automatically");
       setPwaState((prev) => ({ ...prev, updateAvailable: false }));
     } catch (err) {
       // console.error("Error updating PWA:", err);
