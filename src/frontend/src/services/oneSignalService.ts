@@ -299,19 +299,9 @@ class OneSignalService {
           finalSubscriptionCheck,
         );
 
-        if (finalSubscriptionCheck) {
-          // User is subscribed but player ID not available yet
-          console.warn(
-            "OneSignal: Subscription created but player ID not immediately available. Listening for subscription change event...",
-          );
-
-          // Return null but don't throw error - the event listener will handle it
-          return null;
-        }
-
-        // Subscription failed completely
+        // Always fail if player ID wasn't found - don't wait for event listener
         throw new Error(
-          "Failed to create push notification subscription. Please try again.",
+          "Your browser may not be compatible with push notifications at this time.",
         );
       }
     } catch (error) {

@@ -540,7 +540,7 @@ class PWAService {
     if (!oneSignalService.isReady()) {
       //console.error("❌ PWA: OneSignal not initialized");
       throw new Error(
-        "OneSignal not initialized. Please wait for SDK to load.",
+        "Your browser may not be compatible with push notifications at this time.",
       );
     }
 
@@ -698,45 +698,6 @@ class PWAService {
     }
   }
 
-  /**
-   * Handle service worker update
-   * DISABLED: Not used when custom SW is disabled
-   */
-  /*
-  private notifyUpdateAvailable() {
-    // You can emit an event or show a notification about update availability
-    window.dispatchEvent(new CustomEvent("pwa-update-available"));
-  }
-  */
-
-  /**
-   * Update service worker
-   * DISABLED: Not used when custom SW is disabled
-   */
-  /*
-  async updateServiceWorker() {
-    if (this.swRegistration) {
-      const newWorker = this.swRegistration.waiting;
-      if (newWorker) {
-        newWorker.postMessage({ type: "SKIP_WAITING" });
-        window.location.reload();
-      }
-    }
-  }
-  */
-
-  /**
-   * Validate VAPID key format
-   */
-  // private isValidVAPIDKey(vapidKey: string): boolean {
-  //   try {
-  //     // VAPID keys should be base64url encoded and 65 bytes when decoded
-  //     const decoded = this.convertVAPIDKey(vapidKey);
-  //     return decoded.byteLength === 65;
-  //   } catch {
-  //     return false;
-  //   }
-  // }
 }
 
 // Export singleton instance

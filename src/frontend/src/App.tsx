@@ -6,6 +6,7 @@ import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
 import Contact from "./components/Contact";
 import SuspensionModal from "./components/SuspensionModal";
+import { OneSignalBlockedModal } from "./components/OneSignalBlockedModal";
 import { initializeFirebase } from "./services/firebaseApp";
 
 // Initialize Firebase as early as possible
@@ -25,6 +26,38 @@ const LandingPage = () => {
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+    useState(false);
+
+  // Check for OneSignal blocking on mount
+  useEffect(() => {
+    const checkOneSignalBlocking = () => {
+      // Check if OneSignal SDK failed to load
+      const oneSignalScript = document.querySelector(
+        'script[src*="OneSignalSDK"]',
+      );
+      if (oneSignalScript) {
+        oneSignalScript.addEventListener("error", () => {
+          console.error(
+            "OneSignal SDK blocked by browser or extension",
+          );
+          setShowOneSignalBlockedModal(true);
+        });
+      }
+
+      // Also check if window.OneSignal is undefined after a delay
+      setTimeout(() => {
+        if (typeof window.OneSignal === "undefined") {
+          console.error(
+            "OneSignal SDK not loaded - may be blocked",
+          );
+          setShowOneSignalBlockedModal(true);
+        }
+      }, 5000); // Give it 5 seconds to load
+    };
+
+    checkOneSignalBlocking();
+  }, []);
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
@@ -167,6 +200,13 @@ const LandingPage = () => {
           sessionStorage.setItem("hasShownSuspensionModal", "true");
         }}
       />
+
+      {/* OneSignal Blocked Modal */}
+      {showOneSignalBlockedModal && (
+        <OneSignalBlockedModal
+          onClose={() => setShowOneSignalBlockedModal(false)}
+        />
+      )}
     </main>
   );
 };
