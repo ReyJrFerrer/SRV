@@ -89,7 +89,7 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border px-3 pt-3 pb-3 shadow-sm lg:p-3 ${
+      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border px-3 pb-3 pt-3 shadow-sm lg:p-3 ${
         isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
       }`}
     >
@@ -636,7 +636,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -660,7 +660,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -675,7 +675,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     onChange={(e) =>
                       handlePresetChange(allDays, e.target.checked)
                     }
-                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -705,7 +705,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                           type="checkbox"
                           checked={formData.availabilitySchedule.includes(day)}
                           onChange={() => handleDayToggle(day)}
-                          className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
+                          className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
                           style={{ width: "1.2em", height: "1.2em" }}
                         />
                         <span className="px-2 text-base font-medium text-gray-700">
@@ -746,7 +746,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             />
             <label
               htmlFor="useSameTimeForAllDays"
-              className="ml-2 text-sm leading-relaxed font-medium text-gray-700 sm:text-base"
+              className="ml-2 text-sm font-medium leading-relaxed text-gray-700 sm:text-base"
             >
               Use the same working hours for all selected days
             </label>
