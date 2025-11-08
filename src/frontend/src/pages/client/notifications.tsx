@@ -1,5 +1,5 @@
 // SECTION: Imports — dependencies for this page
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
@@ -394,6 +394,24 @@ const NotificationsPage = () => {
   const navigate = useNavigate();
 
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+  
+  // Tabs for categorizing notifications
+  type NotificationTab =
+    | "All"
+    | "Bookings"
+    | "Chat"
+    | "Ratings"
+    | "From Admin notifications";
+
+  const TAB_ITEMS: NotificationTab[] = [
+    "All",
+    "Bookings",
+    "Chat",
+    "Ratings",
+    "From Admin notifications",
+  ];
+
+  const [activeTab, setActiveTab] = useState<NotificationTab>("All");
   const [editMode, setEditMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
@@ -478,8 +496,36 @@ const NotificationsPage = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    const filtered = notifications.filter((n) => !deletedIds.includes(n.id));
-    return filtered.reduce<{
+    // First filter out locally deleted items
+    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+
+    // Helper to map notification type to a UI category
+    const categoryOfType = (type: string) => {
+      const bookingTypes = [
+        "booking_accepted",
+        "booking_declined",
+        "booking_cancelled",
+        "booking_completed",
+        "payment_received",
+        "payment_failed",
+        "service_rescheduled",
+        "service_reminder",
+        "provider_on_the_way",
+      ];
+      const adminTypes = ["system_announcement", "promo_offer"];
+      if (bookingTypes.includes(type)) return "Bookings";
+      if (type === "chat_message" || type === "provider_message") return "Chat";
+      if (type === "review_reminder") return "Ratings";
+      if (adminTypes.includes(type)) return "From Admin notifications";
+      return "All";
+    };
+
+    const byTab =
+      activeTab === "All"
+        ? visible
+        : visible.filter((n) => categoryOfType(n.type) === activeTab);
+
+    return byTab.reduce<{
       unread: Notification[];
       read: Notification[];
     }>(
@@ -627,6 +673,47 @@ const NotificationsPage = () => {
           )}
         </div>
       </header>
+
+        {/* Tabs navigation for notification categories */}
+        <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
+          <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
+            <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+              {TAB_ITEMS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${
+                    activeTab === tab
+                      ? "bg-blue-600 text-white shadow"
+                      : "text-gray-600 hover:bg-yellow-200"
+                  }`}
+                >
+                  {tab} ({notifications.filter((n) => !deletedIds.includes(n.id)).filter((n)=>{
+                    // quick inline category mapping for counts
+                    const bookingTypes = [
+                      "booking_accepted",
+                      "booking_declined",
+                      "booking_cancelled",
+                      "booking_completed",
+                      "payment_received",
+                      "payment_failed",
+                      "service_rescheduled",
+                      "service_reminder",
+                      "provider_on_the_way",
+                    ];
+                    const adminTypes = ["system_announcement", "promo_offer"];
+                    if (tab === "All") return true;
+                    if (tab === "Bookings") return bookingTypes.includes(n.type);
+                    if (tab === "Chat") return n.type === "chat_message" || n.type === "provider_message";
+                    if (tab === "Ratings") return n.type === "review_reminder";
+                    if (tab === "From Admin notifications") return adminTypes.includes(n.type);
+                    return false;
+                  }).length})
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
 
       {editMode && (
         <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
