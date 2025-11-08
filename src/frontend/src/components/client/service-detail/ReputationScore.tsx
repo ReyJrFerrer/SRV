@@ -53,7 +53,7 @@ const ReputationScore: React.FC<ReputationScoreProps> = ({ reputation }) => {
   if (loading) {
     return (
       <span
-        className="flex items-center rounded-lg bg-gray-100 pr-3 py-1 text-sm font-semibold text-gray-600"
+        className="flex items-center rounded-lg bg-gray-100 py-1 pr-3 text-sm font-semibold text-gray-600"
         style={{ minWidth: 0 }}
       >
         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
@@ -64,7 +64,7 @@ const ReputationScore: React.FC<ReputationScoreProps> = ({ reputation }) => {
 
   return (
     <span
-      className={`flex items-center rounded-lg pr-3 py-1 text-sm font-semibold ${textColor}`}
+      className={`flex items-center rounded-lg py-1 pr-3 text-sm font-semibold ${textColor}`}
       style={{ minWidth: 0 }}
     >
       <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />

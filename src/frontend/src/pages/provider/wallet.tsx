@@ -834,7 +834,7 @@ const WalletPage: React.FC = () => {
           </div>
         </div>
       )}
-{!showOnboardingModal && <BottomNavigation />}
+      {!showOnboardingModal && <BottomNavigation />}
     </div>
   );
 };

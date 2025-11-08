@@ -290,7 +290,7 @@ const BookingDetailsPage: React.FC = () => {
         {isLoading ? (
           <div className="flex min-h-[calc(100vh-150px)] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
               <p className="text-gray-600">Loading booking details...</p>
             </div>
           </div>
@@ -307,7 +307,7 @@ const BookingDetailsPage: React.FC = () => {
             <div>
               <div className="mt-13 relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
                 <span
-                  className={`absolute top-5 right-4 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
+                  className={`absolute right-4 top-5 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
                 >
                   {status?.replace("_", " ")}

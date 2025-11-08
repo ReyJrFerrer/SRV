@@ -29,7 +29,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
 
   return (
     <span
-      className="text-sm mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
+      className="mb-2 mt-2 flex items-center gap-2 text-sm font-semibold text-gray-900"
       style={{ minWidth: 0 }}
     >
       <span>Reputation Score:</span>

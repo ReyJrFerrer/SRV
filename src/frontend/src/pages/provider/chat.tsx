@@ -135,7 +135,7 @@ const ProviderChatPage: React.FC = () => {
                             className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
                           />
                           {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
                               {unreadCount}
                             </span>
                           )}
@@ -160,7 +160,7 @@ const ProviderChatPage: React.FC = () => {
                               {lastMessage?.content?.encryptedText ? (
                                 lastMessage.content.encryptedText
                               ) : (
-                                <span className="text-gray-400 italic">
+                                <span className="italic text-gray-400">
                                   No messages yet
                                 </span>
                               )}

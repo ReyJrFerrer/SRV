@@ -74,7 +74,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
           )}
         </div>
         <button
-          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          className="absolute right-2 top-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
           onClick={onClose}
           aria-label="Close"
         >
@@ -175,7 +175,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         <button
           type="button"
           aria-label="Show badge info"
-          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
           onClick={onInfoClick}
         >
           <InformationCircleIcon
@@ -280,7 +280,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
         </ul>
         <button
-          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          className="absolute right-2 top-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
           onClick={onClose}
           aria-label="Close"
         >
@@ -468,7 +468,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
               }}
             />
             <button
-              className="absolute top-2 right-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+              className="absolute right-2 top-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
               onClick={() => setShowModal(false)}
               aria-label="Close"
             >
@@ -699,7 +699,7 @@ const ClientProfilePage: React.FC = () => {
                       />
                       <button
                         onClick={handleImageUploadClick}
-                        className="absolute right-1 bottom-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
+                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
                       >
                         <CameraIcon className="h-5 w-5" />
                       </button>
@@ -733,7 +733,7 @@ const ClientProfilePage: React.FC = () => {
                           if (nameError) setNameError("");
                           if (editError) setEditError("");
                         }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                       />
                       {nameError && (
                         <p className="mt-1 text-sm text-red-500">{nameError}</p>
@@ -836,7 +836,7 @@ const ClientProfilePage: React.FC = () => {
                 <button
                   type="button"
                   aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   onClick={() => setShowAboutInfo(true)}
                 >
                   <InformationCircleIcon className="h-6 w-6 text-blue-500" />
@@ -924,7 +924,7 @@ const ClientProfilePage: React.FC = () => {
                       <button
                         type="button"
                         aria-label="About ratings"
-                        className="rounded-full p-1 hover:bg-gray-100 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         onClick={() => setShowRatingInfo(true)}
                       >
                         <InformationCircleIcon className="h-5 w-5 text-gray-500" />

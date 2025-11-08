@@ -448,12 +448,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               Provided by: {providerName}
             </p>
             {/* Reputation + Rating (real frontend display using shared components) */}
-            <div className="flex flex-col items-start left-0 lg:flex-row">
+            <div className="left-0 flex flex-col items-start lg:flex-row">
               <div className="flex-shrink-0">
                 <ReputationScore reputation={reputation} />
               </div>
 
-              <div className="flex items-center gap-2 rounded-full pr-3 py-1 text-sm font-semibold text-gray-800">
+              <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
                 {loadingStats ? (
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
