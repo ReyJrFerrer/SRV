@@ -104,11 +104,11 @@ const BookingConfirmationPage: React.FC = () => {
               </h3>
 
               <div className="space-y-2 text-sm">
-                <p>
+                <p className="break-words">
                   <span className="font-bold text-gray-700">Provider:</span>{" "}
                   {bookingDetails.providerName}
                 </p>
-                <p>
+                <p className="break-words">
                   <span className="font-bold text-gray-700">Service:</span>{" "}
                   {bookingDetails.serviceName}
                 </p>
@@ -116,9 +116,12 @@ const BookingConfirmationPage: React.FC = () => {
                   bookingDetails.packages.length > 0 && (
                     <div>
                       <span className="font-bold text-gray-700">Packages:</span>
-                      <ul className="ml-4 mt-1 list-inside list-disc">
+                      <ul className="mt-1 ml-4 list-outside list-disc">
                         {bookingDetails.packages.map((pkg) => (
-                          <li key={pkg.id} className="text-gray-600">
+                          <li
+                            key={pkg.id}
+                            className="break-words text-gray-600"
+                          >
                             {pkg.title}
                           </li>
                         ))}
@@ -129,7 +132,7 @@ const BookingConfirmationPage: React.FC = () => {
                   <span className="font-bold text-gray-700">
                     Booking Details:
                   </span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="mt-1 ml-3 list-inside list-disc">
                     <li>
                       <span className="font-semibold">Type:</span>{" "}
                       {bookingDetails.bookingType === "sameday"
@@ -165,7 +168,7 @@ const BookingConfirmationPage: React.FC = () => {
                 </div>
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">Payment:</span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="mt-1 ml-3 list-inside list-disc">
                     {bookingDetails.packagePrice && (
                       <li>
                         <span className="font-semibold">Package Price:</span> ₱{" "}

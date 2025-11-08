@@ -6,7 +6,11 @@ import {
 } from "../../hooks/useProviderNotificationsWithPush";
 import BottomNavigation from "../../components/provider/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import { EnvelopeOpenIcon, InboxIcon } from "@heroicons/react/24/solid";
+import {
+  EnvelopeOpenIcon,
+  InboxIcon,
+  EllipsisVerticalIcon,
+} from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/provider/NotificationItem";
 
 const NotificationsPageSP = () => {
@@ -47,6 +51,28 @@ const NotificationsPageSP = () => {
   // Edit / selection mode
   const [editMode, setEditMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const mobileMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const mobileMenuButtonRef = React.useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileMenuButtonRef.current &&
+        !mobileMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   React.useEffect(() => {
     const handler = (e: Event) => {
@@ -218,7 +244,8 @@ const NotificationsPageSP = () => {
           {notifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
-              <div className="flex items-center gap-2">
+              
+              <div className="hidden items-center gap-2 sm:flex">
                 <button
                   onClick={() => {
                     if (!editMode) {
@@ -252,6 +279,75 @@ const NotificationsPageSP = () => {
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
                   </button>
+                )}
+              </div>
+
+              <div className="relative sm:hidden">
+                <button
+                  ref={mobileMenuButtonRef}
+                  onClick={() => setMobileMenuOpen((s) => !s)}
+                  className="rounded-full p-2 text-black hover:bg-gray-100"
+                  aria-haspopup="true"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <EllipsisVerticalIcon className="h-6 w-6" />
+                </button>
+
+                {mobileMenuOpen && (
+                  <div
+                    ref={mobileMenuRef}
+                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                  >
+                    <div className="py-1" role="menu">
+                      <button
+                        onClick={() => {
+                          if (!editMode) {
+                            setEditMode(true);
+                            clearSelection();
+                          } else {
+                            setEditMode(false);
+                            clearSelection();
+                          }
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {editMode ? "Done" : "Edit"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          handleSelectAll();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {selectedIds.length > 0 &&
+                        selectedIds.length ===
+                          notifications.filter(
+                            (n) => !deletedIds.includes(n.id),
+                          ).length
+                          ? "Clear selection"
+                          : "Select all"}
+                      </button>
+
+                      {unread.length > 0 && (
+                        <button
+                          onClick={() => {
+                            markAllAsRead();
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </>

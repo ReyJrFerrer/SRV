@@ -114,7 +114,7 @@ const NotificationItem: React.FC<Props> = ({
         </p>
         {notification.message &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
+            <p className="mt-1 break-words text-xs italic text-gray-600">
               {notification.message}
             </p>
           )}
