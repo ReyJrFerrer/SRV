@@ -116,12 +116,17 @@ const LandingPage = () => {
             navigate("/create-profile");
           }
         } catch (err) {
-          // Any error (including "Profile not found") - go to create profile
-          console.log(
-            "Error fetching profile, redirecting to create profile:",
+          // Error fetching profile (network issues, canister errors, etc.)
+          // Redirect to landing page instead of create-profile to avoid confusion
+          console.error(
+            "Error fetching profile, redirecting to landing page:",
             err,
           );
-          navigate("/create-profile");
+
+          // Only redirect if we're not already on landing page
+          if (location.pathname !== "/") {
+            navigate("/");
+          }
         } finally {
           setIsCheckingProfile(false);
         }

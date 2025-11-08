@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { usePWA } from "../hooks/usePWA";
 import { useAuth } from "../context/AuthContext";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  BellIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface NotificationSettingsDetailedProps {
   className?: string;
@@ -113,47 +119,11 @@ export const NotificationSettingsDetailed: React.FC<
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             {pwaState.pushPermission === "granted" ? (
-              <svg
-                className="h-6 w-6 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CheckCircleIcon className="h-6 w-6 text-green-600" />
             ) : pwaState.pushPermission === "denied" ? (
-              <svg
-                className="h-6 w-6 text-red-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <XCircleIcon className="h-6 w-6 text-red-600" />
             ) : (
-              <svg
-                className="h-6 w-6 text-gray-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
+              <BellIcon className="h-6 w-6 text-gray-600" />
             )}
           </div>
           <div className="flex-1">
@@ -182,19 +152,7 @@ export const NotificationSettingsDetailed: React.FC<
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-3">
-            <svg
-              className="h-5 w-5 flex-shrink-0 text-red-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 text-red-600" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         </div>

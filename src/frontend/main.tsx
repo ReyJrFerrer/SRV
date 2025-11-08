@@ -26,6 +26,7 @@ import {
   ClientRedirect,
   ProviderRedirect,
 } from "./src/components/layout/Redirects";
+import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/create-profile"));
@@ -209,7 +210,14 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<App />} />
-              <Route path="/create-profile" element={<CreateProfile />} />
+              <Route
+                path="/create-profile"
+                element={
+                  <CreateProfileGuard>
+                    <CreateProfile />
+                  </CreateProfileGuard>
+                }
+              />
 
               <Route path="/client" element={<ClientLayout />}>
                 <Route index element={<ClientRedirect />} />
