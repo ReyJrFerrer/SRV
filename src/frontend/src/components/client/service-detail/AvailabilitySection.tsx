@@ -51,11 +51,11 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 
   return (
     <div className="mt-8 rounded-xl bg-white p-4 shadow-xl backdrop-blur-md">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <CalendarIcon />
         <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
         {isActive && (
-          <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+          <span className="ml-auto flex animate-pulse items-center justify-end gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[10px] font-bold text-green-700 lg:text-sm">
             <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
             Available Now
           </span>
@@ -74,7 +74,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                   <li key={day} className="py-1">
                     <button
                       type="button"
-                      className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                      className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition focus:ring-2 focus:ring-blue-400 focus:outline-none`}
                       onClick={() => setOpenDay(isOpen ? null : day)}
                       aria-expanded={isOpen}
                       aria-controls={`availability-panel-${day}`}
@@ -101,7 +101,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                     {isOpen && (
                       <div
                         id={`availability-panel-${day}`}
-                        className="mb-2 mt-2 flex flex-wrap items-center gap-2 px-3"
+                        className="mt-2 mb-2 flex flex-wrap items-center gap-2 px-3"
                       >
                         {slots.length > 0 ? (
                           slots.map((slot, idx) => (
@@ -155,7 +155,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                           >
                             {slot ? (
                               <span
-                                className={` inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
+                                className={`inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
                               >
                                 {slot}
                               </span>

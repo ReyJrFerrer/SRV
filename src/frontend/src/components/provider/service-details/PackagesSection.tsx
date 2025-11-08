@@ -173,17 +173,17 @@ const PackagesSection: React.FC<Props> = ({
                     disabled={packageFormLoading}
                   />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex gap-2">
                   <button
                     onClick={onCancelPackageEdit}
-                    className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                    className="w-full rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
                     disabled={packageFormLoading}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={onSavePackage}
-                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     disabled={packageFormLoading}
                   >
                     {packageFormLoading && (
@@ -192,7 +192,7 @@ const PackagesSection: React.FC<Props> = ({
                     {packageFormLoading
                       ? "Saving..."
                       : currentPackageId
-                        ? "Update Package"
+                        ? "Update"
                         : "Create Package"}
                   </button>
                 </div>
@@ -210,7 +210,7 @@ const PackagesSection: React.FC<Props> = ({
               >
                 <div className="mb-4">
                   <div className="min-w-0">
-                    <h3 className="mb-2 text-xl font-bold text-gray-900">
+                    <h3 className="mb-2 truncate text-xl font-bold text-gray-900">
                       {pkg.title}
                     </h3>
                     <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
@@ -242,7 +242,7 @@ const PackagesSection: React.FC<Props> = ({
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
                           : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
@@ -265,7 +265,7 @@ const PackagesSection: React.FC<Props> = ({
                           ? undefined
                           : onDeletePackage(pkg.id)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center rounded-xl px-4 py-2.5 font-medium whitespace-nowrap transition-all duration-200 ${
                         hasActiveBookings ||
                         isAddingOrEditingPackage ||
                         packages.length <= 1

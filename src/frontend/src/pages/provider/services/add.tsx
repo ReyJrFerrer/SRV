@@ -1020,7 +1020,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || isProcessingImages}
-              className="ml-auto flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-auto flex items-center rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
