@@ -27,6 +27,8 @@ import {
   ProviderRedirect,
 } from "./src/components/layout/Redirects";
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
+import { BookingStateGuard } from "./src/components/layout/BookingStateGuard";
+import { ClientBookingStateGuard } from "./src/components/layout/ClientBookingStateGuard";
 
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/create-profile"));
@@ -145,7 +147,7 @@ window.OneSignalDeferred.push(async function (OneSignal) {
       safari_web_id: "web.onesignal.auto.514888af-c9d7-482b-90d4-9de98d872128",
       allowLocalhostAsSecureOrigin: true, // Enable for local development
       notifyButton: {
-        enable: true,
+        enable: false,
       },
       // Let OneSignal use default scope "/" for push notifications to work properly
       // Our custom sw.js will be disabled to avoid conflicts
@@ -258,7 +260,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   path="booking/payment-pending"
                   element={<ClientPaymentPending />}
                 />
-                <Route path="booking/receipt/:id" element={<ReceiptPage />} />
+                <Route
+                  path="booking/receipt/:id"
+                  element={
+                    <ClientBookingStateGuard
+                      requiredStatus="Completed"
+                      errorMessage="You can only view receipts for completed bookings."
+                    >
+                      <ReceiptPage />
+                    </ClientBookingStateGuard>
+                  }
+                />
                 <Route
                   path="book/:id"
                   element={
@@ -319,25 +331,60 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 />
                 <Route
                   path="active-service/:bookingId"
-                  element={<ProviderActiveService />}
+                  element={
+                    <BookingStateGuard
+                      requiredStatus="InProgress"
+                      errorMessage="This booking is not currently in progress."
+                    >
+                      <ProviderActiveService />
+                    </BookingStateGuard>
+                  }
                 />
                 <Route
                   path="directions/:bookingId"
-                  element={<ProviderDirectionsPage />}
+                  element={
+                    <BookingStateGuard
+                      requiredStatus="Accepted"
+                      errorMessage="You can only access directions for accepted bookings."
+                    >
+                      <ProviderDirectionsPage />
+                    </BookingStateGuard>
+                  }
                 />
                 <Route
                   path="complete-service/:bookingId"
-                  element={<ProviderCompleteService />}
+                  element={
+                    <BookingStateGuard
+                      requiredStatus="InProgress"
+                      errorMessage="You can only complete bookings that are currently in progress."
+                    >
+                      <ProviderCompleteService />
+                    </BookingStateGuard>
+                  }
                 />
                 <Route
                   path="receipt/:bookingId"
-                  element={<ProviderReceipt />}
+                  element={
+                    <BookingStateGuard
+                      requiredStatus="Completed"
+                      errorMessage="You can only view receipts for completed bookings."
+                    >
+                      <ProviderReceipt />
+                    </BookingStateGuard>
+                  }
                 />
 
                 {/* Rate Client after receipt */}
                 <Route
                   path="rate-client/:bookingId"
-                  element={<ProviderRateClientPage />}
+                  element={
+                    <BookingStateGuard
+                      requiredStatus="Completed"
+                      errorMessage="You can only rate clients after completing a booking."
+                    >
+                      <ProviderRateClientPage />
+                    </BookingStateGuard>
+                  }
                 />
 
                 {/* Review Routes */}
