@@ -27,8 +27,6 @@ import {
   ProviderRedirect,
 } from "./src/components/layout/Redirects";
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
-import { BookingStateGuard } from "./src/components/layout/BookingStateGuard";
-import { ClientBookingStateGuard } from "./src/components/layout/ClientBookingStateGuard";
 
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/create-profile"));
@@ -134,6 +132,7 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
+import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 
 // Initialize OneSignal when SDK is loaded
@@ -208,8 +207,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <HashRouter>
         <ScrollToTop />
         <AuthProvider>
-          <Suspense fallback={null}>
-            <Routes>
+          <BookingCacheProvider>
+            <Suspense fallback={null}>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<App />} />
               <Route
@@ -262,14 +262,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 />
                 <Route
                   path="booking/receipt/:id"
-                  element={
-                    <ClientBookingStateGuard
-                      requiredStatus="Completed"
-                      errorMessage="You can only view receipts for completed bookings."
-                    >
-                      <ReceiptPage />
-                    </ClientBookingStateGuard>
-                  }
+                  element={<ReceiptPage />}
                 />
                 <Route
                   path="book/:id"
@@ -331,59 +324,26 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 />
                 <Route
                   path="active-service/:bookingId"
-                  element={
-                    <BookingStateGuard
-                      requiredStatus="InProgress"
-                      errorMessage="This booking is not currently in progress."
-                    >
-                      <ProviderActiveService />
-                    </BookingStateGuard>
-                  }
+                  element={<ProviderActiveService />}
                 />
                 <Route
                   path="directions/:bookingId"
-                  element={
-                    <BookingStateGuard
-                      requiredStatus="Accepted"
-                      errorMessage="You can only access directions for accepted bookings."
-                    >
-                      <ProviderDirectionsPage />
-                    </BookingStateGuard>
-                  }
+                  element={<ProviderDirectionsPage />}
                 />
                 <Route
                   path="complete-service/:bookingId"
-                  element={
-                    <BookingStateGuard
-                      requiredStatus="InProgress"
-                      errorMessage="You can only complete bookings that are currently in progress."
-                    >
-                      <ProviderCompleteService />
-                    </BookingStateGuard>
-                  }
+                  element={<ProviderCompleteService />}
                 />
                 <Route
                   path="receipt/:bookingId"
-                  element={
-                    <BookingStateGuard
-                      requiredStatus="Completed"
-                      errorMessage="You can only view receipts for completed bookings."
-                    >
-                      <ProviderReceipt />
-                    </BookingStateGuard>
-                  }
+                  element={<ProviderReceipt />}
                 />
 
                 {/* Rate Client after receipt */}
                 <Route
                   path="rate-client/:bookingId"
                   element={
-                    <BookingStateGuard
-                      requiredStatus="Completed"
-                      errorMessage="You can only rate clients after completing a booking."
-                    >
                       <ProviderRateClientPage />
-                    </BookingStateGuard>
                   }
                 />
 
@@ -400,6 +360,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               </Route>
             </Routes>
           </Suspense>
+          </BookingCacheProvider>
         </AuthProvider>
       </HashRouter>
     </QueryClientProvider>

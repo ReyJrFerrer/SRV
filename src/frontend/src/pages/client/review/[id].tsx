@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { StarIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { StarIcon, ExclamationCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { useBookingRating } from "../../../hooks/reviewManagement"; // Adjust path as needed
-import {
-  useBookingManagement,
-  EnhancedBooking,
-} from "../../../hooks/bookingManagement"; // Adjust path as needed
+import { useBookingManagement } from "../../../hooks/bookingManagement"; // Adjust path as needed
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedClientBooking } from "../../../hooks/useCachedBooking";
 
 const feedbackOptions = [
   "Very Professional",
@@ -23,7 +21,6 @@ export const BookingReviewPage: React.FC = () => {
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [booking, setBooking] = useState<EnhancedBooking | null>(null);
   const [, setExistingReview] = useState<any>(null);
   const [providerNameState, setProviderName] = useState("Service Provider");
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -31,11 +28,13 @@ export const BookingReviewPage: React.FC = () => {
   }>({
     estimatedCommission: 0,
   });
+  const [hasExistingReview, setHasExistingReview] = useState<boolean | null>(null);
+  const [, setCheckingReview] = useState(true);
+
+  // Use cached booking hook
+  const { booking, isLoading: isLoadingBooking } = useCachedClientBooking(bookingId);
 
   const {
-    bookings,
-    loading: bookingLoading,
-    error: bookingError,
     formatBookingDate,
     formatLocationString,
   } = useBookingManagement();
@@ -45,7 +44,6 @@ export const BookingReviewPage: React.FC = () => {
   const {
     submitReview,
     getBookingReviews,
-    loading: reviewLoading,
     error: reviewError,
     clearError,
   } = useBookingRating(bookingId as string);
@@ -55,52 +53,110 @@ export const BookingReviewPage: React.FC = () => {
     document.title = `Review Booking | SRV`;
   }, []);
 
-  // Load booking and existing review data
+  // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
-    const loadData = async () => {
+    if (!bookingId) {
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+    
+    if (!booking) {
+      console.warn("Review: booking not found");
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+    
+    if (booking.status !== "Completed") {
+      console.warn(`Review: booking status is ${booking.status}, not Completed`);
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
+
+  // Check if client has already reviewed this booking
+  useEffect(() => {
+    const checkExistingReview = async () => {
       if (!bookingId || typeof bookingId !== "string") return;
+      
+      // Wait for booking to load first
+      if (isLoadingBooking) return;
+      
+      if (!booking) return;
+
       try {
-        const foundBooking = bookings.find((b) => b.id === bookingId);
-        setBooking(foundBooking || null);
-
-        if (foundBooking) {
-          setProviderName(
-            foundBooking.providerProfile?.name ||
-              foundBooking.providerName ||
-              "Service Provider",
-          );
-
-          // Check commission validation for cash bookings
-          if (foundBooking.paymentMethod === "CashOnHand") {
-            try {
-              const validation = await checkCommissionValidation(foundBooking);
-              setCommissionValidation(validation);
-            } catch (error) {
-              console.error("Failed to validate commission:", error);
-              setCommissionValidation({ estimatedCommission: 0 });
-            }
-          } else {
-            setCommissionValidation({ estimatedCommission: 0 });
-          }
-        }
-
-        const bookingReviews = await getBookingReviews(bookingId as string);
+        setCheckingReview(true);
+        const bookingReviews = await getBookingReviews(bookingId);
+        
+        // Check if client has already submitted a review
         if (bookingReviews && bookingReviews.length > 0) {
           const userReview = bookingReviews[0];
+          
+          // If review already exists, show it and prevent resubmission
+          if (userReview.rating && userReview.rating > 0) {
+            console.warn("Client has already reviewed this booking");
+            setHasExistingReview(true);
+            // Redirect after a brief moment to show the message
+            setTimeout(() => {
+              navigate(`/client/booking/receipt/${bookingId}`, { replace: true });
+            }, 2000);
+            return;
+          }
+          
+          // If review exists but empty, allow editing
           setExistingReview(userReview);
-          setRating(userReview.rating);
-          setFeedback(userReview.comment);
+          setRating(userReview.rating || 0);
+          setFeedback(userReview.comment || "");
+        }
+        
+        setHasExistingReview(false);
+      } catch (error) {
+        console.error("Error checking existing review:", error);
+        setHasExistingReview(false);
+      } finally {
+        setCheckingReview(false);
+      }
+    };
+
+    checkExistingReview();
+  }, [bookingId, booking, isLoadingBooking, getBookingReviews, navigate]);
+
+  // Load provider name and commission validation when booking is available
+  useEffect(() => {
+    const loadData = async () => {
+      if (!booking) return;
+      
+      // Skip if already checked for existing review
+      if (hasExistingReview !== null) return;
+      
+      try {
+        setProviderName(
+          booking.providerProfile?.name ||
+            booking.providerName ||
+            "Service Provider",
+        );
+
+        // Check commission validation for cash bookings
+        if (booking.paymentMethod === "CashOnHand") {
+          try {
+            const validation = await checkCommissionValidation(booking);
+            setCommissionValidation(validation);
+          } catch (error) {
+            console.error("Failed to validate commission:", error);
+            setCommissionValidation({ estimatedCommission: 0 });
+          }
+        } else {
+          setCommissionValidation({ estimatedCommission: 0 });
         }
       } catch (error) {
-        //console.error("Error loading booking/review data:", error);
+        console.error("Error loading booking data:", error);
         setFormError("Could not load booking data.");
       }
     };
 
-    if (!bookingLoading) {
+    if (!isLoadingBooking && hasExistingReview === false) {
       loadData();
     }
-  }, [bookingId, bookings, getBookingReviews, bookingLoading]);
+  }, [booking, isLoadingBooking, hasExistingReview, checkCommissionValidation]);
 
   const handleRating = useCallback((value: number) => {
     setRating(value);
@@ -164,10 +220,6 @@ export const BookingReviewPage: React.FC = () => {
     booking,
   ]);
 
-  const isLoading = useMemo(
-    () => bookingLoading || reviewLoading,
-    [bookingLoading, reviewLoading],
-  );
 
   const isFormValid = useMemo(() => {
     const trimmedFeedback = feedback.trim();
@@ -191,11 +243,23 @@ export const BookingReviewPage: React.FC = () => {
     }
   }, [rating]);
 
-  if (isLoading && !booking) {
+
+
+  // Show message if client has already reviewed this booking
+  if (hasExistingReview === true) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading...</span>
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <div className="mb-4 text-yellow-500">
+            <CheckCircleIcon className="mx-auto h-16 w-16" />
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-gray-900">
+            Already Reviewed
+          </h2>
+          <p className="mb-4 text-gray-600">
+            You have already submitted a review for this booking. Redirecting to receipt...
+          </p>
+        </div>
       </div>
     );
   }
@@ -207,13 +271,13 @@ export const BookingReviewPage: React.FC = () => {
           Booking Not Found
         </h2>
         <p className="mb-4 text-yellow-600">
-          {bookingError || "The requested booking could not be found."}
+          The requested booking could not be found.
         </p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/client/booking")}
           className="text-blue-600 hover:underline"
         >
-          Go Back
+          Go to My Bookings
         </button>
       </div>
     );

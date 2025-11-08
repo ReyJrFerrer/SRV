@@ -115,6 +115,8 @@ interface BookingManagementHook {
   isUserAuthenticated: () => boolean;
   retryOperation: (operation: string) => Promise<void>;
   isOperationInProgress: (operation: string) => boolean;
+  // Individual booking lookup
+  getBookingById: (bookingId: string) => Promise<EnhancedBooking | null>;
   // Package helper functions
   getPackageDisplayName: (booking: EnhancedBooking) => string;
   hasPackage: (booking: EnhancedBooking) => boolean;
@@ -725,6 +727,36 @@ export const useBookingManagement = (): BookingManagementHook => {
     [userBookings],
   );
 
+  const getBookingById = useCallback(
+    async (bookingId: string): Promise<EnhancedBooking | null> => {
+      try {
+        // First try to find in local state for instant response
+        const localBooking = userBookings.find(
+          (booking) => booking.id === bookingId,
+        );
+        if (localBooking) {
+          return localBooking;
+        }
+
+        // If not found locally, fetch from backend
+        const booking = await bookingCanisterService.getBooking(bookingId);
+        if (booking) {
+          // Transform and enrich the booking before returning
+          const transformedBooking = transformBooking(booking);
+          const enrichedBooking =
+            await enrichBookingWithAllData(transformedBooking);
+          return enrichedBooking;
+        }
+
+        return null;
+      } catch (error) {
+        console.error(`Error fetching booking ${bookingId}:`, error);
+        return null;
+      }
+    },
+    [userBookings, transformBooking, enrichBookingWithAllData],
+  );
+
   // Utility functions
   const formatBookingDate = useCallback((dateString: string): string => {
     if (!dateString) return "TBD";
@@ -913,6 +945,7 @@ export const useBookingManagement = (): BookingManagementHook => {
     isUserAuthenticated,
     retryOperation,
     isOperationInProgress,
+    getBookingById,
 
     // Enhanced helper functions
     getPackageDisplayName,

@@ -1,7 +1,6 @@
 import React, {
   useState,
   useEffect,
-  useMemo,
   ChangeEvent,
   FormEvent,
 } from "react";
@@ -13,6 +12,7 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
 import BottomNavigation from "../../../components/provider/NavigationBar";
@@ -35,19 +35,13 @@ const CompleteServicePage: React.FC = () => {
   });
 
   const {
-    getBookingById,
     completeBookingById,
-    loading,
     isProviderAuthenticated,
     checkCommissionValidation,
   } = useProviderBookingManagement();
 
-  const booking = useMemo(() => {
-    if (bookingId && typeof bookingId === "string") {
-      return getBookingById(bookingId);
-    }
-    return null;
-  }, [bookingId, getBookingById]);
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking } = useCachedProviderBooking(bookingId);
 
   useEffect(() => {
     if (booking) {
@@ -244,22 +238,6 @@ const CompleteServicePage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Booking not found or an error occurred.
-      </div>
-    );
-  }
-
   // Check authentication
   if (!isProviderAuthenticated()) {
     return (
@@ -296,12 +274,12 @@ const CompleteServicePage: React.FC = () => {
             <p className="mb-4 text-center text-sm text-gray-500">
               Finalize service for{" "}
               <span className="font-semibold text-blue-700">
-                "{booking.packageName}"
+                "{booking!.packageName}"
               </span>{" "}
               with{" "}
               <span className="inline-flex items-center gap-1 font-semibold text-blue-700">
                 <UserIcon className="h-4 w-4" />
-                {booking.clientName}
+                {booking!.clientName}
               </span>
             </p>
           </div>
@@ -325,15 +303,15 @@ const CompleteServicePage: React.FC = () => {
                 Payment Method:
               </span>
               <span className="text-sm font-semibold text-gray-800">
-                {booking.paymentMethod === "CashOnHand"
+                {booking!.paymentMethod === "CashOnHand"
                   ? "Cash"
-                  : booking.paymentMethod}
+                  : booking!.paymentMethod}
               </span>
             </div>
 
             <form onSubmit={handleSubmitPayment} className="space-y-4">
               {/* Cash Payment Form - Only show for cash payments */}
-              {booking.paymentMethod === "CashOnHand" && (
+              {booking!.paymentMethod === "CashOnHand" && (
                 <>
                   <div>
                     <label
@@ -380,8 +358,8 @@ const CompleteServicePage: React.FC = () => {
               )}
 
               {/* Digital Payment Information */}
-              {(booking.paymentMethod === "GCash" ||
-                booking.paymentMethod === "SRVWallet") && (
+              {(booking!.paymentMethod === "GCash" ||
+                booking!.paymentMethod === "SRVWallet") && (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -391,7 +369,7 @@ const CompleteServicePage: React.FC = () => {
                   </div>
                   <p className="text-sm text-green-600">
                     The client has already paid ₱{servicePrice.toFixed(2)} via{" "}
-                    {booking.paymentMethod}. Completing this service will
+                    {booking!.paymentMethod}. Completing this service will
                     automatically release the payment to you after commission
                     deduction.
                   </p>
@@ -415,7 +393,7 @@ const CompleteServicePage: React.FC = () => {
                 ) : (
                   <>
                     <CheckCircleIcon className="h-5 w-5" />
-                    {booking.paymentMethod === "CashOnHand"
+                    {booking!.paymentMethod === "CashOnHand"
                       ? "Confirm Payment & Complete"
                       : "Complete Service & Release Payment"}
                   </>

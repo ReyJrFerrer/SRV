@@ -130,7 +130,7 @@ interface ProviderBookingManagementHook {
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
   // Individual booking lookup and action functions
-  getBookingById: (bookingId: string) => ProviderEnhancedBooking | null;
+  getBookingById: (bookingId: string) => Promise<ProviderEnhancedBooking | null>;
   getBookingWithClientData: (
     bookingId: string,
   ) => Promise<ProviderEnhancedBooking | null>;
@@ -1623,14 +1623,53 @@ export const useProviderBookingManagement =
       disputeBooking,
 
       // Individual booking lookup and action functions
-      getBookingById: (bookingId: string) =>
-        providerBookings.find((booking) => booking.id === bookingId) || null,
+      getBookingById: async (bookingId: string) => {
+        try {
+          // First try to find in local state for instant response
+          const localBooking = providerBookings.find(
+            (booking) => booking.id === bookingId,
+          );
+          if (localBooking) {
+            return localBooking;
+          }
+
+          // If not found locally, fetch from backend
+          const booking = await bookingCanisterService.getBooking(bookingId);
+          if (booking) {
+            // Enrich with client data before returning
+            const enrichedBooking = await enrichBookingWithClientData(booking);
+            return enrichedBooking;
+          }
+
+          return null;
+        } catch (error) {
+          console.error(`Error fetching booking ${bookingId}:`, error);
+          return null;
+        }
+      },
       getBookingWithClientData: async (bookingId: string) => {
-        const booking = providerBookings.find(
-          (booking) => booking.id === bookingId,
-        );
-        if (!booking) return null;
-        return await enrichBookingWithClientData(booking);
+        try {
+          // Use getBookingById which now checks backend if not in local state
+          const booking = await (async () => {
+            const localBooking = providerBookings.find(
+              (b) => b.id === bookingId,
+            );
+            if (localBooking) return localBooking;
+
+            const fetchedBooking =
+              await bookingCanisterService.getBooking(bookingId);
+            return fetchedBooking;
+          })();
+
+          if (!booking) return null;
+          return await enrichBookingWithClientData(booking);
+        } catch (error) {
+          console.error(
+            `Error fetching booking with client data ${bookingId}:`,
+            error,
+          );
+          return null;
+        }
       },
       acceptBookingById: async (bookingId: string, scheduledDate?: Date) => {
         try {
