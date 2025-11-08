@@ -13,6 +13,14 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import {
+  countActiveServiceProviders,
+  calculateDashboardStats,
+  generateBookingsChartData,
+  generateRevenueChartData,
+  type Period,
+} from "../utils/homeUtils";
+import { getFeedbackStats } from "../services/adminServiceCanister";
 
 export const AdminHomePage: React.FC = () => {
   const {
@@ -41,170 +49,54 @@ export const AdminHomePage: React.FC = () => {
   // Reports for pending tickets
   const [reports, setReports] = useState<any[]>([]);
 
+  // Feedback stats
+  const [feedbackStats, setFeedbackStats] = useState<{
+    averageRating: number;
+    totalFeedback: number;
+  } | null>(null);
+
   // Calculate active service providers count from users with ServiceProvider role
-  const activeServiceProvidersCount =
-    users?.filter((user: any) => {
-      if (typeof user.activeRole === "string") {
-        return user.activeRole === "ServiceProvider";
-      } else if (user.activeRole && typeof user.activeRole === "object") {
-        return "ServiceProvider" in user.activeRole;
-      }
-      return false;
-    }).length || 0;
+  const activeServiceProvidersCount = useMemo(() => {
+    return countActiveServiceProviders(users || []);
+  }, [users]);
 
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
 
-  // Calculate settled bookings with fallback to systemStats when bookings array is empty
-  const settledBookings =
-    bookings && bookings.length > 0
-      ? bookings.filter(
-          (booking) =>
-            booking.status?.toLowerCase() === "completed" ||
-            booking.status?.toLowerCase() === "settled",
-        ).length
-      : systemStats?.settledBookings || 0;
-
   // Calculate dashboard stats from current data
-  const dashboardStats = {
-    totalServiceProviders: activeServiceProvidersCount,
-    totalPendingValidations: servicesWithCertificates.reduce(
-      (total, service) => total + (service.certificateUrls?.length || 0),
-      0,
-    ),
-    totalPendingTickets: reports.filter(
-      (report) => !report.status || report.status === "open",
-    ).length,
-    totalAdminUsers: systemStats?.adminUsers || 0,
-    totalBookings: totalBookings,
-    settledBookings: settledBookings,
-  };
+  const dashboardStats = useMemo(() => {
+    return calculateDashboardStats(
+      activeServiceProvidersCount,
+      servicesWithCertificates,
+      reports,
+      systemStats,
+      totalBookings,
+      feedbackStats,
+    );
+  }, [
+    activeServiceProvidersCount,
+    servicesWithCertificates,
+    reports,
+    systemStats,
+    totalBookings,
+    feedbackStats,
+  ]);
 
   // Charts: period filter
-  type Period = "7d" | "30d" | "90d";
   const [period, setPeriod] = useState<Period>("7d");
   const lineData = useMemo(() => {
-    const today = new Date();
-    const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const chartData = [];
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const formattedDate = date
-        .toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-        .toUpperCase()
-        .replace(" ", ". ");
-
-      let count = 0;
-
-      // Count bookings for this specific date
-      if (bookings && bookings.length > 0) {
-        const dateStr = date.toISOString().slice(0, 10);
-        count = bookings.filter((booking) => {
-          let bookingDateStr;
-          if (booking.createdAt instanceof Date) {
-            bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === "string") {
-            bookingDateStr = booking.createdAt.slice(0, 10);
-          } else {
-            return false;
-          }
-          return bookingDateStr === dateStr;
-        }).length;
-      } else if (i === 0) {
-        count = totalBookings;
-      }
-
-      chartData.push({
-        date: formattedDate,
-        count,
-        fullDate: date.toISOString().slice(0, 10),
-      });
-    }
-
-    return chartData;
+    return generateBookingsChartData(bookings || [], totalBookings, period);
   }, [bookings, totalBookings, period]);
 
   // Revenue per Day chart data with vertical grids
   const revenueLineData = useMemo(() => {
-    // Generate dynamic date range based on selected period
-    const today = new Date();
-    const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const chartData = [];
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const formattedDate = date
-        .toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-        .toUpperCase()
-        .replace(" ", ". ");
-
-      let revenue = 0;
-      let commission = 0;
-
-      // Calculate revenue for this specific date
-      if (bookings && bookings.length > 0) {
-        const dateStr = date.toISOString().slice(0, 10);
-
-        // Calculate revenue from completed bookings
-        revenue = bookings
-          .filter((booking) => {
-            let bookingDateStr;
-            if (booking.createdAt instanceof Date) {
-              bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-            } else if (typeof booking.createdAt === "string") {
-              bookingDateStr = booking.createdAt.slice(0, 10);
-            } else {
-              return false;
-            }
-            return (
-              bookingDateStr === dateStr &&
-              (booking.status === "Completed" || booking.status === "Settled")
-            );
-          })
-          .reduce((sum, booking) => sum + (booking.price || 0), 0);
-
-        // Calculate commission from commission transactions
-        if (commissionTransactions && commissionTransactions.length > 0) {
-          commission = commissionTransactions
-            .filter((transaction) => {
-              const transactionDateStr = transaction.timestamp
-                .toISOString()
-                .slice(0, 10);
-              return transactionDateStr === dateStr;
-            })
-            .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-        }
-      } else if (i === 0) {
-        // If no bookings data, show totals on today
-        revenue = systemStats?.totalRevenue || 0;
-        commission = systemStats?.totalCommission || 0;
-      }
-
-      chartData.push({
-        date: formattedDate,
-        revenue,
-        commission,
-        fullDate: date.toISOString().slice(0, 10),
-      });
-    }
-
-    return chartData;
-  }, [
-    bookings,
-    commissionTransactions,
-    systemStats?.totalRevenue,
-    systemStats?.totalCommission,
-    period,
-  ]);
+    return generateRevenueChartData(
+      bookings || [],
+      commissionTransactions || [],
+      systemStats,
+      period,
+    );
+  }, [bookings, commissionTransactions, systemStats, period]);
 
   // Load services with certificates for pending validations count
   useEffect(() => {
@@ -231,6 +123,22 @@ export const AdminHomePage: React.FC = () => {
     };
     loadReports();
   }, [getReportsFromFeedbackCanister]);
+
+  // Load feedback stats
+  useEffect(() => {
+    const loadFeedbackStats = async () => {
+      try {
+        const stats = await getFeedbackStats();
+        setFeedbackStats({
+          averageRating: stats.averageRating || 0,
+          totalFeedback: stats.totalFeedback || 0,
+        });
+      } catch (error) {
+        console.error("Error loading feedback stats:", error);
+      }
+    };
+    loadFeedbackStats();
+  }, []);
 
   // Toggle mobile bottom bar when header scrolls out of view
   useEffect(() => {

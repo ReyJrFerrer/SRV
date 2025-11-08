@@ -82,6 +82,7 @@ const {
   getServicesWithCertificates,
   getPendingCertificateValidations,
   validateCertificate,
+  updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
 } = require("./src/admin");
 
@@ -237,6 +238,8 @@ const {
   canReceiveNotification,
   deleteNotification,
   cleanupNotificationFrequency,
+  storeOneSignalPlayerId,
+  removeOneSignalPlayerId,
 } = require("./src/notification");
 
 // Import Media Management functions
@@ -251,7 +254,6 @@ const {
   getStorageStats,
   validateMediaItems,
   getRemittanceMediaItems,
-  updateCertificateValidationStatus,
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
@@ -415,6 +417,8 @@ exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 exports.canReceiveNotification = canReceiveNotification;
 exports.deleteNotification = deleteNotification;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
+exports.storeOneSignalPlayerId = storeOneSignalPlayerId;
+exports.removeOneSignalPlayerId = removeOneSignalPlayerId;
 
 // Export Media Management Functions
 exports.uploadMedia = uploadMedia;
@@ -427,7 +431,6 @@ exports.updateMediaMetadata = updateMediaMetadata;
 exports.getStorageStats = getStorageStats;
 exports.validateMediaItems = validateMediaItems;
 exports.getRemittanceMediaItems = getRemittanceMediaItems;
-exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
@@ -454,6 +457,7 @@ exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
+exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 
 // Export Scheduled Admin Functions
 exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;

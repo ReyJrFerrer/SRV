@@ -18,6 +18,52 @@ interface BookingDetails {
   expectedChange?: string;
 }
 
+function formatTo12Hour(timeStr?: string): string {
+  if (!timeStr) return "";
+  const raw = timeStr.trim();
+  const formatSingle = (seg: string, forcedPeriod?: string): string => {
+    const s = seg.trim();
+    const hasAmpm = /\b(am|pm)\b/i.test(s);
+    if (hasAmpm) {
+      return s
+        .replace(/\s+/g, " ")
+        .replace(/\b(am|pm)\b/i, (m) => m.toUpperCase());
+    }
+
+    const m = s.match(/(\d{1,2})(?::(\d{2}))?/);
+    if (!m) return s;
+    let hh = parseInt(m[1], 10);
+    const mm = m[2] ? parseInt(m[2], 10) : 0;
+    if (isNaN(hh) || isNaN(mm)) return s;
+
+    const period = forcedPeriod
+      ? forcedPeriod.toUpperCase()
+      : hh >= 12
+        ? "PM"
+        : "AM";
+    const hour12 = ((hh + 11) % 12) + 1;
+    const minutePadded = mm < 10 ? `0${mm}` : String(mm);
+    return `${hour12}:${minutePadded} ${period}`;
+  };
+
+  const rangeSepRegex = /\s*(?:[-–—]|to)\s*/i;
+  if (rangeSepRegex.test(raw)) {
+    const parts = raw
+      .split(rangeSepRegex)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const trailingMatch = raw.match(/\b(am|pm)\b\s*$/i);
+    const trailing = trailingMatch ? trailingMatch[1].toUpperCase() : undefined;
+    const formatted = parts.map((p) => {
+      const has = /\b(am|pm)\b/i.test(p);
+      return formatSingle(p, !has ? trailing : undefined);
+    });
+    return formatted.join(" - ");
+  }
+
+  return formatSingle(raw);
+}
+
 const BookingConfirmationPage: React.FC = () => {
   const location = useLocation();
   const bookingDetails: BookingDetails | null = location.state?.details || null;
@@ -96,7 +142,7 @@ const BookingConfirmationPage: React.FC = () => {
                     </li>
                     <li>
                       <span className="font-semibold">Time:</span>{" "}
-                      {bookingDetails.time}
+                      {formatTo12Hour(bookingDetails.time)}
                     </li>
                     {bookingDetails.location && (
                       <li>

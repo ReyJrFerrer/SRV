@@ -1,4 +1,4 @@
-// Notification Service - Firebase Cloud Messaging Integration
+// Notification Service - OneSignal Push Notifications Integration
 import { httpsCallable } from "firebase/functions";
 import {
   collection,
@@ -48,13 +48,6 @@ export interface NotificationFilter {
   toDate?: Date;
   limit?: number;
   offset?: number;
-}
-
-export interface PushSubscriptionData {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-  userAgent?: string;
 }
 
 /**
@@ -275,60 +268,6 @@ export const notificationCanisterService = {
       console.error("Error fetching notifications for push:", error);
       throw new Error(`Failed to fetch notifications for push: ${error}`);
     }
-  },
-
-  /**
-   * Store FCM token (replaces push subscription storage)
-   */
-  async storePushSubscription(
-    subscriptionData: PushSubscriptionData,
-  ): Promise<void> {
-    try {
-      const storeFCMTokenFunc = httpsCallable(functions, "storeFCMToken");
-
-      // For FCM, we use the endpoint as the token
-      const result = await storeFCMTokenFunc({
-        fcmToken: subscriptionData.endpoint,
-      });
-
-      const response = result.data as any;
-
-      if (!response.success) {
-        throw new Error("Failed to store FCM token");
-      }
-    } catch (error) {
-      console.error("Error storing FCM token:", error);
-      throw new Error(`Failed to store FCM token: ${error}`);
-    }
-  },
-
-  /**
-   * Remove FCM token
-   */
-  async removePushSubscription(): Promise<void> {
-    try {
-      const removeFCMTokenFunc = httpsCallable(functions, "removeFCMToken");
-
-      const result = await removeFCMTokenFunc({});
-
-      const response = result.data as any;
-
-      if (!response.success) {
-        throw new Error("Failed to remove FCM token");
-      }
-    } catch (error) {
-      console.error("Error removing FCM token:", error);
-      throw new Error(`Failed to remove FCM token: ${error}`);
-    }
-  },
-
-  /**
-   * Get current push subscription (returns null for FCM)
-   */
-  async getPushSubscription(): Promise<PushSubscriptionData | null> {
-    // FCM doesn't expose subscription details in the same way
-    // This is a compatibility method that always returns null
-    return null;
   },
 
   /**

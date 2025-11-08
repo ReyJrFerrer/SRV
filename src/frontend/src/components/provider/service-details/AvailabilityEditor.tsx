@@ -196,15 +196,32 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                   checked={dayEntry.availability.isAvailable}
                   onChange={() => {
                     const newSchedule = [...weeklySchedule];
-                    newSchedule[
-                      weeklySchedule.findIndex((d) => d.day === dayEntry.day)
-                    ] = {
-                      ...dayEntry,
-                      availability: {
-                        ...dayEntry.availability,
-                        isAvailable: !dayEntry.availability.isAvailable,
-                      },
+                    const idx = weeklySchedule.findIndex(
+                      (d) => d.day === dayEntry.day,
+                    );
+                    const currentlyAvailable =
+                      dayEntry.availability.isAvailable;
+                    const newAvailability = {
+                      ...dayEntry.availability,
+                      isAvailable: !currentlyAvailable,
+                      slots:
+                        !currentlyAvailable &&
+                        (!dayEntry.availability.slots ||
+                          dayEntry.availability.slots.length === 0)
+                          ? [
+                              {
+                                startTime: templateTimeSlot.startTime,
+                                endTime: templateTimeSlot.endTime,
+                              },
+                            ]
+                          : dayEntry.availability.slots || [],
                     };
+
+                    newSchedule[idx] = {
+                      ...dayEntry,
+                      availability: newAvailability,
+                    };
+
                     setWeeklySchedule(newSchedule);
                   }}
                   className="rounded text-blue-600 focus:ring-blue-500"
@@ -220,17 +237,20 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                     const newSchedule = [...weeklySchedule];
                     const slots = newSchedule[idx].availability.slots || [];
                     let newSlot: TimeSlot;
+
                     if (slots.length > 0) {
                       const lastSlotEndTime = slots[slots.length - 1].endTime;
-                      const newStartTime = lastSlotEndTime;
-                      const newEndTime = addHoursToTime(newStartTime, 2);
+                      const newStartTime = addHoursToTime(lastSlotEndTime, 1);
+                      const newEndTime = addHoursToTime(newStartTime, 1);
                       newSlot = {
                         startTime: newStartTime,
                         endTime: newEndTime,
                       };
                     } else {
+                      // Keep the existing default behavior for first slot
                       newSlot = { startTime: "09:00", endTime: "17:00" };
                     }
+
                     newSchedule[idx].availability.slots = [...slots, newSlot];
                     setWeeklySchedule(newSchedule);
                   }}

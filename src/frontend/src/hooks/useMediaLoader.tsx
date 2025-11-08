@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { mediaService } from "../services/mediaService";
+import { useState, useEffect } from "react";
+import { doc, getFirestore, getDoc } from "firebase/firestore";
+import { getFirebaseApp } from "../services/firebaseApp";
+import { mediaService, extractMediaIdFromUrl } from "../services/mediaService";
 import { serviceCanisterService } from "../services/serviceCanisterService";
 
 export interface UseImageLoaderOptions {
@@ -344,86 +347,94 @@ export const useServiceImageGallery = (
   };
 };
 
-/**
- * Hook for managing service certificates
- * Provides loading and management functionality for service certificates (PDFs and images)
- */
 export const useServiceCertificates = (
   serviceId: string | null | undefined,
   certificateUrls: (string | null | undefined)[] = [],
   options: UseImageLoaderOptions = {},
 ) => {
   const validUrls = certificateUrls.filter((url): url is string => !!url);
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const db = getFirestore(getFirebaseApp());
 
-  // Load all service certificates
-  const {
-    data: loadedCertificates,
-    isLoading: isLoadingCertificates,
-    error: loadError,
-    isError: isLoadError,
-    refetch: refetchCertificates,
-  } = useQuery({
-    queryKey: ["service-certificates", serviceId, validUrls],
-    queryFn: async () => {
-      if (!validUrls.length) return [];
+  useEffect(() => {
+    if (!serviceId || !validUrls.length) {
+      setCertificates([]);
+      setIsLoading(false);
+      return;
+    }
 
-      const certificatePromises = validUrls.map(async (url) => {
-        try {
-          // Get both image data and validation status
-          const [dataUrl, mediaDetails] = await Promise.all([
-            mediaService.getImageDataUrl(url, {
+    setIsLoading(true);
+
+    const loadCertificates = async () => {
+      try {
+        const promises = validUrls.map(async (url) => {
+          try {
+            const dataUrl = await mediaService.getImageDataUrl(url, {
               enableCache: true,
               ...options,
-            }),
-            mediaService.getMediaItemDetails(url),
-          ]);
+            });
 
-          return {
-            url,
-            dataUrl,
-            validationStatus: mediaDetails.validationStatus,
-            error: null,
-          };
-        } catch (error) {
-          return {
-            url,
-            dataUrl: null,
-            validationStatus: undefined,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to load certificate",
-          };
-        }
-      });
+            const mediaId = extractMediaIdFromUrl(url);
+            if (!mediaId) {
+              return {
+                url,
+                dataUrl,
+                validationStatus: undefined,
+                error: "Invalid media URL",
+              };
+            }
 
-      return await Promise.all(certificatePromises);
-    },
-    enabled: !!serviceId && validUrls.length > 0,
-    staleTime: 1000 * 30, // 30 seconds - shorter to reflect admin approval/rejection changes
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    refetchOnWindowFocus: true, // Refetch when window regains focus to show updated status
-    refetchOnMount: true, // Refetch when component mounts
-  });
+            const mediaDocRef = doc(db, "media", mediaId);
+            const mediaDoc = await getDoc(mediaDocRef);
+            const validationStatus = mediaDoc.exists()
+              ? mediaDoc.data().validationStatus || "Pending"
+              : "Pending";
+
+            return {
+              url,
+              dataUrl,
+              validationStatus,
+              error: null,
+            };
+          } catch (err) {
+            return {
+              url,
+              dataUrl: null,
+              validationStatus: undefined,
+              error:
+                err instanceof Error
+                  ? err.message
+                  : "Failed to load certificate",
+            };
+          }
+        });
+
+        const results = await Promise.all(promises);
+        setCertificates(results);
+        setIsLoading(false);
+        setError(null);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err : new Error("Failed to load certificates"),
+        );
+        setIsLoading(false);
+      }
+    };
+
+    loadCertificates();
+  }, [serviceId, JSON.stringify(validUrls), db]);
 
   return {
-    /** Array of loaded certificates with their data URLs */
-    certificates: loadedCertificates || [],
-    /** Whether certificates are currently loading */
-    isLoading: isLoadingCertificates,
-    /** Any error that occurred during loading */
-    error: loadError as Error | null,
-    /** Whether an error occurred */
-    isError: isLoadError,
-    /** Function to manually refetch all certificates */
-    refetch: refetchCertificates,
-    /** Whether certificates have been loaded successfully */
-    isSuccess: !!loadedCertificates,
-    /** Number of successfully loaded certificates */
-    successCount:
-      loadedCertificates?.filter((cert) => cert.dataUrl).length || 0,
-    /** Number of failed certificate loads */
-    errorCount: loadedCertificates?.filter((cert) => cert.error).length || 0,
+    certificates,
+    isLoading,
+    error,
+    isError: !!error,
+    refetch: () => {},
+    isSuccess: !isLoading && certificates.length > 0,
+    successCount: certificates.filter((cert) => cert.dataUrl).length,
+    errorCount: certificates.filter((cert) => cert.error).length,
   };
 };
 

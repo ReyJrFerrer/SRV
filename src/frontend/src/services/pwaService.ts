@@ -1,6 +1,6 @@
 // PWA Service - Manages Service Worker registration and PWA functionality
 import browserDetectionService from "./browserDetectionService";
-import fcmService from "./fcmService";
+import oneSignalService from "./oneSignalService";
 
 export interface PWAInstallPrompt {
   prompt: () => Promise<void>;
@@ -23,17 +23,27 @@ class PWAService {
     // Log browser capabilities for debugging
     browserDetectionService.logBrowserCapabilities();
 
-    this.initializeServiceWorker();
+    // DISABLED: Custom service worker registration to avoid conflicts with OneSignal
+    // OneSignal needs scope "/" for push notifications to work properly
+    // We'll add caching logic to OneSignalSDKWorker.js if needed
+    // this.initializeServiceWorker();
+
     this.setupInstallPrompt();
   }
 
   /**
    * Initialize Service Worker
+   * DISABLED: Commented out to avoid conflicts with OneSignal
+   * OneSignal handles its own service worker (OneSignalSDKWorker.js) with scope "/"
+   * Both service workers cannot coexist at the same scope without conflicts
+   *
+   * If caching/offline functionality is needed, add it to OneSignalSDKWorker.js
    */
+  /*
   private async initializeServiceWorker() {
     const browserInfo = browserDetectionService.getBrowserInfo();
 
-    // //console.log("🔧 PWA: Initializing Service Worker", {
+    // //console.log("🔧 PWA: Initializing Custom Service Worker", {
     //   browser: `${browserInfo.name} ${browserInfo.version}`,
     //   supportsServiceWorker: browserInfo.supportsServiceWorker,
     //   isSecureContext: window.isSecureContext,
@@ -50,7 +60,10 @@ class PWAService {
     }
 
     try {
-      //console.log("📝 PWA: Registering service worker...");
+      //console.log("📝 PWA: Registering custom service worker for caching...");
+      
+      // Register our custom service worker for caching and offline functionality
+      // OneSignal will register its own service worker (OneSignalSDKWorker.js) separately
       const registration = await navigator.serviceWorker.register("/sw.js", {
         scope: "/",
         updateViaCache: "none", // Ensure fresh updates
@@ -58,7 +71,7 @@ class PWAService {
 
       this.swRegistration = registration;
 
-      // //console.log("✅ PWA: Service Worker registered successfully", {
+      // //console.log("✅ PWA: Custom Service Worker registered successfully", {
       //   scope: registration.scope,
       //   updateViaCache: registration.updateViaCache,
       //   browser: `${browserInfo.name} ${browserInfo.version}`,
@@ -107,7 +120,7 @@ class PWAService {
         // Edge might need additional time for service worker registration
       }
     } catch (error) {
-      // //console.error("❌ PWA: Service Worker registration failed", {
+      // //console.error("❌ PWA: Custom Service Worker registration failed", {
       //   error,
       //   browser: `${browserInfo.name} ${browserInfo.version}`,
       //   isSecureContext: window.isSecureContext,
@@ -115,6 +128,7 @@ class PWAService {
       // });
     }
   }
+  */
 
   /**
    * Setup PWA install prompt
@@ -317,12 +331,14 @@ class PWAService {
 
   /**
    * Request push notification permission
+   * Note: For OneSignal-based push notifications, this is mainly for checking browser capabilities.
+   * OneSignal handles the actual permission request during subscription.
    */
   async requestNotificationPermission(): Promise<NotificationPermission> {
     const browserInfo = browserDetectionService.getBrowserInfo();
     const capabilities = browserDetectionService.getPWACapabilities();
 
-    //console.log("🔔 PWA: Requesting notification permission", {
+    //console.log("🔔 PWA: Checking notification permission", {
     //   browser: `${browserInfo.name} ${browserInfo.version}`,
     //   currentPermission: Notification.permission,
     //   canReceivePushNotifications: capabilities.canReceivePushNotifications,
@@ -339,11 +355,6 @@ class PWAService {
     if (!("PushManager" in window)) {
       //console.error("❌ PWA: PushManager not supported");
       throw new Error("This browser does not support push notifications");
-    }
-
-    if (!this.swRegistration) {
-      //console.error("❌ PWA: Service Worker not registered");
-      throw new Error("Service Worker not registered");
     }
 
     if (!capabilities.canReceivePushNotifications) {
@@ -516,83 +527,112 @@ class PWAService {
   }
 
   /**
-   * Subscribe to push notifications (delegates to FCM)
+   * Subscribe to push notifications (delegates to OneSignal)
+   * Note: OneSignal handles its own service worker (OneSignalSDKWorker.js)
+   * and manages push subscriptions independently from our custom sw.js
    */
   async subscribeToPushNotifications(
     _vapidPublicKey: string,
-  ): Promise<PushSubscriptionData> {
-    //console.log("🔔 PWA: Subscribing to push notifications (FCM)");
+  ): Promise<string | null> {
+    //console.log("🔔 PWA: Subscribing to push notifications via OneSignal");
 
-    if (!this.swRegistration) {
-      //console.error("❌ PWA: Service Worker not registered");
-      throw new Error("Service Worker not registered");
+    // Check if OneSignal is initialized
+    if (!oneSignalService.isReady()) {
+      //console.error("❌ PWA: OneSignal not initialized");
+      throw new Error(
+        "OneSignal not initialized. Please wait for SDK to load.",
+      );
     }
 
-    if (Notification.permission !== "granted") {
-      //console.error("❌ PWA: Notification permission not granted");
-      throw new Error("Notification permission not granted");
+    // Check browser support for notifications
+    if (!this.isPushNotificationSupported()) {
+      //console.error("❌ PWA: Push notifications not supported in this browser");
+      throw new Error("Push notifications are not supported in this browser");
     }
 
+    // OneSignal will handle permission requests during subscription
+    // We don't need to manually check our custom service worker registration
+    // because OneSignal manages its own service worker (OneSignalSDKWorker.js)
     try {
-      // Initialize FCM and get token
-      const token = await fcmService.initialize();
+      //console.log("🔔 PWA: Delegating subscription to OneSignal...");
+      const playerId = await oneSignalService.subscribe();
 
-      if (!token) {
-        throw new Error("Failed to get FCM token");
+      if (!playerId) {
+        //console.warn("❌ PWA: Player ID not immediately available");
+
+        // Check if subscription was successful even without player ID
+        const isSubscribed = await oneSignalService.isSubscribed();
+
+        if (isSubscribed) {
+          //console.log(
+          //  "✅ PWA: Subscription successful, player ID will be available via event listener",
+          //);
+          // Return a temporary ID to indicate subscription is in progress
+          return "pending";
+        }
+
+        //console.error("❌ PWA: Failed to subscribe to push notifications");
+        throw new Error(
+          "Failed to subscribe to push notifications. Please try again.",
+        );
       }
 
-      // Register token with backend
-      const registered = await fcmService.registerToken(token);
-
-      if (!registered) {
-        throw new Error("Failed to register FCM token with backend");
-      }
-
-      // Return subscription data in expected format (FCM uses token as endpoint)
-      return {
-        endpoint: token,
-        keys: {
-          p256dh: "", // Not used in FCM
-          auth: "", // Not used in FCM
-        },
-      };
+      //console.log("✅ PWA: Successfully subscribed via OneSignal:", playerId);
+      return playerId;
     } catch (error) {
-      //console.error("❌ PWA: FCM subscription failed", error);
+      //console.error("❌ PWA: OneSignal subscription failed", error);
       throw error;
     }
   }
 
   /**
-   * Unsubscribe from push notifications (delegates to FCM)
+   * Unsubscribe from push notifications (delegates to OneSignal)
    */
   async unsubscribeFromPushNotifications(): Promise<boolean> {
     try {
-      await fcmService.unregisterToken();
-      await fcmService.deleteToken();
-      return true;
+      return await oneSignalService.unsubscribe();
     } catch (error) {
-      console.error("Failed to unsubscribe from FCM:", error);
+      console.error("Failed to unsubscribe from OneSignal:", error);
       return false;
     }
   }
 
   /**
-   * Get current push subscription (delegates to FCM)
+   * Get current push subscription (delegates to OneSignal)
+   * Returns subscription data if user is subscribed, null otherwise
    */
   async getCurrentPushSubscription(): Promise<PushSubscriptionData | null> {
-    const token = fcmService.getToken();
+    try {
+      // Check if OneSignal is ready
+      if (!oneSignalService.isReady()) {
+        return null;
+      }
 
-    if (token) {
-      return {
-        endpoint: token,
-        keys: {
-          p256dh: "", // Not used in FCM
-          auth: "", // Not used in FCM
-        },
-      };
+      // Check if user is actually subscribed (not just has permission)
+      const isSubscribed = await oneSignalService.isSubscribed();
+
+      if (!isSubscribed) {
+        return null;
+      }
+
+      // Get player ID
+      const playerId = await oneSignalService.getPlayerId();
+
+      if (playerId) {
+        return {
+          endpoint: playerId,
+          keys: {
+            p256dh: "", // Not used by OneSignal
+            auth: "", // Not used by OneSignal
+          },
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("PWA: Error getting push subscription:", error);
+      return null;
     }
-
-    return null;
   }
 
   /**
@@ -632,13 +672,13 @@ class PWAService {
     // For PWAs, especially on mobile, permission status can change outside the app
     const permission = this.getNotificationPermission();
 
-    // If we have a service worker registration, check FCM token status
+    // If we have a service worker registration, check OneSignal player ID status
     if (permission === "granted" && this.swRegistration) {
       try {
-        fcmService.getToken(); // Check if we have a valid FCM token
-        //console.log("📊 PWA: Checked FCM token status");
+        await oneSignalService.getPlayerId(); // Check if we have a valid player ID
+        //console.log("📊 PWA: Checked OneSignal player ID status");
       } catch (error) {
-        //console.error("❌ PWA: Error checking FCM token:", error);
+        //console.error("❌ PWA: Error checking OneSignal player ID:", error);
       }
     }
 
@@ -660,15 +700,20 @@ class PWAService {
 
   /**
    * Handle service worker update
+   * DISABLED: Not used when custom SW is disabled
    */
+  /*
   private notifyUpdateAvailable() {
     // You can emit an event or show a notification about update availability
     window.dispatchEvent(new CustomEvent("pwa-update-available"));
   }
+  */
 
   /**
    * Update service worker
+   * DISABLED: Not used when custom SW is disabled
    */
+  /*
   async updateServiceWorker() {
     if (this.swRegistration) {
       const newWorker = this.swRegistration.waiting;
@@ -678,6 +723,7 @@ class PWAService {
       }
     }
   }
+  */
 
   /**
    * Validate VAPID key format

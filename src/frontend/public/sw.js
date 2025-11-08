@@ -1,11 +1,7 @@
-// Service Worker for SRV PWA - Enhanced for cross-browser compatibility with FCM support
-// Import Firebase Messaging for FCM support
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
-);
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js",
-);
+// Service Worker for SRV PWA - Enhanced for cross-browser compatibility
+// Note: OneSignal handles push notifications via OneSignalSDKWorker.js
+// This service worker focuses ONLY on PWA caching and offline functionality
+// Both service workers can coexist with proper scoping
 
 const CACHE_NAME = "srv-pwa-v1";
 const STATIC_CACHE_URLS = [
@@ -43,49 +39,7 @@ function detectBrowser() {
   else if (browserInfo.isChrome) browserInfo.name = "Chrome";
   else if (browserInfo.isFirefox) browserInfo.name = "Firefox";
 
-  //console.log("🔍 SW: Browser detected:", browserInfo);
   return browserInfo;
-}
-
-// Initialize Firebase for FCM background messages
-try {
-  firebase.initializeApp({
-    apiKey: "AIzaSyDRyQ38qXdEDDF1gcw33UhyAXocHAtnQzs",
-    authDomain: "devsrv-rey.firebaseapp.com",
-    projectId: "devsrv-rey",
-    storageBucket: "devsrv-rey.firebasestorage.app",
-    messagingSenderId: "851522429469",
-    appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4",
-  });
-
-  const messaging = firebase.messaging();
-
-  // Handle background messages from FCM
-  // NOTE: This is the ONLY handler needed for FCM push notifications
-  // The manual 'push' event listener below is NOT needed and causes duplicates
-  messaging.onBackgroundMessage((payload) => {
-    console.log("SW: Received background message from FCM:", payload);
-
-    const notificationTitle = payload.notification?.title || "SRV Notification";
-    const notificationOptions = {
-      body: payload.notification?.body || "You have a new notification",
-      icon: payload.notification?.icon || "/logo.svg",
-      badge: "/logo.svg",
-      data: payload.data || {},
-      tag: payload.data?.notificationId || `srv-notification-${Date.now()}`,
-      // Add timestamp for better ordering
-      timestamp: payload.data?.timestamp
-        ? new Date(payload.data.timestamp).getTime()
-        : Date.now(),
-    };
-
-    return self.registration.showNotification(
-      notificationTitle,
-      notificationOptions,
-    );
-  });
-} catch (error) {
-  console.error("SW: Failed to initialize Firebase:", error);
 }
 
 // Install event - cache resources
@@ -263,8 +217,18 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Notification click event handler
+// Note: OneSignal handles most notification events, but we keep this for compatibility
 self.addEventListener("notificationclick", (event) => {
-  //console.log("Notification clicked:", event);
+  console.log("SW: Notification clicked:", event);
+
+  // Only handle notifications that are not from OneSignal
+  if (
+    event.notification.tag &&
+    event.notification.tag.startsWith("onesignal")
+  ) {
+    // Let OneSignal handle its own notifications
+    return;
+  }
 
   event.notification.close();
 
@@ -299,7 +263,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Background sync event (for offline actions)
 self.addEventListener("sync", (event) => {
-  //console.log("Background sync:", event.tag);
+  console.log("SW: Background sync:", event.tag);
 
   if (event.tag === "background-notification-sync") {
     event.waitUntil(
