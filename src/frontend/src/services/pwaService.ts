@@ -36,7 +36,7 @@ class PWAService {
    * DISABLED: Commented out to avoid conflicts with OneSignal
    * OneSignal handles its own service worker (OneSignalSDKWorker.js) with scope "/"
    * Both service workers cannot coexist at the same scope without conflicts
-   * 
+   *
    * If caching/offline functionality is needed, add it to OneSignalSDKWorker.js
    */
   /*
@@ -559,10 +559,10 @@ class PWAService {
 
       if (!playerId) {
         //console.warn("❌ PWA: Player ID not immediately available");
-        
+
         // Check if subscription was successful even without player ID
         const isSubscribed = await oneSignalService.isSubscribed();
-        
+
         if (isSubscribed) {
           //console.log(
           //  "✅ PWA: Subscription successful, player ID will be available via event listener",
@@ -570,7 +570,7 @@ class PWAService {
           // Return a temporary ID to indicate subscription is in progress
           return "pending";
         }
-        
+
         //console.error("❌ PWA: Failed to subscribe to push notifications");
         throw new Error(
           "Failed to subscribe to push notifications. Please try again.",

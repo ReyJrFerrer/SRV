@@ -96,7 +96,7 @@ class OneSignalService {
         console.log(
           "OneSignal: User previously subscribed, will restore on next action",
         );
-        
+
         // Get player ID (OneSignal User ID)
         try {
           const playerId = window.OneSignal.User.onesignalId;
@@ -207,7 +207,7 @@ class OneSignalService {
 
           if (!newPermissionGranted) {
             console.warn("OneSignal: Permission request returned false");
-            
+
             // Check if user actually denied or if there was another issue
             const updatedNativePermission = Notification.permission;
             if (updatedNativePermission === "denied") {
@@ -294,14 +294,17 @@ class OneSignalService {
 
         const finalSubscriptionCheck =
           window.OneSignal.User.PushSubscription.optedIn;
-        console.log("OneSignal: Final subscription check:", finalSubscriptionCheck);
+        console.log(
+          "OneSignal: Final subscription check:",
+          finalSubscriptionCheck,
+        );
 
         if (finalSubscriptionCheck) {
           // User is subscribed but player ID not available yet
           console.warn(
             "OneSignal: Subscription created but player ID not immediately available. Listening for subscription change event...",
           );
-          
+
           // Return null but don't throw error - the event listener will handle it
           return null;
         }
@@ -374,12 +377,12 @@ class OneSignalService {
 
       // Try multiple possible locations for the player ID
       let playerId = window.OneSignal.User.onesignalId;
-      
+
       if (!playerId) {
         // Fallback: try push subscription ID
         playerId = window.OneSignal.User.PushSubscription.id;
       }
-      
+
       if (!playerId) {
         // Fallback: try push token
         playerId = window.OneSignal.User.PushSubscription.token;

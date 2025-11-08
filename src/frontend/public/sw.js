@@ -222,7 +222,10 @@ self.addEventListener("notificationclick", (event) => {
   console.log("SW: Notification clicked:", event);
 
   // Only handle notifications that are not from OneSignal
-  if (event.notification.tag && event.notification.tag.startsWith("onesignal")) {
+  if (
+    event.notification.tag &&
+    event.notification.tag.startsWith("onesignal")
+  ) {
     // Let OneSignal handle its own notifications
     return;
   }
