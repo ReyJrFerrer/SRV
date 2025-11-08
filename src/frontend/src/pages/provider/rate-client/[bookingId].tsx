@@ -201,7 +201,7 @@ const ProviderRateClientPage: React.FC = () => {
                   disabled={submitting}
                 >
                   <StarIcon
-                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star ? "text-blue-500" : "text-gray-200"}`}
+                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
                     fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
                   />
                 </button>
