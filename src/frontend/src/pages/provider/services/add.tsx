@@ -979,14 +979,14 @@ const AddServicePage: React.FC = () => {
       />
       {/* Header */}
       <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 md:ml-20 lg:ml-20">
+        <div className="flex max-w-4xl items-center px-3.5 py-2.5 md:ml-20 lg:ml-20">
           <button
             onClick={handleHeaderBack}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-2xl font-extrabold tracking-tight text-black sm:text-xl md:text-lg">
+          <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>

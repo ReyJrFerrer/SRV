@@ -217,7 +217,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 <button
                   aria-label={service.category.name || "Category"}
                   title={service.category.name}
-                  className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white bg-yellow-100 shadow-md"
+                  className="relative z-10 flex items-center justify-center rounded-full"
                   onClick={(e) => {
                     // stop propagation so clicking the category icon doesn't navigate the card link
                     e.stopPropagation();
@@ -226,7 +226,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   <img
                     src={getCategoryIcon(service.category.slug)}
                     alt={service.category.name || "Category"}
-                    className="h-5 w-5 object-contain"
+                    className="h-10 w-10 object-contain"
                     onError={(e) => {
                       e.currentTarget.src = "/images/categories/others.svg";
                     }}

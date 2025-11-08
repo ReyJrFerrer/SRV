@@ -672,7 +672,7 @@ const ClientProfilePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Profile
           </h1>
         </div>
@@ -807,7 +807,7 @@ const ClientProfilePage: React.FC = () => {
                         : "text-black group-hover:text-white"
                     }`}
                   />
-                  <span className="text-md font-medium text-gray-800 group-hover:text-white">
+                  <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
                     {isSwitchingRole
                       ? "Switching Role..."
                       : "Switch into SRVice Provider"}

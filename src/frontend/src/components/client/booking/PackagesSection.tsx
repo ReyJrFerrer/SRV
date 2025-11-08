@@ -30,7 +30,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
         : "border-blue-100"
     }`}
   >
-    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
       Select Package(s) <span className="text-red-500">*</span>
     </h3>

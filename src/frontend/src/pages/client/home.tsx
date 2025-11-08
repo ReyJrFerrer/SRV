@@ -142,7 +142,7 @@ const ClientHomePage: React.FC = () => {
         {/* SECTION: Categories */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories
-          className="mb-8 w-full max-w-full"
+          className="mb-4 w-full max-w-full"
           moreButtonImageUrl="/images/categories/more.svg"
           lessButtonImageUrl="/images/categories/more.svg"
         />
