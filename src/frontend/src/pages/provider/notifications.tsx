@@ -244,7 +244,7 @@ const NotificationsPageSP = () => {
           {notifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
-              
+
               <div className="hidden items-center gap-2 sm:flex">
                 <button
                   onClick={() => {

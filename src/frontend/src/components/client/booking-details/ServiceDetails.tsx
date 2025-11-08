@@ -68,13 +68,13 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   commissionEstimate,
 }) => {
   return (
-    <div className="pt-6 lg:col-span-3 lg:pt-0 lg:pl-8">
+    <div className="pt-6 lg:col-span-3 lg:pl-8 lg:pt-0">
       <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
         <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service Details
       </h3>
       <div className="space-y-3 text-base">
         <div className="flex items-start">
-          <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600" />
+          <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <span className="min-w-0">
             <strong>Package:</strong>{" "}
             <span className="inline-block max-w-full break-words align-bottom">
@@ -83,14 +83,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
           </span>
         </div>
         <div className="flex items-start">
-          <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600" />
+          <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <span>
             <strong>Scheduled:</strong>{" "}
             {formatDateRange(requestedDate || "", scheduledDate || "")}
           </span>
         </div>
         <div className="flex items-start">
-          <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600" />
+          <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <span>
             <strong>Location:</strong>{" "}
             {(formattedLocation || "Not specified")
@@ -104,7 +104,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         </div>
         {price != null && (
           <div className="flex items-start">
-            <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-600" />
+            <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
             <span>
               <strong>Payment:</strong> ₱
               {(price + (commissionEstimate || 0)).toFixed(2)} (Cash)
