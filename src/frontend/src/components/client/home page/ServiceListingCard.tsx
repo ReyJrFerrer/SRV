@@ -31,7 +31,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
       >
         <div className="relative">
           <div className="h-32 w-full animate-pulse rounded-t-2xl bg-gray-200" />
-          <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
+          <div className="absolute top-2 right-2 left-2 flex items-center justify-between">
             <div className="h-8 w-8 animate-pulse rounded-full border border-gray-200 bg-white shadow" />
             <div className="h-6 w-20 animate-pulse rounded-full bg-gray-200" />
           </div>
@@ -195,7 +195,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
           to={`/client/service/${service.id}`}
-          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
+          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out group-hover:pb-2 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl`}
         >
           <div className="relative">
             {/* Image container */}
@@ -211,13 +211,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               />
             </div>
             {/* Category icon and availability badge row */}
-            <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
+            <div className="absolute top-2 right-2 left-2 flex items-center justify-between">
               {/* Category icon as an action button (small yellow circle with icon) */}
               {service.category?.slug && (
                 <button
                   aria-label={service.category.name || "Category"}
                   title={service.category.name}
-                  className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white bg-yellow-100 shadow-md"
+                  className="relative z-10 flex items-center justify-center rounded-full"
                   onClick={(e) => {
                     // stop propagation so clicking the category icon doesn't navigate the card link
                     e.stopPropagation();
@@ -226,7 +226,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   <img
                     src={getCategoryIcon(service.category.slug)}
                     alt={service.category.name || "Category"}
-                    className="h-5 w-5 object-contain"
+                    className="h-10 w-10 object-contain"
                     onError={(e) => {
                       e.currentTarget.src = "/images/categories/others.svg";
                     }}
@@ -247,7 +247,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
               {/* Service title */}
-              <p className="mb-1 mt-2 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+              <p className="mt-2 mb-1 truncate text-lg leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
                 {service.title}
               </p>
               {/* Provider name with verification badge */}

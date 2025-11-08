@@ -39,7 +39,7 @@
           "*.css": "tailwindcss"
         },
         "editor.quickSuggestions": {
-          "strings": "true"
+          "strings": "on"
         },
         "github.copilot.chat.codeGeneration.instructions": [
           {

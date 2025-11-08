@@ -276,30 +276,27 @@ const BookingDetailsPage: React.FC = () => {
         <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
-            className="mr-4 flex-shrink-0 rounded-full hover:bg-gray-100"
+            className="flex-shrink-0 rounded-full hover:bg-gray-100 lg:mr-4"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <div className="flex-grow lg:hidden"></div>
-          <h1 className="flex-grow text-center text-2xl font-extrabold tracking-tight text-black lg:ml-4 lg:text-left">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Booking Details
           </h1>
-          <div className="flex-grow lg:hidden"></div>
-          <div className="hidden lg:flex-grow"></div>
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+      <main className="mx-auto space-y-6 p-4 sm:p-6">
         {isLoading ? (
           <div className="flex min-h-[calc(100vh-150px)] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
               <p className="text-gray-600">Loading booking details...</p>
             </div>
           </div>
         ) : (
           <>
-            <div className="mt-19">
+            <div>
               <CancellationReasons
                 bookingId={specificBooking?.id ?? null}
                 cancelledByClient={status === "Cancelled"}
@@ -307,10 +304,10 @@ const BookingDetailsPage: React.FC = () => {
               />
             </div>
 
-            <div className="mt-1 pt-1">
-              <div className="relative rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:p-7">
+            <div>
+              <div className="mt-13 relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
                 <span
-                  className={`absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold shadow-lg ${getStatusPillStyle(status || "")} sm:text-base`}
+                  className={`absolute top-5 right-4 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
                 >
                   {status?.replace("_", " ")}
@@ -339,7 +336,7 @@ const BookingDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
+            <div className="rounded-2xl border border-blue-100 bg-white/90 p-5 shadow-2xl backdrop-blur-md">
               <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
                 <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
                 Progress

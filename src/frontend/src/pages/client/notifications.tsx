@@ -141,7 +141,7 @@ const NotificationsPage = () => {
           }`}
         >
           <h1
-            className={`text-2xl font-extrabold tracking-tight text-black ${
+            className={`text-xl font-extrabold tracking-tight text-black lg:text-2xl ${
               notifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
@@ -182,7 +182,7 @@ const NotificationsPage = () => {
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                    className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                   >
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
@@ -204,7 +204,7 @@ const NotificationsPage = () => {
                 {mobileMenuOpen && (
                   <div
                     ref={mobileMenuRef}
-                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                    className="ring-opacity-5 absolute top-full right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500"
                   >
                     <div className="py-1" role="menu">
                       <button

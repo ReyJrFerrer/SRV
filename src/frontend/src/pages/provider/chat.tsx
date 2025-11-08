@@ -54,7 +54,7 @@ const ProviderChatPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
           </h1>
           {/* Add a button for starting a new chat in the future */}
@@ -135,7 +135,7 @@ const ProviderChatPage: React.FC = () => {
                             className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
                           />
                           {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
                               {unreadCount}
                             </span>
                           )}
@@ -160,7 +160,7 @@ const ProviderChatPage: React.FC = () => {
                               {lastMessage?.content?.encryptedText ? (
                                 lastMessage.content.encryptedText
                               ) : (
-                                <span className="italic text-gray-400">
+                                <span className="text-gray-400 italic">
                                   No messages yet
                                 </span>
                               )}

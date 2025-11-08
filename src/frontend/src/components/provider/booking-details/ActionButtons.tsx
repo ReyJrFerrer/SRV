@@ -285,7 +285,7 @@ const ActionButtons: React.FC<Props> = ({
   // Default: center and distribute equally
   return (
     <div className={`${baseContainer} w-full`}>
-      <div className="flex w-full justify-center gap-2">
+      <div className="flex w-full flex-col justify-center gap-2 lg:flex-row">
         {buttons.map((b, i) => (
           <div key={`btn-${i}`} className="flex-1">
             {b}
