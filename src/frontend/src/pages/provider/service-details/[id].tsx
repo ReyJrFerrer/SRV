@@ -627,12 +627,12 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingUploads([]);
       setPendingRemovals([]);
       setTempDisplayImages([]);
-      
+
       // Exit edit mode
       setEditImages(false);
-      
+
       toast.success("Service images updated!");
-      
+
       // Trigger a refresh of service data to get updated image URLs
       setRetryCount((prev) => prev + 1);
     } catch (error) {
@@ -847,12 +847,12 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingCertificateUploads([]);
       setPendingCertificateRemovals([]);
       setTempDisplayCertificates([]);
-      
+
       // Exit edit mode
       setEditCertifications(false);
-      
+
       toast.success("Certifications updated!");
-      
+
       // Trigger a refresh of service data to get updated certificate URLs
       setRetryCount((prev) => prev + 1);
     } catch (error) {
