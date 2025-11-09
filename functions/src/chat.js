@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
 const {
   NOTIFICATION_TYPES,
   USER_TYPES,
@@ -286,7 +287,7 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
           ),
           relatedEntityId: conversationId,
           status: "unread",
-          createdAt: new Date(),
+          createdAt: FieldValue.serverTimestamp(),
           metadata: {
             senderId: senderId,
             senderName: senderName,
@@ -296,6 +297,14 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
         };
 
         await db.collection("notifications").doc(notificationId).set(notificationData);
+
+        console.log(`✅ Chat notification created in Firestore:`, {
+          notificationId,
+          userId: receiverId,
+          userType: receiverUserType,
+          type: NOTIFICATION_TYPES.CHAT_MESSAGE,
+          title: notificationData.title,
+        });
 
         // Send OneSignal push notification (non-blocking)
         sendOneSignalNotification(receiverId, notificationData).catch((error) => {

@@ -325,6 +325,48 @@ export const useProviderNotificationsWithPush = () => {
     }
   }, [bookingLoading, fetchProviderNotifications]);
 
+  // Set up real-time listener for provider notifications
+  useEffect(() => {
+    if (!identity) {
+      return;
+    }
+
+    const userId = getUserId();
+    console.log("🔔 [useProviderNotifications] Setting up real-time listener for:", userId);
+
+    // Subscribe to real-time updates
+    const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
+      userId,
+      (newNotifications) => {
+        console.log("🔔 [useProviderNotifications] Received real-time update:", newNotifications.length, "notifications");
+        
+        // Convert to provider notification format
+        const formattedNotifications: ProviderNotification[] = newNotifications.map((notif) => ({
+          id: notif.id,
+          message: notif.message,
+          type: notif.type as any,
+          timestamp: notif.timestamp,
+          read: notif.read,
+          href: notif.href,
+          clientName: notif.clientName,
+          bookingId: notif.bookingId,
+          amount: notif.metadata?.amount || undefined,
+        }));
+
+        setNotifications(formattedNotifications);
+        const newUnreadCount = formattedNotifications.filter((n) => !n.read).length;
+        providerNotificationStore.setCount(newUnreadCount);
+        setLoading(false);
+      },
+      { userType: "provider" }
+    );
+
+    return () => {
+      console.log("🔔 [useProviderNotifications] Cleaning up real-time listener");
+      unsubscribe();
+    };
+  }, [identity]);
+
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {

@@ -129,6 +129,7 @@ export const notificationCanisterService = {
       // Debounce the callback to prevent rapid re-renders
       const debouncedCallback = debounce(
         (notifications: FrontendNotification[]) => {
+          console.log("🔥 [notificationCanisterService] Debounced callback fired with", notifications.length, "notifications");
           callback(notifications);
         },
         250,
@@ -138,6 +139,7 @@ export const notificationCanisterService = {
       return onSnapshot(
         q,
         (snapshot) => {
+          console.log("🔥 [notificationCanisterService] onSnapshot triggered with", snapshot.docs.length, "documents");
           const notifications = snapshot.docs.map((doc) => {
             const data = doc.data();
             return convertToFrontendNotification({
@@ -149,6 +151,7 @@ export const notificationCanisterService = {
                   : new Date().toISOString(),
             });
           });
+          console.log("🔥 [notificationCanisterService] Converted notifications:", notifications.length);
           debouncedCallback(notifications);
         },
         (error) => {
