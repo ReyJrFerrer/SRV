@@ -76,9 +76,6 @@ const NotificationsPage = () => {
   // ensure client-side filtering reacts to meaningful changes (read flag,
   // type, href, etc.) even if the upstream hook mutates the array in place.
   const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
-  const [stableNotifications, setStableNotifications] = React.useState<
-    Notification[]
-  >([]);
 
   // Stabilize incoming notifications similar to provider page.
   React.useEffect(() => {
