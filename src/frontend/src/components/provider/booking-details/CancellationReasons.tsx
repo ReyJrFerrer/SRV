@@ -52,11 +52,12 @@ export default function CancellationReasons({
   if (!shouldShow) return null;
 
   // Determine the display text based on who cancelled
-  const cancellerText = cancelledBy === "Client" 
-    ? "Client cancelled this booking"
-    : cancelledBy === "Provider"
-    ? "Provider cancelled this booking"
-    : "This booking was cancelled";
+  const cancellerText =
+    cancelledBy === "Client"
+      ? "Client cancelled this booking"
+      : cancelledBy === "Provider"
+        ? "Provider cancelled this booking"
+        : "This booking was cancelled";
 
   return (
     <section className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
