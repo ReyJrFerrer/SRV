@@ -57,45 +57,47 @@ export const BookingReviewPage: React.FC = () => {
     document.title = `Review Booking | SRV`;
   }, []);
 
-  // Redirect if booking doesn't exist or wrong status
+  // Check booking status and existing review
   useEffect(() => {
-    if (!bookingId) {
-      navigate("/client/booking", { replace: true });
-      return;
-    }
-    // Wait for loading to complete before checking booking
-    if (isLoadingBooking) {
-      return;
-    }
+    const checkBookingAndReview = async () => {
+      // Step 1: Check if we have a booking ID
+      if (!bookingId) {
+        console.warn("Review: No booking ID");
+        navigate("/client/booking", { replace: true });
+        return;
+      }
 
-    if (!booking) {
-      console.warn("Review: booking not found");
-      navigate("/client/booking", { replace: true });
-      return;
-    }
+      // Step 2: Wait for booking to load
+      if (isLoadingBooking) {
+        console.log("⏳ Waiting for booking to load...");
+        return;
+      }
 
-    if (booking.status !== "Completed") {
-      console.warn(
-        `Review: booking status is ${booking.status}, not Completed`,
-      );
-      navigate("/client/booking", { replace: true });
-      return;
-    }
-  }, [booking, isLoadingBooking, bookingId, navigate]);
+      // Step 3: Check if booking exists
+      if (!booking) {
+        console.warn("Review: booking not found");
+        navigate("/client/booking", { replace: true });
+        return;
+      }
 
-  // Check if client has already reviewed this booking
-  useEffect(() => {
-    const checkExistingReview = async () => {
-      if (!bookingId || typeof bookingId !== "string") return;
+      // Step 4: Check if booking is completed
+      if (booking.status !== "Completed") {
+        console.warn(
+          `Review: booking status is ${booking.status}, not Completed`,
+        );
+        navigate("/client/booking", { replace: true });
+        return;
+      }
 
-      // Wait for booking to load first
-      if (isLoadingBooking) return;
-
-      if (!booking) return;
-
+      // Step 5: All basic checks passed, now check for existing review
       try {
         setCheckingReview(true);
+        console.log(
+          "🔍 Checking for existing booking review for booking:",
+          bookingId,
+        );
         const bookingReviews = await getBookingReviews(bookingId);
+        console.log("📝 Booking reviews fetched:", bookingReviews);
 
         // Check if client has already submitted a review
         if (bookingReviews && bookingReviews.length > 0) {
@@ -103,7 +105,7 @@ export const BookingReviewPage: React.FC = () => {
 
           // If review already exists, show it and prevent resubmission
           if (userReview.rating && userReview.rating > 0) {
-            console.warn("Client has already reviewed this booking");
+            console.warn("⚠️ Client has already reviewed this booking");
             setHasExistingReview(true);
             // Redirect after a brief moment to show the message
             setTimeout(() => {
@@ -115,21 +117,23 @@ export const BookingReviewPage: React.FC = () => {
           }
 
           // If review exists but empty, allow editing
+          console.log("📝 Found incomplete review, allowing edit");
           setExistingReview(userReview);
           setRating(userReview.rating || 0);
           setFeedback(userReview.comment || "");
         }
 
+        console.log("✅ No existing review found, allowing rating");
         setHasExistingReview(false);
       } catch (error) {
-        console.error("Error checking existing review:", error);
+        console.error("❌ Error checking existing review:", error);
         setHasExistingReview(false);
       } finally {
         setCheckingReview(false);
       }
     };
 
-    checkExistingReview();
+    checkBookingAndReview();
   }, [bookingId, booking, isLoadingBooking, getBookingReviews, navigate]);
 
   // Load provider name and commission validation when booking is available
