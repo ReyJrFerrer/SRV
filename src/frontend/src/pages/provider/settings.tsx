@@ -24,7 +24,7 @@ const SettingsPage: React.FC = () => {
     profile,
     loading: profileLoading,
     switchRole,
-    profileImageUrl
+    profileImageUrl,
   } = useUserProfile();
 
   // Set the document title when the component mounts

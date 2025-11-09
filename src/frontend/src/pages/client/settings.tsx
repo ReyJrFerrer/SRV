@@ -26,7 +26,6 @@ const SettingsPage: React.FC = () => {
     loading: profileLoading,
     switchRole,
     profileImageUrl,
-    refetchImage,
   } = useUserProfile();
 
   useEffect(() => {
