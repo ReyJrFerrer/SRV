@@ -14,7 +14,7 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { useReviewManagement } from "../../hooks/reviewManagement";
+import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/cancellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
@@ -85,9 +85,7 @@ const ProviderBookingsPage: React.FC = () => {
     startBookingById,
   } = useProviderBookingManagement();
 
-  const { getUserReviews } = useReviewManagement({
-    autoLoadUserReviews: false,
-  });
+  const { getClientReviewsByUser } = useClientRating();
   const { fetchUserReputation } = useReputation();
 
   // Get the client name for the decline confirmation dialog
@@ -103,18 +101,12 @@ const ProviderBookingsPage: React.FC = () => {
   interface ClientData {
     reviews: any[];
     reputation: any;
+    loading: boolean;
   }
 
   const [clientDataMap, setClientDataMap] = useState<
     Record<string, ClientData>
   >({});
-  const [, setIsLoadingClientData] = useState(false);
-
-  // Track which client IDs have been fetched to prevent duplicate fetches and flickering
-  const fetchedClientIdsRef = useRef<Set<string>>(new Set());
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isFetchingRef = useRef<boolean>(false);
-  const hasInitiallyRendered = useRef<boolean>(false);
 
   // Handle booking decline
   const handleDeclineBooking = async () => {
@@ -157,108 +149,6 @@ const ProviderBookingsPage: React.FC = () => {
       setIsCancelling(false);
     }
   };
-
-  // Effect to fetch client data for all unique client IDs - delayed to load last
-  useEffect(() => {
-    // Clear any existing timeout
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current);
-    }
-
-    const fetchAllClientData = async () => {
-      // Prevent concurrent fetches
-      if (isFetchingRef.current) return;
-
-      const clientIds = Array.from(
-        new Set(
-          bookings
-            .map(
-              (booking) =>
-                booking.clientProfile?.id?.toString() ||
-                booking.clientId?.toString(),
-            )
-            .filter(Boolean) as string[],
-        ),
-      );
-
-      const newClientIds = clientIds.filter(
-        (id) => !fetchedClientIdsRef.current.has(id),
-      );
-
-      if (newClientIds.length === 0) return;
-
-      isFetchingRef.current = true;
-      setIsLoadingClientData(true);
-
-      try {
-        // Mark these IDs as being fetched BEFORE the actual fetch to prevent race conditions
-        newClientIds.forEach((id) => fetchedClientIdsRef.current.add(id));
-
-        // Fetch all new client data in parallel
-        const clientDataPromises = newClientIds.map(async (clientId) => {
-          if (!clientId)
-            return { clientId, data: { reviews: [], reputation: null } };
-
-          try {
-            const [clientReviews, clientReputation] = await Promise.all([
-              getUserReviews(clientId),
-              fetchUserReputation(clientId),
-            ]);
-
-            return {
-              clientId,
-              data: {
-                reviews: clientReviews || [],
-                reputation: clientReputation || null,
-              },
-            };
-          } catch (err) {
-            console.error("Error fetching client data:", err);
-            return { clientId, data: { reviews: [], reputation: null } };
-          }
-        });
-
-        const results = await Promise.all(clientDataPromises);
-
-        // Update state once with all new data to minimize re-renders
-        setClientDataMap((prev) => {
-          const updated = { ...prev };
-          results.forEach(({ clientId, data }) => {
-            updated[clientId] = data;
-          });
-          return updated;
-        });
-      } catch (error) {
-        console.error("Error fetching client data:", error);
-      } finally {
-        setIsLoadingClientData(false);
-        isFetchingRef.current = false;
-      }
-    };
-
-    // Only start fetching after bookings are loaded and component has rendered
-    if (bookings.length > 0 && !loading) {
-      // Wait for initial render, then delay fetch to allow cards to render first
-      if (!hasInitiallyRendered.current) {
-        hasInitiallyRendered.current = true;
-        fetchTimeoutRef.current = setTimeout(() => {
-          fetchAllClientData();
-        }, 1000); // 800ms delay - cards render, THEN data fetches
-      } else {
-        fetchTimeoutRef.current = setTimeout(() => {
-          fetchAllClientData();
-        }, 800); // 600ms debounce for subsequent updates
-      }
-    }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings, loading]);
 
   useEffect(() => {
     if (
@@ -450,6 +340,61 @@ const ProviderBookingsPage: React.FC = () => {
 
     return filteredBookings;
   }, [activeTab, categorizedBookings, searchTerm, timingFilter]);
+
+  // Effect to fetch client data for all unique client IDs
+  useEffect(() => {
+    const fetchStatsForClients = async () => {
+      const clientIds = Array.from(
+        new Set(
+          currentBookings
+            .map(
+              (booking) =>
+                booking.clientProfile?.id?.toString() ||
+                booking.clientId?.toString(),
+            )
+            .filter(Boolean) as string[],
+        ),
+      );
+
+      const mapCopy = { ...clientDataMap };
+      const toFetch = clientIds.filter((id) => !mapCopy[id]);
+      if (toFetch.length === 0) return;
+
+      await Promise.all(
+        toFetch.map(async (clientId) => {
+          try {
+            mapCopy[clientId] = {
+              reviews: [],
+              reputation: null,
+              loading: true,
+            };
+
+            const [clientReviews, clientReputation] = await Promise.all([
+              getClientReviewsByUser(clientId),
+              fetchUserReputation(clientId),
+            ]);
+
+            mapCopy[clientId] = {
+              reviews: clientReviews || [],
+              reputation: clientReputation || null,
+              loading: false,
+            };
+          } catch (err) {
+            console.error("Error fetching client data:", err);
+            mapCopy[clientId] = {
+              reviews: [],
+              reputation: null,
+              loading: false,
+            };
+          }
+        }),
+      );
+
+      setClientDataMap(mapCopy);
+    };
+
+    if (currentBookings.length > 0) fetchStatsForClients();
+  }, [currentBookings, getClientReviewsByUser, fetchUserReputation]);
 
   const handleRetry = async () => {
     clearError();

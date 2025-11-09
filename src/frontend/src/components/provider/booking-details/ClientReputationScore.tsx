@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ShieldCheckIcon } from "@heroicons/react/24/solid";
 
 interface ClientReputationScoreProps {
@@ -8,27 +8,16 @@ interface ClientReputationScoreProps {
 const ClientReputationScore: React.FC<ClientReputationScoreProps> = ({
   reputation,
 }) => {
-  const [reputationScore, setReputationScore] = useState<number>(50);
-
-  useEffect(() => {
-    const loadReputation = async () => {
-      try {
-        if (reputation && typeof reputation.trustScore === "number") {
-          setReputationScore(Math.round(reputation.trustScore));
-        } else {
-          setReputationScore(50);
-        }
-      } catch (error) {
-        setReputationScore(50);
-      }
-    };
-
-    if (reputation) loadReputation();
-  }, [reputation]);
+  // Calculate score directly without async state
+  const reputationScore =
+    reputation && typeof reputation.trustScore === "number"
+      ? Math.round(reputation.trustScore)
+      : 50;
 
   const score = reputationScore;
   let iconColor = "text-blue-500";
   let textColor = "text-blue-700";
+
   if (score >= 80) {
     iconColor = "text-blue-500";
     textColor = "text-blue-700";

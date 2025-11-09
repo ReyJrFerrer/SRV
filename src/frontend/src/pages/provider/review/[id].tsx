@@ -253,9 +253,7 @@ export default function ProviderReviewView() {
 
   const serviceName = useMemo(
     () =>
-      booking?.serviceDetails?.description ||
-      booking?.packageName ||
-      "Service",
+      booking?.serviceDetails?.description || booking?.packageName || "Service",
     [booking?.serviceDetails?.description, booking?.packageName],
   );
 
