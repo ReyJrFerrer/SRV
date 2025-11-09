@@ -303,36 +303,48 @@ export const useNotificationsWithPush = () => {
     }
 
     const userId = getUserId();
-    console.log("🔔 [useNotifications] Setting up real-time listener for:", userId);
+    console.log(
+      "🔔 [useNotifications] Setting up real-time listener for:",
+      userId,
+    );
 
     // Subscribe to real-time updates
-    const unsubscribe = notificationCanisterService.subscribeToUserNotifications(
-      userId,
-      (newNotifications) => {
-        console.log("🔔 [useNotifications] Received real-time update:", newNotifications.length, "notifications");
-        
-        // Convert to frontend format
-        const formattedNotifications: Notification[] = newNotifications.map((notif) => ({
-          id: notif.id,
-          message: notif.message,
-          type: notif.type as any,
-          timestamp: notif.timestamp,
-          read: notif.read,
-          href: notif.href,
-          providerName: notif.providerName,
-          clientName: notif.clientName,
-          bookingId: notif.bookingId,
-          title: notif.title,
-          metadata: notif.metadata,
-        }));
+    const unsubscribe =
+      notificationCanisterService.subscribeToUserNotifications(
+        userId,
+        (newNotifications) => {
+          console.log(
+            "🔔 [useNotifications] Received real-time update:",
+            newNotifications.length,
+            "notifications",
+          );
 
-        setNotifications(formattedNotifications);
-        const newUnreadCount = formattedNotifications.filter((n) => !n.read).length;
-        notificationStore.setCount(newUnreadCount);
-        setLoading(false);
-      },
-      { userType: "client" }
-    );
+          // Convert to frontend format
+          const formattedNotifications: Notification[] = newNotifications.map(
+            (notif) => ({
+              id: notif.id,
+              message: notif.message,
+              type: notif.type as any,
+              timestamp: notif.timestamp,
+              read: notif.read,
+              href: notif.href,
+              providerName: notif.providerName,
+              clientName: notif.clientName,
+              bookingId: notif.bookingId,
+              title: notif.title,
+              metadata: notif.metadata,
+            }),
+          );
+
+          setNotifications(formattedNotifications);
+          const newUnreadCount = formattedNotifications.filter(
+            (n) => !n.read,
+          ).length;
+          notificationStore.setCount(newUnreadCount);
+          setLoading(false);
+        },
+        { userType: "client" },
+      );
 
     return () => {
       console.log("🔔 [useNotifications] Cleaning up real-time listener");
