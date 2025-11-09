@@ -80,7 +80,6 @@ function startVersionCheck(): void {
     }
   }, VERSION_CHECK_INTERVAL);
 }
-
 /**
  * Stop version checks
  */
@@ -164,7 +163,6 @@ function showUpdateNotification(): void {
 
   // Add reload handler
   document.getElementById("reload-app-btn")?.addEventListener("click", () => {
-    // Clear all caches before reload
     clearAllCaches().then(() => {
       window.location.reload();
     });
