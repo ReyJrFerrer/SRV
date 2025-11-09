@@ -284,9 +284,37 @@ export const BookingReviewPage: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto mt-6 max-w-2xl rounded-lg bg-white p-6 shadow">
-      {/* Booking Details Card */}
-      <div className="mx-auto mb-8 w-full rounded-2xl border border-yellow-200 bg-white p-6 shadow-lg">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
+          <button
+            onClick={() => navigate("/client/home")}
+            className="rounded-full p-2 hover:bg-gray-100"
+          >
+            <svg
+              className="h-6 w-6 text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            Rate Provider
+          </h1>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-4xl flex-1 p-4">
+        <div className="mx-auto mt-2 max-w-2xl rounded-lg bg-white p-6 shadow">
+          {/* Booking Details Card */}
+          <div className="mx-auto mb-8 w-full rounded-2xl border border-yellow-200 bg-white p-6 shadow-lg">
         <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
           <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400 font-bold text-white">
             i
@@ -416,6 +444,8 @@ export const BookingReviewPage: React.FC = () => {
           {isSubmitting ? "Submitting..." : "Submit Rating"}
         </button>
       </div>
+        </div>
+      </main>
     </div>
   );
 };

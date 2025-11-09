@@ -390,7 +390,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             {clientId && (
               <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
                 {hasClientData ? (
-                  <div className="flex w-full animate-fadeIn flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                  <div className="animate-fadeIn flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
                     <ClientReputationScore reputation={reputation} />
                     <ClientRatingSummary reviews={review} />
                   </div>

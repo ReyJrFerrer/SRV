@@ -256,7 +256,7 @@ const ProviderRateClientPage: React.FC = () => {
               </div>
               <div>
                 <span className="font-bold">Service:</span>{" "}
-                {booking.serviceName}
+                {booking.serviceDetails!.title}
               </div>
               <div>
                 <span className="font-bold">Package:</span>{" "}

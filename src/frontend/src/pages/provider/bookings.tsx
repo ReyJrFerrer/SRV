@@ -241,15 +241,13 @@ const ProviderBookingsPage: React.FC = () => {
       // Wait for initial render, then delay fetch to allow cards to render first
       if (!hasInitiallyRendered.current) {
         hasInitiallyRendered.current = true;
-        // Delay to allow cards to render with skeletons first
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 500); // 500ms delay - cards render, THEN data fetches
+        }, 800); // 800ms delay - cards render, THEN data fetches
       } else {
-        // For subsequent updates, use shorter debounce
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 300);
+        }, 600); // 600ms debounce for subsequent updates
       }
     }
 
