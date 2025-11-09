@@ -32,8 +32,34 @@ const NotificationsPageSP = () => {
     document.title = "Notifications | SRV";
   }, []);
 
+  // Stabilize notifications array to prevent flickering
+  React.useEffect(() => {
+    if (loading) return;
+
+    // Check if there are new notifications that haven't been processed
+    const newNotifications = notifications.filter(
+      (n) => !processedNotificationsRef.current.has(n.id),
+    );
+
+    if (newNotifications.length > 0 || notifications.length === 0) {
+      // Mark all current notifications as processed
+      notifications.forEach((n) => {
+        processedNotificationsRef.current.add(n.id);
+      });
+
+      // Update stable notifications only when there are actual changes
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    ProviderNotification[]
+  >([]);
 
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
@@ -120,7 +146,7 @@ const NotificationsPageSP = () => {
   };
 
   const getCountForTab = (tab: NotificationTab) => {
-    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
     if (tab === "All") return visible.length;
     return visible.filter((n) => categoryOfType(n.type) === tab).length;
   };
@@ -128,7 +154,7 @@ const NotificationsPageSP = () => {
   const clearSelection = () => setSelectedIds([]);
 
   const handleSelectAll = () => {
-    const visibleIds = notifications
+    const visibleIds = stableNotifications
       .filter((n) => !deletedIds.includes(n.id))
       .map((n) => n.id);
     if (!editMode) {
@@ -198,7 +224,7 @@ const NotificationsPageSP = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
 
     // Then filter by active tab (category) if not 'All'
     const byTab =
@@ -220,28 +246,28 @@ const NotificationsPageSP = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications, deletedIds, activeTab]);
+  }, [stableNotifications, deletedIds, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div
           className={`w-full px-4 py-3 ${
-            notifications.length === 0
+            stableNotifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
         >
           <h1
             className={`text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl ${
-              notifications.length === 0 && unreadCount > 0
+              stableNotifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
             }`}
           >
             Notifications
           </h1>
-          {notifications.length > 0 && (
+          {stableNotifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
 
@@ -266,7 +292,7 @@ const NotificationsPageSP = () => {
                 >
                   {selectedIds.length > 0 &&
                   selectedIds.length ===
-                    notifications.filter((n) => !deletedIds.includes(n.id))
+                    stableNotifications.filter((n) => !deletedIds.includes(n.id))
                       .length
                     ? "Clear"
                     : "Select all"}
@@ -326,7 +352,7 @@ const NotificationsPageSP = () => {
                       >
                         {selectedIds.length > 0 &&
                         selectedIds.length ===
-                          notifications.filter(
+                          stableNotifications.filter(
                             (n) => !deletedIds.includes(n.id),
                           ).length
                           ? "Clear selection"
@@ -418,7 +444,7 @@ const NotificationsPageSP = () => {
           </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
-        ) : notifications.length === 0 ? (
+        ) : stableNotifications.length === 0 ? (
           <div className="flex flex-col items-center p-10 text-center text-gray-500">
             <InboxIcon className="mb-4 h-16 w-16 text-gray-300" />
             <h3 className="text-lg font-semibold">No Notifications Yet</h3>
