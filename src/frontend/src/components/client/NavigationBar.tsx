@@ -188,7 +188,7 @@ const BottomNavigation: React.FC = () => {
                           <div
                             className={`flex items-center justify-center transition-all duration-300 ${
                               isActive
-                                ? "h-9 w-9 rounded-full bg-blue-600"
+                                ? "h-9 w-9 rounded-full bg-blue-500"
                                 : "h-6 w-6"
                             }`}
                           >
@@ -209,15 +209,15 @@ const BottomNavigation: React.FC = () => {
                                 <Icon
                                   className={
                                     isActive
-                                      ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                      : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                                      ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                                      : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400 sm:h-8 sm:w-8"
                                   }
                                 />
                               );
                             })()}
                           </div>
                           {!isActive && (
-                            <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
+                            <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-400 sm:block">
                               {item.label}
                             </span>
                           )}
@@ -261,7 +261,7 @@ const BottomNavigation: React.FC = () => {
                     <div
                       className={`flex items-center justify-center transition-all duration-300 ${
                         isActive
-                          ? "h-12 w-12 rounded-full bg-blue-600"
+                          ? "h-12 w-12 rounded-full bg-blue-500"
                           : "h-10 w-10"
                       }`}
                     >
@@ -297,15 +297,15 @@ const BottomNavigation: React.FC = () => {
                       <div
                         className={
                           isActive
-                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-600"
+                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-500"
                             : ""
                         }
                       >
                         <Icon
                           className={
                             isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                              ? "h-6 w-6 text-yellow-300"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -313,7 +313,7 @@ const BottomNavigation: React.FC = () => {
                   })()
                 )}
                 {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 group-hover:text-yellow-500 md:block">
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 group-hover:text-yellow-400 md:block">
                     {item.label}
                   </span>
                 )}
@@ -348,15 +348,15 @@ const BottomNavigation: React.FC = () => {
                 <div
                   className={`flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "h-12 w-12 rounded-full bg-blue-600"
+                      ? "h-12 w-12 rounded-full bg-blue-500"
                       : "h-10 w-10"
                   }`}
                 >
                   <Cog6ToothIcon
                     className={
                       isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                        ? "h-6 w-6 text-yellow-300"
+                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400"
                     }
                   />
                 </div>
@@ -364,7 +364,7 @@ const BottomNavigation: React.FC = () => {
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
                       ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
+                      : "opacity-90 group-hover:text-yellow-400"
                   }`}
                 >
                   {item.label}

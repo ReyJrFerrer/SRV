@@ -193,15 +193,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <div
                           className={
                             active
-                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                               : ""
                           }
                         >
                           <Icon
                             className={
                               active
-                                ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                                ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                                : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400 sm:h-8 sm:w-8"
                             }
                           />
                         </div>
@@ -210,7 +210,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                           active
                             ? "scale-105 font-bold text-blue-900"
-                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-400"
                         }`}
                         style={{ opacity: active ? 1 : 0.9 }}
                       >
@@ -255,15 +255,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
                         <BellIcon
                           className={
                             active
-                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400 sm:h-8 sm:w-8"
                           }
                         />
                       </div>
@@ -272,7 +272,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                         active
                           ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-400"
                       }`}
                       style={{ opacity: active ? 1 : 0.9 }}
                     >
@@ -317,15 +317,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
                         <Cog6ToothIcon
                           className={
                             active
-                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400 sm:h-8 sm:w-8"
                           }
                         />
                       </div>
@@ -334,7 +334,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                         active
                           ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-400"
                       }`}
                       style={{ opacity: active ? 1 : 0.9 }}
                     >
@@ -387,15 +387,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                             : ""
                         }
                       >
                         <Icon
                           className={
                             isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                              ? "h-6 w-6 text-yellow-300"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -405,7 +405,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                       isActive
                         ? "font-bold"
-                        : "opacity-90 group-hover:text-yellow-500"
+                        : "opacity-90 group-hover:text-yellow-400"
                     }`}
                   >
                     {item.label}
@@ -448,15 +448,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <div
               className={
                 location.pathname.startsWith("/provider/notifications")
-                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                   : ""
               }
             >
               <BellIcon
                 className={
                   location.pathname.startsWith("/provider/notifications")
-                    ? "h-6 w-6 text-yellow-400"
-                    : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                    ? "h-6 w-6 text-yellow-300"
+                    : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400"
                 }
               />
             </div>
@@ -512,8 +512,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 location.pathname.startsWith(
                   navItems.find((i) => i.label === "Profile")!.to,
                 )
-                  ? "h-10 w-10 ring-2 ring-yellow-500"
-                  : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+                  ? "h-10 w-10 ring-2 ring-yellow-400"
+                  : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-400"
               }`}
               draggable={false}
             />
@@ -558,15 +558,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <div
                   className={
                     isActive
-                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                       : ""
                   }
                 >
                   <Cog6ToothIcon
                     className={
                       isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                        ? "h-6 w-6 text-yellow-300"
+                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-400"
                     }
                   />
                 </div>
@@ -574,7 +574,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
                       ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
+                      : "opacity-90 group-hover:text-yellow-400"
                   }`}
                 >
                   {item.label}
