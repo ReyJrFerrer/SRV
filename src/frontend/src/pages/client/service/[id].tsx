@@ -72,7 +72,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   } = useServiceCertificates(service?.id, service?.certificateUrls || []);
 
   const { conversations, createConversation, loading: chatLoading } = useChat();
-  const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
+  const { userImageUrl } = useUserImage(service?.providerAvatar);
 
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
@@ -139,12 +139,6 @@ const ClientServiceDetailsPage: React.FC = () => {
       document.title = `${service.name} | SRV`;
     }
   }, [service]);
-
-  useEffect(() => {
-    if (userImageUrl) {
-      refetch();
-    }
-  }, [userImageUrl, refetch]);
 
   useEffect(() => {
     if (!service?.id) {
@@ -351,14 +345,23 @@ const ClientServiceDetailsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
       <div className="relative h-60 w-full">
+        {/* Accept any valid URL (data:, http(s), or local path) for hero images */}
         <img
-          src={
-            heroImages && heroImages.length > 0 && heroImages[0].dataUrl
-              ? heroImages[0].dataUrl
-              : service?.category?.slug
-                ? `/images/ai-sp/${service.category.slug}.svg`
-                : "/default-provider.svg"
-          }
+          src={(() => {
+            const firstImage = heroImages?.[0]?.dataUrl;
+            const isValidUrl = (url?: string | null): url is string =>
+              !!url &&
+              (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) &&
+              url.length > 20;
+
+            if (isValidUrl(firstImage)) {
+              return firstImage;
+            }
+            if (service?.category?.slug) {
+              return `/images/ai-sp/${service.category.slug}.svg`;
+            }
+            return "/default-provider.svg";
+          })()}
           alt={name}
           className="h-full w-full object-cover"
           onError={(e) => {
@@ -398,14 +401,17 @@ const ClientServiceDetailsPage: React.FC = () => {
                       }}
                     >
                       <img
-                        src={
-                          userImageUrl &&
-                          userImageUrl !== "/default-provider.svg" &&
-                          userImageUrl !== "" &&
-                          userImageUrl !== undefined
-                            ? userImageUrl
-                            : "/default-provider.svg"
-                        }
+                        src={(() => {
+                          const isValidUrl = (url?: string | null): url is string =>
+                            !!url &&
+                            (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) &&
+                            url.length > 20;
+
+                          if (isValidUrl(userImageUrl)) {
+                            return userImageUrl;
+                          }
+                          return "/default-provider.svg";
+                        })()}
                         alt={providerName}
                         className="h-full w-full rounded-full object-cover"
                         style={{ borderRadius: "50%" }}

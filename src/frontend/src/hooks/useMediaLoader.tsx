@@ -38,6 +38,7 @@ export const useImageLoader = (
     error,
     isError,
     refetch,
+    isSuccess,
   } = useQuery({
     queryKey: ["image", mediaUrl],
     queryFn: async () => {
@@ -47,12 +48,17 @@ export const useImageLoader = (
       const result = await mediaService.getImageDataUrl(mediaUrl, {
         enableCache: true,
       });
-      
+
       // Validate the result is not blank or invalid
-      if (!result || result === "" || result === "undefined" || result === "null") {
+      if (
+        !result ||
+        result === "" ||
+        result === "undefined" ||
+        result === "null"
+      ) {
         throw new Error("Invalid image data received");
       }
-      
+
       return result;
     },
     enabled: opts.enabled && !!mediaUrl,
@@ -67,7 +73,8 @@ export const useImageLoader = (
 
   return {
     /** The data URL for the image (ready to use in src attribute) */
-    imageDataUrl: imageDataUrl || opts.placeholder,
+    // If query hasn't returned yet we fall back to the caller-provided placeholder (may be empty)
+    imageDataUrl: imageDataUrl ?? opts.placeholder,
     /** Whether the image is currently loading */
     isLoading,
     /** Any error that occurred during loading */
@@ -77,7 +84,8 @@ export const useImageLoader = (
     /** Function to manually refetch the image */
     refetch,
     /** Whether the image has been loaded successfully */
-    isSuccess: !!imageDataUrl,
+    // Use React Query's isSuccess so placeholders don't incorrectly mark success
+    isSuccess,
   };
 };
 
@@ -166,7 +174,12 @@ export const useProfileImage = (
 
   // Update persistent cache when new data arrives (only if valid)
   useEffect(() => {
-    if (isSuccess && imageDataUrl && profilePictureUrl && imageDataUrl !== "/default-client.svg") {
+    if (
+      isSuccess &&
+      imageDataUrl &&
+      profilePictureUrl &&
+      imageDataUrl !== "/default-client.svg"
+    ) {
       // Verify the data URL is valid before caching
       if (imageDataUrl.startsWith("http") || imageDataUrl.startsWith("data:")) {
         persistentImageCache.set(profilePictureUrl, imageDataUrl);
@@ -197,10 +210,7 @@ export const useProfileImage = (
   })();
 
   const isActuallyLoading =
-    !initialCache &&
-    isLoading &&
-    !!profilePictureUrl &&
-    cacheChecked;
+    !initialCache && isLoading && !!profilePictureUrl && cacheChecked;
 
   return {
     /** The profile image URL (with fallback to default avatar) */
@@ -209,8 +219,7 @@ export const useProfileImage = (
     isLoading: isActuallyLoading,
     /** Whether to show the default avatar */
     isUsingDefaultAvatar:
-      !profilePictureUrl ||
-      finalImageUrl === "/default-client.svg",
+      !profilePictureUrl || finalImageUrl === "/default-client.svg",
     /** Any error that occurred */
     error,
     /** Whether an error occurred */
@@ -237,16 +246,19 @@ export const useUserImage = (
 
   options: UseImageLoaderOptions = {},
 ) => {
+  // Supply a sensible placeholder for provider/user images so callers have a usable src
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
+      placeholder: "/default-provider.svg",
       ...options,
     });
 
   return {
     /** The profile image URL (with fallback to default avatar) */
-    userImageUrl: isSuccess && imageDataUrl ? imageDataUrl : undefined,
+    // If we have a valid loaded data URL use it, otherwise fall back to placeholder
+    userImageUrl: imageDataUrl || "/default-provider.svg",
     /** Whether the profile image is loading */
-    isLoading: isLoading && !!profilePictureUrl,
+    isLoading: Boolean(isLoading && !!profilePictureUrl),
     /** Whether to show the default avatar */
     isUsingDefaultAvatar: !profilePictureUrl || (!isSuccess && !isLoading),
     /** Any error that occurred */

@@ -16,19 +16,19 @@ interface CachedImageData {
  */
 const isValidDataUrl = (dataUrl: string): boolean => {
   if (!dataUrl || typeof dataUrl !== "string") return false;
-  
+
   // Check if it's a valid URL format (http/https or data URL)
   if (dataUrl.startsWith("http://") || dataUrl.startsWith("https://")) {
     return true;
   }
-  
+
   // For data URLs, ensure they have actual content
   if (dataUrl.startsWith("data:")) {
     // Check if there's content after the base64 marker
     const base64Content = dataUrl.split(",")[1];
     return !!(base64Content && base64Content.length > 100); // Minimum viable image size
   }
-  
+
   return false;
 };
 
@@ -119,7 +119,7 @@ export const persistentImageCache = {
     try {
       const keys = Object.keys(sessionStorage);
       const now = Date.now();
-      
+
       keys.forEach((key) => {
         if (key.startsWith(CACHE_KEY_PREFIX)) {
           try {
