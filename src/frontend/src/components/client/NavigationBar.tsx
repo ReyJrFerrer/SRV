@@ -89,7 +89,12 @@ const BottomNavigation: React.FC = () => {
     { to: "/client/booking", label: "Booking", icon: null, count: 0 },
     { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
     { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
-    { to: "/client/notifications", label: "Notifications", icon: null, count: unreadCount },
+    {
+      to: "/client/notifications",
+      label: "Notifications",
+      icon: null,
+      count: unreadCount,
+    },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
@@ -135,7 +140,7 @@ const BottomNavigation: React.FC = () => {
       if (label === "Settings") return settingsItem;
       return navItems.find((i) => i.label === label) || null;
     })
-    .filter((i): i is typeof navItems[number] | typeof settingsItem => !!i);
+    .filter((i): i is (typeof navItems)[number] | typeof settingsItem => !!i);
 
   return (
     <>
@@ -145,7 +150,10 @@ const BottomNavigation: React.FC = () => {
             <div className="grid w-full grid-cols-6 font-medium">
               {mobileItems.map((item) => {
                 const displayItem = item;
-                const isActive = isRouteActive(displayItem.label, displayItem.to);
+                const isActive = isRouteActive(
+                  displayItem.label,
+                  displayItem.to,
+                );
                 return (
                   <Link
                     key={displayItem.label}
