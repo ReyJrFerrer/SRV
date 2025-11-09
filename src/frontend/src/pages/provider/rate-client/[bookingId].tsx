@@ -152,7 +152,7 @@ const ProviderRateClientPage: React.FC = () => {
     setFormError(null);
     clearError();
     if (!bookingId) {
-      setFormError("Missing booking ID.");
+      setFormError("Booking not found");
       return;
     }
     if (!isFormValid) {
@@ -332,7 +332,7 @@ const ProviderRateClientPage: React.FC = () => {
           {(formError || reviewError) && (
             <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
               <ExclamationCircleIcon className="mr-2 h-5 w-5" />
-              <span className="text-sm">{formError || reviewError}</span>
+              <span className="text-sm">{formError || "You already reviewed this client."}</span>
             </div>
           )}
 

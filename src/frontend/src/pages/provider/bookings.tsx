@@ -243,11 +243,11 @@ const ProviderBookingsPage: React.FC = () => {
         hasInitiallyRendered.current = true;
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 10000); // 800ms delay - cards render, THEN data fetches
+        }, 1000); // 800ms delay - cards render, THEN data fetches
       } else {
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 8000); // 600ms debounce for subsequent updates
+        }, 800); // 600ms debounce for subsequent updates
       }
     }
 

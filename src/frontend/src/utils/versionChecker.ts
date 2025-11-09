@@ -104,57 +104,109 @@ function showUpdateNotification(): void {
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: #2563eb;
+      max-width: 90%;
+      width: 480px;
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
       color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 20px 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
       z-index: 10000;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       font-family: system-ui, -apple-system, sans-serif;
       animation: slideDown 0.3s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     ">
-      <div>
-        <strong>New Version Available!</strong>
-        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">
-          Please reload to get the latest updates.
+      <div style="
+        flex: 1;
+        min-width: 0;
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+        ">
+          <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+          </svg>
+          <strong style="font-size: 16px; font-weight: 700;">New Version Available!</strong>
+        </div>
+        <p style="
+          margin: 0;
+          font-size: 14px;
+          opacity: 0.95;
+          line-height: 1.4;
+        ">
+          Please reload to get the latest updates and improvements.
         </p>
       </div>
-      <button id="reload-app-btn" style="
-        background: white;
-        color: #2563eb;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
+      <div style="
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
       ">
-        Reload Now
-      </button>
-      <button id="dismiss-update-btn" style="
-        background: transparent;
-        color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        white-space: nowrap;
-      ">
-        Later
-      </button>
+        <button id="reload-app-btn" style="
+          background: #fdcc38;
+          color: #1f2937;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 14px;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 8px rgba(253, 204, 56, 0.3);
+        "
+        onmouseover="this.style.background='#fdd761'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(253, 204, 56, 0.4)';"
+        onmouseout="this.style.background='#fdcc38'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(253, 204, 56, 0.3)';"
+        >
+          Reload Now
+        </button>
+        <button id="dismiss-update-btn" style="
+          background: transparent;
+          color: white;
+          border: 2px solid rgba(255, 255, 255, 0.4);
+          padding: 8px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.2s ease;
+        "
+        onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 0.6)';"
+        onmouseout="this.style.background='transparent'; this.style.borderColor='rgba(255, 255, 255, 0.4)';"
+        >
+          Later
+        </button>
+      </div>
     </div>
     <style>
       @keyframes slideDown {
         from {
-          transform: translateX(-50%) translateY(-100%);
+          transform: translateX(-50%) translateY(-120%);
           opacity: 0;
         }
         to {
           transform: translateX(-50%) translateY(0);
           opacity: 1;
+        }
+      }
+      
+      @media (max-width: 640px) {
+        #app-update-notification > div {
+          flex-direction: column;
+          text-align: center;
+          padding: 20px;
+        }
+        
+        #app-update-notification button {
+          width: 100%;
         }
       }
     </style>

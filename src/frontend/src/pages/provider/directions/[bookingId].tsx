@@ -747,7 +747,7 @@ const ProviderDirectionsPage: React.FC = () => {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-600">
-        Error: {error}
+        Error: You are not allowed to start an active service.
       </div>
     );
   }
