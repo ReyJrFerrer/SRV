@@ -166,7 +166,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   const servicesWithData = useMemo(() => {
     // Only show services up to displayCount
     const servicesToShow = services.slice(0, displayCount);
-    
+
     return servicesToShow.map((service) => {
       const serviceData = serviceDataMap[service.id] || {
         isVerified: false,
@@ -189,7 +189,9 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     setIsLoadingMore(true);
     // Simulate a small delay for UX
     setTimeout(() => {
-      setDisplayCount((prev) => Math.min(prev + ITEMS_PER_PAGE, services.length));
+      setDisplayCount((prev) =>
+        Math.min(prev + ITEMS_PER_PAGE, services.length),
+      );
       setIsLoadingMore(false);
     }, 300);
   };
@@ -214,15 +216,13 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-          {servicesWithData.map(({ service, serviceData }) => (
-            <div key={service.id}>
-              <ServiceListItem service={service} serviceData={serviceData} />
-            </div>
-          ))}
-        </div>
-
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+        {servicesWithData.map(({ service, serviceData }) => (
+          <div key={service.id}>
+            <ServiceListItem service={service} serviceData={serviceData} />
+          </div>
+        ))}
+      </div>
 
       {/* Load More Button */}
       {!loading && services.length > 0 && hasMore && (
@@ -243,7 +243,6 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
           </button>
         </div>
       )}
-
     </div>
   );
 };
