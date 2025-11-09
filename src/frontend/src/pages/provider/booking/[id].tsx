@@ -12,7 +12,7 @@ import CancellationReasons from "../../../components/common/canellation/Cancella
 import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { useClientRating } from "../../../hooks/useClientRating";
+import { useReviewManagement } from "../../../hooks/reviewManagement";
 import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
 import ServiceDetailsCard from "../../../components/provider/booking-details/ServiceDetailsCard";
@@ -48,7 +48,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
-  const { getClientReviewsByUser } = useClientRating();
+  const { getUserReviews } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
   const { fetchUserReputation } = useReputation();
 
   // Set document title
@@ -133,7 +135,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       try {
         const [reviews, reputation] = await Promise.all([
-          getClientReviewsByUser(clientId),
+          getUserReviews(clientId),
           fetchUserReputation(clientId),
         ]);
         setClientReviews(reviews);
@@ -144,7 +146,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     };
 
     fetchClientData();
-  }, [clientId, getClientReviewsByUser, fetchUserReputation]);
+  }, [clientId, getUserReviews, fetchUserReputation]);
 
   // Check commission validation when booking changes
   useEffect(() => {

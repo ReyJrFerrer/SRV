@@ -11,7 +11,7 @@ import {
 } from "../../../hooks/bookingManagement";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
-import { reviewCanisterService } from "../../../services/reviewCanisterService";
+import { useReviewManagement } from "../../../hooks/reviewManagement";
 import { useReputation } from "../../../hooks/useReputation";
 import {
   ClipboardDocumentListIcon,
@@ -41,6 +41,9 @@ const TAB_ITEMS: BookingStatusTab[] = [
 const MyBookingsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const bookingManagement = useBookingManagement();
+  const { getServiceReviews, calculateServiceRating } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
@@ -282,9 +285,9 @@ const MyBookingsPage: React.FC = () => {
               reputation: null,
             };
 
-            const [avg, reviews] = await Promise.all([
-              reviewCanisterService.calculateServiceRating(serviceId),
-              reviewCanisterService.getServiceReviews(serviceId),
+            const [avgRating, reviews] = await Promise.all([
+              calculateServiceRating(serviceId),
+              getServiceReviews(serviceId),
             ]);
 
             let reputation = null;
@@ -306,7 +309,7 @@ const MyBookingsPage: React.FC = () => {
             }
 
             mapCopy[serviceId] = {
-              averageRating: avg?.averageRating ?? null,
+              averageRating: avgRating ?? null,
               reviews: Array.isArray(reviews) ? reviews : [],
               loading: false,
               reputation,

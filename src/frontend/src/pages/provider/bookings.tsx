@@ -17,7 +17,7 @@ import serviceCanisterService, {
   ServiceCategory,
 } from "../../services/serviceCanisterService";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { useClientRating } from "../../hooks/useClientRating";
+import { useReviewManagement } from "../../hooks/reviewManagement";
 import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/canellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
@@ -92,7 +92,9 @@ const ProviderBookingsPage: React.FC = () => {
     startBookingById,
   } = useProviderBookingManagement();
 
-  const { getClientReviewsByUser } = useClientRating();
+  const { getUserReviews } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
   const { fetchUserReputation } = useReputation();
 
   // Memoized function to fetch client data
@@ -102,7 +104,7 @@ const ProviderBookingsPage: React.FC = () => {
 
       try {
         const [clientReviews, clientReputation] = await Promise.all([
-          getClientReviewsByUser(clientId),
+          getUserReviews(clientId),
           fetchUserReputation(clientId),
         ]);
 
@@ -115,7 +117,7 @@ const ProviderBookingsPage: React.FC = () => {
         return { reviews: [], reputation: null };
       }
     },
-    [getClientReviewsByUser, fetchUserReputation],
+    [getUserReviews, fetchUserReputation],
   );
 
   // Get the client name for the decline confirmation dialog
@@ -136,6 +138,10 @@ const ProviderBookingsPage: React.FC = () => {
   const [clientDataMap, setClientDataMap] = useState<
     Record<string, ClientData>
   >({});
+  const [, setIsLoadingClientData] = useState(false);
+
+  // Track which client IDs have been fetched to prevent duplicate fetches and flickering
+  const fetchedClientIdsRef = useRef<Set<string>>(new Set());
 
   // Handle booking decline
   const handleDeclineBooking = async () => {
@@ -194,28 +200,44 @@ const ProviderBookingsPage: React.FC = () => {
         ),
       );
 
-      const newClientDataMap = { ...clientDataMap };
-      let hasUpdates = false;
-
-      await Promise.all(
-        clientIds.map(async (clientId) => {
-          if (!clientId || clientDataMap[clientId]) return;
-
-          const data = await fetchClientData(clientId);
-          newClientDataMap[clientId] = data;
-          hasUpdates = true;
-        }),
+      // Filter out already fetched client IDs to prevent unnecessary re-fetches
+      const newClientIds = clientIds.filter(
+        (id) => !fetchedClientIdsRef.current.has(id),
       );
 
-      if (hasUpdates) {
-        setClientDataMap(newClientDataMap);
+      if (newClientIds.length === 0) return;
+
+      setIsLoadingClientData(true);
+
+      try {
+        // Fetch all new client data in parallel
+        const clientDataPromises = newClientIds.map(async (clientId) => {
+          const data = await fetchClientData(clientId);
+          return { clientId, data };
+        });
+
+        const results = await Promise.all(clientDataPromises);
+
+        // Update state once with all new data to minimize re-renders
+        setClientDataMap((prev) => {
+          const updated = { ...prev };
+          results.forEach(({ clientId, data }) => {
+            updated[clientId] = data;
+            fetchedClientIdsRef.current.add(clientId);
+          });
+          return updated;
+        });
+      } catch (error) {
+        console.error("Error fetching client data:", error);
+      } finally {
+        setIsLoadingClientData(false);
       }
     };
 
     if (bookings.length > 0) {
       fetchAllClientData();
     }
-  }, [bookings, clientDataMap, fetchClientData]);
+  }, [bookings, fetchClientData]);
 
   useEffect(() => {
     if (
@@ -628,9 +650,10 @@ const ProviderBookingsPage: React.FC = () => {
                 const clientId =
                   booking.clientProfile?.id?.toString() ||
                   booking.clientId?.toString();
-                const clientData = clientId
-                  ? clientDataMap[clientId]
-                  : { reviews: [], reputation: null };
+                const clientData =
+                  clientId && clientDataMap[clientId]
+                    ? clientDataMap[clientId]
+                    : { reviews: [], reputation: null };
 
                 return (
                   <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
@@ -651,8 +674,8 @@ const ProviderBookingsPage: React.FC = () => {
                     >
                       <ProviderBookingItemCard
                         booking={booking}
-                        review={clientData?.reviews || []}
-                        reputation={clientData?.reputation || null}
+                        review={clientData.reviews}
+                        reputation={clientData.reputation}
                         onDeclineClick={() => {
                           setDecliningBookingId(booking.id);
                           setShowDeclineConfirm(true);

@@ -42,6 +42,10 @@ const ReceiptPage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
 
     if (!booking) {
       console.warn("Receipt: booking not found");
@@ -120,10 +124,11 @@ const ReceiptPage: React.FC = () => {
     }
   };
 
+  // Show loading state while booking is being fetched
   if (!booking) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Booking details for receipt not found.
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
