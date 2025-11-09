@@ -5,14 +5,21 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
-import useServiceById from "../../../hooks/serviceDetail";
-import { useServiceReviews } from "../../../hooks/reviewManagement";
 import { EnrichedService } from "../../../hooks/serviceInformation";
-import { useUserImage } from "../../../hooks/useMediaLoader";
-import { useServiceImages } from "../../../hooks/useMediaLoader";
+
+// Enhanced service data interface with all fetched information
+export interface EnhancedServiceData {
+  isVerified?: boolean;
+  averageRating: number;
+  totalReviews: number;
+  serviceImages: string[];
+  userImageUrl: string | null;
+  isLoadingImages: boolean;
+}
 
 interface ServiceListItemProps {
   service: EnrichedService;
+  serviceData: EnhancedServiceData;
   inCategories?: boolean;
   isGridItem?: boolean;
   retainMobileLayout?: boolean;
@@ -65,34 +72,31 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
 
 // ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({ service, retainMobileLayout = false, isGridItem = false }) => {
-    // Fetch the latest service data to get isVerified
-    const { service: fetchedService } = useServiceById(service.id);
-    const isVerified = fetchedService?.isVerified;
-    // Use the same logic as ServiceDetailPageComponent for review count
-    const { reviews = [], getAverageRating } = useServiceReviews(service.id);
-    const visibleReviews = Array.isArray(reviews)
-      ? reviews.filter((r) => r.status === "Visible")
-      : [];
-    const totalReviews =
-      visibleReviews.length > 0
-        ? visibleReviews.length
-        : typeof service.rating?.count === "number"
-          ? service.rating.count
-          : 0;
-    const averageRating =
-      visibleReviews.length > 0
-        ? getAverageRating(visibleReviews)
-        : service.rating?.average || 0;
+  ({
+    service,
+    serviceData,
+    retainMobileLayout = false,
+    isGridItem = false,
+  }) => {
+    // Track image loading state to prevent flash of default image
+    const [imageLoaded, setImageLoaded] = React.useState(false);
+    const [imageSrc, setImageSrc] = React.useState<string>("");
+
+    // Use the passed service data instead of fetching
+    const {
+      isVerified,
+      averageRating,
+      totalReviews,
+      serviceImages,
+      userImageUrl,
+      isLoadingImages,
+    } = serviceData;
+
     const serviceRating = {
       average: averageRating,
       count: totalReviews,
       loading: false,
     };
-    const { images } = useServiceImages(
-      fetchedService?.id,
-      fetchedService?.media,
-    );
 
     // Define layout classes based on props
     const itemWidthClass = isGridItem ? "w-full" : "w-full";
@@ -162,10 +166,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       return fallback;
     };
 
-    const { userImageUrl, isLoading: isLoadingUserImage } = useUserImage(
-      service.providerAvatar,
-    );
-
     // Helper function to determine the image source with proper priority
     const getImageSource = (): string => {
       // Accept any valid image URL (data:, http(s) or local path)
@@ -175,13 +175,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         u.length > 20;
 
       // Priority 1: Service images (if loaded and valid)
-      const firstImage = images[0]?.dataUrl;
+      const firstImage = serviceImages[0];
       if (isValidImageUrl(firstImage)) {
         return firstImage;
       }
 
       // Priority 2: User avatar (if loaded and valid)
-      if (!isLoadingUserImage && isValidImageUrl(userImageUrl)) {
+      if (!isLoadingImages && isValidImageUrl(userImageUrl)) {
         return userImageUrl;
       }
 
@@ -194,6 +194,43 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       return "/images/ai-sp/others.svg";
     };
 
+    // Effect to preload image and update state when ready
+    React.useEffect(() => {
+      const imageSource = getImageSource();
+
+      // Reset loading state when image source changes
+      setImageLoaded(false);
+      setImageSrc(imageSource);
+
+      // For SVG or already loaded images, mark as loaded immediately
+      if (imageSource.endsWith(".svg") || imageSource.startsWith("data:")) {
+        setImageLoaded(true);
+        return;
+      }
+
+      // Preload the image
+      const img = new Image();
+      img.onload = () => {
+        setImageLoaded(true);
+      };
+      img.onerror = () => {
+        // On error, use fallback and mark as loaded
+        setImageSrc("/images/ai-sp/others.svg");
+        setImageLoaded(true);
+      };
+      img.src = imageSource;
+
+      return () => {
+        img.onload = null;
+        img.onerror = null;
+      };
+    }, [serviceImages, userImageUrl, service.category?.slug, isLoadingImages]);
+
+    // Show skeleton while data is loading (after all hooks)
+    if (isLoadingImages) {
+      return <ServiceListingCardSkeleton />;
+    }
+
     return (
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
@@ -203,13 +240,22 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="relative">
             {/* Image container */}
             <div className="aspect-video w-full bg-blue-50">
+              {!imageLoaded && (
+                <div className="h-full w-full animate-pulse rounded-t-2xl bg-gray-200" />
+              )}
               <img
-                src={getImageSource()}
+                src={imageSrc}
                 alt={service.title}
-                className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300"
+                className={`service-image h-full w-full rounded-t-2xl object-cover transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                style={
+                  !imageLoaded ? { position: "absolute", top: 0, left: 0 } : {}
+                }
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";
+                  setImageLoaded(true);
                 }}
               />
             </div>
