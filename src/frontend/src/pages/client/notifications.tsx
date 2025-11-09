@@ -280,7 +280,7 @@ const NotificationsPage = () => {
               <div className="hidden sm:block" aria-hidden="true" />
 
               <div
-                className={`hidden items-center gap-2 transition-opacity duration-200 sm:flex ${
+                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
                   loading ? "pointer-events-none opacity-0" : "opacity-100"
                 }`}
               >
@@ -322,7 +322,7 @@ const NotificationsPage = () => {
               </div>
 
               <div
-                className={`relative transition-opacity duration-200 sm:hidden ${
+                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
                   loading ? "pointer-events-none opacity-0" : "opacity-100"
                 }`}
               >

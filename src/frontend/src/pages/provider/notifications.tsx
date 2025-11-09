@@ -253,8 +253,8 @@ const NotificationsPageSP = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center justify-between px-4 py-3">
-          <h1 className="text-md absolute left-1/2 -translate-x-1/2 transform font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
           {stableNotifications.length > 0 && (

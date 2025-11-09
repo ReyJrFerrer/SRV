@@ -222,8 +222,17 @@ const BottomNavigation: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        {item.count > 0 && (
-                          <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                        {((displayItem && displayItem.count) ?? 0) > 0 && (
+                          <span
+                            aria-label={
+                              displayItem.count > 99
+                                ? "99+ new notifications"
+                                : `${displayItem.count} new notifications`
+                            }
+                            className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                          >
+                            {displayItem.count > 99 ? "99+" : displayItem.count}
+                          </span>
                         )}
                       </Link>
                     );
@@ -318,7 +327,16 @@ const BottomNavigation: React.FC = () => {
                   </span>
                 )}
                 {item.count > 0 && (
-                  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  <span
+                    aria-label={
+                      item.count > 99
+                        ? "99+ new notifications"
+                        : `${item.count} new notifications`
+                    }
+                    className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                  >
+                    {item.count > 99 ? "99+" : item.count}
+                  </span>
                 )}
               </Link>
             );
