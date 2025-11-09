@@ -146,7 +146,9 @@ const NotificationsPageSP = () => {
   };
 
   const getCountForTab = (tab: NotificationTab) => {
-    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
     if (tab === "All") return visible.length;
     return visible.filter((n) => categoryOfType(n.type) === tab).length;
   };
@@ -224,7 +226,9 @@ const NotificationsPageSP = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
 
     // Then filter by active tab (category) if not 'All'
     const byTab =
@@ -292,8 +296,9 @@ const NotificationsPageSP = () => {
                 >
                   {selectedIds.length > 0 &&
                   selectedIds.length ===
-                    stableNotifications.filter((n) => !deletedIds.includes(n.id))
-                      .length
+                    stableNotifications.filter(
+                      (n) => !deletedIds.includes(n.id),
+                    ).length
                     ? "Clear"
                     : "Select all"}
                 </button>

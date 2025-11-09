@@ -644,8 +644,8 @@ export const useReviewManagement = (
     [handleReviewError],
   );
 
-  const getUserReviews = useCallback(
-    async (userId?: string): Promise<Review[]> => {
+  const getUserReviews = useMemo(
+    () => async (userId?: string): Promise<Review[]> => {
       const targetUserId = userId || getCurrentUserId();
       if (!targetUserId) return [];
 

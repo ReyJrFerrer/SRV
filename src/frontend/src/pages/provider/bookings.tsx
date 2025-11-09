@@ -90,29 +90,6 @@ const ProviderBookingsPage: React.FC = () => {
   });
   const { fetchUserReputation } = useReputation();
 
-  // Memoized function to fetch client data
-  const fetchClientData = useCallback(
-    async (clientId: string) => {
-      if (!clientId) return { reviews: [], reputation: null };
-
-      try {
-        const [clientReviews, clientReputation] = await Promise.all([
-          getUserReviews(clientId),
-          fetchUserReputation(clientId),
-        ]);
-
-        return {
-          reviews: clientReviews || [],
-          reputation: clientReputation || null,
-        };
-      } catch (err) {
-        console.error("Error fetching client data:", err);
-        return { reviews: [], reputation: null };
-      }
-    },
-    [getUserReviews, fetchUserReputation],
-  );
-
   // Get the client name for the decline confirmation dialog
   const getClientName = useCallback(
     (bookingId: string) => {
@@ -135,6 +112,8 @@ const ProviderBookingsPage: React.FC = () => {
 
   // Track which client IDs have been fetched to prevent duplicate fetches and flickering
   const fetchedClientIdsRef = useRef<Set<string>>(new Set());
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   // Handle booking decline
   const handleDeclineBooking = async () => {
@@ -178,9 +157,17 @@ const ProviderBookingsPage: React.FC = () => {
     }
   };
 
-  // Effect to fetch client data for all unique client IDs
+  // Effect to fetch client data for all unique client IDs - fetch each client only once
   useEffect(() => {
+    // Clear any existing timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+
     const fetchAllClientData = async () => {
+      // Prevent concurrent fetches
+      if (isFetchingRef.current) return;
+
       const clientIds = Array.from(
         new Set(
           bookings
@@ -193,20 +180,40 @@ const ProviderBookingsPage: React.FC = () => {
         ),
       );
 
-      // Filter out already fetched client IDs to prevent unnecessary re-fetches
       const newClientIds = clientIds.filter(
         (id) => !fetchedClientIdsRef.current.has(id),
       );
 
       if (newClientIds.length === 0) return;
 
+      isFetchingRef.current = true;
       setIsLoadingClientData(true);
 
       try {
+        // Mark these IDs as being fetched BEFORE the actual fetch to prevent race conditions
+        newClientIds.forEach((id) => fetchedClientIdsRef.current.add(id));
+
         // Fetch all new client data in parallel
         const clientDataPromises = newClientIds.map(async (clientId) => {
-          const data = await fetchClientData(clientId);
-          return { clientId, data };
+          if (!clientId) return { clientId, data: { reviews: [], reputation: null } };
+
+          try {
+            const [clientReviews, clientReputation] = await Promise.all([
+              getUserReviews(clientId),
+              fetchUserReputation(clientId),
+            ]);
+
+            return {
+              clientId,
+              data: {
+                reviews: clientReviews || [],
+                reputation: clientReputation || null,
+              },
+            };
+          } catch (err) {
+            console.error("Error fetching client data:", err);
+            return { clientId, data: { reviews: [], reputation: null } };
+          }
         });
 
         const results = await Promise.all(clientDataPromises);
@@ -216,7 +223,6 @@ const ProviderBookingsPage: React.FC = () => {
           const updated = { ...prev };
           results.forEach(({ clientId, data }) => {
             updated[clientId] = data;
-            fetchedClientIdsRef.current.add(clientId);
           });
           return updated;
         });
@@ -224,13 +230,25 @@ const ProviderBookingsPage: React.FC = () => {
         console.error("Error fetching client data:", error);
       } finally {
         setIsLoadingClientData(false);
+        isFetchingRef.current = false;
       }
     };
 
+    // Debounce the fetch to prevent multiple calls
     if (bookings.length > 0) {
-      fetchAllClientData();
+      fetchTimeoutRef.current = setTimeout(() => {
+        fetchAllClientData();
+      }, 300); // 300ms debounce delay
     }
-  }, [bookings, fetchClientData]);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
 
   useEffect(() => {
     if (
