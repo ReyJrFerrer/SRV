@@ -51,6 +51,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const clientId =
     booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
 
+  // Determine if client data has been loaded
+  const hasClientData = review.length > 0 || reputation !== null;
+
   // Commission validation state for cash bookings
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
@@ -383,11 +386,28 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
           {/* Details List */}
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-            {/* REPUTATION AND RATING: MOBILE COLUMN, WEB ROW */}
+            {/* REPUTATION AND RATING: Show skeleton while loading, then fade in data */}
             {clientId && (
               <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
-                <ClientReputationScore reputation={reputation} />
-                <ClientRatingSummary reviews={review} />
+                {hasClientData ? (
+                  <div className="flex w-full animate-fadeIn flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    <ClientReputationScore reputation={reputation} />
+                    <ClientRatingSummary reviews={review} />
+                  </div>
+                ) : (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    {/* Skeleton for Reputation Score */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                    {/* Skeleton for Rating Summary */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -114,6 +114,7 @@ const ProviderBookingsPage: React.FC = () => {
   const fetchedClientIdsRef = useRef<Set<string>>(new Set());
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isFetchingRef = useRef<boolean>(false);
+  const hasInitiallyRendered = useRef<boolean>(false);
 
   // Handle booking decline
   const handleDeclineBooking = async () => {
@@ -157,7 +158,7 @@ const ProviderBookingsPage: React.FC = () => {
     }
   };
 
-  // Effect to fetch client data for all unique client IDs - fetch each client only once
+  // Effect to fetch client data for all unique client IDs - delayed to load last
   useEffect(() => {
     // Clear any existing timeout
     if (fetchTimeoutRef.current) {
@@ -195,7 +196,8 @@ const ProviderBookingsPage: React.FC = () => {
 
         // Fetch all new client data in parallel
         const clientDataPromises = newClientIds.map(async (clientId) => {
-          if (!clientId) return { clientId, data: { reviews: [], reputation: null } };
+          if (!clientId)
+            return { clientId, data: { reviews: [], reputation: null } };
 
           try {
             const [clientReviews, clientReputation] = await Promise.all([
@@ -234,11 +236,21 @@ const ProviderBookingsPage: React.FC = () => {
       }
     };
 
-    // Debounce the fetch to prevent multiple calls
-    if (bookings.length > 0) {
-      fetchTimeoutRef.current = setTimeout(() => {
-        fetchAllClientData();
-      }, 300); // 300ms debounce delay
+    // Only start fetching after bookings are loaded and component has rendered
+    if (bookings.length > 0 && !loading) {
+      // Wait for initial render, then delay fetch to allow cards to render first
+      if (!hasInitiallyRendered.current) {
+        hasInitiallyRendered.current = true;
+        // Delay to allow cards to render with skeletons first
+        fetchTimeoutRef.current = setTimeout(() => {
+          fetchAllClientData();
+        }, 500); // 500ms delay - cards render, THEN data fetches
+      } else {
+        // For subsequent updates, use shorter debounce
+        fetchTimeoutRef.current = setTimeout(() => {
+          fetchAllClientData();
+        }, 300);
+      }
     }
 
     // Cleanup timeout on unmount
@@ -248,7 +260,7 @@ const ProviderBookingsPage: React.FC = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings]);
+  }, [bookings, loading]);
 
   useEffect(() => {
     if (

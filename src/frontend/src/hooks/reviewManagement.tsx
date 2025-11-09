@@ -645,31 +645,32 @@ export const useReviewManagement = (
   );
 
   const getUserReviews = useMemo(
-    () => async (userId?: string): Promise<Review[]> => {
-      const targetUserId = userId || getCurrentUserId();
-      if (!targetUserId) return [];
+    () =>
+      async (userId?: string): Promise<Review[]> => {
+        const targetUserId = userId || getCurrentUserId();
+        if (!targetUserId) return [];
 
-      try {
-        setLoadingState("reviews", true);
-        const userReviews =
-          await reviewCanisterService.getUserReviews(targetUserId);
+        try {
+          setLoadingState("reviews", true);
+          const userReviews =
+            await reviewCanisterService.getUserReviews(targetUserId);
 
-        // Enrich with profile data if loading for current user
-        if (!userId || userId === getCurrentUserId()) {
-          const enrichedReviews = await Promise.all(
-            userReviews.map((review) => enrichReviewWithProfileData(review)),
-          );
-          setReviews(enrichedReviews);
+          // Enrich with profile data if loading for current user
+          if (!userId || userId === getCurrentUserId()) {
+            const enrichedReviews = await Promise.all(
+              userReviews.map((review) => enrichReviewWithProfileData(review)),
+            );
+            setReviews(enrichedReviews);
+          }
+
+          return userReviews;
+        } catch (error) {
+          handleReviewError(error, `get user reviews for ${targetUserId}`);
+          return [];
+        } finally {
+          setLoadingState("reviews", false);
         }
-
-        return userReviews;
-      } catch (error) {
-        handleReviewError(error, `get user reviews for ${targetUserId}`);
-        return [];
-      } finally {
-        setLoadingState("reviews", false);
-      }
-    },
+      },
     [
       getCurrentUserId,
       setLoadingState,
