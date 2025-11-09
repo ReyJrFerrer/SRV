@@ -23,32 +23,6 @@ const ProviderRateClientPage: React.FC = () => {
   const { booking, isLoading: isLoadingBooking } =
     useCachedProviderBooking(bookingId);
 
-  // Redirect if booking doesn't exist or wrong status
-  useEffect(() => {
-    if (!bookingId) {
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-    // Wait for loading to complete before checking booking
-    if (isLoadingBooking) {
-      return;
-    }
-
-    if (!booking) {
-      console.warn("Rate client: booking not found");
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-
-    if (booking.status !== "Completed") {
-      console.warn(
-        `Rate client: booking status is ${booking.status}, not Completed`,
-      );
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-  }, [booking, isLoadingBooking, bookingId, navigate]);
-
   const {
     submitClientReview,
     getClientReviews,
@@ -71,55 +45,81 @@ const ProviderRateClientPage: React.FC = () => {
     document.title = "Rate Client | SRV Provider";
   }, []);
 
-  // Check if provider has already reviewed this booking
+  // Check booking status and existing review
   useEffect(() => {
-    const checkExistingReview = async () => {
-      if (!bookingId) return;
+    const checkBookingAndReview = async () => {
+      // Step 1: Check if we have a booking ID
+      if (!bookingId) {
+        console.warn("Rate client: No booking ID");
+        navigate("/provider/bookings", { replace: true });
+        return;
+      }
 
-      // Wait for loading to complete before checking booking
+      // Step 2: Wait for booking to load
       if (isLoadingBooking) {
+        console.log("⏳ Waiting for booking to load...", { bookingId, booking, isLoadingBooking });
         return;
       }
 
+      console.log("✅ Booking loaded!", { booking, isLoadingBooking });
+
+      // Step 3: Check if booking exists
       if (!booking) {
-        console.warn("Cannot rate client: booking not found");
+        console.warn("Rate client: booking not found");
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
-      // Only allow rating if booking is completed
+      // Step 4: Check if booking is completed
       if (booking.status !== "Completed") {
-        console.warn("Cannot rate client: booking status is not Completed");
+        console.warn(
+          `Rate client: booking status is ${booking.status}, not Completed`
+        );
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
+      // Step 5: Quick check - if booking already has providerReviewSubmitted flag
+      if ((booking as any).providerReviewSubmitted === true) {
+        console.warn("⚠️ Provider has already reviewed this client (from booking flag)");
+        setHasExistingReview(true);
+        setCheckingReview(false);
+        // Redirect after a brief moment to show the message
+        setTimeout(() => {
+          navigate("/provider/bookings?tab=Completed", { replace: true });
+        }, 2000);
+        return;
+      }
+
+      // Step 6: Double-check with API for existing review
       try {
         setCheckingReview(true);
+        console.log("🔍 Checking for existing client review for booking:", bookingId);
         const reviews = await getClientReviews(bookingId);
+        console.log("📝 Client reviews fetched:", reviews);
 
         // Check if provider has already submitted a review
         if (reviews && reviews.length > 0) {
-          console.warn("Provider has already reviewed this client");
+          console.warn("⚠️ Provider has already reviewed this client (from API)");
           setHasExistingReview(true);
           // Redirect after a brief moment to show the message
           setTimeout(() => {
             navigate("/provider/bookings?tab=Completed", { replace: true });
           }, 2000);
         } else {
+          console.log("✅ No existing review found, allowing rating");
           setHasExistingReview(false);
         }
       } catch (error) {
-        console.error("Error checking existing review:", error);
+        console.error("❌ Error checking existing review:", error);
         setHasExistingReview(false);
       } finally {
         setCheckingReview(false);
       }
     };
 
-    checkExistingReview();
-  }, [bookingId, booking, isLoadingBooking, navigate]);
-  // Removed getClientReviews from dependencies to prevent re-runs
+    checkBookingAndReview();
+  }, [bookingId, booking, isLoadingBooking, getClientReviews, navigate]);
 
   const handleRating = useCallback((value: number) => setRating(value), []);
 
