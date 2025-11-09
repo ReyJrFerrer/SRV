@@ -22,7 +22,10 @@ import { useReputation } from "../../hooks/useReputation";
 import { useClientAnalytics } from "../../hooks/useClientAnalytics";
 import useClientRating from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
-import { ProfileSkeleton, ReputationScoreSkeleton } from "../../components/SkeletonLoader";
+import {
+  ProfileSkeleton,
+  ReputationScoreSkeleton,
+} from "../../components/SkeletonLoader";
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
@@ -699,301 +702,303 @@ const ClientProfilePage: React.FC = () => {
           <ProfileSkeleton role="client" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          <div className="flex flex-col space-y-4 lg:col-span-1">
-            <div className="rounded-xl bg-white p-6 shadow-md">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <ProfilePictureModal
-                    src={previewImage || profileImageUrl}
-                    isLoading={isImageLoading}
-                  />
-                  {isEditing && (
+            <div className="flex flex-col space-y-4 lg:col-span-1">
+              <div className="rounded-xl bg-white p-6 shadow-md">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <ProfilePictureModal
+                      src={previewImage || profileImageUrl}
+                      isLoading={isImageLoading}
+                    />
+                    {isEditing && (
+                      <>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/*"
+                        />
+                        <button
+                          onClick={handleImageUploadClick}
+                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
+                        >
+                          <CameraIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {!isEditing ? (
                     <>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      <button
-                        onClick={handleImageUploadClick}
-                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                      >
-                        <CameraIcon className="h-5 w-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                {!isEditing ? (
-                  <>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {profile?.name || "Client Name"}
-                    </h2>
-                    <p className="text-md text-gray-500">
-                      {profile?.phone || "No phone number"}
-                    </p>
-                  </>
-                ) : (
-                  <div className="mt-4 w-full max-w-sm space-y-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => {
-                          setName(e.target.value);
-                          if (nameError) setNameError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {nameError && (
-                        <p className="mt-1 text-sm text-red-500">{nameError}</p>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Phone Number
-                      </label>
-                      <p className="mt-1 text-gray-800">
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        {profile?.name || "Client Name"}
+                      </h2>
+                      <p className="text-md text-gray-500">
                         {profile?.phone || "No phone number"}
                       </p>
-                      <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
-                        <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                        <p className="text-xs text-blue-800">
-                          Your phone number is linked to your account for
-                          security and cannot be changed here. Please contact
-                          support for assistance if you need to update it.
+                    </>
+                  ) : (
+                    <div className="mt-4 w-full max-w-sm space-y-4">
+                      <div>
+                        <label
+                          htmlFor="name"
+                          className="block text-left text-sm font-medium text-gray-700"
+                        >
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={name}
+                          onChange={(e) => {
+                            setName(e.target.value);
+                            if (nameError) setNameError("");
+                            if (editError) setEditError("");
+                          }}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        />
+                        {nameError && (
+                          <p className="mt-1 text-sm text-red-500">
+                            {nameError}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Phone Number
+                        </label>
+                        <p className="mt-1 text-gray-800">
+                          {profile?.phone || "No phone number"}
+                        </p>
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <p className="text-xs text-blue-800">
+                            Your phone number is linked to your account for
+                            security and cannot be changed here. Please contact
+                            support for assistance if you need to update it.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-6">
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                      >
+                        <PencilIcon className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </button>
+                    ) : (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveChanges}
+                          disabled={loading}
+                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                          {loading ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg bg-yellow-300 shadow-sm">
+                <button
+                  onClick={handleSwitchToProvider}
+                  disabled={isSwitchingRole}
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                    isSwitchingRole
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:bg-blue-600"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <ArrowPathRoundedSquareIcon
+                      className={`mr-4 h-6 w-6 ${
+                        isSwitchingRole
+                          ? "animate-spin text-blue-600"
+                          : "text-black group-hover:text-white"
+                      }`}
+                    />
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
+                      {isSwitchingRole
+                        ? "Switching Role..."
+                        : "Switch into SRVice Provider"}
+                    </span>
+                  </div>
+                  {!isSwitchingRole && (
+                    <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                  )}
+                </button>
+              </div>
+              <div className="hidden lg:block">
+                <button
+                  onClick={logout}
+                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+            <div className="mt-1 lg:col-span-2 lg:mt-0">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+                <div className="mb-6 flex items-center justify-center gap-2">
+                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
+                    Your Reputation Score
+                  </h3>
+                  <button
+                    type="button"
+                    aria-label="What is reputation score?"
+                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    onClick={() => setShowAboutInfo(true)}
+                  >
+                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                  </button>
+                  <AboutReputationScoreModal
+                    show={showAboutInfo}
+                    onClose={() => setShowAboutInfo(false)}
+                    reputationDisplay={reputationDisplay}
+                  />
+                </div>
+                {reputationLoading ? (
+                  <div className="flex justify-center">
+                    <ReputationScoreSkeleton />
+                  </div>
+                ) : reputationError ? (
+                  <div className="flex justify-center">
+                    <div className="flex h-48 w-48 items-center justify-center">
+                      <div className="text-center">
+                        <div className="mb-4 text-red-500">
+                          <svg
+                            className="mx-auto h-16 w-16"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-red-600">
+                          {reputationError}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Please check your connection and try again
                         </p>
                       </div>
                     </div>
                   </div>
-                )}
-                <div className="mt-6">
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      <PencilIcon className="mr-2 h-4 w-4" />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={handleCancelEdit}
-                        className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveChanges}
-                        disabled={loading}
-                        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                      >
-                        {loading ? "Saving..." : "Save Changes"}
-                      </button>
+                ) : (
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <ReputationScore score={reputationScore} />
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg bg-yellow-300 shadow-sm">
-              <button
-                onClick={handleSwitchToProvider}
-                disabled={isSwitchingRole}
-                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                  isSwitchingRole
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-blue-600"
-                }`}
-              >
-                <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-6 w-6 ${
-                      isSwitchingRole
-                        ? "animate-spin text-blue-600"
-                        : "text-black group-hover:text-white"
-                    }`}
-                  />
-                  <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
-                    {isSwitchingRole
-                      ? "Switching Role..."
-                      : "Switch into SRVice Provider"}
-                  </span>
-                </div>
-                {!isSwitchingRole && (
-                  <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
-                )}
-              </button>
-            </div>
-            <div className="hidden lg:block">
-              <button
-                onClick={logout}
-                className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-          <div className="mt-1 lg:col-span-2 lg:mt-0">
-            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <div className="mb-6 flex items-center justify-center gap-2">
-                <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                  Your Reputation Score
-                </h3>
-                <button
-                  type="button"
-                  aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  onClick={() => setShowAboutInfo(true)}
-                >
-                  <InformationCircleIcon className="h-6 w-6 text-blue-500" />
-                </button>
-                <AboutReputationScoreModal
-                  show={showAboutInfo}
-                  onClose={() => setShowAboutInfo(false)}
-                  reputationDisplay={reputationDisplay}
-                />
-              </div>
-              {reputationLoading ? (
-                <div className="flex justify-center">
-                  <ReputationScoreSkeleton />
-                </div>
-              ) : reputationError ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-4 text-red-500">
-                        <svg
-                          className="mx-auto h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                    {reputationDisplay && (
+                      <>
+                        <div className="flex w-full justify-center">
+                          <TrustLevelBadge
+                            trustLevel={reputationDisplay.level}
+                            onInfoClick={() => setShowBadgeInfo(true)}
+                            infoOpen={showBadgeInfo}
                           />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-medium text-red-600">
-                        {reputationError}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Please check your connection and try again
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="mb-2 flex items-center justify-center gap-2">
-                    <ReputationScore score={reputationScore} />
-                  </div>
-                  {reputationDisplay && (
-                    <>
-                      <div className="flex w-full justify-center">
-                        <TrustLevelBadge
-                          trustLevel={reputationDisplay.level}
-                          onInfoClick={() => setShowBadgeInfo(true)}
-                          infoOpen={showBadgeInfo}
+                        </div>
+                        <TrustLevelInfoModal
+                          show={showBadgeInfo}
+                          onClose={() => setShowBadgeInfo(false)}
                         />
-                      </div>
-                      <TrustLevelInfoModal
-                        show={showBadgeInfo}
-                        onClose={() => setShowBadgeInfo(false)}
-                      />
-                      <AboutReputationScoreModal
-                        show={showAboutInfo}
-                        onClose={() => setShowAboutInfo(false)}
-                        reputationDisplay={reputationDisplay}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
-              <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
-                <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-yellow-700">
-                      Your Ratings
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <StarIcon className="h-6 w-6 text-yellow-500" />
-                      <button
-                        type="button"
-                        aria-label="About ratings"
-                        className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        onClick={() => setShowRatingInfo(true)}
-                      >
-                        <InformationCircleIcon className="h-5 w-5 text-gray-500" />
-                      </button>
-                    </div>
+                        <AboutReputationScoreModal
+                          show={showAboutInfo}
+                          onClose={() => setShowAboutInfo(false)}
+                          reputationDisplay={reputationDisplay}
+                        />
+                      </>
+                    )}
                   </div>
-                  {ratingsLoading ? (
-                    <div className="flex items-center justify-center py-6 text-sm text-gray-500">
-                      Loading...
-                    </div>
-                  ) : ratingsError ? (
-                    <div className="py-4 text-sm text-red-500">
-                      {ratingsError}
-                    </div>
-                  ) : (
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <div className="text-3xl font-extrabold text-gray-900">
-                          {avgRating.toFixed(1)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Average rating
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-gray-900">
-                          {reviewsCount}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Reviews received
-                        </div>
+                )}
+                <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
+                  <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h4 className="text-lg font-bold text-yellow-700">
+                        Your Ratings
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <StarIcon className="h-6 w-6 text-yellow-500" />
+                        <button
+                          type="button"
+                          aria-label="About ratings"
+                          className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          onClick={() => setShowRatingInfo(true)}
+                        >
+                          <InformationCircleIcon className="h-5 w-5 text-gray-500" />
+                        </button>
                       </div>
                     </div>
-                  )}
-                  <button
-                    onClick={() => navigate("/client/profile/reviews")}
-                    className="mt-5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
-                  >
-                    View Reviews & Ratings
-                  </button>
-                </div>
-                <div>
-                  <ClientStats />
+                    {ratingsLoading ? (
+                      <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                        Loading...
+                      </div>
+                    ) : ratingsError ? (
+                      <div className="py-4 text-sm text-red-500">
+                        {ratingsError}
+                      </div>
+                    ) : (
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <div className="text-3xl font-extrabold text-gray-900">
+                            {avgRating.toFixed(1)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Average rating
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-gray-900">
+                            {reviewsCount}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Reviews received
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => navigate("/client/profile/reviews")}
+                      className="mt-5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                    >
+                      View Reviews & Ratings
+                    </button>
+                  </div>
+                  <div>
+                    <ClientStats />
+                  </div>
                 </div>
               </div>
             </div>
+            {editError && (
+              <p className="mt-4 text-center text-red-500">{editError}</p>
+            )}
+            {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+            {reputationError && !error && (
+              <p className="mt-4 text-center text-red-500">
+                Reputation: {reputationError}
+              </p>
+            )}
           </div>
-          {editError && (
-            <p className="mt-4 text-center text-red-500">{editError}</p>
-          )}
-          {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-          {reputationError && !error && (
-            <p className="mt-4 text-center text-red-500">
-              Reputation: {reputationError}
-            </p>
-          )}
-        </div>
         )}
       </main>
       <BottomNavigation />

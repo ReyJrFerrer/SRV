@@ -14,7 +14,10 @@ import BottomNavigation from "../../../components/provider/NavigationBar"; // Ch
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
-import { ProfileSkeleton, ReputationScoreSkeleton } from "../../../components/SkeletonLoader";
+import {
+  ProfileSkeleton,
+  ReputationScoreSkeleton,
+} from "../../../components/SkeletonLoader";
 
 // AboutReputationScoreModal: Provider version
 interface AboutReputationScoreModalProps {
@@ -539,235 +542,237 @@ const ProviderProfilePage: React.FC = () => {
           <ProfileSkeleton role="provider" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
-          <div className="flex flex-col space-y-4 lg:col-span-1">
-            {/* Profile Info Card (top left) */}
-            <div className="rounded-xl bg-white p-6 shadow-md">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <ProfilePictureModal
-                    src={previewImage || profileImageUrl}
-                    isLoading={isImageLoading}
-                  />
-                  {isEditing && (
+            {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
+            <div className="flex flex-col space-y-4 lg:col-span-1">
+              {/* Profile Info Card (top left) */}
+              <div className="rounded-xl bg-white p-6 shadow-md">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <ProfilePictureModal
+                      src={previewImage || profileImageUrl}
+                      isLoading={isImageLoading}
+                    />
+                    {isEditing && (
+                      <>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/*"
+                        />
+                        <button
+                          onClick={handleImageUploadClick}
+                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
+                        >
+                          <CameraIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {!isEditing ? (
                     <>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      <button
-                        onClick={handleImageUploadClick}
-                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                      >
-                        <CameraIcon className="h-5 w-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                {!isEditing ? (
-                  <>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {profile?.name || "Provider Name"}
-                    </h2>
-                    <p className="text-md text-gray-500">
-                      {profile?.phone || "No phone number"}
-                    </p>
-                  </>
-                ) : (
-                  <div className="mt-4 w-full max-w-sm space-y-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => {
-                          setName(e.target.value);
-                          if (nameError) setNameError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {nameError && (
-                        <p className="mt-1 text-sm text-red-500">{nameError}</p>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Phone Number
-                      </label>
-                      <p className="mt-1 text-gray-800">
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        {profile?.name || "Provider Name"}
+                      </h2>
+                      <p className="text-md text-gray-500">
                         {profile?.phone || "No phone number"}
                       </p>
-                      <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
-                        <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                        <p className="text-xs text-blue-800">
-                          Your phone number is linked to your account for
-                          security and cannot be changed here. Please contact
-                          support for assistance if you need to update it.
+                    </>
+                  ) : (
+                    <div className="mt-4 w-full max-w-sm space-y-4">
+                      <div>
+                        <label
+                          htmlFor="name"
+                          className="block text-left text-sm font-medium text-gray-700"
+                        >
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={name}
+                          onChange={(e) => {
+                            setName(e.target.value);
+                            if (nameError) setNameError("");
+                            if (editError) setEditError("");
+                          }}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        />
+                        {nameError && (
+                          <p className="mt-1 text-sm text-red-500">
+                            {nameError}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Phone Number
+                        </label>
+                        <p className="mt-1 text-gray-800">
+                          {profile?.phone || "No phone number"}
+                        </p>
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <p className="text-xs text-blue-800">
+                            Your phone number is linked to your account for
+                            security and cannot be changed here. Please contact
+                            support for assistance if you need to update it.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-6">
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                      >
+                        <PencilIcon className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </button>
+                    ) : (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveChanges}
+                          disabled={loading}
+                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                          {loading ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Switch to Client Button (below profile info) */}
+              <div className="rounded-lg bg-blue-600 shadow-sm">
+                <button
+                  onClick={handleSwitchToClient}
+                  disabled={isSwitchingRole}
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                    isSwitchingRole
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:bg-yellow-400"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <ArrowPathRoundedSquareIcon
+                      className={`mr-4 h-6 w-6 ${
+                        isSwitchingRole
+                          ? "animate-spin text-yellow-400"
+                          : "text-white group-hover:text-black"
+                      }`}
+                    />
+                    <span className="text-md font-medium text-white group-hover:text-gray-800">
+                      {isSwitchingRole
+                        ? "Switching Role..."
+                        : "Switch into Client"}
+                    </span>
+                  </div>
+                  {!isSwitchingRole && (
+                    <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
+                  )}
+                </button>
+              </div>
+
+              <div className="hidden lg:block">
+                <button
+                  onClick={logout}
+                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+            {/* --- Right Column: Reputation and Stats --- */}
+            <div className="mt-1 lg:col-span-2 lg:mt-0">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+                <div className="mb-6 flex items-center justify-center gap-2">
+                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
+                    Your Reputation Score
+                  </h3>
+                  <button
+                    type="button"
+                    aria-label="What is reputation score?"
+                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    onClick={() => setShowAboutInfo(true)}
+                  >
+                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                  </button>
+                  <AboutReputationScoreModal
+                    show={showAboutInfo}
+                    onClose={() => setShowAboutInfo(false)}
+                    reputationDisplay={reputationDisplay}
+                  />
+                </div>
+                {reputationLoading ? (
+                  <div className="flex justify-center">
+                    <ReputationScoreSkeleton />
+                  </div>
+                ) : reputationError ? (
+                  <div className="flex justify-center">
+                    <div className="flex h-48 w-48 items-center justify-center">
+                      <div className="text-center">
+                        <div className="mb-4 text-red-500">
+                          <ExclamationTriangleIcon className="mx-auto h-16 w-16" />
+                        </div>
+                        <p className="text-sm font-medium text-red-600">
+                          {reputationError}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Please check your connection and try again
                         </p>
                       </div>
                     </div>
                   </div>
-                )}
-                <div className="mt-6">
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      <PencilIcon className="mr-2 h-4 w-4" />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={handleCancelEdit}
-                        className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveChanges}
-                        disabled={loading}
-                        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                      >
-                        {loading ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* Switch to Client Button (below profile info) */}
-            <div className="rounded-lg bg-blue-600 shadow-sm">
-              <button
-                onClick={handleSwitchToClient}
-                disabled={isSwitchingRole}
-                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                  isSwitchingRole
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-yellow-400"
-                }`}
-              >
-                <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-6 w-6 ${
-                      isSwitchingRole
-                        ? "animate-spin text-yellow-400"
-                        : "text-white group-hover:text-black"
-                    }`}
-                  />
-                  <span className="text-md font-medium text-white group-hover:text-gray-800">
-                    {isSwitchingRole
-                      ? "Switching Role..."
-                      : "Switch into Client"}
-                  </span>
-                </div>
-                {!isSwitchingRole && (
-                  <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
-                )}
-              </button>
-            </div>
-
-            <div className="hidden lg:block">
-              <button
-                onClick={logout}
-                className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-          {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-1 lg:col-span-2 lg:mt-0">
-            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <div className="mb-6 flex items-center justify-center gap-2">
-                <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                  Your Reputation Score
-                </h3>
-                <button
-                  type="button"
-                  aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  onClick={() => setShowAboutInfo(true)}
-                >
-                  <InformationCircleIcon className="h-6 w-6 text-blue-500" />
-                </button>
-                <AboutReputationScoreModal
-                  show={showAboutInfo}
-                  onClose={() => setShowAboutInfo(false)}
-                  reputationDisplay={reputationDisplay}
-                />
-              </div>
-              {reputationLoading ? (
-                <div className="flex justify-center">
-                  <ReputationScoreSkeleton />
-                </div>
-              ) : reputationError ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-4 text-red-500">
-                        <ExclamationTriangleIcon className="mx-auto h-16 w-16" />
-                      </div>
-                      <p className="text-sm font-medium text-red-600">
-                        {reputationError}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Please check your connection and try again
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="mb-2 flex items-center justify-center gap-2">
-                    <ReputationScore score={reputationScore} />
-                    {/* <button
+                ) : (
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <ReputationScore score={reputationScore} />
+                      {/* <button
                       onClick={forceRefreshReputation}
                       className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
                       title="Refresh reputation score"
                     >
                       <ArrowPathRoundedSquareIcon className="h-4 w-4" />
                     </button> */}
-                  </div>
-                  {reputationDisplay && (
-                    <>
-                      <div className="flex w-full justify-center">
-                        <TrustLevelBadge
-                          trustLevel={reputationDisplay.level}
-                          onInfoClick={() => setShowBadgeInfo(true)}
-                          infoOpen={showBadgeInfo}
+                    </div>
+                    {reputationDisplay && (
+                      <>
+                        <div className="flex w-full justify-center">
+                          <TrustLevelBadge
+                            trustLevel={reputationDisplay.level}
+                            onInfoClick={() => setShowBadgeInfo(true)}
+                            infoOpen={showBadgeInfo}
+                          />
+                        </div>
+                        <TrustLevelInfoModal
+                          show={showBadgeInfo}
+                          onClose={() => setShowBadgeInfo(false)}
                         />
-                      </div>
-                      <TrustLevelInfoModal
-                        show={showBadgeInfo}
-                        onClose={() => setShowBadgeInfo(false)}
-                      />
-                      <AboutReputationScoreModal
-                        show={showAboutInfo}
-                        onClose={() => setShowAboutInfo(false)}
-                        reputationDisplay={reputationDisplay}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
+                        <AboutReputationScoreModal
+                          show={showAboutInfo}
+                          onClose={() => setShowAboutInfo(false)}
+                          reputationDisplay={reputationDisplay}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
         )}
       </main>
       <div className="mt-8 block w-full px-4 lg:hidden">

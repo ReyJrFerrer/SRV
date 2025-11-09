@@ -97,7 +97,10 @@ export const ProfilePictureSkeleton: React.FC<{
 export const ReputationScoreSkeleton: React.FC = () => {
   return (
     <div className="relative flex h-48 w-48 items-center justify-center">
-      <svg className="absolute h-full w-full animate-pulse" viewBox="0 0 100 100">
+      <svg
+        className="absolute h-full w-full animate-pulse"
+        viewBox="0 0 100 100"
+      >
         <circle
           className="text-gray-200"
           strokeWidth="10"
