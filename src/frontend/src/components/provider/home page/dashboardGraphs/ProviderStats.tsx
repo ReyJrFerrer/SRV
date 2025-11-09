@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Suspense } from "react";
 import {
-  ClockIcon,
   CheckCircleIcon,
   StarIcon,
   ChartBarIcon,
@@ -100,12 +99,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         bgColor: "bg-[#4068F4]",
       },
       {
-        title: "Pending Payout",
-        value: "₱0.00",
-        icon: <ClockIcon className="h-6 w-6 text-white" />,
-        bgColor: "bg-[#4068F4]",
-      },
-      {
         title: "Completed Jobs",
         value: "0",
         icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
@@ -147,19 +140,12 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
     try {
       const monthlyRevenue = getRevenueByPeriod("month");
-      const pendingPayout = analytics.expectedRevenue || 0;
 
       return [
         {
           title: "Earnings This Month",
           value: `₱${monthlyRevenue.toFixed(2)}`,
           icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-          bgColor: "bg-[#4068F4]",
-        },
-        {
-          title: "Pending Payout",
-          value: `₱${pendingPayout.toFixed(2)}`,
-          icon: <ClockIcon className="h-6 w-6 text-white" />,
           bgColor: "bg-[#4068F4]",
         },
         {

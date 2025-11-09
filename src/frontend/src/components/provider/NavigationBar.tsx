@@ -146,7 +146,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <>
-      {!location.pathname.startsWith("/provider/chat") && (
+      {!location.pathname.startsWith("/provider/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
             <div className="grid w-full grid-cols-6 font-medium">
