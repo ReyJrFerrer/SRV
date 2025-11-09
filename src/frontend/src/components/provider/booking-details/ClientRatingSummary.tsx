@@ -1,43 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 
 interface ClientRatingSummaryProps {
   reviews: any;
 }
+
 const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({
   reviews,
 }) => {
-  const [avgRating, setAvgRating] = useState<number | null>(null);
-  const [reviewsCount, setReviewsCount] = useState<number>(0);
+  // Calculate rating directly without async state
+  const reviewsCount = Array.isArray(reviews) ? reviews.length : 0;
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        if (!mounted) return;
-        const count = Array.isArray(reviews) ? reviews.length : 0;
-        setReviewsCount(count);
-        if (count > 0) {
-          const sum = (reviews as any[]).reduce(
-            (acc, r) => acc + (Number(r?.rating) || 0),
-            0,
-          );
-          setAvgRating(Math.round((sum / count) * 10) / 10);
-        } else {
-          setAvgRating(null);
-        }
-      } catch {
-        if (!mounted) return;
-        setAvgRating(null);
-        setReviewsCount(0);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [reviews]);
+  let avgRating: number | null = null;
+  if (reviewsCount > 0) {
+    const sum = (reviews as any[]).reduce(
+      (acc, r) => acc + (Number(r?.rating) || 0),
+      0,
+    );
+    avgRating = Math.round((sum / reviewsCount) * 10) / 10;
+  }
 
   const renderStars = (rating: number) => {
     const full = Math.floor(rating);

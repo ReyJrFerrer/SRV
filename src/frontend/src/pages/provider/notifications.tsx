@@ -19,13 +19,17 @@ const NotificationsPageSP = () => {
   // Use the new provider notifications hook
   const {
     notifications,
-    unreadCount,
     loading,
     error,
     markAsRead,
     deleteNotification,
     markAllAsRead,
   } = useProviderNotifications();
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    ProviderNotification[]
+  >([]);
 
   // Set the document title
   useEffect(() => {
@@ -54,12 +58,6 @@ const NotificationsPageSP = () => {
 
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
-
-  // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
-  const [stableNotifications, setStableNotifications] = React.useState<
-    ProviderNotification[]
-  >([]);
 
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
@@ -255,27 +253,19 @@ const NotificationsPageSP = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div
-          className={`w-full px-4 py-3 ${
-            stableNotifications.length === 0
-              ? "flex items-center justify-center"
-              : "relative flex items-center justify-between"
-          }`}
-        >
-          <h1
-            className={`text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl ${
-              stableNotifications.length === 0 && unreadCount > 0
-                ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
-                : ""
-            }`}
-          >
+        <div className="relative flex w-full items-center justify-between px-4 py-3">
+          <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
 
-              <div className="hidden items-center gap-2 sm:flex">
+              <div
+                className={`hidden items-center gap-2 transition-opacity duration-200 sm:flex ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   onClick={() => {
                     if (!editMode) {
@@ -313,7 +303,11 @@ const NotificationsPageSP = () => {
                 )}
               </div>
 
-              <div className="relative sm:hidden">
+              <div
+                className={`relative transition-opacity duration-200 sm:hidden ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   ref={mobileMenuButtonRef}
                   onClick={() => setMobileMenuOpen((s) => !s)}

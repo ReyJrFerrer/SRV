@@ -486,9 +486,6 @@ const MyBookingsPage: React.FC = () => {
                           reviews={
                             serviceStatsMap[booking.serviceId || ""]?.reviews
                           }
-                          loadingStats={
-                            serviceStatsMap[booking.serviceId || ""]?.loading
-                          }
                           reputation={
                             serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
@@ -526,9 +523,6 @@ const MyBookingsPage: React.FC = () => {
                           }
                           reviews={
                             serviceStatsMap[booking.serviceId || ""]?.reviews
-                          }
-                          loadingStats={
-                            serviceStatsMap[booking.serviceId || ""]?.loading
                           }
                           reputation={
                             serviceStatsMap[booking.serviceId || ""]?.reputation

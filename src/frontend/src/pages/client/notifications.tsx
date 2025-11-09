@@ -23,11 +23,53 @@ const NotificationsPage = () => {
     error,
     markAsRead,
     markAllAsRead,
-    unreadCount,
     deleteNotification,
   } = useNotifications();
   const navigate = useNavigate();
 
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    Notification[]
+  >([]);
+
+  // Track if this is the initial load
+  const isInitialLoadRef = React.useRef(true);
+
+  // Stabilize notifications array to prevent flickering
+  React.useEffect(() => {
+    // On initial load, wait for loading to finish before showing anything
+    if (isInitialLoadRef.current && loading) {
+      return;
+    }
+
+    // After initial load completes, mark it as done
+    if (isInitialLoadRef.current && !loading) {
+      isInitialLoadRef.current = false;
+    }
+
+    // If loading again after initial load, keep showing stable notifications
+    if (loading && !isInitialLoadRef.current) {
+      return;
+    }
+
+    // Check if there are new notifications that haven't been processed
+    const newNotifications = notifications.filter(
+      (n) => !processedNotificationsRef.current.has(n.id),
+    );
+
+    if (newNotifications.length > 0 || notifications.length === 0) {
+      // Mark all current notifications as processed
+      notifications.forEach((n) => {
+        processedNotificationsRef.current.add(n.id);
+      });
+
+      // Update stable notifications only when there are actual changes
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
+  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Stabilize notifications like the provider page to avoid flicker and
@@ -79,14 +121,14 @@ const NotificationsPage = () => {
   }, [notifications, loading]);
 
   // Tabs for categorizing notifications
-  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin",
+    "Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -173,32 +215,40 @@ const NotificationsPage = () => {
     navigate(notification.href);
   };
 
+  // Helper to map notification type to a UI category
+  const categoryOfType = (type: string) => {
+    const bookingTypes = [
+      "booking_accepted",
+      "booking_declined",
+      "booking_cancelled",
+      "booking_completed",
+      "payment_received",
+      "payment_failed",
+      "service_rescheduled",
+      "service_reminder",
+      "provider_on_the_way",
+    ];
+    const adminTypes = ["system_announcement", "promo_offer"];
+    if (bookingTypes.includes(type)) return "Bookings";
+    if (type === "chat_message" || type === "provider_message") return "Chat";
+    if (type === "review_reminder") return "Ratings";
+    if (adminTypes.includes(type)) return "Admin";
+    return "All";
+  };
+
+  const getCountForTab = (tab: NotificationTab) => {
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
+    if (tab === "All") return visible.length;
+    return visible.filter((n) => categoryOfType(n.type) === tab).length;
+  };
+
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
     const visible = stableNotifications.filter(
       (n) => !deletedIds.includes(n.id),
     );
-
-    // Helper to map notification type to a UI category
-    const categoryOfType = (type: string) => {
-      const bookingTypes = [
-        "booking_accepted",
-        "booking_declined",
-        "booking_cancelled",
-        "booking_completed",
-        "payment_received",
-        "payment_failed",
-        "service_rescheduled",
-        "service_reminder",
-        "provider_on_the_way",
-      ];
-      const adminTypes = ["system_announcement", "promo_offer"];
-      if (bookingTypes.includes(type)) return "Bookings";
-      if (type === "chat_message" || type === "provider_message") return "Chat";
-      if (type === "review_reminder") return "Ratings";
-      if (adminTypes.includes(type)) return "From Admin";
-      return "All";
-    };
 
     const byTab =
       activeTab === "All"
@@ -224,27 +274,19 @@ const NotificationsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
-        <div
-          className={`w-full px-4 py-3 ${
-            stableNotifications.length === 0
-              ? "flex items-center justify-center"
-              : "relative flex items-center justify-between"
-          }`}
-        >
-          <h1
-            className={`text-xl font-extrabold tracking-tight text-black lg:text-2xl ${
-              notifications.length === 0 && unreadCount > 0
-                ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
-                : ""
-            }`}
-          >
+        <div className="relative flex w-full items-center justify-between px-4 py-3">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
 
-              <div className="hidden items-center gap-2 sm:flex">
+              <div
+                className={`hidden items-center gap-2 transition-opacity duration-200 sm:flex ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   onClick={() => {
                     if (!editMode) {
@@ -282,7 +324,11 @@ const NotificationsPage = () => {
                 )}
               </div>
 
-              <div className="relative sm:hidden">
+              <div
+                className={`relative transition-opacity duration-200 sm:hidden ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   ref={mobileMenuButtonRef}
                   onClick={() => setMobileMenuOpen((s) => !s)}
@@ -369,40 +415,7 @@ const NotificationsPage = () => {
                     : "text-gray-600 hover:bg-yellow-200"
                 }`}
               >
-                {tab} (
-                {
-                  stableNotifications
-                    .filter((n) => !deletedIds.includes(n.id))
-                    .filter((n) => {
-                      // quick inline category mapping for counts
-                      const bookingTypes = [
-                        "booking_accepted",
-                        "booking_declined",
-                        "booking_cancelled",
-                        "booking_completed",
-                        "payment_received",
-                        "payment_failed",
-                        "service_rescheduled",
-                        "service_reminder",
-                        "provider_on_the_way",
-                      ];
-                      const adminTypes = ["system_announcement", "promo_offer"];
-                      if (tab === "All") return true;
-                      if (tab === "Bookings")
-                        return bookingTypes.includes(n.type);
-                      if (tab === "Chat")
-                        return (
-                          n.type === "chat_message" ||
-                          n.type === "provider_message"
-                        );
-                      if (tab === "Ratings")
-                        return n.type === "review_reminder";
-                      if (tab === "From Admin")
-                        return adminTypes.includes(n.type);
-                      return false;
-                    }).length
-                }
-                )
+                {tab} ({getCountForTab(tab)})
               </button>
             ))}
           </nav>
@@ -445,13 +458,13 @@ const NotificationsPage = () => {
       )}
 
       <main className="flex-1 px-4 pb-24">
-        {loading ? (
+        {loading && stableNotifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             Loading notifications…
           </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
-        ) : notifications.length === 0 ? (
+        ) : stableNotifications.length === 0 ? (
           <div className="flex flex-col items-center p-10 text-center text-gray-500">
             <InboxIcon className="mb-4 h-16 w-16 text-gray-300" />
             <h3 className="text-lg font-semibold">No Notifications Yet</h3>
