@@ -24,8 +24,7 @@ const SettingsPage: React.FC = () => {
     profile,
     loading: profileLoading,
     switchRole,
-    profileImageUrl,
-    refetchImage,
+    profileImageUrl
   } = useUserProfile();
 
   // Set the document title when the component mounts
@@ -56,18 +55,14 @@ const SettingsPage: React.FC = () => {
   const handleSwitchToClient = async () => {
     setSwitching(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        navigate("/client");
-      }
+      await switchRole();
+      navigate("/client/settings");
     } catch (error) {
-      //console.error("Failed to switch role:", error);
+      console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }
   };
-
-  refetchImage();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
