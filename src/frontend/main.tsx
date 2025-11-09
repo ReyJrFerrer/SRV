@@ -134,6 +134,10 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
+import { initVersionChecker } from "./src/utils/versionChecker";
+
+// Initialize version checker for automatic cache clearing on new deployments
+initVersionChecker();
 
 // Initialize OneSignal when SDK is loaded
 window.OneSignalDeferred = window.OneSignalDeferred || [];

@@ -11,6 +11,7 @@ import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -45,6 +46,35 @@ const ProviderHomePage: React.FC = () => {
       }
     },
   );
+
+  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+    useState(false);
+
+  // Check for OneSignal blocking on mount
+  useEffect(() => {
+    const checkOneSignalBlocking = () => {
+      // Check if OneSignal SDK failed to load
+      const oneSignalScript = document.querySelector(
+        'script[src*="OneSignalSDK"]',
+      );
+      if (oneSignalScript) {
+        oneSignalScript.addEventListener("error", () => {
+          console.error("OneSignal SDK blocked by browser or extension");
+          setShowOneSignalBlockedModal(true);
+        });
+      }
+
+      // Also check if window.OneSignal is undefined after a delay
+      setTimeout(() => {
+        if (typeof window.OneSignal === "undefined") {
+          console.error("OneSignal SDK not loaded - may be blocked");
+          setShowOneSignalBlockedModal(true);
+        }
+      }, 5000); // Give it 5 seconds to load
+    };
+
+    checkOneSignalBlocking();
+  }, []);
 
   // Fallback: Permissions API check for geolocation denied state.
   const [permissionApiDenied, setPermissionApiDenied] = useState(false);
@@ -282,6 +312,13 @@ const ProviderHomePage: React.FC = () => {
           />
         );
       })()}
+
+      {/* OneSignal Blocked Modal */}
+      {showOneSignalBlockedModal && (
+        <OneSignalBlockedModal
+          onClose={() => setShowOneSignalBlockedModal(false)}
+        />
+      )}
 
       <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}
