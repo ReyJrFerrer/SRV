@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {

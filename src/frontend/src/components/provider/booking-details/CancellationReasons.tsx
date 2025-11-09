@@ -5,8 +5,8 @@ interface Props {
   // optional server-provided cancellation reason (if/when backend exists)
   cancellationReason?: string | null;
   cancellationNotes?: string | null;
-  // whether the booking was cancelled by the client
-  cancelledByClient?: boolean;
+  // the role of who cancelled the booking: "Client" or "Provider"
+  cancelledBy?: string | null;
 }
 
 const STORAGE_KEY_PREFIX = "cancellation_reasons_v1:";
@@ -18,7 +18,7 @@ export default function CancellationReasons({
   bookingId,
   cancellationReason,
   cancellationNotes,
-  cancelledByClient,
+  cancelledBy,
 }: Props) {
   // Prefer server-provided cancellation reason when available. If not
   // available, try to read a locally stored entry (this can simulate a
@@ -46,10 +46,17 @@ export default function CancellationReasons({
   const displayedReason = cancellationReason || localEntry?.reason || null;
   const displayedNotes = cancellationNotes || localEntry?.notes || null;
 
-  // Only render when booking was cancelled by client OR we have a reason to show
-  const shouldShow = !!(cancelledByClient || displayedReason);
+  // Only render when we have cancelledBy or a reason to show
+  const shouldShow = !!(cancelledBy || displayedReason);
 
   if (!shouldShow) return null;
+
+  // Determine the display text based on who cancelled
+  const cancellerText = cancelledBy === "Client" 
+    ? "Client cancelled this booking"
+    : cancelledBy === "Provider"
+    ? "Provider cancelled this booking"
+    : "This booking was cancelled";
 
   return (
     <section className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
@@ -71,13 +78,13 @@ export default function CancellationReasons({
         </div>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-red-800">
-            Client cancelled this booking
+            {cancellerText}
           </h3>
           <div className="mt-1 text-sm text-red-700">
             {displayedReason ? (
               <div className="whitespace-pre-wrap">{displayedReason}</div>
             ) : (
-              <div>No reason provided by client.</div>
+              <div>No reason provided.</div>
             )}
             {displayedNotes && (
               <div className="mt-2 text-xs text-red-700">

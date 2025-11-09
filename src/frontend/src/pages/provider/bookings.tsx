@@ -16,7 +16,7 @@ import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { useReviewManagement } from "../../hooks/reviewManagement";
 import { useReputation } from "../../hooks/useReputation";
-import CancelWithReasonButton from "../../components/common/canellation/CancelWithReasonButton";
+import CancelWithReasonButton from "../../components/common/cancellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
@@ -243,11 +243,11 @@ const ProviderBookingsPage: React.FC = () => {
         hasInitiallyRendered.current = true;
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 1000); // 800ms delay - cards render, THEN data fetches
+        }, 10000); // 800ms delay - cards render, THEN data fetches
       } else {
         fetchTimeoutRef.current = setTimeout(() => {
           fetchAllClientData();
-        }, 800); // 600ms debounce for subsequent updates
+        }, 8000); // 600ms debounce for subsequent updates
       }
     }
 
