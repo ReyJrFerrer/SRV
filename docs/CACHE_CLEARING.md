@@ -13,6 +13,7 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 **Purpose**: Prevents browsers from caching HTML files
 
 **What was changed**:
+
 - Added cache-control headers for HTML files to prevent caching
 - Kept asset caching (CSS, JS, images) for performance
 
@@ -41,10 +42,14 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 **Purpose**: Additional layer of cache prevention at the HTML level
 
 **What was changed**:
+
 - Added meta tags to both `src/frontend/index.html` and `src/admin/index.html`
 
 ```html
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta
+  http-equiv="Cache-Control"
+  content="no-cache, no-store, must-revalidate"
+/>
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 ```
@@ -54,16 +59,19 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 **Purpose**: Automatically detects new deployments and prompts users to reload
 
 **Files created**:
+
 - `src/frontend/src/utils/versionChecker.ts`
 - `src/admin/src/utils/versionChecker.ts`
 
 **How it works**:
+
 1. Checks for a `version.json` file every 5 minutes
 2. Compares the current version with the deployed version
 3. Shows a user-friendly notification when a new version is detected
 4. Clears all caches (Cache API, Service Workers, localStorage) before reload
 
 **Features**:
+
 - Non-intrusive notification with "Reload Now" and "Later" options
 - Automatic cleanup of all browser caches
 - Configurable check interval
@@ -73,15 +81,18 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 **Purpose**: Creates a version file during build that changes with each deployment
 
 **Files created**:
+
 - `src/frontend/scripts/generate-version.js`
 - `src/admin/scripts/generate-version.js`
 
 **What it does**:
+
 - Generates a `version.json` file in the dist folder
 - Contains build timestamp and version number
 - Runs automatically during the build process
 
 **Example version.json**:
+
 ```json
 {
   "version": "1.0.0",
@@ -95,10 +106,12 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 **Purpose**: Automatically generates version file during build
 
 **Modified files**:
+
 - `src/frontend/package.json`
 - `src/admin/package.json`
 
 **Changes**:
+
 ```json
 "build": "tsc && vite build && node ./scripts/generate-version.js"
 ```
@@ -107,11 +120,11 @@ When deploying updates to Firebase Hosting, browsers may serve cached versions o
 
 1. **During Development**: Normal caching behavior for fast development
 2. **During Build**: Version file is generated with current timestamp
-3. **After Deployment**: 
+3. **After Deployment**:
    - HTML files are never cached (HTTP headers + meta tags)
    - Assets (JS, CSS) are cached with hashed filenames for performance
    - Version checker periodically checks for new deployments
-4. **When Update Detected**: 
+4. **When Update Detected**:
    - User sees a friendly notification
    - Can reload immediately or later
    - All caches are cleared before reload
@@ -169,9 +182,9 @@ If needed, you can disable version checking by commenting out the initialization
 You can force a version check from the browser console:
 
 ```javascript
-import { checkForUpdates } from './utils/versionChecker';
+import { checkForUpdates } from "./utils/versionChecker";
 const hasUpdate = await checkForUpdates();
-console.log('Has update:', hasUpdate);
+console.log("Has update:", hasUpdate);
 ```
 
 ## Browser Support

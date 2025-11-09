@@ -171,9 +171,11 @@ function showUpdateNotification(): void {
   });
 
   // Add dismiss handler
-  document.getElementById("dismiss-update-btn")?.addEventListener("click", () => {
-    notification.remove();
-  });
+  document
+    .getElementById("dismiss-update-btn")
+    ?.addEventListener("click", () => {
+      notification.remove();
+    });
 }
 
 /**
@@ -185,7 +187,7 @@ async function clearAllCaches(): Promise<void> {
     if ("caches" in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
-        cacheNames.map((cacheName) => caches.delete(cacheName))
+        cacheNames.map((cacheName) => caches.delete(cacheName)),
       );
       console.log("✅ Cleared Cache API");
     }
@@ -194,7 +196,7 @@ async function clearAllCaches(): Promise<void> {
     if ("serviceWorker" in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(
-        registrations.map((registration) => registration.unregister())
+        registrations.map((registration) => registration.unregister()),
       );
       console.log("✅ Unregistered service workers");
     }
