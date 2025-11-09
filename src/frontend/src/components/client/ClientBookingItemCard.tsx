@@ -467,9 +467,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
                     <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
                       <div className="flex items-center gap-2">
-                        <StarRatingDisplay
-                          rating={averageRating ?? 0}
-                        />
+                        <StarRatingDisplay rating={averageRating ?? 0} />
                         <span className="ml-1 font-bold">
                           {(averageRating as number).toFixed(1)}
                         </span>
