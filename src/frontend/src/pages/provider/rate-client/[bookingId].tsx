@@ -57,7 +57,11 @@ const ProviderRateClientPage: React.FC = () => {
 
       // Step 2: Wait for booking to load
       if (isLoadingBooking) {
-        console.log("⏳ Waiting for booking to load...", { bookingId, booking, isLoadingBooking });
+        console.log("⏳ Waiting for booking to load...", {
+          bookingId,
+          booking,
+          isLoadingBooking,
+        });
         return;
       }
 
@@ -73,7 +77,7 @@ const ProviderRateClientPage: React.FC = () => {
       // Step 4: Check if booking is completed
       if (booking.status !== "Completed") {
         console.warn(
-          `Rate client: booking status is ${booking.status}, not Completed`
+          `Rate client: booking status is ${booking.status}, not Completed`,
         );
         navigate("/provider/bookings", { replace: true });
         return;
@@ -81,7 +85,9 @@ const ProviderRateClientPage: React.FC = () => {
 
       // Step 5: Quick check - if booking already has providerReviewSubmitted flag
       if ((booking as any).providerReviewSubmitted === true) {
-        console.warn("⚠️ Provider has already reviewed this client (from booking flag)");
+        console.warn(
+          "⚠️ Provider has already reviewed this client (from booking flag)",
+        );
         setHasExistingReview(true);
         setCheckingReview(false);
         // Redirect after a brief moment to show the message
@@ -94,13 +100,18 @@ const ProviderRateClientPage: React.FC = () => {
       // Step 6: Double-check with API for existing review
       try {
         setCheckingReview(true);
-        console.log("🔍 Checking for existing client review for booking:", bookingId);
+        console.log(
+          "🔍 Checking for existing client review for booking:",
+          bookingId,
+        );
         const reviews = await getClientReviews(bookingId);
         console.log("📝 Client reviews fetched:", reviews);
 
         // Check if provider has already submitted a review
         if (reviews && reviews.length > 0) {
-          console.warn("⚠️ Provider has already reviewed this client (from API)");
+          console.warn(
+            "⚠️ Provider has already reviewed this client (from API)",
+          );
           setHasExistingReview(true);
           // Redirect after a brief moment to show the message
           setTimeout(() => {
@@ -332,7 +343,9 @@ const ProviderRateClientPage: React.FC = () => {
           {(formError || reviewError) && (
             <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
               <ExclamationCircleIcon className="mr-2 h-5 w-5" />
-              <span className="text-sm">{formError || "You already reviewed this client."}</span>
+              <span className="text-sm">
+                {formError || "You already reviewed this client."}
+              </span>
             </div>
           )}
 

@@ -53,7 +53,7 @@ const ClientServiceDetailsPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
-  const { reviews, getAverageRating } = useServiceReviews(serviceId as string);
+  const { reviews, getAverageRating, getRatingDistribution, loading: reviewsLoading, error: reviewsError } = useServiceReviews(serviceId as string);
 
   const { images: heroImages } = useServiceImages(
     service?.id,
@@ -529,7 +529,14 @@ const ClientServiceDetailsPage: React.FC = () => {
           hasCertificates={hasCertificates}
           hasPendingCertificates={hasPendingCertificates}
         />
-        <ReviewsSection serviceId={service.id} />
+        <ReviewsSection 
+          serviceId={service.id}
+          reviews={reviews}
+          loading={reviewsLoading}
+          error={reviewsError}
+          averageRating={getAverageRating(reviews)}
+          ratingDistribution={getRatingDistribution(reviews)}
+        />
       </main>
 
       <div className="shadow-t-lg fixed bottom-12 left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">

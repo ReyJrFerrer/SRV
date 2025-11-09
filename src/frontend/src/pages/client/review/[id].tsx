@@ -83,7 +83,7 @@ export const BookingReviewPage: React.FC = () => {
       // Step 4: Check if booking is completed
       if (booking.status !== "Completed") {
         console.warn(
-          `Review: booking status is ${booking.status}, not Completed`
+          `Review: booking status is ${booking.status}, not Completed`,
         );
         navigate("/client/booking", { replace: true });
         return;
@@ -92,7 +92,10 @@ export const BookingReviewPage: React.FC = () => {
       // Step 5: All basic checks passed, now check for existing review
       try {
         setCheckingReview(true);
-        console.log("🔍 Checking for existing booking review for booking:", bookingId);
+        console.log(
+          "🔍 Checking for existing booking review for booking:",
+          bookingId,
+        );
         const bookingReviews = await getBookingReviews(bookingId);
         console.log("📝 Booking reviews fetched:", bookingReviews);
 
