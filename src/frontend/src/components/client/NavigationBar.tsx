@@ -86,36 +86,11 @@ const BottomNavigation: React.FC = () => {
 
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
-    {
-      to: "/client/booking",
-      label: "Booking",
-      icon: null,
-      count: 0,
-    },
-    {
-      to: "/client/profile/reviews",
-      label: "Ratings",
-      icon: null,
-      count: 0,
-    },
-    {
-      to: "/client/chat",
-      label: "Chat",
-      icon: null,
-      count: unreadChatCount,
-    },
-    {
-      to: "/client/notifications",
-      label: "Notifications",
-      icon: null,
-      count: unreadCount,
-    },
-    {
-      to: "/client/profile",
-      label: "Profile",
-      icon: null,
-      count: 0,
-    },
+    { to: "/client/booking", label: "Booking", icon: null, count: 0 },
+    { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
+    { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
+    { to: "/client/notifications", label: "Notifications", icon: null, count: unreadCount },
+    { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
   // Separate Settings item to render at the bottom of the desktop sidebar
@@ -145,90 +120,92 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
+  // Define explicit order for the mobile bottom navigation
+  // Requested: place Ratings between Chat and Notifications
+  const mobileOrder = [
+    "Home",
+    "Booking",
+    "Chat",
+    "Ratings",
+    "Notifications",
+    "Settings",
+  ];
+  const mobileItems = mobileOrder
+    .map((label) => {
+      if (label === "Settings") return settingsItem;
+      return navItems.find((i) => i.label === label) || null;
+    })
+    .filter((i): i is typeof navItems[number] | typeof settingsItem => !!i);
+
   return (
     <>
       {!location.pathname.startsWith("/client/chat") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
-            <div className="grid w-full grid-cols-5 font-medium">
-              {navItems
-                .filter((it) => it.label !== "Ratings")
-                .map((item) => {
-                  // On mobile, show Settings instead of Profile
-                  const displayItem =
-                    item.label === "Profile" ? settingsItem : item;
-                  const isActive = isRouteActive(
-                    displayItem.label,
-                    displayItem.to,
-                  );
-                  if (
-                    [
-                      "Home",
-                      "Booking",
-                      "Settings",
-                      "Notifications",
-                      "Chat",
-                    ].includes(displayItem.label)
-                  ) {
-                    return (
-                      <Link
-                        key={displayItem.label}
-                        to={displayItem.to}
-                        className="group relative flex min-h-[2px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
-                        onClick={(e) => {
-                          if (isActive) {
-                            e.preventDefault();
-                            setTimeout(() => {
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }, 120);
-                          }
-                        }}
+            <div className="grid w-full grid-cols-6 font-medium">
+              {mobileItems.map((item) => {
+                const displayItem = item;
+                const isActive = isRouteActive(displayItem.label, displayItem.to);
+                return (
+                  <Link
+                    key={displayItem.label}
+                    to={displayItem.to}
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    onClick={(e) => {
+                      if (isActive) {
+                        e.preventDefault();
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }, 120);
+                      }
+                    }}
+                  >
+                    <div className="flex w-full flex-col items-center justify-center">
+                      <div
+                        className={`flex items-center justify-center transition-all duration-300 ${
+                          isActive
+                            ? "h-9 w-9 rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            : "h-6 w-6 sm:h-8 sm:w-8"
+                        }`}
                       >
-                        <div className="flex w-full flex-col items-center justify-center">
-                          <div
-                            className={`flex items-center justify-center transition-all duration-300 ${
-                              isActive
-                                ? "h-9 w-9 rounded-full bg-blue-600"
-                                : "h-6 w-6"
-                            }`}
-                          >
-                            {(() => {
-                              const Icon =
-                                displayItem.label === "Home"
-                                  ? HomeIcon
-                                  : displayItem.label === "Booking"
-                                    ? CalendarDaysIcon
-                                    : displayItem.label === "Notifications"
-                                      ? BellIcon
-                                      : displayItem.label === "Chat"
-                                        ? ChatBubbleOvalLeftEllipsisIcon
-                                        : displayItem.label === "Settings"
-                                          ? Cog6ToothIcon
-                                          : HomeIcon;
-                              return (
-                                <Icon
-                                  className={
-                                    isActive
-                                      ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                      : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
-                                  }
-                                />
-                              );
-                            })()}
-                          </div>
-                          {!isActive && (
-                            <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
-                              {item.label}
-                            </span>
-                          )}
-                        </div>
-                        {item.count > 0 && (
-                          <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                        )}
-                      </Link>
-                    );
-                  }
-                })}
+                        {(() => {
+                          const Icon =
+                            displayItem.label === "Home"
+                              ? HomeIcon
+                              : displayItem.label === "Booking"
+                                ? CalendarDaysIcon
+                                : displayItem.label === "Ratings"
+                                  ? StarIcon
+                                  : displayItem.label === "Notifications"
+                                    ? BellIcon
+                                    : displayItem.label === "Chat"
+                                      ? ChatBubbleOvalLeftEllipsisIcon
+                                      : displayItem.label === "Settings"
+                                        ? Cog6ToothIcon
+                                        : HomeIcon;
+                          return (
+                            <Icon
+                              className={
+                                isActive
+                                  ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
+                                  : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              }
+                            />
+                          );
+                        })()}
+                      </div>
+                      {!isActive && (
+                        <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+                    {item.count > 0 && (
+                      <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </nav>
         </div>
