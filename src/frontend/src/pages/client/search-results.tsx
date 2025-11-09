@@ -124,6 +124,16 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    serviceImages: service.heroImage ? [service.heroImage] : [],
+    userImageUrl: service.providerAvatar || null,
+    isLoadingImages: false,
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
@@ -264,7 +274,11 @@ const SearchResultsPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
             {sortedAndFilteredResults.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem service={service} retainMobileLayout={true} />
+                <ServiceListItem
+                  service={service}
+                  serviceData={createServiceData(service)}
+                  retainMobileLayout={true}
+                />
               </Appear>
             ))}
           </div>
