@@ -195,15 +195,15 @@ const BottomNavigation: React.FC = () => {
                             <Icon
                               className={
                                 isActive
-                                  ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                  : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                                  ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                                  : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-300 sm:h-8 sm:w-8"
                               }
                             />
                           );
                         })()}
                       </div>
                       {!isActive && (
-                        <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out group-hover:text-yellow-500 sm:block">
+                        <span className="mt-1 hidden text-xs text-blue-500 transition duration-300 ease-in-out group-hover:text-yellow-300 sm:block">
                           {item.label}
                         </span>
                       )}
@@ -279,7 +279,7 @@ const BottomNavigation: React.FC = () => {
                                   ? Cog6ToothIcon
                                   : HomeIcon;
                     return (
-                      <div
+                        <div
                         className={
                           isActive
                             ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-600"
@@ -289,8 +289,8 @@ const BottomNavigation: React.FC = () => {
                         <Icon
                           className={
                             isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                              ? "h-6 w-6 text-yellow-300"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
                           }
                         />
                       </div>
@@ -340,8 +340,8 @@ const BottomNavigation: React.FC = () => {
                   <Cog6ToothIcon
                     className={
                       isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                        ? "h-6 w-6 text-yellow-300"
+                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
                     }
                   />
                 </div>

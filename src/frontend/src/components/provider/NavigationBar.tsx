@@ -200,8 +200,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           <Icon
                             className={
                               active
-                                ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                                ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                                : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
                             }
                           />
                         </div>
@@ -262,8 +262,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <BellIcon
                           className={
                             active
-                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
                           }
                         />
                       </div>
@@ -324,8 +324,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <Cog6ToothIcon
                           className={
                             active
-                              ? "h-7 w-7 text-yellow-400 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
                           }
                         />
                       </div>
@@ -394,8 +394,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <Icon
                           className={
                             isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                              ? "h-6 w-6 text-yellow-300"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
                           }
                         />
                       </div>
@@ -455,8 +455,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               <BellIcon
                 className={
                   location.pathname.startsWith("/provider/notifications")
-                    ? "h-6 w-6 text-yellow-400"
-                    : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                    ? "h-6 w-6 text-yellow-300"
+                    : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
                 }
               />
             </div>
@@ -565,8 +565,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   <Cog6ToothIcon
                     className={
                       isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-blue-600 transition-colors duration-200 group-hover:text-yellow-500"
+                        ? "h-6 w-6 text-yellow-300"
+                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
                     }
                   />
                 </div>
