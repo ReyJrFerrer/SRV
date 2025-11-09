@@ -60,14 +60,14 @@ const NotificationsPageSP = () => {
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
-  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin",
+    "Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -139,7 +139,7 @@ const NotificationsPageSP = () => {
     if (bookingTypes.includes(type)) return "Bookings";
     if (type === "chat_message") return "Chat";
     if (type === "review_request") return "Ratings";
-    if (adminTypes.includes(type)) return "From Admin";
+    if (adminTypes.includes(type)) return "Admin";
     return "All";
   };
 
