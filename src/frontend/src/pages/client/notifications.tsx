@@ -31,12 +31,7 @@ const NotificationsPage = () => {
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
-  type NotificationTab =
-    | "All"
-    | "Bookings"
-    | "Chat"
-    | "Ratings"
-    | "Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
@@ -351,8 +346,7 @@ const NotificationsPage = () => {
                         );
                       if (tab === "Ratings")
                         return n.type === "review_reminder";
-                      if (tab === "Admin")
-                        return adminTypes.includes(n.type);
+                      if (tab === "Admin") return adminTypes.includes(n.type);
                       return false;
                     }).length
                 }
