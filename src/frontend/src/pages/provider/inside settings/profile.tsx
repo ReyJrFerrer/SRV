@@ -512,7 +512,7 @@ const ProviderProfilePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black">
             My Profile
           </h1>
         </div>

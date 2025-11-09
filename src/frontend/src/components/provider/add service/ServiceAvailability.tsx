@@ -485,13 +485,15 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               <span>Working Days</span>
               <span className="text-sm text-red-500 sm:text-base">*</span>
             </h2>
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-100"
-            >
-              Clear All
-            </button>
+            {formData.availabilitySchedule.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-100"
+              >
+                Clear All
+              </button>
+            )}
           </div>
 
           <p className="mb-4 text-sm text-gray-500">

@@ -46,9 +46,13 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
           onChange={() => onToggle(pkg.id)}
           className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
         />
-        <div className="flex-1">
-          <div className="text-lg font-semibold text-gray-900">{pkg.title}</div>
-          <div className="mb-1 text-sm text-gray-600">{pkg.description}</div>
+        <div className="min-w-0 flex-1">
+          <div className="break-words text-lg font-semibold text-gray-900">
+            {pkg.title}
+          </div>
+          <div className="mb-1 break-words text-sm text-gray-600">
+            {pkg.description}
+          </div>
           <div className="text-base font-bold text-blue-600">
             ₱
             {(pkg.price + (pkg.commissionFee || 0)).toLocaleString(undefined, {

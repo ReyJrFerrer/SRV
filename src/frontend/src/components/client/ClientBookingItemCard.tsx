@@ -427,7 +427,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+              <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
               <span

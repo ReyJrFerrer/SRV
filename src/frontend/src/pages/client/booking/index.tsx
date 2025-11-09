@@ -369,7 +369,7 @@ const MyBookingsPage: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Bookings
@@ -379,7 +379,7 @@ const MyBookingsPage: React.FC = () => {
 
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
         {/* SECTION: Search and filter bar */}
-        <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
+        <div className="mb-5 border-gray-200 bg-white">
           <div className="flex justify-start overflow-x-auto whitespace-nowrap sm:justify-center">
             <nav className="flex space-x-4 overflow-x-auto border-b border-gray-200 px-4 py-3">
               {TAB_ITEMS.map((tab) => (
