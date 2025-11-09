@@ -18,8 +18,8 @@ import BottomNavigation from "../../../components/client/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
-import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
-import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
+import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import ProviderInfo from "../../../components/client/booking-details/ProviderInfo";
 import ServiceDetails from "../../../components/client/booking-details/ServiceDetails";
 import BookingProgressTracker from "../../../components/client/booking-details/BookingProgressTracker";
@@ -300,7 +300,7 @@ const BookingDetailsPage: React.FC = () => {
             <div>
               <CancellationReasons
                 bookingId={specificBooking?.id ?? null}
-                cancelledByClient={status === "Cancelled"}
+                cancelledBy={(specificBooking as any)?.cancelledBy}
                 cancellationReason={(specificBooking as any)?.cancelReason}
               />
             </div>

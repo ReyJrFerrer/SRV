@@ -3,19 +3,27 @@ interface Props {
   // optional server-provided cancellation reason (if/when backend exists)
   cancellationReason?: string | null;
   // cancellationNotes?: string | null;
-  // whether the booking was cancelled by the client
-  cancelledByClient?: boolean;
+  // the role of who cancelled the booking: "Client" or "Provider"
+  cancelledBy?: string | null;
 }
 
 export default function CancellationReasons({
   cancellationReason,
-  cancelledByClient,
+  cancelledBy,
 }: Props) {
   const displayedReason = cancellationReason;
   // const displayedNotes = cancellationNotes;
 
-  const shouldShow = !!(cancelledByClient || displayedReason);
+  const shouldShow = !!(cancelledBy || displayedReason);
   if (!shouldShow) return null;
+
+  // Determine the display text based on who cancelled
+  const cancellerText =
+    cancelledBy === "Client"
+      ? "Client cancelled this booking"
+      : cancelledBy === "Provider"
+        ? "Provider cancelled this booking"
+        : "This booking was cancelled";
 
   return (
     <section className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
@@ -37,7 +45,7 @@ export default function CancellationReasons({
         </div>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-red-800">
-            Client cancelled this booking
+            {cancellerText}
           </h3>
           <div className="mt-1 text-sm text-red-700">
             <div className="whitespace-pre-wrap">{displayedReason}</div>

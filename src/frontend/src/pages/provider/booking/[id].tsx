@@ -8,7 +8,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
-import CancellationReasons from "../../../components/common/canellation/CancellationReasons";
+import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -20,7 +20,7 @@ import BookingProgressSection from "../../../components/provider/booking-details
 import CommissionInfo from "../../../components/provider/booking-details/CommissionInfo";
 import DeclineConfirmDialog from "../../../components/provider/booking-details/DeclineConfirmDialog";
 import ActionButtons from "../../../components/provider/booking-details/ActionButtons";
-import CancelWithReasonButton from "../../../components/common/canellation/CancelWithReasonButton";
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
 import { toast } from "sonner";
 
@@ -767,7 +767,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
       <div className="mt-16">
         <CancellationReasons
           bookingId={specificBooking?.id}
-          cancelledByClient={specificBooking?.status === "Cancelled"}
+          cancelledBy={(specificBooking as any)?.cancelledBy}
           cancellationReason={(specificBooking as any)?.cancelReason}
           // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
         />

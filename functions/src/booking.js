@@ -1473,11 +1473,13 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         // Don't fail the cancellation if reputation update fails, just log it
       }
     }
+    // Determine the role of the canceller
+    const cancellerRole = authInfo.uid === booking.clientId ? "Client" : "Provider";
     const updatedBooking = {
       ...booking,
       status: "Cancelled",
       cancelReason: cancelReason.trim(),
-      cancelledBy: authInfo.uid,
+      cancelledBy: cancellerRole,
       cancelledAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -1488,7 +1490,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Cancelled",
         cancelReason: cancelReason.trim(),
-        cancelledBy: authInfo.uid,
+        cancelledBy: cancellerRole,
         cancelledAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -1528,16 +1530,16 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
       `${cancellerName} has cancelled the booking for "${serviceName}" 
-      Reason of the client: ${cancelReason.trim()}`,
+      Reason: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
         serviceName,
-        cancelledBy: authInfo.uid,
+        cancelledBy: cancellerRole,
         cancelReason: cancelReason.trim(),
         senderName: cancellerName,
         message: `${cancellerName} has cancelled the booking for "${serviceName} " 
-          Reason of the client: ${cancelReason.trim()}`,
+          Reason: ${cancelReason.trim()}`,
       },
     );
 
@@ -1552,9 +1554,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         description: `Cancelled Booking.\nCancellation Reason: ${cancelReason.trim()}`,
         category: "cancellation",
         timestamp: new Date().toISOString(),
-        source: authInfo.uid === booking.clientId ? "client_cancellation" : "provider_cancellation",
+        source: cancellerRole === "Client" ? "client_cancellation" : "provider_cancellation",
         bookingId: bookingId,
-        cancelledBy: authInfo.uid,
+        cancelledBy: cancellerRole,
         serviceId: booking.serviceId,
         serviceName: serviceName,
         cancelledByName: cancellerName,
