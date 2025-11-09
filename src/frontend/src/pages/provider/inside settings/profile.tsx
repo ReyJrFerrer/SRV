@@ -14,6 +14,7 @@ import BottomNavigation from "../../../components/provider/NavigationBar"; // Ch
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
+import { ProfileSkeleton, ReputationScoreSkeleton } from "../../../components/SkeletonLoader";
 
 // AboutReputationScoreModal: Provider version
 interface AboutReputationScoreModalProps {
@@ -310,6 +311,21 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   isLoading,
 }) => {
   const [showModal, setShowModal] = React.useState(false);
+  const [displaySrc, setDisplaySrc] = React.useState(
+    src || "/default-provider.svg",
+  );
+
+  // Update display src only when src is actually loaded (not during loading)
+  React.useEffect(() => {
+    if (src && !isLoading) {
+      setDisplaySrc(src);
+    }
+  }, [src, isLoading]);
+
+  // Check if we have a valid cached/loaded image (data URL or blob URL)
+  const hasValidImage =
+    displaySrc.startsWith("data:") || displaySrc.startsWith("blob:");
+
   return (
     <>
       <div
@@ -322,13 +338,13 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
           if (e.key === "Enter" || e.key === " ") setShowModal(true);
         }}
       >
-        {isLoading ? (
+        {isLoading && !hasValidImage ? (
           <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>
         ) : (
           <img
-            src={src || "/default-provider.svg"}
+            src={displaySrc}
             alt="Profile Picture"
             className="h-32 w-32 rounded-full border-4 border-blue-200 object-cover shadow-lg transition-all duration-200 hover:border-yellow-400 focus:border-yellow-400"
             tabIndex={-1}
@@ -345,7 +361,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <img
-              src={src || "/default-provider.svg"}
+              src={displaySrc}
               alt="Profile Picture Large"
               className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
               onError={(e) => {
@@ -519,7 +535,10 @@ const ProviderProfilePage: React.FC = () => {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+        {loading || !profile ? (
+          <ProfileSkeleton role="provider" />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
           {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
           <div className="flex flex-col space-y-4 lg:col-span-1">
             {/* Profile Info Card (top left) */}
@@ -694,14 +713,7 @@ const ProviderProfilePage: React.FC = () => {
               </div>
               {reputationLoading ? (
                 <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                      <p className="text-sm text-gray-500">
-                        Loading reputation score...
-                      </p>
-                    </div>
-                  </div>
+                  <ReputationScoreSkeleton />
                 </div>
               ) : reputationError ? (
                 <div className="flex justify-center">
@@ -756,6 +768,7 @@ const ProviderProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
       </main>
       <div className="mt-8 block w-full px-4 lg:hidden">
         <button
