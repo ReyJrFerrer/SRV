@@ -7,6 +7,7 @@ interface Props {
   onBack: () => void;
   service: any;
   serviceImages: Array<{ dataUrl?: string | null }> | undefined;
+  isLoadingServiceImages: boolean;
   hasActiveBookings: boolean;
   activeBookingsCount: number;
   editTitleCategory: boolean;
@@ -25,6 +26,7 @@ interface Props {
 const HeroSection: React.FC<Props> = ({
   service,
   serviceImages,
+  isLoadingServiceImages,
   hasActiveBookings,
   activeBookingsCount,
   editTitleCategory,
@@ -40,13 +42,25 @@ const HeroSection: React.FC<Props> = ({
   onCancel,
 }) => {
   console.log("From Hero Section: ", service);
+
+  // Check if we have a valid cached/loaded image (data URL or blob URL)
+  const hasValidImage =
+    serviceImages &&
+    serviceImages.length > 0 &&
+    serviceImages[0].dataUrl &&
+    (serviceImages[0].dataUrl.startsWith("data:") ||
+      serviceImages[0].dataUrl.startsWith("blob:"));
+
   return (
     <>
       <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
         <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-          {serviceImages &&
-          serviceImages.length > 0 &&
-          serviceImages[0].dataUrl ? (
+          {isLoadingServiceImages && !hasValidImage ? (
+            // Show skeleton while loading and we don't have cached image
+            <div className="absolute inset-0 h-full w-full animate-pulse bg-gradient-to-r from-blue-200 via-blue-100 to-blue-50"></div>
+          ) : serviceImages &&
+            serviceImages.length > 0 &&
+            serviceImages[0].dataUrl ? (
             <img
               src={serviceImages[0].dataUrl}
               alt="Service Hero"

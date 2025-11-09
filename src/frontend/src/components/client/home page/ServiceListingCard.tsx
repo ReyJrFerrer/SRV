@@ -162,23 +162,26 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       return fallback;
     };
 
-    const { userImageUrl, refetch } = useUserImage(service.providerAvatar);
-    refetch();
+    const { userImageUrl, isLoading: isLoadingUserImage } = useUserImage(
+      service.providerAvatar,
+    );
 
     // Helper function to determine the image source with proper priority
     const getImageSource = (): string => {
-      // Priority 1: Service images
-      if (images[0]?.dataUrl) {
-        return images[0].dataUrl;
+      // Accept any valid image URL (data:, http(s) or local path)
+      const isValidImageUrl = (u?: string | null): u is string =>
+        !!u &&
+        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
+        u.length > 20;
+
+      // Priority 1: Service images (if loaded and valid)
+      const firstImage = images[0]?.dataUrl;
+      if (isValidImageUrl(firstImage)) {
+        return firstImage;
       }
 
-      // Priority 2: User avatar
-      if (
-        userImageUrl &&
-        userImageUrl !== "/default-avatar.png" &&
-        userImageUrl !== "" &&
-        userImageUrl !== undefined
-      ) {
+      // Priority 2: User avatar (if loaded and valid)
+      if (!isLoadingUserImage && isValidImageUrl(userImageUrl)) {
         return userImageUrl;
       }
 
