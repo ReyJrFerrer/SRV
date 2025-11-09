@@ -279,7 +279,7 @@ const BottomNavigation: React.FC = () => {
                                   ? Cog6ToothIcon
                                   : HomeIcon;
                     return (
-                        <div
+                      <div
                         className={
                           isActive
                             ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-600"
