@@ -271,7 +271,7 @@ const ServiceReviewsPage: React.FC = () => {
               )}
               {flaggedReviews.length > 0 && (
                 <span className="flex items-center">
-                  <span className="mr-1 text-red-500">🚩</span>
+                  <span className="mr-1 text-red-500">Flagged</span>
                   {flaggedReviews.length} Flagged
                 </span>
               )}

@@ -11,7 +11,7 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
 }) => {
   return (
     <>
-      {/* Header (sticky on desktop) */}
+      {/* Header */}
       <header className="z-50 border-b border-yellow-100 bg-gradient-to-r from-yellow-50 to-white shadow sm:sticky sm:top-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-6">

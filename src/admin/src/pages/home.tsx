@@ -24,10 +24,7 @@ import { getFeedbackStats } from "../services/adminServiceCanister";
 
 export const AdminHomePage: React.FC = () => {
   const {
-    // Loading states
     loading,
-
-    // Data states
     systemStats,
     users,
     bookings,
@@ -140,7 +137,7 @@ export const AdminHomePage: React.FC = () => {
     loadFeedbackStats();
   }, []);
 
-  // Toggle mobile bottom bar when header scrolls out of view
+  // Toggle mobile bottom bar
   useEffect(() => {
     const onScroll = () => {
       setShowMobileBar(window.scrollY > 80);
@@ -211,7 +208,7 @@ export const AdminHomePage: React.FC = () => {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl overflow-x-hidden px-4 py-6 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         <div className="space-y-6">
-          {/* System Overview - moved to top */}
+          {/* System Overview */}
           <AdminDashboardStats
             stats={dashboardStats}
             loading={loading.systemStats}
@@ -384,7 +381,7 @@ export const AdminHomePage: React.FC = () => {
           </section>
         </div>
       </main>
-      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      {/* Mobile bottom actions bar */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
           showMobileBar

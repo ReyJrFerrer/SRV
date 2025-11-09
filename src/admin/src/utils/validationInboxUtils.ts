@@ -1,4 +1,3 @@
-// Calculate statistics for validation inbox
 export const calculateStats = (
   servicesWithCertificates: any[],
   approvedCertificates: any[],
@@ -26,51 +25,42 @@ export const calculateStats = (
   };
 };
 
-// Extract media ID from certificate URL
+// Extract media ID from certificate URL (handles Firebase Storage emulator, production, and legacy formats)
 export const extractMediaIdFromUrl = async (
   certificateUrl: string,
 ): Promise<string> => {
   let mediaId: string | null = null;
 
   try {
-    // Handle Firebase Storage Emulator URLs: http://127.0.0.1:9199/v0/b/{bucket}/o/{encodedPath}?alt=media
+    // Firebase Storage Emulator (localhost/127.0.0.1:9199)
     if (
       certificateUrl.includes("127.0.0.1:9199") ||
       certificateUrl.includes("localhost:9199")
     ) {
-      // Extract the encoded path from the URL: /o/{encodedPath}
       const urlMatch = certificateUrl.match(/\/o\/([^?]+)/);
       if (urlMatch) {
-        const encodedPath = urlMatch[1];
-        // Decode URL-encoded path: certificates%2FownerId%2FmediaId_filename -> certificates/ownerId/mediaId_filename
-        const decodedPath = decodeURIComponent(encodedPath);
-        // Split path: ["certificates", "ownerId", "mediaId_filename"]
+        const decodedPath = decodeURIComponent(urlMatch[1]);
         const pathParts = decodedPath.split("/");
         const filename = pathParts[pathParts.length - 1];
-        // MediaId is the first part before underscore: {mediaId}_{filename}
         mediaId = filename?.split("_")[0] || null;
       }
     }
-    // Handle Firebase Storage Production URLs: https://storage.googleapis.com/{bucket}/{path}
+    // Firebase Storage Production (storage.googleapis.com)
     else if (certificateUrl.includes("storage.googleapis.com")) {
-      // Extract from URL like: https://storage.googleapis.com/.../certificates/uid/mediaId_filename
       const parts = certificateUrl.split("/");
-      const filename = parts[parts.length - 1]?.split("?")[0]; // Remove query params
-      // MediaId is typically the first part before underscore: {mediaId}_{filename}
+      const filename = parts[parts.length - 1]?.split("?")[0];
       mediaId = filename?.split("_")[0] || null;
     }
-    // Handle old format: /media/{mediaId}
     else if (certificateUrl.includes("/media/")) {
       mediaId =
         certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
         null;
     }
-    // Handle media:// format
     else if (certificateUrl.startsWith("media://")) {
       mediaId = certificateUrl.replace("media://", "").split("/").pop() || null;
     }
 
-    // If extraction failed, try querying Firestore by URL as fallback
+    // Fallback: query Firestore by URL if extraction failed
     if (!mediaId) {
       console.warn(
         "Could not extract mediaId from URL, querying Firestore by URL:",
@@ -113,7 +103,6 @@ export const extractMediaIdFromUrl = async (
     );
   }
 
-  // Final validation - ensure we have a mediaId
   if (!mediaId || mediaId.trim() === "") {
     console.error("Media ID is empty or invalid:", mediaId);
     throw new Error("Media ID is required but was empty or invalid");
@@ -122,7 +111,6 @@ export const extractMediaIdFromUrl = async (
   return mediaId;
 };
 
-// Remove certificate from services list
 export const removeCertificateFromServices = (
   services: any[],
   serviceId: string,
@@ -140,10 +128,9 @@ export const removeCertificateFromServices = (
       }
       return s;
     })
-    .filter((s) => s.certificateUrls.length > 0); // Remove services with no certificates left
+    .filter((s) => s.certificateUrls.length > 0);
 };
 
-// Create certificate data object
 export const createCertificateData = (
   service: any,
   certificateIndex: number,
@@ -162,18 +149,15 @@ export const createCertificateData = (
   };
 };
 
-// Add certificate back to services list
 export const addCertificateToServices = (
   services: any[],
   certificate: any,
 ): any[] => {
-  // Check if the service already exists in the list
   const existingServiceIndex = services.findIndex(
     (s) => s.serviceId === certificate.service.serviceId,
   );
 
   if (existingServiceIndex !== -1) {
-    // Service exists, add the certificate URL if it's not already there
     const service = services[existingServiceIndex];
     if (!service.certificateUrls.includes(certificate.certificateUrl)) {
       return services.map((s, idx) =>
@@ -190,7 +174,6 @@ export const addCertificateToServices = (
     }
     return services;
   } else {
-    // Service doesn't exist, add it with the certificate
     return [
       ...services,
       {
@@ -201,14 +184,12 @@ export const addCertificateToServices = (
   }
 };
 
-// Extract media ID from certificate URL (simple version for undo)
 export const extractMediaIdFromUrlSimple = (
   certificateUrl: string,
 ): string | null => {
   return certificateUrl.split("/media/")[1] || null;
 };
 
-// Create media modal state for viewing certificate
 export const createMediaModalState = (url: string) => {
   return {
     isOpen: true,
@@ -223,7 +204,6 @@ export const createMediaModalState = (url: string) => {
   };
 };
 
-// Create closed media modal state
 export const createClosedMediaModalState = () => {
   return {
     isOpen: false,

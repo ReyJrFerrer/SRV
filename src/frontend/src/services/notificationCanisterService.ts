@@ -427,8 +427,6 @@ export const notificationCanisterService = {
   },
 };
 
-// Deprecated functions - kept for backward compatibility
-// These are no longer needed with Firebase but may be referenced in old code
 export const updateNotificationActor = (_identity: any) => {
   console.warn(
     "updateNotificationActor is deprecated - Firebase handles auth automatically",

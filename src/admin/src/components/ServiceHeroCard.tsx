@@ -42,7 +42,6 @@ export const ServiceHeroCard: React.FC<ServiceHeroCardProps> = ({
       <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
         {/* Service Info */}
         <div className="min-w-0 flex-1">
-          {/* Mobile: Green dot next to name */}
           <div className="mb-2 block md:hidden">
             <div className="flex flex-col items-start gap-1">
               <div className="flex w-full flex-wrap items-center gap-2">
@@ -63,7 +62,6 @@ export const ServiceHeroCard: React.FC<ServiceHeroCardProps> = ({
               </div>
             </div>
           </div>
-          {/* Desktop: Name, availability note */}
           <div className="mb-2 hidden items-center gap-2 md:flex">
             <h2
               className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
@@ -71,7 +69,6 @@ export const ServiceHeroCard: React.FC<ServiceHeroCardProps> = ({
             >
               {service.title}
             </h2>
-            {/* Availability note */}
             <span
               className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${
                 service.status === "Available"
@@ -93,7 +90,7 @@ export const ServiceHeroCard: React.FC<ServiceHeroCardProps> = ({
             {service.category}
           </div>
         </div>
-        {/* Rating on Right Side */}
+        {/* Rating */}
         <div className="flex min-w-[180px] flex-col items-center justify-center gap-2">
           <div
             onClick={() => navigate(`/service/${service.id}/reviews`)}

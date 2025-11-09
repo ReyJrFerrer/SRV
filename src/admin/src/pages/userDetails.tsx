@@ -1,43 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import ProviderStats from "../components/ProviderStats";
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 import {
   UserDetailsHeader,
   UserInformationCard,
   ReputationSummaryCard,
   UserDetailsModals,
 } from "../components";
-
-interface UserData {
-  id: string;
-  name: string;
-  phone: string;
-  createdAt: Date;
-  updatedAt: Date;
-  profilePicture?: {
-    imageUrl: string;
-    thumbnailUrl: string;
-  };
-  biography?: string;
-  totalEarnings: number;
-  pendingCommission: number;
-  settledCommission: number;
-  completedJobs: number;
-  averageRating: number;
-  totalReviews: number;
-  completionRate: number;
-  lastActivity: Date;
-  reputationScore: number;
-  reputationLevel: string;
-  reputationRing: number;
-  isLocked: boolean;
-  walletBalance: number;
-  servicesCount: number;
-}
+import {
+  convertProfileToUserData,
+  formatDate,
+  type UserData,
+} from "../utils/userDetailsUtils";
 
 export const UserDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,9 +34,6 @@ export const UserDetailsPage: React.FC = () => {
   const [loadingUser, setLoadingUser] = useState(true);
   const [showReputationConfirmation, setShowReputationConfirmation] =
     useState(false);
-  const [showCommissionConfirmation, setShowCommissionConfirmation] =
-    useState(false);
-  const [outstandingCommission, setOutstandingCommission] = useState(0);
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
   const [showLockConfirmation, setShowLockConfirmation] = useState(false);
   const [suspensionDuration, setSuspensionDuration] = useState<
@@ -68,202 +41,11 @@ export const UserDetailsPage: React.FC = () => {
   >("7");
   const [customDays, setCustomDays] = useState<number>(7);
 
-  // Convert Profile to UserData format with real data
-  const convertProfileToUserData = async (
-    profile: Profile,
-  ): Promise<UserData> => {
-    // Get lock status from the shared lock status store
-    const lockStatus = getUserLockStatus(profile.id.toString());
-
-    try {
-      // Fetch real analytics data with individual error handling
-      const [analytics, reviews, reputation, walletBalance, servicesData] =
-        await Promise.allSettled([
-          adminServiceCanister.getUserAnalytics(profile.id.toString()),
-          adminServiceCanister.getUserReviews(profile.id.toString()),
-          adminServiceCanister.getUserReputation(profile.id.toString()),
-          walletCanisterService.getBalanceOf(profile.id.toString()),
-          adminServiceCanister.getUserServicesAndBookings(
-            profile.id.toString(),
-          ),
-        ]);
-
-      // Extract results with fallbacks
-      const analyticsData =
-        analytics.status === "fulfilled"
-          ? analytics.value
-          : {
-              totalEarnings: 0,
-              completedJobs: 0,
-              cancelledJobs: 0,
-              totalJobs: 0,
-              completionRate: 0,
-            };
-
-      const reviewsData =
-        reviews.status === "fulfilled"
-          ? reviews.value
-          : {
-              averageRating: 0,
-              totalReviews: 0,
-            };
-
-      const reputationData =
-        reputation.status === "fulfilled"
-          ? reputation.value
-          : {
-              reputationScore: 50,
-              trustLevel: "New",
-              completedBookings: 0,
-            };
-
-      const walletBalanceData =
-        walletBalance.status === "fulfilled" ? walletBalance.value : 0;
-
-      const servicesDataResult =
-        servicesData.status === "fulfilled"
-          ? servicesData.value
-          : {
-              offeredServices: [],
-              clientBookings: [],
-              providerBookings: [],
-            };
-
-      // Log any failed requests for debugging
-      if (analytics.status === "rejected") {
-        console.warn("Analytics fetch failed:", analytics.reason);
-      }
-      if (reviews.status === "rejected") {
-        console.warn("Reviews fetch failed:", reviews.reason);
-      }
-      if (reputation.status === "rejected") {
-        console.warn("Reputation fetch failed:", reputation.reason);
-      }
-      if (walletBalance.status === "rejected") {
-        console.warn("Wallet balance fetch failed:", walletBalance.reason);
-      }
-      if (servicesData.status === "rejected") {
-        console.warn("Services data fetch failed:", servicesData.reason);
-      }
-
-      // Safely convert dates from nanoseconds to Date objects
-      const createdAtValue = profile.createdAt
-        ? typeof profile.createdAt === "bigint"
-          ? new Date(Number(profile.createdAt) / 1000000)
-          : typeof profile.createdAt === "number"
-            ? new Date(profile.createdAt / 1000000)
-            : new Date()
-        : new Date();
-
-      const updatedAtValue = profile.updatedAt
-        ? typeof profile.updatedAt === "bigint"
-          ? new Date(Number(profile.updatedAt) / 1000000)
-          : typeof profile.updatedAt === "number"
-            ? new Date(profile.updatedAt / 1000000)
-            : new Date()
-        : new Date();
-
-      return {
-        id: profile.id.toString(),
-        name: profile.name,
-        phone: profile.phone,
-        createdAt: createdAtValue,
-        updatedAt: updatedAtValue,
-        profilePicture:
-          profile.profilePicture &&
-          profile.profilePicture.length > 0 &&
-          profile.profilePicture[0]
-            ? {
-                imageUrl: profile.profilePicture[0].imageUrl,
-                thumbnailUrl: profile.profilePicture[0].thumbnailUrl,
-              }
-            : undefined,
-        biography:
-          profile.biography && profile.biography.length > 0
-            ? profile.biography[0]
-            : undefined,
-        totalEarnings: analyticsData.totalEarnings,
-        pendingCommission: 0,
-        settledCommission: 0,
-        completedJobs: analyticsData.completedJobs,
-        averageRating: reviewsData.averageRating,
-        totalReviews: reviewsData.totalReviews,
-        completionRate: analyticsData.completionRate,
-        lastActivity: updatedAtValue,
-        reputationScore: reputationData.reputationScore,
-        reputationLevel: reputationData.trustLevel,
-        reputationRing: Math.min(
-          5,
-          Math.floor(reputationData.completedBookings / 10) + 1,
-        ),
-        isLocked: lockStatus,
-        walletBalance: walletBalanceData || 0,
-        servicesCount: servicesDataResult.offeredServices.length,
-      };
-    } catch (error) {
-      console.error("Error fetching real user data, using defaults:", error);
-      // Fallback to default values if real data fails
-      // Safely convert dates from nanoseconds to Date objects
-      const createdAtValue = profile.createdAt
-        ? typeof profile.createdAt === "bigint"
-          ? new Date(Number(profile.createdAt) / 1000000)
-          : typeof profile.createdAt === "number"
-            ? new Date(profile.createdAt / 1000000)
-            : new Date()
-        : new Date();
-
-      const updatedAtValue = profile.updatedAt
-        ? typeof profile.updatedAt === "bigint"
-          ? new Date(Number(profile.updatedAt) / 1000000)
-          : typeof profile.updatedAt === "number"
-            ? new Date(profile.updatedAt / 1000000)
-            : new Date()
-        : new Date();
-
-      return {
-        id: profile.id.toString(),
-        name: profile.name,
-        phone: profile.phone,
-        createdAt: createdAtValue,
-        updatedAt: updatedAtValue,
-        profilePicture:
-          profile.profilePicture &&
-          profile.profilePicture.length > 0 &&
-          profile.profilePicture[0]
-            ? {
-                imageUrl: profile.profilePicture[0].imageUrl,
-                thumbnailUrl: profile.profilePicture[0].thumbnailUrl,
-              }
-            : undefined,
-        biography:
-          profile.biography && profile.biography.length > 0
-            ? profile.biography[0]
-            : undefined,
-        // Default values if real data fails
-        totalEarnings: 0,
-        pendingCommission: 0,
-        settledCommission: 0,
-        completedJobs: 0,
-        averageRating: 0,
-        totalReviews: 0,
-        completionRate: 0,
-        lastActivity: new Date(Number(profile.updatedAt) / 1000000),
-        reputationScore: 50,
-        reputationLevel: "New",
-        reputationRing: 1,
-        isLocked: lockStatus,
-        walletBalance: 0,
-        servicesCount: 0,
-      };
-    }
-  };
-
-  const handleUpdateCommission = async (newAmount: number) => {
+  const handleUpdateCommission = (newAmount: number) => {
     // Update local balance when refreshed from ProviderStats
     if (user) {
       setUser({ ...user, walletBalance: newAmount });
     }
-    setOutstandingCommission(newAmount);
   };
 
   const handleReputationChange = (newScore: number) => {
@@ -380,7 +162,7 @@ export const UserDetailsPage: React.FC = () => {
   };
 
   // Load user data function
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     if (!id) {
       setLoadingUser(false);
       return;
@@ -401,10 +183,12 @@ export const UserDetailsPage: React.FC = () => {
 
     if (foundProfile) {
       try {
-        const userData = await convertProfileToUserData(foundProfile);
+        const userData = await convertProfileToUserData(
+          foundProfile,
+          getUserLockStatus,
+        );
         setUser(userData);
         setPendingReputationScore(userData.reputationScore);
-        setOutstandingCommission(userData.pendingCommission);
       } catch (error) {
         console.error("Error converting user data:", error);
         // Fallback to basic user data
@@ -420,15 +204,20 @@ export const UserDetailsPage: React.FC = () => {
             : new Date(),
           profilePicture:
             foundProfile?.profilePicture &&
-            foundProfile.profilePicture.length > 0
+            Array.isArray(foundProfile.profilePicture) &&
+            foundProfile.profilePicture.length > 0 &&
+            foundProfile.profilePicture[0]?.imageUrl
               ? {
-                  imageUrl: foundProfile.profilePicture[0]!.imageUrl,
-                  thumbnailUrl: foundProfile.profilePicture[0]!.thumbnailUrl,
+                  imageUrl: foundProfile.profilePicture[0].imageUrl,
+                  thumbnailUrl:
+                    foundProfile.profilePicture[0].thumbnailUrl ||
+                    foundProfile.profilePicture[0].imageUrl,
                 }
               : undefined,
           biography:
-            foundProfile?.biography && foundProfile.biography.length > 0
-              ? foundProfile.biography[0]
+            foundProfile?.biography &&
+            typeof foundProfile.biography === "string"
+              ? foundProfile.biography
               : undefined,
           totalEarnings: 0,
           pendingCommission: 0,
@@ -449,27 +238,18 @@ export const UserDetailsPage: React.FC = () => {
         };
         setUser(basicUserData);
         setPendingReputationScore(50);
-        setOutstandingCommission(0);
       }
     } else {
       setUser(null);
     }
 
     setLoadingUser(false);
-  };
+  }, [id, backendUsers, refreshUsers, getUserLockStatus]);
 
   // Load user data on component mount
   useEffect(() => {
     loadUser();
-  }, [id, backendUsers, refreshUsers]);
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "2-digit",
-      year: "numeric",
-    });
-  };
+  }, [loadUser]);
 
   if (loadingUser) {
     return (
@@ -584,15 +364,12 @@ export const UserDetailsPage: React.FC = () => {
 
       <UserDetailsModals
         showReputationConfirmation={showReputationConfirmation}
-        showCommissionConfirmation={showCommissionConfirmation}
         showLockConfirmation={showLockConfirmation}
         pendingReputationScore={pendingReputationScore}
-        outstandingCommission={outstandingCommission}
         suspensionDuration={suspensionDuration}
         customDays={customDays}
         onReputationConfirm={confirmReputationUpdate}
         onReputationCancel={() => setShowReputationConfirmation(false)}
-        onCommissionCancel={() => setShowCommissionConfirmation(false)}
         onLockConfirm={confirmLockAccount}
         onLockCancel={() => {
           setShowLockConfirmation(false);

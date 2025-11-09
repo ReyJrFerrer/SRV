@@ -37,7 +37,6 @@ export const UserChatHistoryPage: React.FC = () => {
 
   useEffect(() => {
     if (conversationId && userId) {
-      // Get data from navigation state or fetch
       if (location.state) {
         setOtherUserName(location.state.otherUserName || "");
         setOtherUserId(location.state.otherUserId || "");
@@ -47,7 +46,7 @@ export const UserChatHistoryPage: React.FC = () => {
       }
       loadMessages();
       loadOtherUserProfile();
-      loadUserProfile(); // Load the user's own profile
+      loadUserProfile();
     }
   }, [conversationId, userId, location.state]);
 
@@ -78,7 +77,6 @@ export const UserChatHistoryPage: React.FC = () => {
     if (!userId || !conversationId) return;
 
     try {
-      // First try to get other user ID from conversation if not in state
       if (!otherUserId) {
         const conversations =
           await adminServiceCanister.getUserConversations(userId);
@@ -101,15 +99,13 @@ export const UserChatHistoryPage: React.FC = () => {
           if (!otherUserName) {
             setOtherUserName(profile.name);
           }
-          // Only update if profilePicture exists (like client/provider does)
+          // Only update if profilePicture exists
           if (profile.profilePicture && profile.profilePicture.imageUrl) {
             setOtherUserImage(profile.profilePicture.imageUrl);
           }
-          // If null, don't call setState - stays as DEFAULT_USER_IMAGE
         }
       }
     } catch (e) {
-      // Silently fail - user will see default avatar
     }
   };
 
@@ -120,14 +116,11 @@ export const UserChatHistoryPage: React.FC = () => {
       const profile = await authCanisterService.getProfile(userId);
       if (profile) {
         setUserName(profile.name);
-        // Only update if profilePicture exists (like client/provider does)
         if (profile.profilePicture && profile.profilePicture.imageUrl) {
           setUserImage(profile.profilePicture.imageUrl);
         }
-        // If null, don't call setState - stays as DEFAULT_USER_IMAGE
       }
     } catch (e) {
-      // Silently fail - user will see default avatar
     }
   };
 
@@ -220,7 +213,7 @@ export const UserChatHistoryPage: React.FC = () => {
                 key={message.id}
                 className={`flex items-end gap-2 ${fromUser ? "justify-end" : "justify-start"}`}
               >
-                {/* Avatar (for other user only) */}
+                {/* Avatar */}
                 {!fromUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
@@ -254,7 +247,7 @@ export const UserChatHistoryPage: React.FC = () => {
                     {formatTimestamp(message.createdAt)}
                   </p>
                 </div>
-                {/* Avatar (for user only) */}
+                {/* Avatar */}
                 {fromUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage

@@ -228,7 +228,7 @@ async function checkConsecutiveBadReviews(
         };
 
         // Save report to Firestore
-        await db.collection("app_reports").doc(reportId).set(newReport);
+        await db.collection("reports").doc(reportId).set(newReport);
         console.log(`✅ Automatically created ticket ${reportId} for ` +
           `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} consecutive bad reviews.`);
         return true;

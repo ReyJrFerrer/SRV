@@ -2,15 +2,12 @@ import React from "react";
 
 interface UserDetailsModalsProps {
   showReputationConfirmation: boolean;
-  showCommissionConfirmation: boolean;
   showLockConfirmation: boolean;
   pendingReputationScore: number;
-  outstandingCommission: number;
   suspensionDuration: "7" | "30" | "custom" | "indefinite";
   customDays: number;
   onReputationConfirm: () => void;
   onReputationCancel: () => void;
-  onCommissionCancel: () => void;
   onLockConfirm: () => void;
   onLockCancel: () => void;
   onSuspensionDurationChange: (
@@ -21,15 +18,12 @@ interface UserDetailsModalsProps {
 
 export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
   showReputationConfirmation,
-  showCommissionConfirmation,
   showLockConfirmation,
   pendingReputationScore,
-  outstandingCommission,
   suspensionDuration,
   customDays,
   onReputationConfirm,
   onReputationCancel,
-  onCommissionCancel,
   onLockConfirm,
   onLockCancel,
   onSuspensionDurationChange,
@@ -64,39 +58,6 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                 className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Update Reputation
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Commission Update Confirmation Modal - Keeping for backward compatibility but not used */}
-      {showCommissionConfirmation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Confirm Commission Update
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to update the outstanding commission to{" "}
-                <strong>₱{outstandingCommission.toFixed(2)}</strong>?
-              </p>
-            </div>
-            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
-              <button
-                onClick={onCommissionCancel}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onCommissionCancel}
-                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Close
               </button>
             </div>
           </div>

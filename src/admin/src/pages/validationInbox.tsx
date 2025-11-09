@@ -19,9 +19,6 @@ import {
 
 export const ValidationInboxPage: React.FC = () => {
   const navigate = useNavigate();
-  // Certificate validation page - no need for useAdmin loading states
-
-  // Certificate validation state
   const [servicesWithCertificates, setServicesWithCertificates] = useState<
     any[]
   >([]);
@@ -39,8 +36,7 @@ export const ValidationInboxPage: React.FC = () => {
   // Certificate validation state
   const [approvedCertificates, setApprovedCertificates] = useState<any[]>([]);
   const [rejectedCertificates, setRejectedCertificates] = useState<any[]>([]);
-
-  // State for media modal
+  
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     mediaItem: {
@@ -139,13 +135,6 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      console.log(
-        "Using mediaId for certificate update:",
-        mediaId,
-        "from URL:",
-        certificateUrl,
-      );
-
       // Update validation status in media collection
       const { adminServiceCanister } = await import(
         "../services/adminServiceCanister"
@@ -155,9 +144,6 @@ export const ValidationInboxPage: React.FC = () => {
         "Validated",
       );
 
-      console.log("Certificate validated successfully, reloading data...");
-
-      // Reload all data to reflect the changes
       await Promise.all([
         loadServicesWithCertificates(),
         loadValidatedCertificates(),
@@ -177,13 +163,6 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      console.log(
-        "Using mediaId for certificate update:",
-        mediaId,
-        "from URL:",
-        certificateUrl,
-      );
-
       // Update validation status in media collection
       const { adminServiceCanister } = await import(
         "../services/adminServiceCanister"
@@ -193,9 +172,6 @@ export const ValidationInboxPage: React.FC = () => {
         "Rejected",
       );
 
-      console.log("Certificate rejected successfully, reloading data...");
-
-      // Reload all data to reflect the changes
       await Promise.all([
         loadServicesWithCertificates(),
         loadValidatedCertificates(),
@@ -235,8 +211,6 @@ export const ValidationInboxPage: React.FC = () => {
       setServicesWithCertificates((prev) =>
         addCertificateToServices(prev, certificate),
       );
-
-      console.log("Certificate undone:", certificate);
     } catch (error) {
       console.error("Error undoing certificate:", error);
     }

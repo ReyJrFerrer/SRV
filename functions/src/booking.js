@@ -1573,7 +1573,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       };
 
       // Save report to Firestore
-      await db.collection("app_reports").doc(reportId).set(newReport);
+      await db.collection("reports").doc(reportId).set(newReport);
       console.log(`✅ [cancelBooking] Automatically 
         created ticket ${reportId} for booking cancellation.`);
     } catch (ticketError) {
@@ -2753,7 +2753,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         };
 
         ticketPromises.push(
-          db.collection("app_reports").doc(reportId).set(newReport).catch((err) => {
+          db.collection("reports").doc(reportId).set(newReport).catch((err) => {
             console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel 
               ticket for booking ${booking.id}: ${err.message}`);
           }),

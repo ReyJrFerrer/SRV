@@ -7,7 +7,7 @@ interface ServiceDetailsModalsProps {
   isDeleting: boolean;
   serviceTitle?: string;
   previewUrl: string | null;
-  previewType: "image" | "pdf" | null;
+  previewType: "image" | null;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   onPreviewClose: () => void;
@@ -59,7 +59,7 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
         </div>
       )}
 
-      {/* Image/PDF Preview Modal */}
+      {/* Image Preview Modal */}
       <Dialog
         open={!!previewUrl}
         onClose={onPreviewClose}
@@ -84,13 +84,6 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
                 src={previewUrl}
                 alt="Preview"
                 className="max-h-[70vh] max-w-[80vw] rounded-lg object-contain"
-              />
-            )}
-            {previewUrl && previewType === "pdf" && (
-              <iframe
-                src={previewUrl}
-                title="PDF Preview"
-                className="h-[70vh] w-[80vw] rounded-lg border"
               />
             )}
           </div>

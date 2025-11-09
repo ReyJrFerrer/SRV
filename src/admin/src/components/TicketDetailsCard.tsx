@@ -80,7 +80,7 @@ export const TicketDetailsCard: React.FC<TicketDetailsCardProps> = ({
                       className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        console.error(`❌ Image ${index + 1} failed to load:`, {
+                        console.error(`Image ${index + 1} failed to load:`, {
                           attachment,
                           displayUrl,
                           src: img.src,

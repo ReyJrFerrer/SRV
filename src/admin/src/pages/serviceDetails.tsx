@@ -49,7 +49,7 @@ const ServiceDetailsPage: React.FC = () => {
 
   // State for image/certificate preview modal
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewType, setPreviewType] = useState<"image" | "pdf" | null>(null);
+  const [previewType, setPreviewType] = useState<"image" | null>(null);
 
   // Handle back button behavior based on where user came from
   const handleBackClick = () => {
@@ -63,9 +63,6 @@ const ServiceDetailsPage: React.FC = () => {
       navigate(`/user/${userId}/services`);
     }
   };
-
-  // Helper to check if file is a PDF
-  const isPdfFile = (url: string) => url?.toLowerCase().endsWith(".pdf");
 
   // Load service images using the useServiceImages hook
   const {
@@ -87,17 +84,7 @@ const ServiceDetailsPage: React.FC = () => {
   const {
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
-    error: certificateError,
   } = useServiceCertificates(service?.id, service?.certificateUrls || []);
-
-  // Debug logging for certificates
-  useEffect(() => {
-    if (serviceCertificates) {
-      console.log("Service certificates loaded:", serviceCertificates);
-      console.log("Certificate loading error:", certificateError);
-      console.log("Is loading certificates:", isLoadingCertificates);
-    }
-  }, [serviceCertificates, certificateError, isLoadingCertificates]);
 
   useEffect(() => {
     const loadServiceData = async () => {
@@ -118,7 +105,7 @@ const ServiceDetailsPage: React.FC = () => {
           userId,
         );
 
-        // Use provider's serviceCanisterService.getService directly - same as provider
+        // Use provider's serviceCanisterService.getService directly
         const serviceData = await serviceCanisterService.getService(serviceId);
 
         if (serviceData) {
@@ -197,7 +184,7 @@ const ServiceDetailsPage: React.FC = () => {
                   slots: schedule.availability.slots || [],
                 },
               })) || [],
-            packages: [], // Will be loaded separately
+            packages: [],
           };
           setService(mappedService);
 
@@ -233,11 +220,7 @@ const ServiceDetailsPage: React.FC = () => {
 
     try {
       setIsDeleting(true);
-
-      // Call the admin service to delete the service
       await adminServiceCanister.deleteService(serviceId);
-
-      // Navigate back based on where user came from
       handleBackClick();
     } catch (err) {
       console.error("Error deleting service:", err);
@@ -340,7 +323,6 @@ const ServiceDetailsPage: React.FC = () => {
                 setPreviewUrl(url);
                 setPreviewType(type);
               }}
-              isPdfFile={isPdfFile}
             />
 
             <MediaGallery
@@ -353,7 +335,6 @@ const ServiceDetailsPage: React.FC = () => {
                 setPreviewUrl(url);
                 setPreviewType(type);
               }}
-              isPdfFile={isPdfFile}
             />
           </div>
         </div>
@@ -370,7 +351,6 @@ const ServiceDetailsPage: React.FC = () => {
           onPreviewClose={() => setPreviewUrl(null)}
           onDeleteClick={() => setShowDeleteConfirm(true)}
         />
-        {/* Add space below the buttons */}
         <div className="h-8" />
       </main>
     </div>

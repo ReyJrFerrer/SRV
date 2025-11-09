@@ -1,27 +1,58 @@
-// Helper function to check if user is online (active within last 24 hours)
+// Helper function to check if user is online
 export const isUserOnline = (user: any): boolean => {
-  if (!user.updatedAt) return false;
-  const updatedAt =
-    typeof user.updatedAt === "number"
-      ? new Date(Number(user.updatedAt) / 1000000)
-      : new Date(user.updatedAt);
-  const now = new Date();
-  const hoursSinceUpdate =
-    (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
-  return hoursSinceUpdate <= 24;
+  if (user.isActive !== undefined) {
+    return user.isActive;
+  }
+  if (user.lastActivity) {
+    const lastActivityDate =
+      user.lastActivity instanceof Date
+        ? user.lastActivity
+        : new Date(user.lastActivity);
+    const now = new Date();
+    const minutesSinceActivity =
+      (now.getTime() - lastActivityDate.getTime()) / (1000 * 60);
+    return minutesSinceActivity <= 15;
+  }
+
+  if (user.updatedAt) {
+    const updatedAt =
+      user.updatedAt instanceof Date
+        ? user.updatedAt
+        : new Date(user.updatedAt);
+    const now = new Date();
+    const hoursSinceUpdate =
+      (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+    return hoursSinceUpdate <= 24;
+  }
+
+  return false;
 };
 
-// Helper function to check if user is dormant (not updated for at least a month)
+// Helper function to check if user is dormant 
 export const isUserDormant = (user: any): boolean => {
-  if (!user.updatedAt) return true; // Consider users without update time as dormant
-  const updatedAt =
-    typeof user.updatedAt === "number"
-      ? new Date(Number(user.updatedAt) / 1000000)
-      : new Date(user.updatedAt);
-  const now = new Date();
-  const daysSinceUpdate =
-    (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
-  return daysSinceUpdate >= 30; // At least 30 days
+  if (user.lastActivity) {
+    const lastActivityDate =
+      user.lastActivity instanceof Date
+        ? user.lastActivity
+        : new Date(user.lastActivity);
+    const now = new Date();
+    const daysSinceActivity =
+      (now.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceActivity >= 30;
+  }
+
+  if (user.updatedAt) {
+    const updatedAt =
+      user.updatedAt instanceof Date
+        ? user.updatedAt
+        : new Date(user.updatedAt);
+    const now = new Date();
+    const daysSinceUpdate =
+      (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceUpdate >= 30; // At least 30 days
+  }
+
+  return true;
 };
 
 // Format currency for display
@@ -36,17 +67,9 @@ export const formatCurrency = (amount: number): string => {
 export const isProvider = (user: any): boolean => {
   if (!user.activeRole) return false;
 
-  // Handle both string format and Motoko variant format
   if (typeof user.activeRole === "string") {
     return (
       user.activeRole === "ServiceProvider" || user.activeRole === "Provider"
-    );
-  }
-
-  // Handle Motoko variant format
-  if (typeof user.activeRole === "object") {
-    return (
-      "ServiceProvider" in user.activeRole || "Provider" in user.activeRole
     );
   }
 
@@ -57,31 +80,11 @@ export const isProvider = (user: any): boolean => {
 export const isClient = (user: any): boolean => {
   if (!user.activeRole) return false;
 
-  // Handle both string format and Motoko variant format
   if (typeof user.activeRole === "string") {
     return user.activeRole === "Client";
   }
 
-  // Handle Motoko variant format
-  if (typeof user.activeRole === "object") {
-    return "Client" in user.activeRole;
-  }
-
   return false;
-};
-
-// Check if user has a valid role (Provider, ServiceProvider, or Client)
-export const hasValidRole = (user: any): boolean => {
-  if (!user.activeRole) return false;
-  return typeof user.activeRole === "string"
-    ? user.activeRole === "ServiceProvider" ||
-        user.activeRole === "Provider" ||
-        user.activeRole === "Client"
-    : typeof user.activeRole === "object"
-      ? "ServiceProvider" in user.activeRole ||
-        "Provider" in user.activeRole ||
-        "Client" in user.activeRole
-      : false;
 };
 
 // Filter users based on filter type
@@ -97,7 +100,7 @@ export const filterUsers = (
     } else if (filter === "dormant") {
       return isUserDormant(user);
     }
-    return true; // "all" - no filter
+    return true;
   });
 };
 
@@ -113,11 +116,12 @@ export const countClients = (users: any[]): number => {
   return users.filter(isClient).length;
 };
 
-// Calculate online users count
+// Count online users count
 export const calculateOnlineUsers = (users: any[]): number => {
   if (!users) return 0;
-  return users.filter((user) => hasValidRole(user) && isUserOnline(user))
-    .length;
+  return users.filter(
+    (user) => (isProvider(user) || isClient(user)) && isUserOnline(user),
+  ).length;
 };
 
 // Process service provider performance data
@@ -140,27 +144,21 @@ export const processServiceProviderPerformance = (
   systemStats: any,
   walletBalances: Record<string, number>,
 ): ServiceProviderPerformanceData[] => {
-  // Don't calculate if system stats are not loaded yet
   if (!systemStats) {
     return [];
   }
 
-  // If no bookings data available due to network issues, show current service providers with basic info
   if (!bookings || bookings.length === 0) {
     let providersToShow = serviceProviders;
     if (!providersToShow || providersToShow.length === 0) {
       if (users && users.length > 0) {
-        // Filter users who are service providers and convert to ServiceProviderData format
         const serviceProviderUsers = users.filter((user) => {
           if (typeof user.activeRole === "string") {
             return user.activeRole === "ServiceProvider";
-          } else if (user.activeRole && typeof user.activeRole === "object") {
-            return "ServiceProvider" in user.activeRole;
           }
           return false;
         });
 
-        // Convert Profile[] to ServiceProviderData[] format
         providersToShow = serviceProviderUsers.map((user) => ({
           id: user.id.toString(),
           name: user.name,
@@ -169,7 +167,9 @@ export const processServiceProviderPerformance = (
           pendingCommission: 0,
           settledCommission: 0,
           lastActivity: user.updatedAt
-            ? new Date(Number(user.updatedAt) / 1000000)
+            ? user.updatedAt instanceof Date
+              ? user.updatedAt
+              : new Date(user.updatedAt)
             : new Date(),
         }));
       }
@@ -210,7 +210,7 @@ export const processServiceProviderPerformance = (
 
   const performanceMap = new Map<string, ServiceProviderPerformanceData>();
 
-  // Find all users who have ever been service providers
+  // Find service provider users
   const providerIds = new Set<string>();
   bookings.forEach((booking) => {
     if (booking.serviceProviderId) {
@@ -218,7 +218,6 @@ export const processServiceProviderPerformance = (
     }
   });
 
-  // Initialize with users who have provider history
   providerIds.forEach((providerId) => {
     const user = users.find((u) => u.id.toString() === providerId);
     if (user) {
@@ -250,7 +249,6 @@ export const processServiceProviderPerformance = (
           walletBalance: walletBalances[provider.id] || 0,
         });
       } else {
-        // Update existing entry with wallet balance
         const existing = performanceMap.get(provider.id);
         if (existing) {
           existing.walletBalance = walletBalances[provider.id] || 0;
@@ -357,7 +355,7 @@ export const processServiceCategoryData = (
 ): ServiceCategoryData[] => {
   const categoryCounts: Record<string, number> = {};
 
-  // Create a map of category IDs to names from serviceCategories
+  // Map category IDs to names
   const categoryNameMap: Record<string, string> = {};
   if (serviceCategories && Array.isArray(serviceCategories)) {
     serviceCategories.forEach((category: any) => {
@@ -365,7 +363,7 @@ export const processServiceCategoryData = (
     });
   }
 
-  // Count services by category from actual services
+  // Count services by category
   if (services && Array.isArray(services)) {
     services.forEach((service: any) => {
       const categoryId = service.category?.id || service.category || "Unknown";
