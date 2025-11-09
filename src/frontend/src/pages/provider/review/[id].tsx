@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -14,8 +14,8 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useBookingRating } from "../../../hooks/reviewManagement";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 
-// Skeleton components
-const BookingDetailsSkeleton = () => (
+// Memoized skeleton components to prevent unnecessary re-renders
+const BookingDetailsSkeleton = memo(() => (
   <div className="rounded-xl bg-white p-6 shadow-lg">
     <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-200" />
     <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
@@ -41,9 +41,11 @@ const BookingDetailsSkeleton = () => (
       <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
     </div>
   </div>
-);
+));
 
-const ReviewCardSkeleton = () => (
+BookingDetailsSkeleton.displayName = "BookingDetailsSkeleton";
+
+const ReviewCardSkeleton = memo(() => (
   <div className="rounded-xl bg-white p-6 shadow-lg">
     <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
     <div className="space-y-4">
@@ -78,7 +80,9 @@ const ReviewCardSkeleton = () => (
       </div>
     </div>
   </div>
-);
+));
+
+ReviewCardSkeleton.displayName = "ReviewCardSkeleton";
 
 export default function ProviderReviewView() {
   const navigate = useNavigate();
@@ -126,70 +130,71 @@ export default function ProviderReviewView() {
     getRelativeTime,
   } = useBookingRating(null); // Don't auto-load user reviews
 
-  // Load booking and review data when bookingId changes
-  useEffect(() => {
-    const loadData = async () => {
-      if (!bookingId || typeof bookingId !== "string") return;
+  // Memoize the load data function to prevent unnecessary re-renders
+  const loadData = useCallback(async () => {
+    if (!bookingId || typeof bookingId !== "string") return;
 
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Find the booking from the bookings array
-        const foundBooking = bookings.find((b) => b.id === bookingId);
+      // Find the booking from the bookings array
+      const foundBooking = bookings.find((b) => b.id === bookingId);
 
-        if (!foundBooking) {
-          setError(
-            "Booking not found or you do not have access to this booking.",
-          );
-          return;
-        }
+      if (!foundBooking) {
+        setError(
+          "Booking not found or you do not have access to this booking.",
+        );
+        return;
+      }
 
-        // Verify this is a completed booking
-        if (foundBooking.status !== "Completed") {
-          setError("Reviews are only available for completed bookings.");
-          return;
-        }
+      // Verify this is a completed booking
+      if (foundBooking.status !== "Completed") {
+        setError("Reviews are only available for completed bookings.");
+        return;
+      }
 
-        setBooking(foundBooking);
+      setBooking(foundBooking);
 
-        // Check commission validation for cash bookings
-        if (foundBooking.paymentMethod === "CashOnHand") {
-          try {
-            const validation = await checkCommissionValidation(foundBooking);
-            setCommissionValidation(validation);
-          } catch (error) {
-            console.error("Failed to validate commission:", error);
-            setCommissionValidation({ estimatedCommission: 0 });
-          }
-        } else {
+      // Check commission validation for cash bookings
+      if (foundBooking.paymentMethod === "CashOnHand") {
+        try {
+          const validation = await checkCommissionValidation(foundBooking);
+          setCommissionValidation(validation);
+        } catch (error) {
+          console.error("Failed to validate commission:", error);
           setCommissionValidation({ estimatedCommission: 0 });
         }
-
-        // Get reviews for this booking
-        const bookingReviews = await getBookingReviews(bookingId);
-
-        if (bookingReviews && bookingReviews.length > 0) {
-          // Find the client's review (the review written by the client about this provider)
-          const review = bookingReviews.find(
-            (r) => r.clientId.toString() === foundBooking.clientId.toString(),
-          );
-          setClientReview(review || null);
-        } else {
-          setClientReview(null);
-        }
-      } catch (error) {
-        //console.error("Error loading booking/review data:", error);
-        setError("Failed to load booking and review data.");
-      } finally {
-        setLoading(false);
+      } else {
+        setCommissionValidation({ estimatedCommission: 0 });
       }
-    };
 
+      // Get reviews for this booking
+      const bookingReviews = await getBookingReviews(bookingId);
+
+      if (bookingReviews && bookingReviews.length > 0) {
+        // Find the client's review (the review written by the client about this provider)
+        const review = bookingReviews.find(
+          (r) => r.clientId.toString() === foundBooking.clientId.toString(),
+        );
+        setClientReview(review || null);
+      } else {
+        setClientReview(null);
+      }
+    } catch (error) {
+      //console.error("Error loading booking/review data:", error);
+      setError("Failed to load booking and review data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId, bookings, checkCommissionValidation, getBookingReviews]);
+
+  // Load booking and review data when dependencies change
+  useEffect(() => {
     if (!bookingLoading && bookings.length >= 0) {
       loadData();
     }
-  }, [bookingId, bookings, bookingLoading, getBookingReviews]);
+  }, [bookingLoading, loadData]);
 
   // Render star rating display
   const renderStarRating = useCallback((rating: number) => {
@@ -240,15 +245,46 @@ export default function ProviderReviewView() {
     [bookingError, reviewError, error],
   );
 
+  // Memoize extracted booking data to prevent unnecessary recalculations
+  const clientName = useMemo(
+    () => booking?.clientName || "Unknown Client",
+    [booking?.clientName],
+  );
 
-  // Extract booking data
-  const clientName = booking?.clientName || "Unknown Client";
-  const serviceName =
-    booking?.serviceDetails?.description || booking?.packageName || "Service";
-  const packageName = booking?.packageName;
-  const bookingLocation =
-    booking?.formattedLocation || "Location not specified";
-  const price = booking?.price;
+  const serviceName = useMemo(
+    () =>
+      booking?.serviceDetails?.description ||
+      booking?.packageName ||
+      "Service",
+    [booking?.serviceDetails?.description, booking?.packageName],
+  );
+
+  const packageName = useMemo(
+    () => booking?.packageName,
+    [booking?.packageName],
+  );
+
+  const bookingLocation = useMemo(
+    () => booking?.formattedLocation || "Location not specified",
+    [booking?.formattedLocation],
+  );
+
+  const price = useMemo(() => booking?.price, [booking?.price]);
+
+  // Memoize the total price calculation
+  const totalPrice = useMemo(
+    () =>
+      price !== undefined
+        ? (price + commissionValidation.estimatedCommission).toFixed(2)
+        : null,
+    [price, commissionValidation.estimatedCommission],
+  );
+
+  // Memoize booking date
+  const bookingDate = useMemo(
+    () => formatBookingDate(booking?.requestedDate || booking?.createdAt),
+    [booking?.requestedDate, booking?.createdAt, formatBookingDate],
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
@@ -303,10 +339,7 @@ export default function ProviderReviewView() {
                 <div className="flex items-center">
                   <CalendarDaysIcon className="mr-2 h-5 w-5 text-blue-500" />
                   <span>
-                    <strong>Date:</strong>{" "}
-                    {formatBookingDate(
-                      booking?.requestedDate || booking?.createdAt,
-                    )}
+                    <strong>Date:</strong> {bookingDate}
                   </span>
                 </div>
                 <div className="flex items-center">
@@ -315,15 +348,12 @@ export default function ProviderReviewView() {
                     <strong>Location:</strong> {bookingLocation}
                   </span>
                 </div>
-                {price !== undefined && (
+                {totalPrice && (
                   <div className="flex items-center">
                     <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
                     <div className="flex flex-col">
                       <span>
-                        <strong>Price:</strong> ₱
-                        {(
-                          price + commissionValidation.estimatedCommission
-                        ).toFixed(2)}
+                        <strong>Price:</strong> ₱{totalPrice}
                       </span>
                     </div>
                   </div>
