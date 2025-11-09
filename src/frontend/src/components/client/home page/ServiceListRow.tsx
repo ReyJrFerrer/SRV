@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ServiceListItem, {
   ServiceListingCardSkeleton,
 } from "./ServiceListingCard";
@@ -36,23 +36,32 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   useEffect(() => {
     const fetchServiceData = async () => {
       const serviceIds = services.map((s) => s.id);
-      const mapCopy = { ...serviceDataMap };
-      const toFetch = serviceIds.filter((id) => !mapCopy[id]);
+      
+      // Only fetch data for services we haven't fetched yet
+      const toFetch = serviceIds.filter((id) => !serviceDataMap[id]);
 
       if (toFetch.length === 0) return;
 
-      await Promise.all(
+      // Initialize loading state for new services
+      const newEntries: Record<string, ServiceData> = {};
+      toFetch.forEach((serviceId) => {
+        newEntries[serviceId] = {
+          isVerified: false,
+          averageRating: 0,
+          totalReviews: 0,
+          serviceImages: [],
+          userImageUrl: null,
+          isLoadingImages: true,
+        };
+      });
+
+      // Update state with loading placeholders
+      setServiceDataMap((prev) => ({ ...prev, ...newEntries }));
+
+      // Fetch data for all new services
+      const fetchedData = await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
-            mapCopy[serviceId] = {
-              isVerified: false,
-              averageRating: 0,
-              totalReviews: 0,
-              serviceImages: [],
-              userImageUrl: null,
-              isLoadingImages: true,
-            };
-
             // Fetch service details for verification status
             const serviceDetails =
               await serviceCanisterService.getService(serviceId);
@@ -84,70 +93,89 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
             // Use provider avatar from enriched service
             const userImageUrl = service?.providerAvatar || null;
 
-            mapCopy[serviceId] = {
-              isVerified: (serviceDetails as any)?.isVerified || false,
-              averageRating,
-              totalReviews: visibleReviews.length,
-              serviceImages,
-              userImageUrl,
-              isLoadingImages: false,
+            return {
+              serviceId,
+              data: {
+                isVerified: (serviceDetails as any)?.isVerified || false,
+                averageRating,
+                totalReviews: visibleReviews.length,
+                serviceImages,
+                userImageUrl,
+                isLoadingImages: false,
+              },
             };
           } catch (err) {
             console.error(`Error fetching data for service ${serviceId}:`, err);
-            mapCopy[serviceId] = {
-              isVerified: false,
-              averageRating: 0,
-              totalReviews: 0,
-              serviceImages: [],
-              userImageUrl: null,
-              isLoadingImages: false,
+            return {
+              serviceId,
+              data: {
+                isVerified: false,
+                averageRating: 0,
+                totalReviews: 0,
+                serviceImages: [],
+                userImageUrl: null,
+                isLoadingImages: false,
+              },
             };
           }
         }),
       );
 
-      setServiceDataMap(mapCopy);
+      // Update state with fetched data
+      const updatedData: Record<string, ServiceData> = {};
+      fetchedData.forEach(({ serviceId, data }) => {
+        updatedData[serviceId] = data;
+      });
+
+      setServiceDataMap((prev) => ({ ...prev, ...updatedData }));
     };
 
     if (services.length > 0) {
       fetchServiceData();
     }
-  }, [services]);
+  }, [services, serviceDataMap]);
 
-  const enhanceService = (service: EnrichedService): EnrichedService => ({
-    ...service,
-    heroImage: getCategoryImage(service.category.name),
-    rating: {
-      average: service.rating.average ?? 0,
-      count: service.rating.count ?? 0,
-    },
-    price: {
-      amount: service.price.amount,
-      unit: service.price.unit,
-      display: `₱${service.price.amount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-    },
-  });
+  // Memoize the enhance service function
+  const enhanceService = useMemo(
+    () => (service: EnrichedService): EnrichedService => ({
+      ...service,
+      heroImage: getCategoryImage(service.category.name),
+      rating: {
+        average: service.rating.average ?? 0,
+        count: service.rating.count ?? 0,
+      },
+      price: {
+        amount: service.price.amount,
+        unit: service.price.unit,
+        display: `₱${service.price.amount.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      },
+    }),
+    [],
+  );
 
-  if (loading) {
-    return (
-      <div className={`${className}`}>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="h-7 w-32 animate-pulse rounded-md bg-gray-200"></div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i}>
-              <ServiceListingCardSkeleton />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Memoize the services with their data
+  const servicesWithData = useMemo(() => {
+    return services.map((service) => {
+      const serviceData = serviceDataMap[service.id] || {
+        isVerified: false,
+        averageRating: service.rating?.average || 0,
+        totalReviews: service.rating?.count || 0,
+        serviceImages: [],
+        userImageUrl: null,
+        isLoadingImages: true,
+      };
 
+      return {
+        service: enhanceService(service),
+        serviceData,
+      };
+    });
+  }, [services, serviceDataMap, enhanceService]);
+
+  // Show error state
   if (error) {
     return (
       <div className={`p-4 ${className}`}>
@@ -157,37 +185,36 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     );
   }
 
+  // Always show the layout with services or skeleton cards
   return (
     <div className={`w-full max-w-full ${className}`}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      {services.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-gray-500">No services available at the moment.</p>
-        </div>
+      {loading || services.length === 0 ? (
+        loading ? (
+          // Show skeleton grid while initially loading
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i}>
+                <ServiceListingCardSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Show empty state when no services available
+          <div className="py-12 text-center">
+            <p className="text-gray-500">No services available at the moment.</p>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => {
-            const serviceData = serviceDataMap[service.id] || {
-              isVerified: false,
-              averageRating: service.rating?.average || 0,
-              totalReviews: service.rating?.count || 0,
-              serviceImages: [],
-              userImageUrl: null,
-              isLoadingImages: true,
-            };
-
-            return (
-              <div key={service.id}>
-                <ServiceListItem
-                  service={enhanceService(service)}
-                  serviceData={serviceData}
-                />
-              </div>
-            );
-          })}
+          {servicesWithData.map(({ service, serviceData }) => (
+            <div key={service.id}>
+              <ServiceListItem service={service} serviceData={serviceData} />
+            </div>
+          ))}
         </div>
       )}
     </div>

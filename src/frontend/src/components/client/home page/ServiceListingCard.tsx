@@ -78,6 +78,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     retainMobileLayout = false,
     isGridItem = false,
   }) => {
+    // Track image loading state to prevent flash of default image
+    const [imageLoaded, setImageLoaded] = React.useState(false);
+    const [imageSrc, setImageSrc] = React.useState<string>("");
+
     // Use the passed service data instead of fetching
     const {
       isVerified,
@@ -189,6 +193,44 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       // Priority 4: Default fallback
       return "/images/ai-sp/others.svg";
     };
+
+    // Effect to preload image and update state when ready
+    React.useEffect(() => {
+      const imageSource = getImageSource();
+      
+      // Reset loading state when image source changes
+      setImageLoaded(false);
+      setImageSrc(imageSource);
+
+      // For SVG or already loaded images, mark as loaded immediately
+      if (imageSource.endsWith('.svg') || imageSource.startsWith('data:')) {
+        setImageLoaded(true);
+        return;
+      }
+
+      // Preload the image
+      const img = new Image();
+      img.onload = () => {
+        setImageLoaded(true);
+      };
+      img.onerror = () => {
+        // On error, use fallback and mark as loaded
+        setImageSrc('/images/ai-sp/others.svg');
+        setImageLoaded(true);
+      };
+      img.src = imageSource;
+
+      return () => {
+        img.onload = null;
+        img.onerror = null;
+      };
+    }, [serviceImages, userImageUrl, service.category?.slug, isLoadingImages]);
+
+    // Show skeleton while data is loading (after all hooks)
+    if (isLoadingImages) {
+      return <ServiceListingCardSkeleton />;
+    }
+
     return (
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
@@ -198,13 +240,20 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="relative">
             {/* Image container */}
             <div className="aspect-video w-full bg-blue-50">
+              {!imageLoaded && (
+                <div className="h-full w-full animate-pulse rounded-t-2xl bg-gray-200" />
+              )}
               <img
-                src={getImageSource()}
+                src={imageSrc}
                 alt={service.title}
-                className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300"
+                className={`service-image h-full w-full rounded-t-2xl object-cover transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                style={!imageLoaded ? { position: 'absolute', top: 0, left: 0 } : {}}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";
+                  setImageLoaded(true);
                 }}
               />
             </div>
