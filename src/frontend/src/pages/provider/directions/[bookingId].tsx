@@ -713,7 +713,7 @@ const ProviderDirectionsPage: React.FC = () => {
 
   const handleStartService = async () => {
     if (!bookingId || isStartingService) return;
-    
+
     try {
       setIsStartingService(true);
       const success = await startBookingById(bookingId);

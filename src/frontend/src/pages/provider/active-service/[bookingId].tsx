@@ -53,7 +53,6 @@ const ActiveServicePage: React.FC = () => {
       return;
     }
 
-
     if (!booking) {
       console.warn("Active service: booking not found");
       navigate("/provider/bookings", { replace: true });

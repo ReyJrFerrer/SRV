@@ -29,11 +29,10 @@ const ProviderRateClientPage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-       // Wait for loading to complete before checking booking
+    // Wait for loading to complete before checking booking
     if (isLoadingBooking) {
       return;
     }
-
 
     if (!booking) {
       console.warn("Rate client: booking not found");
@@ -202,7 +201,7 @@ const ProviderRateClientPage: React.FC = () => {
   // Show loading state while booking is being fetched
   if (!booking) {
     return (
-       <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
