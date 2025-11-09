@@ -344,8 +344,8 @@ export const processServiceImageFiles = async (
       return [];
     }
 
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
+    if (files.length > 10) {
+      throw new Error("Maximum 10 images allowed per service");
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -789,8 +789,8 @@ export const uploadServiceImagesWithDescaling = async (
       throw new Error("No files provided for upload");
     }
 
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
+    if (files.length > 10) {
+      throw new Error("Maximum 10 images allowed per service");
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };

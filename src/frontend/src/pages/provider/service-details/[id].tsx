@@ -516,9 +516,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     const files = Array.from(event.target.files);
 
     // Check if adding these files would exceed the 5 image limit
-    if (tempDisplayImages.length + files.length > 5) {
+    if (tempDisplayImages.length + files.length > 10) {
       setUploadError(
-        `Cannot upload ${files.length} image(s). Maximum 5 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
+        `Cannot upload ${files.length} image(s). Maximum 10 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
       );
       event.target.value = "";
       return;
@@ -627,8 +627,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingUploads([]);
       setPendingRemovals([]);
       setTempDisplayImages([]);
+
+      // Exit edit mode
+      setEditImages(false);
+
       toast.success("Service images updated!");
-      window.location.reload();
+
+      // Trigger a refresh of service data to get updated image URLs
+      setRetryCount((prev) => prev + 1);
     } catch (error) {
       setUploadError(
         error instanceof Error
@@ -841,8 +847,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingCertificateUploads([]);
       setPendingCertificateRemovals([]);
       setTempDisplayCertificates([]);
+
+      // Exit edit mode
+      setEditCertifications(false);
+
       toast.success("Certifications updated!");
-      window.location.reload();
+
+      // Trigger a refresh of service data to get updated certificate URLs
+      setRetryCount((prev) => prev + 1);
     } catch (error) {
       setCertificateUploadError(
         error instanceof Error

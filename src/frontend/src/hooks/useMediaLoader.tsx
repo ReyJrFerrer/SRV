@@ -4,6 +4,7 @@ import { doc, getFirestore, getDoc } from "firebase/firestore";
 import { getFirebaseApp } from "../services/firebaseApp";
 import { mediaService, extractMediaIdFromUrl } from "../services/mediaService";
 import { serviceCanisterService } from "../services/serviceCanisterService";
+import { persistentImageCache } from "../utils/persistentImageCache";
 
 export interface UseImageLoaderOptions {
   enabled?: boolean;
@@ -111,32 +112,86 @@ export const useImagePreloader = (mediaUrls: (string | null | undefined)[]) => {
 
 /**
  * Hook for managing profile picture loading specifically
- * Includes fallback to default avatar
+ * Includes fallback to default avatar and persistent caching
  */
 export const useProfileImage = (
   profilePictureUrl: string | null | undefined,
   options: UseImageLoaderOptions = {},
 ) => {
+  const [initialCache, setInitialCache] = useState<string | null>(null);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
+
+  // Check persistent cache on mount - this runs before the query
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCache = async () => {
+      if (profilePictureUrl) {
+        const cached = await persistentImageCache.get(profilePictureUrl);
+        if (mounted && cached) {
+          setInitialCache(cached);
+        }
+      }
+      if (mounted) {
+        setCacheLoaded(true);
+      }
+    };
+
+    loadCache();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profilePictureUrl]);
+
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
       placeholder: "/default-client.svg",
+      enabled: cacheLoaded, // Only start loading after cache check
       ...options,
     });
 
+  // Update persistent cache when new data arrives
+  useEffect(() => {
+    if (isSuccess && imageDataUrl && profilePictureUrl) {
+      persistentImageCache.set(profilePictureUrl, imageDataUrl);
+    }
+  }, [isSuccess, imageDataUrl, profilePictureUrl]);
+
+  // Determine the final image URL to display
+  const finalImageUrl = (() => {
+    // If we have fresh data from the query, use it
+    if (isSuccess && imageDataUrl) {
+      return imageDataUrl;
+    }
+    // If we have cached data, use it while loading
+    if (initialCache) {
+      return initialCache;
+    }
+    // Otherwise use default
+    return "/default-client.svg";
+  })();
+
   return {
     /** The profile image URL (with fallback to default avatar) */
-    profileImageUrl:
-      isSuccess && imageDataUrl ? imageDataUrl : "/default-client.svg",
-    /** Whether the profile image is loading */
-    isLoading: isLoading && !!profilePictureUrl,
+    profileImageUrl: finalImageUrl,
+    /** Whether the profile image is loading (and we don't have cache) */
+    isLoading: !initialCache && isLoading && !!profilePictureUrl && cacheLoaded,
     /** Whether to show the default avatar */
-    isUsingDefaultAvatar: !profilePictureUrl || (!isSuccess && !isLoading),
+    isUsingDefaultAvatar:
+      !profilePictureUrl || (!isSuccess && !isLoading && !initialCache),
     /** Any error that occurred */
     error,
     /** Whether an error occurred */
     isError,
     /** Function to manually refetch the image */
-    refetch,
+    refetch: async () => {
+      // Clear cache when refetching to ensure fresh data
+      if (profilePictureUrl) {
+        await persistentImageCache.clear(profilePictureUrl);
+      }
+      return refetch();
+    },
   };
 };
 
@@ -342,8 +397,8 @@ export const useServiceImageGallery = (
 
     // Gallery state
     hasImages: (imageLoader.images?.length || 0) > 0,
-    canAddMore: (imageUrls.length || 0) < 5, // Max 5 images per service
-    remainingSlots: Math.max(0, 5 - (imageUrls.length || 0)),
+    canAddMore: (imageUrls.length || 0) < 10, // Max 10 images per service
+    remainingSlots: Math.max(0, 10 - (imageUrls.length || 0)),
   };
 };
 

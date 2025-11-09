@@ -789,10 +789,53 @@ const AddServicePage: React.FC = () => {
       } catch {}
       navigate(`/provider/service-details/${newService.id}`, { replace: true });
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create service";
-      setValidationErrors({ general: errorMessage });
-      toast.error("Failed to create service.", { id: "create-service" });
+      let userFriendlyMessage = "Failed to create service. Please try again.";
+
+      if (error instanceof Error) {
+        const errorMsg = error.message.toLowerCase();
+
+        // Handle file size errors
+        if (
+          errorMsg.includes("file size") &&
+          errorMsg.includes("exceeds maximum")
+        ) {
+          if (errorMsg.includes("servicecertificate")) {
+            userFriendlyMessage =
+              "One or more certification files are too large. Please ensure each certification file is under 450 KB.";
+          } else if (errorMsg.includes("serviceimage")) {
+            userFriendlyMessage =
+              "One or more service images are too large. Please compress your images and try again.";
+          } else {
+            userFriendlyMessage =
+              "One or more files are too large. Please reduce the file size and try again.";
+          }
+        }
+        // Handle unsupported file type errors
+        else if (errorMsg.includes("unsupported content type")) {
+          userFriendlyMessage =
+            "One or more files have an unsupported format. Please use PNG, JPEG, or GIF images only.";
+        }
+        // Handle network/timeout errors
+        else if (errorMsg.includes("network") || errorMsg.includes("timeout")) {
+          userFriendlyMessage =
+            "Network error. Please check your connection and try again.";
+        }
+        // Handle authentication errors
+        else if (
+          errorMsg.includes("unauthenticated") ||
+          errorMsg.includes("permission")
+        ) {
+          userFriendlyMessage =
+            "You don't have permission to perform this action. Please sign in again.";
+        }
+        // Default to original error message if it's user-friendly enough
+        else if (error.message.length < 100 && !errorMsg.includes("internal")) {
+          userFriendlyMessage = error.message;
+        }
+      }
+
+      setValidationErrors({ general: userFriendlyMessage });
+      toast.error(userFriendlyMessage, { id: "create-service" });
     } finally {
       setIsSubmitting(false);
     }

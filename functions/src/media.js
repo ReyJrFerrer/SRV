@@ -29,7 +29,7 @@ function getAuthInfo(context, data) {
 }
 
 // Constants - mirroring media.mo canister
-const MAX_FILE_SIZE = 450000; // 450KB in bytes
+const MAX_FILE_SIZE = 1000000; // 1MB in bytes
 const MAX_REMITTANCE_FILE_SIZE = 1048576; // 1MB in bytes
 const SUPPORTED_CONTENT_TYPES = [
   "image/jpeg",
