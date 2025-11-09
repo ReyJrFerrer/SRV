@@ -36,14 +36,14 @@ const NotificationsPage = () => {
     | "Bookings"
     | "Chat"
     | "Ratings"
-    | "From Admin notifications";
+    | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin notifications",
+    "Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -351,7 +351,7 @@ const NotificationsPage = () => {
                         );
                       if (tab === "Ratings")
                         return n.type === "review_reminder";
-                      if (tab === "From Admin notifications")
+                      if (tab === "Admin")
                         return adminTypes.includes(n.type);
                       return false;
                     }).length
