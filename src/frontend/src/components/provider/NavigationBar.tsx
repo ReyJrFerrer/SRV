@@ -201,7 +201,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             className={
                               active
                                 ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400 sm:h-8 sm:w-8"
+                                : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                             }
                           />
                         </div>
@@ -263,7 +263,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -325,7 +325,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -357,7 +357,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             .map((item) => {
               const isActive = location.pathname.startsWith(item.to);
               return (
-                  <Link
+                <Link
                   key={item.label}
                   to={item.to}
                   className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
@@ -570,13 +570,13 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                   />
                 </div>
-                    <span
-                      className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                        isActive
-                          ? "font-bold"
-                          : "opacity-90 md:group-hover:text-yellow-400"
-                      }`}
-                    >
+                <span
+                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
+                    isActive
+                      ? "font-bold"
+                      : "opacity-90 md:group-hover:text-yellow-400"
+                  }`}
+                >
                   {item.label}
                 </span>
               </Link>

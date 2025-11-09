@@ -171,10 +171,10 @@ const BottomNavigation: React.FC = () => {
                     ].includes(displayItem.label)
                   ) {
                     return (
-            <Link
-            key={displayItem.label}
-            to={displayItem.to}
-            className="group relative flex min-h-[2px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
+                      <Link
+                        key={displayItem.label}
+                        to={displayItem.to}
+                        className="group relative flex min-h-[2px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
                         onClick={(e) => {
                           if (isActive) {
                             e.preventDefault();
@@ -210,14 +210,14 @@ const BottomNavigation: React.FC = () => {
                                   className={
                                     isActive
                                       ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                      : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400 sm:h-8 sm:w-8"
+                                      : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                                   }
                                 />
                               );
                             })()}
                           </div>
                           {!isActive && (
-                              <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out md:group-hover:text-yellow-400 sm:block">
+                            <span className="mt-1 hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:text-yellow-400">
                               {item.label}
                             </span>
                           )}
@@ -244,7 +244,7 @@ const BottomNavigation: React.FC = () => {
               <Link
                 key={item.label}
                 to={item.to}
-                        className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
+                className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
                   isActive ? "bg-gray-50" : ""
                 }`}
                 onClick={(e) => {
@@ -313,7 +313,7 @@ const BottomNavigation: React.FC = () => {
                   })()
                 )}
                 {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:group-hover:text-yellow-400 md:block">
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
                     {item.label}
                   </span>
                 )}
@@ -362,10 +362,10 @@ const BottomNavigation: React.FC = () => {
                 </div>
                 <span
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                      isActive
-                        ? "font-bold"
-                        : "opacity-90 md:group-hover:text-yellow-400"
-                    }`}
+                    isActive
+                      ? "font-bold"
+                      : "opacity-90 md:group-hover:text-yellow-400"
+                  }`}
                 >
                   {item.label}
                 </span>
