@@ -542,15 +542,11 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Use authenticated user's ID if no userId provided,
-  // or validate admin access for other user's reviews
+  // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
-  if (userId && userId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Not authorized to view other user's reviews",
-    );
-  }
+
+  // Reviews are public (as per firestore.rules), so any authenticated user can view them
+  // Only restriction: admins can request hidden reviews
 
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;

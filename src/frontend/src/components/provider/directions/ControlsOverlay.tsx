@@ -15,6 +15,7 @@ interface ControlsOverlayProps {
   isInNavigationMode: boolean;
   toggleNavigationMode: () => void;
   handleStartService: () => void;
+  isStartingService: boolean;
   mapRef: React.MutableRefObject<google.maps.Map | null>;
   providerLocation: google.maps.LatLngLiteral | null;
   navigateBack: () => void;
@@ -34,6 +35,7 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
   isInNavigationMode,
   toggleNavigationMode,
   handleStartService,
+  isStartingService,
   mapRef,
   providerLocation,
   navigateBack,
@@ -176,10 +178,17 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
         <div className="flex-1">
           <button
             onClick={handleStartService}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
-            disabled={!destinationHasCoords}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!destinationHasCoords || isStartingService}
           >
-            Start Service
+            {isStartingService ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <span>Starting...</span>
+              </>
+            ) : (
+              "Start Service"
+            )}
           </button>
         </div>
       </div>

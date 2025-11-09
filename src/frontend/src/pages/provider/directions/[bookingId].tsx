@@ -39,7 +39,7 @@ function haversineDistanceMeters(
 const ProviderDirectionsPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const { loading, error, startBookingById } = useProviderBookingManagement();
+  const { error, startBookingById } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
   const { booking, isLoading: isLoadingBooking } =
@@ -49,6 +49,11 @@ const ProviderDirectionsPage: React.FC = () => {
   useEffect(() => {
     if (!bookingId) {
       navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
       return;
     }
 
@@ -85,6 +90,7 @@ const ProviderDirectionsPage: React.FC = () => {
   >("idle");
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
   // Prevent multiple auto-start triggers
+  const [isStartingService, setIsStartingService] = useState(false);
 
   // Navigation mode and device heading (compass)
   const [isInNavigationMode, setIsInNavigationMode] = useState(false);
@@ -706,19 +712,27 @@ const ProviderDirectionsPage: React.FC = () => {
   }, [booking, mapApiKey, destResolveStatus]);
 
   const handleStartService = async () => {
-    if (!bookingId) return;
-    const success = await startBookingById(bookingId);
-    if (success) {
-      const startTime = new Date().toISOString();
-      localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
-      navigate(
-        `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
-      );
+    if (!bookingId || isStartingService) return;
+    
+    try {
+      setIsStartingService(true);
+      const success = await startBookingById(bookingId);
+      if (success) {
+        const startTime = new Date().toISOString();
+        localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
+        navigate(
+          `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to start service:", error);
+    } finally {
+      setIsStartingService(false);
     }
   };
   // Removed manual start handler; auto-start is handled by proximity effect above
 
-  if (loading || isLoadingBooking || !providerLocation) {
+  if (!providerLocation) {
     return (
       <InlineLoader
         message={
@@ -790,6 +804,7 @@ const ProviderDirectionsPage: React.FC = () => {
         isInNavigationMode={isInNavigationMode}
         toggleNavigationMode={toggleNavigationMode}
         handleStartService={handleStartService}
+        isStartingService={isStartingService}
         mapRef={mapRef}
         providerLocation={providerLocation}
         navigateBack={() => navigate(-1)}

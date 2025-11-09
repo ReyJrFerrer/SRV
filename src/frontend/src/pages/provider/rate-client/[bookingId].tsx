@@ -29,6 +29,11 @@ const ProviderRateClientPage: React.FC = () => {
       navigate("/provider/bookings", { replace: true });
       return;
     }
+       // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
+
 
     if (!booking) {
       console.warn("Rate client: booking not found");
@@ -71,6 +76,11 @@ const ProviderRateClientPage: React.FC = () => {
   useEffect(() => {
     const checkExistingReview = async () => {
       if (!bookingId) return;
+
+      // Wait for loading to complete before checking booking
+      if (isLoadingBooking) {
+        return;
+      }
 
       if (!booking) {
         console.warn("Cannot rate client: booking not found");
@@ -189,27 +199,21 @@ const ProviderRateClientPage: React.FC = () => {
     );
   }
 
-  if (!booking)
+  // Show loading state while booking is being fetched
+  if (!booking) {
     return (
-      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center">
-        <h2 className="mb-2 text-lg font-semibold text-yellow-800">
-          Booking Not Found
-        </h2>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-blue-600 hover:underline"
-        >
-          Go Back
-        </button>
+       <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/provider/home")}
             className="rounded-full p-2 hover:bg-gray-100"
           >
             <svg

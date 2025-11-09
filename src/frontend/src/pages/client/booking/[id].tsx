@@ -13,7 +13,7 @@ import {
   EnhancedBooking,
   useBookingManagement,
 } from "../../../hooks/bookingManagement";
-import { reviewCanisterService } from "../../../services/reviewCanisterService";
+import { useReviewManagement } from "../../../hooks/reviewManagement";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
@@ -51,6 +51,9 @@ const BookingDetailsPage: React.FC = () => {
   const { identity } = useAuth();
   const { conversations, loading: chatLoading, createConversation } = useChat();
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
+  const { getServiceReviews, calculateServiceRating } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
 
   const { checkCommissionValidation } = useProviderBookingManagement();
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -89,13 +92,11 @@ const BookingDetailsPage: React.FC = () => {
       if (specificBooking?.serviceId) {
         setLoadingStats(true);
         try {
-          const [avgRatingResponse, reviews] = await Promise.all([
-            reviewCanisterService.calculateServiceRating(
-              specificBooking.serviceId,
-            ),
-            reviewCanisterService.getServiceReviews(specificBooking.serviceId),
+          const [avgRating, reviews] = await Promise.all([
+            calculateServiceRating(specificBooking.serviceId),
+            getServiceReviews(specificBooking.serviceId),
           ]);
-          setAverageRating(avgRatingResponse.averageRating);
+          setAverageRating(avgRating ?? null);
           setReviewCount(reviews.length);
         } catch (error) {
           setAverageRating(null);
@@ -106,7 +107,7 @@ const BookingDetailsPage: React.FC = () => {
       }
     };
     fetchReviewStats();
-  }, [specificBooking?.serviceId]);
+  }, [specificBooking?.serviceId, calculateServiceRating, getServiceReviews]);
 
   useEffect(() => {
     let mounted = true;

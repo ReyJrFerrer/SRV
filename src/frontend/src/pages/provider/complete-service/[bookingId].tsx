@@ -31,7 +31,7 @@ const CompleteServicePage: React.FC = () => {
 
   const {
     completeBookingById,
-    isProviderAuthenticated,
+    // isProviderAuthenticated,
     checkCommissionValidation,
   } = useProviderBookingManagement();
 
@@ -234,13 +234,22 @@ const CompleteServicePage: React.FC = () => {
   };
 
   // Check authentication
-  if (!isProviderAuthenticated()) {
+  // if (!isProviderAuthenticated()) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
+  //       Please log in as a service provider to access this page.
+  //     </div>
+  //   );
+  // }
+  // Show loading state while booking is being fetched
+  if (!booking) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Please log in as a service provider to access this page.
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
+
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">

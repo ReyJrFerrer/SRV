@@ -63,6 +63,10 @@ export const BookingReviewPage: React.FC = () => {
       navigate("/client/booking", { replace: true });
       return;
     }
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
 
     if (!booking) {
       console.warn("Review: booking not found");
@@ -270,21 +274,11 @@ export const BookingReviewPage: React.FC = () => {
     );
   }
 
+    // Show loading state while booking is being fetched
   if (!booking) {
     return (
-      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center">
-        <h2 className="mb-2 text-lg font-semibold text-yellow-800">
-          Booking Not Found
-        </h2>
-        <p className="mb-4 text-yellow-600">
-          The requested booking could not be found.
-        </p>
-        <button
-          onClick={() => navigate("/client/booking")}
-          className="text-blue-600 hover:underline"
-        >
-          Go to My Bookings
-        </button>
+       <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }

@@ -14,7 +14,7 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { useClientRating } from "../../hooks/useClientRating";
+import { useReviewManagement } from "../../hooks/reviewManagement";
 import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/canellation/CancelWithReasonButton";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
@@ -85,7 +85,9 @@ const ProviderBookingsPage: React.FC = () => {
     startBookingById,
   } = useProviderBookingManagement();
 
-  const { getClientReviewsByUser } = useClientRating();
+  const { getUserReviews } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
   const { fetchUserReputation } = useReputation();
 
   // Memoized function to fetch client data
@@ -95,7 +97,7 @@ const ProviderBookingsPage: React.FC = () => {
 
       try {
         const [clientReviews, clientReputation] = await Promise.all([
-          getClientReviewsByUser(clientId),
+          getUserReviews(clientId),
           fetchUserReputation(clientId),
         ]);
 
@@ -108,7 +110,7 @@ const ProviderBookingsPage: React.FC = () => {
         return { reviews: [], reputation: null };
       }
     },
-    [getClientReviewsByUser, fetchUserReputation],
+    [getUserReviews, fetchUserReputation],
   );
 
   // Get the client name for the decline confirmation dialog
