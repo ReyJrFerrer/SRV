@@ -47,7 +47,12 @@ const NotificationsPage = () => {
       try {
         nextMap.set(
           n.id,
-          JSON.stringify({ id: n.id, type: n.type, read: n.read, href: n.href }),
+          JSON.stringify({
+            id: n.id,
+            type: n.type,
+            read: n.read,
+            href: n.href,
+          }),
         );
       } catch (e) {
         nextMap.set(n.id, String(n.id));
@@ -74,12 +79,7 @@ const NotificationsPage = () => {
   }, [notifications, loading]);
 
   // Tabs for categorizing notifications
-  type NotificationTab =
-    | "All"
-    | "Bookings"
-    | "Chat"
-    | "Ratings"
-    | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
@@ -175,7 +175,9 @@ const NotificationsPage = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
 
     // Helper to map notification type to a UI category
     const categoryOfType = (type: string) => {
@@ -223,8 +225,8 @@ const NotificationsPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
         <div
-      className={`w-full px-4 py-3 ${
-        stableNotifications.length === 0
+          className={`w-full px-4 py-3 ${
+            stableNotifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
@@ -262,11 +264,12 @@ const NotificationsPage = () => {
                   className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                 >
                   {selectedIds.length > 0 &&
-                    selectedIds.length ===
-                      stableNotifications.filter((n) => !deletedIds.includes(n.id))
-                        .length
-                      ? "Clear"
-                      : "Select all"}
+                  selectedIds.length ===
+                    stableNotifications.filter(
+                      (n) => !deletedIds.includes(n.id),
+                    ).length
+                    ? "Clear"
+                    : "Select all"}
                 </button>
                 {unread.length > 0 && (
                   <button
@@ -322,12 +325,12 @@ const NotificationsPage = () => {
                         role="menuitem"
                       >
                         {selectedIds.length > 0 &&
-                          selectedIds.length ===
-                            stableNotifications.filter(
-                              (n) => !deletedIds.includes(n.id),
-                            ).length
-                            ? "Clear selection"
-                            : "Select all"}
+                        selectedIds.length ===
+                          stableNotifications.filter(
+                            (n) => !deletedIds.includes(n.id),
+                          ).length
+                          ? "Clear selection"
+                          : "Select all"}
                       </button>
 
                       {unread.length > 0 && (
@@ -397,7 +400,7 @@ const NotificationsPage = () => {
                       if (tab === "From Admin")
                         return adminTypes.includes(n.type);
                       return false;
-          }).length
+                    }).length
                 }
                 )
               </button>

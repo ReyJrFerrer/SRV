@@ -92,7 +92,8 @@ const ReviewsPage: React.FC = () => {
         const mapped = data.map((r: any) => ({
           ...r,
           reviewerName:
-            reviewerNameCache.current.get(r.providerId) || (r as any).reviewerName,
+            reviewerNameCache.current.get(r.providerId) ||
+            (r as any).reviewerName,
         }));
 
         setReviews(mapped as ClientReview[]);
