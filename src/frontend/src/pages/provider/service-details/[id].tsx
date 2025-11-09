@@ -67,10 +67,8 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [service, setService] = useState<EnhancedService | null>(null);
 
   // Load service images using the useServiceImages hook
-  const { images: serviceImages } = useServiceImages(
-    service?.id,
-    service?.imageUrls || [],
-  );
+  const { images: serviceImages, isLoading: isLoadingServiceImages } =
+    useServiceImages(service?.id, service?.imageUrls || []);
 
   // Image upload hook
   const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
@@ -1112,6 +1110,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           onBack={() => navigate("/provider/home")}
           service={service}
           serviceImages={serviceImages}
+          isLoadingServiceImages={isLoadingServiceImages}
           hasActiveBookings={hasActiveBookings}
           activeBookingsCount={activeBookingsCount}
           editTitleCategory={editTitleCategory}

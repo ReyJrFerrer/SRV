@@ -26,7 +26,6 @@ const SettingsPage: React.FC = () => {
     loading: profileLoading,
     switchRole,
     profileImageUrl,
-    refetchImage,
   } = useUserProfile();
 
   useEffect(() => {
@@ -55,18 +54,14 @@ const SettingsPage: React.FC = () => {
   const handleSwitchToProvider = async () => {
     setSwitching(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        navigate("/provider");
-      }
+      await switchRole();
+      navigate("/provider/settings");
     } catch (error) {
-      //console.error("Failed to switch role:", error);
+      console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }
   };
-
-  refetchImage();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-24">
