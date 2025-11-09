@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ServiceListItem, {
   ServiceListingCardSkeleton,
 } from "./ServiceListingCard";
@@ -7,6 +7,8 @@ import {
   useAllServicesWithProviders,
 } from "../../../hooks/serviceInformation";
 import { getCategoryImage } from "../../../utils/serviceHelpers";
+import reviewCanisterService from "../../../services/reviewCanisterService";
+import serviceCanisterService from "../../../services/serviceCanisterService";
 
 interface ServicesListProps {
   className?: string;
@@ -15,6 +17,94 @@ interface ServicesListProps {
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   // Use the realtime hook for live updates from Firestore
   const { services, loading, error } = useAllServicesWithProviders();
+
+  // Service data state map with proper typing
+  interface ServiceData {
+    isVerified?: boolean;
+    averageRating: number;
+    totalReviews: number;
+    serviceImages: string[];
+    userImageUrl: string | null;
+    isLoadingImages: boolean;
+  }
+
+  const [serviceDataMap, setServiceDataMap] = useState<
+    Record<string, ServiceData>
+  >({});
+
+  // Effect to fetch service data for all services
+  useEffect(() => {
+    const fetchServiceData = async () => {
+      const serviceIds = services.map((s) => s.id);
+      const mapCopy = { ...serviceDataMap };
+      const toFetch = serviceIds.filter((id) => !mapCopy[id]);
+      
+      if (toFetch.length === 0) return;
+
+      await Promise.all(
+        toFetch.map(async (serviceId) => {
+          try {
+            mapCopy[serviceId] = {
+              isVerified: false,
+              averageRating: 0,
+              totalReviews: 0,
+              serviceImages: [],
+              userImageUrl: null,
+              isLoadingImages: true,
+            };
+
+            // Fetch service details for verification status
+            const serviceDetails = await serviceCanisterService.getService(serviceId);
+            
+            // Fetch reviews for ratings
+            const reviews = await reviewCanisterService.getServiceReviews(serviceId);
+            const visibleReviews = reviews.filter((r: any) => r.status === "Visible");
+            const averageRating = visibleReviews.length > 0
+              ? visibleReviews.reduce((acc: number, r: any) => acc + r.rating, 0) / visibleReviews.length
+              : 0;
+
+            // Find the service from the list to get provider avatar
+            const service = services.find(s => s.id === serviceId);
+            
+            // For service images, we'll use the heroImage from the enriched service
+            // and the provider avatar as fallback
+            const serviceImages: string[] = [];
+            if (service?.heroImage) {
+              serviceImages.push(service.heroImage);
+            }
+
+            // Use provider avatar from enriched service
+            const userImageUrl = service?.providerAvatar || null;
+
+            mapCopy[serviceId] = {
+              isVerified: (serviceDetails as any)?.isVerified || false,
+              averageRating,
+              totalReviews: visibleReviews.length,
+              serviceImages,
+              userImageUrl,
+              isLoadingImages: false,
+            };
+          } catch (err) {
+            console.error(`Error fetching data for service ${serviceId}:`, err);
+            mapCopy[serviceId] = {
+              isVerified: false,
+              averageRating: 0,
+              totalReviews: 0,
+              serviceImages: [],
+              userImageUrl: null,
+              isLoadingImages: false,
+            };
+          }
+        }),
+      );
+
+      setServiceDataMap(mapCopy);
+    };
+
+    if (services.length > 0) {
+      fetchServiceData();
+    }
+  }, [services]);
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
     ...service,
@@ -71,11 +161,25 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => (
-            <div key={service.id}>
-              <ServiceListItem service={enhanceService(service)} />
-            </div>
-          ))}
+          {services.map((service) => {
+            const serviceData = serviceDataMap[service.id] || {
+              isVerified: false,
+              averageRating: service.rating?.average || 0,
+              totalReviews: service.rating?.count || 0,
+              serviceImages: [],
+              userImageUrl: null,
+              isLoadingImages: true,
+            };
+
+            return (
+              <div key={service.id}>
+                <ServiceListItem
+                  service={enhanceService(service)}
+                  serviceData={serviceData}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

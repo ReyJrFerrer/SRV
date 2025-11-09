@@ -5,14 +5,21 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
-import useServiceById from "../../../hooks/serviceDetail";
-import { useServiceReviews } from "../../../hooks/reviewManagement";
 import { EnrichedService } from "../../../hooks/serviceInformation";
-import { useUserImage } from "../../../hooks/useMediaLoader";
-import { useServiceImages } from "../../../hooks/useMediaLoader";
+
+// Enhanced service data interface with all fetched information
+export interface EnhancedServiceData {
+  isVerified?: boolean;
+  averageRating: number;
+  totalReviews: number;
+  serviceImages: string[];
+  userImageUrl: string | null;
+  isLoadingImages: boolean;
+}
 
 interface ServiceListItemProps {
   service: EnrichedService;
+  serviceData: EnhancedServiceData;
   inCategories?: boolean;
   isGridItem?: boolean;
   retainMobileLayout?: boolean;
@@ -65,34 +72,20 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
 
 // ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({ service, retainMobileLayout = false, isGridItem = false }) => {
-    // Fetch the latest service data to get isVerified
-    const { service: fetchedService } = useServiceById(service.id);
-    const isVerified = fetchedService?.isVerified;
-    // Use the same logic as ServiceDetailPageComponent for review count
-    const { reviews = [], getAverageRating } = useServiceReviews(service.id);
-    const visibleReviews = Array.isArray(reviews)
-      ? reviews.filter((r) => r.status === "Visible")
-      : [];
-    const totalReviews =
-      visibleReviews.length > 0
-        ? visibleReviews.length
-        : typeof service.rating?.count === "number"
-          ? service.rating.count
-          : 0;
-    const averageRating =
-      visibleReviews.length > 0
-        ? getAverageRating(visibleReviews)
-        : service.rating?.average || 0;
+  ({
+    service,
+    serviceData,
+    retainMobileLayout = false,
+    isGridItem = false,
+  }) => {
+    // Use the passed service data instead of fetching
+    const { isVerified, averageRating, totalReviews, serviceImages, userImageUrl, isLoadingImages } = serviceData;
+
     const serviceRating = {
       average: averageRating,
       count: totalReviews,
       loading: false,
     };
-    const { images } = useServiceImages(
-      fetchedService?.id,
-      fetchedService?.media,
-    );
 
     // Define layout classes based on props
     const itemWidthClass = isGridItem ? "w-full" : "w-full";
@@ -156,45 +149,39 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const getCategoryIcon = (slug: string | undefined): string => {
       if (!slug) return "/images/categories/others.svg";
       if (categoryIconMap[slug]) {
-        return `/images/categories/${categoryIconMap[slug]}`;
-      }
-      const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
-      return fallback;
-    };
+      return `/images/categories/${categoryIconMap[slug]}`;
+    }
+    const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
+    return fallback;
+  };
 
-    const { userImageUrl, isLoading: isLoadingUserImage } = useUserImage(
-      service.providerAvatar,
-    );
+  // Helper function to determine the image source with proper priority
+  const getImageSource = (): string => {
+    // Accept any valid image URL (data:, http(s) or local path)
+    const isValidImageUrl = (u?: string | null): u is string =>
+      !!u &&
+      (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
+      u.length > 20;
 
-    // Helper function to determine the image source with proper priority
-    const getImageSource = (): string => {
-      // Accept any valid image URL (data:, http(s) or local path)
-      const isValidImageUrl = (u?: string | null): u is string =>
-        !!u &&
-        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
-        u.length > 20;
+    // Priority 1: Service images (if loaded and valid)
+    const firstImage = serviceImages[0];
+    if (isValidImageUrl(firstImage)) {
+      return firstImage;
+    }
 
-      // Priority 1: Service images (if loaded and valid)
-      const firstImage = images[0]?.dataUrl;
-      if (isValidImageUrl(firstImage)) {
-        return firstImage;
-      }
+    // Priority 2: User avatar (if loaded and valid)
+    if (!isLoadingImages && isValidImageUrl(userImageUrl)) {
+      return userImageUrl;
+    }
 
-      // Priority 2: User avatar (if loaded and valid)
-      if (!isLoadingUserImage && isValidImageUrl(userImageUrl)) {
-        return userImageUrl;
-      }
+    // Priority 3: Category-specific fallback
+    if (service.category?.slug) {
+      return `/images/ai-sp/${service.category.slug}.svg`;
+    }
 
-      // Priority 3: Category-specific fallback
-      if (service.category?.slug) {
-        return `/images/ai-sp/${service.category.slug}.svg`;
-      }
-
-      // Priority 4: Default fallback
-      return "/images/ai-sp/others.svg";
-    };
-
-    return (
+    // Priority 4: Default fallback
+    return "/images/ai-sp/others.svg";
+  };    return (
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
           to={`/client/service/${service.id}`}
