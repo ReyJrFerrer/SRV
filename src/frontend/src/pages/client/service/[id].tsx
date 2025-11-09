@@ -351,7 +351,9 @@ const ClientServiceDetailsPage: React.FC = () => {
             const firstImage = heroImages?.[0]?.dataUrl;
             const isValidUrl = (url?: string | null): url is string =>
               !!url &&
-              (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) &&
+              (url.startsWith("data:") ||
+                url.startsWith("http") ||
+                url.startsWith("/")) &&
               url.length > 20;
 
             if (isValidUrl(firstImage)) {
@@ -402,9 +404,13 @@ const ClientServiceDetailsPage: React.FC = () => {
                     >
                       <img
                         src={(() => {
-                          const isValidUrl = (url?: string | null): url is string =>
+                          const isValidUrl = (
+                            url?: string | null,
+                          ): url is string =>
                             !!url &&
-                            (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) &&
+                            (url.startsWith("data:") ||
+                              url.startsWith("http") ||
+                              url.startsWith("/")) &&
                             url.length > 20;
 
                           if (isValidUrl(userImageUrl)) {

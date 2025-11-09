@@ -170,7 +170,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const getImageSource = (): string => {
       // Accept any valid image URL (data:, http(s) or local path)
       const isValidImageUrl = (u?: string | null): u is string =>
-        !!u && (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) && u.length > 20;
+        !!u &&
+        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
+        u.length > 20;
 
       // Priority 1: Service images (if loaded and valid)
       const firstImage = images[0]?.dataUrl;
