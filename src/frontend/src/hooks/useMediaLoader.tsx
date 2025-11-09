@@ -44,9 +44,16 @@ export const useImageLoader = (
       if (!mediaUrl) {
         throw new Error("Media URL is required");
       }
-      return await mediaService.getImageDataUrl(mediaUrl, {
+      const result = await mediaService.getImageDataUrl(mediaUrl, {
         enableCache: true,
       });
+      
+      // Validate the result is not blank or invalid
+      if (!result || result === "" || result === "undefined" || result === "null") {
+        throw new Error("Invalid image data received");
+      }
+      
+      return result;
     },
     enabled: opts.enabled && !!mediaUrl,
     staleTime: opts.staleTime,
@@ -54,6 +61,8 @@ export const useImageLoader = (
     retry: opts.retry,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    // Retry with exponential backoff for failed requests
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return {
@@ -119,7 +128,7 @@ export const useProfileImage = (
   options: UseImageLoaderOptions = {},
 ) => {
   const [initialCache, setInitialCache] = useState<string | null>(null);
-  const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [cacheChecked, setCacheChecked] = useState(false);
 
   // Check persistent cache on mount - this runs before the query
   useEffect(() => {
@@ -127,13 +136,17 @@ export const useProfileImage = (
 
     const loadCache = async () => {
       if (profilePictureUrl) {
-        const cached = await persistentImageCache.get(profilePictureUrl);
-        if (mounted && cached) {
-          setInitialCache(cached);
+        try {
+          const cached = await persistentImageCache.get(profilePictureUrl);
+          if (mounted && cached) {
+            setInitialCache(cached);
+          }
+        } catch (error) {
+          console.warn("Error loading cache:", error);
         }
       }
       if (mounted) {
-        setCacheLoaded(true);
+        setCacheChecked(true);
       }
     };
 
@@ -147,39 +160,57 @@ export const useProfileImage = (
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
       placeholder: "/default-client.svg",
-      enabled: cacheLoaded, // Only start loading after cache check
+      enabled: cacheChecked && !!profilePictureUrl, // Only start loading after cache check
       ...options,
     });
 
-  // Update persistent cache when new data arrives
+  // Update persistent cache when new data arrives (only if valid)
   useEffect(() => {
-    if (isSuccess && imageDataUrl && profilePictureUrl) {
-      persistentImageCache.set(profilePictureUrl, imageDataUrl);
+    if (isSuccess && imageDataUrl && profilePictureUrl && imageDataUrl !== "/default-client.svg") {
+      // Verify the data URL is valid before caching
+      if (imageDataUrl.startsWith("http") || imageDataUrl.startsWith("data:")) {
+        persistentImageCache.set(profilePictureUrl, imageDataUrl);
+      }
     }
   }, [isSuccess, imageDataUrl, profilePictureUrl]);
 
-  // Determine the final image URL to display
+  // Determine the final image URL to display with proper fallback logic
   const finalImageUrl = (() => {
-    // If we have fresh data from the query, use it
-    if (isSuccess && imageDataUrl) {
+    // If we have fresh data from the query, use it (but not if it's just the placeholder)
+    if (isSuccess && imageDataUrl && imageDataUrl !== "/default-client.svg") {
       return imageDataUrl;
     }
-    // If we have cached data, use it while loading
-    if (initialCache) {
+    // If we're still loading and have cached data, use the cache
+    if (isLoading && initialCache) {
+      return initialCache;
+    }
+    // If we have cached data and no fresh data yet, use cache
+    if (initialCache && !isSuccess && !isError) {
+      return initialCache;
+    }
+    // If there was an error but we have cache, use cache
+    if (isError && initialCache) {
       return initialCache;
     }
     // Otherwise use default
     return "/default-client.svg";
   })();
 
+  const isActuallyLoading =
+    !initialCache &&
+    isLoading &&
+    !!profilePictureUrl &&
+    cacheChecked;
+
   return {
     /** The profile image URL (with fallback to default avatar) */
     profileImageUrl: finalImageUrl,
     /** Whether the profile image is loading (and we don't have cache) */
-    isLoading: !initialCache && isLoading && !!profilePictureUrl && cacheLoaded,
+    isLoading: isActuallyLoading,
     /** Whether to show the default avatar */
     isUsingDefaultAvatar:
-      !profilePictureUrl || (!isSuccess && !isLoading && !initialCache),
+      !profilePictureUrl ||
+      finalImageUrl === "/default-client.svg",
     /** Any error that occurred */
     error,
     /** Whether an error occurred */
@@ -189,6 +220,7 @@ export const useProfileImage = (
       // Clear cache when refetching to ensure fresh data
       if (profilePictureUrl) {
         await persistentImageCache.clear(profilePictureUrl);
+        setInitialCache(null);
       }
       return refetch();
     },
