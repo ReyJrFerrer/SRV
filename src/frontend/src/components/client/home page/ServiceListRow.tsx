@@ -1,5 +1,7 @@
 import React from "react";
-import ServiceListItem from "./ServiceListingCard";
+import ServiceListItem, {
+  ServiceListingCardSkeleton,
+} from "./ServiceListingCard";
 import {
   EnrichedService,
   useAllServicesWithProviders,
@@ -39,25 +41,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-lg bg-white shadow-sm"
-            >
-              {/* Image skeleton */}
-              <div className="aspect-video w-full animate-pulse bg-gray-200"></div>
-              {/* Content skeleton */}
-              <div className="p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
-                  <div className="h-3 w-16 animate-pulse rounded bg-gray-200"></div>
-                </div>
-                <div className="mb-2 h-4 w-full animate-pulse rounded bg-gray-200"></div>
-                <div className="mb-2 h-3 w-24 animate-pulse rounded bg-gray-200"></div>
-                <div className="flex items-center justify-between border-t border-gray-100 pt-2">
-                  <div className="h-5 w-16 animate-pulse rounded bg-gray-200"></div>
-                  <div className="h-3 w-12 animate-pulse rounded bg-gray-200"></div>
-                </div>
-              </div>
+            <div key={i}>
+              <ServiceListingCardSkeleton />
             </div>
           ))}
         </div>
