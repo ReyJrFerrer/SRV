@@ -53,12 +53,12 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
 
   return {
     booking,
-    // Show loading if: fetching, minimum time not complete, or bookings not initialized yet
-    isLoading:
-      isFetching ||
-      !minLoadingComplete ||
-      !isProviderBookingsReady ||
-      (bookingId ? isLoadingProviderBooking(bookingId) : false),
+    isLoading: booking
+      ? false
+      : isFetching ||
+        !minLoadingComplete ||
+        !isProviderBookingsReady ||
+        (bookingId ? isLoadingProviderBooking(bookingId) : false),
   };
 };
 
@@ -110,10 +110,12 @@ export const useCachedClientBooking = (bookingId: string | undefined) => {
   return {
     booking,
     // Show loading if: fetching, minimum time not complete, or bookings not initialized yet
-    isLoading:
-      isFetching ||
-      !minLoadingComplete ||
-      !isClientBookingsReady ||
-      (bookingId ? isLoadingClientBooking(bookingId) : false),
+    // BUT if we already have the booking data, don't show loading (fixes stuck loading state)
+    isLoading: booking
+      ? false
+      : isFetching ||
+        !minLoadingComplete ||
+        !isClientBookingsReady ||
+        (bookingId ? isLoadingClientBooking(bookingId) : false),
   };
 };
