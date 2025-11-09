@@ -53,7 +53,13 @@ const ClientServiceDetailsPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
-  const { reviews, getAverageRating, getRatingDistribution, loading: reviewsLoading, error: reviewsError } = useServiceReviews(serviceId as string);
+  const {
+    reviews,
+    getAverageRating,
+    getRatingDistribution,
+    loading: reviewsLoading,
+    error: reviewsError,
+  } = useServiceReviews(serviceId as string);
 
   const { images: heroImages } = useServiceImages(
     service?.id,
@@ -529,7 +535,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           hasCertificates={hasCertificates}
           hasPendingCertificates={hasPendingCertificates}
         />
-        <ReviewsSection 
+        <ReviewsSection
           serviceId={service.id}
           reviews={reviews}
           loading={reviewsLoading}
