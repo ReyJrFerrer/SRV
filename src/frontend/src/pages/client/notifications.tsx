@@ -72,6 +72,51 @@ const NotificationsPage = () => {
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
+  // Stabilize notifications like the provider page to avoid flicker and
+  // ensure client-side filtering reacts to meaningful changes (read flag,
+  // type, href, etc.) even if the upstream hook mutates the array in place.
+  const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
+
+  // Stabilize incoming notifications similar to provider page.
+  React.useEffect(() => {
+    if (loading) return;
+
+    const nextMap = new Map<string, string>();
+    notifications.forEach((n) => {
+      try {
+        nextMap.set(
+          n.id,
+          JSON.stringify({
+            id: n.id,
+            type: n.type,
+            read: n.read,
+            href: n.href,
+          }),
+        );
+      } catch (e) {
+        nextMap.set(n.id, String(n.id));
+      }
+    });
+
+    const prevMap = previousNotificationsRef.current;
+    let changed = false;
+    if (prevMap.size !== nextMap.size) {
+      changed = true;
+    } else {
+      for (const [id, sig] of nextMap.entries()) {
+        if (prevMap.get(id) !== sig) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed || notifications.length === 0) {
+      previousNotificationsRef.current = nextMap;
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
@@ -226,8 +271,8 @@ const NotificationsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
-        <div className="relative flex w-full items-center justify-between px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
@@ -235,7 +280,7 @@ const NotificationsPage = () => {
               <div className="hidden sm:block" aria-hidden="true" />
 
               <div
-                className={`hidden items-center gap-2 transition-opacity duration-200 sm:flex ${
+                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
                   loading ? "pointer-events-none opacity-0" : "opacity-100"
                 }`}
               >
@@ -277,7 +322,7 @@ const NotificationsPage = () => {
               </div>
 
               <div
-                className={`relative transition-opacity duration-200 sm:hidden ${
+                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
                   loading ? "pointer-events-none opacity-0" : "opacity-100"
                 }`}
               >

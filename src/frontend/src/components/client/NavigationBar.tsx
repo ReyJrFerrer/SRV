@@ -144,7 +144,7 @@ const BottomNavigation: React.FC = () => {
 
   return (
     <>
-      {!location.pathname.startsWith("/client/chat") && (
+      {!location.pathname.startsWith("/client/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
             <div className="grid w-full grid-cols-6 font-medium">
@@ -229,7 +229,7 @@ const BottomNavigation: React.FC = () => {
               <Link
                 key={item.label}
                 to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+                className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
                   isActive ? "bg-gray-50" : ""
                 }`}
                 onClick={(e) => {
@@ -246,7 +246,7 @@ const BottomNavigation: React.FC = () => {
                     <div
                       className={`flex items-center justify-center transition-all duration-300 ${
                         isActive
-                          ? "h-12 w-12 rounded-full bg-blue-600"
+                          ? "h-12 w-12 rounded-full bg-blue-500"
                           : "h-10 w-10"
                       }`}
                     >
@@ -256,7 +256,7 @@ const BottomNavigation: React.FC = () => {
                         className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
                           isActive
                             ? "h-10 w-10 border-2 border-white"
-                            : "h-8 w-8 group-hover:scale-105"
+                            : "h-8 w-8 md:group-hover:scale-105"
                         }`}
                         draggable={false}
                       />
@@ -282,7 +282,7 @@ const BottomNavigation: React.FC = () => {
                       <div
                         className={
                           isActive
-                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-600"
+                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-500"
                             : ""
                         }
                       >
@@ -298,12 +298,21 @@ const BottomNavigation: React.FC = () => {
                   })()
                 )}
                 {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 group-hover:text-yellow-500 md:block">
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
                     {item.label}
                   </span>
                 )}
                 {item.count > 0 && (
-                  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  <span
+                    aria-label={
+                      item.count > 99
+                        ? "99+ new notifications"
+                        : `${item.count} new notifications`
+                    }
+                    className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                  >
+                    {item.count > 99 ? "99+" : item.count}
+                  </span>
                 )}
               </Link>
             );
@@ -320,7 +329,7 @@ const BottomNavigation: React.FC = () => {
               <Link
                 key={item.label}
                 to={item.to}
-                className="group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50"
+                className="group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50"
                 onClick={(e) => {
                   if (isActive) {
                     e.preventDefault();
@@ -333,7 +342,7 @@ const BottomNavigation: React.FC = () => {
                 <div
                   className={`flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "h-12 w-12 rounded-full bg-blue-600"
+                      ? "h-12 w-12 rounded-full bg-blue-500"
                       : "h-10 w-10"
                   }`}
                 >
@@ -349,7 +358,7 @@ const BottomNavigation: React.FC = () => {
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
                       ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
+                      : "opacity-90 md:group-hover:text-yellow-400"
                   }`}
                 >
                   {item.label}

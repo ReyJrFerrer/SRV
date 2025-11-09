@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import useClientRating, {
   type ClientReview,
@@ -6,6 +6,7 @@ import useClientRating, {
 import { StarIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "../../../context/AuthContext";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
+import authCanisterService from "../../../services/authCanisterService";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   label,
@@ -27,12 +28,21 @@ const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   );
 };
 
+const getReviewerName = (rev: ClientReview) =>
+  (rev as any).reviewerName ||
+  (rev as any).authorName ||
+  (rev as any).providerName ||
+  (rev as any).userName ||
+  "Anonymous";
+
 const ReviewsPage: React.FC = () => {
   const { firebaseUser } = useAuth();
   const { getClientReviewsByUser, loading } = useClientRating();
   const [reviews, setReviews] = useState<ClientReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
+  // Cache reviewer names by user id to avoid repeated profile calls
+  const reviewerNameCache = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     document.title = "Reviews About Me | SRV Client";
@@ -48,7 +58,45 @@ const ReviewsPage: React.FC = () => {
         }
         // This will fetch reviews that providers have left about this client
         const data = await getClientReviewsByUser(firebaseUser.uid);
-        setReviews(data);
+
+        const providerIds = Array.from(
+          new Set(data.map((r: any) => r.providerId).filter(Boolean)),
+        );
+
+        const idsToFetch = providerIds.filter(
+          (id) => !reviewerNameCache.current.has(id),
+        );
+
+        if (idsToFetch.length > 0) {
+          const profileResults = await Promise.all(
+            idsToFetch.map(async (id) => {
+              try {
+                return await authCanisterService.getProfile(id);
+              } catch (e) {
+                return null;
+              }
+            }),
+          );
+
+          profileResults.forEach((profile, idx) => {
+            const id = idsToFetch[idx];
+            if (profile && profile.name) {
+              reviewerNameCache.current.set(id, profile.name);
+            } else {
+              // store a fallback to avoid repeated failed requests
+              reviewerNameCache.current.set(id, "Anonymous");
+            }
+          });
+        }
+
+        const mapped = data.map((r: any) => ({
+          ...r,
+          reviewerName:
+            reviewerNameCache.current.get(r.providerId) ||
+            (r as any).reviewerName,
+        }));
+
+        setReviews(mapped as ClientReview[]);
       } catch (e) {
         setError("Failed to load reviews.");
       }
@@ -145,17 +193,22 @@ const ReviewsPage: React.FC = () => {
               reviews.map((rev) => (
                 <div key={rev.id} className="rounded-xl bg-white p-5 shadow">
                   <div className="mb-1 flex items-center justify-between">
-                    <div className="flex items-center">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <StarIcon
-                          key={s}
-                          className={`h-4 w-4 ${
-                            s <= rev.rating
-                              ? "text-yellow-400"
-                              : "text-gray-200"
-                          }`}
-                        />
-                      ))}
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm font-medium text-slate-800">
+                        {getReviewerName(rev)}
+                      </div>
+                      <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <StarIcon
+                            key={s}
+                            className={`h-4 w-4 ${
+                              s <= rev.rating
+                                ? "text-yellow-400"
+                                : "text-gray-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
                     <div className="text-xs text-gray-500">
                       {new Date(rev.createdAt).toLocaleDateString()}

@@ -60,14 +60,14 @@ const NotificationsPageSP = () => {
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
-  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin",
+    "Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -139,7 +139,7 @@ const NotificationsPageSP = () => {
     if (bookingTypes.includes(type)) return "Bookings";
     if (type === "chat_message") return "Chat";
     if (type === "review_request") return "Ratings";
-    if (adminTypes.includes(type)) return "From Admin";
+    if (adminTypes.includes(type)) return "Admin";
     return "All";
   };
 
@@ -253,12 +253,12 @@ const NotificationsPageSP = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center justify-between px-4 py-3">
-          <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
-            <>
+            <div className="ml-auto flex items-center">
               <div className="hidden sm:block" aria-hidden="true" />
 
               <div
@@ -375,7 +375,7 @@ const NotificationsPageSP = () => {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
         </div>
       </header>

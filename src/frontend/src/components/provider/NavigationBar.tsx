@@ -146,7 +146,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <>
-      {!location.pathname.startsWith("/provider/chat") && (
+      {!location.pathname.startsWith("/provider/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
             <div className="grid w-full grid-cols-6 font-medium">
@@ -186,14 +186,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     <Link
                       key={item.label}
                       to={item.to}
-                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
                       onClick={onClick}
                     >
                       <div className="flex w-full items-center justify-center">
                         <div
                           className={
                             active
-                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                               : ""
                           }
                         >
@@ -201,7 +201,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             className={
                               active
                                 ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                                : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                             }
                           />
                         </div>
@@ -210,14 +210,23 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                           active
                             ? "scale-105 font-bold text-blue-900"
-                            : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                            : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
                         }`}
                         style={{ opacity: active ? 1 : 0.9 }}
                       >
                         {item.label}
                       </span>
                       {item.count > 0 && (
-                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                        <span
+                          aria-label={
+                            item.count > 99
+                              ? "99+ new notifications"
+                              : `${item.count} new notifications`
+                          }
+                          className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                        >
+                          {item.count > 99 ? "99+" : item.count}
+                        </span>
                       )}
                     </Link>
                   );
@@ -248,14 +257,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   <Link
                     key="Notifications-mobile"
                     to={to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
                     onClick={onClick}
                   >
                     <div className="flex w-full items-center justify-center">
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -263,7 +272,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -272,14 +281,23 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                         active
                           ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                          : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
                       }`}
                       style={{ opacity: active ? 1 : 0.9 }}
                     >
                       Notifications
                     </span>
                     {unreadCount > 0 && (
-                      <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      <span
+                        aria-label={
+                          unreadCount > 99
+                            ? "99+ new notifications"
+                            : `${unreadCount} new notifications`
+                        }
+                        className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
                     )}
                   </Link>
                 );
@@ -310,14 +328,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   <Link
                     key="Settings-mobile"
                     to={to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
                     onClick={onClick}
                   >
                     <div className="flex w-full items-center justify-center">
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -325,7 +343,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500 sm:h-8 sm:w-8"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -334,7 +352,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
                         active
                           ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                          : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
                       }`}
                       style={{ opacity: active ? 1 : 0.9 }}
                     >
@@ -360,7 +378,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <Link
                   key={item.label}
                   to={item.to}
-                  className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+                  className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
                     isActive ? "bg-gray-50" : ""
                   }`}
                   onClick={(e) => {
@@ -387,7 +405,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                             : ""
                         }
                       >
@@ -395,7 +413,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             isActive
                               ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
+                              : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -405,13 +423,22 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                       isActive
                         ? "font-bold"
-                        : "opacity-90 group-hover:text-yellow-500"
+                        : "opacity-90 md:group-hover:text-yellow-400"
                     }`}
                   >
                     {item.label}
                   </span>
                   {item.count > 0 && (
-                    <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                    <span
+                      aria-label={
+                        item.count > 99
+                          ? "99+ new notifications"
+                          : `${item.count} new notifications`
+                      }
+                      className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                    >
+                      {item.count > 99 ? "99+" : item.count}
+                    </span>
                   )}
                 </Link>
               );
@@ -420,7 +447,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           {/* Desktop-only Notifications button placed above profile */}
           <Link
             to="/provider/notifications"
-            className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+            className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
               location.pathname.startsWith("/provider/notifications")
                 ? "bg-gray-50"
                 : ""
@@ -448,7 +475,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <div
               className={
                 location.pathname.startsWith("/provider/notifications")
-                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                   : ""
               }
             >
@@ -456,7 +483,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 className={
                   location.pathname.startsWith("/provider/notifications")
                     ? "h-6 w-6 text-yellow-300"
-                    : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
+                    : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
                 }
               />
             </div>
@@ -464,8 +491,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               Notifications
             </span>
             {unreadCount > 0 && (
-              <span className="absolute right-2 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-                &nbsp;
+              <span
+                aria-label={
+                  unreadCount > 99
+                    ? "99+ new notifications"
+                    : `${unreadCount} new notifications`
+                }
+                className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Link>
@@ -474,7 +508,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <Link
             key="Profile"
             to={navItems.find((i) => i.label === "Profile")!.to}
-            className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+            className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
               location.pathname.startsWith(
                 navItems.find((i) => i.label === "Profile")!.to,
               )
@@ -512,8 +546,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 location.pathname.startsWith(
                   navItems.find((i) => i.label === "Profile")!.to,
                 )
-                  ? "h-10 w-10 ring-2 ring-yellow-500"
-                  : "h-8 w-8 group-hover:scale-105 group-hover:ring-2 group-hover:ring-yellow-500"
+                  ? "h-10 w-10 ring-2 ring-yellow-400"
+                  : "h-8 w-8 md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-yellow-400"
               }`}
               draggable={false}
             />
@@ -533,7 +567,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               <Link
                 key={item.label}
                 to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 hover:bg-gray-50 ${
+                className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
                   isActive ? "bg-gray-50" : ""
                 }`}
                 onClick={async (e) => {
@@ -558,7 +592,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <div
                   className={
                     isActive
-                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
+                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
                       : ""
                   }
                 >
@@ -566,7 +600,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={
                       isActive
                         ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
+                        : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
                     }
                   />
                 </div>
@@ -574,7 +608,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
                     isActive
                       ? "font-bold"
-                      : "opacity-90 group-hover:text-yellow-500"
+                      : "opacity-90 md:group-hover:text-yellow-400"
                   }`}
                 >
                   {item.label}
