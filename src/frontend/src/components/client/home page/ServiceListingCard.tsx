@@ -197,13 +197,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     // Effect to preload image and update state when ready
     React.useEffect(() => {
       const imageSource = getImageSource();
-      
+
       // Reset loading state when image source changes
       setImageLoaded(false);
       setImageSrc(imageSource);
 
       // For SVG or already loaded images, mark as loaded immediately
-      if (imageSource.endsWith('.svg') || imageSource.startsWith('data:')) {
+      if (imageSource.endsWith(".svg") || imageSource.startsWith("data:")) {
         setImageLoaded(true);
         return;
       }
@@ -215,7 +215,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       };
       img.onerror = () => {
         // On error, use fallback and mark as loaded
-        setImageSrc('/images/ai-sp/others.svg');
+        setImageSrc("/images/ai-sp/others.svg");
         setImageLoaded(true);
       };
       img.src = imageSource;
@@ -247,9 +247,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 src={imageSrc}
                 alt={service.title}
                 className={`service-image h-full w-full rounded-t-2xl object-cover transition-opacity duration-300 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                  imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
-                style={!imageLoaded ? { position: 'absolute', top: 0, left: 0 } : {}}
+                style={
+                  !imageLoaded ? { position: "absolute", top: 0, left: 0 } : {}
+                }
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";

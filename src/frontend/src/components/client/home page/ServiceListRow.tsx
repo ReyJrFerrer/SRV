@@ -18,6 +18,11 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   // Use the realtime hook for live updates from Firestore
   const { services, loading, error } = useAllServicesWithProviders();
 
+  // Pagination state
+  const ITEMS_PER_PAGE = 10;
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   // Service data state map with proper typing
   interface ServiceData {
     isVerified?: boolean;
@@ -35,8 +40,10 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   // Effect to fetch service data for all services
   useEffect(() => {
     const fetchServiceData = async () => {
-      const serviceIds = services.map((s) => s.id);
-      
+      // Only fetch data for services that will be displayed
+      const servicesToDisplay = services.slice(0, displayCount);
+      const serviceIds = servicesToDisplay.map((s) => s.id);
+
       // Only fetch data for services we haven't fetched yet
       const toFetch = serviceIds.filter((id) => !serviceDataMap[id]);
 
@@ -133,32 +140,36 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     if (services.length > 0) {
       fetchServiceData();
     }
-  }, [services, serviceDataMap]);
+  }, [services, displayCount]); // Only depend on services and displayCount
 
   // Memoize the enhance service function
   const enhanceService = useMemo(
-    () => (service: EnrichedService): EnrichedService => ({
-      ...service,
-      heroImage: getCategoryImage(service.category.name),
-      rating: {
-        average: service.rating.average ?? 0,
-        count: service.rating.count ?? 0,
-      },
-      price: {
-        amount: service.price.amount,
-        unit: service.price.unit,
-        display: `₱${service.price.amount.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`,
-      },
-    }),
+    () =>
+      (service: EnrichedService): EnrichedService => ({
+        ...service,
+        heroImage: getCategoryImage(service.category.name),
+        rating: {
+          average: service.rating.average ?? 0,
+          count: service.rating.count ?? 0,
+        },
+        price: {
+          amount: service.price.amount,
+          unit: service.price.unit,
+          display: `₱${service.price.amount.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
+        },
+      }),
     [],
   );
 
   // Memoize the services with their data
   const servicesWithData = useMemo(() => {
-    return services.map((service) => {
+    // Only show services up to displayCount
+    const servicesToShow = services.slice(0, displayCount);
+    
+    return servicesToShow.map((service) => {
       const serviceData = serviceDataMap[service.id] || {
         isVerified: false,
         averageRating: service.rating?.average || 0,
@@ -173,7 +184,20 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         serviceData,
       };
     });
-  }, [services, serviceDataMap, enhanceService]);
+  }, [services, serviceDataMap, enhanceService, displayCount]);
+
+  // Handler for loading more services
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    // Simulate a small delay for UX
+    setTimeout(() => {
+      setDisplayCount((prev) => Math.min(prev + ITEMS_PER_PAGE, services.length));
+      setIsLoadingMore(false);
+    }, 300);
+  };
+
+  // Check if there are more services to load
+  const hasMore = displayCount < services.length;
 
   // Show error state
   if (error) {
@@ -205,7 +229,9 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         ) : (
           // Show empty state when no services available
           <div className="py-12 text-center">
-            <p className="text-gray-500">No services available at the moment.</p>
+            <p className="text-gray-500">
+              No services available at the moment.
+            </p>
           </div>
         )
       ) : (
@@ -215,6 +241,33 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
               <ServiceListItem service={service} serviceData={serviceData} />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Load More Button */}
+      {!loading && services.length > 0 && hasMore && (
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+          >
+            {isLoadingMore ? (
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <span>Loading...</span>
+              </div>
+            ) : (
+              <span>Load More Services</span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Show count info */}
+      {!loading && services.length > 0 && (
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Showing {Math.min(displayCount, services.length)} of {services.length} services
         </div>
       )}
     </div>
