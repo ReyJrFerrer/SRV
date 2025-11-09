@@ -10,6 +10,7 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 import ClientHeader from "../../components/client/home page/Header";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
 import { useAuth } from "../../context/AuthContext";
 import {
   ArrowPathRoundedSquareIcon,
@@ -35,6 +36,35 @@ const ClientHomePage: React.FC = () => {
       }
     },
   );
+  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+    useState(false);
+
+  // Check for OneSignal blocking on mount
+  useEffect(() => {
+    const checkOneSignalBlocking = () => {
+      // Check if OneSignal SDK failed to load
+      const oneSignalScript = document.querySelector(
+        'script[src*="OneSignalSDK"]',
+      );
+      if (oneSignalScript) {
+        oneSignalScript.addEventListener("error", () => {
+          console.error("OneSignal SDK blocked by browser or extension");
+          setShowOneSignalBlockedModal(true);
+        });
+      }
+
+      // Also check if window.OneSignal is undefined after a delay
+      setTimeout(() => {
+        if (typeof window.OneSignal === "undefined") {
+          console.error("OneSignal SDK not loaded - may be blocked");
+          setShowOneSignalBlockedModal(true);
+        }
+      }, 5000); // Give it 5 seconds to load
+    };
+
+    checkOneSignalBlocking();
+  }, []);
+
   const [permissionApiDenied, setPermissionApiDenied] = useState(false);
   useEffect(() => {
     let mounted = true;
@@ -125,6 +155,13 @@ const ClientHomePage: React.FC = () => {
           />
         );
       })()}
+
+      {/* SECTION: OneSignal Blocked Modal */}
+      {showOneSignalBlockedModal && (
+        <OneSignalBlockedModal
+          onClose={() => setShowOneSignalBlockedModal(false)}
+        />
+      )}
 
       {/* SECTION: Error alert */}
       {error && (
