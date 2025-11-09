@@ -25,7 +25,12 @@ const NotificationsPageSP = () => {
     deleteNotification,
     markAllAsRead,
   } = useProviderNotifications();
-
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    ProviderNotification[]
+  >([]);
+  
   // Set the document title
   useEffect(() => {
     document.title = "Notifications | SRV";
@@ -54,11 +59,7 @@ const NotificationsPageSP = () => {
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
-  // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
-  const [stableNotifications, setStableNotifications] = React.useState<
-    ProviderNotification[]
-  >([]);
+
 
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";

@@ -27,9 +27,31 @@ const NotificationsPage = () => {
   } = useNotifications();
   const navigate = useNavigate();
 
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    Notification[]
+  >([]);
+
+  // Track if this is the initial load
+  const isInitialLoadRef = React.useRef(true);
+
   // Stabilize notifications array to prevent flickering
   React.useEffect(() => {
-    if (loading) return;
+    // On initial load, wait for loading to finish before showing anything
+    if (isInitialLoadRef.current && loading) {
+      return;
+    }
+
+    // After initial load completes, mark it as done
+    if (isInitialLoadRef.current && !loading) {
+      isInitialLoadRef.current = false;
+    }
+
+    // If loading again after initial load, keep showing stable notifications
+    if (loading && !isInitialLoadRef.current) {
+      return;
+    }
 
     // Check if there are new notifications that haven't been processed
     const newNotifications = notifications.filter(
@@ -49,12 +71,6 @@ const NotificationsPage = () => {
 
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
-
-  // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
-  const [stableNotifications, setStableNotifications] = React.useState<
-    Notification[]
-  >([]);
 
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
@@ -243,8 +259,9 @@ const NotificationsPage = () => {
                 >
                   {selectedIds.length > 0 &&
                   selectedIds.length ===
-                    stableNotifications.filter((n) => !deletedIds.includes(n.id))
-                      .length
+                    stableNotifications.filter(
+                      (n) => !deletedIds.includes(n.id),
+                    ).length
                     ? "Clear"
                     : "Select all"}
                 </button>
@@ -393,7 +410,7 @@ const NotificationsPage = () => {
       )}
 
       <main className="flex-1 px-4 pb-24">
-        {loading ? (
+        {loading && stableNotifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             Loading notifications…
           </div>
