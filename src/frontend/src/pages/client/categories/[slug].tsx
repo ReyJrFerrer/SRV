@@ -13,6 +13,7 @@ import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovem
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
+  EnrichedService,
 } from "../../../hooks/serviceInformation";
 import serviceCanisterService from "../../../services/serviceCanisterService";
 import { getCategoryIcon } from "../../../utils/serviceHelpers";
@@ -110,6 +111,16 @@ const CategoryPage: React.FC = () => {
   }, [slug]);
 
   const handleSearch = (term: string) => setSearchTerm(term);
+
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    serviceImages: service.heroImage ? [service.heroImage] : [],
+    userImageUrl: service.providerAvatar || null,
+    isLoadingImages: false,
+  });
 
   const sortedAndFilteredServices = useMemo(() => {
     let processedServices = services.filter(
@@ -262,7 +273,11 @@ const CategoryPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {sortedAndFilteredServices.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem service={service} retainMobileLayout={true} />
+                <ServiceListItem
+                  service={service}
+                  serviceData={createServiceData(service)}
+                  retainMobileLayout={true}
+                />
               </Appear>
             ))}
           </div>
