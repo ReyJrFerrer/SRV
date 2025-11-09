@@ -363,8 +363,23 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
+        const status = (booking.status || "").toString().toLowerCase();
+
+        const statusNorm = status.replace(/[^a-z]/g, "");
+
+        if (
+          statusNorm.includes("complete") ||
+          statusNorm.includes("cancel") ||
+          statusNorm.includes("declined")
+        ) {
+          return false;
+        }
+
         const bookingDateString =
-          (booking as any).scheduledDateTime || (booking as any).createdAt;
+          (booking as any).scheduledDateTime ||
+          (booking as any).requestedDate ||
+          (booking as any).requestedDateTime ||
+          (booking as any).createdAt;
         if (!bookingDateString) {
           return false;
         }

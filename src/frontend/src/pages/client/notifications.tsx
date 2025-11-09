@@ -30,20 +30,63 @@ const NotificationsPage = () => {
 
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
+  // Stabilize notifications like the provider page to avoid flicker and
+  // ensure client-side filtering reacts to meaningful changes (read flag,
+  // type, href, etc.) even if the upstream hook mutates the array in place.
+  const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    Notification[]
+  >([]);
+
+  // Stabilize incoming notifications similar to provider page.
+  React.useEffect(() => {
+    if (loading) return;
+
+    const nextMap = new Map<string, string>();
+    notifications.forEach((n) => {
+      try {
+        nextMap.set(
+          n.id,
+          JSON.stringify({ id: n.id, type: n.type, read: n.read, href: n.href }),
+        );
+      } catch (e) {
+        nextMap.set(n.id, String(n.id));
+      }
+    });
+
+    const prevMap = previousNotificationsRef.current;
+    let changed = false;
+    if (prevMap.size !== nextMap.size) {
+      changed = true;
+    } else {
+      for (const [id, sig] of nextMap.entries()) {
+        if (prevMap.get(id) !== sig) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed || notifications.length === 0) {
+      previousNotificationsRef.current = nextMap;
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
   // Tabs for categorizing notifications
   type NotificationTab =
     | "All"
     | "Bookings"
     | "Chat"
     | "Ratings"
-    | "From Admin notifications";
+    | "From Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin notifications",
+    "From Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -78,7 +121,7 @@ const NotificationsPage = () => {
   };
 
   const handleSelectAll = () => {
-    const visibleIds = notifications
+    const visibleIds = stableNotifications
       .filter((n) => !deletedIds.includes(n.id))
       .map((n) => n.id);
     if (!editMode) {
@@ -132,7 +175,7 @@ const NotificationsPage = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = notifications.filter((n) => !deletedIds.includes(n.id));
+    const visible = stableNotifications.filter((n) => !deletedIds.includes(n.id));
 
     // Helper to map notification type to a UI category
     const categoryOfType = (type: string) => {
@@ -151,7 +194,7 @@ const NotificationsPage = () => {
       if (bookingTypes.includes(type)) return "Bookings";
       if (type === "chat_message" || type === "provider_message") return "Chat";
       if (type === "review_reminder") return "Ratings";
-      if (adminTypes.includes(type)) return "From Admin notifications";
+      if (adminTypes.includes(type)) return "From Admin";
       return "All";
     };
 
@@ -174,14 +217,14 @@ const NotificationsPage = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications, deletedIds, activeTab]);
+  }, [stableNotifications, deletedIds, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
         <div
-          className={`w-full px-4 py-3 ${
-            notifications.length === 0
+      className={`w-full px-4 py-3 ${
+        stableNotifications.length === 0
               ? "flex items-center justify-center"
               : "relative flex items-center justify-between"
           }`}
@@ -195,7 +238,7 @@ const NotificationsPage = () => {
           >
             Notifications
           </h1>
-          {notifications.length > 0 && (
+          {stableNotifications.length > 0 && (
             <>
               <div className="hidden sm:block" aria-hidden="true" />
 
@@ -219,11 +262,11 @@ const NotificationsPage = () => {
                   className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                 >
                   {selectedIds.length > 0 &&
-                  selectedIds.length ===
-                    notifications.filter((n) => !deletedIds.includes(n.id))
-                      .length
-                    ? "Clear"
-                    : "Select all"}
+                    selectedIds.length ===
+                      stableNotifications.filter((n) => !deletedIds.includes(n.id))
+                        .length
+                      ? "Clear"
+                      : "Select all"}
                 </button>
                 {unread.length > 0 && (
                   <button
@@ -279,12 +322,12 @@ const NotificationsPage = () => {
                         role="menuitem"
                       >
                         {selectedIds.length > 0 &&
-                        selectedIds.length ===
-                          notifications.filter(
-                            (n) => !deletedIds.includes(n.id),
-                          ).length
-                          ? "Clear selection"
-                          : "Select all"}
+                          selectedIds.length ===
+                            stableNotifications.filter(
+                              (n) => !deletedIds.includes(n.id),
+                            ).length
+                            ? "Clear selection"
+                            : "Select all"}
                       </button>
 
                       {unread.length > 0 && (
@@ -325,7 +368,7 @@ const NotificationsPage = () => {
               >
                 {tab} (
                 {
-                  notifications
+                  stableNotifications
                     .filter((n) => !deletedIds.includes(n.id))
                     .filter((n) => {
                       // quick inline category mapping for counts
@@ -351,10 +394,10 @@ const NotificationsPage = () => {
                         );
                       if (tab === "Ratings")
                         return n.type === "review_reminder";
-                      if (tab === "From Admin notifications")
+                      if (tab === "From Admin")
                         return adminTypes.includes(n.type);
                       return false;
-                    }).length
+          }).length
                 }
                 )
               </button>
