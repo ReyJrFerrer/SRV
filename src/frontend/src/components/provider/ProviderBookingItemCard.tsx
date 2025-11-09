@@ -361,7 +361,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         {/* Booking Information */}
         <div>
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+            <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
               {serviceTitle}
             </p>
 

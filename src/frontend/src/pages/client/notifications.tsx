@@ -178,7 +178,7 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 bg-white">
         <div
           className={`w-full px-4 py-3 ${
             notifications.length === 0
@@ -310,14 +310,14 @@ const NotificationsPage = () => {
       </header>
 
       {/* Tabs navigation for notification categories */}
-      <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-          <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+      <div className="mb-5 border-t border-gray-200 bg-white">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap border-b border-gray-200 p-2 sm:justify-center">
+          <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${
+                className={`flex-shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold sm:text-sm ${
                   activeTab === tab
                     ? "bg-blue-600 text-white shadow"
                     : "text-gray-600 hover:bg-yellow-200"

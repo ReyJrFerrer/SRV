@@ -160,7 +160,7 @@ const ConversationPage: React.FC = () => {
             onClick={() => navigate(-1)}
             className="rounded-full p-2 hover:bg-blue-100"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="ml-3">
             <h1 className="text-lg font-bold text-blue-900">Error</h1>
@@ -191,7 +191,7 @@ const ConversationPage: React.FC = () => {
           onClick={() => navigate(-1)}
           className="rounded-full p-2 hover:bg-yellow-100"
         >
-          <ArrowLeftIcon className="h-6 w-6 text-blue-700 hover:text-yellow-600" />
+          <ArrowLeftIcon className="h-6 w-6 text-gray-700 hover:text-yellow-600" />
         </button>
         <div className="ml-3 flex flex-1 items-center justify-between">
           <div className="flex items-center">

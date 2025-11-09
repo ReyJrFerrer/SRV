@@ -75,8 +75,11 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       <div className="space-y-3 text-base">
         <div className="flex items-start">
           <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-          <span>
-            <strong>Package:</strong> {packageName}
+          <span className="min-w-0">
+            <strong>Package:</strong>{" "}
+            <span className="inline-block max-w-full break-words align-bottom">
+              {packageName}
+            </span>
           </span>
         </div>
         <div className="flex items-start">

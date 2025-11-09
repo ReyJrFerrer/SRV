@@ -51,11 +51,11 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 
   return (
     <div className="mt-8 rounded-xl bg-white p-4 shadow-xl backdrop-blur-md">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <CalendarIcon />
         <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
         {isActive && (
-          <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+          <span className="ml-auto flex animate-pulse items-center justify-end gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[10px] font-bold text-green-700 lg:text-sm">
             <span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>
             Available Now
           </span>
@@ -155,7 +155,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                           >
                             {slot ? (
                               <span
-                                className={` inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
+                                className={`inline-block min-w-[120px] rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md`}
                               >
                                 {slot}
                               </span>
