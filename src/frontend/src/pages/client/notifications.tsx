@@ -174,7 +174,7 @@ const NotificationsPage = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications, deletedIds]);
+  }, [notifications, deletedIds, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
