@@ -38,7 +38,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       const serviceIds = services.map((s) => s.id);
       const mapCopy = { ...serviceDataMap };
       const toFetch = serviceIds.filter((id) => !mapCopy[id]);
-      
+
       if (toFetch.length === 0) return;
 
       await Promise.all(
@@ -54,18 +54,26 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
             };
 
             // Fetch service details for verification status
-            const serviceDetails = await serviceCanisterService.getService(serviceId);
-            
+            const serviceDetails =
+              await serviceCanisterService.getService(serviceId);
+
             // Fetch reviews for ratings
-            const reviews = await reviewCanisterService.getServiceReviews(serviceId);
-            const visibleReviews = reviews.filter((r: any) => r.status === "Visible");
-            const averageRating = visibleReviews.length > 0
-              ? visibleReviews.reduce((acc: number, r: any) => acc + r.rating, 0) / visibleReviews.length
-              : 0;
+            const reviews =
+              await reviewCanisterService.getServiceReviews(serviceId);
+            const visibleReviews = reviews.filter(
+              (r: any) => r.status === "Visible",
+            );
+            const averageRating =
+              visibleReviews.length > 0
+                ? visibleReviews.reduce(
+                    (acc: number, r: any) => acc + r.rating,
+                    0,
+                  ) / visibleReviews.length
+                : 0;
 
             // Find the service from the list to get provider avatar
-            const service = services.find(s => s.id === serviceId);
-            
+            const service = services.find((s) => s.id === serviceId);
+
             // For service images, we'll use the heroImage from the enriched service
             // and the provider avatar as fallback
             const serviceImages: string[] = [];

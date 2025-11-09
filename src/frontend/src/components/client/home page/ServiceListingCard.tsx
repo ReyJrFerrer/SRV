@@ -79,7 +79,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     isGridItem = false,
   }) => {
     // Use the passed service data instead of fetching
-    const { isVerified, averageRating, totalReviews, serviceImages, userImageUrl, isLoadingImages } = serviceData;
+    const {
+      isVerified,
+      averageRating,
+      totalReviews,
+      serviceImages,
+      userImageUrl,
+      isLoadingImages,
+    } = serviceData;
 
     const serviceRating = {
       average: averageRating,
@@ -149,39 +156,40 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const getCategoryIcon = (slug: string | undefined): string => {
       if (!slug) return "/images/categories/others.svg";
       if (categoryIconMap[slug]) {
-      return `/images/categories/${categoryIconMap[slug]}`;
-    }
-    const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
-    return fallback;
-  };
+        return `/images/categories/${categoryIconMap[slug]}`;
+      }
+      const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
+      return fallback;
+    };
 
-  // Helper function to determine the image source with proper priority
-  const getImageSource = (): string => {
-    // Accept any valid image URL (data:, http(s) or local path)
-    const isValidImageUrl = (u?: string | null): u is string =>
-      !!u &&
-      (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
-      u.length > 20;
+    // Helper function to determine the image source with proper priority
+    const getImageSource = (): string => {
+      // Accept any valid image URL (data:, http(s) or local path)
+      const isValidImageUrl = (u?: string | null): u is string =>
+        !!u &&
+        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
+        u.length > 20;
 
-    // Priority 1: Service images (if loaded and valid)
-    const firstImage = serviceImages[0];
-    if (isValidImageUrl(firstImage)) {
-      return firstImage;
-    }
+      // Priority 1: Service images (if loaded and valid)
+      const firstImage = serviceImages[0];
+      if (isValidImageUrl(firstImage)) {
+        return firstImage;
+      }
 
-    // Priority 2: User avatar (if loaded and valid)
-    if (!isLoadingImages && isValidImageUrl(userImageUrl)) {
-      return userImageUrl;
-    }
+      // Priority 2: User avatar (if loaded and valid)
+      if (!isLoadingImages && isValidImageUrl(userImageUrl)) {
+        return userImageUrl;
+      }
 
-    // Priority 3: Category-specific fallback
-    if (service.category?.slug) {
-      return `/images/ai-sp/${service.category.slug}.svg`;
-    }
+      // Priority 3: Category-specific fallback
+      if (service.category?.slug) {
+        return `/images/ai-sp/${service.category.slug}.svg`;
+      }
 
-    // Priority 4: Default fallback
-    return "/images/ai-sp/others.svg";
-  };    return (
+      // Priority 4: Default fallback
+      return "/images/ai-sp/others.svg";
+    };
+    return (
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
           to={`/client/service/${service.id}`}
