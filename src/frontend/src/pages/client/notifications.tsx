@@ -271,7 +271,7 @@ const NotificationsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
-        <div className="justify-center relative flex w-full items-center px-4 py-3">
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
@@ -313,7 +313,7 @@ const NotificationsPage = () => {
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                   >
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
@@ -339,7 +339,7 @@ const NotificationsPage = () => {
                 {mobileMenuOpen && (
                   <div
                     ref={mobileMenuRef}
-                    className="ring-opacity-5 absolute top-full right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500"
+                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
                   >
                     <div className="py-1" role="menu">
                       <button
@@ -400,7 +400,7 @@ const NotificationsPage = () => {
 
       {/* Tabs navigation for notification categories */}
       <div className="mb-5 border-t border-gray-200 bg-white">
-        <div className="hide-scrollbar flex justify-start overflow-x-auto border-b border-gray-200 p-2 whitespace-nowrap sm:justify-center">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap border-b border-gray-200 p-2 sm:justify-center">
           <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
             {TAB_ITEMS.map((tab) => (
               <button
