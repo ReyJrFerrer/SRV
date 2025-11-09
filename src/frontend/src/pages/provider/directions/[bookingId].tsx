@@ -752,13 +752,6 @@ const ProviderDirectionsPage: React.FC = () => {
     );
   }
 
-  if (!booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-gray-600">
-        Booking not found.
-      </div>
-    );
-  }
   const destinationHasCoords = !!destinationCoords;
 
   const toggleNavigationMode = () => {
