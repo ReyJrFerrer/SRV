@@ -717,7 +717,7 @@ const ClientProfilePage: React.FC = () => {
                           ref={fileInputRef}
                           onChange={handleFileChange}
                           className="hidden"
-                          accept="image/*"
+                          accept="image/png, image/jpeg"
                         />
                         <button
                           onClick={handleImageUploadClick}

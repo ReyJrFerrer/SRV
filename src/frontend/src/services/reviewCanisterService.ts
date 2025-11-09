@@ -289,11 +289,29 @@ export const reviewCanisterService = {
       );
       return responseData.data;
     } catch (error) {
+      // Check if the error is "No reviews found" and return default values
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("No reviews found")) {
+        console.log(
+          "ℹ️ [reviewCanisterService] No reviews found for provider, returning default rating",
+        );
+        return {
+          averageRating: 0,
+          reviewCount: 0,
+          providerId,
+        };
+      }
+      
       console.error(
         "❌ [reviewCanisterService] Error calculating provider rating:",
         error,
       );
-      throw new Error(`Failed to calculate provider rating: ${error}`);
+      // Return default values for other errors too
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+        providerId,
+      };
     }
   },
 
@@ -333,11 +351,29 @@ export const reviewCanisterService = {
       );
       return responseData.data;
     } catch (error) {
+      // Check if the error is "No reviews found" and return default values
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("No reviews found")) {
+        console.log(
+          "ℹ️ [reviewCanisterService] No reviews found for service, returning default rating",
+        );
+        return {
+          averageRating: 0,
+          reviewCount: 0,
+          serviceId,
+        };
+      }
+      
       console.error(
         "❌ [reviewCanisterService] Error calculating service rating:",
         error,
       );
-      throw new Error(`Failed to calculate service rating: ${error}`);
+      // Return default values for other errors too
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+        serviceId,
+      };
     }
   },
 
@@ -377,11 +413,29 @@ export const reviewCanisterService = {
       );
       return responseData.data;
     } catch (error) {
+      // Check if the error is "No reviews found" and return default values
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("No reviews found")) {
+        console.log(
+          "ℹ️ [reviewCanisterService] No reviews found for user, returning default rating",
+        );
+        return {
+          averageRating: 0,
+          reviewCount: 0,
+          userId: userId || "",
+        };
+      }
+      
       console.error(
         "❌ [reviewCanisterService] Error calculating user average rating:",
         error,
       );
-      throw new Error(`Failed to calculate user average rating: ${error}`);
+      // Return default values for other errors too
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+        userId: userId || "",
+      };
     }
   },
 

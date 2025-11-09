@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import ServiceListItem, {
-  ServiceListingCardSkeleton,
-} from "./ServiceListingCard";
+import ServiceListItem from "./ServiceListingCard";
 import {
   EnrichedService,
   useAllServicesWithProviders,
@@ -216,25 +214,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      {loading || services.length === 0 ? (
-        loading ? (
-          // Show skeleton grid while initially loading
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i}>
-                <ServiceListingCardSkeleton />
-              </div>
-            ))}
-          </div>
-        ) : (
-          // Show empty state when no services available
-          <div className="py-12 text-center">
-            <p className="text-gray-500">
-              No services available at the moment.
-            </p>
-          </div>
-        )
-      ) : (
+      
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
           {servicesWithData.map(({ service, serviceData }) => (
             <div key={service.id}>
@@ -242,7 +222,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
             </div>
           ))}
         </div>
-      )}
+
 
       {/* Load More Button */}
       {!loading && services.length > 0 && hasMore && (
@@ -264,12 +244,6 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         </div>
       )}
 
-      {/* Show count info */}
-      {!loading && services.length > 0 && (
-        <div className="mt-4 text-center text-sm text-gray-600">
-          Showing {Math.min(displayCount, services.length)} of {services.length} services
-        </div>
-      )}
     </div>
   );
 };
