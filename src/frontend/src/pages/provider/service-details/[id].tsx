@@ -516,9 +516,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     const files = Array.from(event.target.files);
 
     // Check if adding these files would exceed the 5 image limit
-    if (tempDisplayImages.length + files.length > 5) {
+    if (tempDisplayImages.length + files.length > 10) {
       setUploadError(
-        `Cannot upload ${files.length} image(s). Maximum 5 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
+        `Cannot upload ${files.length} image(s). Maximum 10 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
       );
       event.target.value = "";
       return;

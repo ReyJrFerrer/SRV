@@ -1371,8 +1371,8 @@ export const useServiceManagement = (): ServiceManagementHook => {
     (files: File[], options?: ImageUploadOptions): string[] => {
       const errors: string[] = [];
 
-      if (files.length > 5) {
-        errors.push("Maximum 5 images allowed per service");
+      if (files.length > 10) {
+        errors.push("Maximum 10 images allowed per service");
       }
 
       // Use mediaService validation for each file

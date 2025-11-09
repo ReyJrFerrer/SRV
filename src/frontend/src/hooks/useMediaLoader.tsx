@@ -397,8 +397,8 @@ export const useServiceImageGallery = (
 
     // Gallery state
     hasImages: (imageLoader.images?.length || 0) > 0,
-    canAddMore: (imageUrls.length || 0) < 5, // Max 5 images per service
-    remainingSlots: Math.max(0, 5 - (imageUrls.length || 0)),
+    canAddMore: (imageUrls.length || 0) < 10, // Max 10 images per service
+    remainingSlots: Math.max(0, 10 - (imageUrls.length || 0)),
   };
 };
 
