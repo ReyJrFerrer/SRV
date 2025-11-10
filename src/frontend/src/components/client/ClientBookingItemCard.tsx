@@ -1,5 +1,5 @@
 // --- Client Booking Item Card ---
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
@@ -10,26 +10,38 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   XCircleIcon,
-  ArrowPathIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
+import { useChat } from "../../hooks/useChat";
+import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import ReputationScore from "./service-detail/ReputationScore";
+import ActionButtons from "./booking-details/ActionButtons";
+import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
-  onCancelBooking?: (bookingId: string) => void;
-  onUpdateStatus?: (bookingId: string, status: string) => Promise<void>;
+  onCancelClick: (booking: EnhancedBooking) => void;
+  // Optional pre-fetched rating/reviews provided by parent (My Bookings page)
+  averageRating?: number | null;
+  reviewCount?: number | null;
+  reviews?: any[];
+  reputation: any;
 }
 
 const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   booking,
-  onCancelBooking,
-  onUpdateStatus,
+  onCancelClick,
+  averageRating,
+  reviewCount,
+  reputation,
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
+  const { conversations, createConversation } = useChat();
+  const { identity } = useAuth();
 
   // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -66,7 +78,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           estimatedCommission: validation.estimatedCommission,
         });
       } catch (error) {
-        console.error("Error checking commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -130,11 +141,24 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }
   const providerName = booking.providerProfile?.name;
 
+  const notes = (booking as any)?.notes;
+
   const bookingLocation =
     booking.formattedLocation ||
     (typeof booking.location === "string"
       ? booking.location
       : "Location not specified");
+
+  const providerId =
+    booking?.providerProfile?.id?.toString() || booking?.providerId?.toString();
+
+  // Determine if provider data has been loaded
+  const hasProviderData =
+    averageRating !== undefined &&
+    averageRating !== null &&
+    reviewCount !== undefined &&
+    reviewCount !== null &&
+    reputation !== null;
 
   // --- Format date function ---
   const formatDate = (date: Date | string | number) => {
@@ -222,29 +246,66 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Event Handlers ---
-  const handleCancelClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleChat = useCallback(async () => {
+    if (!booking.providerProfile?.id) {
+      toast.error("Provider information is missing.");
+      return;
+    }
+    if (!identity) {
+      toast.error("You must be logged in to start a conversation.");
+      return;
+    }
 
     try {
-      if (onUpdateStatus) {
-        await onUpdateStatus(booking.id, "Cancelled");
-      } else if (onCancelBooking) {
-        onCancelBooking(booking.id);
-      } else {
-        toast.error(
-          `Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`,
-        );
+      const currentUserId = identity.getPrincipal().toString();
+      const providerIdString = booking.providerProfile.id.toString();
+
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === providerIdString) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === providerIdString),
+      );
+
+      if (existingConversation) {
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
       }
-    } catch (error) {
-      toast.error("Failed to cancel booking. Please try again.");
+
+      const newConv = await createConversation(currentUserId, providerIdString);
+      if (newConv && newConv.id) {
+        navigate(`/client/chat/${newConv.id}`, {
+          state: {
+            conversationId: newConv.id,
+            otherUserName: booking.providerProfile?.name || "Provider",
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
+        return;
+      }
+
+      toast.error(
+        "Could not start a new conversation. Please try again later.",
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not start conversation. Please try again.",
+      );
     }
-  };
+  }, [booking, conversations, createConversation, identity, navigate]);
 
-  const handleBookAgainClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleBookAgain = () => {
     if (booking.serviceId) {
       navigate(`/client/book/${booking.serviceId}`);
     } else {
@@ -254,10 +315,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // Add handler for viewing reviews when already reviewed
-  const handleViewReviews = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleViewReviews = () => {
     if (booking.serviceId) {
       navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
@@ -266,14 +324,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   };
 
   // --- Check if booking can be cancelled ---
-  const canCancel = ["Requested", "Pending", "Accepted", "Confirmed"].includes(
+  const canCancel = ["Requested", "Accepted", "Confirmed"].includes(
     booking.status,
   );
 
   // --- Check if booking is completed/cancelled for actions ---
   const isCompleted = booking.status === "Completed";
   const isCancelled = booking.status === "Cancelled";
-  const isFinished = isCompleted || isCancelled;
 
   // --- Review button content logic ---
   const getReviewButtonContent = () => {
@@ -351,8 +408,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-  console.log(booking);
-
   // --- Render: Booking Card Layout ---
   return (
     <Link
@@ -378,7 +433,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+              <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
               <span
@@ -398,12 +453,49 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <p className="mt-1 text-xs text-gray-500">
               Provided by: {providerName}
             </p>
+            {/* Reputation + Rating (real frontend display using shared components) */}
+            {providerId && (
+              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
+                {hasProviderData ? (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    <div className="flex-shrink-0">
+                      <ReputationScore reputation={reputation} />
+                    </div>
+
+                    <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
+                      <div className="flex items-center gap-2">
+                        <StarRatingDisplay rating={averageRating ?? 0} />
+                        <span className="ml-1 font-bold">
+                          {(averageRating as number).toFixed(1)}
+                        </span>
+                      </div>
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({reviewCount})
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    {/* Skeleton for Reputation Score */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                    {/* Skeleton for Rating Summary */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <p className="mt-1 text-xs text-gray-500">
               Contact: {booking.providerProfile?.phone}
             </p>
 
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              <p className="flex items-center">
+              <p className="flex items-start">
                 <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                 {booking.scheduledDate
                   ? formatDateRange(
@@ -413,13 +505,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   : formatDate(booking.requestedDate || booking.createdAt)}
               </p>
 
-              <p className="flex items-center">
+              <p className="flex items-start">
                 <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                 <span className="truncate">{bookingLocation}</span>
               </p>
 
               {booking.price && (
-                <p className="flex items-center">
+                <p className="flex items-start">
                   <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                   <span className="font-semibold text-green-600">
                     ₱
@@ -430,58 +522,50 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 </p>
               )}
             </div>
+
+            {/* Booking Notes (if any) */}
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
           </div>
 
           <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-            {canCancel && (
-              <button
-                onClick={handleCancelClick}
-                className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
-              >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
-              </button>
-            )}
-
-            {/* Only show "Book Again" for completed bookings, not cancelled */}
-            {isCompleted && booking.serviceId && (
-              <button
-                onClick={handleBookAgainClick}
-                className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
-              >
-                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Book Again
-              </button>
-            )}
-
-            {/* Enhanced review button with validation for cancelled bookings */}
-            {isFinished && reviewButtonContent && (
-              <div className="relative">
-                {reviewButtonContent.href ? (
-                  <Link
-                    to={reviewButtonContent.href.pathname}
-                    state={{ providerName }}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    onClick={(e) => {
-                      if (reviewButtonContent.disabled) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </Link>
-                ) : (
-                  <button
-                    onClick={reviewButtonContent.onClick}
-                    disabled={reviewButtonContent.disabled}
-                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                    title={reviewButtonContent.tooltip}
-                  >
-                    {reviewButtonContent.icon}
-                    {reviewButtonContent.text}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
+            <ActionButtons
+              compact={true}
+              onChat={handleChat}
+              chatLoading={false}
+              onRequestCancel={() => onCancelClick(booking)}
+              canCancel={canCancel}
+              // provide Book Again handler so the shared component renders it
+              onBookAgain={
+                isCompleted && booking.serviceId ? handleBookAgain : undefined
+              }
+              bookAgainLabel={"Book Again"}
+              reviewButtonContent={
+                reviewButtonContent
+                  ? {
+                      text: reviewButtonContent.text,
+                      icon: reviewButtonContent.icon,
+                      onClick: reviewButtonContent.onClick ?? undefined,
+                      to: reviewButtonContent.href
+                        ? reviewButtonContent.href.pathname
+                        : undefined,
+                      state: reviewButtonContent.href
+                        ? reviewButtonContent.href.query || { providerName }
+                        : undefined,
+                      disabled: reviewButtonContent.disabled,
+                      className: reviewButtonContent.className,
+                    }
+                  : null
+              }
+              status={booking.status}
+              onReport={() =>
+                navigate(`/client/report`, { state: { bookingId: booking.id } })
+              }
+            />
           </div>
         </div>
       </div>

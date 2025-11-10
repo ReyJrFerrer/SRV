@@ -1,7 +1,7 @@
 import React from "react";
 /* Use standard React and HTML elements, styling with Tailwind CSS v4 */
 // SVG icons will use standard SVG elements below
-import ServiceListItem from "./ServiceListItem";
+import ServiceListItem from "./home page/ServiceListingCard";
 import {
   EnrichedService,
   useTopPickServices,
@@ -62,6 +62,14 @@ const TopPicks: React.FC<TopPicksProps> = ({
     heroImage: getCategoryImage(service.category.name),
   });
 
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
+
   // --- Render: Top Picks Layout ---
   if (loading) {
     return (
@@ -111,12 +119,16 @@ const TopPicks: React.FC<TopPicksProps> = ({
         // Service List
         <div className="flex flex-col gap-4 pb-4">
           {services.map(enhanceService).map((item) => (
-            <ServiceListItem key={item.id} service={item} />
+            <ServiceListItem
+              key={item.id}
+              service={item}
+              serviceData={createServiceData(item)}
+            />
           ))}
         </div>
       )}
     </div>
   );
-}; // Styling is now handled with Tailwind CSS utility classes
+};
 
 export default TopPicks;

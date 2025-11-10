@@ -1,187 +1,20 @@
-import React, { useMemo, useEffect } from "react";
+// SECTION: Imports — dependencies for this page
+import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
   Notification,
-} from "../../hooks/useNotificationsWithPush"; // Using push-enabled version
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+} from "../../hooks/useNotificationsWithPush";
+import BottomNavigation from "../../components/client/NavigationBar";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
-  BellAlertIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  StarIcon,
   EnvelopeOpenIcon,
   InboxIcon,
+  EllipsisVerticalIcon,
 } from "@heroicons/react/24/solid";
+import NotificationItem from "../../components/client/NotificationItemClient";
 
-// Helper to get the right icon for each notification type, with colored backgrounds
-const NotificationIcon: React.FC<{ type: Notification["type"] }> = ({
-  type,
-}) => {
-  let icon, bg;
-  switch (type) {
-    case "booking_accepted":
-      icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
-      bg = "bg-green-100";
-      break;
-    case "booking_declined":
-      icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
-      bg = "bg-red-100";
-      break;
-    case "booking_cancelled":
-      icon = <XCircleIcon className="h-6 w-6 text-orange-500" />;
-      bg = "bg-orange-100";
-      break;
-    case "booking_completed":
-      icon = <CheckCircleIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-      break;
-    case "payment_received":
-      icon = <CheckCircleIcon className="h-6 w-6 text-green-700" />;
-      bg = "bg-green-200";
-      break;
-    case "payment_failed":
-      icon = <XCircleIcon className="h-6 w-6 text-red-700" />;
-      bg = "bg-red-200";
-      break;
-    case "provider_message":
-      icon = <EnvelopeOpenIcon className="h-6 w-6 text-purple-600" />;
-      bg = "bg-purple-100";
-      break;
-    case "system_announcement":
-      icon = <BellAlertIcon className="h-6 w-6 text-gray-700" />;
-      bg = "bg-gray-200";
-      break;
-    case "service_rescheduled":
-      icon = <BellAlertIcon className="h-6 w-6 text-yellow-700" />;
-      bg = "bg-yellow-200";
-      break;
-    case "service_reminder":
-      icon = <StarIcon className="h-6 w-6 text-blue-500" />;
-      bg = "bg-blue-100";
-      break;
-    case "promo_offer":
-      icon = <StarIcon className="h-6 w-6 text-pink-500" />;
-      bg = "bg-pink-100";
-      break;
-    case "provider_on_the_way":
-      icon = <BellAlertIcon className="h-6 w-6 text-teal-600" />;
-      bg = "bg-teal-100";
-      break;
-    case "review_reminder":
-      icon = <StarIcon className="h-6 w-6 text-yellow-500" />;
-      bg = "bg-yellow-100";
-      break;
-    default:
-      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
-      bg = "bg-blue-100";
-  }
-  return (
-    <span
-      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
-    >
-      {icon}
-    </span>
-  );
-};
-
-// Reusable component for a single notification item
-const NotificationItem: React.FC<{
-  notification: Notification;
-  onClick: () => void;
-}> = ({ notification, onClick }) => {
-  const timeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + "y ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + "mo ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + "d ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + "h ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + "m ago";
-    return Math.floor(seconds) + "s ago";
-  };
-
-  // Enhanced notification message formatting
-  const getEnhancedMessage = () => {
-    const providerName = notification.providerName
-      ? ` by ${notification.providerName}`
-      : "";
-
-    switch (notification.type) {
-      case "booking_accepted":
-        return `Your booking has been accepted${providerName}. Service is confirmed and scheduled.`;
-      case "booking_declined":
-        return `Your booking was declined${providerName}. Please try booking with another provider.`;
-      case "booking_cancelled":
-        return `Your booking has been cancelled${providerName}. You can book again anytime.`;
-      case "booking_completed":
-        return `Service completed${providerName}. Thank you for using our platform!`;
-      case "payment_received":
-        return `Payment received successfully${providerName}. Your transaction is complete.`;
-      case "payment_failed":
-        return `Payment failed${providerName}. Please check your payment method and try again.`;
-      case "provider_message":
-        return `New message${providerName}. Tap to view and respond.`;
-      case "system_announcement":
-        return `System announcement: ${notification.message || "Important update from SRV team."}`;
-      case "service_rescheduled":
-        return `Service rescheduled${providerName}. Your appointment has been moved to a new time.`;
-      case "service_reminder":
-        return `Service reminder${providerName}. Your appointment is coming up soon.`;
-      case "promo_offer":
-        return `Special offer available! ${notification.message || "Check out our latest promotions."}`;
-      case "provider_on_the_way":
-        return `Provider is on the way${providerName}. They should arrive shortly.`;
-      case "review_reminder":
-        return `Please review your experience${providerName}. Your feedback helps improve our service.`;
-      default:
-        return notification.message || "New notification from SRV";
-    }
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className={`flex items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 ${
-        notification.href
-          ? "cursor-pointer hover:border-blue-200"
-          : "cursor-default"
-      } ${
-        !notification.read
-          ? "bg-blue-50 hover:bg-blue-100"
-          : "bg-white hover:bg-gray-50"
-      }`}
-    >
-      <div className="mt-1 flex-shrink-0">
-        <NotificationIcon type={notification.type} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">
-          {getEnhancedMessage()}
-        </p>
-        {notification.message &&
-          notification.type !== "system_announcement" &&
-          notification.type !== "promo_offer" &&
-          notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 text-xs italic text-gray-600">
-              {notification.message}
-            </p>
-          )}
-        <p className="mt-1 text-xs text-gray-500">
-          {timeAgo(notification.timestamp)}
-        </p>
-      </div>
-      {!notification.read && (
-        <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
-      )}
-    </div>
-  );
-};
+// NotificationItem and NotificationMenu moved to components/notifications
 
 const NotificationsPage = () => {
   const {
@@ -190,27 +23,234 @@ const NotificationsPage = () => {
     error,
     markAsRead,
     markAllAsRead,
-    unreadCount,
+    deleteNotification,
   } = useNotifications();
   const navigate = useNavigate();
 
-  // Set the document title
+  // Track processed notification IDs to prevent flickering from re-renders
+  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
+  const [stableNotifications, setStableNotifications] = React.useState<
+    Notification[]
+  >([]);
+
+  // Track if this is the initial load
+  const isInitialLoadRef = React.useRef(true);
+
+  // Stabilize notifications array to prevent flickering
+  React.useEffect(() => {
+    // On initial load, wait for loading to finish before showing anything
+    if (isInitialLoadRef.current && loading) {
+      return;
+    }
+
+    // After initial load completes, mark it as done
+    if (isInitialLoadRef.current && !loading) {
+      isInitialLoadRef.current = false;
+    }
+
+    // If loading again after initial load, keep showing stable notifications
+    if (loading && !isInitialLoadRef.current) {
+      return;
+    }
+
+    // Check if there are new notifications that haven't been processed
+    const newNotifications = notifications.filter(
+      (n) => !processedNotificationsRef.current.has(n.id),
+    );
+
+    if (newNotifications.length > 0 || notifications.length === 0) {
+      // Mark all current notifications as processed
+      notifications.forEach((n) => {
+        processedNotificationsRef.current.add(n.id);
+      });
+
+      // Update stable notifications only when there are actual changes
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
+  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
+  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+
+  // Stabilize notifications like the provider page to avoid flicker and
+  // ensure client-side filtering reacts to meaningful changes (read flag,
+  // type, href, etc.) even if the upstream hook mutates the array in place.
+  const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
+
+  // Stabilize incoming notifications similar to provider page.
+  React.useEffect(() => {
+    if (loading) return;
+
+    const nextMap = new Map<string, string>();
+    notifications.forEach((n) => {
+      try {
+        nextMap.set(
+          n.id,
+          JSON.stringify({
+            id: n.id,
+            type: n.type,
+            read: n.read,
+            href: n.href,
+          }),
+        );
+      } catch (e) {
+        nextMap.set(n.id, String(n.id));
+      }
+    });
+
+    const prevMap = previousNotificationsRef.current;
+    let changed = false;
+    if (prevMap.size !== nextMap.size) {
+      changed = true;
+    } else {
+      for (const [id, sig] of nextMap.entries()) {
+        if (prevMap.get(id) !== sig) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed || notifications.length === 0) {
+      previousNotificationsRef.current = nextMap;
+      setStableNotifications(notifications);
+    }
+  }, [notifications, loading]);
+
+  // Tabs for categorizing notifications
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
+
+  const TAB_ITEMS: NotificationTab[] = [
+    "All",
+    "Bookings",
+    "Chat",
+    "Ratings",
+    "Admin",
+  ];
+
+  const [activeTab, setActiveTab] = useState<NotificationTab>("All");
+  const [editMode, setEditMode] = React.useState(false);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const mobileMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const mobileMenuButtonRef = React.useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
-    document.title = "Notifications | SRV";
-  }, []);
+    if (!mobileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileMenuButtonRef.current &&
+        !mobileMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
+
+  const handleLocalDelete = (id: string) => {
+    setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    deleteNotification(id);
+  };
+
+  const handleSelectAll = () => {
+    const visibleIds = stableNotifications
+      .filter((n) => !deletedIds.includes(n.id))
+      .map((n) => n.id);
+    if (!editMode) {
+      setSelectedIds(visibleIds);
+      setEditMode(true);
+      return;
+    }
+    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(visibleIds);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const bulkMarkAsRead = () => {
+    selectedIds.forEach((id) => markAsRead(id));
+    clearSelection();
+    setEditMode(false);
+  };
+
+  const bulkDeleteSelected = () => {
+    selectedIds.forEach((id) => {
+      try {
+        deleteNotification(id);
+      } catch (e) {}
+    });
+    setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
+    clearSelection();
+    setEditMode(false);
+  };
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    // Only navigate if href exists (null href means non-clickable)
-    if (notification.href) {
-      navigate(notification.href);
-    }
+
+    if (!notification.href) return;
+
+    navigate(notification.href);
+  };
+
+  // Helper to map notification type to a UI category
+  const categoryOfType = (type: string) => {
+    const bookingTypes = [
+      "booking_accepted",
+      "booking_declined",
+      "booking_cancelled",
+      "booking_completed",
+      "payment_received",
+      "payment_failed",
+      "service_rescheduled",
+      "service_reminder",
+      "provider_on_the_way",
+    ];
+    const adminTypes = ["system_announcement", "promo_offer"];
+    if (bookingTypes.includes(type)) return "Bookings";
+    if (type === "chat_message" || type === "provider_message") return "Chat";
+    if (type === "review_reminder") return "Ratings";
+    if (adminTypes.includes(type)) return "Admin";
+    return "All";
+  };
+
+  const getCountForTab = (tab: NotificationTab) => {
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
+    if (tab === "All") return visible.length;
+    return visible.filter((n) => categoryOfType(n.type) === tab).length;
   };
 
   const { unread, read } = useMemo(() => {
-    return notifications.reduce<{
+    // First filter out locally deleted items
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id),
+    );
+
+    const byTab =
+      activeTab === "All"
+        ? visible
+        : visible.filter((n) => categoryOfType(n.type) === activeTab);
+
+    return byTab.reduce<{
       unread: Notification[];
       read: Notification[];
     }>(
@@ -224,35 +264,202 @@ const NotificationsPage = () => {
       },
       { unread: [], read: [] },
     );
-  }, [notifications]);
+  }, [stableNotifications, deletedIds, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div
-          className={`mx-auto flex max-w-3xl items-center px-4 py-4 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
-        >
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+      <header className="sticky top-0 z-20 bg-white">
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Notifications
           </h1>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-            >
-              <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-              Mark all as read
-            </button>
+          {stableNotifications.length > 0 && (
+            <>
+              <div className="hidden sm:block" aria-hidden="true" />
+
+              <div
+                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    if (!editMode) {
+                      setEditMode(true);
+                      clearSelection();
+                    } else {
+                      setEditMode(false);
+                      clearSelection();
+                    }
+                  }}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </button>
+                <button
+                  onClick={handleSelectAll}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {selectedIds.length > 0 &&
+                  selectedIds.length ===
+                    stableNotifications.filter(
+                      (n) => !deletedIds.includes(n.id),
+                    ).length
+                    ? "Clear"
+                    : "Select all"}
+                </button>
+                {unread.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  >
+                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+
+              <div
+                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
+                <button
+                  ref={mobileMenuButtonRef}
+                  onClick={() => setMobileMenuOpen((s) => !s)}
+                  className="text-black-600 rounded-full p-2 hover:bg-gray-100"
+                  aria-haspopup="true"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <EllipsisVerticalIcon className="h-6 w-6" />
+                </button>
+
+                {mobileMenuOpen && (
+                  <div
+                    ref={mobileMenuRef}
+                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                  >
+                    <div className="py-1" role="menu">
+                      <button
+                        onClick={() => {
+                          if (!editMode) {
+                            setEditMode(true);
+                            clearSelection();
+                          } else {
+                            setEditMode(false);
+                            clearSelection();
+                          }
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {editMode ? "Done" : "Edit"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          handleSelectAll();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        {selectedIds.length > 0 &&
+                        selectedIds.length ===
+                          stableNotifications.filter(
+                            (n) => !deletedIds.includes(n.id),
+                          ).length
+                          ? "Clear selection"
+                          : "Select all"}
+                      </button>
+
+                      {unread.length > 0 && (
+                        <button
+                          onClick={() => {
+                            markAllAsRead();
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </header>
 
-      <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
-        {loading ? (
-          <div className="p-10 text-center text-gray-500">Loading...</div>
+      {/* Tabs navigation for notification categories */}
+      <div className="mb-5 border-t border-gray-200 bg-white">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap border-b border-gray-200 p-2 sm:justify-center">
+          <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
+            {TAB_ITEMS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold sm:text-sm ${
+                  activeTab === tab
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-600 hover:bg-yellow-200"
+                }`}
+              >
+                {tab} ({getCountForTab(tab)})
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {editMode && (
+        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
+          <div className="text-sm text-gray-700">
+            {selectedIds.length} selected
+          </div>
+          <div className="flex items-center gap-2">
+            {unread.length > 0 && (
+              <button
+                onClick={bulkMarkAsRead}
+                disabled={selectedIds.length === 0}
+                className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+              >
+                Mark as read
+              </button>
+            )}
+            <button
+              onClick={bulkDeleteSelected}
+              disabled={selectedIds.length === 0}
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => {
+                setEditMode(false);
+                clearSelection();
+              }}
+              className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 px-4 pb-24">
+        {loading && stableNotifications.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            Loading notifications…
+          </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
-        ) : notifications.length === 0 ? (
+        ) : stableNotifications.length === 0 ? (
           <div className="flex flex-col items-center p-10 text-center text-gray-500">
             <InboxIcon className="mb-4 h-16 w-16 text-gray-300" />
             <h3 className="text-lg font-semibold">No Notifications Yet</h3>
@@ -261,7 +468,7 @@ const NotificationsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
+          <div className="mx-auto mt-6 max-w-2xl">
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
@@ -269,12 +476,22 @@ const NotificationsPage = () => {
                     New
                   </h2>
                   <div className="divide-y divide-blue-100">
-                    {unread.map((notif) => (
-                      <NotificationItem
+                    {unread.map((notif, idx) => (
+                      <Appear
                         key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => handleLocalDelete(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -286,12 +503,22 @@ const NotificationsPage = () => {
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">
-                    {read.map((notif) => (
-                      <NotificationItem
+                    {read.map((notif, idx) => (
+                      <Appear
                         key={notif.id}
-                        notification={notif}
-                        onClick={() => handleNotificationClick(notif)}
-                      />
+                        delayMs={idx * 25}
+                        variant="fade-up"
+                      >
+                        <NotificationItem
+                          notification={notif}
+                          onClick={() => handleNotificationClick(notif)}
+                          onDelete={() => handleLocalDelete(notif.id)}
+                          onMarkAsRead={() => markAsRead(notif.id)}
+                          selectable={editMode}
+                          checked={selectedIds.includes(notif.id)}
+                          onToggleSelect={() => toggleSelect(notif.id)}
+                        />
+                      </Appear>
                     ))}
                   </div>
                 </section>

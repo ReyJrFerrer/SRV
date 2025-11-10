@@ -1,82 +1,30 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { useReputation } from "../../../hooks/useReputation";
 import { useUserImage } from "../../../hooks/useMediaLoader";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  CalendarDaysIcon,
-  MapPinIcon,
-  CurrencyDollarIcon,
-  ChatBubbleLeftRightIcon,
-  XCircleIcon,
   StarIcon,
   CheckCircleIcon,
-  PhoneIcon,
-  BriefcaseIcon,
-  ArchiveBoxIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import {
   EnhancedBooking,
   useBookingManagement,
 } from "../../../hooks/bookingManagement";
-import { reviewCanisterService } from "../../../services/reviewCanisterService";
-import { authCanisterService } from "../../../services/authCanisterService";
-import BottomNavigation from "../../../components/client/BottomNavigation";
-import { useChat } from "../../../hooks/useChat"; // Import the chat hook
-import { useAuth } from "../../../context/AuthContext"; // Import auth context
+import { useReviewManagement } from "../../../hooks/reviewManagement";
+import BottomNavigation from "../../../components/client/NavigationBar";
+import { useChat } from "../../../hooks/useChat";
+import { useAuth } from "../../../context/AuthContext";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
-// Reputation Score Component (from ServiceDetailPageComponent.tsx)
-const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
-  const { fetchUserReputation } = useReputation();
-  const [reputationScore, setReputationScore] = useState<number>(50); // Default score
-  const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-    const loadReputation = async () => {
-      try {
-        setLoading(true);
-        const reputation = await fetchUserReputation(providerId);
-        if (reputation) {
-          setReputationScore(Math.round(reputation.trustScore));
-        } else {
-          setReputationScore(50); // Fallback to default
-        }
-      } catch (error) {
-        setReputationScore(50); // Fallback to default on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (providerId) {
-      loadReputation();
-    }
-  }, [providerId, fetchUserReputation]);
-
-  const score = reputationScore;
-
-  if (loading) {
-    return (
-      <span
-        className="mb-2 mt-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
-        style={{ minWidth: 0 }}
-      >
-        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
-        <span className="mr-2">Loading reputation...</span>
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className="text-md mb-2 mt-2 flex items-center gap-2 font-semibold text-gray-900"
-      style={{ minWidth: 0 }}
-    >
-      <span>Reputation Score:</span>
-      <span>{score}</span>
-    </span>
-  );
-};
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
+import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
+import ProviderInfo from "../../../components/client/booking-details/ProviderInfo";
+import ServiceDetails from "../../../components/client/booking-details/ServiceDetails";
+import BookingProgressTracker from "../../../components/client/booking-details/BookingProgressTracker";
+import BookingNotes from "../../../components/client/booking-details/BookingNotes";
+import ActionButtons from "../../../components/client/booking-details/ActionButtons";
 
 type BookingStatus =
   | "Requested"
@@ -87,177 +35,70 @@ type BookingStatus =
   | "Declined"
   | "Disputed";
 
-// Progress tracker for booking status
-const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
-  currentStatus,
-}) => {
-  const statuses: BookingStatus[] = [
-    "Requested",
-    "Accepted",
-    "InProgress",
-    "Completed",
-  ];
-  const currentIndex = statuses.findIndex((status) => status === currentStatus);
-  const isAllCompleted = currentStatus === "Completed";
-
-  if (currentIndex === -1) {
-    return (
-      <div className="py-4 text-center">
-        <p className="font-medium text-gray-600">
-          This booking is not in an active progress state.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex w-full flex-col items-center">
-      <div className="w-full">
-        <div className="flex w-full items-center justify-between gap-1 px-0 sm:gap-4 sm:px-2">
-          {statuses.map((status, index) => {
-            const isActive = index === currentIndex;
-            const isCompleted =
-              index < currentIndex || (isAllCompleted && index === 3);
-            const isLast = index === statuses.length - 1;
-            return (
-              <React.Fragment key={status}>
-                <div
-                  className="flex flex-col items-center text-center"
-                  style={{ width: "56px" }}
-                >
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border-4 shadow-lg transition-all duration-300 sm:h-12 sm:w-12 ${
-                      isAllCompleted
-                        ? "border-yellow-400 bg-yellow-400 text-white"
-                        : isCompleted
-                          ? "border-yellow-400 bg-yellow-400 text-white"
-                          : isActive
-                            ? "border-blue-600 bg-blue-600 text-white"
-                            : "border-gray-300 bg-gray-100 text-gray-400"
-                    } `}
-                  >
-                    {(isAllCompleted && isLast) ||
-                    (isCompleted && index !== 3) ? (
-                      <CheckCircleIcon className="h-5 w-5 text-white sm:h-7 sm:w-7" />
-                    ) : (
-                      <span className="text-base font-bold sm:text-lg">
-                        {index + 1}
-                      </span>
-                    )}
-                  </div>
-                  <p
-                    className={`mt-2 text-xs font-semibold sm:mt-3 sm:text-sm ${
-                      isAllCompleted
-                        ? "text-yellow-600"
-                        : isCompleted
-                          ? "text-yellow-600"
-                          : isActive
-                            ? "text-blue-700"
-                            : "text-gray-400"
-                    } `}
-                  >
-                    {status === "InProgress" ? "Current" : status}
-                  </p>
-                </div>
-                {index < statuses.length - 1 && (
-                  <div className="flex min-w-[16px] flex-1 items-center sm:min-w-[40px]">
-                    <div
-                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-2 ${
-                        isAllCompleted
-                          ? "bg-yellow-400"
-                          : index < currentIndex - 1
-                            ? "bg-yellow-400"
-                            : index === currentIndex - 1
-                              ? "bg-blue-600"
-                              : "bg-gray-200"
-                      } `}
-                    ></div>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const BookingDetailsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>(); // Get booking ID from URL params
+  const { id } = useParams<{ id: string }>();
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
-  const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
-
+  const [canUserReview] = useState<boolean | null>(null);
+  const [checkingReviewStatus] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const { identity } = useAuth();
-  const { conversations, loading: chatLoading, createConversation } = useChat(); // Add the useChat hook
+  const { conversations, loading: chatLoading, createConversation } = useChat();
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const { getServiceReviews, calculateServiceRating } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
 
-  // Commission validation hook and state
   const { checkCommissionValidation } = useProviderBookingManagement();
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
-  }>({
-    estimatedCommission: 0,
-  });
+  }>({ estimatedCommission: 0 });
 
   const {
     bookings,
     updateBookingStatus: updateBookingStatusHook,
     loading: hookLoading,
-    refreshBookings,
-    clearError,
-    isOperationInProgress,
   } = useBookingManagement();
 
-  // Call useUserImage hook early to avoid conditional hook calls
   const { userImageUrl } = useUserImage(
     specificBooking?.providerProfile?.profilePicture?.imageUrl || null,
   );
 
-  // Set document title
   useEffect(() => {
     document.title = `Booking: ${specificBooking?.serviceName || "Details"} | SRV`;
   }, [specificBooking?.serviceName]);
 
-  // Find the specific booking from the list once bookings are loaded
   useEffect(() => {
     if (id && typeof id === "string" && !hookLoading) {
+      setLocalLoading(true);
       const foundBooking = bookings.find((booking) => booking.id === id);
       if (foundBooking) {
         setSpecificBooking(foundBooking);
       } else {
-        setLocalError("Booking not found");
+        setSpecificBooking(null);
       }
       setLocalLoading(false);
     }
   }, [id, bookings, hookLoading]);
 
-  // Fetch review statistics for the service
   useEffect(() => {
     const fetchReviewStats = async () => {
       if (specificBooking?.serviceId) {
         setLoadingStats(true);
         try {
-          const [avgRatingResponse, reviews] = await Promise.all([
-            reviewCanisterService.calculateServiceRating(
-              specificBooking.serviceId,
-            ),
-            reviewCanisterService.getServiceReviews(specificBooking.serviceId),
+          const [avgRating, reviews] = await Promise.all([
+            calculateServiceRating(specificBooking.serviceId),
+            getServiceReviews(specificBooking.serviceId),
           ]);
-          setAverageRating(avgRatingResponse.averageRating);
+          setAverageRating(avgRating ?? null);
           setReviewCount(reviews.length);
         } catch (error) {
-          //console.error("Failed to fetch review stats:", error);
           setAverageRating(null);
           setReviewCount(null);
         } finally {
@@ -266,92 +107,57 @@ const BookingDetailsPage: React.FC = () => {
       }
     };
     fetchReviewStats();
-  }, [specificBooking?.serviceId]);
+  }, [specificBooking?.serviceId, calculateServiceRating, getServiceReviews]);
 
-  // Check if the current user can review this booking
   useEffect(() => {
-    const checkReviewStatus = async () => {
-      if (!specificBooking?.id || specificBooking.status !== "Completed") {
-        setCanUserReview(false);
-        return;
-      }
-      setCheckingReviewStatus(true);
+    let mounted = true;
+    const calcCommission = async () => {
+      if (!specificBooking) return;
       try {
-        const userProfile = await authCanisterService.getMyProfile();
-        if (!userProfile?.id) {
-          setCanUserReview(false);
-          return;
-        }
-        const canReview = await reviewCanisterService.canUserReviewBooking(
-          specificBooking.id,
-          userProfile.id,
+        const res: any = await (checkCommissionValidation as any)(
+          specificBooking,
         );
-        setCanUserReview(canReview);
-      } catch (error) {
-        //console.error("Error checking review status:", error);
-        setCanUserReview(true); // Default to true if check fails to allow user to try
-      } finally {
-        setCheckingReviewStatus(false);
+        const estimated =
+          res?.estimatedCommission ?? (typeof res === "number" ? res : 0);
+        if (mounted)
+          setCommissionValidation({ estimatedCommission: estimated });
+      } catch (e) {
+        if (mounted) setCommissionValidation({ estimatedCommission: 0 });
       }
     };
-    checkReviewStatus();
-  }, [specificBooking]);
-
-  // Check commission validation for cash bookings
-  useEffect(() => {
-    const validateCommission = async () => {
-      // Only validate commission for cash payment bookings
-      if (!specificBooking || specificBooking.paymentMethod !== "CashOnHand") {
-        setCommissionValidation({ estimatedCommission: 0 });
-        return;
-      }
-
-      try {
-        const validation = await checkCommissionValidation(specificBooking);
-        setCommissionValidation({
-          estimatedCommission: validation.estimatedCommission,
-        });
-      } catch (error) {
-        console.error("Error checking commission:", error);
-        setCommissionValidation({ estimatedCommission: 0 });
-      }
+    calcCommission();
+    return () => {
+      mounted = false;
     };
-
-    validateCommission();
   }, [specificBooking, checkCommissionValidation]);
 
   const handleUpdateBookingStatus = async (
     bookingId: string,
     newStatus: BookingStatus,
+    cancelReason: string,
   ) => {
-    await updateBookingStatusHook(bookingId, newStatus);
-    const updatedBooking = bookings.find((b) => b.id === bookingId);
-    if (updatedBooking) setSpecificBooking(updatedBooking);
+    try {
+      if (newStatus === "Cancelled" && !cancelReason)
+        throw new Error("A reason is required for cancellation");
+      await updateBookingStatusHook(bookingId, newStatus, cancelReason);
+      const updatedBooking = bookings.find((b) => b.id === bookingId);
+      if (updatedBooking) setSpecificBooking(updatedBooking);
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const handleRetry = () => {
-    setLocalError(null);
-    clearError();
-    refreshBookings();
-  };
-
-  const handleCancelBooking = async () => {
+  const handleCancelWithReason = async (reason: string) => {
     if (!specificBooking) return;
-    // Show confirmation dialog instead of alert
-    setShowCancelConfirm(true);
-  };
-
-  // New function to handle the actual cancellation after confirmation
-  const handleConfirmCancellation = async () => {
-    if (!specificBooking) return;
-
     setIsCancelling(true);
     try {
-      await handleUpdateBookingStatus(specificBooking.id, "Cancelled");
+      await handleUpdateBookingStatus(specificBooking.id, "Cancelled", reason);
       toast.success("Booking has been cancelled.");
-      setShowCancelConfirm(false);
+      setIsCancelModalOpen(false);
     } catch (error) {
-      toast.error("Failed to cancel booking. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel booking",
+      );
     } finally {
       setIsCancelling(false);
     }
@@ -362,19 +168,14 @@ const BookingDetailsPage: React.FC = () => {
       setChatErrorMessage("Provider information is missing.");
       return;
     }
-
     if (!identity) {
       setChatErrorMessage("You must be logged in to start a conversation.");
       return;
     }
-
     setChatErrorMessage(null);
-
     try {
       const currentUserId = identity.getPrincipal().toString();
       const providerIdString = specificBooking.providerId.toString();
-
-      // Check if there's an existing conversation with this provider
       const existingConversation = conversations.find(
         (conv) =>
           (conv.conversation.clientId === currentUserId &&
@@ -382,9 +183,7 @@ const BookingDetailsPage: React.FC = () => {
           (conv.conversation.providerId === currentUserId &&
             conv.conversation.clientId === providerIdString),
       );
-
       if (existingConversation) {
-        // Navigate to existing conversation
         navigate(`/client/chat/${existingConversation.conversation.id}`, {
           state: {
             conversationId: existingConversation.conversation.id,
@@ -393,8 +192,6 @@ const BookingDetailsPage: React.FC = () => {
         });
         return;
       }
-
-      // If no existing conversation, create a new one
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv && newConv.id) {
         navigate(`/client/chat/${newConv.id}`, {
@@ -409,7 +206,6 @@ const BookingDetailsPage: React.FC = () => {
         "Could not start a new conversation. Please try again later.",
       );
     } catch (error) {
-      //console.error("Failed to handle chat:", error);
       setChatErrorMessage(
         error instanceof Error
           ? error.message
@@ -422,6 +218,8 @@ const BookingDetailsPage: React.FC = () => {
     if (specificBooking?.serviceId)
       navigate(`/client/service/reviews/${specificBooking.serviceId}`);
   };
+
+  const handleReportClick = () => navigate("/client/report");
 
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
@@ -436,7 +234,7 @@ const BookingDetailsPage: React.FC = () => {
 
   const getReviewButtonContent = () => {
     if (!specificBooking || specificBooking.status !== "Completed") return null;
-    if (checkingReviewStatus) {
+    if (checkingReviewStatus)
       return {
         text: "Checking...",
         icon: (
@@ -445,15 +243,13 @@ const BookingDetailsPage: React.FC = () => {
         disabled: true,
         className: "bg-gray-400",
       };
-    }
-    if (canUserReview === false) {
+    if (canUserReview === false)
       return {
         text: "View Your Review",
         icon: <CheckCircleIcon className="mr-2 h-5 w-5" />,
         onClick: handleViewReviews,
         className: "bg-green-500 hover:bg-green-600",
       };
-    }
     return {
       text: "Rate Provider",
       icon: <StarIcon className="mr-2 h-5 w-5" />,
@@ -463,49 +259,6 @@ const BookingDetailsPage: React.FC = () => {
     };
   };
 
-  if (hookLoading || localLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (localError && !specificBooking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 text-center">
-        <div>
-          <h1 className="mb-2 text-2xl font-bold text-red-600">
-            Error Loading Booking
-          </h1>
-          <p className="mb-4 text-gray-600">{localError}</p>
-          <button
-            onClick={handleRetry}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!specificBooking) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-        <h1 className="mb-4 text-xl font-semibold text-red-600">
-          Booking Not Found
-        </h1>
-        <Link
-          to="/client/booking"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Back to Bookings
-        </Link>
-      </div>
-    );
-  }
-
   const {
     providerProfile,
     packageName,
@@ -514,288 +267,130 @@ const BookingDetailsPage: React.FC = () => {
     price,
     status,
     scheduledDate,
-  } = specificBooking;
+  } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
-
-  const formatDateRange = (
-    requestedDate: Date | string | number,
-    scheduledDate: Date | string | number,
-  ) => {
-    try {
-      const requestedDateObj = new Date(requestedDate);
-      const scheduledDateObj = new Date(scheduledDate);
-
-      const requestedDateStr = requestedDateObj.toLocaleDateString([], {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      const requestedTimeStr = requestedDateObj.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      const scheduledTimeStr = scheduledDateObj.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      // Check if both dates are on the same day
-      const isSameDay =
-        requestedDateObj.toDateString() === scheduledDateObj.toDateString();
-
-      if (isSameDay) {
-        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledTimeStr}`;
-      } else {
-        const scheduledDateStr = scheduledDateObj.toLocaleDateString([], {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-        return `${requestedDateStr} at ${requestedTimeStr} to ${scheduledDateStr} at ${scheduledTimeStr}`;
-      }
-    } catch {
-      return "Date range not available";
-    }
-  };
-
+  const isLoading = hookLoading || localLoading || loadingStats;
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-6">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+            className="flex-shrink-0 rounded-full hover:bg-gray-100 lg:mr-4"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="truncate text-lg font-semibold text-slate-800">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Booking Details
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-5">
-          {/* Section 1: Provider Details */}
-          <div className="h-fit rounded-3xl border border-blue-100 bg-white p-7 shadow-2xl backdrop-blur-md lg:col-span-2">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-              <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
-            </h3>
-            <div className="flex items-center gap-5">
-              <div className="flex-shrink-0">
-                <img
-                  src={userImageUrl || "/default-provider.svg"}
-                  alt={providerProfile?.name || "Provider"}
-                  className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
+      <main className="mx-auto space-y-6 p-4 sm:p-6">
+        {isLoading ? (
+          <div className="flex min-h-[calc(100vh-150px)] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+              <p className="text-gray-600">Loading booking details...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div>
+              <CancellationReasons
+                bookingId={specificBooking?.id ?? null}
+                cancelledBy={(specificBooking as any)?.cancelledBy}
+                cancellationReason={(specificBooking as any)?.cancelReason}
+              />
+            </div>
+
+            <div>
+              <div className="mt-13 relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
+                <span
+                  className={`absolute right-4 top-5 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
+                  aria-label="Booking status"
+                >
+                  {status?.replace("_", " ")}
+                </span>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
+                  <ProviderInfo
+                    providerProfile={providerProfile}
+                    userImageUrl={userImageUrl ?? null}
+                    loadingStats={loadingStats}
+                    averageRating={averageRating}
+                    reviewCount={reviewCount}
+                    providerId={providerProfile?.id}
+                  />
+                  <ServiceDetails
+                    packageName={packageName}
+                    requestedDate={requestedDate}
+                    scheduledDate={scheduledDate}
+                    formattedLocation={formattedLocation}
+                    price={price}
+                    commissionEstimate={
+                      commissionValidation.estimatedCommission
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-white/90 p-5 shadow-2xl backdrop-blur-md">
+              <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+                <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
+                Progress
+              </h3>
+              <div className="px-2 sm:px-8">
+                <BookingProgressTracker
+                  currentStatus={status as BookingStatus}
                 />
               </div>
-              <div className="flex-1">
-                <p className="text-lg font-bold text-gray-900">
-                  {providerProfile?.name || "N/A"}
-                </p>
-                <ReputationScore providerId={providerProfile?.id || ""} />
-                <p className="mt-1 flex items-center text-sm text-gray-500">
-                  <PhoneIcon className="mr-1.5 h-4 w-4" />
-                  {providerProfile?.phone || "No contact number"}
-                </p>
-                <div className="mt-2 flex flex-col items-start gap-1">
-                  <div className="flex items-center gap-2">
-                    {loadingStats ? (
-                      <p className="text-sm text-gray-400">
-                        Loading reviews...
-                      </p>
-                    ) : averageRating != null && reviewCount != null ? (
-                      <>
-                        <div className="flex items-center text-sm font-bold text-yellow-500">
-                          <StarIcon className="mr-1 h-4 w-4" />
-                          <span>{averageRating.toFixed(1)}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          ({reviewCount}{" "}
-                          {reviewCount === 1 ? "review" : "reviews"})
-                        </span>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-400">No reviews yet</p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
 
-          {/* Section 2: Service Details */}
-          <div className="h-fit rounded-3xl border border-yellow-200 bg-white p-7 shadow-2xl lg:col-span-3">
-            <div className="flex items-start justify-between">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
-                <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
-                Details
-              </h3>
-              <span
-                className={`rounded-full px-4 py-2 text-base font-bold shadow-lg ${getStatusPillStyle(status || "")}`}
-              >
-                {status?.replace("_", " ") || "Unknown"}
-              </span>
-            </div>
-            <div className="space-y-3 text-base">
-              <div className="flex items-start">
-                <ArchiveBoxIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Package:</strong> {packageName}
-                </span>
+            <BookingNotes notes={(specificBooking as any)?.notes} />
+
+            {chatErrorMessage && (
+              <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+                <span className="block sm:inline">{chatErrorMessage}</span>
+                <button
+                  onClick={() => setChatErrorMessage(null)}
+                  className="ml-2 text-red-900 hover:text-red-700"
+                >
+                  ✕
+                </button>
               </div>
-              <div className="flex items-start">
-                <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Scheduled:</strong>{" "}
-                  {formatDateRange(requestedDate, scheduledDate)}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Location:</strong>{" "}
-                  {(formattedLocation || "Not specified")
-                    .split(" ")
-                    .map(
-                      (word) =>
-                        word.charAt(0).toUpperCase() +
-                        word.slice(1).toLowerCase(),
-                    )
-                    .join(" ")}
-                </span>
-              </div>
-              {price != null && (
-                <div className="flex items-start">
-                  <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
-                  <span>
-                    <strong>Payment:</strong> ₱
-                    {(price + commissionValidation.estimatedCommission).toFixed(
-                      2,
-                    )}{" "}
-                    (Cash)
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Progress Tracker */}
-        <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
-          <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-            <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
-            Progress
-          </h3>
-          <div className="px-2 sm:px-8">
-            <BookingProgressTracker currentStatus={status as BookingStatus} />
-          </div>
-        </div>
-
-        {/* Chat Error Message */}
-        {chatErrorMessage && (
-          <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-            <span className="block sm:inline">{chatErrorMessage}</span>
-            <button
-              onClick={() => setChatErrorMessage(null)}
-              className="ml-2 text-red-900 hover:text-red-700"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
-          <button
-            onClick={handleChatWithProvider}
-            disabled={chatLoading}
-            className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {chatLoading ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                Creating Chat...
-              </>
-            ) : (
-              <>
-                <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
-                Provider
-              </>
             )}
-          </button>
 
-          {canCancel && (
-            <button
-              onClick={handleCancelBooking}
-              disabled={isOperationInProgress(`update-${id}`)}
-              className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
-            >
-              <XCircleIcon className="mr-2 h-5 w-5" />
-              {isOperationInProgress(`update-${id}`)
-                ? "Cancelling..."
-                : "Cancel"}
-            </button>
-          )}
-
-          {reviewButtonContent &&
-            (reviewButtonContent.to ? (
-              <Link
-                to={reviewButtonContent.to}
-                state={reviewButtonContent.state}
-                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className}`}
-              >
-                {reviewButtonContent.icon} {reviewButtonContent.text}
-              </Link>
-            ) : (
-              <button
-                onClick={reviewButtonContent.onClick}
-                disabled={reviewButtonContent.disabled}
-                className={`flex min-w-[150px] flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium text-white ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
-              >
-                {reviewButtonContent.icon} {reviewButtonContent.text}
-              </button>
-            ))}
-        </div>
+            <ActionButtons
+              onChat={handleChatWithProvider}
+              chatLoading={chatLoading}
+              onRequestCancel={() => setIsCancelModalOpen(true)}
+              canCancel={canCancel}
+              reviewButtonContent={reviewButtonContent}
+              status={status}
+              onReport={handleReportClick}
+            />
+          </>
+        )}
       </main>
 
       <div>
         <BottomNavigation />
       </div>
 
-      {/* Cancel Booking Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Cancel Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone and you may be charged a cancellation fee.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={isCancelling}
-              >
-                Keep Booking
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmCancellation}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Cancel Booking"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CancelWithReasonButton
+        show={isCancelModalOpen}
+        isSubmitting={isCancelling}
+        onSubmit={handleCancelWithReason}
+        onCancel={() => setIsCancelModalOpen(false)}
+        confirmTitle="Cancel Booking?"
+        confirmDescription="Please let us know why you're cancelling this booking."
+        textareaLabel="Reason for cancellation"
+        submitText={isCancelling ? "Submitting..." : "Submit"}
+        cancelText="Back"
+      />
 
       <Toaster position="top-center" richColors />
     </div>

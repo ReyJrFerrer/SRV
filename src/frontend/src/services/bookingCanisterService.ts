@@ -210,14 +210,6 @@ export const bookingCanisterService = {
     paymentId?: string,
     locationDetection: "automatic" | "manual" = "manual",
   ): Promise<Booking | null> {
-    console.log("🚀 [bookingCanisterService] createBooking called with:", {
-      serviceId,
-      providerId: providerId.toString(),
-      price,
-      servicePackageIds,
-      requestedDate: requestedDate.toISOString(),
-      scheduledDate: scheduledDate.toISOString(),
-    });
     try {
       const createBookingFn = httpsCallable(functions, "createBooking");
 
@@ -236,22 +228,10 @@ export const bookingCanisterService = {
         locationDetection,
       });
 
-      console.log(
-        "✅ [bookingCanisterService] createBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] createBooking extracted data:",
-        responseData,
-      );
       return responseData;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error creating booking:",
-        error,
-      );
       throw new Error(`Failed to create booking: ${error}`);
     }
   },
@@ -260,21 +240,13 @@ export const bookingCanisterService = {
    * Get a specific booking by ID
    */
   async getBooking(bookingId: string): Promise<Booking | null> {
-    console.log("🚀 [bookingCanisterService] getBooking called with:", {
-      bookingId,
-    });
     try {
       const getBookingFn = httpsCallable(functions, "getBooking");
 
       const result = await getBookingFn({ bookingId });
-      console.log("✅ [bookingCanisterService] getBooking raw result:", result);
       const responseData = (
         result.data as { success: boolean; data: Booking | null }
       ).data;
-      console.log(
-        "✅ [bookingCanisterService] getBooking extracted data:",
-        responseData,
-      );
 
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       if (responseData) {
@@ -283,10 +255,6 @@ export const bookingCanisterService = {
 
       return responseData;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching booking:",
-        error,
-      );
       throw new Error(`Failed to fetch booking: ${error}`);
     }
   },
@@ -295,34 +263,21 @@ export const bookingCanisterService = {
    * Get all bookings for a client
    */
   async getClientBookings(clientId: Principal): Promise<Booking[]> {
-    console.log(
-      "🚀 [bookingCanisterService] getClientBookings called for client:",
-      clientId.toString(),
-    );
     try {
       const getClientBookingsFn = httpsCallable(functions, "getClientBookings");
 
       const result = await getClientBookingsFn({
         clientId: clientId.toString(),
       });
-      console.log(
-        "✅ [bookingCanisterService] getClientBookings raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      console.log("Booking Canister Data function", responseData);
 
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching client bookings:",
-        error,
-      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -331,10 +286,6 @@ export const bookingCanisterService = {
    * Get all bookings for a provider
    */
   async getProviderBookings(providerId: Principal): Promise<Booking[]> {
-    console.log(
-      "🚀 [bookingCanisterService] getProviderBookings called for provider:",
-      providerId.toString(),
-    );
     try {
       const getProviderBookingsFn = httpsCallable(
         functions,
@@ -344,27 +295,16 @@ export const bookingCanisterService = {
       const result = await getProviderBookingsFn({
         providerId: providerId.toString(),
       });
-      console.log(
-        "✅ [bookingCanisterService] getProviderBookings raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      console.log(
-        `✅ [bookingCanisterService] getProviderBookings extracted ${responseData?.length ?? 0} bookings.`,
-      );
 
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching provider bookings:",
-        error,
-      );
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -372,10 +312,6 @@ export const bookingCanisterService = {
    * Get bookings by status
    */
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
-    console.log(
-      "🚀 [bookingCanisterService] getBookingsByStatus called with status:",
-      status,
-    );
     try {
       const getBookingsByStatusFn = httpsCallable(
         functions,
@@ -383,26 +319,14 @@ export const bookingCanisterService = {
       );
 
       const result = await getBookingsByStatusFn({ status });
-      console.log(
-        "✅ [bookingCanisterService] getBookingsByStatus raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      console.log(
-        `✅ [bookingCanisterService] getBookingsByStatus extracted ${responseData?.length ?? 0} bookings.`,
-      );
-
       // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching bookings by status:",
-        error,
-      );
       return []; // Return empty array on error to prevent .map() issues
     }
   },
@@ -414,10 +338,6 @@ export const bookingCanisterService = {
     bookingId: string,
     scheduledDate: Date,
   ): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] acceptBooking called for booking:",
-      bookingId,
-    );
     try {
       const acceptBookingFn = httpsCallable(functions, "acceptBooking");
 
@@ -426,22 +346,10 @@ export const bookingCanisterService = {
         scheduledDate: scheduledDate.toISOString(),
       });
 
-      console.log(
-        "✅ [bookingCanisterService] acceptBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] acceptBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error accepting booking:",
-        error,
-      );
       throw new Error(`Failed to accept booking: ${error}`);
     }
   },
@@ -450,62 +358,42 @@ export const bookingCanisterService = {
    * Decline a booking
    */
   async declineBooking(bookingId: string): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] declineBooking called for booking:",
-      bookingId,
-    );
     try {
       const declineBookingFn = httpsCallable(functions, "declineBooking");
 
       const result = await declineBookingFn({ bookingId });
-      console.log(
-        "✅ [bookingCanisterService] declineBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] declineBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error declining booking:",
-        error,
-      );
       throw new Error(`Failed to decline booking: ${error}`);
     }
   },
 
   /**
    * Cancel a booking
+   * @param bookingId The ID of the booking to cancel
+   * @param cancelReason The reason for cancellation (required)
    */
-  async cancelBooking(bookingId: string): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] cancelBooking called for booking:",
-      bookingId,
-    );
+  async cancelBooking(
+    bookingId: string,
+    cancelReason: string,
+  ): Promise<Booking | null> {
     try {
       const cancelBookingFn = httpsCallable(functions, "cancelBooking");
 
-      const result = await cancelBookingFn({ bookingId });
-      console.log(
-        "✅ [bookingCanisterService] cancelBooking raw result:",
-        result,
-      );
+      if (!cancelReason || cancelReason.trim() === "") {
+        throw new Error("A reason for cancellation is required");
+      }
+
+      const result = await cancelBookingFn({
+        bookingId,
+        cancelReason: cancelReason.trim(),
+      });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] cancelBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error cancelling booking:",
-        error,
-      );
       throw new Error(`Failed to cancel booking: ${error}`);
     }
   },
@@ -514,30 +402,14 @@ export const bookingCanisterService = {
    * Start a booking (mark as in progress)
    */
   async startBooking(bookingId: string): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] startBooking called for booking:",
-      bookingId,
-    );
     try {
       const startBookingFn = httpsCallable(functions, "startBooking");
 
       const result = await startBookingFn({ bookingId });
-      console.log(
-        "✅ [bookingCanisterService] startBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] startBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error starting booking:",
-        error,
-      );
       throw new Error(`Failed to start booking: ${error}`);
     }
   },
@@ -549,10 +421,6 @@ export const bookingCanisterService = {
     bookingId: string,
     amountPaid?: number,
   ): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] completeBooking called for booking:",
-      bookingId,
-    );
     try {
       const completeBookingFn = httpsCallable(functions, "completeBooking");
 
@@ -560,23 +428,10 @@ export const bookingCanisterService = {
         bookingId,
         amountPaid,
       });
-
-      console.log(
-        "✅ [bookingCanisterService] completeBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] completeBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error completing booking:",
-        error,
-      );
       throw new Error(`Failed to complete booking: ${error}`);
     }
   },
@@ -585,30 +440,14 @@ export const bookingCanisterService = {
    * Dispute a booking
    */
   async disputeBooking(bookingId: string): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] disputeBooking called for booking:",
-      bookingId,
-    );
     try {
       const disputeBookingFn = httpsCallable(functions, "disputeBooking");
 
       const result = await disputeBookingFn({ bookingId });
-      console.log(
-        "✅ [bookingCanisterService] disputeBooking raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] disputeBooking extracted data:",
-        responseData,
-      );
       return mapBookingFields(responseData);
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error disputing booking:",
-        error,
-      );
       throw new Error(`Failed to dispute booking: ${error}`);
     }
   },
@@ -622,10 +461,6 @@ export const bookingCanisterService = {
     serviceId: string,
     date: Date,
   ): Promise<AvailableSlot[] | null> {
-    console.log(
-      "🚀 [bookingCanisterService] getServiceAvailableSlots called for service:",
-      serviceId,
-    );
     try {
       const getServiceAvailableSlotsFn = httpsCallable(
         functions,
@@ -637,22 +472,12 @@ export const bookingCanisterService = {
         date: date.toISOString(),
       });
 
-      console.log(
-        "✅ [bookingCanisterService] getServiceAvailableSlots raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: AvailableSlot[] }
       ).data;
-      console.log(
-        `✅ [bookingCanisterService] getServiceAvailableSlots extracted ${responseData?.length ?? 0} slots.`,
-      );
+
       return responseData || [];
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching service available slots:",
-        error,
-      );
       return [];
     }
   },
@@ -664,10 +489,6 @@ export const bookingCanisterService = {
     serviceId: string,
     requestedDateTime: Date,
   ): Promise<boolean | null> {
-    console.log(
-      "🚀 [bookingCanisterService] checkServiceAvailability called for service:",
-      serviceId,
-    );
     try {
       const checkServiceAvailabilityFn = httpsCallable(
         functions,
@@ -679,23 +500,11 @@ export const bookingCanisterService = {
         requestedDateTime: requestedDateTime.toISOString(),
       });
 
-      console.log(
-        "✅ [bookingCanisterService] checkServiceAvailability raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: { available: boolean } }
       ).data;
-      console.log(
-        "✅ [bookingCanisterService] checkServiceAvailability extracted data:",
-        responseData,
-      );
       return responseData?.available || false;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error checking service availability:",
-        error,
-      );
       throw new Error(`Failed to check service availability: ${error}`);
     }
   },
@@ -708,10 +517,6 @@ export const bookingCanisterService = {
     startDate?: Date,
     endDate?: Date,
   ): Promise<ClientAnalytics | null> {
-    console.log(
-      "🚀 [bookingCanisterService] getClientAnalytics called for client:",
-      clientId.toString(),
-    );
     try {
       const getClientAnalyticsFn = httpsCallable(
         functions,
@@ -724,23 +529,11 @@ export const bookingCanisterService = {
         endDate: endDate?.toISOString(),
       });
 
-      console.log(
-        "✅ [bookingCanisterService] getClientAnalytics raw result:",
-        result,
-      );
       const responseData = (
         result.data as { success: boolean; data: ClientAnalytics }
       ).data;
-      console.log(
-        "✅ [bookingCanisterService] getClientAnalytics extracted data:",
-        responseData,
-      );
       return responseData;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error fetching client analytics:",
-        error,
-      );
       throw new Error(`Failed to fetch client analytics: ${error}`);
     }
   },
@@ -756,10 +549,6 @@ export const bookingCanisterService = {
     commissionRetained?: number,
     payoutId?: string,
   ): Promise<Booking | null> {
-    console.log(
-      "🚀 [bookingCanisterService] releasePayment called for booking:",
-      bookingId,
-    );
     try {
       const releasePaymentFn = httpsCallable(functions, "releasePayment");
 
@@ -771,22 +560,10 @@ export const bookingCanisterService = {
         payoutId,
       });
 
-      console.log(
-        "✅ [bookingCanisterService] releasePayment raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
-      console.log(
-        "✅ [bookingCanisterService] releasePayment extracted data:",
-        responseData,
-      );
       return responseData;
     } catch (error) {
-      console.error(
-        "❌ [bookingCanisterService] Error releasing payment:",
-        error,
-      );
       throw new Error(`Failed to release payment: ${error}`);
     }
   },
@@ -847,8 +624,7 @@ export const bookingCanisterService = {
         });
         callback(bookings);
       },
-      (error) => {
-        console.error("Error listening to client bookings:", error);
+      () => {
         callback([]);
       },
     );
@@ -877,8 +653,7 @@ export const bookingCanisterService = {
         });
         callback(bookings);
       },
-      (error) => {
-        console.error("Error listening to provider bookings:", error);
+      () => {
         callback([]);
       },
     );
@@ -903,8 +678,7 @@ export const bookingCanisterService = {
           callback(null);
         }
       },
-      (error) => {
-        console.error("Error listening to booking:", error);
+      () => {
         callback(null);
       },
     );
@@ -930,8 +704,7 @@ export const bookingCanisterService = {
         });
         callback(bookings);
       },
-      (error) => {
-        console.error("Error listening to bookings by status:", error);
+      () => {
         callback([]);
       },
     );

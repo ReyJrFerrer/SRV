@@ -16,6 +16,7 @@ interface Booking {
   completedAt?: string;
   rating?: number;
   review?: string;
+  location?: string;
 }
 
 export const UserBookingsPage: React.FC = () => {
@@ -26,6 +27,10 @@ export const UserBookingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchUserAndBookings = async () => {
@@ -35,8 +40,11 @@ export const UserBookingsPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        // Filter out any invalid profiles before searching
+        const validUsers = backendUsers.filter((u) => u && u.id);
+
         // Find user in backend users
-        const foundUser = backendUsers.find((u) => u.id.toString() === userId);
+        const foundUser = validUsers.find((u) => u.id.toString() === userId);
         if (foundUser) {
           setUser(foundUser);
         }
@@ -138,6 +146,57 @@ export const UserBookingsPage: React.FC = () => {
       return "Invalid Date";
     }
   };
+
+  // Helper function to normalize booking status for filtering
+  const normalizeBookingStatus = (status: any): string => {
+    if (!status) return "unknown";
+    if (typeof status === "string") {
+      return status.toLowerCase();
+    }
+    if (typeof status === "object" && status !== null) {
+      const keys = Object.keys(status);
+      if (keys.length > 0) {
+        return keys[0].toLowerCase();
+      }
+    }
+    return "unknown";
+  };
+
+  // Filter bookings based on search term and status
+  const filteredBookings = bookings.filter((booking) => {
+    // Search filter - check service name and provider name
+    const matchesSearch =
+      searchTerm === "" ||
+      booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.providerName.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const normalizedStatus = normalizeBookingStatus(booking.status);
+    const filterValue = statusFilter.toLowerCase();
+    let matchesStatus = false;
+
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (filterValue === "pending") {
+      // Pending includes both "pending" and "requested"
+      matchesStatus =
+        normalizedStatus === "pending" || normalizedStatus === "requested";
+    } else if (filterValue === "inprogress") {
+      // Handle both "inprogress" and "in_progress"
+      matchesStatus =
+        normalizedStatus === "inprogress" || normalizedStatus === "in_progress";
+    } else {
+      matchesStatus = normalizedStatus === filterValue;
+    }
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBookings = filteredBookings.slice(startIndex, endIndex);
 
   if (loading) {
     return (
@@ -247,7 +306,7 @@ export const UserBookingsPage: React.FC = () => {
                       Total Bookings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {bookings.length}
+                      {filteredBookings.length}
                     </dd>
                   </dl>
                 </div>
@@ -280,7 +339,7 @@ export const UserBookingsPage: React.FC = () => {
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {
-                        bookings.filter((b) => {
+                        filteredBookings.filter((b) => {
                           if (!b.status) return false;
                           if (typeof b.status === "string") {
                             return b.status.toLowerCase() === "completed";
@@ -325,22 +384,18 @@ export const UserBookingsPage: React.FC = () => {
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {
-                        bookings.filter((b) => {
+                        filteredBookings.filter((b) => {
                           if (!b.status) return false;
-                          if (typeof b.status === "string") {
-                            return (
-                              b.status.toLowerCase() === "pending" ||
-                              b.status.toLowerCase() === "requested"
-                            );
-                          }
-                          if (typeof b.status === "object") {
-                            return Object.keys(b.status).some(
-                              (key) =>
-                                key.toLowerCase() === "pending" ||
-                                key.toLowerCase() === "requested",
-                            );
-                          }
-                          return false;
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
+                          return (
+                            normalizedStatus === "pending" ||
+                            normalizedStatus === "requested" ||
+                            normalizedStatus === "accepted" ||
+                            normalizedStatus === "in_progress" ||
+                            normalizedStatus === "inprogress"
+                          );
                         }).length
                       }
                     </dd>
@@ -355,7 +410,7 @@ export const UserBookingsPage: React.FC = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-6 w-6 text-blue-400"
+                    className="h-6 w-6 text-red-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -364,20 +419,29 @@ export const UserBookingsPage: React.FC = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Spent
+                      Canceled
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      ₱
-                      {bookings
-                        .reduce((sum, b) => sum + b.price, 0)
-                        .toLocaleString()}
+                      {
+                        filteredBookings.filter((b) => {
+                          if (!b.status) return false;
+                          const normalizedStatus = normalizeBookingStatus(
+                            b.status,
+                          );
+                          return (
+                            normalizedStatus === "cancelled" ||
+                            normalizedStatus === "canceled" ||
+                            normalizedStatus === "declined"
+                          );
+                        }).length
+                      }
                     </dd>
                   </dl>
                 </div>
@@ -386,18 +450,83 @@ export const UserBookingsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="mb-8 rounded-lg bg-white p-6 shadow">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label
+                htmlFor="search"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Search
+              </label>
+              <input
+                type="text"
+                id="search"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+                placeholder="Search by service or provider..."
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="status"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Status
+              </label>
+              <select
+                id="status"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1); // Reset to first page on filter change
+                }}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Statuses</option>
+                <option value="requested">Requested</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="inprogress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="declined">Declined</option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                  setCurrentPage(1);
+                }}
+                className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Bookings List */}
         <div className="overflow-hidden bg-white shadow sm:rounded-md">
           <div className="px-4 py-5 sm:px-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Booking History
+              Booking History ({filteredBookings.length})
             </h3>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">
               Complete booking history for this user
             </p>
           </div>
           <ul className="divide-y divide-gray-200">
-            {bookings.length === 0 ? (
+            {filteredBookings.length === 0 ? (
               <li className="px-4 py-5 sm:px-6">
                 <div className="py-8 text-center">
                   <svg
@@ -417,12 +546,14 @@ export const UserBookingsPage: React.FC = () => {
                     No bookings found
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    This user hasn't made any bookings yet.
+                    {searchTerm || statusFilter !== "all"
+                      ? "No bookings match your search criteria. Try adjusting your filters."
+                      : "This user hasn't made any bookings yet."}
                   </p>
                 </div>
               </li>
             ) : (
-              bookings.map((booking) => (
+              currentBookings.map((booking) => (
                 <li key={booking.id} className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -452,6 +583,13 @@ export const UserBookingsPage: React.FC = () => {
                         <span className="mx-2">•</span>
                         <p>Created: {formatDate(booking.createdAt)}</p>
                       </div>
+                      {booking.location && (
+                        <div className="mt-1 text-sm text-gray-500">
+                          <p className="truncate">
+                            Location: {booking.location}
+                          </p>
+                        </div>
+                      )}
                       {booking.scheduledDate && (
                         <div className="mt-1 text-sm text-gray-500">
                           <p>Scheduled: {formatDate(booking.scheduledDate)}</p>
@@ -476,6 +614,83 @@ export const UserBookingsPage: React.FC = () => {
               ))
             )}
           </ul>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing{" "}
+                    <span className="font-medium">{startIndex + 1}</span> to{" "}
+                    <span className="font-medium">
+                      {Math.min(endIndex, filteredBookings.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">
+                      {filteredBookings.length}
+                    </span>{" "}
+                    results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm">
+                    <button
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center border px-4 py-2 text-sm font-medium ${
+                            page === currentPage
+                              ? "z-10 border-blue-500 bg-blue-50 text-blue-600"
+                              : "border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

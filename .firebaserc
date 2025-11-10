@@ -1,5 +1,19 @@
 {
   "projects": {
-    "default": "devsrv-rey"
-  }
+    "default": "devsrv-rey",
+    "srv": "devsrv-rey"
+  },
+  "targets": {
+    "devsrv-rey": {
+      "hosting": {
+        "client": [
+          "srvepinoy"
+        ],
+        "admin": [
+          "srveadmin"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

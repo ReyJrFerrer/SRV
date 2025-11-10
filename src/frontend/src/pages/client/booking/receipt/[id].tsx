@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUturnLeftIcon, ShareIcon } from "@heroicons/react/24/solid";
 import {
   useBookingManagement,
   EnhancedBooking,
 } from "../../../../hooks/bookingManagement"; // Adjust path as needed
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
+import useNoBackNavigation from "../../../../hooks/useNoBackNavigation";
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
   const location = useLocation();
+  const navigate = useNavigate();
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
@@ -21,6 +23,9 @@ const ReceiptPage: React.FC = () => {
   const userRating = location.state?.userRating;
   const { bookings, loading: bookingLoading } = useBookingManagement();
   const { checkCommissionValidation } = useProviderBookingManagement();
+
+  // Prevent going back to the booking flow via browser back button
+  useNoBackNavigation("/client/booking");
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {
@@ -43,6 +48,24 @@ const ReceiptPage: React.FC = () => {
     }
   }, [id, bookings, bookingLoading]);
 
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!id) {
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+
+    if (!booking) {
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Completed") {
+      navigate("/client/booking", { replace: true });
+      return;
+    }
+  }, [booking, bookingLoading, id, navigate]);
+
   // Check commission validation for cash bookings
   useEffect(() => {
     const validateCommission = async () => {
@@ -56,7 +79,6 @@ const ReceiptPage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };

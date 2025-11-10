@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
-import { ServiceCategory } from "../../../services/serviceCanisterService";
+import {
+  ServiceCategory,
+  CommissionQuote,
+} from "../../../services/serviceCanisterService";
+import { toast } from "sonner";
 
 // Validation errors interface
 interface ValidationErrors {
@@ -48,8 +52,19 @@ interface ServiceDetailsProps {
   addPackage: () => void;
   removePackage: (id: string) => void;
   validationErrors?: ValidationErrors;
-  onRequestCategory: (categoryName: string) => void;
   scrollToErrorTrigger?: number;
+  // Optional helper to compute commission for a given category and price
+  // The project provides getCommissionQuote which returns a CommissionQuote
+  // so we accept that shape and compute total locally.
+  computeCommission?: (
+    categoryName: string,
+    price: number,
+  ) => Promise<{
+    commissionFee: number;
+  }>;
+  // Called when a commission quote is retrieved for a package so parent
+  // can persist/use the result (lifting the live value to `commissionQuotes`).
+  onCommissionComputed?: (pkgId: string, quote: CommissionQuote) => void;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -62,7 +77,97 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   removePackage,
   validationErrors = {},
   scrollToErrorTrigger,
+  computeCommission,
+  onCommissionComputed,
 }) => {
+  // Local live commission map per package id
+  const [liveCommission, setLiveCommission] = useState<{
+    [pkgId: string]: { commissionFee: number; total: number } | undefined;
+  }>({});
+
+  // Debounce timers per package
+  const commissionTimers = useRef<{ [pkgId: string]: number | undefined }>({});
+
+  // Loading state for per-package commission fetches
+  const [commissionLoading, setCommissionLoading] = useState<{
+    [pkgId: string]: boolean | undefined;
+  }>({});
+
+  // When the component mounts or when formData changes (for example after
+  // restoring a draft), precompute live commission for any packages that
+  // already have a price so the UI shows the commission value immediately.
+  useEffect(() => {
+    let mounted = true;
+
+    const computeInitial = async () => {
+      for (const pkg of formData.servicePackages) {
+        const pkgId = pkg.id;
+        const priceNum = Number(pkg.price) || 0;
+        // Only compute when there is a price and we don't already have a value
+        if (priceNum > 0 && !liveCommission[pkgId]) {
+          if (!mounted) return;
+          setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
+          try {
+            const categoryName =
+              categories.find((c) => c.id === formData.categoryId)?.name ||
+              "Default Category";
+            if (computeCommission) {
+              const quote = await computeCommission(categoryName, priceNum);
+              const fee = (quote as any).commissionFee || 0;
+              if (!mounted) return;
+              setLiveCommission((prev) => ({
+                ...prev,
+                [pkgId]: { commissionFee: fee, total: priceNum + fee },
+              }));
+              if (onCommissionComputed) {
+                try {
+                  onCommissionComputed(pkgId, quote as CommissionQuote);
+                } catch (e) {
+                  // ignore
+                }
+              }
+            } else {
+              const fee = Math.round(priceNum * 0.05 * 100) / 100;
+              if (!mounted) return;
+              setLiveCommission((prev) => ({
+                ...prev,
+                [pkgId]: { commissionFee: fee, total: priceNum + fee },
+              }));
+              if (onCommissionComputed) {
+                try {
+                  onCommissionComputed(pkgId, {
+                    commissionFee: fee,
+                  } as CommissionQuote);
+                } catch (e) {}
+              }
+            }
+          } catch (e) {
+            // ignore failures here - live commission is best-effort
+          } finally {
+            if (!mounted) return;
+            setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
+          }
+        }
+      }
+    };
+
+    computeInitial();
+
+    return () => {
+      mounted = false;
+    };
+    // Intentionally include formData.servicePackages and category so this
+    // re-runs when the parent restores the draft (which updates formData).
+  }, [formData.servicePackages, formData.categoryId, computeCommission]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(commissionTimers.current).forEach((t) => {
+        if (t) window.clearTimeout(t);
+      });
+    };
+  }, []);
   // Local state to control error visibility
   const [hideTitleError, setHideTitleError] = useState(false);
   const [hideCategoryError, setHideCategoryError] = useState(false);
@@ -151,6 +256,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
+  // (Custom/"Other" categories have been removed.)
+
   // Modify the handlePackageInputChange function
   const handlePackageInputChange = (
     index: number,
@@ -164,13 +271,92 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       [pkgId]: { ...prev[pkgId], [field]: true },
     }));
     handlePackageChange(index, field, value);
+    // If the price field changed, kick off live commission calculation
+    if (field === "price") {
+      const pkg = formData.servicePackages[index];
+      const pkgId = pkg.id;
+      // clear existing timer
+      if (commissionTimers.current[pkgId]) {
+        window.clearTimeout(commissionTimers.current[pkgId]);
+      }
+      // schedule debounce
+      commissionTimers.current[pkgId] = window.setTimeout(async () => {
+        // indicate loading for this package
+        setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
+        try {
+          const priceNum = Number(String(value).replace(/[^0-9]/g, "")) || 0;
+          const categoryName =
+            categories.find((c) => c.id === formData.categoryId)?.name ||
+            "Default Category";
+          if (computeCommission) {
+            const quote = await computeCommission(categoryName, priceNum);
+            const fee = quote.commissionFee;
+            setLiveCommission((prev) => ({
+              ...prev,
+              [pkgId]: { commissionFee: fee, total: priceNum + fee },
+            }));
+            // lift to parent if requested
+            if (onCommissionComputed) {
+              try {
+                // treat returned shape as CommissionQuote when possible
+                onCommissionComputed(
+                  pkgId,
+                  quote as unknown as CommissionQuote,
+                );
+              } catch (e) {
+                // ignore lifting errors
+              }
+            }
+          } else {
+            // Fallback: simple percentage (5%)
+            const fee = Math.round(priceNum * 0.05 * 100) / 100;
+            setLiveCommission((prev) => ({
+              ...prev,
+              [pkgId]: { commissionFee: fee, total: priceNum + fee },
+            }));
+            if (onCommissionComputed) {
+              try {
+                onCommissionComputed(pkgId, {
+                  commissionFee: fee,
+                } as CommissionQuote);
+              } catch (e) {}
+            }
+          }
+        } catch (e) {
+          // show a subtle toast on failure
+          toast.error("Failed to fetch commission quote");
+        }
+        // clear loading flag
+        setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
+      }, 400);
+    }
+  };
+
+  // Modify the handlePackageInputChange function
+  const handlePriceChange = (index: number, value: string) => {
+    // Allow only numbers by stripping non-digit characters
+    let numericValue = value.replace(/[^0-9]/g, "");
+
+    // Prevent leading zeros, unless the value is "0" itself
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      numericValue = parseInt(numericValue, 10).toString();
+    }
+    // Prevent exceeding 1,000,000
+    if (parseInt(numericValue, 10) > 1000000) {
+      numericValue = "1000000";
+    }
+
+    if (numericValue === "NaN") {
+      numericValue = "";
+    }
+    handlePackageInputChange(index, "price", numericValue);
   };
 
   return (
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
+        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
           <div className="space-y-8">
             {/* Service Title */}
             <section>
@@ -192,12 +378,13 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   onChange={handleTitleChange}
                   required
                   ref={titleRef}
-                  className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                  className={`lg:text-md mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
                     validationErrors.serviceOfferingTitle && !hideTitleError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
                       : "border-gray-300 bg-gray-50 focus:border-blue-500"
                   }`}
                   placeholder="e.g., Professional Hair Styling"
+                  maxLength={40}
                 />
                 {validationErrors.serviceOfferingTitle && !hideTitleError && (
                   <p className="text-sm text-red-600">
@@ -246,7 +433,21 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                         </option>
                       ))
                   )}
+                  {/* 'Other' custom category removed */}
                 </select>
+                {/* Removed optional custom category input */}
+                {/* Request Service Category button - opens Google Form in new tab */}
+                <div className="mt-3 flex items-center justify-center">
+                  <a
+                    href="https://forms.gle/o3KjDDCkcr5KGE2R8"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
+                    aria-label="Request Service Category"
+                  >
+                    Request Service Category
+                  </a>
+                </div>
                 {validationErrors.categoryId && !hideCategoryError && (
                   <p className="text-sm text-red-600">
                     {validationErrors.categoryId}
@@ -259,7 +460,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
         {/* Right: Service Packages */}
         <div>
-          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
+          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
             <h2 className="mb-4 text-xl font-bold text-blue-700">
               Service Packages <span className="text-red-500">*</span>
             </h2>
@@ -275,7 +476,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ref={(el) => {
                         packageRefs.current[pkg.id] = el;
                       }}
-                      className={`relative rounded-xl border bg-white p-6 shadow-md transition-shadow hover:shadow-lg ${
+                      className={`relative rounded-xl border bg-white p-4 shadow-md transition-shadow hover:shadow-lg ${
                         pkgError ? "border-red-400" : "border-gray-200"
                       }`}
                     >
@@ -314,13 +515,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                               )
                             }
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
                               pkgError &&
                               pkgError.name &&
                               !hidePackageFieldError[pkg.id]?.name
                                 ? "border-red-400 bg-red-50 focus:border-red-500"
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
+                            maxLength={40}
                           />
                           {pkgError &&
                             pkgError.name &&
@@ -335,18 +537,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgPrice-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Price (PHP)<span className="text-red-500">*</span>
+                            Price <span className="text-red-500">*</span>
                           </label>
                           <input
-                            type="number"
+                            type="text" // Changed from "number" to "text" for stricter control
                             id={`pkgPrice-${pkg.id}`}
                             value={pkg.price}
                             onChange={(e) =>
-                              handlePackageInputChange(
-                                index,
-                                "price",
-                                e.target.value,
-                              )
+                              handlePriceChange(index, e.target.value)
                             }
                             required
                             min="0"
@@ -358,6 +556,38 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                           />
+                          {/* Live commission display or loading state */}
+                          {commissionLoading[pkg.id] ? (
+                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                              <span>Calculating…</span>
+                            </div>
+                          ) : (
+                            liveCommission[pkg.id] && (
+                              <div className="mt-2 text-sm text-green-600">
+                                <div className="flex flex-col">
+                                  <span className="mb-1">
+                                    Commission: ₱
+                                    {liveCommission[
+                                      pkg.id
+                                    ]!.commissionFee.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                  <span className="font-semibold">
+                                    Total: ₱
+                                    {liveCommission[
+                                      pkg.id
+                                    ]!.total.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          )}
                           {pkgError &&
                             pkgError.price &&
                             !hidePackageFieldError[pkg.id]?.price && (
@@ -393,6 +623,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                             placeholder="Describe what's included in this package."
+                            maxLength={100}
                           />
                           {pkgError &&
                             pkgError.description &&
@@ -409,11 +640,20 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               </div>
               <button
                 type="button"
-                onClick={addPackage}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-500 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                onClick={
+                  formData.servicePackages.length < 5 ? addPackage : undefined
+                }
+                disabled={formData.servicePackages.length >= 5}
+                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-base font-semibold transition-colors ${
+                  formData.servicePackages.length >= 5
+                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
+                    : "border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                }`}
               >
                 <PlusCircleIcon className="h-5 w-5" />
-                Add Package
+                {formData.servicePackages.length >= 5
+                  ? "Maximum 5 packages"
+                  : "Add Package"}
               </button>
               {validationErrors.servicePackages && !hidePackagesError && (
                 <p className="mt-2 text-sm text-red-600">

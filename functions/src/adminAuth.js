@@ -36,6 +36,17 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   try {
     console.log(`🔧 [Admin] Creating admin profile for UID: ${uid}`);
 
+
+    const adminRolesSnapshot = await db.collection("userRoles")
+      .where("role", "==", "ADMIN")
+      .get();
+
+    const adminCount = adminRolesSnapshot.size;
+    const adminNumber = String(adminCount).padStart(2, "0");
+    const adminName = `admin${adminNumber}`;
+
+    console.log(`🔢 [Admin] Found ${adminCount} existing admin(s), assigning name: ${adminName}`);
+
     // Check if profile already exists
     const profileRef = db.collection("users").doc(uid);
     const profileDoc = await profileRef.get();
@@ -45,21 +56,67 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       const newProfile = {
         uid: uid,
         principal: principal || uid,
-        name: name || "Admin User",
+        name: adminName, // Always use generated sequential admin name
         phone: phone || "",
-        role: "ServiceProvider", // Default role for admin users
+        role: "ServiceProvider", // Application role (Client/ServiceProvider)
+        // Note: Admin role is stored separately in userRoles collection
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         isAdmin: true,
       };
 
       await profileRef.set(newProfile);
-      console.log(`✅ [Admin] Profile created for UID: ${uid}`);
+      console.log(`✅ [Admin] Profile created for UID: ${uid} with name: ${newProfile.name}`);
     } else {
       console.log(`ℹ️  [Admin] Profile already exists for UID: ${uid}`);
+
+      // If profile exists but doesn't have a numbered admin name, update it
+      const existingData = profileDoc.data();
+      if (existingData.isAdmin || existingData.name === "Admin User") {
+        // Check if already has a numbered admin name
+        if (!existingData.name.match(/^admin\d{2}$/)) {
+          // Find the correct admin number by checking if this user already has a role
+          const existingRole = await db.collection("userRoles").doc(uid).get();
+
+          if (existingRole.exists) {
+            // User already has admin role - find their position in the ordered list
+            // Get all admin roles ordered by assignedAt
+            const allAdminRoles = await db.collection("userRoles")
+              .where("role", "==", "ADMIN")
+              .orderBy("assignedAt", "asc")
+              .get();
+
+            // Find this user's index in the ordered list
+            let adminIndex = 0;
+            for (let i = 0; i < allAdminRoles.docs.length; i++) {
+              if (allAdminRoles.docs[i].id === uid) {
+                adminIndex = i;
+                break;
+              }
+            }
+
+            const adminNumber = String(adminIndex).padStart(2, "0");
+            const correctAdminName = `admin${adminNumber}`;
+
+            await profileRef.update({
+              name: correctAdminName,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            console.log(`🔄 [Admin] Updated existing admin profile name to: ${correctAdminName}`);
+          } else {
+            // No role yet, will be assigned below - use the calculated name
+            await profileRef.update({
+              name: adminName,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            console.log(`🔄 [Admin] Updated existing admin profile name to: ${adminName}`);
+          }
+        }
+      }
     }
 
-    // Assign admin role
     const roleAssignment = {
       userId: uid,
       role: "ADMIN",

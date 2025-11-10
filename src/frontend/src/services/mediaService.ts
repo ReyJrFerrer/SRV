@@ -1,10 +1,11 @@
 // Media Service for handling file uploads and conversions
 import { authCanisterService } from "./authCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance
-const functions = getFunctions();
+// Get Firebase Functions instance with correct region
+const functions = getFirebaseFunctions();
 
 export interface ImageUploadOptions {
   maxSizeKB?: number;
@@ -47,12 +48,26 @@ const imageCache = new Map<string, string>();
  */
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
-    // Handle Firebase Storage URLs
-    if (url.includes("storage.googleapis.com")) {
-      // Extract from URL like: https://storage.googleapis.com/.../users/uid/mediaId_filename
+    // Handle Firebase Storage emulator URLs: http://127.0.0.1:9199/v0/b/bucket/o/path?alt=media
+    if (url.includes("127.0.0.1:9199") || url.includes("localhost:9199")) {
+      const urlObj = new URL(url);
+      const pathMatch = urlObj.pathname.match(/\/o\/(.+)$/);
+      if (pathMatch) {
+        const fullPath = decodeURIComponent(pathMatch[1]);
+        const parts = fullPath.split("/");
+        const filename = parts[parts.length - 1];
+        const mediaId = filename.split("_")[0];
+        return mediaId || null;
+      }
+    }
+
+    // Handle Firebase Storage production URLs
+    if (
+      url.includes("storage.googleapis.com") ||
+      url.includes("firebasestorage.googleapis.com")
+    ) {
       const parts = url.split("/");
-      const filename = parts[parts.length - 1];
-      // Extract mediaId from filename (format: {mediaId}_{filename})
+      const filename = parts[parts.length - 1].split("?")[0];
       const mediaId = filename.split("_")[0];
       return mediaId || null;
     }
@@ -68,7 +83,6 @@ export const extractMediaIdFromUrl = (url: string): string | null => {
 
     return null;
   } catch (error) {
-    //console.error("Error extracting media ID from URL:", error);
     return null;
   }
 };
@@ -104,7 +118,6 @@ export const getImageDataUrl = async (
     // For old format URLs, try to get from Cloud Function
     const mediaId = extractMediaIdFromUrl(mediaUrl);
     if (!mediaId) {
-      //console.warn("Could not extract media ID from URL:", mediaUrl);
       return opts.fallbackImageUrl;
     }
 
@@ -117,7 +130,6 @@ export const getImageDataUrl = async (
     const result = await getFileDataFn({ mediaId });
 
     if (!result.data.success) {
-      //console.warn("Failed to retrieve image data from Cloud Function");
       return opts.fallbackImageUrl;
     }
 
@@ -130,7 +142,6 @@ export const getImageDataUrl = async (
 
     return url;
   } catch (error) {
-    //console.error("Error retrieving image data:", error);
     return opts.fallbackImageUrl;
   }
 };
@@ -180,9 +191,7 @@ export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
 export const preloadImage = async (mediaUrl: string): Promise<void> => {
   try {
     await getImageDataUrl(mediaUrl, { enableCache: true });
-  } catch (error) {
-    //console.warn("Failed to preload image:", mediaUrl, error);
-  }
+  } catch (error) {}
 };
 
 /**
@@ -330,8 +339,8 @@ export const processServiceImageFiles = async (
       return [];
     }
 
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
+    if (files.length > 10) {
+      throw new Error("Maximum 10 images allowed per service");
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -354,16 +363,10 @@ export const processServiceImageFiles = async (
 
       // Scale down if file exceeds size limit
       if (currentSizeKB > opts.maxSizeKB) {
-        // //console.log(
-        //   `Scaling ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
-        // );
         processedFile = await intelligentScaleImageTo450KB(
           file,
           opts.maxSizeKB,
         );
-        // //console.log(
-        //   `Successfully scaled ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
-        // );
       }
 
       // Apply dimension limits if specified
@@ -377,9 +380,6 @@ export const processServiceImageFiles = async (
         // Check if resizing caused the file to exceed size limit again
         const resizedSizeKB = processedFile.size / 1024;
         if (resizedSizeKB > opts.maxSizeKB) {
-          // //console.log(
-          //   `File size after dimension resize: ${resizedSizeKB.toFixed(1)}KB. Scaling down again...`,
-          // );
           processedFile = await intelligentScaleImageTo450KB(
             processedFile,
             opts.maxSizeKB,
@@ -399,7 +399,6 @@ export const processServiceImageFiles = async (
 
     return processedFiles;
   } catch (error) {
-    //console.error("Error processing service image files:", error);
     throw error;
   }
 };
@@ -450,16 +449,10 @@ export const processServiceCertificateFiles = async (
       } else {
         // For image certificates, scale down if needed
         if (currentSizeKB > opts.maxSizeKB) {
-          // //console.log(
-          //   `Scaling certificate ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
-          // );
           processedFile = await intelligentScaleImageTo450KB(
             file,
             opts.maxSizeKB,
           );
-          // //console.log(
-          //   `Successfully scaled certificate ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
-          // );
         }
 
         // Apply dimension limits for image certificates
@@ -473,9 +466,6 @@ export const processServiceCertificateFiles = async (
           // Check if resizing caused the file to exceed size limit again
           const resizedSizeKB = processedFile.size / 1024;
           if (resizedSizeKB > opts.maxSizeKB) {
-            // //console.log(
-            //   `Certificate size after dimension resize: ${resizedSizeKB.toFixed(1)}KB. Scaling down again...`,
-            // );
             processedFile = await intelligentScaleImageTo450KB(
               processedFile,
               opts.maxSizeKB,
@@ -496,7 +486,6 @@ export const processServiceCertificateFiles = async (
 
     return processedFiles;
   } catch (error) {
-    //console.error("Error processing service certificate files:", error);
     throw error;
   }
 };
@@ -585,10 +574,6 @@ export const scaleImageTo450KB = async (
           currentFile = newFile;
         }
 
-        // If we've exhausted iterations, return the last result
-        // //console.warn(
-        //   `Could not reach ${targetSizeKB}KB target after ${maxIterations} iterations. Final size: ${currentFile.size / 1024}KB`,
-        // );
         resolve(currentFile);
       };
 
@@ -628,7 +613,6 @@ export const intelligentScaleImageTo450KB = async (
     // Strategy 2: If significantly over, use dimension + quality reduction
     return await scaleImageTo450KB(file, targetSizeKB);
   } catch (error) {
-    //console.error("Error in intelligent scaling:", error);
     throw error;
   }
 };
@@ -727,13 +711,7 @@ export const uploadProfilePictureWithDescaling = async (
     const currentSizeKB = file.size / 1024;
 
     if (currentSizeKB > opts.maxSizeKB) {
-      // //console.log(
-      //   `Image size (${currentSizeKB.toFixed(1)}KB) exceeds limit. Scaling down to ${opts.maxSizeKB}KB...`,
-      // );
       processedFile = await intelligentScaleImageTo450KB(file, opts.maxSizeKB);
-      // //console.log(
-      //   `Successfully scaled image to ${(processedFile.size / 1024).toFixed(1)}KB`,
-      // );
     }
 
     // Apply dimension limits if specified
@@ -757,7 +735,6 @@ export const uploadProfilePictureWithDescaling = async (
 
     return result;
   } catch (error) {
-    //console.error("Error uploading profile picture with descaling:", error);
     throw error;
   }
 };
@@ -775,8 +752,8 @@ export const uploadServiceImagesWithDescaling = async (
       throw new Error("No files provided for upload");
     }
 
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
+    if (files.length > 10) {
+      throw new Error("Maximum 10 images allowed per service");
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -799,16 +776,10 @@ export const uploadServiceImagesWithDescaling = async (
       const currentSizeKB = file.size / 1024;
 
       if (currentSizeKB > opts.maxSizeKB) {
-        // //console.log(
-        //   `Scaling ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
-        // );
         processedFile = await intelligentScaleImageTo450KB(
           file,
           opts.maxSizeKB,
         );
-        // //console.log(
-        //   `Successfully scaled ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
-        // );
       }
 
       // Apply dimension limits
@@ -839,7 +810,6 @@ export const uploadServiceImagesWithDescaling = async (
 
     return result;
   } catch (error) {
-    console.error("Error uploading service images with descaling:", error);
     throw error;
   }
 };
@@ -878,7 +848,92 @@ export const uploadServiceCertificatesWithProcessing = async (
 
     return result;
   } catch (error) {
-    console.error("Error uploading service certificates:", error);
+    throw error;
+  }
+};
+
+/**
+ * Upload report attachments with automatic processing
+ * Supports images only for report screenshots
+ */
+export const uploadReportAttachments = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<string[]> => {
+  try {
+    if (files.length === 0) {
+      throw new Error("No files to upload");
+    }
+
+    if (files.length > 5) {
+      throw new Error("Maximum 5 attachments allowed per report");
+    }
+
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const uploadMediaFn = httpsCallable<
+      {
+        fileName: string;
+        contentType: string;
+        mediaType: string;
+        fileData: string;
+      },
+      { success: boolean; data: { url: string } }
+    >(functions, "uploadMedia");
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      // Validate file type
+      if (!opts.allowedTypes.includes(file.type)) {
+        throw new Error(
+          `File type ${file.type} is not supported. Only images are allowed for report attachments.`,
+        );
+      }
+
+      // Preserve original filename
+      const originalFileName = file.name;
+      const originalContentType = file.type;
+
+      // Process file - scale down if needed
+      let processedFile = file;
+      const currentSizeKB = file.size / 1024;
+
+      if (currentSizeKB > opts.maxSizeKB) {
+        processedFile = await intelligentScaleImageTo450KB(
+          file,
+          opts.maxSizeKB,
+        );
+      }
+
+      // Apply dimension limits if specified
+      if (opts.maxWidth || opts.maxHeight) {
+        processedFile = await resizeImage(
+          processedFile,
+          opts.maxWidth,
+          opts.maxHeight,
+        );
+      }
+
+      // Convert to base64
+      const fileData = await fileToUint8Array(processedFile);
+      const base64Data = uint8ArrayToBase64(fileData);
+
+      // Upload via media canister (Cloud Function) - use original filename
+      const result = await uploadMediaFn({
+        fileName: originalFileName,
+        contentType: originalContentType,
+        mediaType: "ReportAttachment",
+        fileData: base64Data,
+      });
+      if (result.data.success && result.data.data.url) {
+        uploadedUrls.push(result.data.data.url);
+      } else {
+        throw new Error("Failed to upload report attachment");
+      }
+    }
+
+    return uploadedUrls;
+  } catch (error) {
     throw error;
   }
 };
@@ -895,6 +950,7 @@ export const mediaService = {
   uploadProfilePictureWithDescaling,
   uploadServiceImagesWithDescaling,
   uploadServiceCertificatesWithProcessing,
+  uploadReportAttachments,
 
   // Image retrieval functionality
   getImageDataUrl,
@@ -913,7 +969,6 @@ export const mediaService = {
     try {
       return await authCanisterService.removeProfilePicture();
     } catch (error) {
-      //console.error("Error removing profile picture:", error);
       throw error;
     }
   },
@@ -934,7 +989,6 @@ export const mediaService = {
       }
       return results;
     } catch (error) {
-      //console.error("Error deleting service images:", error);
       throw error;
     }
   },
@@ -949,7 +1003,6 @@ export const mediaService = {
         orderedImageUrls,
       );
     } catch (error) {
-      //console.error("Error updating service image order:", error);
       throw error;
     }
   },
@@ -973,7 +1026,6 @@ export const mediaService = {
       }
       return results;
     } catch (error) {
-      //console.error("Error deleting service certificates:", error);
       throw error;
     }
   },
@@ -985,7 +1037,6 @@ export const mediaService = {
     try {
       return await serviceCanisterService.verifyService(serviceId, isVerified);
     } catch (error) {
-      //console.error("Error verifying service:", error);
       throw error;
     }
   },

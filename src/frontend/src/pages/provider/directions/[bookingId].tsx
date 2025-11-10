@@ -4,27 +4,16 @@
 // Behavior: Watches GPS, computes directions, renders native polylines, supports alternate selection.
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import GStreetView from "../../../components/common/GStreetView";
+import InlineLoader from "../../../components/provider/directions/InlineLoader";
+import MapView from "../../../components/provider/directions/MapView";
+import ControlsOverlay from "../../../components/provider/directions/ControlsOverlay";
+import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 
-// SECTION: Inline loader
-const InlineLoader: React.FC<{ message?: string }> = ({ message }) => (
-  <div className="flex min-h-screen items-center justify-center bg-gray-50">
-    <div className="text-center">
-      <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-b-2 border-blue-600" />
-      <p className="text-sm text-gray-600">{message || "Loading map..."}</p>
-    </div>
-  </div>
-);
-
-// SECTION: Map container style
-const containerStyle: React.CSSProperties = {
-  width: "100vw",
-  height: "100vh",
-  position: "absolute",
-  inset: 0,
-};
+// NOTE: InlineLoader, Map rendering and StreetView modal are extracted into
+// components under src/components/provider/directions/ to keep this page
+// focused on routing and logic while preserving identical behavior.
 
 // SECTION: Math helpers (Haversine)
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -50,9 +39,34 @@ function haversineDistanceMeters(
 const ProviderDirectionsPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const { loading, error, startBookingById, getBookingById } =
-    useProviderBookingManagement();
-  const booking = bookingId ? getBookingById(bookingId) : null;
+  const { error, startBookingById } = useProviderBookingManagement();
+
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
+
+    if (!booking) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Accepted") {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   const [providerLocation, setProviderLocation] =
     useState<google.maps.LatLngLiteral | null>(null);
@@ -72,6 +86,7 @@ const ProviderDirectionsPage: React.FC = () => {
   >("idle");
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
   // Prevent multiple auto-start triggers
+  const [isStartingService, setIsStartingService] = useState(false);
 
   // Navigation mode and device heading (compass)
   const [isInNavigationMode, setIsInNavigationMode] = useState(false);
@@ -89,6 +104,7 @@ const ProviderDirectionsPage: React.FC = () => {
   const routePolylineRef = useRef<google.maps.Polyline | null>(null);
   const altRoutePolylinesRef = useRef<google.maps.Polyline[]>([]);
   const altRouteListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   // Allow user to toggle auto-centering on their current location
   const [followMe, setFollowMe] = useState<boolean>(false);
@@ -304,8 +320,6 @@ const ProviderDirectionsPage: React.FC = () => {
             lastOriginRef.current = origin;
           } else {
             setDirectionsStatus("failed");
-            // eslint-disable-next-line no-console
-            console.error("Directions request failed:", status);
           }
         },
       );
@@ -361,7 +375,8 @@ const ProviderDirectionsPage: React.FC = () => {
     if (!map || !providerLocation) return;
     if (isInNavigationMode) {
       const heading = deviceHeading ?? 0;
-      map.moveCamera({ center: providerLocation, zoom: 18, heading, tilt: 45 });
+      // Zoom in to road level for navigation mode.
+      map.moveCamera({ center: providerLocation, zoom: 23, heading, tilt: 45 });
     } else if (followMe) {
       map.panTo(providerLocation);
     }
@@ -483,17 +498,47 @@ const ProviderDirectionsPage: React.FC = () => {
       const { idx, path } = altInfos[i];
       const pl = altRoutePolylinesRef.current[i];
       pl.setPath(path as any);
+      // Use the same base blue color as the main route for visual consistency
       pl.setOptions({
-        strokeColor: altStrokeColorRef.current,
+        strokeColor: mainStrokeColorRef.current,
         strokeOpacity: 0,
         strokeWeight: 4,
         icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
         clickable: true,
       });
-      const listener = google.maps.event.addListener(pl, "click", () => {
+
+      // attach listeners: click selects route and shows an info window; hover/touch highlight
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResponse?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
       });
-      altRouteListenersRef.current.push(listener);
+
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
     }
 
     // Add missing alts
@@ -505,18 +550,46 @@ const ProviderDirectionsPage: React.FC = () => {
       const { idx, path } = altInfos[i];
       const pl = new google.maps.Polyline({
         path,
-        strokeColor: altStrokeColorRef.current,
+        strokeColor: mainStrokeColorRef.current,
         strokeOpacity: 0,
         strokeWeight: 4,
         clickable: true,
         icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
       });
       pl.setMap(map);
-      const listener = google.maps.event.addListener(pl, "click", () => {
+
+      // listeners for newly created alternate polyline
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
         setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResponse?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
       });
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
       altRoutePolylinesRef.current.push(pl);
-      altRouteListenersRef.current.push(listener);
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
     }
   }, [directionsResponse, selectedRouteIndex]);
 
@@ -633,19 +706,26 @@ const ProviderDirectionsPage: React.FC = () => {
   }, [booking, mapApiKey, destResolveStatus]);
 
   const handleStartService = async () => {
-    if (!bookingId) return;
-    const success = await startBookingById(bookingId);
-    if (success) {
-      const startTime = new Date().toISOString();
-      localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
-      navigate(
-        `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
-      );
+    if (!bookingId || isStartingService) return;
+
+    try {
+      setIsStartingService(true);
+      const success = await startBookingById(bookingId);
+      if (success) {
+        const startTime = new Date().toISOString();
+        localStorage.setItem(`activeServiceStartTime:${bookingId}`, startTime);
+        navigate(
+          `/provider/active-service/${bookingId}?startTime=${encodeURIComponent(startTime)}`,
+        );
+      }
+    } catch (error) {
+    } finally {
+      setIsStartingService(false);
     }
   };
   // Removed manual start handler; auto-start is handled by proximity effect above
 
-  if (loading || !providerLocation) {
+  if (!providerLocation) {
     return (
       <InlineLoader
         message={
@@ -660,18 +740,11 @@ const ProviderDirectionsPage: React.FC = () => {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-600">
-        Error: {error}
+        Error: You are not allowed to start an active service.
       </div>
     );
   }
 
-  if (!booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-gray-600">
-        Booking not found.
-      </div>
-    );
-  }
   const destinationHasCoords = !!destinationCoords;
 
   const toggleNavigationMode = () => {
@@ -689,234 +762,57 @@ const ProviderDirectionsPage: React.FC = () => {
   };
 
   return (
-    <APIProvider apiKey={mapApiKey}>
-      <div className="relative h-screen w-screen">
-        {providerLocation && destinationHasCoords && (
-          <Map
-            style={containerStyle}
-            defaultZoom={15}
-            defaultCenter={providerLocation}
-            onCameraChanged={(ev) => (mapRef.current = ev.map)}
-            gestureHandling={isInNavigationMode ? "none" : "greedy"}
-            disableDefaultUI={true}
-            zoomControl={true}
-            mapId={"6922634ff75ae05ac38cc473"}
-          >
-            {providerLocation && (
-              <AdvancedMarker position={providerLocation}>
-                {isInNavigationMode ? (
-                  <div
-                    style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}
-                  >
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="#1D4ED8"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      backgroundColor: "#2563eb",
-                      border: "2px solid #ffffff",
-                    }}
-                  />
-                )}
-              </AdvancedMarker>
-            )}
-            {destinationHasCoords && destinationCoords && (
-              <AdvancedMarker position={destinationCoords} />
-            )}
-          </Map>
-        )}
-        {/* Overlay controls */}
-        <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-          {/* Street View button above Follow me */}
-          {destinationHasCoords && destinationCoords && (
-            <div className="flex w-full justify-end px-1">
-              <button
-                type="button"
-                onClick={() => setShowStreetView(true)}
-                className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
-                title="Open Street View"
-                aria-label="Open Street View"
-              >
-                {/* Eye icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="h-5 w-5"
-                >
-                  <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </button>
-            </div>
-          )}
-          {/* Follow toggle and Re-center controls */}
-          <div className="flex items-center justify-between px-1">
-            <label className="flex items-center gap-2 text-xs text-gray-700">
-              <input
-                type="checkbox"
-                checked={followMe}
-                onChange={(e) => setFollowMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              Follow me
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                if (mapRef.current && providerLocation) {
-                  mapRef.current.panTo(providerLocation);
-                }
-              }}
-              className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
-              title="Re-center map on your location"
-              aria-label="Re-center map"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-4 w-4"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
-                <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
-              </svg>
-            </button>
-          </div>
-          <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
-            {/* Re-center moved above card */}
-            {directionsStatus === "pending" && (
-              <p className="text-center text-sm font-medium text-gray-700">
-                Calculating route...
-              </p>
-            )}
-            {directionsStatus === "ok" && directionsResponse && (
-              <div className="text-center">
-                {(() => {
-                  const leg =
-                    directionsResponse.routes[selectedRouteIndex]?.legs[0] ||
-                    directionsResponse.routes[0].legs[0];
-                  return (
-                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                      <div className="text-lg font-extrabold text-gray-900">
-                        {leg.duration?.text || "N/A"}
-                      </div>
-                      <span className="text-gray-300">•</span>
-                      <div className="text-base font-semibold text-gray-700">
-                        {leg.distance?.text || "N/A"}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-            {directionsStatus === "failed" && (
-              <p className="text-center text-sm font-medium text-red-600">
-                Could not compute directions.
-              </p>
-            )}
-            {!destinationHasCoords && destResolveStatus !== "pending" && (
-              <p className="mt-2 text-center text-xs text-red-600">
-                Destination coordinates missing for this booking.
-              </p>
-            )}
-            {!destinationHasCoords && destResolveStatus === "pending" && (
-              <p className="mt-2 text-center text-xs text-gray-600">
-                Resolving destination...
-              </p>
-            )}
-          </div>
+    <div className="relative h-screen w-screen">
+      <MapView
+        mapApiKey={mapApiKey}
+        providerLocation={providerLocation}
+        destinationCoords={destinationCoords}
+        isInNavigationMode={isInNavigationMode}
+        deviceHeading={deviceHeading}
+        setMapRef={(m) => (mapRef.current = m)}
+        destinationName={
+          (booking as any)?.formattedLocation ||
+          (booking as any)?.location ||
+          null
+        }
+      />
 
-          {/* Navigation mode toggle */}
-          {isInNavigationMode ? (
-            <button
-              onClick={toggleNavigationMode}
-              className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-red-700"
-            >
-              Exit Navigation
-            </button>
-          ) : (
-            <button
-              onClick={toggleNavigationMode}
-              className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-green-700 disabled:opacity-50"
-              disabled={!destinationHasCoords}
-            >
-              Start Navigation
-            </button>
-          )}
-          <button
-            onClick={handleStartService}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow transition-colors hover:bg-blue-700 disabled:opacity-50"
-            disabled={!destinationHasCoords}
-          >
-            I've Arrived - Start Service
-          </button>
-          <button
-            onClick={() => navigate(-1)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-          >
-            Back
-          </button>
+      <ControlsOverlay
+        destinationHasCoords={destinationHasCoords}
+        destinationCoords={destinationCoords}
+        directionsStatus={directionsStatus}
+        destResolveStatus={destResolveStatus}
+        directionsResponse={directionsResponse}
+        selectedRouteIndex={selectedRouteIndex}
+        setShowStreetView={setShowStreetView}
+        followMe={followMe}
+        setFollowMe={setFollowMe}
+        isInNavigationMode={isInNavigationMode}
+        toggleNavigationMode={toggleNavigationMode}
+        handleStartService={handleStartService}
+        isStartingService={isStartingService}
+        mapRef={mapRef}
+        providerLocation={providerLocation}
+        navigateBack={() => navigate(-1)}
+        destinationName={
+          (booking as any)?.formattedLocation ||
+          (booking as any)?.location ||
+          null
+        }
+      />
+
+      <StreetViewModal
+        show={showStreetView}
+        position={destinationCoords}
+        onClose={() => setShowStreetView(false)}
+      />
+
+      {mapApiKey === "REPLACE_WITH_KEY" && (
+        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
+          Missing Google Maps API key
         </div>
-        {/* Street View modal */}
-        {showStreetView && destinationHasCoords && destinationCoords && (
-          <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
-              <button
-                className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-                onClick={() => setShowStreetView(false)}
-                aria-label="Close Street View"
-              >
-                <span className="text-xl font-bold text-gray-700">&times;</span>
-              </button>
-              <div className="h-full w-full">
-                <GStreetView
-                  position={destinationCoords}
-                  pov={{ heading: 0, pitch: 0 }}
-                  options={{
-                    addressControl: true,
-                    linksControl: true,
-                    panControl: true,
-                  }}
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Floating button removed; recenter is in overlay */}
-        {mapApiKey === "REPLACE_WITH_KEY" && (
-          <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
-            Missing Google Maps API key
-          </div>
-        )}
-      </div>
-    </APIProvider>
+      )}
+    </div>
   );
 };
 

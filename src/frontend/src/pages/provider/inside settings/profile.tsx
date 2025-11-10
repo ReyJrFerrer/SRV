@@ -8,11 +8,16 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
   InformationCircleIcon,
+  ExclamationTriangleIcon, // Import the new icon
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/provider/BottomNavigation"; // Changed to provider bottom nav
+import BottomNavigation from "../../../components/provider/NavigationBar"; // Changed to provider bottom nav
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
+import {
+  ProfileSkeleton,
+  ReputationScoreSkeleton,
+} from "../../../components/SkeletonLoader";
 
 // AboutReputationScoreModal: Provider version
 interface AboutReputationScoreModalProps {
@@ -309,6 +314,21 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   isLoading,
 }) => {
   const [showModal, setShowModal] = React.useState(false);
+  const [displaySrc, setDisplaySrc] = React.useState(
+    src || "/default-provider.svg",
+  );
+
+  // Update display src only when src is actually loaded (not during loading)
+  React.useEffect(() => {
+    if (src && !isLoading) {
+      setDisplaySrc(src);
+    }
+  }, [src, isLoading]);
+
+  // Check if we have a valid cached/loaded image (data URL or blob URL)
+  const hasValidImage =
+    displaySrc.startsWith("data:") || displaySrc.startsWith("blob:");
+
   return (
     <>
       <div
@@ -321,13 +341,13 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
           if (e.key === "Enter" || e.key === " ") setShowModal(true);
         }}
       >
-        {isLoading ? (
+        {isLoading && !hasValidImage ? (
           <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>
         ) : (
           <img
-            src={src || "/default-provider.svg"}
+            src={displaySrc}
             alt="Profile Picture"
             className="h-32 w-32 rounded-full border-4 border-blue-200 object-cover shadow-lg transition-all duration-200 hover:border-yellow-400 focus:border-yellow-400"
             tabIndex={-1}
@@ -344,7 +364,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <img
-              src={src || "/default-provider.svg"}
+              src={displaySrc}
               alt="Profile Picture Large"
               className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
               onError={(e) => {
@@ -402,11 +422,9 @@ const ProviderProfilePage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
@@ -427,7 +445,12 @@ const ProviderProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       setName(profile.name);
-      setPhone(profile.phone || "");
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (error) {
+      setToast({ message: error, type: "error" });
     }
   }, [profile]);
 
@@ -443,7 +466,6 @@ const ProviderProfilePage: React.FC = () => {
 
   const handleSaveChanges = async () => {
     setNameError("");
-    setPhoneError("");
     setEditError("");
     let valid = true;
     const nameTrimmed = name.trim();
@@ -458,23 +480,11 @@ const ProviderProfilePage: React.FC = () => {
       setNameError("Each part of your name must be at least 2 characters.");
       valid = false;
     }
-    const phoneTrimmed = phone.trim();
-    const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
-    if (!phoneTrimmed) {
-      setPhoneError("Phone number is required.");
-      valid = false;
-    } else if (phoneDigits.length !== 11) {
-      setPhoneError("Phone number must be exactly 11 digits.");
-      valid = false;
-    } else if (!phoneDigits.startsWith("09")) {
-      setPhoneError("Phone number must start with '09'.");
-      valid = false;
-    }
     if (!valid) {
       setEditError("Please fix the errors above before saving.");
       return;
     }
-    const success = await updateProfile({ name, phone, imageFile });
+    const success = await updateProfile({ name, imageFile });
     if (success) {
       setIsEditing(false);
       setImageFile(null);
@@ -482,12 +492,14 @@ const ProviderProfilePage: React.FC = () => {
       refetchImage();
       setToast({ message: "Profile updated successfully!", type: "success" });
     }
+    // The error is now set inside useUserProfile and displayed via the `error` state
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setName(profile?.name || "");
-    setPhone(profile?.phone || "");
+    setNameError("");
+    setEditError("");
     setImageFile(null);
     setPreviewImage(null);
   };
@@ -511,290 +523,262 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">
-            My Provider Profile
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black">
+            My Profile
           </h1>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
-          <div className="flex flex-col space-y-4 lg:col-span-1">
-            {/* Profile Info Card (top left) */}
-            <div className="rounded-xl bg-white p-6 shadow-md">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <ProfilePictureModal
-                    src={previewImage || profileImageUrl}
-                    isLoading={isImageLoading}
-                  />
-                  {isEditing && (
-                    <>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      <button
-                        onClick={handleImageUploadClick}
-                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                      >
-                        <CameraIcon className="h-5 w-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                {!isEditing ? (
-                  <>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {profile?.name || "Provider Name"}
-                    </h2>
-                    <p className="text-md text-gray-500">
-                      {profile?.phone || "No phone number"}
-                    </p>
-                  </>
-                ) : (
-                  <div className="mt-4 w-full max-w-sm space-y-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => {
-                          setName(e.target.value);
-                          if (nameError) setNameError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {nameError && (
-                        <p className="mt-1 text-sm text-red-500">{nameError}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => {
-                          // Remove spaces from phone number input
-                          const phoneValue = e.target.value.replace(/\s/g, "");
-                          setPhone(phoneValue);
-                          if (phoneError) setPhoneError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {phoneError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {phoneError}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="mt-6">
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      <PencilIcon className="mr-2 h-4 w-4" />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={handleCancelEdit}
-                        className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveChanges}
-                        disabled={loading}
-                        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                      >
-                        {loading ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* Switch to Client Button (below profile info) */}
-            <div className="rounded-lg bg-blue-600 shadow-sm">
-              <button
-                onClick={handleSwitchToClient}
-                disabled={isSwitchingRole}
-                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                  isSwitchingRole
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-yellow-400"
-                }`}
-              >
-                <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-6 w-6 ${
-                      isSwitchingRole
-                        ? "animate-spin text-yellow-400"
-                        : "text-white group-hover:text-black"
-                    }`}
-                  />
-                  <span className="text-md font-medium text-white group-hover:text-gray-800">
-                    {isSwitchingRole
-                      ? "Switching Role..."
-                      : "Switch into Client"}
-                  </span>
-                </div>
-                {!isSwitchingRole && (
-                  <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
-                )}
-              </button>
-            </div>
-            <div className="hidden lg:block">
-              <button
-                onClick={logout}
-                className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-          {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <div className="mb-6 flex items-center justify-center gap-2">
-                <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                  Your Reputation Score
-                </h3>
-                <button
-                  type="button"
-                  aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  onClick={() => setShowAboutInfo(true)}
-                >
-                  <InformationCircleIcon className="h-6 w-6 text-blue-500" />
-                </button>
-                <AboutReputationScoreModal
-                  show={showAboutInfo}
-                  onClose={() => setShowAboutInfo(false)}
-                  reputationDisplay={reputationDisplay}
-                />
-              </div>
-              {reputationLoading ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                      <p className="text-sm text-gray-500">
-                        Loading reputation score...
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : reputationError ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-4 text-red-500">
-                        <svg
-                          className="mx-auto h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+        {loading || !profile ? (
+          <ProfileSkeleton role="provider" />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+            {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
+            <div className="flex flex-col space-y-4 lg:col-span-1">
+              {/* Profile Info Card (top left) */}
+              <div className="rounded-xl bg-white p-6 shadow-md">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <ProfilePictureModal
+                      src={previewImage || profileImageUrl}
+                      isLoading={isImageLoading}
+                    />
+                    {isEditing && (
+                      <>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/png, image/jpeg"
+                        />
+                        <button
+                          onClick={handleImageUploadClick}
+                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
-                        </svg>
+                          <CameraIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {!isEditing ? (
+                    <>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        {profile?.name || "Provider Name"}
+                      </h2>
+                      <p className="text-md text-gray-500">
+                        {profile?.phone || "No phone number"}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mt-4 w-full max-w-sm space-y-4">
+                      <div>
+                        <label
+                          htmlFor="name"
+                          className="block text-left text-sm font-medium text-gray-700"
+                        >
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={name}
+                          onChange={(e) => {
+                            setName(e.target.value);
+                            if (nameError) setNameError("");
+                            if (editError) setEditError("");
+                          }}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        />
+                        {nameError && (
+                          <p className="mt-1 text-sm text-red-500">
+                            {nameError}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-sm font-medium text-red-600">
-                        {reputationError}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Please check your connection and try again
-                      </p>
+                      <div className="text-left">
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Phone Number
+                        </label>
+                        <p className="mt-1 text-gray-800">
+                          {profile?.phone || "No phone number"}
+                        </p>
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <p className="text-xs text-blue-800">
+                            Your phone number is linked to your account for
+                            security and cannot be changed here. Please contact
+                            support for assistance if you need to update it.
+                          </p>
+                        </div>
+                      </div>
                     </div>
+                  )}
+                  <div className="mt-6">
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                      >
+                        <PencilIcon className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </button>
+                    ) : (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveChanges}
+                          disabled={loading}
+                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                          {loading ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="mb-2 flex items-center justify-center gap-2">
-                    <ReputationScore score={reputationScore} />
-                    {/* <button
+              </div>
+              {/* Switch to Client Button (below profile info) */}
+              <div className="rounded-lg bg-blue-600 shadow-sm">
+                <button
+                  onClick={handleSwitchToClient}
+                  disabled={isSwitchingRole}
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                    isSwitchingRole
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:bg-yellow-400"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <ArrowPathRoundedSquareIcon
+                      className={`mr-4 h-6 w-6 ${
+                        isSwitchingRole
+                          ? "animate-spin text-yellow-400"
+                          : "text-white group-hover:text-black"
+                      }`}
+                    />
+                    <span className="text-md font-medium text-white group-hover:text-gray-800">
+                      {isSwitchingRole
+                        ? "Switching Role..."
+                        : "Switch into Client"}
+                    </span>
+                  </div>
+                  {!isSwitchingRole && (
+                    <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
+                  )}
+                </button>
+              </div>
+
+              <div className="hidden lg:block">
+                <button
+                  onClick={logout}
+                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+            {/* --- Right Column: Reputation and Stats --- */}
+            <div className="mt-1 lg:col-span-2 lg:mt-0">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+                <div className="mb-6 flex items-center justify-center gap-2">
+                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
+                    Your Reputation Score
+                  </h3>
+                  <button
+                    type="button"
+                    aria-label="What is reputation score?"
+                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    onClick={() => setShowAboutInfo(true)}
+                  >
+                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                  </button>
+                  <AboutReputationScoreModal
+                    show={showAboutInfo}
+                    onClose={() => setShowAboutInfo(false)}
+                    reputationDisplay={reputationDisplay}
+                  />
+                </div>
+                {reputationLoading ? (
+                  <div className="flex justify-center">
+                    <ReputationScoreSkeleton />
+                  </div>
+                ) : reputationError ? (
+                  <div className="flex justify-center">
+                    <div className="flex h-48 w-48 items-center justify-center">
+                      <div className="text-center">
+                        <div className="mb-4 text-red-500">
+                          <ExclamationTriangleIcon className="mx-auto h-16 w-16" />
+                        </div>
+                        <p className="text-sm font-medium text-red-600">
+                          {reputationError}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Please check your connection and try again
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <ReputationScore score={reputationScore} />
+                      {/* <button
                       onClick={forceRefreshReputation}
                       className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
                       title="Refresh reputation score"
                     >
                       <ArrowPathRoundedSquareIcon className="h-4 w-4" />
                     </button> */}
-                  </div>
-                  {reputationDisplay && (
-                    <>
-                      <div className="flex w-full justify-center">
-                        <TrustLevelBadge
-                          trustLevel={reputationDisplay.level}
-                          onInfoClick={() => setShowBadgeInfo(true)}
-                          infoOpen={showBadgeInfo}
+                    </div>
+                    {reputationDisplay && (
+                      <>
+                        <div className="flex w-full justify-center">
+                          <TrustLevelBadge
+                            trustLevel={reputationDisplay.level}
+                            onInfoClick={() => setShowBadgeInfo(true)}
+                            infoOpen={showBadgeInfo}
+                          />
+                        </div>
+                        <TrustLevelInfoModal
+                          show={showBadgeInfo}
+                          onClose={() => setShowBadgeInfo(false)}
                         />
-                      </div>
-                      <TrustLevelInfoModal
-                        show={showBadgeInfo}
-                        onClose={() => setShowBadgeInfo(false)}
-                      />
-                      <AboutReputationScoreModal
-                        show={showAboutInfo}
-                        onClose={() => setShowAboutInfo(false)}
-                        reputationDisplay={reputationDisplay}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
+                        <AboutReputationScoreModal
+                          show={showAboutInfo}
+                          onClose={() => setShowAboutInfo(false)}
+                          reputationDisplay={reputationDisplay}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          {editError && (
-            <p className="mt-4 text-center text-red-500">{editError}</p>
-          )}
-          {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-          {reputationError && !error && (
-            <p className="mt-4 text-center text-red-500">
-              Reputation: {reputationError}
-            </p>
-          )}
-        </div>
+        )}
       </main>
       <div className="mt-8 block w-full px-4 lg:hidden">
         <button
           onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+          className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
         >
           Log Out
         </button>

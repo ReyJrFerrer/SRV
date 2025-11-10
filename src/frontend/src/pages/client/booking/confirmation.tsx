@@ -1,7 +1,8 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
+import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
-// Interface for the booking details passed via navigation state
 interface BookingDetails {
   serviceName: string;
   providerName: string;
@@ -17,21 +18,64 @@ interface BookingDetails {
   expectedChange?: string;
 }
 
+function formatTo12Hour(timeStr?: string): string {
+  if (!timeStr) return "";
+  const raw = timeStr.trim();
+  const formatSingle = (seg: string, forcedPeriod?: string): string => {
+    const s = seg.trim();
+    const hasAmpm = /\b(am|pm)\b/i.test(s);
+    if (hasAmpm) {
+      return s
+        .replace(/\s+/g, " ")
+        .replace(/\b(am|pm)\b/i, (m) => m.toUpperCase());
+    }
+
+    const m = s.match(/(\d{1,2})(?::(\d{2}))?/);
+    if (!m) return s;
+    let hh = parseInt(m[1], 10);
+    const mm = m[2] ? parseInt(m[2], 10) : 0;
+    if (isNaN(hh) || isNaN(mm)) return s;
+
+    const period = forcedPeriod
+      ? forcedPeriod.toUpperCase()
+      : hh >= 12
+        ? "PM"
+        : "AM";
+    const hour12 = ((hh + 11) % 12) + 1;
+    const minutePadded = mm < 10 ? `0${mm}` : String(mm);
+    return `${hour12}:${minutePadded} ${period}`;
+  };
+
+  const rangeSepRegex = /\s*(?:[-–—]|to)\s*/i;
+  if (rangeSepRegex.test(raw)) {
+    const parts = raw
+      .split(rangeSepRegex)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const trailingMatch = raw.match(/\b(am|pm)\b\s*$/i);
+    const trailing = trailingMatch ? trailingMatch[1].toUpperCase() : undefined;
+    const formatted = parts.map((p) => {
+      const has = /\b(am|pm)\b/i.test(p);
+      return formatSingle(p, !has ? trailing : undefined);
+    });
+    return formatted.join(" - ");
+  }
+
+  return formatSingle(raw);
+}
+
 const BookingConfirmationPage: React.FC = () => {
   const location = useLocation();
-
-  // Safely access the booking details from the navigation state
   const bookingDetails: BookingDetails | null = location.state?.details || null;
-
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Booking Confirmed - SRV Client";
   }, []);
+  useNoBackNavigation("/client/booking");
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b border-gray-200 bg-white px-4 py-3">
-        <h1 className="text-center text-lg font-semibold text-gray-900">
+      <header className="sticky top-0 z-20 w-full border-b border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-6">
+        <h1 className="text-center text-2xl font-bold tracking-tight text-gray-900">
           Booking Request Sent!
         </h1>
       </header>
@@ -40,7 +84,6 @@ const BookingConfirmationPage: React.FC = () => {
         {bookingDetails ? (
           <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
             <div className="relative mx-auto mb-4 h-24 w-24">
-              {/* Use standard <img> tag instead of Next.js <Image> */}
               <img
                 src="/images/srv characters (SVG)/girl.svg"
                 alt="Success"
@@ -61,36 +104,35 @@ const BookingConfirmationPage: React.FC = () => {
               </h3>
 
               <div className="space-y-2 text-sm">
-                {/* Provider first */}
-                <p>
+                <p className="break-words">
                   <span className="font-bold text-gray-700">Provider:</span>{" "}
                   {bookingDetails.providerName}
                 </p>
-                {/* Service next */}
-                <p>
+                <p className="break-words">
                   <span className="font-bold text-gray-700">Service:</span>{" "}
                   {bookingDetails.serviceName}
                 </p>
-                {/* Packages */}
                 {bookingDetails.packages &&
                   bookingDetails.packages.length > 0 && (
                     <div>
                       <span className="font-bold text-gray-700">Packages:</span>
-                      <ul className="ml-4 mt-1 list-inside list-disc">
+                      <ul className="ml-4 mt-1 list-outside list-disc">
                         {bookingDetails.packages.map((pkg) => (
-                          <li key={pkg.id} className="text-gray-600">
+                          <li
+                            key={pkg.id}
+                            className="break-words text-gray-600"
+                          >
                             {pkg.title}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
-                {/* Grouped: Type, Date, Time, Location */}
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">
                     Booking Details:
                   </span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="ml-3 mt-1 list-inside list-disc">
                     <li>
                       <span className="font-semibold">Type:</span>{" "}
                       {bookingDetails.bookingType === "sameday"
@@ -103,7 +145,7 @@ const BookingConfirmationPage: React.FC = () => {
                     </li>
                     <li>
                       <span className="font-semibold">Time:</span>{" "}
-                      {bookingDetails.time}
+                      {formatTo12Hour(bookingDetails.time)}
                     </li>
                     {bookingDetails.location && (
                       <li>
@@ -124,10 +166,9 @@ const BookingConfirmationPage: React.FC = () => {
                     )}
                   </ul>
                 </div>
-                {/* Payment group */}
                 <div className="pt-2">
                   <span className="font-bold text-gray-700">Payment:</span>
-                  <ul className="ml-4 mt-1 list-inside list-disc">
+                  <ul className="ml-3 mt-1 list-inside list-disc">
                     {bookingDetails.packagePrice && (
                       <li>
                         <span className="font-semibold">Package Price:</span> ₱{" "}
@@ -156,7 +197,6 @@ const BookingConfirmationPage: React.FC = () => {
                           )}
                         </li>
                       )}
-                    {/* Show expected change if present, otherwise fallback to calculation */}
                     {bookingDetails.expectedChange &&
                     bookingDetails.expectedChange !== "0.00" ? (
                       <li>
@@ -196,7 +236,6 @@ const BookingConfirmationPage: React.FC = () => {
                     )}
                   </ul>
                 </div>
-                {/* Notes for Provider */}
                 {bookingDetails.notes && (
                   <p>
                     <span className="font-bold text-gray-700">
@@ -207,8 +246,6 @@ const BookingConfirmationPage: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Use Link from react-router-dom */}
             <Link
               to="/client/home"
               className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"

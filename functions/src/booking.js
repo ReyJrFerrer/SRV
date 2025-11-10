@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
+const {deductReputationForCancellationInternal} = require("./reputation");
 
 // Import notification system from notification.js
 const {
@@ -11,13 +12,13 @@ const {
   generateNotificationHref,
   isSpamming,
   updateNotificationFrequency,
-  sendFCMNotification,
+  sendOneSignalNotification,
 } = require("./notification");
 
 // Import reputation bridge for updating reputations after booking completion
 const {
-  updateUserReputationInternal,
   updateProviderReputationInternal,
+  checkUserReputationInternal,
 } = require("./reputation");
 
 // Import wallet internal functions for commission handling
@@ -31,6 +32,16 @@ const db = admin.firestore();
 
 // Constants for notification system
 const NOTIFICATION_EXPIRY_DAYS = 30;
+
+/**
+ * Generate a unique report ID
+ * @return {string} Unique report ID
+ */
+function generateReportId() {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `report_${timestamp}_${random}`;
+}
 
 /**
  * Helper function to safely get user authentication info
@@ -67,7 +78,7 @@ function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
     "Requested": ["Accepted", "Declined", "Cancelled"],
     "Accepted": ["InProgress", "Cancelled"],
-    "InProgress": ["Completed", "Disputed"],
+    "InProgress": ["Completed", "Disputed", "Cancelled"],
     "Completed": ["Disputed"],
     "Declined": [],
     "Cancelled": [],
@@ -294,12 +305,12 @@ async function createNotification(
     // Update notification frequency tracking
     await updateNotificationFrequency(targetUserId, notificationType);
 
-    // Send FCM push notification asynchronously (don't wait for it)
-    sendFCMNotification(targetUserId, {
+    // Send OneSignal push notification asynchronously (don't wait for it)
+    sendOneSignalNotification(targetUserId, {
       ...notification,
       createdAt: now,
     }).catch((error) => {
-      console.error("Failed to send FCM notification:", error);
+      console.error("Failed to send OneSignal notification:", error);
     });
 
     console.log(`✅ [createNotification] Successfully created notification for ${targetUserId}`);
@@ -391,9 +402,9 @@ async function cancelConflictingBookings(
       });
 
       // Send notification to the client
-      const notificationMessage = `We're sorry, but the provider chose another ` +
-        `booking for "${serviceName}". Your booking has been automatically cancelled. ` +
-        `Would you like to book another time?`;
+      const notificationMessage = `Your booking request for "${serviceName}" 
+      was not selected by the provider for this time slot and has been automatically cancelled. 
+      Please feel free to book another time.`;
 
       notificationPromises.push(
         createNotification(
@@ -435,19 +446,6 @@ async function cancelConflictingBookings(
  */
 exports.createBooking = functions.https.onCall(async (data, context) => {
   console.log("🚀 [createBooking] called");
-  const safeDataForLog = {
-    serviceId: data.data?.serviceId,
-    providerId: data.data?.providerId,
-    price: data.data?.price,
-    location: data.data?.location ? "Present" : "Missing",
-    requestedDate: data.data?.requestedDate,
-    scheduledDate: data.data?.scheduledDate,
-    paymentMethod: data.data?.paymentMethod,
-    servicePackageIds: data.data?.servicePackageIds,
-    notes: data.data?.notes,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log("📦 [createBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -467,7 +465,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [createBooking] Auth info:", authInfo);
+  // console.log("🔐 [createBooking] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -487,6 +485,51 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Check client's reputation
+    const clientReputation = await checkUserReputationInternal(authInfo.uid);
+    console.log("[createBooking] Reputation check result:", clientReputation);
+    if (!clientReputation.success || !clientReputation.data) {
+      console.error("❌ [createBooking] Failed to verify client reputation:",
+        clientReputation.error);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Unable to verify client reputation. Please try again later.",
+      );
+    }
+
+    if (clientReputation.data.trustScore <= 5) {
+      console.error(`❌ [createBooking] Client ${authInfo.uid} has insufficient ` +
+        `reputation score: ${clientReputation.data.trustScore}`);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        `Your reputation score (${clientReputation.data.trustScore}) is too ` +
+          "low to create a booking. Please contact support if you believe " +
+          "this is an error.",
+      );
+    }
+
+    // Check provider's reputation
+    const providerReputation = await checkUserReputationInternal(providerId);
+    console.log("[createBooking] Reputation check result:", providerReputation);
+    if (!providerReputation.success || !providerReputation.data) {
+      console.error("❌ [createBooking] Failed to verify provider reputation:",
+        providerReputation.error);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Unable to verify provider reputation. Please try again later.",
+      );
+    }
+
+    if (providerReputation.data.trustScore <= 5) {
+      console.error(`❌ [createBooking] Provider ${providerId} has insufficient ` +
+        `reputation score: ${providerReputation.data.trustScore}`);
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This provider is currently not accepting new bookings due to " +
+          "reputation issues. Please try another provider.",
+      );
+    }
+
     // Validate service exists and belongs to provider
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
@@ -495,8 +538,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     }
 
     const service = serviceDoc.data();
-    console.log(`[createBooking] Fetched service data for serviceId ${serviceId}:`,
-      JSON.stringify(service, null, 2));
 
     if (service.providerId !== providerId) {
       console.error(`❌ [createBooking] 
@@ -523,7 +564,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
     if (servicePackageIds.length > 0) {
       for (const packageId of servicePackageIds) {
-        console.log(`📦 [createBooking] Validating package ${packageId}...`);
+        // console.log(`📦 [createBooking] Validating package ${packageId}...`);
 
         const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
@@ -592,9 +633,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       evidence: null,
       notes: notes || null,
       paymentMethod,
-      // Location detection flag (automatic = detected via GPS/maps, manual = manually entered)
       locationDetection: locationDetection,
-      // Initialize payment status tracking fields
       paymentStatus: paymentId ? "PAID_HELD" : "PENDING",
       paymentId: paymentId || null,
       heldAmount: paymentId ? finalPrice : null,
@@ -607,8 +646,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       updatedAt: now,
     };
 
-    console.log("📝 [createBooking] Creating new booking object:"
-      , JSON.stringify(newBooking, null, 2));
     // Use Firestore transaction for atomic booking creation
     await db.runTransaction(async (transaction) => {
       transaction.set(db.collection("bookings").doc(bookingId), newBooking);
@@ -1047,6 +1084,25 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
+    // Create service completion reminder notification for the provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "your client" : "your client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER,
+      "Service In Progress",
+      `Don't forget to complete the service for ${clientName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
+
     console.log("✅ [startBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
   } catch (error) {
@@ -1258,10 +1314,6 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
 
     // Try-catch of updating reputation scores, if these fails then the functions goes through
     try {
-      console.log(`🌟 [completeBooking] Updating reputation for client ${booking.clientId}`);
-      await updateUserReputationInternal(booking.clientId);
-      console.log(`✅ [completeBooking] Client reputation updated successfully`);
-
       console.log(`🌟 [completeBooking] Updating reputation for provider ${booking.providerId}`);
       await updateProviderReputationInternal(booking.providerId);
       console.log(`✅ [completeBooking] Provider reputation updated successfully`);
@@ -1269,6 +1321,42 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       console.log("Reputation couldn't update");
     }
 
+
+    // Create review reminder notification for client
+    await createNotification(
+      booking.clientId,
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.REVIEW_REMINDER,
+      "Share Your Experience",
+      `Please review your recent "${serviceName}" service with ${providerName}`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        providerName,
+        bookingId: booking.id,
+      },
+    );
+
+    // Create review reminder notification for provider
+    const clientDoc = await db.collection("users").doc(booking.clientId).get();
+    const clientName = clientDoc.exists ? clientDoc.data().name || "the client" : "the client";
+    await createNotification(
+      booking.providerId,
+      USER_TYPES.PROVIDER,
+      NOTIFICATION_TYPES.REVIEW_REQUEST,
+      "Rate Your Client",
+      `Rate your experience with ${clientName} for "${serviceName}"`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        clientId: booking.clientId,
+        clientName,
+        bookingId: booking.id,
+      },
+    );
 
     console.log("✅ [completeBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
@@ -1289,7 +1377,16 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
   const safeDataForLog = {bookingId: data.data?.bookingId};
   console.log("📦 [cancelBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const {bookingId, cancelReason} = payload;
+
+  if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
+    console.error(`❌ [cancelBooking] Validation failed: 
+      cancelReason is required and cannot be empty.`);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "A reason for cancellation is required",
+    );
+  }
 
   const authInfo = getAuthInfo(context, data);
   console.log("🔐 [cancelBooking] Auth info:", authInfo);
@@ -1337,9 +1434,34 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       );
     }
 
+    // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
+    const shouldDeductReputation = booking.status === "Accepted" || booking.status === "InProgress";
+
+    if (shouldDeductReputation) {
+      try {
+        const cancellerType = authInfo.uid === booking.clientId ? "client" : "provider";
+        console.log(
+          `⚠️ [cancelBooking] Deducting reputation points for ${cancellerType} ` +
+          `${authInfo.uid} for cancelling ${booking.status} booking.`,
+        );
+        await deductReputationForCancellationInternal(authInfo.uid);
+        console.log(
+          `✅ [cancelBooking] Successfully deducted reputation points for ${cancellerType} ` +
+          `${authInfo.uid}.`,
+        );
+      } catch (error) {
+        console.error(`❌ [cancelBooking] Failed to deduct reputation points:`, error);
+        // Don't fail the cancellation if reputation update fails, just log it
+      }
+    }
+    // Determine the role of the canceller
+    const cancellerRole = authInfo.uid === booking.clientId ? "Client" : "Provider";
     const updatedBooking = {
       ...booking,
       status: "Cancelled",
+      cancelReason: cancelReason.trim(),
+      cancelledBy: cancellerRole,
+      cancelledAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -1348,6 +1470,9 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Cancelled",
+        cancelReason: cancelReason.trim(),
+        cancelledBy: cancellerRole,
+        cancelledAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
     });
@@ -1363,8 +1488,6 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         console.error(
           `⚠️ [cancelBooking] Failed to release held commission: ${releaseError.message}`,
         );
-        // Don't throw error here - cancellation should still succeed
-        // But log it for manual review
       }
     }
 
@@ -1385,15 +1508,57 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      `${cancellerName} has cancelled the booking for "${serviceName}"`,
+      `${cancellerName} has cancelled the booking for "${serviceName}" 
+      Reason: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
         serviceName,
-        cancelledBy: authInfo.uid,
+        cancelledBy: cancellerRole,
+        cancelReason: cancelReason.trim(),
         senderName: cancellerName,
+        message: `${cancellerName} has cancelled the booking for "${serviceName} " 
+          Reason: ${cancelReason.trim()}`,
       },
     );
+
+    // Automatically create a ticket with cancellation category
+    try {
+      const userProfile = cancellerDoc.exists ? cancellerDoc.data() : null;
+      const reportId = generateReportId();
+
+      // Create ticket description with structured data
+      const ticketDescription = JSON.stringify({
+        title: `Booking Cancellation - ${serviceName}`,
+        description: `Cancelled Booking.\nCancellation Reason: ${cancelReason.trim()}`,
+        category: "cancellation",
+        timestamp: new Date().toISOString(),
+        source: cancellerRole === "Client" ? "client_cancellation" : "provider_cancellation",
+        bookingId: bookingId,
+        cancelledBy: cancellerRole,
+        serviceId: booking.serviceId,
+        serviceName: serviceName,
+        cancelledByName: cancellerName,
+      });
+
+      const newReport = {
+        id: reportId,
+        userId: authInfo.uid,
+        userName: cancellerName,
+        userPhone: userProfile?.phone || "Unknown",
+        description: ticketDescription,
+        status: "open",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Save report to Firestore
+      await db.collection("app_reports").doc(reportId).set(newReport);
+      console.log(`✅ [cancelBooking] Automatically 
+        created ticket ${reportId} for booking cancellation.`);
+    } catch (ticketError) {
+      // Don't fail the cancellation if ticket creation fails - just log it
+      console.error(`⚠️ [cancelBooking] Failed to create automatic ticket: ${ticketError.message}`);
+    }
 
     console.log("✅ [cancelBooking] Function finished successfully.");
     return {success: true, data: updatedBooking};
@@ -2441,27 +2606,38 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
   console.log(`📅 [cancelMissedBookings] Current time: ${new Date().toISOString()}`);
 
   try {
-    const now = new Date();
+    const now = new Date(); // Current time
 
-    console.log(`📝 [cancelMissedBookings] Looking for bookings with a scheduledDate ` +
+    console.log(`📝 [cancelMissedBookings] Looking for ACCEPTED bookings with a scheduledDate ` +
       `(end time) before the current time: ${now.toISOString()}...`);
 
-    // Find all "Accepted" bookings whose scheduled date (end time) has passed by more than 1 hour
+    // Find all "Accepted" bookings whose scheduled date (end time) has passed
     const missedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("scheduledDate", "<=", now.toISOString())
       .get();
 
-    console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size} missed bookings.`);
+    // Find all "Requested" bookings whose scheduled date (end time) has passed
+    const expiredRequestedBookingsQuery = await db.collection("bookings")
+      .where("status", "==", "Requested")
+      .where("scheduledDate", "<=", now.toISOString())
+      .get();
 
-    if (missedBookingsQuery.empty) {
-      console.log("✅ [cancelMissedBookings] No missed bookings found.");
+    console.log(`📊 [cancelMissedBookings] Found ${missedBookingsQuery.size}
+      missed 'Accepted' bookings.`);
+    console.log(`📊 [cancelMissedBookings] Found ${expiredRequestedBookingsQuery.size}
+      expired 'Requested' bookings.`);
+
+    if (missedBookingsQuery.empty && expiredRequestedBookingsQuery.empty) {
+      console.log("✅ [cancelMissedBookings] No missed or expired bookings found.");
       return {success: true, count: 0};
     }
 
     const batch = db.batch();
     const notificationPromises = [];
-    let cancelledCount = 0;
+    const ticketPromises = [];
+    let cancelledAcceptedCount = 0;
+    let cancelledRequestedCount = 0;
 
     // Process each missed booking
     for (const doc of missedBookingsQuery.docs) {
@@ -2482,6 +2658,22 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         console.error(`Error fetching service for booking ${booking.id}:`, error);
       }
 
+      // Deduct reputation for provider missing the time slot
+      try {
+        console.log(
+          `⚠️ [cancelMissedBookings] Deducting reputation points for provider ` +
+          `${booking.providerId} for missing time slot.`,
+        );
+        await deductReputationForCancellationInternal(booking.providerId);
+        console.log(
+          `✅ [cancelMissedBookings] Successfully deducted reputation points for provider ` +
+          `${booking.providerId}.`,
+        );
+      } catch (error) {
+        console.error(`❌ [cancelMissedBookings] Failed to deduct reputation points:`, error);
+        // Don't fail the cancellation if reputation update fails, just log it
+      }
+
       // Update booking status to Cancelled
       batch.update(doc.ref, {
         status: "Cancelled",
@@ -2490,9 +2682,9 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
       });
 
       // Send notification to the client
-      const notificationMessage = `We're sorry, but the service provider did not show up ` +
-        `for your scheduled booking "${serviceName}". The time slot has passed and the booking ` +
-        `has been automatically cancelled. Would you like to look for another service provider?`;
+      const notificationMessage = `Your booking for "${serviceName}" was automatically 
+      cancelled because the provider did not start the service within the scheduled time. 
+      Please feel free to book with another provider.`;
 
       notificationPromises.push(
         createNotification(
@@ -2512,16 +2704,117 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         ),
       );
 
-      cancelledCount++;
+      // Automatically create a ticket with cancellation category for scheduled auto-cancel
+      try {
+        const reportId = generateReportId();
+        const ticketDescription = JSON.stringify({
+          title: `Scheduled Auto-Cancellation - ${serviceName}`,
+          description: "Cancelled Booking.\nCancellation Reason: missed scheduled time slot",
+          category: "cancellation",
+          timestamp: new Date().toISOString(),
+          source: "system_auto_cancellation_missed_slot",
+          bookingId: booking.id,
+          cancelledBy: "system",
+          serviceId: booking.serviceId,
+          serviceName: serviceName,
+          providerId: booking.providerId,
+          clientId: booking.clientId,
+        });
+
+        const newReport = {
+          id: reportId,
+          userId: "system",
+          userName: "System",
+          userPhone: "N/A",
+          description: ticketDescription,
+          status: "open",
+          createdAt: new Date().toISOString(),
+        };
+
+        ticketPromises.push(
+          db.collection("app_reports").doc(reportId).set(newReport).catch((err) => {
+            console.error(`⚠️ [cancelMissedBookings] Failed to create auto-cancel 
+              ticket for booking ${booking.id}: ${err.message}`);
+          }),
+        );
+      } catch (ticketError) {
+        console.error(`⚠️ [cancelMissedBookings] Ticket creation error: ${ticketError.message}`);
+      }
+
+      cancelledAcceptedCount++;
     }
 
-    if (cancelledCount > 0) {
+    // Process each expired "Requested" booking
+    for (const doc of expiredRequestedBookingsQuery.docs) {
+      const booking = doc.data();
+
+      console.log(`📝 [cancelMissedBookings] Cancelling expired '
+        Requested' booking ${booking.id}...`);
+
+      // Fetch service details for notification
+      let serviceName = "your service";
+      try {
+        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+        if (serviceDoc.exists) {
+          serviceName = serviceDoc.data().title || "your service";
+        }
+      } catch (error) {
+        console.error(`Error fetching service for booking ${booking.id}:`, error);
+      }
+
+      // Update booking status to Cancelled
+      batch.update(doc.ref, {
+        status: "Cancelled",
+        updatedAt: now.toISOString(),
+        cancellationReason: "auto_cancelled_request_expired",
+      });
+
+      // Send notification to the client
+      const notificationMessage = `Your booking request for "${serviceName}" has expired ` +
+        `as the provider did not respond in time. 
+        Please feel free to book another time or provider.`;
+
+      notificationPromises.push(
+        createNotification(
+          booking.clientId,
+          USER_TYPES.CLIENT,
+          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN, // Re-using this type
+          "Booking Request Expired",
+          notificationMessage,
+          booking.id,
+          {
+            serviceId: booking.serviceId,
+            serviceName,
+            providerId: booking.providerId,
+            requestedDate: booking.requestedDate,
+            scheduledDate: booking.scheduledDate,
+          },
+        ),
+      );
+
+      cancelledRequestedCount++;
+    }
+
+    const totalCancelled = cancelledAcceptedCount + cancelledRequestedCount;
+
+    if (totalCancelled > 0) {
       await batch.commit();
       await Promise.allSettled(notificationPromises);
-      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledCount} missed bookings.`);
+      await Promise.allSettled(ticketPromises);
+      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledAcceptedCount}
+        missed 'Accepted' bookings.`);
+      console.log(`✅ [cancelMissedBookings] Cancelled ${cancelledRequestedCount}
+        expired 'Requested' bookings.`);
     }
 
-    return {success: true, count: cancelledCount};
+    return {
+      success: true,
+      cancelledCounts: {
+        missedAccepted: cancelledAcceptedCount,
+        expiredRequested: cancelledRequestedCount,
+        total: totalCancelled,
+      },
+    };
   } catch (error) {
     console.error("❌ [cancelMissedBookings] Error cancelling missed bookings:", error);
     console.error("Stack trace:", error.stack);

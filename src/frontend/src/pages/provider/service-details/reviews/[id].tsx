@@ -10,6 +10,7 @@ import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceById } from "../../../../hooks/serviceInformation";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useUserImage } from "../../../../hooks/useMediaLoader";
+import BottomNavigation from "../../../../components/provider/NavigationBar";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -260,7 +261,7 @@ const ServiceReviewsPage: React.FC = () => {
   const providerAvatar = userImageUrl || "/default-provider.svg";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 pb-20 md:pb-0">
       {/* Header for navigation */}
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
@@ -491,6 +492,7 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         )}
       </main>
+      <BottomNavigation />
     </div>
   );
 };

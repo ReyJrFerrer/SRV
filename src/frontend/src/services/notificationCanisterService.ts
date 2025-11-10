@@ -1,4 +1,4 @@
-// Notification Service - Firebase Cloud Messaging Integration
+// Notification Service - OneSignal Push Notifications Integration
 import { httpsCallable } from "firebase/functions";
 import {
   collection,
@@ -50,13 +50,6 @@ export interface NotificationFilter {
   offset?: number;
 }
 
-export interface PushSubscriptionData {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-  userAgent?: string;
-}
-
 /**
  * Convert Firestore notification to frontend format
  */
@@ -80,6 +73,22 @@ const convertToFrontendNotification = (
     metadata: notificationData.metadata,
   };
 };
+
+/**
+ * Debounce helper function
+ */
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
 
 // Notification Service Functions using Firebase
 export const notificationCanisterService = {
@@ -117,6 +126,14 @@ export const notificationCanisterService = {
         }
       }
 
+      // Debounce the callback to prevent rapid re-renders
+      const debouncedCallback = debounce(
+        (notifications: FrontendNotification[]) => {
+          callback(notifications);
+        },
+        250,
+      ); // 250ms debounce for notifications
+
       // Set up real-time listener
       return onSnapshot(
         q,
@@ -132,16 +149,13 @@ export const notificationCanisterService = {
                   : new Date().toISOString(),
             });
           });
-          callback(notifications);
+          debouncedCallback(notifications);
         },
-        (error) => {
-          console.error("Error in notification listener:", error);
+        () => {
           callback([]);
         },
       );
     } catch (error) {
-      console.error("Error setting up notification subscription:", error);
-      // Return a no-op unsubscribe function
       return () => {};
     }
   },
@@ -172,7 +186,6 @@ export const notificationCanisterService = {
 
       return [];
     } catch (error) {
-      console.error("Error fetching user notifications:", error);
       throw new Error(`Failed to fetch notifications: ${error}`);
     }
   },
@@ -194,7 +207,6 @@ export const notificationCanisterService = {
         throw new Error("Failed to mark notification as read");
       }
     } catch (error) {
-      console.error("Error marking notification as read:", error);
       throw new Error(`Failed to mark notification as read: ${error}`);
     }
   },
@@ -219,7 +231,6 @@ export const notificationCanisterService = {
         throw new Error("Failed to mark notification as push sent");
       }
     } catch (error) {
-      console.error("Error marking notification as push sent:", error);
       throw new Error(`Failed to mark notification as push sent: ${error}`);
     }
   },
@@ -248,63 +259,8 @@ export const notificationCanisterService = {
 
       return [];
     } catch (error) {
-      console.error("Error fetching notifications for push:", error);
       throw new Error(`Failed to fetch notifications for push: ${error}`);
     }
-  },
-
-  /**
-   * Store FCM token (replaces push subscription storage)
-   */
-  async storePushSubscription(
-    subscriptionData: PushSubscriptionData,
-  ): Promise<void> {
-    try {
-      const storeFCMTokenFunc = httpsCallable(functions, "storeFCMToken");
-
-      // For FCM, we use the endpoint as the token
-      const result = await storeFCMTokenFunc({
-        fcmToken: subscriptionData.endpoint,
-      });
-
-      const response = result.data as any;
-
-      if (!response.success) {
-        throw new Error("Failed to store FCM token");
-      }
-    } catch (error) {
-      console.error("Error storing FCM token:", error);
-      throw new Error(`Failed to store FCM token: ${error}`);
-    }
-  },
-
-  /**
-   * Remove FCM token
-   */
-  async removePushSubscription(): Promise<void> {
-    try {
-      const removeFCMTokenFunc = httpsCallable(functions, "removeFCMToken");
-
-      const result = await removeFCMTokenFunc({});
-
-      const response = result.data as any;
-
-      if (!response.success) {
-        throw new Error("Failed to remove FCM token");
-      }
-    } catch (error) {
-      console.error("Error removing FCM token:", error);
-      throw new Error(`Failed to remove FCM token: ${error}`);
-    }
-  },
-
-  /**
-   * Get current push subscription (returns null for FCM)
-   */
-  async getPushSubscription(): Promise<PushSubscriptionData | null> {
-    // FCM doesn't expose subscription details in the same way
-    // This is a compatibility method that always returns null
-    return null;
   },
 
   /**
@@ -326,7 +282,6 @@ export const notificationCanisterService = {
 
       return { total: 0, unread: 0, pushSent: 0, read: 0 };
     } catch (error) {
-      console.error("Error getting notification stats:", error);
       throw new Error(`Failed to get notification stats: ${error}`);
     }
   },
@@ -351,8 +306,31 @@ export const notificationCanisterService = {
 
       return 0;
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
       throw new Error(`Failed to mark all notifications as read: ${error}`);
+    }
+  },
+
+  /**
+   * Delete a notification
+   */
+  async deleteNotification(notificationId: string): Promise<void> {
+    try {
+      const deleteNotificationFunc = httpsCallable(
+        functions,
+        "deleteNotification",
+      );
+
+      const result = await deleteNotificationFunc({
+        notificationId,
+      });
+
+      const response = result.data as any;
+
+      if (!response.success) {
+        throw new Error("Failed to delete notification");
+      }
+    } catch (error) {
+      throw new Error(`Failed to delete notification: ${error}`);
     }
   },
 
@@ -375,7 +353,6 @@ export const notificationCanisterService = {
 
       return response.canReceive || false;
     } catch (error) {
-      console.error("Error checking notification rate limit:", error);
       return false;
     }
   },
@@ -426,11 +403,8 @@ export const notificationCanisterService = {
 
       throw new Error("Failed to create notification");
     } catch (error) {
-      console.error("Error creating notification:", error);
-
       // Don't rethrow rate limit errors as they're expected
       if (error instanceof Error && error.message.includes("rate limit")) {
-        console.warn("Rate limit reached, skipping notification creation");
         return "rate-limited";
       }
 
@@ -441,10 +415,6 @@ export const notificationCanisterService = {
 
 // Deprecated functions - kept for backward compatibility
 // These are no longer needed with Firebase but may be referenced in old code
-export const updateNotificationActor = (_identity: any) => {
-  console.warn(
-    "updateNotificationActor is deprecated - Firebase handles auth automatically",
-  );
-};
+export const updateNotificationActor = (_identity: any) => {};
 
 export default notificationCanisterService;

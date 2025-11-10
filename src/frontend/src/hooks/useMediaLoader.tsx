@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { mediaService } from "../services/mediaService";
+import { useState, useEffect } from "react";
+import { doc, getFirestore, getDoc } from "firebase/firestore";
+import { getFirebaseApp } from "../services/firebaseApp";
+import { mediaService, extractMediaIdFromUrl } from "../services/mediaService";
 import { serviceCanisterService } from "../services/serviceCanisterService";
+import { persistentImageCache } from "../utils/persistentImageCache";
 
 export interface UseImageLoaderOptions {
   enabled?: boolean;
@@ -34,15 +38,28 @@ export const useImageLoader = (
     error,
     isError,
     refetch,
+    isSuccess,
   } = useQuery({
     queryKey: ["image", mediaUrl],
     queryFn: async () => {
       if (!mediaUrl) {
         throw new Error("Media URL is required");
       }
-      return await mediaService.getImageDataUrl(mediaUrl, {
+      const result = await mediaService.getImageDataUrl(mediaUrl, {
         enableCache: true,
       });
+
+      // Validate the result is not blank or invalid
+      if (
+        !result ||
+        result === "" ||
+        result === "undefined" ||
+        result === "null"
+      ) {
+        throw new Error("Invalid image data received");
+      }
+
+      return result;
     },
     enabled: opts.enabled && !!mediaUrl,
     staleTime: opts.staleTime,
@@ -50,11 +67,14 @@ export const useImageLoader = (
     retry: opts.retry,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    // Retry with exponential backoff for failed requests
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return {
     /** The data URL for the image (ready to use in src attribute) */
-    imageDataUrl: imageDataUrl || opts.placeholder,
+    // If query hasn't returned yet we fall back to the caller-provided placeholder (may be empty)
+    imageDataUrl: imageDataUrl ?? opts.placeholder,
     /** Whether the image is currently loading */
     isLoading,
     /** Any error that occurred during loading */
@@ -64,7 +84,8 @@ export const useImageLoader = (
     /** Function to manually refetch the image */
     refetch,
     /** Whether the image has been loaded successfully */
-    isSuccess: !!imageDataUrl,
+    // Use React Query's isSuccess so placeholders don't incorrectly mark success
+    isSuccess,
   };
 };
 
@@ -108,32 +129,108 @@ export const useImagePreloader = (mediaUrls: (string | null | undefined)[]) => {
 
 /**
  * Hook for managing profile picture loading specifically
- * Includes fallback to default avatar
+ * Includes fallback to default avatar and persistent caching
  */
 export const useProfileImage = (
   profilePictureUrl: string | null | undefined,
   options: UseImageLoaderOptions = {},
 ) => {
+  const [initialCache, setInitialCache] = useState<string | null>(null);
+  const [cacheChecked, setCacheChecked] = useState(false);
+
+  // Check persistent cache on mount - this runs before the query
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCache = async () => {
+      if (profilePictureUrl) {
+        try {
+          const cached = await persistentImageCache.get(profilePictureUrl);
+          if (mounted && cached) {
+            setInitialCache(cached);
+          }
+        } catch (error) {}
+      }
+      if (mounted) {
+        setCacheChecked(true);
+      }
+    };
+
+    loadCache();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profilePictureUrl]);
+
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
       placeholder: "/default-client.svg",
+      enabled: cacheChecked && !!profilePictureUrl, // Only start loading after cache check
       ...options,
     });
 
+  // Update persistent cache when new data arrives (only if valid)
+  useEffect(() => {
+    if (
+      isSuccess &&
+      imageDataUrl &&
+      profilePictureUrl &&
+      imageDataUrl !== "/default-client.svg"
+    ) {
+      // Verify the data URL is valid before caching
+      if (imageDataUrl.startsWith("http") || imageDataUrl.startsWith("data:")) {
+        persistentImageCache.set(profilePictureUrl, imageDataUrl);
+      }
+    }
+  }, [isSuccess, imageDataUrl, profilePictureUrl]);
+
+  // Determine the final image URL to display with proper fallback logic
+  const finalImageUrl = (() => {
+    // If we have fresh data from the query, use it (but not if it's just the placeholder)
+    if (isSuccess && imageDataUrl && imageDataUrl !== "/default-client.svg") {
+      return imageDataUrl;
+    }
+    // If we're still loading and have cached data, use the cache
+    if (isLoading && initialCache) {
+      return initialCache;
+    }
+    // If we have cached data and no fresh data yet, use cache
+    if (initialCache && !isSuccess && !isError) {
+      return initialCache;
+    }
+    // If there was an error but we have cache, use cache
+    if (isError && initialCache) {
+      return initialCache;
+    }
+    // Otherwise use default
+    return "/default-client.svg";
+  })();
+
+  const isActuallyLoading =
+    !initialCache && isLoading && !!profilePictureUrl && cacheChecked;
+
   return {
     /** The profile image URL (with fallback to default avatar) */
-    profileImageUrl:
-      isSuccess && imageDataUrl ? imageDataUrl : "/default-client.svg",
-    /** Whether the profile image is loading */
-    isLoading: isLoading && !!profilePictureUrl,
+    profileImageUrl: finalImageUrl,
+    /** Whether the profile image is loading (and we don't have cache) */
+    isLoading: isActuallyLoading,
     /** Whether to show the default avatar */
-    isUsingDefaultAvatar: !profilePictureUrl || (!isSuccess && !isLoading),
+    isUsingDefaultAvatar:
+      !profilePictureUrl || finalImageUrl === "/default-client.svg",
     /** Any error that occurred */
     error,
     /** Whether an error occurred */
     isError,
     /** Function to manually refetch the image */
-    refetch,
+    refetch: async () => {
+      // Clear cache when refetching to ensure fresh data
+      if (profilePictureUrl) {
+        await persistentImageCache.clear(profilePictureUrl);
+        setInitialCache(null);
+      }
+      return refetch();
+    },
   };
 };
 
@@ -147,16 +244,19 @@ export const useUserImage = (
 
   options: UseImageLoaderOptions = {},
 ) => {
+  // Supply a sensible placeholder for provider/user images so callers have a usable src
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
+      placeholder: "/default-provider.svg",
       ...options,
     });
 
   return {
     /** The profile image URL (with fallback to default avatar) */
-    userImageUrl: isSuccess && imageDataUrl ? imageDataUrl : undefined,
+    // If we have a valid loaded data URL use it, otherwise fall back to placeholder
+    userImageUrl: imageDataUrl || "/default-provider.svg",
     /** Whether the profile image is loading */
-    isLoading: isLoading && !!profilePictureUrl,
+    isLoading: Boolean(isLoading && !!profilePictureUrl),
     /** Whether to show the default avatar */
     isUsingDefaultAvatar: !profilePictureUrl || (!isSuccess && !isLoading),
     /** Any error that occurred */
@@ -258,7 +358,6 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           options,
         );
       } catch (error) {
-        //console.error("Error uploading service images:", error);
         throw error;
       }
     },
@@ -277,7 +376,6 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           imageUrl,
         );
       } catch (error) {
-        //console.error("Error removing service image:", error);
         throw error;
       }
     },
@@ -296,7 +394,6 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
           orderedImageUrls,
         );
       } catch (error) {
-        //console.error("Error reordering service images:", error);
         throw error;
       }
     },
@@ -308,7 +405,6 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
       try {
         return await mediaService.processServiceImageFiles(files, options);
       } catch (error) {
-        //console.error("Error processing service image files:", error);
         throw error;
       }
     },
@@ -339,91 +435,99 @@ export const useServiceImageGallery = (
 
     // Gallery state
     hasImages: (imageLoader.images?.length || 0) > 0,
-    canAddMore: (imageUrls.length || 0) < 5, // Max 5 images per service
-    remainingSlots: Math.max(0, 5 - (imageUrls.length || 0)),
+    canAddMore: (imageUrls.length || 0) < 10, // Max 10 images per service
+    remainingSlots: Math.max(0, 10 - (imageUrls.length || 0)),
   };
 };
 
-/**
- * Hook for managing service certificates
- * Provides loading and management functionality for service certificates (PDFs and images)
- */
 export const useServiceCertificates = (
   serviceId: string | null | undefined,
   certificateUrls: (string | null | undefined)[] = [],
   options: UseImageLoaderOptions = {},
 ) => {
   const validUrls = certificateUrls.filter((url): url is string => !!url);
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const db = getFirestore(getFirebaseApp());
 
-  // Load all service certificates
-  const {
-    data: loadedCertificates,
-    isLoading: isLoadingCertificates,
-    error: loadError,
-    isError: isLoadError,
-    refetch: refetchCertificates,
-  } = useQuery({
-    queryKey: ["service-certificates", serviceId, validUrls],
-    queryFn: async () => {
-      if (!validUrls.length) return [];
+  useEffect(() => {
+    if (!serviceId || !validUrls.length) {
+      setCertificates([]);
+      setIsLoading(false);
+      return;
+    }
 
-      const certificatePromises = validUrls.map(async (url) => {
-        try {
-          // Get both image data and validation status
-          const [dataUrl, mediaDetails] = await Promise.all([
-            mediaService.getImageDataUrl(url, {
+    setIsLoading(true);
+
+    const loadCertificates = async () => {
+      try {
+        const promises = validUrls.map(async (url) => {
+          try {
+            const dataUrl = await mediaService.getImageDataUrl(url, {
               enableCache: true,
               ...options,
-            }),
-            mediaService.getMediaItemDetails(url),
-          ]);
+            });
 
-          return {
-            url,
-            dataUrl,
-            validationStatus: mediaDetails.validationStatus,
-            error: null,
-          };
-        } catch (error) {
-          return {
-            url,
-            dataUrl: null,
-            validationStatus: undefined,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to load certificate",
-          };
-        }
-      });
+            const mediaId = extractMediaIdFromUrl(url);
+            if (!mediaId) {
+              return {
+                url,
+                dataUrl,
+                validationStatus: undefined,
+                error: "Invalid media URL",
+              };
+            }
 
-      return await Promise.all(certificatePromises);
-    },
-    enabled: !!serviceId && validUrls.length > 0,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
+            const mediaDocRef = doc(db, "media", mediaId);
+            const mediaDoc = await getDoc(mediaDocRef);
+            const validationStatus = mediaDoc.exists()
+              ? mediaDoc.data().validationStatus || "Pending"
+              : "Pending";
+
+            return {
+              url,
+              dataUrl,
+              validationStatus,
+              error: null,
+            };
+          } catch (err) {
+            return {
+              url,
+              dataUrl: null,
+              validationStatus: undefined,
+              error:
+                err instanceof Error
+                  ? err.message
+                  : "Failed to load certificate",
+            };
+          }
+        });
+
+        const results = await Promise.all(promises);
+        setCertificates(results);
+        setIsLoading(false);
+        setError(null);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err : new Error("Failed to load certificates"),
+        );
+        setIsLoading(false);
+      }
+    };
+
+    loadCertificates();
+  }, [serviceId, JSON.stringify(validUrls), db]);
 
   return {
-    /** Array of loaded certificates with their data URLs */
-    certificates: loadedCertificates || [],
-    /** Whether certificates are currently loading */
-    isLoading: isLoadingCertificates,
-    /** Any error that occurred during loading */
-    error: loadError as Error | null,
-    /** Whether an error occurred */
-    isError: isLoadError,
-    /** Function to manually refetch all certificates */
-    refetch: refetchCertificates,
-    /** Whether certificates have been loaded successfully */
-    isSuccess: !!loadedCertificates,
-    /** Number of successfully loaded certificates */
-    successCount:
-      loadedCertificates?.filter((cert) => cert.dataUrl).length || 0,
-    /** Number of failed certificate loads */
-    errorCount: loadedCertificates?.filter((cert) => cert.error).length || 0,
+    certificates,
+    isLoading,
+    error,
+    isError: !!error,
+    refetch: () => {},
+    isSuccess: !isLoading && certificates.length > 0,
+    successCount: certificates.filter((cert) => cert.dataUrl).length,
+    errorCount: certificates.filter((cert) => cert.error).length,
   };
 };
 
@@ -450,7 +554,6 @@ export const useServiceCertificateUpload = (
           options,
         );
       } catch (error) {
-        //console.error("Error uploading service certificates:", error);
         throw error;
       }
     },
@@ -469,7 +572,6 @@ export const useServiceCertificateUpload = (
           certificateUrl,
         );
       } catch (error) {
-        //console.error("Error removing service certificate:", error);
         throw error;
       }
     },
@@ -488,7 +590,6 @@ export const useServiceCertificateUpload = (
           isVerified,
         );
       } catch (error) {
-        //console.error("Error verifying service:", error);
         throw error;
       }
     },
@@ -503,7 +604,6 @@ export const useServiceCertificateUpload = (
           options,
         );
       } catch (error) {
-        //console.error("Error processing service certificate files:", error);
         throw error;
       }
     },
@@ -515,7 +615,6 @@ export const useServiceCertificateUpload = (
       try {
         return mediaService.validateCertificateFile(file, options);
       } catch (error) {
-        //console.error("Error validating certificate file:", error);
         throw error;
       }
     },

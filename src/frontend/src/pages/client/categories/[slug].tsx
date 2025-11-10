@@ -1,22 +1,19 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
-
-// Components
 import SearchBar from "../../../components/client/SearchBar";
-import ServiceListItem from "../../../components/client/ServiceListItem";
-import BottomNavigation from "../../../components/client/BottomNavigation";
-
-// Hooks
+import ServiceListItem from "../../../components/client/home page/ServiceListingCard";
+import BottomNavigation from "../../../components/client/NavigationBar";
+import Appear from "../../../components/common/pageFlowImprovements/Appear";
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
+  EnrichedService,
 } from "../../../hooks/serviceInformation";
-
-// Services & Utilities
 import serviceCanisterService from "../../../services/serviceCanisterService";
 import { getCategoryIcon } from "../../../utils/serviceHelpers";
 
@@ -29,31 +26,31 @@ interface CategoryState {
 }
 
 const CategoryPage: React.FC = () => {
-  const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
+
+  const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    navigate(-1);
+  };
 
   const [category, setCategory] = useState<CategoryState | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // --- NEW: State for sorting and filtering ---
   const [showFilters, setShowFilters] = useState(false);
-  // Pending (unapplied) filter state
   const [pendingSortBy, setPendingSortBy] = useState("rating");
   const [pendingMaxPrice, setPendingMaxPrice] = useState(10000);
   const [pendingMinRating, setPendingMinRating] = useState(0);
-  // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
   const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
-  // Sync pending state with applied state when opening filter panel
   useEffect(() => {
     if (showFilters) {
       setPendingSortBy(sortBy);
       setPendingMaxPrice(maxPrice);
       setPendingMinRating(minRating);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showFilters]);
 
   const categoryId = category?.id || "";
@@ -62,11 +59,9 @@ const CategoryPage: React.FC = () => {
   const allServicesHook = useAllServicesWithProviders();
   const categoryServicesHook = useServicesByCategory(categoryId);
 
-  const {
-    services,
-    loading: servicesLoading,
-    error: servicesError,
-  } = isAllServices ? allServicesHook : categoryServicesHook;
+  const { services, error: servicesError } = isAllServices
+    ? allServicesHook
+    : categoryServicesHook;
 
   useEffect(() => {
     document.title = category ? `${category.name} | SRV` : "Category | SRV";
@@ -105,35 +100,35 @@ const CategoryPage: React.FC = () => {
         }
         setCategory(foundCategory);
       } catch (error) {
-        //console.error("Failed to load category data:", error);
         setCategory(null);
       }
     };
     loadCategory();
   }, [slug]);
 
-  const handleBackClick = () => navigate(-1);
   const handleSearch = (term: string) => setSearchTerm(term);
 
-  // --- REFACTORED: Memoized sorting and filtering logic ---
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
+
   const sortedAndFilteredServices = useMemo(() => {
-    // 1. Filter by search term first
     let processedServices = services.filter(
       (service) =>
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-
-    // 2. Apply advanced filters (using applied state)
     processedServices = processedServices.filter((service) => {
       const safeRating = service.rating?.average ?? 0;
       const priceMatch = service.price.amount <= maxPrice;
       const ratingMatch = safeRating >= minRating;
       return priceMatch && ratingMatch;
     });
-
-    // 3. Apply sorting
     return processedServices.sort((a, b) => {
       const safeRatingA = a.rating?.average ?? 0;
       const safeRatingB = b.rating?.average ?? 0;
@@ -155,30 +150,8 @@ const CategoryPage: React.FC = () => {
     });
   }, [services, searchTerm, sortBy, maxPrice, minRating]);
 
-  if (servicesLoading || !category) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!category) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div>
-          <p className="mb-4 text-xl text-red-600">Category not found</p>
-          <Link to="/client/home" className="text-blue-500 hover:underline">
-            Return to Home
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
       <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
         <div className="mb-4 flex items-center gap-3">
           <button
@@ -188,12 +161,14 @@ const CategoryPage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
           </button>
-          <h1 className="truncate text-xl font-bold">{category.name}</h1>
+          <h1 className="truncate text-xl font-bold">
+            {category ? category.name : "Loading…"}
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-grow">
             <SearchBar
-              placeholder={`Search in ${category.name}`}
+              placeholder={`Search in ${category ? category.name : "Category"}`}
               onSearch={handleSearch}
             />
           </div>
@@ -206,9 +181,9 @@ const CategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Services List */}
+      {/* SECTION: Services list and filters */}
       <div className="p-2 sm:p-4">
-        {/* --- Collapsible Filter Panel --- */}
+        {/* SECTION: Collapsible filter panel */}
         {showFilters && (
           <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -278,25 +253,17 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
 
-        {sortedAndFilteredServices.length === 0 && !servicesError ? (
-          <div className="py-10 text-center">
-            <p className="text-gray-500">
-              {searchTerm
-                ? `No services found for "${searchTerm}" with the current filters.`
-                : "No services found in this category with the current filters."}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {sortedAndFilteredServices.map((service) => (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          {sortedAndFilteredServices.map((service, idx) => (
+            <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
               <ServiceListItem
-                key={service.id}
                 service={service}
+                serviceData={createServiceData(service)}
                 retainMobileLayout={true}
               />
-            ))}
-          </div>
-        )}
+            </Appear>
+          ))}
+        </div>
       </div>
 
       <BottomNavigation />

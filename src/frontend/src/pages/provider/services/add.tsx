@@ -1,15 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
+import BottomNavigation from "../../../components/provider/NavigationBar";
+import ServiceDrafts from "../../../components/provider/add service/ServiceDrafts";
+import {
+  getFilesEntries,
+  deleteDraftFromIDB,
+} from "../../../utils/draftStorage";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/add service/ServiceDetails";
 import ServiceAvailability from "../../../components/provider/add service/ServiceAvailability";
 import ServiceLocation from "../../../components/provider/add service/ServiceLocation";
 import ServiceImageUpload from "../../../components/provider/add service/ServiceImageUpload";
+import ReviewSubmit from "../../../components/provider/add service/ReviewSubmit";
+// Draft UI/logic moved into ServiceDrafts component
 
 // Service Management Hook & Types
 import {
@@ -50,9 +58,9 @@ interface ValidationErrors {
 // Backend validation constants
 const VALIDATION_LIMITS = {
   MIN_TITLE_LENGTH: 3,
-  MAX_TITLE_LENGTH: 100,
+  MAX_TITLE_LENGTH: 40,
   MIN_DESCRIPTION_LENGTH: 3,
-  MAX_DESCRIPTION_LENGTH: 1000,
+  MAX_DESCRIPTION_LENGTH: 100,
   MIN_PRICE: 1,
   MAX_PRICE: 1_000_000,
 };
@@ -143,6 +151,46 @@ const AddServicePage: React.FC = () => {
   }>({});
   const [loadingCommissions, setLoadingCommissions] = useState(false);
 
+  // Local draft autosave key (used by submission to clear saved draft)
+  const ADD_SERVICE_DRAFT_KEY = "add_service_draft_v1";
+
+  // ServiceDrafts ref handles all draft/localStorage logic (save/restore/banner/modal)
+  const serviceDraftsRef = useRef<any>(null);
+
+  // Header back handler: ask user if they'd like to save as draft before leaving
+  const handleHeaderBack = () => {
+    if (serviceCreated) {
+      navigate("/provider/home");
+      return;
+    }
+    if (currentStep === 1) {
+      // If at first step and no changes, just go back
+      const hasChanges =
+        JSON.stringify(formData) !== JSON.stringify(initialServiceState) ||
+        serviceImageFiles.length > 0 ||
+        certificationFiles.length > 0;
+      if (!hasChanges) {
+        navigate(-1);
+        return;
+      }
+      // delegate to ServiceDrafts to show the same modal
+      serviceDraftsRef.current?.showExitPromptNow?.();
+      return;
+    }
+    // otherwise just go back a step
+    handleBack();
+  };
+
+  const handleNavigateAttempt = (to: string): boolean => {
+    if (
+      serviceDraftsRef.current &&
+      typeof serviceDraftsRef.current.handleNavigateAttempt === "function"
+    ) {
+      return serviceDraftsRef.current.handleNavigateAttempt(to);
+    }
+    return true;
+  };
+
   // --- Image Handlers ---
   const handleImageFilesChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -215,7 +263,6 @@ const AddServicePage: React.FC = () => {
     setLoadingCommissions(true);
     const quotes: { [packageId: string]: CommissionQuote } = {};
 
-    console.log(formData.categoryId);
     const categoryForCommission =
       categories.find((cat) => cat.id === formData.categoryId)?.name ||
       "Default Category";
@@ -232,7 +279,6 @@ const AddServicePage: React.FC = () => {
       }
       setCommissionQuotes(quotes);
     } catch (error) {
-      console.error("Failed to fetch commission quotes:", error);
     } finally {
       setLoadingCommissions(false);
     }
@@ -298,6 +344,8 @@ const AddServicePage: React.FC = () => {
         if (!formData.categoryId) {
           errors.categoryId = "Please select a category";
         }
+        // Category must be selected
+        // (custom "Other" categories were removed)
         if (formData.servicePackages.length === 0) {
           errors.servicePackages = "At least one service package is required";
         } else {
@@ -463,23 +511,23 @@ const AddServicePage: React.FC = () => {
         }
         break;
       case 3: // Location
+        // Accept either GPS coordinates OR a complete manual address
         const hasGPSCoordinates =
           formData.locationLatitude && formData.locationLongitude;
+        const hasManualProvince = !!(formData.locationProvince || "")
+          .toString()
+          .trim();
+        const hasManualCity = !!(formData.locationMunicipalityCity || "")
+          .toString()
+          .trim();
+        // Only province and city are required for manual input in this flow
+
         if (!hasGPSCoordinates) {
-          errors.locationMunicipalityCity =
-            "Still detecting your location, please wait";
-        } else if (!hasGPSCoordinates) {
-          if (!formData.locationProvince.trim()) {
+          // When GPS is unavailable, require only Province and Municipality/City
+          if (!hasManualProvince) {
             errors.locationMunicipalityCity = "Province is required";
-          } else if (!formData.locationMunicipalityCity.trim()) {
+          } else if (!hasManualCity) {
             errors.locationMunicipalityCity = "Municipality/City is required";
-          } else if (!formData.locationBarangay.trim()) {
-            errors.locationMunicipalityCity = "Barangay is required";
-          } else if (!formData.locationStreet.trim()) {
-            errors.locationMunicipalityCity = "Street name is required";
-          } else if (!formData.locationHouseNumber.trim()) {
-            errors.locationMunicipalityCity =
-              "House number/building is required";
           }
         }
         break;
@@ -646,10 +694,44 @@ const AddServicePage: React.FC = () => {
             fileData: Uint8Array;
           }>
         | undefined;
-      if (serviceImageFiles.length > 0) {
+
+      // Ensure we process images even if the in-memory state is empty
+      // (covers the case where user restored from IDB but state wasn't populated yet)
+      let filesToProcess: File[] = serviceImageFiles;
+      if (
+        (!filesToProcess || filesToProcess.length === 0) &&
+        typeof getFilesEntries === "function"
+      ) {
+        try {
+          const imgEntries = await getFilesEntries(
+            ADD_SERVICE_DRAFT_KEY,
+            "img",
+          );
+          if (imgEntries && imgEntries.length > 0) {
+            filesToProcess = imgEntries.map((e: any, i: number) => {
+              const name = e.name || `draft-img-${i}`;
+              const type =
+                e.type ||
+                (e.blob && (e.blob as Blob).type) ||
+                "application/octet-stream";
+              const lastModified = e.lastModified || Date.now();
+              return new File([e.blob], name, { type, lastModified });
+            });
+            // also set local state so UI reflects restored files
+            setServiceImageFiles(filesToProcess);
+            setImagePreviews(
+              imgEntries.map((e: any) => URL.createObjectURL(e.blob)),
+            );
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      if (filesToProcess && filesToProcess.length > 0) {
         try {
           processedServiceImages =
-            await processImageFilesForService(serviceImageFiles);
+            await processImageFilesForService(filesToProcess);
         } catch {
           processedServiceImages = undefined;
         }
@@ -698,12 +780,60 @@ const AddServicePage: React.FC = () => {
       await Promise.all(packagePromises);
       toast.success("Service created successfully!", { id: "create-service" });
       setServiceCreated(true);
+      // Clear saved draft now that service is created
+      try {
+        localStorage.removeItem(ADD_SERVICE_DRAFT_KEY);
+        await deleteDraftFromIDB(ADD_SERVICE_DRAFT_KEY);
+      } catch {}
       navigate(`/provider/service-details/${newService.id}`, { replace: true });
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create service";
-      setValidationErrors({ general: errorMessage });
-      toast.error("Failed to create service.", { id: "create-service" });
+      let userFriendlyMessage = "Failed to create service. Please try again.";
+
+      if (error instanceof Error) {
+        const errorMsg = error.message.toLowerCase();
+
+        // Handle file size errors
+        if (
+          errorMsg.includes("file size") &&
+          errorMsg.includes("exceeds maximum")
+        ) {
+          if (errorMsg.includes("servicecertificate")) {
+            userFriendlyMessage =
+              "One or more certification files are too large. Please ensure each certification file is under 450 KB.";
+          } else if (errorMsg.includes("serviceimage")) {
+            userFriendlyMessage =
+              "One or more service images are too large. Please compress your images and try again.";
+          } else {
+            userFriendlyMessage =
+              "One or more files are too large. Please reduce the file size and try again.";
+          }
+        }
+        // Handle unsupported file type errors
+        else if (errorMsg.includes("unsupported content type")) {
+          userFriendlyMessage =
+            "One or more files have an unsupported format. Please use PNG, JPEG, or GIF images only.";
+        }
+        // Handle network/timeout errors
+        else if (errorMsg.includes("network") || errorMsg.includes("timeout")) {
+          userFriendlyMessage =
+            "Network error. Please check your connection and try again.";
+        }
+        // Handle authentication errors
+        else if (
+          errorMsg.includes("unauthenticated") ||
+          errorMsg.includes("permission")
+        ) {
+          userFriendlyMessage =
+            "You don't have permission to perform this action. Please sign in again.";
+        }
+        // Default to original error message if it's user-friendly enough
+        else if (error.message.length < 100 && !errorMsg.includes("internal")) {
+          userFriendlyMessage = error.message;
+        }
+      }
+
+      setValidationErrors({ general: userFriendlyMessage });
+      toast.error(userFriendlyMessage, { id: "create-service" });
     } finally {
       setIsSubmitting(false);
     }
@@ -755,8 +885,7 @@ const AddServicePage: React.FC = () => {
     }));
   };
 
-  // --- Placeholder for category request ---
-  const onRequestCategory = useCallback((_categoryName: string) => {}, []);
+  // removed optional custom category handling
 
   // --- Step Renderer ---
   const renderStep = () => {
@@ -768,12 +897,17 @@ const AddServicePage: React.FC = () => {
             formData={formData}
             categories={categories}
             loadingCategories={loadingCategories}
+            // provide the commission computation function so ServiceDetails can
+            // calculate commission/total live as the user types
+            computeCommission={getCommissionQuote}
+            onCommissionComputed={(pkgId, quote) =>
+              setCommissionQuotes((prev) => ({ ...prev, [pkgId]: quote }))
+            }
             handleChange={handleChange}
             handlePackageChange={handlePackageChange}
             addPackage={addPackage}
             removePackage={removePackage}
             validationErrors={validationErrors}
-            onRequestCategory={onRequestCategory}
             scrollToErrorTrigger={scrollToErrorTrigger}
           />
         );
@@ -843,331 +977,19 @@ const AddServicePage: React.FC = () => {
           </div>
         );
       case 5:
-        // Review & Submit Step
+        // Review & Submit Step - extracted to ReviewSubmit component
         return (
-          <div className="flex flex-col items-center space-y-8">
-            <div className="w-full max-w-3xl rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-10 shadow-2xl">
-              <div className="mb-8 flex flex-col items-center text-center">
-                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 shadow">
-                  <svg
-                    className="h-8 w-8 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="mb-2 text-3xl font-extrabold text-blue-900">
-                  Review &amp; Submit
-                </h2>
-                <p className="text-lg text-gray-600">
-                  Please review your service details before submitting.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="4" y="4" width="16" height="16" rx="2" />
-                      <path d="M8 9h8M8 13h6" strokeLinecap="round" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Service Title
-                    </h3>
-                  </div>
-                  <p className="break-words text-lg font-semibold text-blue-800">
-                    {formData.serviceOfferingTitle}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M7 7a2 2 0 114 0 2 2 0 01-4 0z" />
-                      <path d="M3 11V7a2 2 0 012-2h4l10 10a2 2 0 010 2.83l-4.17 4.17a2 2 0 01-2.83 0L3 11z" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Category</h3>
-                  </div>
-                  <p className="break-words text-lg font-semibold text-blue-800">
-                    {categories.find((cat) => cat.id === formData.categoryId)
-                      ?.name || "Unknown"}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm md:col-span-2">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="7" width="18" height="13" rx="2" />
-                      <path d="M16 3v4M8 3v4M3 7h18" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Packages</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {formData.servicePackages
-                      .filter(
-                        (pkg) =>
-                          pkg.name.trim() &&
-                          pkg.description.trim() &&
-                          pkg.price,
-                      )
-                      .map((pkg) => {
-                        const commissionQuote = commissionQuotes[pkg.id];
-                        return (
-                          <div
-                            key={pkg.id}
-                            className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium text-blue-900">
-                                {pkg.name}
-                              </p>
-                              <p className="break-words text-sm text-gray-600">
-                                {pkg.description}
-                              </p>
-                            </div>
-                            <div className="mt-2 text-right md:mt-0">
-                              <p className="text-lg font-semibold text-green-600">
-                                ₱{Number(pkg.price).toLocaleString()}
-                              </p>
-                              {loadingCommissions && (
-                                <p className="text-xs text-gray-500">
-                                  Loading commission...
-                                </p>
-                              )}
-                              {commissionQuote && (
-                                <div className="mt-1 text-base text-gray-600">
-                                  <p>
-                                    Commission: ₱
-                                    {commissionQuote.commissionFee.toLocaleString()}
-                                  </p>
-                                  <p className="font-medium text-blue-600">
-                                    Total: ₱
-                                    {(
-                                      Number(pkg.price) +
-                                      commissionQuote.commissionFee
-                                    ).toLocaleString()}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="5" width="18" height="16" rx="2" />
-                      <path d="M16 3v2M8 3v2M3 9h18" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Availability
-                    </h3>
-                  </div>
-                  <div className="font-medium text-blue-900">
-                    {formData.availabilitySchedule.join(", ")}
-                  </div>
-                  {formData.availabilitySchedule.length > 0 && (
-                    <span className="mt-1 block text-sm text-gray-500">
-                      {formData.useSameTimeForAllDays
-                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${
-                            formData.commonTimeSlots.length > 1 ? "s" : ""
-                          })`
-                        : "Custom hours per day"}
-                    </span>
-                  )}
-                </div>
-                <div className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 21c-4.418 0-8-4.03-8-9a8 8 0 1116 0c0 4.97-3.582 9-8 9z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">Location</h3>
-                  </div>
-                  <div className="break-words font-medium text-blue-900">
-                    {[
-                      formData.locationMunicipalityCity,
-                      formData.locationProvince,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </div>
-                </div>
-              </div>
-              {/* Service Images Preview */}
-              {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
-                <div className="mt-10">
-                  <div className="mb-2 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <rect x="3" y="5" width="18" height="14" rx="2" />
-                      <circle cx="8.5" cy="12.5" r="1.5" />
-                      <path d="M21 19l-5.5-7-4.5 6-3-4-4 5" />
-                    </svg>
-                    <h3 className="font-semibold text-gray-800">
-                      Service Images
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {serviceImageFiles.length > 0
-                      ? serviceImageFiles.map((file, idx) => (
-                          <div
-                            key={file.name + idx}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                          >
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`Service Image ${idx + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))
-                      : imagePreviews.map((previewUrl, idx) => (
-                          <div
-                            key={previewUrl}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
-                          >
-                            <img
-                              src={previewUrl}
-                              alt={`Service Image ${idx + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                  </div>
-                </div>
-              )}
-              {/* Certifications Preview */}
-              {(certificationFiles?.length > 0 ||
-                certificationPreviews?.length > 0) && (
-                <div className="mt-10">
-                  <div className="mb-2 flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 text-yellow-500"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
-                    </svg>
-                    <h3 className="font-semibold text-yellow-700">
-                      Certifications
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {certificationFiles && certificationFiles.length > 0
-                      ? certificationFiles.map((file, idx) => {
-                          const isPdf =
-                            file.type === "application/pdf" ||
-                            file.name.endsWith(".pdf");
-                          const src = URL.createObjectURL(file);
-                          return (
-                            <div
-                              key={file.name + idx}
-                              className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
-                            >
-                              {isPdf ? (
-                                <iframe
-                                  src={src}
-                                  title={`Certification PDF ${idx + 1}`}
-                                  className="h-full w-full rounded bg-gray-100"
-                                  style={{
-                                    minHeight: 0,
-                                    minWidth: 0,
-                                    border: "none",
-                                  }}
-                                />
-                              ) : (
-                                <img
-                                  src={src}
-                                  alt={`Certification ${idx + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-                              )}
-                            </div>
-                          );
-                        })
-                      : certificationPreviews?.map((previewUrl, idx) => (
-                          <div
-                            key={previewUrl}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
-                          >
-                            {previewUrl.endsWith(".pdf") ? (
-                              <iframe
-                                src={previewUrl}
-                                title={`Certification PDF ${idx + 1}`}
-                                className="h-full w-full rounded bg-gray-100"
-                                style={{
-                                  minHeight: 0,
-                                  minWidth: 0,
-                                  border: "none",
-                                }}
-                              />
-                            ) : (
-                              <img
-                                src={previewUrl}
-                                alt={`Certification ${idx + 1}`}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                        ))}
-                  </div>
-                </div>
-              )}
-              {/* Error Display */}
-              {validationErrors.general && (
-                <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="text-sm text-red-600">
-                    {validationErrors.general}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <ReviewSubmit
+            formData={formData}
+            categories={categories}
+            commissionQuotes={commissionQuotes}
+            loadingCommissions={loadingCommissions}
+            serviceImageFiles={serviceImageFiles}
+            imagePreviews={imagePreviews}
+            certificationFiles={certificationFiles}
+            certificationPreviews={certificationPreviews}
+            validationErrors={validationErrors}
+          />
         );
       default:
         return <div>Review and Submit</div>;
@@ -1176,31 +998,44 @@ const AddServicePage: React.FC = () => {
 
   // --- Main Page Layout ---
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100 pb-12">
       <Toaster position="top-center" />
+
+      <ServiceDrafts
+        ref={serviceDraftsRef}
+        formData={formData}
+        setFormData={setFormData}
+        serviceImageFiles={serviceImageFiles}
+        setServiceImageFiles={setServiceImageFiles}
+        imagePreviews={imagePreviews}
+        setImagePreviews={setImagePreviews}
+        certificationFiles={certificationFiles}
+        setCertificationFiles={setCertificationFiles}
+        certificationPreviews={certificationPreviews}
+        setCertificationPreviews={setCertificationPreviews}
+        commissionQuotes={commissionQuotes}
+        setCommissionQuotes={setCommissionQuotes}
+        initialServiceState={initialServiceState}
+        navigate={navigate}
+      />
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
-        <div className="container mx-auto flex items-center">
+      <header className="fixed inset-x-0 top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-3.5 py-2.5 md:ml-20 lg:ml-20">
           <button
-            onClick={() =>
-              serviceCreated
-                ? navigate("/provider/home")
-                : currentStep === 1
-                  ? navigate(-1)
-                  : handleBack()
-            }
+            onClick={handleHeaderBack}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-l font-extrabold text-black sm:text-xl md:text-2xl">
+          <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>
       </header>
+      {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
-      <main className="container mx-auto flex-grow p-4 sm:p-6">
-        <div className="mt-6 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
+      <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
+        <div className="mt-20 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>
         {/* Navigation Buttons */}
@@ -1209,7 +1044,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleBack}
               disabled={isSubmitting}
-              className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+              className="rounded-md bg-gray-200 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
             >
               Back
             </button>
@@ -1218,7 +1053,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleNext}
               disabled={isSubmitting || isProcessingImages}
-              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-auto rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isProcessingImages ? "Processing Images..." : "Next"}
             </button>
@@ -1226,7 +1061,7 @@ const AddServicePage: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || isProcessingImages}
-              className="ml-auto flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-auto flex items-center rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -1242,6 +1077,7 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
+      <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
     </div>
   );
 };

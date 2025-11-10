@@ -1,55 +1,58 @@
-import { Link, useNavigate } from "react-router-dom";
-import {
-  ProviderEnhancedBooking,
-  useProviderBookingManagement,
-} from "../../hooks/useProviderBookingManagement";
+import { useNavigate } from "react-router-dom";
+import { ProviderEnhancedBooking } from "../../hooks/useProviderBookingManagement";
 import {
   MapPinIcon,
   ClockIcon,
   CurrencyDollarIcon,
   CalendarDaysIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ExclamationTriangleIcon,
-  ArrowPathIcon,
-  StarIcon,
-  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import ClientReputationScore from "./booking-details/ClientReputationScore";
+import ClientRatingSummary from "./booking-details/ClientRatingSummary";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { useEffect, useState, MouseEvent } from "react";
+import { useEffect, useState } from "react";
+import ActionButtons from "./booking-details/ActionButtons";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
+  review: any;
+  reputation: any;
+  onDeclineClick: () => void;
+  onCancelClick: (booking: ProviderEnhancedBooking) => void;
+  isDeclining: boolean;
+
+  acceptBookingById: any;
+  isBookingActionInProgress: any;
+  checkCommissionValidation: any;
+  startBookingById: any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
+  review = [],
+  reputation = null,
+  onDeclineClick,
+  onCancelClick,
+  acceptBookingById,
+  isBookingActionInProgress,
+  checkCommissionValidation,
+  startBookingById,
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
-  const {
-    acceptBookingById,
-    declineBookingById,
-    isBookingActionInProgress,
-    checkCommissionValidation,
-    startBookingById,
-  } = useProviderBookingManagement();
 
   const { conversations, createConversation } = useChat();
   const { userImageUrl, refetch } = useUserImage(
     booking?.clientProfile?.profilePicture?.imageUrl,
   );
 
-  // State for decline confirmation dialog
-  const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
-  const [isDeclinining, setIsDeclinining] = useState<boolean>(false);
+  const clientId =
+    booking?.clientProfile?.id?.toString() || booking?.clientId?.toString();
 
-  // State for complete confirmation dialog
-  const [showCompleteConfirm, setShowCompleteConfirm] =
-    useState<boolean>(false);
-  const [isCompleting, setIsCompleting] = useState<boolean>(false);
+  // Determine if client data has been loaded
+  const hasClientData = review.length > 0 || reputation !== null;
 
   // Commission validation state for cash bookings
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -63,6 +66,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     commissionValidationMessage: "",
     loading: false,
   });
+
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   // Check commission validation for cash bookings that can be accepted
   useEffect(() => {
@@ -153,8 +158,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const status = booking.status;
   const notes = booking.notes;
 
-  console.log("From Provider Booking Item Card", booking);
-
   // --- Date range formatting helper ---
   const formatDateRange = (
     requestedDate: Date | string | number,
@@ -225,10 +228,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   };
 
   // --- Action handlers ---
-  const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleAccept = async () => {
     // Check commission validation for cash bookings before accepting
     if (booking.paymentMethod === "CashOnHand") {
       if (commissionValidation.loading) {
@@ -251,65 +251,36 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  const handleReject = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Show confirmation dialog instead of window.confirm
-    setShowDeclineConfirm(true);
+  const handleMarkAsCompleted = async () => {
+    navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // New function to handle the actual decline after confirmation
-  const handleConfirmDecline = async () => {
-    setIsDeclinining(true);
-    try {
-      const success = await declineBookingById(
-        booking.id,
-        "Declined by provider",
-      );
-      if (success) {
-        navigate(`../../provider/home`);
-      }
-    } finally {
-      setIsDeclinining(false);
-      setShowDeclineConfirm(false);
-    }
-  };
+  // Handle cancel button click
 
-  const handleMarkAsCompleted = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Show the confirmation dialog instead of window.confirm
-    setShowCompleteConfirm(true);
-  };
-
-  // New function to handle the actual completion after confirmation
-  const handleConfirmComplete = async () => {
-    setIsCompleting(true);
-    try {
-      // The action is to navigate to the completion page
-      navigate(`/provider/complete-service/${booking.id}`);
-    } finally {
-      // This will run before navigation completes
-      setIsCompleting(false);
-      setShowCompleteConfirm(false);
-    }
+  // Handle complete confirmation
+  const handleCompleteConfirm = () => {
+    navigate(`/provider/complete-service/${booking.id}`);
   };
 
   // Navigate to directions page first; actual start initiated from there
-  const handleStartService = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // commented for debugging
-    // navigate(`/provider/directions/${booking.id}`);
-    startBookingById(booking.id);
-    navigate(`/provider/active-service/${booking.id}`);
+  const handleStartService = async () => {
+    if (!booking) return;
+
+    // Check the locationDetection flag
+    const locationDetection = (booking as any).locationDetection;
+
+    if (locationDetection === "automatic") {
+      // If location was detected automatically (via GPS/maps), navigate to directions page
+      navigate(`/provider/directions/${booking.id}`);
+    } else {
+      // If location was manually entered, start the booking directly
+      startBookingById(booking.id);
+      navigate(`/provider/active-service/${booking.id}`);
+    }
   };
 
   // --- Chat handler: check for existing conversation, else create, then navigate ---
-  const handleChatClient = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleChatClient = async () => {
     if (!booking.clientId || !identity) return;
     try {
       const currentUserId = identity.getPrincipal().toString();
@@ -356,11 +327,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
+  // contact removed; ActionButtons no longer supports contact action
+
   // --- Booking state checks for button logic ---
-  const canAcceptOrDecline = booking.canAccept && booking.canDecline;
-  const canStart = booking.canStart;
-  const canComplete = booking.canComplete;
-  const isCompleted = status === "Completed";
   const isInProgress = status === "InProgress";
 
   // --- Helper: Check if booking is scheduled for a future date ---
@@ -373,14 +342,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // --- Reusable Booking Card Content Component ---
   const BookingCardContent = ({ showDurationInDetails = true }) => (
-    <div className="md:flex">
-      {/* Provider Profile Image */}
-      <div className="md:flex-shrink-0">
-        <div className="relative h-48 w-full object-cover md:w-48">
+    <div className="rounded-lg bg-white shadow-lg md:flex">
+      {/* Provider Profile Image Section (Vertically Centered) */}
+      <div className="flex items-center md:flex-shrink-0">
+        <div className="relative h-48 w-full md:w-48">
           <img
             src={serviceImage || "/default-client.svg"}
             alt={clientName}
-            className="h-full w-full object-cover"
+            className="h-full w-full rounded-t-lg object-cover md:rounded-l-lg md:rounded-t-none"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-client.svg";
             }}
@@ -388,13 +357,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         </div>
       </div>
 
-      {/* Booking Details */}
+      {/* Booking Details and Actions Section */}
       <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+        {/* Booking Information */}
         <div>
           <div className="flex items-start justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+            <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
               {serviceTitle}
             </p>
+
             {/* Booking status badge */}
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
@@ -411,7 +382,34 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           </h3>
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
+          {/* Details List */}
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+            {/* REPUTATION AND RATING: Show skeleton while loading, then fade in data */}
+            {clientId && (
+              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
+                {hasClientData ? (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    <ClientReputationScore reputation={reputation} />
+                    <ClientRatingSummary reviews={review} />
+                  </div>
+                ) : (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    {/* Skeleton for Reputation Score */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                    {/* Skeleton for Rating Summary */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Date/Time */}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               {formatDateRange(
@@ -420,143 +418,80 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               )}
             </p>
 
+            {/* Location */}
             <p className="flex items-center">
               <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               <span className="truncate">{locationAddress}</span>
             </p>
 
-            {price !== undefined && (
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Price: ₱{price.toFixed(2)}
-                </span>
-              </p>
+            {/* Price/Payment Details */}
+            {(price !== undefined || amountToPay !== undefined) && (
+              <>
+                {price !== undefined && (
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-bold text-gray-600">
+                      Price: <strong>₱{price.toFixed(2)}</strong>
+                    </span>
+                  </p>
+                )}
+                {amountToPay !== undefined && (
+                  <p className="flex items-center">
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                    <span className="font-bold text-gray-600">
+                      Client's amount to pay:{" "}
+                      <strong>₱{amountToPay.toFixed(2)}</strong>
+                    </span>
+                  </p>
+                )}
+              </>
             )}
 
-            {amountToPay !== undefined && (
-              <p className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="font-semibold text-green-600">
-                  Client's amount to pay: ₱{amountToPay.toFixed(2)}
-                </span>
-              </p>
-            )}
-
+            {/* Payment Method */}
             <p className="flex items-center">
               <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-              <span className="font-semibold text-green-600">
-                Client's payment method:{" "}
-                {booking.paymentMethod === "CashOnHand"
-                  ? "Cash on Hand"
-                  : booking.paymentMethod}
+              <span className="font-bold text-gray-600">
+                Payment Method:
+                <strong>
+                  {" "}
+                  {booking.paymentMethod === "CashOnHand"
+                    ? "Cash on Hand"
+                    : booking.paymentMethod}
+                </strong>
               </span>
             </p>
 
+            {/* Duration */}
             {showDurationInDetails && duration !== "N/A" && (
               <p className="flex items-center">
                 <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                 Duration: {duration}
               </p>
             )}
+
+            {/* Booking Notes */}
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
           </div>
-          {notes && (
-            <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-              <strong>Booking Notes:</strong> {notes}
-            </div>
-          )}
         </div>
-        {/* Action Buttons Section */}
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-          {canAcceptOrDecline && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleReject}
-                disabled={isBookingActionInProgress(booking.id, "decline")}
-                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
-              >
-                <XCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "decline")
-                  ? "Declining..."
-                  : "Decline"}
-              </button>
-              <button
-                onClick={handleAccept}
-                disabled={
-                  isBookingActionInProgress(booking.id, "accept") ||
-                  commissionValidation.hasInsufficientBalance
-                }
-                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
-              >
-                <CheckCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "accept")
-                  ? "Accepting..."
-                  : commissionValidation.hasInsufficientBalance
-                    ? "Insufficient Balance"
-                    : "Accept"}
-              </button>
-            </div>
-          )}
-          {(canStart || canComplete || isCompleted) && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleChatClient}
-                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-              >
-                <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
-                Chat {booking.clientName?.split(" ")[0] || "Client"}
-              </button>
-              {canStart && (
-                <button
-                  onClick={handleStartService}
-                  disabled={
-                    isBookingActionInProgress(booking.id, "start") ||
-                    isScheduledForFuture // <-- lock if scheduled for future
-                  }
-                  className={`flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50 ${
-                    isScheduledForFuture ? "cursor-not-allowed opacity-60" : ""
-                  }`}
-                  title={
-                    isScheduledForFuture
-                      ? "You can only start the service on the scheduled date."
-                      : undefined
-                  }
-                >
-                  <ArrowPathIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "start")
-                    ? "Starting..."
-                    : isScheduledForFuture
-                      ? "Start Service (Locked)"
-                      : "Start Service"}
-                </button>
-              )}
-              {canComplete && (
-                <button
-                  onClick={handleMarkAsCompleted}
-                  disabled={isBookingActionInProgress(booking.id, "complete")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
-                >
-                  <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "complete")
-                    ? "Completing..."
-                    : "Mark Completed"}
-                </button>
-              )}
-              {isCompleted && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/provider/review/${booking?.id}`);
-                  }}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
-                >
-                  <StarIcon className="mr-1 h-4 w-4" />
-                  View My Reviews
-                </button>
-              )}
-            </div>
-          )}
+
+        {/* Action Buttons Section - use shared ActionButtons component */}
+        <div className="mt-5 grid grid-cols-1 gap-2 border-t border-gray-200 pt-4 sm:auto-cols-fr sm:grid-flow-col">
+          <ActionButtons
+            booking={booking}
+            onChat={handleChatClient}
+            onAccept={handleAccept}
+            onDecline={onDeclineClick}
+            onCancel={() => onCancelClick(booking)}
+            onStart={handleStartService}
+            onComplete={handleMarkAsCompleted}
+            canStartServiceNow={() => !isScheduledForFuture}
+            isBookingActionInProgress={isBookingActionInProgress}
+            commissionValidation={commissionValidation}
+          />
         </div>
       </div>
     </div>
@@ -565,37 +500,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // --- Card Layout ---
   return (
     <>
-      {/* Decline Confirmation Dialog */}
-      {showDeclineConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Decline Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to decline this booking from{" "}
-              <b>{clientName}</b>? This action cannot be undone and the client
-              will be notified.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowDeclineConfirm(false)}
-                disabled={isDeclinining}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmDecline}
-                disabled={isDeclinining}
-              >
-                {isDeclinining ? "Declining..." : "Decline"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Booking Card */}
+      <BookingCardContent showDurationInDetails={!isInProgress} />
 
       {/* Complete Confirmation Dialog */}
       {showCompleteConfirm && (
@@ -612,35 +518,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               <button
                 className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
                 onClick={() => setShowCompleteConfirm(false)}
-                disabled={isCompleting}
               >
                 Cancel
               </button>
               <button
                 className="flex-1 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
-                onClick={handleConfirmComplete}
-                disabled={isCompleting}
+                onClick={handleCompleteConfirm}
               >
-                {isCompleting ? "Proceeding..." : "Confirm"}
+                Confirm
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {isInProgress ? (
-        <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
-          {/* Booking Card */}
-          <BookingCardContent />
-        </div>
-      ) : (
-        <Link
-          to={`/provider/booking/${booking.id}`}
-          className="mb-6 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        >
-          {/* Booking Card */}
-          <BookingCardContent showDurationInDetails={false} />
-        </Link>
       )}
     </>
   );

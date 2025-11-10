@@ -1,11 +1,7 @@
-// Service Worker for SRV PWA - Enhanced for cross-browser compatibility with FCM support
-// Import Firebase Messaging for FCM support
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
-);
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js",
-);
+// Service Worker for SRV PWA - Enhanced for cross-browser compatibility
+// Note: OneSignal handles push notifications via OneSignalSDKWorker.js
+// This service worker focuses ONLY on PWA caching and offline functionality
+// Both service workers can coexist with proper scoping
 
 const CACHE_NAME = "srv-pwa-v1";
 const STATIC_CACHE_URLS = [
@@ -22,49 +18,28 @@ function detectBrowser() {
     name: "Unknown",
     version: "Unknown",
     isSafari: /Safari/.test(userAgent) && !/Chrome/.test(userAgent),
-    isChrome: /Chrome/.test(userAgent),
-    isBrave: /Brave/.test(userAgent),
+    isChrome:
+      /Chrome/.test(userAgent) &&
+      !/Edg/.test(userAgent) &&
+      !/Vivaldi/.test(userAgent) &&
+      !/Brave/.test(userAgent),
+    isBrave:
+      /Brave/.test(userAgent) ||
+      (navigator.brave && typeof navigator.brave.isBrave === "function"),
+    isVivaldi: /Vivaldi/.test(userAgent),
     isEdge: /Edg/.test(userAgent),
     isFirefox: /Firefox/.test(userAgent),
   };
 
-  //console.log("🔍 SW: Browser detected:", browserInfo);
+  // Set a readable name
+  if (browserInfo.isSafari) browserInfo.name = "Safari";
+  else if (browserInfo.isBrave) browserInfo.name = "Brave";
+  else if (browserInfo.isVivaldi) browserInfo.name = "Vivaldi";
+  else if (browserInfo.isEdge) browserInfo.name = "Edge";
+  else if (browserInfo.isChrome) browserInfo.name = "Chrome";
+  else if (browserInfo.isFirefox) browserInfo.name = "Firefox";
+
   return browserInfo;
-}
-
-// Initialize Firebase for FCM background messages
-try {
-  firebase.initializeApp({
-    apiKey: "AIzaSyDRyQ38qXdEDDF1gcw33UhyAXocHAtnQzs",
-    authDomain: "devsrv-rey.firebaseapp.com",
-    projectId: "devsrv-rey",
-    storageBucket: "devsrv-rey.firebasestorage.app",
-    messagingSenderId: "851522429469",
-    appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4",
-  });
-
-  const messaging = firebase.messaging();
-
-  // Handle background messages from FCM
-  messaging.onBackgroundMessage((payload) => {
-    console.log("SW: Received background message from FCM:", payload);
-
-    const notificationTitle = payload.notification?.title || "SRV Notification";
-    const notificationOptions = {
-      body: payload.notification?.body || "You have a new notification",
-      icon: payload.notification?.icon || "/logo.svg",
-      badge: "/logo.svg",
-      data: payload.data || {},
-      tag: payload.data?.notificationId || "srv-notification",
-    };
-
-    return self.registration.showNotification(
-      notificationTitle,
-      notificationOptions,
-    );
-  });
-} catch (error) {
-  console.error("SW: Failed to initialize Firebase:", error);
 }
 
 // Install event - cache resources
@@ -132,7 +107,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Skip chrome-extension and other non-http requests
+  // Skip non-http requests
   if (!event.request.url.startsWith("http")) {
     return;
   }
@@ -147,167 +122,113 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Bypass third-party requests that can be blocked (e.g., Google Maps telemetry) so we don't
-  // intercept them and cause console noise when blocked by the network or extensions.
+  // Bypass third-party Google Maps requests to avoid interference
   try {
     const reqUrl = new URL(event.request.url);
-    const isThirdParty = reqUrl.origin !== self.location.origin;
     const isGoogleMapsDomain =
       reqUrl.hostname === "maps.googleapis.com" ||
       reqUrl.hostname === "maps.gstatic.com";
     const isMapsTelemetry =
       isGoogleMapsDomain &&
       reqUrl.pathname.includes("/maps/api/js/QuotaService.RecordEvent");
-
     if (isMapsTelemetry || isGoogleMapsDomain) {
-      // Let the browser handle it (no caching, no SW respondWith)
       return;
     }
-  } catch (_) {
-    // If URL parsing fails, continue to default handler below
-  }
+  } catch (_) {}
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached response if found
-      if (response) {
-        return response;
-      }
+  const reqUrl = new URL(event.request.url);
+  const sameOrigin = reqUrl.origin === self.location.origin;
 
-      // Clone the request because it's a stream
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest)
-        .then((response) => {
-          // Check if valid response
+  const cacheFirst = () =>
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
           if (
-            !response ||
-            response.status !== 200 ||
-            response.type !== "basic"
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
           ) {
-            return response;
-          }
-
-          // Clone the response because it's a stream
-          const responseToCache = response.clone();
-
-          // Add successful responses to cache (with browser-specific handling)
-          caches.open(CACHE_NAME).then((cache) => {
-            // Safari sometimes has issues with certain cache operations
-            try {
-              cache.put(event.request, responseToCache);
-            } catch (cacheError) {
-              if (browser.isSafari) {
-                //console.warn(
-                //  "⚠️ SW: Safari cache put failed (expected):",
-                //  cacheError,
-                //);
-              } else {
-                //console.error("❌ SW: Cache put failed:", cacheError);
-              }
-            }
-          });
-
-          return response;
-        })
-        .catch((error) => {
-          //console.error("❌ SW: Fetch failed:", error);
-          // For navigation requests return an offline fallback if we have it
-          if (event.request.mode === "navigate") {
-            return caches.match("/").then((fallbackResponse) => {
-              if (fallbackResponse) return fallbackResponse;
-              return new Response(
-                "App is offline. Please check your connection.",
-                {
-                  status: 503,
-                  headers: { "Content-Type": "text/plain" },
-                },
-              );
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              try {
+                cache.put(event.request, copy);
+              } catch (_) {}
             });
           }
-          // For third-party or opaque requests, avoid rejecting the promise to silence console noise
-          try {
-            const reqUrl = new URL(event.request.url);
-            if (reqUrl.origin !== self.location.origin) {
-              // Return an empty 204 to satisfy callers expecting a response (e.g., telemetry beacons)
-              return new Response(null, { status: 204 });
-            }
-          } catch (_) {}
-          // Otherwise, return a generic 504 response
-          return new Response("Network error", { status: 504 });
-        });
-    }),
-  );
-});
-
-// Push notification event handler
-self.addEventListener("push", (event) => {
-  const browser = detectBrowser();
-  //console.log(`🔔 SW: Push event received (${browser.name}):`, event);
-
-  let notificationData = {};
-
-  if (event.data) {
-    try {
-      notificationData = event.data.json();
-    } catch (error) {
-      //console.error("❌ SW: Error parsing push data:", error);
-      notificationData = {
-        title: "SRV Notification",
-        body: event.data.text() || "You have a new notification",
-        icon: "/logo.svg",
-        badge: "/logo.svg",
-      };
-    }
-  } else {
-    notificationData = {
-      title: "SRV Notification",
-      body: "You have a new notification",
-      icon: "/logo.svg",
-      badge: "/logo.svg",
-    };
-  }
-
-  // Browser-specific notification options
-  const options = {
-    body: notificationData.body,
-    icon: notificationData.icon || "/logo.svg",
-    badge: notificationData.badge || "/logo.svg",
-    data: notificationData.data || {},
-    tag: notificationData.tag || "srv-notification",
-    requireInteraction: browser.isSafari
-      ? false
-      : notificationData.requireInteraction || false, // Safari doesn't support requireInteraction well
-    vibrate: browser.isSafari
-      ? undefined
-      : notificationData.vibrate || [100, 50, 100], // Safari doesn't support vibrate
-    timestamp: Date.now(),
-  };
-
-  // Safari doesn't support actions in notifications
-  if (!browser.isSafari && notificationData.actions) {
-    options.actions = notificationData.actions;
-  }
-
-  //console.log(`📱 SW: Showing notification (${browser.name})`, options);
-
-  event.waitUntil(
-    self.registration
-      .showNotification(notificationData.title, options)
-      .catch((error) => {
-        //console.error("❌ SW: Failed to show notification:", error);
-        // Fallback for Safari or other issues
-        return self.registration.showNotification("SRV Notification", {
-          body: "You have a new notification",
-          icon: "/logo.svg",
+          return response;
         });
       }),
-  );
+    );
+
+  const networkFirst = () =>
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type !== "opaque"
+          ) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              try {
+                cache.put(event.request, copy);
+              } catch (_) {}
+            });
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then((r) => r || caches.match("/")),
+        ),
+    );
+
+  // Navigations (HTML): prefer fresh content, fallback to cache
+  if (event.request.mode === "navigate") {
+    return networkFirst();
+  }
+
+  if (sameOrigin) {
+    const pathname = reqUrl.pathname;
+
+    // Service workers: always fetch latest
+    if (pathname === "/sw.js" || pathname === "/firebase-messaging-sw.js") {
+      return event.respondWith(fetch(event.request));
+    }
+
+    // Built assets (JS/CSS)
+    if (
+      pathname.startsWith("/assets/") ||
+      pathname.endsWith(".js") ||
+      pathname.endsWith(".css")
+    ) {
+      return cacheFirst();
+    }
+
+    // Fonts and images
+    if (pathname.startsWith("/fonts/") || pathname.startsWith("/images/")) {
+      return cacheFirst();
+    }
+  }
+
+  // Default: cache-first for other GETs
+  return cacheFirst();
 });
 
 // Notification click event handler
+// Note: OneSignal handles most notification events, but we keep this for compatibility
 self.addEventListener("notificationclick", (event) => {
-  //console.log("Notification clicked:", event);
+  console.log("SW: Notification clicked:", event);
+
+  // Only handle notifications that are not from OneSignal
+  if (
+    event.notification.tag &&
+    event.notification.tag.startsWith("onesignal")
+  ) {
+    // Let OneSignal handle its own notifications
+    return;
+  }
 
   event.notification.close();
 
@@ -342,7 +263,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Background sync event (for offline actions)
 self.addEventListener("sync", (event) => {
-  //console.log("Background sync:", event.tag);
+  console.log("SW: Background sync:", event.tag);
 
   if (event.tag === "background-notification-sync") {
     event.waitUntil(

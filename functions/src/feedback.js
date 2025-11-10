@@ -18,7 +18,6 @@ function getAuthInfo(context, data) {
   };
 }
 
-// Constants matching the Motoko canister
 const MIN_RATING = 1;
 const MAX_RATING = 5;
 const MAX_COMMENT_LENGTH = 1000;
@@ -75,7 +74,6 @@ function validateDescription(description) {
 
 /**
  * Submit feedback
- * Mirrors the Motoko submitFeedback function
  */
 exports.submitFeedback = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -147,7 +145,6 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
 
 /**
  * Get all feedback (admin function)
- * Mirrors the Motoko getAllFeedback function
  */
 exports.getAllFeedback = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -182,7 +179,6 @@ exports.getAllFeedback = functions.https.onCall(async (data, context) => {
 
 /**
  * Get feedback by user
- * Mirrors the Motoko getMyFeedback function
  */
 exports.getMyFeedback = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -218,7 +214,6 @@ exports.getMyFeedback = functions.https.onCall(async (data, context) => {
 
 /**
  * Get feedback statistics
- * Mirrors the Motoko getFeedbackStats function
  */
 exports.getFeedbackStats = functions.https.onCall(async (data, _context) => {
   // Extract payload
@@ -293,7 +288,6 @@ exports.getFeedbackStats = functions.https.onCall(async (data, _context) => {
 
 /**
  * Get feedback by ID
- * Mirrors the Motoko getFeedbackById function
  */
 exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
   // Extract payload
@@ -328,7 +322,6 @@ exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
 
 /**
  * Get recent feedback (limited number)
- * Mirrors the Motoko getRecentFeedback function
  */
 exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
   // Extract payload
@@ -366,13 +359,11 @@ exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
 
 /**
  * Submit report
- * Mirrors the Motoko submitReport function
  */
 exports.submitReport = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data.data || data;
-  const {description} = payload;
-  console.log("Submit Report Payload", payload);
+  const {description, attachments = []} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -391,6 +382,21 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     );
   }
 
+  // Validate attachments array
+  if (attachments && !Array.isArray(attachments)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Attachments must be an array",
+    );
+  }
+
+  if (attachments && attachments.length > 5) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Maximum 5 attachments allowed per report",
+    );
+  }
+
   try {
     // Get user profile from Firestore users collection
     const userRef = db.collection("users").doc(authInfo.uid);
@@ -403,14 +409,70 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     const userProfile = userSnap.data();
     console.log("User profile data for report:", userProfile);
 
+    // Determine user's actual role from profile
+    const userActiveRole = userProfile?.activeRole || "Client";
+    const isProvider = userActiveRole === "ServiceProvider";
+    const correctSource = isProvider ? "provider_report" : "client_report";
+
+    // Parse and validate the description to ensure source matches user's role
+    let finalDescription = String(description);
+    try {
+      // Try to parse description as JSON (structured report format)
+      const parsedDesc = JSON.parse(description);
+      if (parsedDesc && typeof parsedDesc === "object") {
+        // Override source field to match user's actual role
+        parsedDesc.source = correctSource;
+        console.log(`✅ [submitReport] Corrected source from "${parsedDesc.source || "missing"}"
+          to "${correctSource}" for user ${authInfo.uid} (activeRole: ${userActiveRole})`);
+        finalDescription = JSON.stringify(parsedDesc);
+      }
+    } catch (e) {
+      // Description is not JSON, create structured format with correct source
+      console.log(`⚠️ [submitReport] Description is not JSON,
+        creating structured format with correct source: ${correctSource}`);
+      finalDescription = JSON.stringify({
+        title: "User Report",
+        description: String(description),
+        category: "other",
+        timestamp: new Date().toISOString(),
+        source: correctSource,
+      });
+    }
+
+    // Extract media IDs from URLs if needed
+    // Attachments should be media IDs, but support both URL and ID formats
+    const mediaIds = [];
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        // If it's a URL, query Firestore to find the media ID
+        if (attachment.startsWith("http://") || attachment.startsWith("https://")) {
+          const mediaSnapshot = await db
+            .collection("media")
+            .where("url", "==", attachment)
+            .limit(1)
+            .get();
+
+          if (!mediaSnapshot.empty) {
+            mediaIds.push(mediaSnapshot.docs[0].id);
+          } else {
+            console.warn("Media not found for URL:", attachment);
+          }
+        } else {
+          // Assume it's already a media ID
+          mediaIds.push(attachment);
+        }
+      }
+    }
+
     const reportId = generateReportId();
     const newReport = {
       id: reportId,
       userId: authInfo.uid,
       userName: userProfile?.name || "Unknown",
       userPhone: userProfile?.phone || "Unknown",
-      description: String(description), // Ensure it's a string
-      status: "open", // Default status for new reports
+      description: finalDescription,
+      attachments: mediaIds,
+      status: "open",
       createdAt: new Date().toISOString(),
     };
 
@@ -434,10 +496,6 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
  * Mirrors the Motoko getAllReports function
  */
 exports.getAllReports = functions.https.onCall(async (data, context) => {
-  // Extract payload
-  const payload = data.data.data || data;
-  console.log("Get All Reports Payload", payload);
-
   // Authentication - admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -466,7 +524,6 @@ exports.getAllReports = functions.https.onCall(async (data, context) => {
 
 /**
  * Get reports by user
- * Mirrors the Motoko getMyReports function
  */
 exports.getMyReports = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -502,7 +559,6 @@ exports.getMyReports = functions.https.onCall(async (data, context) => {
 
 /**
  * Update report status (admin function)
- * Mirrors the Motoko updateReportStatus function
  */
 exports.updateReportStatus = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -562,7 +618,6 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
 
 /**
  * Get report statistics
- * Mirrors the Motoko getReportStats function
  */
 exports.getReportStats = functions.https.onCall(async (data, _context) => {
   // Extract payload
@@ -606,7 +661,6 @@ exports.getReportStats = functions.https.onCall(async (data, _context) => {
 
 /**
  * Get report by ID
- * Mirrors the Motoko getReportById function
  */
 exports.getReportById = functions.https.onCall(async (data, _context) => {
   // Extract payload
@@ -641,7 +695,6 @@ exports.getReportById = functions.https.onCall(async (data, _context) => {
 
 /**
  * Get recent reports (limited number)
- * Mirrors the Motoko getRecentReports function
  */
 exports.getRecentReports = functions.https.onCall(async (data, _context) => {
   // Extract payload

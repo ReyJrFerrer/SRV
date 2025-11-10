@@ -5,7 +5,6 @@
  * reputation canister. It handles all reputation-related operations including initialization,
  * updates, and review processing with AI-powered sentiment analysis.
  *
- * This is a critical component of the hybrid ICP-Firebase architecture.
  */
 
 const functions = require("firebase-functions");
@@ -138,7 +137,27 @@ function getManualReputationIdl() {
         [ReviewResult],
         [],
       ),
+      processProviderReview: IDL.Func(
+        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [ReviewResult],
+        [],
+      ),
+      processProviderReviewWithLLM: IDL.Func(
+        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [ReviewResult],
+        [],
+      ),
       getReputationScore: IDL.Func([IDL.Principal], [ReputationResult], ["query"]),
+      deductReputationForCancellation: IDL.Func(
+        [IDL.Principal],
+        [ReputationResult],
+        [],
+      ),
+      setUserReputation: IDL.Func(
+        [IDL.Principal, IDL.Nat],
+        [IDL.Variant({ok: IDL.Text, err: IDL.Text})],
+        [],
+      ),
     });
   };
 }
@@ -193,7 +212,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: process.env.CANISTER_ID_REPUTATION || "bd3sg-teaaa-aaaaa-qaaba-cai",
+    reputation: "bd3sg-teaaa-aaaaa-qaaba-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION,
@@ -586,83 +605,95 @@ async function processReviewForReputationInternal(review, useLLM = false) {
   });
 
   if (!review || !review.id) {
-    throw new Error("Review object is required");
+    throw new Error("Review object with ID is required");
   }
 
   try {
-    // 1. Fetch client data from Firestore
-    console.log(`📊 Fetching client data for ${review.clientId}`);
-    const clientData = await fetchUserData(review.clientId);
-
-    // 2. Get the reputation actor
     const reputationActor = await createReputationActor();
 
-    // 3. Prepare review object for canister
-    const reviewForCanister = {
+    // Check if this is a provider-to-client review
+    const isProviderReview = review.reviewType === "ProviderToClient";
+
+    // Fetch appropriate user data based on review type
+    let clientData;
+    let providerData;
+
+    if (isProviderReview) {
+      // For provider reviews, we need provider data (the reviewer)
+      providerData = await fetchProviderData(review.providerId);
+    } else {
+      // For regular reviews, we need client data (the reviewer)
+      clientData = await fetchUserData(review.clientId);
+    }
+
+    // Prepare review for IC canister
+    const icReview = {
       id: review.id,
       bookingId: review.bookingId,
       clientId: Principal.fromText(review.clientId),
       providerId: Principal.fromText(review.providerId),
       serviceId: review.serviceId,
-      rating: review.rating,
-      comment: review.comment || "",
-      status: review.status === "Hidden" ? {Hidden: null} :
-        review.status === "Flagged" ? {Flagged: null} :
-          {Visible: null},
+      rating: BigInt(review.rating),
+      comment: review.comment,
+      status: {Visible: null},
       qualityScore: review.qualityScore ? [review.qualityScore] : [],
       createdAt: isoToNanoseconds(review.createdAt),
-      updatedAt: isoToNanoseconds(review.updatedAt || review.createdAt),
+      updatedAt: isoToNanoseconds(review.updatedAt),
     };
 
-    console.log(`📞 Calling reputation canister to process review ${review.id}`, {
-      useLLM,
-      clientCompletedBookings: clientData.completedBookings,
-    });
-
-    // 4. Call appropriate canister function
-    const result = useLLM ?
-      await reputationActor.processReviewWithLLM(
-        reviewForCanister,
-        clientData.completedBookings,
-        clientData.averageRating ? [clientData.averageRating] : [],
-        clientData.accountAge,
-      ) :
-      await reputationActor.processReview(
-        reviewForCanister,
-        clientData.completedBookings,
-        clientData.averageRating ? [clientData.averageRating] : [],
-        clientData.accountAge,
-      );
+    // Process review with or without LLM based on flag
+    let result;
+    if (useLLM) {
+      if (isProviderReview) {
+        // Process provider review - updates provider's reputation (the reviewer)
+        // This tracks if the provider is trustworthy when rating clients
+        result = await reputationActor.processProviderReviewWithLLM(
+          icReview,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
+        );
+      } else {
+        // Process regular review (client rating provider)
+        // Updates client's reputation (the reviewer)
+        result = await reputationActor.processReviewWithLLM(
+          icReview,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
+        );
+      }
+    } else {
+      if (isProviderReview) {
+        // Process provider review - updates provider's reputation (the reviewer)
+        // This tracks if the provider is trustworthy when rating clients
+        result = await reputationActor.processProviderReview(
+          icReview,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
+        );
+      } else {
+        // Process regular review (client rating provider)
+        // Updates client's reputation (the reviewer)
+        result = await reputationActor.processReview(
+          icReview,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
+        );
+      }
+    }
 
     if ("ok" in result) {
-      console.log(`✅ Review processed successfully for reputation: ${review.id}`);
-
-      // 5. Also update provider reputation separately
-      console.log(`📞 Updating provider reputation for ${review.providerId}`);
-      const providerData = await fetchProviderData(review.providerId);
-
-      const providerResult = await reputationActor.updateProviderReputation(
-        Principal.fromText(review.providerId),
-        providerData.completedBookings,
-        providerData.averageRating ? [providerData.averageRating] : [],
-        providerData.accountAge,
-      );
-
-      if ("ok" in providerResult) {
-        console.log(`✅ Provider reputation updated for ${review.providerId}`);
-      }
-
-      return {
-        success: true,
-        data: result.ok,
-        message: "Review processed and reputations updated successfully",
-      };
+      console.log("✅ Review processed successfully:", result.ok);
+      return {success: true, data: result.ok};
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
-      throw new Error(result.err);
+      console.error("❌ Review processing failed:", result.err);
+      throw new Error(`Failed to process review: ${result.err}`);
     }
   } catch (error) {
-    console.error("Error processing review for reputation:", error);
+    console.error("❌ Error in processReviewForReputationInternal:", error);
     throw error;
   }
 }
@@ -728,6 +759,67 @@ exports.updateProviderReputation = functions.https.onCall(async (data, _context)
 exports.updateProviderReputationInternal = updateProviderReputationInternal;
 
 /**
+ * Deduct reputation points for a user who cancelled a booking
+ * @param {string} userId - The ID of the user who cancelled the booking
+ * @returns {Promise<Object>} Result of the reputation deduction
+ */
+const deductReputationForCancellationInternal = async (userId) => {
+  try {
+    const actor = await createReputationActor();
+    const result = await actor.deductReputationForCancellation(Principal.fromText(userId));
+
+    if ("ok" in result) {
+      return {
+        success: true,
+        data: {
+          userId: result.ok.userId.toString(),
+          trustScore: result.ok.trustScore,
+          trustLevel: result.ok.trustLevel,
+          lastUpdated: new Date(Number(result.ok.lastUpdated / BigInt(1000000))).toISOString(),
+        },
+      };
+    } else {
+      throw new Error(result.err || "Failed to deduct reputation points");
+    }
+  } catch (error) {
+    console.error("Error in deductReputationForCancellationInternal:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deduct reputation points for a user who cancelled a booking
+ * HTTP Cloud Function - can be called from client or other services via HTTP
+ */
+exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  if (!userId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  try {
+    const result = await deductReputationForCancellationInternal(userId);
+    return {success: true, data: result};
+  } catch (error) {
+    console.error("Error deducting reputation for cancellation:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Failed to deduct reputation points",
+      error,
+    );
+  }
+});
+
+// Export the internal function for use in other cloud functions
+exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
+
+/**
  * Process a review and update reputations for both client and provider
  * HTTP Cloud Function - can be called from client or other services via HTTP
  */
@@ -761,59 +853,38 @@ exports.processReviewForReputation = functions.https.onCall(async (data, _contex
 exports.processReviewForReputationInternal = processReviewForReputationInternal;
 
 /**
- * Get reputation score for a user
- * Public query function that anyone can call
+ * Internal function to check the user reputation
+ * Can be called directly from other cloud functions
+ * @param {string} userId -  User principal as text
+ * @return {Promise<Object>} Result object
  */
-exports.getReputationScore = functions.https.onCall(async (data, _context) => {
-  // Extract payload
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  console.log("🔄 Get Reputation Score Payload:", {userId});
-
-  if (!userId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "User ID is required",
-    );
-  }
-
+async function checkUserReputationInternal(userId) {
   try {
-    // First, try to get reputation from Firestore (where admin updates are stored)
-    console.log(`🔍 Checking Firestore for reputation data for ${userId}`);
-    const userDoc = await db.collection("users").doc(userId).get();
-
-    if (userDoc.exists && userDoc.data().reputationScore !== undefined) {
-      const userData = userDoc.data();
-      console.log(`✅ Found reputation in Firestore for ${userId}:`, userData.reputationScore);
-      return {
-        success: true,
-        data: {
-          trustScore: userData.reputationScore || 50,
-          trustLevel: userData.reputationLevel || "New",
-          completedBookings: userData.completedBookings || 0,
-        },
-      };
-    }
-
-    // If not in Firestore, try IC canister
-    console.log(`📞 No Firestore data, trying IC canister for ${userId}`);
+    // Check in IC canister
+    console.log(`📞 [checkUserReputationInternal] Checking User Reputation 
+      for ${userId}`);
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(userId);
 
     const result = await reputationActor.getReputationScore(principal);
 
+    console.log("Reputation result", result);
+
     if ("ok" in result) {
       console.log(`✅ Reputation score retrieved from IC for ${userId}`);
       return {
         success: true,
-        data: result.ok,
+        data: {
+          trustScore: Number(result.ok.trustScore),
+          trustLevel: result.ok.trustLevel?.toString(),
+          completedBookings: Number(result.ok.completedBookings),
+        },
       };
     } else {
       console.error(`❌ Error from canister: ${result.err}`);
-      // Return default reputation instead of throwing error
       return {
-        success: true,
+        success: false,
+        error: result.err || "Failed to get reputation from canister",
         data: {
           trustScore: 50,
           trustLevel: "New",
@@ -822,11 +893,10 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
       };
     }
   } catch (error) {
-    console.error("Error getting reputation score:", error);
-    // Return default reputation instead of throwing error
-    console.log(`⚠️ Returning default reputation for ${userId} due to error`);
+    console.error("Error in checkUserReputationInternal:", error);
     return {
-      success: true,
+      success: false,
+      error: error.message || "Error checking reputation",
       data: {
         trustScore: 50,
         trustLevel: "New",
@@ -834,4 +904,11 @@ exports.getReputationScore = functions.https.onCall(async (data, _context) => {
       },
     };
   }
-});
+}
+
+exports.checkUserReputationInternal = checkUserReputationInternal;
+
+// Export helper functions for use in other modules
+exports.getManualReputationIdl = getManualReputationIdl;
+exports.getCanisterConfig = getCanisterConfig;
+exports.createReputationActor = createReputationActor;

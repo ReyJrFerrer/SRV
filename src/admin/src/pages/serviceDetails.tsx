@@ -1,43 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { Dialog } from "@headlessui/react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
   useServiceImages,
   useServiceCertificates,
 } from "../../../frontend/src/hooks/useMediaLoader";
-import {
-  ArrowLeftIcon,
-  BriefcaseIcon,
-  StarIcon,
-  UserIcon,
-  PhotoIcon,
-  AcademicCapIcon,
-  MapPinIcon,
-  CalendarDaysIcon,
-  TagIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { CameraIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, AcademicCapIcon } from "@heroicons/react/24/solid";
 import {
   adminServiceCanister,
   ServiceData,
 } from "../services/adminServiceCanister";
 import { serviceCanisterService } from "../../../frontend/src/services/serviceCanisterService";
-import { useAdmin } from "../hooks/useAdmin";
-
-interface UserData {
-  id: string;
-  name: string;
-  phone: string;
-  profilePicture?: {
-    imageUrl: string;
-    thumbnailUrl: string;
-  };
-  reputationScore?: number;
-}
+import {
+  ServiceDetailsHeader,
+  ServiceHeroCard,
+  LocationAvailability,
+  ServicePackages,
+  MediaGallery,
+  ServiceDetailsModals,
+} from "../components";
 
 // Helper to format time (e.g., "09:00" -> "9:00 AM")
 const formatTime = (time: string) => {
@@ -50,73 +30,17 @@ const formatTime = (time: string) => {
   return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
 };
 
-// Star Rating Display Component
-const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
-  rating,
-  maxStars = 5,
-}) => (
-  <div className="flex items-center">
-    {[...Array(maxStars)].map((_, index) => {
-      const starValue = index + 1;
-      return (
-        <StarIcon
-          key={index}
-          className={`h-5 w-5 ${starValue <= Math.round(rating) ? "text-yellow-400" : "text-gray-300"}`}
-        />
-      );
-    })}
-  </div>
-);
-
-// Reputation Score Component
-const ReputationScore: React.FC<{ reputationScore: number }> = ({
-  reputationScore,
-}) => {
-  const score = reputationScore || 50;
-  let iconColor = "text-blue-600";
-  let bgColor = "bg-blue-50";
-  let textColor = "text-blue-700";
-
-  if (score >= 80) {
-    iconColor = "text-blue-600";
-    bgColor = "bg-blue-50";
-    textColor = "text-blue-700";
-  } else if (score >= 60) {
-    iconColor = "text-blue-400";
-    bgColor = "bg-blue-100";
-    textColor = "text-blue-700";
-  } else if (score >= 40) {
-    iconColor = "text-yellow-400";
-    bgColor = "bg-yellow-50";
-    textColor = "text-yellow-700";
-  } else {
-    iconColor = "text-yellow-600";
-    bgColor = "bg-yellow-100";
-    textColor = "text-yellow-700";
-  }
-
-  return (
-    <span
-      className={`mb-2 mt-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
-      style={{ minWidth: 0 }}
-    >
-      <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
-      <span className="mr-2">Reputation Score:</span>
-      <span className="font-bold">{score}</span>
-    </span>
-  );
-};
-
 const ServiceDetailsPage: React.FC = () => {
-  const { serviceId, userId } = useParams<{
-    serviceId: string;
-    userId: string;
+  const params = useParams<{
+    serviceId?: string;
+    userId?: string;
+    id?: string; // Support both :id and :serviceId
   }>();
-  const navigate = useNavigate();
+  const serviceId = params.serviceId || params.id;
+  const userId = params.userId;
   const location = useLocation();
-  const { users: backendUsers } = useAdmin();
+  const navigate = useNavigate();
   const [service, setService] = useState<ServiceData | null>(null);
-  const [provider, setProvider] = useState<UserData | null>(null);
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -293,51 +217,6 @@ const ServiceDetailsPage: React.FC = () => {
           setLoading(false);
           return;
         }
-
-        // Find provider information
-        const providerUser = backendUsers.find(
-          (u) => u.id.toString() === userId,
-        );
-        if (providerUser) {
-          // Get real reputation data for provider
-          try {
-            const reputation =
-              await adminServiceCanister.getUserReputation(userId);
-            setProvider({
-              id: providerUser.id.toString(),
-              name: providerUser.name,
-              phone: providerUser.phone,
-              profilePicture:
-                providerUser.profilePicture &&
-                providerUser.profilePicture.length > 0 &&
-                providerUser.profilePicture[0]
-                  ? {
-                      imageUrl: providerUser.profilePicture[0].imageUrl,
-                      thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
-                    }
-                  : undefined,
-              reputationScore: reputation.reputationScore,
-            });
-          } catch (err) {
-            console.error("Error fetching provider reputation:", err);
-            // Fallback to default
-            setProvider({
-              id: providerUser.id.toString(),
-              name: providerUser.name,
-              phone: providerUser.phone,
-              profilePicture:
-                providerUser.profilePicture &&
-                providerUser.profilePicture.length > 0 &&
-                providerUser.profilePicture[0]
-                  ? {
-                      imageUrl: providerUser.profilePicture[0].imageUrl,
-                      thumbnailUrl: providerUser.profilePicture[0].thumbnailUrl,
-                    }
-                  : undefined,
-              reputationScore: 50, // Default value since Profile doesn't have reputationScore // Use actual reputation score
-            });
-          }
-        }
       } catch (err) {
         console.error("Error loading service data:", err);
         setError("Failed to load service data");
@@ -347,7 +226,7 @@ const ServiceDetailsPage: React.FC = () => {
     };
 
     loadServiceData();
-  }, [serviceId, userId, backendUsers]);
+  }, [serviceId, userId]);
 
   const handleDeleteService = async () => {
     if (!service || !serviceId) return;
@@ -367,40 +246,6 @@ const ServiceDetailsPage: React.FC = () => {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "in_progress":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   if (loading) {
@@ -454,590 +299,80 @@ const ServiceDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-8">
-          <button
-            onClick={handleBackClick}
-            className="rounded-full p-2 transition-colors hover:bg-blue-100"
-            aria-label="Go back"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
-          </button>
-          <h1 className="text-2xl font-bold text-black">Service Details</h1>
-          <div className="w-8"></div>
-        </div>
-      </header>
-
-      {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Delete Service?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to delete{" "}
-              <b>{service?.title || "this service"}</b>? This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleDeleteService}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ServiceDetailsHeader onBackClick={handleBackClick} />
 
       {/* Main Content */}
-      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
+      <main className="mx-auto max-w-[1600px] space-y-10 px-4 py-8 sm:px-8">
         {/* Hero Card */}
-        <section className="relative mt-8 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
-          {/* Hero Image */}
-          <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-            {serviceImages &&
-            serviceImages.length > 0 &&
-            serviceImages[0]?.dataUrl ? (
-              <img
-                src={serviceImages[0].dataUrl}
-                alt="Service Hero"
-                className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-                <CameraIcon className="h-16 w-16 text-gray-400" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
-          </div>
-          {/* Card Content */}
-          <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
-            {/* Service Info */}
-            <div className="min-w-0 flex-1">
-              {/* Mobile: Green dot next to name */}
-              <div className="mb-2 block md:hidden">
-                <div className="flex flex-col items-start gap-1">
-                  <div className="flex w-full flex-wrap items-center gap-2">
-                    <h2
-                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
-                      title={service.title}
-                      style={{ wordBreak: "break-word" }}
-                    >
-                      {service.title}
-                    </h2>
-                    {/* Green dot for availability */}
-                    {service.status === "active" && (
-                      <span
-                        className="inline-block h-3 w-3 rounded-full bg-green-500"
-                        title="Available"
-                      ></span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Desktop: Name, availability note */}
-              <div className="mb-2 hidden items-center gap-2 md:flex">
-                <h2
-                  className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
-                  title={service.title}
-                >
-                  {service.title}
-                </h2>
-                {/* Availability note */}
-                <span
-                  className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                    service.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                  title={
-                    service.status === "active"
-                      ? "Service is available"
-                      : "Service is unavailable"
-                  }
-                >
-                  {service.status === "active" ? "Available" : "Unavailable"}
-                </span>
-              </div>
-              {/* Category */}
-              <div className="mb-4 flex items-center gap-2 text-blue-600">
-                <TagIcon className="h-5 w-5" />
-                <span className="text-lg font-medium">{service.category}</span>
-              </div>
-              {/* Price and Rating */}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
-                <div className="flex items-center gap-2">
-                  <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-3xl font-bold text-blue-900">
-                    {formatCurrency(service.price, service.currency)}
-                  </span>
-                </div>
-                {service.rating && (
-                  <div className="flex items-center gap-2">
-                    <StarRatingDisplay rating={service.rating} />
-                    <span className="text-lg font-medium text-blue-800">
-                      {service.rating.toFixed(1)} ({service.reviewCount}{" "}
-                      reviews)
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        <ServiceHeroCard
+          service={service}
+          heroImageUrl={
+            serviceImages && serviceImages.length > 0
+              ? serviceImages[0]?.dataUrl || null
+              : null
+          }
+          isLoadingImages={isLoadingImages}
+        />
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Left Column - Main Content */}
-          <div className="space-y-8 lg:col-span-2">
-            {/* Service Description */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                <DocumentTextIcon className="h-6 w-6 text-blue-400" />
-                Service Description
-              </h3>
-              <p className="whitespace-pre-wrap text-gray-700">
-                {service.description}
-              </p>
-            </section>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Left Column */}
+          <div className="flex flex-col gap-8">
+            <LocationAvailability
+              location={service.location}
+              weeklySchedule={service.weeklySchedule}
+              formatTime={formatTime}
+            />
 
-            {/* Service Images */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                <PhotoIcon className="h-6 w-6 text-blue-400" />
-                Service Images
-              </h3>
-              {isLoadingImages ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center text-blue-300">
-                    <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-blue-300 border-t-blue-600"></div>
-                    <p>Loading images...</p>
-                  </div>
-                </div>
-              ) : serviceImages && serviceImages.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {serviceImages.map((image: any, index: number) => {
-                    const url = image.dataUrl || image.url;
-                    if (!url) return null;
-
-                    return (
-                      <button
-                        key={index}
-                        className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
-                        onClick={() => {
-                          setPreviewUrl(url);
-                          setPreviewType(isPdfFile(url) ? "pdf" : "image");
-                        }}
-                        type="button"
-                        tabIndex={0}
-                        aria-label="Inspect image"
-                      >
-                        {image.error ? (
-                          <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                            <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
-                            <p className="mt-1">Failed to load</p>
-                          </div>
-                        ) : (
-                          <img
-                            src={url}
-                            alt={`Service image ${index + 1}`}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                            onLoad={(e) => {
-                              console.log(
-                                "Service image loaded successfully:",
-                                url,
-                              );
-                              console.log(
-                                "Image natural dimensions:",
-                                e.currentTarget.naturalWidth,
-                                "x",
-                                e.currentTarget.naturalHeight,
-                              );
-                            }}
-                            onError={(e) => {
-                              console.log(
-                                "Service image failed to load:",
-                                url,
-                                image.error,
-                              );
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center text-blue-300">
-                    <CameraIcon className="mx-auto mb-4 h-12 w-12" />
-                    <p>No images available</p>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            {/* Location & Availability */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                <MapPinIcon className="h-6 w-6 text-blue-400" />
-                Location & Availability
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-blue-700">
-                    Full Address
-                  </label>
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
-                    {service.location?.city || "Not specified"}
-                    {service.location?.state && `, ${service.location.state}`}
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-700">
-                    <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
-                    Availability
-                  </label>
-                  <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
-                    {service.weeklySchedule?.filter((day) => {
-                      const availability = day.availability || {
-                        isAvailable: false,
-                        slots: [],
-                      };
-                      return availability.isAvailable;
-                    }).length ? (
-                      service.weeklySchedule
-                        .filter((day) => {
-                          const availability = day.availability || {
-                            isAvailable: false,
-                            slots: [],
-                          };
-                          return availability.isAvailable;
-                        })
-                        .map((day, index) => {
-                          const availability = day.availability || {
-                            isAvailable: false,
-                            slots: [],
-                          };
-                          const dayNames = [
-                            "Sunday",
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                          ];
-                          const dayName =
-                            dayNames[day.dayOfWeek] || `Day ${day.dayOfWeek}`;
-
-                          return (
-                            <div
-                              key={index}
-                              className="flex min-w-[140px] flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow"
-                            >
-                              <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
-                                <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
-                                {dayName}
-                              </span>
-                              {availability.slots &&
-                              availability.slots.length > 0 ? (
-                                <ul className="ml-1 space-y-1">
-                                  {availability.slots.map(
-                                    (slot: any, idx: number) => (
-                                      <li
-                                        key={idx}
-                                        className="flex items-center gap-2 text-xs text-blue-900"
-                                      >
-                                        <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
-                                          {formatTime(slot.startTime)} -{" "}
-                                          {formatTime(slot.endTime)}
-                                        </span>
-                                      </li>
-                                    ),
-                                  )}
-                                </ul>
-                              ) : (
-                                <span className="text-xs text-blue-400">
-                                  No slots
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })
-                    ) : (
-                      <span className="text-blue-400">Not specified</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Service Packages */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <div className="flex items-center justify-between border-b pb-3">
-                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                  <BriefcaseIcon className="h-6 w-6 text-blue-400" />
-                  Service Packages ({packages.length})
-                </h3>
-              </div>
-              {packages.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {packages.map((pkg) => (
-                    <div
-                      key={pkg.id}
-                      className="flex flex-col justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 p-4 shadow transition-shadow hover:shadow-lg"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h4 className="break-words text-lg font-semibold text-blue-900">
-                            {pkg.title}
-                          </h4>
-                          <span className="text-lg font-bold text-green-600">
-                            ₱{pkg.price.toFixed(2)}
-                          </span>
-                        </div>
-                        <p className="mt-1 break-words text-sm text-blue-700">
-                          {pkg.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-blue-300">
-                  <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
-                  <p>No packages available</p>
-                </div>
-              )}
-            </section>
+            <ServicePackages packages={packages} />
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-8">
-            {/* Service Information */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                <BriefcaseIcon className="h-6 w-6 text-blue-400" />
-                Service Information
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Category
-                  </label>
-                  <p className="text-gray-900">{service.category}</p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Price
-                  </label>
-                  <p className="text-2xl font-bold text-blue-800">
-                    {formatCurrency(service.price, service.currency)}
-                  </p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Status
-                  </label>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(service.status)}`}
-                  >
-                    {service.status.replace("_", " ")}
-                  </span>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Created Date
-                  </label>
-                  <p className="text-gray-900">
-                    {formatDate(service.createdDate)}
-                  </p>
-                </div>
-              </div>
-            </section>
+          {/* Right Column */}
+          <div className="flex flex-col gap-8">
+            <MediaGallery
+              title="Certifications"
+              icon={<AcademicCapIcon className="h-6 w-6 text-blue-400" />}
+              items={serviceCertificates || []}
+              isLoading={isLoadingCertificates}
+              emptyIcon={<AcademicCapIcon className="mx-auto mb-2 h-8 w-8" />}
+              emptyMessage="No certificates available"
+              onItemClick={(url, type) => {
+                setPreviewUrl(url);
+                setPreviewType(type);
+              }}
+              isPdfFile={isPdfFile}
+            />
 
-            {/* Provider Information */}
-            {provider && (
-              <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                  <UserIcon className="h-6 w-6 text-blue-400" />
-                  Provider Information
-                </h3>
-                <div className="mb-4 flex items-center space-x-3">
-                  {provider.profilePicture ? (
-                    <img
-                      src={provider.profilePicture.imageUrl}
-                      alt={provider.name}
-                      className="h-12 w-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-300">
-                      <UserIcon className="h-6 w-6 text-gray-600" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {provider.name}
-                    </p>
-                    <p className="text-sm text-gray-500">{provider.phone}</p>
-                  </div>
-                </div>
-
-                {provider.reputationScore && (
-                  <ReputationScore reputationScore={provider.reputationScore} />
-                )}
-
-                <div className="mt-4">
-                  <Link
-                    to={`/user/${provider.id}`}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                  >
-                    View Provider Profile →
-                  </Link>
-                </div>
-              </section>
-            )}
-
-            {/* Certifications */}
-            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
-                <AcademicCapIcon className="h-6 w-6 text-blue-400" />
-                Certifications
-              </h3>
-              {serviceCertificates && serviceCertificates.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {serviceCertificates.map(
-                    (certificate: any, index: number) => {
-                      const url = certificate.dataUrl || certificate.url;
-                      if (!url) return null;
-
-                      return (
-                        <button
-                          key={index}
-                          className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
-                          onClick={() => {
-                            setPreviewUrl(url);
-                            setPreviewType(isPdfFile(url) ? "pdf" : "image");
-                          }}
-                          type="button"
-                          tabIndex={0}
-                          aria-label="Inspect certificate"
-                        >
-                          {certificate.error ? (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                              <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
-                              <p className="mt-1">Failed to load</p>
-                            </div>
-                          ) : (
-                            <img
-                              src={url}
-                              alt={`Certificate ${index + 1}`}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                              onLoad={(e) => {
-                                console.log(
-                                  "Certificate loaded successfully:",
-                                  url,
-                                );
-                                console.log(
-                                  "Certificate natural dimensions:",
-                                  e.currentTarget.naturalWidth,
-                                  "x",
-                                  e.currentTarget.naturalHeight,
-                                );
-                              }}
-                              onError={(e) => {
-                                console.log(
-                                  "Certificate failed to load:",
-                                  url,
-                                  certificate.error,
-                                );
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          )}
-                        </button>
-                      );
-                    },
-                  )}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-blue-300">
-                  <AcademicCapIcon className="mx-auto mb-2 h-8 w-8" />
-                  <p>No certificates available</p>
-                </div>
-              )}
-            </section>
+            <MediaGallery
+              title="Service Images"
+              icon={<PhotoIcon className="h-6 w-6 text-blue-400" />}
+              items={serviceImages || []}
+              isLoading={isLoadingImages}
+              emptyMessage="No images available"
+              onItemClick={(url, type) => {
+                setPreviewUrl(url);
+                setPreviewType(type);
+              }}
+              isPdfFile={isPdfFile}
+            />
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={isDeleting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:opacity-60"
-          >
-            <TrashIcon className="h-6 w-6" />
-            {isDeleting ? "Deleting..." : "Delete Service"}
-          </button>
-        </div>
+        {/* Action Buttons and Modals */}
+        <ServiceDetailsModals
+          showDeleteConfirm={showDeleteConfirm}
+          isDeleting={isDeleting}
+          serviceTitle={service.title}
+          previewUrl={previewUrl}
+          previewType={previewType}
+          onDeleteConfirm={handleDeleteService}
+          onDeleteCancel={() => setShowDeleteConfirm(false)}
+          onPreviewClose={() => setPreviewUrl(null)}
+          onDeleteClick={() => setShowDeleteConfirm(true)}
+        />
         {/* Add space below the buttons */}
         <div className="h-8" />
       </main>
-
-      {/* Image/PDF Preview Modal */}
-      <Dialog
-        open={!!previewUrl}
-        onClose={() => setPreviewUrl(null)}
-        className="fixed inset-0 z-[100] flex items-center justify-center"
-      >
-        <div
-          className="fixed inset-0 bg-black/60"
-          aria-hidden="true"
-          onClick={() => setPreviewUrl(null)}
-        />
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          <button
-            className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
-            onClick={() => setPreviewUrl(null)}
-            aria-label="Close preview"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-          <div className="flex max-h-[90vh] max-w-[90vw] flex-col items-center rounded-lg bg-white p-4 shadow-2xl">
-            {previewUrl && previewType === "image" && (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-[70vh] max-w-[80vw] rounded-lg object-contain"
-              />
-            )}
-            {previewUrl && previewType === "pdf" && (
-              <iframe
-                src={previewUrl}
-                title="PDF Preview"
-                className="h-[70vh] w-[80vw] rounded-lg border"
-              />
-            )}
-          </div>
-        </div>
-      </Dialog>
     </div>
   );
 };

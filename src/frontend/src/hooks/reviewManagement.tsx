@@ -213,7 +213,6 @@ export const useReviewManagement = (
 
   // Error handling functions
   const handleReviewError = useCallback((error: any, operation: string) => {
-    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error?.message || `Failed to ${operation}`;
     setError(errorMessage);
   }, []);
@@ -288,7 +287,6 @@ export const useReviewManagement = (
           return null;
         }
       } catch (error) {
-        //console.error(`❌ Error loading profile for ${userId}:`, error);
         return null;
       } finally {
         setLoadingState("profiles", false);
@@ -421,8 +419,6 @@ export const useReviewManagement = (
 
         return enhancedReview;
       } catch (error) {
-        //console.error(`❌ Error enriching review ${review.id}:`, error);
-
         // Return review with minimal enhancement
         return {
           ...review,
@@ -644,32 +640,33 @@ export const useReviewManagement = (
     [handleReviewError],
   );
 
-  const getUserReviews = useCallback(
-    async (userId?: string): Promise<Review[]> => {
-      const targetUserId = userId || getCurrentUserId();
-      if (!targetUserId) return [];
+  const getUserReviews = useMemo(
+    () =>
+      async (userId?: string): Promise<Review[]> => {
+        const targetUserId = userId || getCurrentUserId();
+        if (!targetUserId) return [];
 
-      try {
-        setLoadingState("reviews", true);
-        const userReviews =
-          await reviewCanisterService.getUserReviews(targetUserId);
+        try {
+          setLoadingState("reviews", true);
+          const userReviews =
+            await reviewCanisterService.getUserReviews(targetUserId);
 
-        // Enrich with profile data if loading for current user
-        if (!userId || userId === getCurrentUserId()) {
-          const enrichedReviews = await Promise.all(
-            userReviews.map((review) => enrichReviewWithProfileData(review)),
-          );
-          setReviews(enrichedReviews);
+          // Enrich with profile data if loading for current user
+          if (!userId || userId === getCurrentUserId()) {
+            const enrichedReviews = await Promise.all(
+              userReviews.map((review) => enrichReviewWithProfileData(review)),
+            );
+            setReviews(enrichedReviews);
+          }
+
+          return userReviews;
+        } catch (error) {
+          handleReviewError(error, `get user reviews for ${targetUserId}`);
+          return [];
+        } finally {
+          setLoadingState("reviews", false);
         }
-
-        return userReviews;
-      } catch (error) {
-        handleReviewError(error, `get user reviews for ${targetUserId}`);
-        return [];
-      } finally {
-        setLoadingState("reviews", false);
-      }
-    },
+      },
     [
       getCurrentUserId,
       setLoadingState,
@@ -996,7 +993,6 @@ export const useReviewManagement = (
           await refreshReviews();
           break;
         default:
-        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserReviews, loadUserProfile, refreshReviews],
@@ -1008,9 +1004,7 @@ export const useReviewManagement = (
       try {
         const stats = await reviewCanisterService.getReviewStatistics();
         setStatistics(stats);
-      } catch (error) {
-        //console.warn("Failed to load review statistics:", error);
-      }
+      } catch (error) {}
     };
 
     loadStatistics();
@@ -1024,7 +1018,6 @@ export const useReviewManagement = (
         const newAnalytics = calculateAnalytics();
         setAnalytics(newAnalytics);
       } catch (error) {
-        //console.error("Error calculating analytics:", error);
       } finally {
         setLoadingState("analytics", false);
       }

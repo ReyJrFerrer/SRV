@@ -1,10 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
 const {
   NOTIFICATION_TYPES,
   USER_TYPES,
   generateNotificationHref,
-  sendFCMNotification,
+  sendOneSignalNotification,
 } = require("./notification");
 
 const db = admin.firestore();
@@ -34,7 +35,6 @@ function generateId() {
 
 /**
  * Create a new conversation (called after booking completion)
- * Mirrors: createConversation(clientId: Principal, providerId: Principal)
  */
 exports.createConversation = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -78,7 +78,6 @@ exports.createConversation = functions.https.onCall(async (data, context) => {
       .get();
 
     if (!existingConversations.empty) {
-      // Return existing conversation
       const existing = existingConversations.docs[0];
       return {
         success: true,
@@ -220,15 +219,15 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
         conversationId: conversationId,
         senderId: senderId,
         receiverId: receiverId,
-        messageType: {Text: null}, // Mirror Motoko variant structure
+        messageType: {Text: null},
         content: {
-          encryptedText: content.trim(), // Not actually encrypted for now
+          encryptedText: content.trim(),
           encryptionKey: "", // Placeholder for future encryption
         },
-        attachment: [], // Empty array mirrors Motoko's null
-        status: {Sent: null}, // Mirror Motoko variant structure
+        attachment: [],
+        status: {Sent: null},
         createdAt: now,
-        readAt: [], // Empty array mirrors Motoko's null
+        readAt: [],
       };
 
       const messageRef = db.collection("messages").doc(messageId);
@@ -286,7 +285,7 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
           ),
           relatedEntityId: conversationId,
           status: "unread",
-          createdAt: new Date(),
+          createdAt: FieldValue.serverTimestamp(),
           metadata: {
             senderId: senderId,
             senderName: senderName,
@@ -297,15 +296,22 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 
         await db.collection("notifications").doc(notificationId).set(notificationData);
 
-        // Send FCM push notification (non-blocking)
-        sendFCMNotification(receiverId, notificationData).catch((error) => {
-          console.error("Failed to send FCM notification for chat message:", error);
+        console.log(`✅ Chat notification created in Firestore:`, {
+          notificationId,
+          userId: receiverId,
+          userType: receiverUserType,
+          type: NOTIFICATION_TYPES.CHAT_MESSAGE,
+          title: notificationData.title,
+        });
+
+        // Send OneSignal push notification (non-blocking)
+        sendOneSignalNotification(receiverId, notificationData).catch((error) => {
+          console.error("Failed to send OneSignal notification for chat message:", error);
         });
 
         console.log(`Chat notification created and sent to ${receiverId}`);
       }
     } catch (notificationError) {
-      // Don't fail the message send if notification fails
       console.error("Error creating chat notification:", notificationError);
     }
 
@@ -325,8 +331,13 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 /**
  * Get all conversations for the current user
  * Mirrors: getMyConversations()
+ * Admin override: If userId is provided in data and user is admin, use that userId
  */
 exports.getMyConversations = functions.https.onCall(async (data, context) => {
+  // Extract payload
+  const payload = data.data || data;
+  const {userId: requestedUserId} = payload;
+
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -336,19 +347,30 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const userId = authInfo.uid;
+  const userId = (authInfo.isAdmin && requestedUserId) ? requestedUserId : authInfo.uid;
+
+  // Log for debugging admin queries
+  if (authInfo.isAdmin && requestedUserId) {
+    console.log(`[getMyConversations] Admin query for userId: ${userId}`);
+  }
 
   try {
     // Find all conversations where user is either client or provider
     const clientConversationsSnapshot = await db
       .collection("conversations")
       .where("clientId", "==", userId)
+      .where("isActive", "==", true)
       .get();
 
     const providerConversationsSnapshot = await db
       .collection("conversations")
       .where("providerId", "==", userId)
+      .where("isActive", "==", true)
       .get();
+
+    console.log(`[getMyConversations] Found ${clientConversationsSnapshot.size} 
+      client conversations and ${providerConversationsSnapshot.size} 
+      provider conversations for userId: ${userId}`);
 
     // Combine and deduplicate conversations
     const conversationMap = new Map();
@@ -429,7 +451,7 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
   }
 
   try {
-    // Verify user is part of conversation
+    // Verify user is part of conversation (unless admin)
     const conversationDoc = await db
       .collection("conversations")
       .doc(conversationId)
@@ -444,6 +466,7 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
 
     const conversation = conversationDoc.data();
     if (
+      !authInfo.isAdmin &&
       userId !== conversation.clientId &&
       userId !== conversation.providerId
     ) {
@@ -492,7 +515,6 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
 
 /**
  * Mark all messages in a conversation as read
- * Mirrors: markMessagesAsRead(conversationId: Text)
  */
 exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -519,8 +541,9 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Use transaction for atomic update
-    return await db.runTransaction(async (transaction) => {
+    // Step 1: Atomically update the unread count in a transaction.
+    // This is a quick operation to avoid lock contention.
+    await db.runTransaction(async (transaction) => {
       const conversationRef = db.collection("conversations").doc(conversationId);
       const conversationDoc = await transaction.get(conversationRef);
 
@@ -551,28 +574,30 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
       transaction.update(conversationRef, {
         unreadCount: updatedUnreadCount,
       });
+    });
 
-      // Mark all messages as read for this user
+    // Step 2: Update all messages outside the transaction using a batched write.
+    // This is much more efficient for bulk updates and avoids timeouts.
+    const messagesSnapshot = await db
+      .collection("messages")
+      .where("conversationId", "==", conversationId)
+      .where("receiverId", "==", userId)
+      .where("readAt", "==", [])
+      .get();
+
+    if (!messagesSnapshot.empty) {
+      const batch = db.batch();
       const now = new Date().toISOString();
-      const messagesSnapshot = await db
-        .collection("messages")
-        .where("conversationId", "==", conversationId)
-        .where("receiverId", "==", userId)
-        .where("readAt", "==", [])
-        .get();
-
       messagesSnapshot.forEach((doc) => {
-        transaction.update(doc.ref, {
-          status: {Read: null}, // Update status to Read
-          readAt: [now], // Array with timestamp mirrors Motoko's optional
+        batch.update(doc.ref, {
+          status: {Read: null},
+          readAt: [now],
         });
       });
+      await batch.commit();
+    }
 
-      return {
-        success: true,
-        data: true,
-      };
-    });
+    return {success: true, data: true};
   } catch (error) {
     console.error("Error marking messages as read:", error);
     if (error instanceof functions.https.HttpsError) {

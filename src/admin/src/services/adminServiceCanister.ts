@@ -3,6 +3,7 @@ import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 // Keep some Motoko types for compatibility during migration
 import { notificationCanisterService } from "../../../frontend/src/services/notificationCanisterService";
+import reputationCanisterService from "../../../frontend/src/services/reputationCanisterService";
 
 // Get Firebase instances from singleton
 const auth = getFirebaseAuth();
@@ -140,43 +141,13 @@ export interface FrontendUserRoleAssignment {
   assignedAt: Date;
 }
 
-export interface FrontendRemittanceOrder {
-  id: string;
-  status:
-    | "AwaitingPayment"
-    | "PaymentSubmitted"
-    | "PaymentValidated"
-    | "Cancelled"
-    | "Settled";
-  serviceType: string;
-  serviceProviderId: string;
-  amount: number; // in PHP (converted from centavos)
-  commissionAmount: number; // in PHP (converted from centavos)
-  paymentMethod: string;
-  bookingId?: string;
-  serviceId?: string;
-  commissionRuleId: string;
-  commissionVersion: number;
-  paymentProofMediaIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  paymentSubmittedAt?: Date;
-  validatedAt?: Date;
-  validatedBy?: string;
-  settledAt?: Date;
-}
-
 export interface FrontendMediaItem {
   id: string;
   fileName: string;
   url: string;
   thumbnailUrl?: string;
   contentType: string;
-  mediaType:
-    | "ServiceImage"
-    | "RemittancePaymentProof"
-    | "UserProfile"
-    | "ServiceCertificate";
+  mediaType: "ServiceImage" | "UserProfile" | "ServiceCertificate";
   fileSize: number;
   ownerId: string;
   validationStatus?: "Pending" | "Validated" | "Rejected"; // Only for ServiceCertificate
@@ -193,6 +164,7 @@ export interface FrontendSystemStats {
   settledBookings: number;
   totalRevenue: number;
   totalCommission: number;
+  totalTopups: number;
 }
 
 export class AdminServiceError extends Error {
@@ -257,6 +229,7 @@ const requireAuth = () => {
 
 /**
  * Helper function to send ticket status update notification
+ * Sends to both client and provider if ticket is related to a booking
  */
 const sendTicketStatusNotification = async (
   userId: string,
@@ -273,9 +246,55 @@ const sendTicketStatusNotification = async (
     const title = "Ticket Status Updated";
     const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatus} to ${statusText}.`;
 
+    // Fetch the report to check if it's related to a booking and determine user type
+    let relatedProviderId: string | undefined;
+    let relatedClientId: string | undefined;
+    let userType: "client" | "provider" = "client";
+
+    try {
+      // Use getReportById instead of getAllReports for better performance
+      // The Firebase function expects: data.data.data || data, so we wrap in data
+      const result = await callFirebaseFunction("getReportById", {
+        data: { reportId: ticketId },
+      });
+      if (result) {
+        const report = result as any;
+        // Parse the description to check for booking-related data and source
+        try {
+          const parsedData = JSON.parse(report.description || "{}");
+
+          // Determine user type based on source (always check this)
+          if (
+            parsedData.source === "provider_report" ||
+            parsedData.source === "provider_cancellation"
+          ) {
+            userType = "provider";
+          } else if (
+            parsedData.source === "client_report" ||
+            parsedData.source === "client_cancellation"
+          ) {
+            userType = "client";
+          }
+
+          // If ticket is related to a booking, get the related parties
+          if (parsedData.bookingId) {
+            relatedProviderId = parsedData.providerId;
+            relatedClientId = parsedData.clientId;
+          }
+        } catch (e) {
+          // Description might not be JSON, default to client
+          console.warn("Could not parse report description:", e);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch report data for notification:", e);
+      // Continue with default userType if we can't fetch the report
+    }
+
+    // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
       userId,
-      "client", // Assuming tickets are submitted by clients
+      userType,
       "generic",
       title,
       message,
@@ -289,8 +308,46 @@ const sendTicketStatusNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
+
+    // If ticket is related to a booking, send notification to the other party
+    if (relatedProviderId && relatedClientId) {
+      const otherPartyId =
+        userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyType = userId === relatedClientId ? "provider" : "client";
+
+      if (otherPartyId && otherPartyId !== userId) {
+        // Add a small delay to avoid rate limiting when sending multiple notifications
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        try {
+          await notificationCanisterService.createNotification(
+            otherPartyId,
+            otherPartyType,
+            "generic",
+            title,
+            message,
+            undefined,
+            {
+              ticketId,
+              oldStatus,
+              newStatus,
+              ticketTitle,
+            },
+          );
+          console.log(
+            `✅ [sendTicketStatusNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+          );
+        } catch (otherPartyError) {
+          console.error(
+            `⚠️ [sendTicketStatusNotification] Failed to notify related party ${otherPartyId}:`,
+            otherPartyError,
+          );
+          // Don't throw - the main notification was sent successfully
+        }
+      }
+    }
   } catch (error) {
     console.error(
       "❌ [sendTicketStatusNotification] Error sending notification:",
@@ -302,6 +359,7 @@ const sendTicketStatusNotification = async (
 
 /**
  * Helper function to send ticket comment notification
+ * Sends to both client and provider if ticket is related to a booking
  */
 const sendTicketCommentNotification = async (
   userId: string,
@@ -316,9 +374,55 @@ const sendTicketCommentNotification = async (
       ? `An internal comment has been added to your ticket "${ticketTitle}".`
       : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
 
+    // Fetch the report to check if it's related to a booking and determine user type
+    let relatedProviderId: string | undefined;
+    let relatedClientId: string | undefined;
+    let userType: "client" | "provider" = "client";
+
+    try {
+      // Use getReportById instead of getAllReports for better performance
+      // The Firebase function expects: data.data.data || data, so we wrap in data
+      const result = await callFirebaseFunction("getReportById", {
+        data: { reportId: ticketId },
+      });
+      if (result) {
+        const report = result as any;
+        // Parse the description to check for booking-related data and source
+        try {
+          const parsedData = JSON.parse(report.description || "{}");
+
+          // Determine user type based on source (always check this)
+          if (
+            parsedData.source === "provider_report" ||
+            parsedData.source === "provider_cancellation"
+          ) {
+            userType = "provider";
+          } else if (
+            parsedData.source === "client_report" ||
+            parsedData.source === "client_cancellation"
+          ) {
+            userType = "client";
+          }
+
+          // If ticket is related to a booking, get the related parties
+          if (parsedData.bookingId) {
+            relatedProviderId = parsedData.providerId;
+            relatedClientId = parsedData.clientId;
+          }
+        } catch (e) {
+          // Description might not be JSON, default to client
+          console.warn("Could not parse report description:", e);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch report data for notification:", e);
+      // Continue with default userType if we can't fetch the report
+    }
+
+    // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
       userId,
-      "client", // Assuming tickets are submitted by clients
+      userType,
       "generic",
       title,
       message,
@@ -332,8 +436,46 @@ const sendTicketCommentNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} for ticket ${ticketId}`,
+      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
+
+    // If ticket is related to a booking, send notification to the other party
+    if (relatedProviderId && relatedClientId) {
+      const otherPartyId =
+        userId === relatedClientId ? relatedProviderId : relatedClientId;
+      const otherPartyType = userId === relatedClientId ? "provider" : "client";
+
+      if (otherPartyId && otherPartyId !== userId) {
+        // Add a small delay to avoid rate limiting when sending multiple notifications
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        try {
+          await notificationCanisterService.createNotification(
+            otherPartyId,
+            otherPartyType,
+            "generic",
+            title,
+            message,
+            undefined,
+            {
+              ticketId,
+              ticketTitle,
+              commentText,
+              isInternal,
+            },
+          );
+          console.log(
+            `✅ [sendTicketCommentNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+          );
+        } catch (otherPartyError) {
+          console.error(
+            `⚠️ [sendTicketCommentNotification] Failed to notify related party ${otherPartyId}:`,
+            otherPartyError,
+          );
+          // Don't throw - the main notification was sent successfully
+        }
+      }
+    }
   } catch (error) {
     console.error(
       "❌ [sendTicketCommentNotification] Error sending notification:",
@@ -619,7 +761,8 @@ export const adminServiceCanister = {
       if (!result || !Array.isArray(result)) return [];
 
       return result.map((assignment: any) => ({
-        userId: assignment.userId,
+        // Handle both userId field and id field (id is the document ID)
+        userId: assignment.userId || assignment.id,
         role: "ADMIN" as const,
         scope: assignment.scope,
         assignedBy: assignment.assignedBy,
@@ -726,6 +869,7 @@ export const adminServiceCanister = {
         settledBookings: result.settledBookings,
         totalRevenue: result.totalRevenue,
         totalCommission: result.totalCommission,
+        totalTopups: result.totalTopups || 0,
       };
     } catch (error) {
       if (error instanceof AdminServiceError) throw error;
@@ -806,8 +950,20 @@ export const adminServiceCanister = {
           (result.data as any).message || "Failed to get bookings data",
         );
       }
-    } catch (error) {
-      console.error("❌ [getBookingsData] Error getting bookings data:", error);
+    } catch (error: any) {
+      // Suppress CORS errors in emulator - data gracefully falls back to systemStats
+      const isNetworkError =
+        error?.code === "ERR_FAILED" ||
+        error?.message?.includes("CORS") ||
+        error?.name === "FirebaseError" ||
+        (error?.code && error.code.includes("internal"));
+
+      if (!isNetworkError) {
+        console.error(
+          "❌ [getBookingsData] Error getting bookings data:",
+          error,
+        );
+      }
       return { bookings: [], commissionTransactions: [] };
     }
   },
@@ -961,16 +1117,32 @@ export const adminServiceCanister = {
   // User Management Functions
 
   /**
-   * Lock or unlock a user account
+   * Lock or unlock a user account with optional time-based suspension
+   * @param userId - User ID to lock/unlock
+   * @param locked - Whether to lock the account
+   * @param suspensionDurationDays - Duration in days (7, 30, custom number, or null for indefinite)
    */
-  async lockUserAccount(userId: string, locked: boolean): Promise<string> {
+  async lockUserAccount(
+    userId: string,
+    locked: boolean,
+    suspensionDurationDays?: number | null,
+  ): Promise<string> {
     try {
       requireAuth();
 
-      console.log("lockUserAccount called with:", { userId, locked });
+      console.log("lockUserAccount called with:", {
+        userId,
+        locked,
+        suspensionDurationDays,
+      });
       const result = await callFirebaseFunction("lockUserAccount", {
         userId,
         locked,
+        suspensionDurationDays: locked
+          ? suspensionDurationDays !== undefined
+            ? suspensionDurationDays
+            : null
+          : undefined,
       });
       return result || "User account updated successfully";
     } catch (error) {
@@ -984,24 +1156,27 @@ export const adminServiceCanister = {
   },
 
   /**
-   * Delete a user account
+   * Get all user lock statuses from Firestore
    */
-  async deleteUserAccount(userId: string): Promise<string> {
+  async getAllUserLockStatuses(): Promise<Record<string, boolean>> {
     try {
       requireAuth();
-      console.log("Calling deleteUserAccount with userId:", userId);
 
-      const result = await callFirebaseFunction("deleteUserAccount", {
-        userId,
-      });
-      console.log("Delete user account result:", result);
-      return result || "User account deleted successfully";
+      const callable = httpsCallable(functions, "getAllUserLockStatuses");
+      const result = await callable({ data: {} });
+
+      if ((result.data as any).success) {
+        return (result.data as any).lockStatuses || {};
+      } else {
+        throw new Error(
+          (result.data as any).message || "Failed to get user lock statuses",
+        );
+      }
     } catch (error) {
-      console.error("Error in deleteUserAccount:", error);
-      if (error instanceof AdminServiceError) throw error;
+      console.error("Error getting user lock statuses:", error);
       throw new AdminServiceError({
-        message: `Failed to delete user account: ${error}`,
-        code: "DELETE_USER_ACCOUNT_ERROR",
+        message: `Failed to get user lock statuses: ${error}`,
+        code: "GET_USER_LOCK_STATUSES_ERROR",
         details: error,
       });
     }
@@ -1143,22 +1318,33 @@ export const adminServiceCanister = {
     completedBookings: number;
   }> {
     try {
-      // Call Firebase function to get reputation data
-      const result = await callFirebaseFunction("getReputationScore", {
-        userId,
-      });
-      const reputation = result.data || result;
+      // Call IC canister directly using frontend service (same as clients/providers)
+      const reputationData =
+        await reputationCanisterService.getReputationScore(userId);
 
-      // Check if we got valid reputation data
-      if (reputation && typeof reputation.trustScore === "number") {
+      if (reputationData) {
+        // Convert the reputation data to match expected format
+        const trustLevel = reputationData.trustLevel?.hasOwnProperty("New")
+          ? "New"
+          : reputationData.trustLevel?.hasOwnProperty("Low")
+            ? "Low"
+            : reputationData.trustLevel?.hasOwnProperty("Medium")
+              ? "Medium"
+              : reputationData.trustLevel?.hasOwnProperty("High")
+                ? "High"
+                : "VeryHigh";
+
         return {
-          reputationScore: Math.round(Number(reputation.trustScore)), // trustScore is already 0-100
-          trustLevel: reputation.trustLevel?.toString() || "New",
-          completedBookings: Number(reputation.completedBookings || 0),
+          reputationScore: Math.round(Number(reputationData.trustScore)),
+          trustLevel: trustLevel,
+          completedBookings: Number(reputationData.completedBookings || 0),
         };
       } else {
         // Fallback to default values if data is invalid
-        console.warn(`Invalid reputation data for user ${userId}:`, reputation);
+        console.warn(
+          `Invalid reputation data for user ${userId}:`,
+          reputationData,
+        );
         return {
           reputationScore: 50, // Default score
           trustLevel: "New",
@@ -1167,19 +1353,7 @@ export const adminServiceCanister = {
       }
     } catch (error) {
       logError("Error fetching user reputation", error);
-
-      // If it's a 500 error, try to get reputation from local storage or return default
-      if (error instanceof Error && error.message.includes("INTERNAL")) {
-        console.warn(
-          `Firebase function error for user ${userId}, using default reputation`,
-        );
-        return {
-          reputationScore: 50, // Default score
-          trustLevel: "New",
-          completedBookings: 0,
-        };
-      }
-
+      // Return default reputation on error
       return {
         reputationScore: 50, // Default score
         trustLevel: "New",
@@ -1205,6 +1379,7 @@ export const adminServiceCanister = {
       completedAt?: string;
       rating?: number;
       review?: string;
+      location?: string;
     }>
   > {
     try {
@@ -1272,6 +1447,7 @@ export const adminServiceCanister = {
             completedAt: booking.completedDate || undefined,
             rating: booking.rating ? Number(booking.rating) : undefined,
             review: booking.review || undefined,
+            location: booking.location || undefined,
           };
         }),
       );
@@ -1350,13 +1526,29 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
+      // Validate certificateId is provided
+      if (!certificateId || certificateId.trim() === "") {
+        throw new AdminServiceError({
+          message: "Certificate ID (mediaId) is required",
+          code: "INVALID_CERTIFICATE_ID",
+        } as AdminServiceError);
+      }
+
+      // Pass payload directly - backend handles both data.data || data formats
+      const payload = {
+        certificateId: certificateId.trim(),
+        status,
+        reason: reason || undefined,
+      };
+
+      console.log(
+        "Calling updateCertificateValidationStatus with payload:",
+        payload,
+      );
+
       const result = await callFirebaseFunction(
         "updateCertificateValidationStatus",
-        {
-          certificateId,
-          status,
-          reason,
-        },
+        payload,
       );
       return result || `Certificate ${status.toLowerCase()} successfully`;
     } catch (error) {
@@ -1393,6 +1585,181 @@ export const adminServiceCanister = {
       return [];
     }
   },
+
+  /**
+   * Get conversations for a specific user (admin function)
+   */
+  async getUserConversations(userId: string): Promise<any[]> {
+    try {
+      requireAuth();
+
+      // Use the chat function but with admin override
+      // callFirebaseFunction already extracts the data property from {success: true, data: [...]}
+      const result = await callFirebaseFunction("getMyConversations", {
+        userId, // Pass userId for admin override in backend
+      });
+
+      // The result is already the data array (or message if no data)
+      // If result is an array, return it; otherwise return empty array
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      logError("Error fetching user conversations", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get messages for a specific conversation (admin function)
+   */
+  async getConversationMessages(
+    conversationId: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<any[]> {
+    try {
+      requireAuth();
+
+      const result = await callFirebaseFunction("getConversationMessages", {
+        conversationId,
+        limit,
+        offset,
+      });
+
+      // The result is already the data object { messages, hasMore, nextPageToken }
+      // Extract and adapt messages array
+      const messages = result?.messages || [];
+
+      // Adapt messages to extract content from encrypted format
+      return messages.map((msg: any) => ({
+        ...msg,
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : msg.content?.encryptedText || "",
+      }));
+    } catch (error) {
+      logError("Error fetching conversation messages", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get detailed reviews for a user (received, given as client, given as provider)
+   */
+  async getUserDetailedReviews(userId: string): Promise<{
+    receivedReviews: any[]; // Reviews RECEIVED (what providers wrote about this user)
+    givenAsClientReviews: any[]; // Reviews GIVEN as client (what user wrote about providers/services)
+    givenAsProviderReviews: any[]; // Reviews GIVEN as provider (what user wrote about clients)
+  }> {
+    try {
+      requireAuth();
+
+      // Get all review types in parallel (including hidden reviews for admin)
+      // Note: Payload must be wrapped in { data: {...} } to match client format
+      const [receivedResult, givenAsClientResult, givenAsProviderResult] =
+        await Promise.allSettled([
+          // Reviews RECEIVED: what providers wrote about this user (as client)
+          callFirebaseFunction("getClientProviderReviews", {
+            data: { clientId: userId, includeHidden: true },
+          }),
+          // Reviews GIVEN as CLIENT: what this user wrote about providers/services
+          callFirebaseFunction("getUserReviews", {
+            data: { userId: userId, includeHidden: true },
+          }),
+          // Reviews GIVEN as PROVIDER: what this user wrote about clients
+          callFirebaseFunction("getProviderReviewsByProvider", {
+            data: { providerId: userId, includeHidden: true },
+          }),
+        ]);
+
+      // callFirebaseFunction already extracts data from {success: true, data: [...]}
+      const receivedReviews =
+        receivedResult.status === "fulfilled" &&
+        Array.isArray(receivedResult.value)
+          ? receivedResult.value
+          : [];
+
+      const givenAsClientReviews =
+        givenAsClientResult.status === "fulfilled" &&
+        Array.isArray(givenAsClientResult.value)
+          ? givenAsClientResult.value
+          : [];
+
+      const givenAsProviderReviews =
+        givenAsProviderResult.status === "fulfilled" &&
+        Array.isArray(givenAsProviderResult.value)
+          ? givenAsProviderResult.value
+          : [];
+
+      return {
+        receivedReviews,
+        givenAsClientReviews,
+        givenAsProviderReviews,
+      };
+    } catch (error) {
+      logError("Error fetching user detailed reviews", error);
+      return {
+        receivedReviews: [],
+        givenAsClientReviews: [],
+        givenAsProviderReviews: [],
+      };
+    }
+  },
+
+  /**
+   * Delete a review (admin only - hides the review)
+   */
+  async deleteReview(reviewId: string): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("deleteReview", {
+        data: { reviewId },
+      });
+    } catch (error) {
+      logError("Error deleting review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Restore a review (admin only - makes hidden review visible)
+   */
+  async restoreReview(reviewId: string): Promise<void> {
+    try {
+      requireAuth();
+      await callFirebaseFunction("restoreReview", {
+        data: { reviewId },
+      });
+    } catch (error) {
+      logError("Error restoring review", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Bulk update review status (admin only)
+   */
+  async bulkUpdateReviewStatus(
+    reviewIds: string[],
+    status: "Visible" | "Hidden",
+  ): Promise<{
+    updated: string[];
+    errors: Array<{ reviewId: string; error: string }>;
+  }> {
+    try {
+      requireAuth();
+      const result = await callFirebaseFunction("bulkUpdateReviewStatus", {
+        data: { reviewIds, status },
+      });
+      return {
+        updated: result.updated || [],
+        errors: result.errors || [],
+      };
+    } catch (error) {
+      logError("Error bulk updating reviews", error);
+      throw error;
+    }
+  },
 };
 
 // Export individual functions for direct use
@@ -1415,7 +1782,7 @@ export const {
   getUserServicesAndBookings,
   getUserServiceCount,
   lockUserAccount,
-  deleteUserAccount,
+  getAllUserLockStatuses,
   updateUserReputation,
   updateCertificateValidationStatus,
   getValidatedCertificates,
@@ -1439,9 +1806,76 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
       description: report.description,
       status: report.status || "open",
       createdAt: report.createdAt || new Date().toISOString(),
+      attachments: report.attachments || [],
     }));
   } catch (error) {
     logError("Error fetching reports from Firebase", error);
+    return [];
+  }
+};
+
+// Get feedback statistics
+export const getFeedbackStats = async (): Promise<{
+  totalFeedback: number;
+  averageRating: number;
+  ratingDistribution: Array<[number, number]>;
+  totalWithComments: number;
+  latestFeedback: any | null;
+}> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("getFeedbackStats", {});
+
+    if (!result) {
+      return {
+        totalFeedback: 0,
+        averageRating: 0,
+        ratingDistribution: [],
+        totalWithComments: 0,
+        latestFeedback: null,
+      };
+    }
+
+    return {
+      totalFeedback: result.totalFeedback || 0,
+      averageRating: result.averageRating || 0,
+      ratingDistribution: result.ratingDistribution || [],
+      totalWithComments: result.totalWithComments || 0,
+      latestFeedback: result.latestFeedback || null,
+    };
+  } catch (error) {
+    logError("Error fetching feedback stats from Firebase", error);
+    return {
+      totalFeedback: 0,
+      averageRating: 0,
+      ratingDistribution: [],
+      totalWithComments: 0,
+      latestFeedback: null,
+    };
+  }
+};
+
+// Get all feedback (admin function)
+export const getAllFeedback = async (): Promise<any[]> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("getAllFeedback", {});
+
+    if (!result || !Array.isArray(result)) return [];
+
+    return result.map((feedback: any) => ({
+      id: feedback.id,
+      userId: feedback.userId,
+      userName: feedback.userName || "Unknown User",
+      userPhone: feedback.userPhone || "",
+      rating: feedback.rating || 0,
+      comment: feedback.comment || null,
+      createdAt: feedback.createdAt || new Date().toISOString(),
+    }));
+  } catch (error) {
+    logError("Error fetching feedback from Firebase", error);
     return [];
   }
 };

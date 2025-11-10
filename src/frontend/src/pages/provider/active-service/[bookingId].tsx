@@ -1,20 +1,25 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   UserIcon,
   MapPinIcon,
   CalendarIcon,
   CurrencyDollarIcon,
   // CameraIcon,
   CheckCircleIcon,
+  XCircleIcon,
   PaperAirplaneIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
+import BottomNavigation from "../../../components/provider/NavigationBar";
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
+import { toast } from "sonner";
+import { bookingCanisterService } from "../../../services/bookingCanisterService";
 
 const ActiveServicePage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +27,7 @@ const ActiveServicePage: React.FC = () => {
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(
     null,
   );
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
@@ -29,18 +35,37 @@ const ActiveServicePage: React.FC = () => {
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const { getBookingById, loading, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
+
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
+
+    if (!booking) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "InProgress") {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
-
-  const booking = useMemo(() => {
-    if (bookingId && typeof bookingId === "string") {
-      return getBookingById(bookingId);
-    }
-    return null;
-  }, [bookingId, getBookingById]);
 
   useEffect(() => {
     if (booking) {
@@ -63,7 +88,6 @@ const ActiveServicePage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -95,6 +119,21 @@ const ActiveServicePage: React.FC = () => {
       window.open(`tel:${booking.clientPhone}`, "_self");
     } else {
       alert(`Contact client: ${booking?.clientName || "Unknown Client"}`);
+    }
+  };
+
+  // Special cancel: cancel booking (ticket is automatically created by cancelBooking)
+  const handleCancelActiveService = async (reason: string) => {
+    if (!booking) return;
+    try {
+      // Cancel the booking - this automatically creates a ticket with structured data
+      await bookingCanisterService.cancelBooking(booking.id, reason);
+      toast.success("Booking cancelled successfully.");
+      setIsCancelModalOpen(false);
+      navigate("/provider/bookings");
+    } catch (err) {
+      toast.error("Unable to cancel active service. Please try again.");
+      throw err;
     }
   };
 
@@ -150,33 +189,11 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-  if (loading) {
+  // Show loading state while booking is being fetched
+  if (!booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // if (error) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-  //       Error: {error}
-  //     </div>
-  //   );
-  // }
-  // if (!isProviderAuthenticated()) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-  //       Please log in as a service provider to access this page.
-  //     </div>
-  //   );
-  // }
-
-  if (!booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Booking not found or an error occurred.
       </div>
     );
   }
@@ -192,27 +209,20 @@ const ActiveServicePage: React.FC = () => {
 
   // --- UI Section ---
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50">
-      <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="container mx-auto flex items-center">
-          <button
-            onClick={() => navigate(`/provider/booking/${booking.id}`)}
-            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <ArrowLeftIcon className="h-5 w-5 text-blue-600" />
-          </button>
-          <h1 className="truncate text-xl font-extrabold text-black sm:text-2xl">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
             Service In Progress
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto flex-grow space-y-8 p-4 pb-24 sm:p-8">
+      <main className="container mx-auto flex-grow space-y-10 px-4 py-16 sm:px-8">
         {/* Timer removed */}
 
         {/* Details and Actions Section */}
-        <div className="mt-6 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+        <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
           {/* Left Column: Booking Details */}
           <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
             <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
@@ -338,11 +348,29 @@ const ActiveServicePage: React.FC = () => {
               >
                 <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
               </button>
+              <button
+                onClick={() => setIsCancelModalOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
+              >
+                <XCircleIcon className="h-5 w-5" />
+                Cancel Service
+              </button>
             </div>
           </section>
         </div>
       </main>
       <div className="lg:hidden"></div>
+      <CancelWithReasonButton
+        show={isCancelModalOpen}
+        onSubmit={handleCancelActiveService}
+        onCancel={() => setIsCancelModalOpen(false)}
+        confirmTitle="Cancel Active Service?"
+        confirmDescription="Share a reason. We'll file it as a complaint ticket to the admin and cancel this service."
+        textareaLabel="Reason for cancellation"
+        submitText="Submit"
+        cancelText="Back"
+      />
+      <BottomNavigation />
     </div>
   );
 };

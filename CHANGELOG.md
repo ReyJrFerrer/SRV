@@ -11,10 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Provider directions page (`/provider/directions/:bookingId`) showing turn-by-turn route from provider current location to client destination with ability to start service upon arrival. Uses unified Google Maps loader to avoid duplicate script issues.
 
+- Add loading skeletons for service lists and provider services to stabilize layout during data fetches
+- Add tiny top progress bar with yellow→blue gradient on route/data loads and cascade Appear animations on list grids
+
 ### Added
 
 - Add automatic next day selection for scheduled bookings to improve user experience by pre-selecting and loading available slots
 - Add provider active service banner that appears across provider pages (except the active-service page) showing current in-progress booking details with quick navigation
+
+### Fixed
+
+- Fix FCM token registration failures across different browsers (Chrome, Brave, Vivaldi, Safari)
+- Improve FCM error handling with specific messages for configuration issues
+- Add comprehensive FCM diagnostics and testing tools
+- Create troubleshooting guide for Firebase Cloud Messaging setup
 
 ## Payment Integration Feature
 

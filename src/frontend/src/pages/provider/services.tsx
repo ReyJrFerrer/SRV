@@ -1,236 +1,24 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   PlusIcon,
-  StarIcon,
   WrenchScrewdriverIcon,
   TrashIcon,
-  LockClosedIcon,
   LockOpenIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/solid";
-import {
-  EnhancedService,
-  useServiceManagement,
-} from "../../hooks/serviceManagement";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import { useServiceManagement } from "../../hooks/serviceManagement";
+import ServiceCard from "../../components/provider/ServiceCard";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
-import { useServiceImages } from "../../hooks/useMediaLoader";
+import Tooltip from "../../components/common/Tooltip";
+import Appear from "../../components/common/pageFlowImprovements/Appear";
+import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 
-// Helper to get category image path
-const getCategoryImage = (slugOrName?: string) => {
-  if (!slugOrName) return "/images/categories/others.svg";
-  const slug = slugOrName.toLowerCase().replace(/\s+/g, "-");
-  return `/images/categories/${slug}.svg`;
-};
+// ServiceCard has been extracted to a separate component under components/provider
 
-const getStatusDisplay = (status: string) => {
-  switch (status) {
-    case "Available":
-      return { text: "Active", className: "bg-green-100 text-green-700" };
-    case "Suspended":
-      return { text: "Suspended", className: "bg-yellow-100 text-yellow-700" };
-    case "Unavailable":
-      return { text: "Inactive", className: "bg-red-100 text-red-700" };
-    default:
-      return { text: "Unknown", className: "bg-gray-100 text-gray-600" };
-  }
-};
-
-// Extract ServiceCard as a separate component to properly use hooks
-interface ServiceCardProps {
-  service: EnhancedService;
-  onToggleActive: (serviceId: string, isActive: boolean) => void;
-  onDelete: (serviceId: string) => void;
-  hasActiveBookings: (serviceId: string) => boolean;
-  getServiceActiveBookingsCount: (serviceId: string) => number;
-  updatingId: string | null;
-  deletingId: string | null;
-}
-
-const ServiceCard: React.FC<ServiceCardProps> = ({
-  service,
-  onToggleActive,
-  onDelete,
-  hasActiveBookings,
-  getServiceActiveBookingsCount,
-  updatingId,
-  deletingId,
-}) => {
-  const navigate = useNavigate();
-  const { images } = useServiceImages(service.id, service.imageUrls);
-  const statusDisplay = getStatusDisplay(service.status);
-  const isActive = service.status === "Available";
-
-  return (
-    <div className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
-      {/* Make the entire card a button except for the action buttons */}
-      <button
-        type="button"
-        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none"
-        style={{
-          background: "transparent",
-          border: "none",
-          padding: 0,
-        }}
-        onClick={() => navigate(`/provider/service-details/${service.id}`)}
-        aria-label={`View details for ${service.title}`}
-        tabIndex={0}
-      />
-
-      {/* Service gallery image at the top */}
-      <div className="pointer-events-none relative flex w-full flex-col items-center">
-        <img
-          src={
-            images[0]?.dataUrl ||
-            `/images/ai-sp/${service.category?.slug || "ai-sp-1"}.svg`
-          }
-          alt={service.title}
-          className="mb-2 h-32 w-full rounded-xl object-cover"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "/images/ai-sp/default-provider.svg";
-          }}
-        />
-
-        {/* Category image at top left of service image */}
-        <img
-          src={getCategoryImage(
-            service.category?.slug || service.category?.name,
-          )}
-          alt="Category"
-          className="absolute left-2 top-2 h-10 w-10 rounded-full border-2 border-white bg-white object-cover shadow"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "/images/categories/others.svg";
-          }}
-        />
-
-        {/* Status badge at top right of service image */}
-        <span
-          className={`absolute right-2 top-2 rounded-full px-3 py-1 text-xs font-semibold shadow ${statusDisplay.className}`}
-        >
-          {statusDisplay.text}
-        </span>
-      </div>
-
-      {/* Service Name */}
-      <h4 className="pointer-events-none mt-3 w-full text-center text-lg font-bold text-blue-900">
-        {service.title}
-      </h4>
-
-      {/* Ratings */}
-      <div className="pointer-events-none mt-2 flex w-full items-center justify-center gap-4">
-        <span className="flex items-center gap-1 text-yellow-400">
-          <StarIcon className="h-5 w-5" />
-          <span className="font-semibold text-yellow-500">
-            {service.averageRating || "0"} / 5{" "}
-            <span className="text-gray-400">({service.reviewCount})</span>
-          </span>
-        </span>
-      </div>
-
-      {/* Activate/Deactivate Button */}
-      <div className="relative z-10 w-full">
-        <Tooltip
-          content={`Cannot ${
-            isActive ? "deactivate" : "activate"
-          } service with ${getServiceActiveBookingsCount(service.id)} active booking${
-            getServiceActiveBookingsCount(service.id) !== 1 ? "s" : ""
-          }`}
-          disabled={!hasActiveBookings(service.id)}
-        >
-          <button
-            className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            } ${
-              isActive
-                ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                : "bg-green-500 text-white hover:bg-green-600"
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                onToggleActive(service.id, isActive);
-              }
-            }}
-            disabled={
-              updatingId === service.id || hasActiveBookings(service.id)
-            }
-          >
-            {isActive ? (
-              <>
-                <LockClosedIcon className="h-5 w-5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <LockOpenIcon className="h-5 w-5" />
-                Activate
-              </>
-            )}
-          </button>
-        </Tooltip>
-
-        {/* Delete Button */}
-        <Tooltip
-          content={`Cannot delete service with ${getServiceActiveBookingsCount(service.id)} active booking${
-            getServiceActiveBookingsCount(service.id) !== 1 ? "s" : ""
-          }`}
-          disabled={!hasActiveBookings(service.id)}
-        >
-          <button
-            className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                onDelete(service.id);
-              }
-            }}
-            disabled={
-              deletingId === service.id || hasActiveBookings(service.id)
-            }
-          >
-            <TrashIcon className="h-5 w-5" />
-            Delete
-          </button>
-        </Tooltip>
-      </div>
-    </div>
-  );
-};
-
-// Simple Tooltip component for validation messages
-interface TooltipProps {
-  children: React.ReactNode;
-  content: string;
-  disabled?: boolean;
-}
-
-const Tooltip: React.FC<TooltipProps> = ({
-  children,
-  content,
-  disabled = false,
-}) => {
-  if (disabled) {
-    return <>{children}</>;
-  }
-  return (
-    <div className="group relative">
-      {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        {content}
-        <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
-      </div>
-    </div>
-  );
-};
+// Tooltip now provided by ../../components/common/Tooltip
 
 const MyServicesPage: React.FC = () => {
   const {
@@ -389,16 +177,23 @@ const MyServicesPage: React.FC = () => {
         </div>
       )}
 
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-6">
-          <div className="flex-1"></div>
-          <h1 className="flex-1 text-center text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-3.5 py-2.5">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
             My Services
           </h1>
           <div className="flex flex-1 justify-end">
             <Link
               to="/provider/services/add"
-              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+              onClick={(e) => {
+                if (userServices.length >= 5) {
+                  e.preventDefault();
+                  toast.error("You can only have a maximum of 5 services.");
+                }
+              }}
+              className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+                userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+              }`}
               aria-label="Add new service"
             >
               <PlusIcon className="h-5 w-5" />
@@ -411,10 +206,7 @@ const MyServicesPage: React.FC = () => {
       <main className="container mx-auto flex-grow p-6 pb-10">
         <div className="mt-4">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-              <p className="mt-4 text-gray-500">Loading your services...</p>
-            </div>
+            <ServiceGridSkeleton count={6} />
           ) : error ? (
             <div className="py-12 text-center">
               <p className="mb-4 text-red-500">{error}</p>
@@ -427,17 +219,20 @@ const MyServicesPage: React.FC = () => {
             </div>
           ) : userServices.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {userServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onToggleActive={handleToggleActive}
-                  onDelete={setDeleteConfirmId}
-                  hasActiveBookings={hasActiveBookings}
-                  getServiceActiveBookingsCount={getServiceActiveBookingsCount}
-                  updatingId={updatingId}
-                  deletingId={deletingId}
-                />
+              {userServices.map((service, idx) => (
+                <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                  <ServiceCard
+                    service={service}
+                    onToggleActive={handleToggleActive}
+                    onDelete={setDeleteConfirmId}
+                    hasActiveBookings={hasActiveBookings}
+                    getServiceActiveBookingsCount={
+                      getServiceActiveBookingsCount
+                    }
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                  />
+                </Appear>
               ))}
             </div>
           ) : (
@@ -446,13 +241,28 @@ const MyServicesPage: React.FC = () => {
               <p className="mb-2 text-lg">
                 You haven't listed any services yet.
               </p>
-              <Link
-                to="/provider/services/add"
-                className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700"
+              <Tooltip
+                content="You have reached the maximum of 5 services."
+                showWhenDisabled={userServices.length >= 5}
               >
-                <PlusIcon className="mr-2 h-5 w-5" />
-                Add your first service
-              </Link>
+                <Link
+                  to="/provider/services/add"
+                  onClick={(e) => {
+                    if (userServices.length >= 5) {
+                      e.preventDefault();
+                      toast.error("You can only have a maximum of 5 services.");
+                    }
+                  }}
+                  className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
+                    userServices.length >= 5
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
+                  }`}
+                >
+                  <PlusIcon className="mr-2 h-5 w-5" />
+                  Add your first service
+                </Link>
+              </Tooltip>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Principal } from "@dfinity/principal";
 import {
   Booking as BaseBooking,
@@ -14,6 +14,40 @@ import {
   ServicePackage,
   serviceCanisterService,
 } from "../services/serviceCanisterService";
+
+// Debounce utility function
+const useDebounce = <F extends (...args: any[]) => any>(
+  callback: F,
+  delay: number,
+) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef<F>(callback);
+
+  // Update the callback if it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  return useCallback(
+    (...args: Parameters<F>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+
+      // Cleanup function to clear the timeout
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    },
+    [delay],
+  );
+};
 
 // Extended Booking interface with package support (using servicePackageId from backend)
 export interface Booking extends BaseBooking {
@@ -65,7 +99,11 @@ interface BookingManagementHook {
 
   // Functions
   bookingsByStatus: (status: BookingStatus) => EnhancedBooking[];
-  updateBookingStatus: (id: string, status: BookingStatus) => Promise<void>;
+  updateBookingStatus: (
+    id: string,
+    status: BookingStatus,
+    cancelReason: string,
+  ) => Promise<void>;
   refreshBookings: () => Promise<void>;
   clearError: () => void;
   getBookingCount: (status: BookingStatus) => number;
@@ -77,6 +115,8 @@ interface BookingManagementHook {
   isUserAuthenticated: () => boolean;
   retryOperation: (operation: string) => Promise<void>;
   isOperationInProgress: (operation: string) => boolean;
+  // Individual booking lookup
+  getBookingById: (bookingId: string) => Promise<EnhancedBooking | null>;
   // Package helper functions
   getPackageDisplayName: (booking: EnhancedBooking) => string;
   hasPackage: (booking: EnhancedBooking) => boolean;
@@ -143,7 +183,6 @@ export const useBookingManagement = (): BookingManagementHook => {
 
   // Error handling functions
   const handleBookingError = useCallback((error: any, operation: string) => {
-    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error?.message || `Failed to ${operation}`;
     setError(errorMessage);
   }, []);
@@ -283,10 +322,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading service details for ${serviceId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("services", false);
@@ -314,10 +349,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading package details for ${packageId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("packages", false);
@@ -346,10 +377,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading provider profile for ${providerId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("providers", false);
@@ -422,8 +449,6 @@ export const useBookingManagement = (): BookingManagementHook => {
 
         return enhancedBooking;
       } catch (error) {
-        //console.error(`❌ Error enriching booking ${booking.id}:`, error);
-
         // Return booking with minimal enhancement but proper packageName handling
         return {
           ...booking,
@@ -584,21 +609,39 @@ export const useBookingManagement = (): BookingManagementHook => {
   ]);
 
   const refreshBookings = useCallback(async () => {
+    if (!isUserAuthenticated()) {
+      return;
+    }
+
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) {
+      return;
+    }
+
     setRefreshing(true);
+    clearError();
+
     try {
-      // Clear all caches to ensure fresh data
-      setProviderProfiles(new Map());
-      setServiceDetails(new Map());
-      setPackageDetails(new Map());
-      await loadUserBookings();
+      const userPrincipal = Principal.fromText(currentUserId);
+      const bookings =
+        await bookingCanisterService.getClientBookings(userPrincipal);
+
+      // Use the debounced handler to process the bookings
+      await handleBookingsUpdate(bookings);
+    } catch (error) {
+      handleBookingError(error, "refresh bookings");
     } finally {
       setRefreshing(false);
     }
-  }, [loadUserBookings]);
+  }, [isUserAuthenticated, getCurrentUserId, clearError, handleBookingError]);
 
   // Booking status management
   const updateBookingStatus = useCallback(
-    async (bookingId: string, newStatus: BookingStatus) => {
+    async (
+      bookingId: string,
+      newStatus: BookingStatus,
+      cancelReason: string,
+    ) => {
       try {
         setLoadingState(`update-${bookingId}`, true);
         clearError();
@@ -607,8 +650,13 @@ export const useBookingManagement = (): BookingManagementHook => {
 
         switch (newStatus) {
           case "Cancelled":
-            updatedBooking =
-              await bookingCanisterService.cancelBooking(bookingId);
+            if (!cancelReason) {
+              throw new Error("A reason for cancellation is required");
+            }
+            updatedBooking = await bookingCanisterService.cancelBooking(
+              bookingId,
+              cancelReason,
+            );
             break;
           case "Accepted":
             updatedBooking = await bookingCanisterService.acceptBooking(
@@ -662,6 +710,35 @@ export const useBookingManagement = (): BookingManagementHook => {
       return userBookings.filter((booking) => booking.status === status);
     },
     [userBookings],
+  );
+
+  const getBookingById = useCallback(
+    async (bookingId: string): Promise<EnhancedBooking | null> => {
+      try {
+        // First try to find in local state for instant response
+        const localBooking = userBookings.find(
+          (booking) => booking.id === bookingId,
+        );
+        if (localBooking) {
+          return localBooking;
+        }
+
+        // If not found locally, fetch from backend
+        const booking = await bookingCanisterService.getBooking(bookingId);
+        if (booking) {
+          // Transform and enrich the booking before returning
+          const transformedBooking = transformBooking(booking);
+          const enrichedBooking =
+            await enrichBookingWithAllData(transformedBooking);
+          return enrichedBooking;
+        }
+
+        return null;
+      } catch (error) {
+        return null;
+      }
+    },
+    [userBookings, transformBooking, enrichBookingWithAllData],
   );
 
   // Utility functions
@@ -728,16 +805,55 @@ export const useBookingManagement = (): BookingManagementHook => {
           await refreshBookings();
           break;
         default:
-        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserBookings, loadUserProfile, refreshBookings],
   );
 
-  // Initialize data on mount
-  useEffect(() => {
+  // Memoize the loadUserProfile function
+  const memoizedLoadUserProfile = useCallback(() => {
     loadUserProfile();
   }, [loadUserProfile]);
+
+  // Debounced version of loadUserProfile
+  const debouncedLoadUserProfile = useDebounce(memoizedLoadUserProfile, 300);
+
+  // Initialize data on mount with debounced loading
+  useEffect(() => {
+    debouncedLoadUserProfile();
+  }, [debouncedLoadUserProfile]);
+
+  // Memoize the subscription callback to prevent unnecessary re-renders
+  const handleBookingsUpdate = useCallback(
+    async (bookings: Booking[]) => {
+      try {
+        // Transform base bookings to extended bookings with package support
+        const transformedBookings = bookings.map(transformBooking);
+
+        // Enrich bookings with all data (provider, service, package) in parallel
+        const enrichedBookings = await Promise.all(
+          transformedBookings.map((booking) =>
+            enrichBookingWithAllData(booking),
+          ),
+        );
+
+        setUserBookings(enrichedBookings);
+        setLoadingState("bookings", false);
+      } catch (error) {
+        handleBookingError(error, "enrich client bookings");
+        setLoadingState("bookings", false);
+      }
+    },
+    [
+      transformBooking,
+      enrichBookingWithAllData,
+      setLoadingState,
+      handleBookingError,
+    ],
+  );
+
+  // Debounce the bookings update handler
+  const debouncedHandleBookingsUpdate = useDebounce(handleBookingsUpdate, 300);
 
   // Subscribe to bookings with realtime updates when user is authenticated
   useEffect(() => {
@@ -756,29 +872,10 @@ export const useBookingManagement = (): BookingManagementHook => {
     try {
       const userPrincipal = Principal.fromText(currentUserId);
 
-      // Subscribe to realtime updates
+      // Subscribe to realtime updates with debounced handler
       const unsubscribe = bookingCanisterService.subscribeToClientBookings(
         userPrincipal,
-        async (bookings) => {
-          try {
-            // Transform base bookings to extended bookings with package support
-            const transformedBookings = bookings.map(transformBooking);
-
-            // Enrich bookings with all data (provider, service, package) in parallel
-            const enrichedBookings = await Promise.all(
-              transformedBookings.map((booking) =>
-                enrichBookingWithAllData(booking),
-              ),
-            );
-
-            setUserBookings(enrichedBookings);
-            setLoadingState("bookings", false);
-          } catch (error) {
-            console.error("Error enriching client bookings:", error);
-            handleBookingError(error, "enrich client bookings");
-            setLoadingState("bookings", false);
-          }
-        },
+        debouncedHandleBookingsUpdate,
       );
 
       // Cleanup subscription on unmount or when dependencies change
@@ -792,8 +889,7 @@ export const useBookingManagement = (): BookingManagementHook => {
   }, [
     isUserAuthenticated,
     getCurrentUserId,
-    transformBooking,
-    enrichBookingWithAllData,
+    debouncedHandleBookingsUpdate,
     setLoadingState,
     clearError,
     handleBookingError,
@@ -831,6 +927,7 @@ export const useBookingManagement = (): BookingManagementHook => {
     isUserAuthenticated,
     retryOperation,
     isOperationInProgress,
+    getBookingById,
 
     // Enhanced helper functions
     getPackageDisplayName,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import reputationCanisterService, {
   updateReputationActor,
@@ -30,56 +30,71 @@ export const useReputation = () => {
    * @param userId - The Principal ID of the user whose reputation to fetch
    * @returns Promise<ReputationScore | null> The user's reputation or null if not found
    */
-  const fetchUserReputation = useCallback(
-    async (userId: string): Promise<ReputationScore | null> => {
-      if (!isAuthenticated || !identity) {
-        //console.warn("Authentication required to fetch user reputation");
-        return null;
-      }
-
-      try {
-        // Update the actor with current identity
-        updateReputationActor(identity);
+  const fetchUserReputation = useMemo(
+    () =>
+      async (userId: string): Promise<ReputationScore | null> => {
+        if (!isAuthenticated || !identity) {
+          return null;
+        }
 
         try {
-          // Try to fetch existing reputation for the specified user
-          const reputationData =
-            await reputationCanisterService.getReputationScore(userId);
+          // Update the actor with current identity
+          updateReputationActor(identity);
 
-          // Convert the reputation data to match our interface
-          const formattedReputation: ReputationScore = {
-            userId: reputationData.userId.toString(),
-            trustScore: Number(reputationData.trustScore),
-            trustLevel: reputationData.trustLevel.hasOwnProperty("New")
-              ? "New"
-              : reputationData.trustLevel.hasOwnProperty("Low")
-                ? "Low"
-                : reputationData.trustLevel.hasOwnProperty("Medium")
-                  ? "Medium"
-                  : reputationData.trustLevel.hasOwnProperty("High")
-                    ? "High"
-                    : "VeryHigh",
-            completedBookings: Number(reputationData.completedBookings),
-            averageRating: reputationData.averageRating
-              ? Number(reputationData.averageRating[0])
-              : undefined,
-            detectionFlags: reputationData.detectionFlags.map(
-              (flag: any) => Object.keys(flag)[0],
-            ),
-            lastUpdated: Number(reputationData.lastUpdated),
-          };
+          try {
+            // Try to fetch existing reputation for the specified user
+            const reputationData =
+              await reputationCanisterService.getReputationScore(userId);
 
-          return formattedReputation;
-        } catch (fetchError: any) {
-          // If reputation doesn't exist, return default score of 50
+            // Convert the reputation data to match our interface
+            const formattedReputation: ReputationScore = {
+              userId: reputationData.userId.toString(),
+              trustScore: Number(reputationData.trustScore),
+              trustLevel: reputationData.trustLevel.hasOwnProperty("New")
+                ? "New"
+                : reputationData.trustLevel.hasOwnProperty("Low")
+                  ? "Low"
+                  : reputationData.trustLevel.hasOwnProperty("Medium")
+                    ? "Medium"
+                    : reputationData.trustLevel.hasOwnProperty("High")
+                      ? "High"
+                      : "VeryHigh",
+              completedBookings: Number(reputationData.completedBookings),
+              averageRating: reputationData.averageRating
+                ? Number(reputationData.averageRating[0])
+                : undefined,
+              detectionFlags: reputationData.detectionFlags.map(
+                (flag: any) => Object.keys(flag)[0],
+              ),
+              lastUpdated: Number(reputationData.lastUpdated),
+            };
+
+            return formattedReputation;
+          } catch (fetchError: any) {
+            // If reputation doesn't exist, return default score of 50
+            if (
+              fetchError.message.includes("No reputation score found") ||
+              fetchError.message.includes("not found")
+            ) {
+              return {
+                userId,
+                trustScore: 50,
+                trustLevel: "New",
+                completedBookings: 0,
+                averageRating: undefined,
+                detectionFlags: [],
+                lastUpdated: Date.now() * 1_000_000, // Convert to nanoseconds
+              };
+            } else {
+              throw fetchError;
+            }
+          }
+        } catch (err: any) {
+          // For network errors, still return default score to not break UI
           if (
-            fetchError.message.includes("No reputation score found") ||
-            fetchError.message.includes("not found")
+            err.message.includes("Network error") ||
+            err.message.includes("fetch")
           ) {
-            // //console.log(
-            //   `📊 No reputation found for user ${userId}, using default score of 50`,
-            // );
-
             return {
               userId,
               trustScore: 50,
@@ -87,37 +102,13 @@ export const useReputation = () => {
               completedBookings: 0,
               averageRating: undefined,
               detectionFlags: [],
-              lastUpdated: Date.now() * 1_000_000, // Convert to nanoseconds
+              lastUpdated: Date.now() * 1_000_000,
             };
-          } else {
-            throw fetchError;
           }
-        }
-      } catch (err: any) {
-        //console.error("❌ Failed to fetch user reputation:", err);
 
-        // For network errors, still return default score to not break UI
-        if (
-          err.message.includes("Network error") ||
-          err.message.includes("fetch")
-        ) {
-          // //console.log(
-          //   `📊 Network error fetching reputation for user ${userId}, using default score of 50`,
-          // );
-          return {
-            userId,
-            trustScore: 50,
-            trustLevel: "New",
-            completedBookings: 0,
-            averageRating: undefined,
-            detectionFlags: [],
-            lastUpdated: Date.now() * 1_000_000,
-          };
+          return null;
         }
-
-        return null;
-      }
-    },
+      },
     [isAuthenticated, identity],
   );
 
@@ -171,8 +162,6 @@ export const useReputation = () => {
       } catch (fetchError: any) {
         // If reputation doesn't exist, try to initialize it
         if (fetchError.message.includes("No reputation score found")) {
-          //console.log("📊 No reputation found, initializing...");
-
           const initialReputation =
             await reputationCanisterService.initializeMyReputation();
 
@@ -192,8 +181,6 @@ export const useReputation = () => {
         }
       }
     } catch (err: any) {
-      //console.error("❌ Failed to fetch reputation:", err);
-
       // Display network error as requested
       if (
         err.message.includes("Network error") ||
@@ -201,7 +188,7 @@ export const useReputation = () => {
       ) {
         setError("Network error: Could not fetch reputation score");
       } else {
-        setError(err.message || "Could not load reputation data");
+        setError("Could not load reputation data");
       }
     } finally {
       setLoading(false);

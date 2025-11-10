@@ -2,7 +2,7 @@
  * Account Management Cloud Functions
  *
  * This module handles all user profile and account management operations
- * migrated from the auth.mo canister. All profile data is stored in Firestore.
+ *  All profile data is stored in Firestore.
  */
 
 const functions = require("firebase-functions");
@@ -94,20 +94,47 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
 
   return true;
 }
+/**
+ * Validates phone number if it exists
+ * HTTPS onCall Cloud Function
+ */
+exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  // Check authentication
+  if (!auth) {
+    console.error("❌ No authentication context found!");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to create a profile",
+    );
+  }
+  const {phone} = data.data || data;
 
+  if (!validatePhone(phone)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid phone format",
+    );
+  }
+
+  // Check if phone is already taken
+  if (await isPhoneTaken(phone)) {
+    throw new functions.https.HttpsError(
+      "already-exists",
+      "Phone number is already registered",
+    );
+  }
+  return {
+    success: true,
+    message: "Phone number is available",
+  };
+});
 /**
  * Create a new user profile
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.createProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
-
-  // Debug logging
-  console.log("🔍 createProfile called:", {
-    hasContextAuth: !!context.auth,
-    hasDataAuth: !!data.auth,
-    authUid: auth?.uid,
-  });
 
   // Check authentication
   if (!auth) {
@@ -159,7 +186,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   // Create new profile
   const now = new Date().toISOString();
 
-  // Initialize reputation score. If this fails, the entire function will fail.
+  // Initialize reputation score. But if it fails, creation will push through.
   try {
     await initializeReputationInternal(principalId, now);
     console.log(`✅ Reputation initialized for user: ${principalId}`);
@@ -168,7 +195,6 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   }
 
 
-  // Initialize reputation score, if this fails then push through with profile creation
   const newProfile = {
     id: principalId,
     name: name,
@@ -180,8 +206,8 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
     profilePicture: null,
     biography: null,
     isActive: true,
-    reputationScore: 0,
     totalEarnings: 0,
+    isOnboarded: false, // Provider onboarding status for payment functionality
   };
 
   await userRef.set(newProfile);
@@ -195,7 +221,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Get user profile by ID
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -231,7 +257,7 @@ exports.getProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Update user profile
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.updateProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -246,7 +272,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
   }
 
   const principalId = auth.uid;
-  const {name, phone} = actualData;
+  const {name} = actualData;
 
   // Validate inputs if provided
   if (name !== undefined && !validateName(name)) {
@@ -254,22 +280,6 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
       "invalid-argument",
       `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
     );
-  }
-
-  if (phone !== undefined) {
-    if (!validatePhone(phone)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid phone format",
-      );
-    }
-
-    if (await isPhoneTaken(phone, principalId)) {
-      throw new functions.https.HttpsError(
-        "already-exists",
-        "Phone number is already registered",
-      );
-    }
   }
 
   // Get existing profile
@@ -293,10 +303,6 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
     updateData.name = name;
   }
 
-  if (phone !== undefined) {
-    updateData.phone = phone;
-  }
-
   await userRef.update(updateData);
 
   // Get updated profile
@@ -310,7 +316,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Switch user active role between Client and ServiceProvider
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.switchUserRole = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -354,7 +360,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
 
 /**
  * Get all service providers
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getAllServiceProviders = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -386,7 +392,7 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
 
 /**
  * Get all users (admin function)
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getAllUsers = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -399,13 +405,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // TODO: Add admin role check in production
-  // if (!auth.token.admin) {
-  //   throw new functions.https.HttpsError(
-  //     "permission-denied",
-  //     "Only admins can access all users"
-  //   );
-  // }
 
   const db = admin.firestore();
   const usersSnapshot = await db.collection("users").get();
@@ -481,7 +480,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
       fileName,
       contentType,
       mediaType: "UserProfile",
-      fileData, // Already base64 encoded from frontend
+      fileData,
       ownerId: principalId,
     });
 
@@ -490,7 +489,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
       profilePicture: {
         mediaId: mediaItem.id,
         imageUrl: mediaItem.url,
-        thumbnailUrl: mediaItem.url, // Use same URL for thumbnail (can be enhanced later)
+        thumbnailUrl: mediaItem.url,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -510,7 +509,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
 
 /**
  * Remove profile picture
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -565,6 +564,67 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error removing profile picture:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Update user active status and last activity timestamp
+ * HTTPS onCall Cloud Function
+ */
+exports.updateUserActiveStatus = functions.https.onCall(async (data, context) => {
+  const auth = context.auth || data.auth;
+  const actualData = data.data || data;
+
+  // Check authentication
+  if (!auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated to update active status",
+    );
+  }
+
+  const principalId = auth.uid;
+  const {isActive} = actualData;
+
+  // Validate input
+  if (typeof isActive !== "boolean") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "isActive must be a boolean value",
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(principalId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Profile not found",
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    // Update user's active status and last activity timestamp
+    await userRef.update({
+      isActive: isActive,
+      lastActivity: now,
+      updatedAt: now,
+    });
+
+    return {
+      success: true,
+      message: `User active status updated to ${isActive}`,
+    };
+  } catch (error) {
+    console.error("Error updating user active status:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

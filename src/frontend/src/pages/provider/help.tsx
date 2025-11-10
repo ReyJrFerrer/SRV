@@ -1,14 +1,15 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import BottomNavigation from "../../components/provider/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
 
   const goToReportPage = () => navigate("/provider/report");
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-4 shadow-2xl sm:p-10">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <div className="mx-auto w-full max-w-xl flex-1 rounded-3xl border border-blue-100 bg-white p-4 shadow-2xl sm:p-10">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
@@ -54,16 +55,17 @@ const HelpSupportPage: React.FC = () => {
               community for tips and peer support (coming soon).
             </li>
           </ul>
-          <div className="mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <h2 className="mb-2 text-lg font-bold text-yellow-700">
               Follow us on Social Media
             </h2>
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center sm:gap-6">
+            {/* 👇 KEY CHANGE HERE: flex-col for mobile, gap-4 for vertical spacing, md:flex-row to go back to horizontal on desktop */}
+            <div className="flex flex-col items-start gap-4 md:flex-row md:justify-center md:gap-6">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-blue-700 hover:text-blue-900"
+                className="flex items-center gap-2 text-blue-700 hover:text-blue-900"
               >
                 <img
                   src="/images/external logo/fb.svg"
@@ -76,7 +78,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://instagram.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-pink-600 hover:text-pink-800"
+                className="flex items-center gap-2 text-pink-600 hover:text-pink-800"
               >
                 <img
                   src="/images/external logo/instagram.svg"
@@ -89,7 +91,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://tiktok.com/@srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-blue-400 hover:text-blue-600"
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-600"
               >
                 <img
                   src="/images/external logo/tiktok.svg"
@@ -106,6 +108,7 @@ const HelpSupportPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 };

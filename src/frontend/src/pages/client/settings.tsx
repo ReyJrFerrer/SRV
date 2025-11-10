@@ -1,18 +1,19 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Adjust path as needed
+import { useAuth } from "../../context/AuthContext";
 import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
-  ArrowPathRoundedSquareIcon, // Icon for the new switch button
+  ArrowPathRoundedSquareIcon,
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import { useLogout } from "../../hooks/logout"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
+import BottomNavigation from "../../components/client/NavigationBar";
+import { useLogout } from "../../hooks/logout";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
@@ -25,15 +26,12 @@ const SettingsPage: React.FC = () => {
     loading: profileLoading,
     switchRole,
     profileImageUrl,
-    refetchImage,
   } = useUserProfile();
 
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Settings | SRV";
   }, []);
 
-  // Menu items, with "Profile" removed as it now has its own section
   const menuItems = [
     {
       name: "Terms & Conditions",
@@ -53,27 +51,24 @@ const SettingsPage: React.FC = () => {
   ];
 
   const [switching, setSwitching] = React.useState(false);
+  const [pwaOpen, setPwaOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const handleSwitchToProvider = async () => {
     setSwitching(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        navigate("/provider");
-      }
+      await switchRole();
+      navigate("/provider/settings");
     } catch (error) {
-      //console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }
   };
 
-  refetchImage();
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-24">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Settings
           </h1>
         </div>
@@ -82,7 +77,7 @@ const SettingsPage: React.FC = () => {
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
           <div className="space-y-6">
-            {/* --- Enhanced Profile Section --- */}
+            {/* SECTION: Profile header */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <button
                 onClick={() => navigate("/client/profile")}
@@ -109,7 +104,7 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* --- Switch to Service Provider Button --- */}
+            {/* SECTION: Switch to service provider */}
             <div className="rounded-2xl border border-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-200 shadow-md">
               <button
                 onClick={handleSwitchToProvider}
@@ -132,36 +127,63 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* --- App Settings Section --- */}
+            {/* SECTION: App settings */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <div className="p-5">
                 <h2 className="mb-4 text-lg font-semibold text-blue-900">
                   App Settings
                 </h2>
-
-                {/* PWA Install Section */}
+                {/* SECTION: PWA install (collapsible) */}
                 <div className="mb-6">
-                  <div className="mb-3 flex items-center">
-                    <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">Install App</h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">Install App</h3>
+                    </div>
+                    <button
+                      onClick={() => setPwaOpen((v) => !v)}
+                      aria-expanded={pwaOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {pwaOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <PWAInstallDetailed />
-                </div>
 
-                {/* Notification Settings Section */}
+                  {pwaOpen && <PWAInstallDetailed />}
+                </div>
+                {/* SECTION: Notification settings (collapsible) */}
                 <div>
-                  <div className="mb-3 flex items-center">
-                    <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">
-                      Push Notifications
-                    </h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">
+                        Push Notifications
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setNotifOpen((v) => !v)}
+                      aria-expanded={notifOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {notifOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <NotificationSettingsDetailed />
+
+                  {notifOpen && <NotificationSettingsDetailed />}
                 </div>
               </div>
             </div>
-
-            {/* --- Other Menu Items --- */}
+            {/* SECTION: Other menu items */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
                 {menuItems.map((item) => (

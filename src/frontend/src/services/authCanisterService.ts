@@ -8,6 +8,8 @@
  */
 
 import * as identityBridge from "./identityBridge";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "./firebaseApp";
 
 // Frontend-compatible Profile interface
 export interface FrontendProfile {
@@ -24,6 +26,8 @@ export interface FrontendProfile {
   createdAt: Date;
   updatedAt: Date;
   locked?: boolean; // Account suspension status
+  suspensionEndDate?: Date | null; // When suspension expires (null for indefinite)
+  isOnboarded?: boolean; // Provider onboarding status for payment functionality
 }
 
 /**
@@ -48,6 +52,12 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
     createdAt: new Date(firestoreProfile.createdAt),
     updatedAt: new Date(firestoreProfile.updatedAt),
     locked: firestoreProfile.locked || false, // Default to false if not specified
+    suspensionEndDate: firestoreProfile.suspensionEndDate
+      ? new Date(firestoreProfile.suspensionEndDate)
+      : firestoreProfile.suspensionEndDate === null
+        ? null
+        : undefined,
+    isOnboarded: firestoreProfile.isOnboarded || false, // Default to false if not specified
   };
 }
 
@@ -66,7 +76,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to fetch service providers");
     } catch (error) {
-      console.error("Error fetching service providers:", error);
       throw new Error(`Failed to fetch service providers: ${error}`);
     }
   },
@@ -85,7 +94,6 @@ export const authCanisterService = {
 
       return null;
     } catch (error) {
-      console.error("Error fetching profile:", error);
       return null;
     }
   },
@@ -104,7 +112,6 @@ export const authCanisterService = {
 
       return null;
     } catch (error) {
-      console.error("Error fetching my profile:", error);
       return null;
     }
   },
@@ -133,8 +140,20 @@ export const authCanisterService = {
 
       throw new Error("Failed to create profile");
     } catch (error) {
-      console.error("Error creating profile:", error);
       throw error;
+    }
+  },
+
+  /**
+   * Validate phone number before receiving the OTP
+   * @param phone User's phone number
+   */
+  async validatePhone(phone: string): Promise<boolean> {
+    try {
+      const result = await identityBridge.validatePhone(phone);
+      return result.success;
+    } catch (error) {
+      return false;
     }
   },
 
@@ -156,7 +175,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to update profile");
     } catch (error) {
-      console.error("Error updating profile:", error);
       throw error;
     }
   },
@@ -175,23 +193,8 @@ export const authCanisterService = {
 
       throw new Error("Failed to switch user role");
     } catch (error) {
-      console.error("Error switching user role:", error);
       throw error;
     }
-  },
-
-  /**
-   * Set canister references (DEPRECATED - No longer needed with Firebase)
-   * Kept for backward compatibility but does nothing
-   */
-  async setCanisterReferences(
-    providedMediaCanisterId?: string,
-  ): Promise<string | null> {
-    console.log(providedMediaCanisterId);
-    console.warn(
-      "setCanisterReferences is deprecated in Firebase architecture",
-    );
-    return null;
   },
 
   /**
@@ -230,7 +233,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to upload profile picture");
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
       throw error;
     }
   },
@@ -248,7 +250,31 @@ export const authCanisterService = {
 
       throw new Error("Failed to remove profile picture");
     } catch (error) {
-      console.error("Error removing profile picture:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update user active status (for login/logout tracking)
+   */
+  async updateUserActiveStatus(isActive: boolean): Promise<void> {
+    try {
+      const functions = getFirebaseFunctions();
+      const updateActiveStatusFn = httpsCallable(
+        functions,
+        "updateUserActiveStatus",
+      );
+
+      const result: any = await updateActiveStatusFn({
+        isActive: isActive,
+      });
+
+      if (!result.data?.success) {
+        throw new Error(
+          result.data?.message || "Failed to update user active status",
+        );
+      }
+    } catch (error) {
       throw error;
     }
   },

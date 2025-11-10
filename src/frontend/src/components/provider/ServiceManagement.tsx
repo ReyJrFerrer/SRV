@@ -7,32 +7,7 @@ import {
 } from "../../hooks/serviceManagement";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import { toast } from "sonner";
-
-// Simple Tooltip component for validation messages
-interface TooltipProps {
-  children: React.ReactNode;
-  content: string;
-  disabled?: boolean;
-}
-
-const Tooltip: React.FC<TooltipProps> = ({
-  children,
-  content,
-  disabled = false,
-}) => {
-  if (disabled) {
-    return <>{children}</>;
-  }
-  return (
-    <div className="group relative">
-      {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        {content}
-        <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
-      </div>
-    </div>
-  );
-};
+import Tooltip from "../common/Tooltip";
 
 // Helper to map status to display text and className
 const getStatusDisplay = (status: string) => {
@@ -141,45 +116,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <h2 className="not-last:mb-6 mt-5 pt-4 text-3xl font-extrabold tracking-tight text-blue-900">
-          My Services
-        </h2>
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-500">Loading your services...</p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <h2 className="mb-6 mt-5 pt-5 text-3xl font-extrabold tracking-tight text-blue-900">
-          My Services
-        </h2>
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="py-12 text-center">
-            <p className="mb-4 text-red-500">{error}</p>
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-              >
-                Try Again
-              </button>
-            )}
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       {/* Centered Delete Confirmation Dialog */}
@@ -219,34 +155,70 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-2 pt-5">
-        <h2 className="mt-5 text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
+      <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
+        <h2 className="text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
           My Services
         </h2>
-        <Link
-          to="/provider/services/add"
-          className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
-          aria-label="Add new service"
+        <Tooltip
+          content="You have reached the maximum of 5 services."
+          showWhenDisabled={services.length >= 5}
         >
-          <PlusIcon className="h-5 w-5" />
-          <span className="ml-1 hidden sm:inline">Add new service</span>
-        </Link>
+          <Link
+            to="/provider/services/add"
+            onClick={(e) => {
+              if (services.length >= 5) {
+                e.preventDefault();
+                toast.error("You can only have a maximum of 5 services.");
+              }
+            }}
+            className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+              services.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+            }`}
+            aria-label="Add new service"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span className="ml-1 hidden sm:inline">Add new service</span>
+          </Link>
+        </Tooltip>
       </div>
-      {/* Add space between the label and the listings */}
-      <div className="mb-6" />
-      {displayedServices.length > 0 ? (
+
+      {loading ? (
+        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-500">Loading your services...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
+          <div className="py-12 text-center">
+            <p className="mb-4 text-red-500">{error}</p>
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              >
+                Try Again
+              </button>
+            )}
+          </div>
+        </div>
+      ) : services.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
               const categoryImage = getCategoryImage(
                 service.category?.slug || service.category?.name,
               );
 
+              const activeCount = getServiceActiveBookingsCount(service.id);
+              const plural = activeCount !== 1 ? "s" : "";
+
               return (
                 <div
                   key={service.id}
-                  className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative mt-8 flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
                   {/* Make the entire card a button */}
                   <button
@@ -263,6 +235,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                     aria-label={`View details for ${service.title}`}
                     tabIndex={0}
                   />
+
                   {/* Category image */}
                   <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
                     <img
@@ -275,24 +248,28 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                       }}
                     />
                   </div>
-                  {/* Active badge in top right if active */}
-                  {isActive && (
+
+                  {/* Status badge */}
+                  {isActive ? (
                     <span
                       className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
                       title="Active"
                     >
                       Active
                     </span>
-                  )}
-                  {!isActive && (
+                  ) : (
                     <span
                       className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
                     >
                       {getStatusDisplay(service.status).text}
                     </span>
                   )}
+
                   <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-                    <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
+                    <h4
+                      className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
+                      style={{ wordBreak: "break-word" }}
+                    >
                       {service.title}
                     </h4>
                     <div className="flex items-center justify-center gap-2">
@@ -305,78 +282,68 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                       </span>
                     </div>
                   </div>
-                  {/* --- Activate and Delete buttons at the bottom of the listing --- */}
-                  <div className="relative z-10 mt-4 flex w-full gap-2">
-                    <div className="flex-1">
-                      <Tooltip
-                        content={`Cannot ${
-                          isActive ? "deactivate" : "activate"
-                        } service with ${getServiceActiveBookingsCount(service.id)} active booking${
-                          getServiceActiveBookingsCount(service.id) !== 1
-                            ? "s"
+
+                  {/* Actions */}
+                  <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
+                    <Tooltip
+                      content={`Cannot ${
+                        isActive ? "deactivate" : "activate"
+                      } service with ${activeCount} active booking${plural}`}
+                      showWhenDisabled={hasActiveBookings(service.id)}
+                    >
+                      <button
+                        type="button"
+                        className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
+                          hasActiveBookings(service.id)
+                            ? "cursor-not-allowed opacity-50"
                             : ""
+                        } ${
+                          isActive
+                            ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                            : "bg-green-500 text-white hover:bg-green-600"
                         }`}
-                        disabled={!hasActiveBookings(service.id)}
-                      >
-                        <button
-                          type="button"
-                          className={`w-full rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          } ${
-                            isActive
-                              ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                              : "bg-green-500 text-white hover:bg-green-600"
-                          }`}
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              await handleToggleActive(service.id, isActive);
-                            }
-                          }}
-                          disabled={hasActiveBookings(service.id)}
-                        >
-                          {isActive ? "Deactivate" : "Activate"}
-                        </button>
-                      </Tooltip>
-                    </div>
-                    <div className="flex-1">
-                      <Tooltip
-                        content={`Cannot delete service with ${getServiceActiveBookingsCount(service.id)} active booking${
-                          getServiceActiveBookingsCount(service.id) !== 1
-                            ? "s"
-                            : ""
-                        }`}
-                        disabled={!hasActiveBookings(service.id)}
-                      >
-                        <button
-                          type="button"
-                          className={`w-full rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
-                            hasActiveBookings(service.id)
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!hasActiveBookings(service.id)) {
-                              setDeleteConfirmId(service.id);
-                            }
-                          }}
-                          disabled={
-                            deletingId === service.id ||
-                            hasActiveBookings(service.id)
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!hasActiveBookings(service.id)) {
+                            await handleToggleActive(service.id, isActive);
                           }
-                        >
-                          Delete
-                        </button>
-                      </Tooltip>
-                    </div>
+                        }}
+                        disabled={hasActiveBookings(service.id)}
+                      >
+                        {isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </Tooltip>
+                    <Tooltip
+                      content={`Cannot delete service with ${activeCount} active booking${plural}`}
+                      showWhenDisabled={hasActiveBookings(service.id)}
+                    >
+                      <button
+                        type="button"
+                        className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
+                          hasActiveBookings(service.id)
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!hasActiveBookings(service.id)) {
+                            setDeleteConfirmId(service.id);
+                          }
+                        }}
+                        disabled={
+                          deletingId === service.id ||
+                          hasActiveBookings(service.id)
+                        }
+                      >
+                        Delete
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               );
             })}
           </div>
+
           {/* View All Services Button */}
           {services.length > 4 && (
             <div className="mt-8 flex justify-center">

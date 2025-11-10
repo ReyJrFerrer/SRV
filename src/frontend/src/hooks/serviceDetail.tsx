@@ -162,6 +162,7 @@ export interface FormattedServiceDetail {
   media: string[];
   requirements: string[];
   isVerified: boolean;
+  certificateUrls: string[];
   slug: string;
   heroImage: string;
   category: {
@@ -238,7 +239,8 @@ const formatServiceForDetailPage = (
     },
     media: service.imageUrls, // Default empty media array
     requirements: [], // Default empty requirements
-    isVerified: service.isVerifiedService, // Default value
+    isVerified: service.isVerifiedService, // Default value (will be overridden by actual validation check)
+    certificateUrls: service.certificateUrls || [], // Certificate URLs for validation status checking
     slug: service.id, // Using ID as slug
     heroImage:
       service.category.imageUrl || getCategoryImage(service.category.name),
@@ -307,9 +309,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
               providerData = await authCanisterService.getProfile(
                 serviceData.providerId,
               );
-            } catch (err) {
-              console.error("Failed to fetch provider data:", err);
-            }
+            } catch (err) {}
           }
 
           setProvider(providerData);
@@ -323,7 +323,6 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
           setService(formattedService);
           setError(null);
         } catch (err) {
-          console.error("Failed to process service data:", err);
           setError("Failed to load service data");
         } finally {
           setLoading(false);
@@ -356,9 +355,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         );
         setService(formattedService);
       }
-    } catch (err) {
-      console.error("Failed to refetch service:", err);
-    }
+    } catch (err) {}
   }, [serviceId]);
 
   return {

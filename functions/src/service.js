@@ -26,13 +26,16 @@ function getAuthInfo(context, data) {
 
 // Constants
 const MIN_TITLE_LENGTH = 1;
-const MAX_TITLE_LENGTH = 100;
+const MAX_TITLE_LENGTH = 40;
 const MIN_DESCRIPTION_LENGTH = 1;
-const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_DESCRIPTION_LENGTH = 100;
 const MIN_PRICE = 1;
 const MAX_PRICE = 1000000;
-const MAX_SERVICE_IMAGES = 5;
+const MAX_SERVICE_IMAGES = 10;
 const MAX_SERVICE_CERTIFICATES = 10;
+const MIN_PACKAGE_TITLE_LENGTH = 1;
+const MAX_PACKAGE_TITLE_LENGTH = 40;
+
 
 /**
  * Calculate distance between two locations using Haversine formula
@@ -60,15 +63,6 @@ function calculateDistance(loc1, loc2) {
  * @return {boolean} True if valid
  */
 function validateTitle(title) {
-  console.log("🔍 validateTitle called with:", {
-    title: title,
-    type: typeof title,
-    truthy: !!title,
-    length: title ? title.length : "N/A",
-    minRequired: MIN_TITLE_LENGTH,
-    maxRequired: MAX_TITLE_LENGTH,
-  });
-
   const result = (
     title &&
     title.length >= MIN_TITLE_LENGTH &&
@@ -80,7 +74,7 @@ function validateTitle(title) {
 }
 
 /**
- * Validate service description length
+ * Validate package description length
  * @param {string} description - Service description
  * @return {boolean} True if valid
  */
@@ -89,6 +83,19 @@ function validateDescription(description) {
     description &&
     description.length >= MIN_DESCRIPTION_LENGTH &&
     description.length <= MAX_DESCRIPTION_LENGTH
+  );
+}
+
+/**
+ * Validate package title length
+ * @param {string} packageTitle - Package title
+ * @return {boolean} True if valid
+ */
+function validatePackageTitle(packageTitle) {
+  return (
+    packageTitle &&
+    packageTitle.length >= MIN_PACKAGE_TITLE_LENGTH &&
+    packageTitle.length <= MAX_PACKAGE_TITLE_LENGTH
   );
 }
 
@@ -125,7 +132,6 @@ function validateLocation(location) {
  * @return {Promise<object>} Commission fee and rate
  */
 async function calculateCommissionInfo(categoryName, price) {
-  // Import commission logic locally to avoid HTTPS call overhead
   const {
     getCategoryTier,
     getFeeStructure,
@@ -192,7 +198,6 @@ async function uploadImagesToStorage(ownerId, images, mediaType) {
 async function deleteImagesFromStorage(mediaItems) {
   for (const item of mediaItems) {
     try {
-      // Call media.js deleteMediaInternal to remove both Storage file and Firestore metadata
       await deleteMediaInternal(item.id);
     } catch (error) {
       console.error(`Error deleting media ${item.id}:`, error);
@@ -263,35 +268,19 @@ exports.createService = functions.https.onCall(async (data, context) => {
     serviceCertificates,
   } = payload;
 
-  console.log("📋 Extracted data from payload:");
-  console.log("  - Title:", title,
-    "(type:", typeof title, ", length:", title ? title.length : "N/A", ")");
-  console.log("  - Description:", description,
-    "(type:", typeof description, ", length:",
-    description ? description.length : "N/A", ")");
-  console.log("  - CategoryId:", categoryId, "(type:", typeof categoryId, ")");
-  console.log("  - Price:", price, "(type:", typeof price, ")");
-  console.log("  - Location:", location ? "Present" : "Missing");
 
   const providerId = authInfo.uid;
 
-  // Validate input
-  console.log("🔍 Starting validation...");
-  console.log("🔍 Title validation - Min:", MIN_TITLE_LENGTH, "Max:", MAX_TITLE_LENGTH);
 
   const titleValid = validateTitle(title);
-  console.log("📝 Title validation result:", titleValid);
   if (!titleValid) {
-    console.log("❌ Title validation failed for:", title);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service title must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters`);
   }
 
   const descValid = validateDescription(description);
-  console.log("📝 Description validation result:", descValid);
   if (!descValid) {
-    console.log("❌ Description validation failed for:", description);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service description must be between 
@@ -299,9 +288,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
   }
 
   const priceValid = validatePrice(price);
-  console.log("💰 Price validation result:", priceValid);
   if (!priceValid) {
-    console.log("❌ Price validation failed for:", price);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`);
@@ -393,9 +380,9 @@ exports.createService = functions.https.onCall(async (data, context) => {
       rating: null,
       reviewCount: 0,
       imageUrls: imageMedia.map((m) => m.url),
-      imageMedia: imageMedia, // Store full media metadata
+      imageMedia: imageMedia,
       certificateUrls: certificateMedia.map((m) => m.url),
-      certificateMedia: certificateMedia, // Store full media metadata
+      certificateMedia: certificateMedia,
       isVerifiedService: certificateMedia.length > 0,
       weeklySchedule: weeklySchedule || null,
       instantBookingEnabled: instantBookingEnabled || false,
@@ -674,7 +661,6 @@ exports.updateService = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Handle null data gracefully by preserving existing values
     // Update title - preserve existing if null/undefined provided
     let updatedTitle;
     if (title !== undefined && title !== null) {
@@ -876,6 +862,84 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
     // Delete service certificates from storage and metadata
     if (service.certificateMedia && service.certificateMedia.length > 0) {
       await deleteImagesFromStorage(service.certificateMedia);
+    }
+
+    // Delete all associated bookings for this service
+    console.log(`🗑️ [deleteService] Deleting bookings for service ${serviceId}...`);
+    const bookingsSnapshot = await db.collection("bookings")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!bookingsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = bookingsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${bookingsSnapshot.size}
+        bookings for service ${serviceId}`);
+    }
+
+    // Delete all associated reviews for this service (client reviews)
+    console.log(`🗑️ [deleteService] Deleting reviews for service ${serviceId}...`);
+    const reviewsSnapshot = await db.collection("reviews")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!reviewsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = reviewsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${reviewsSnapshot.size}
+        reviews for service ${serviceId}`);
+    }
+
+    // Delete all associated provider reviews for this service
+    console.log(`🗑️ [deleteService] Deleting provider reviews for service ${serviceId}...`);
+    const providerReviewsSnapshot = await db.collection("providerReviews")
+      .where("serviceId", "==", serviceId)
+      .get();
+
+    if (!providerReviewsSnapshot.empty) {
+      const batchSize = 500; // Firestore batch limit
+      const docs = providerReviewsSnapshot.docs;
+
+      // Process in batches
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`✅ [deleteService] Deleted ${providerReviewsSnapshot.size}
+        provider reviews for service ${serviceId}`);
     }
 
     // Delete the service document
@@ -1508,6 +1572,15 @@ async function initializeCategoriesDirectly() {
       slug: "photographer",
       imageUrl: "/images/Photographer-CoverImage.jpg",
     },
+    {
+      id: "cat-010",
+      name: "Others",
+      description: "Services that don't fit into other categories",
+      parentId: null,
+      slug: "others",
+      imageUrl: "/images/HomeServices-CoverImage.jpg",
+    },
+
   ];
 
   try {
@@ -1588,6 +1661,31 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
         "permission-denied",
         "Only the service provider can create packages",
       );
+    }
+
+    // Validate input
+    console.log("🔍 Starting validation...");
+    console.log("🔍 Title validation - Min:", MIN_PACKAGE_TITLE_LENGTH, "Max:",
+      MAX_PACKAGE_TITLE_LENGTH);
+
+    const titleValid = validatePackageTitle(title);
+    console.log("📝 Package validation result:", titleValid);
+    if (!titleValid) {
+      console.log("❌ Title validation failed for:", title);
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Package title must be between ${MIN_PACKAGE_TITLE_LENGTH} and 
+        ${MAX_PACKAGE_TITLE_LENGTH} characters`);
+    }
+
+    const descValid = validateDescription(description);
+    console.log("📝 Description validation result:", descValid);
+    if (!descValid) {
+      console.log("❌ Description validation failed for:", description);
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Package description must be between 
+        ${MIN_DESCRIPTION_LENGTH} and ${MAX_DESCRIPTION_LENGTH} characters`);
     }
 
     // Validate price

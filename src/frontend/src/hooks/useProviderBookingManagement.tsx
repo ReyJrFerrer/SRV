@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Principal } from "@dfinity/principal";
 import {
   Booking,
@@ -130,7 +130,9 @@ interface ProviderBookingManagementHook {
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
   // Individual booking lookup and action functions
-  getBookingById: (bookingId: string) => ProviderEnhancedBooking | null;
+  getBookingById: (
+    bookingId: string,
+  ) => Promise<ProviderEnhancedBooking | null>;
   getBookingWithClientData: (
     bookingId: string,
   ) => Promise<ProviderEnhancedBooking | null>;
@@ -198,6 +200,40 @@ interface ProviderBookingManagementHook {
   canAcceptCashBooking: (booking: ProviderEnhancedBooking) => Promise<boolean>;
   getWalletBalance: () => Promise<number>;
 }
+
+// Debounce utility function
+const useDebounce = <F extends (...args: any[]) => any>(
+  callback: F,
+  delay: number,
+) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef<F>(callback);
+
+  // Update the callback if it changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  return useCallback(
+    (...args: Parameters<F>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+
+      // Cleanup function to clear the timeout
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    },
+    [delay],
+  );
+};
 
 export const useProviderBookingManagement =
   (): ProviderBookingManagementHook => {
@@ -309,7 +345,6 @@ export const useProviderBookingManagement =
 
     // Error handling functions
     const handleBookingError = useCallback((error: any, operation: string) => {
-      //console.error(`Error in ${operation}:`, error);
       const errorMessage = error?.message || `Failed to ${operation}`;
       setError(errorMessage);
     }, []);
@@ -383,10 +418,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading client profile for ${clientId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("clients", false);
@@ -416,10 +447,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading service details for ${serviceId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("services", false);
@@ -448,10 +475,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading package details for ${packageId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("packages", false);
@@ -610,11 +633,8 @@ export const useProviderBookingManagement =
               !booking.servicePackageId ||
               booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
-          console.log("From useProviderBookingManagement", enhancedBooking);
           return enhancedBooking;
         } catch (error) {
-          //console.error(`❌ Error enriching booking ${booking.id}:`, error);
-
           // Return booking with minimal enhancement but proper packageName handling
           return {
             ...booking,
@@ -829,21 +849,9 @@ export const useProviderBookingManagement =
                   clientIdStr,
                   providerIdStr,
                 );
-                // //console.log(
-                //   "Conversation created for accepted booking:",
-                //   bookingId,
-                // );
               } else {
-                //console.log("Conversation already exists between these users");
               }
-            } catch (chatError) {
-              // Log the error but don't prevent the booking status update
-              // //console.error(
-              //   "Failed to create conversation for booking:",
-              //   bookingId,
-              //   chatError,
-              // );
-            }
+            } catch (chatError) {}
           }
 
           if (updatedBooking) {
@@ -1293,10 +1301,7 @@ export const useProviderBookingManagement =
         try {
           clearError();
           await operation();
-        } catch (error) {
-          //console.error("Retry operation failed:", error);
-          // Error is handled by the individual operation
-        }
+        } catch (error) {}
       },
       [clearError],
     );
@@ -1359,7 +1364,6 @@ export const useProviderBookingManagement =
             availableBalance: walletAvailableBalance,
           };
         } catch (error) {
-          //console.error("Commission validation error:", error);
           return {
             estimatedCommission: 0,
             hasInsufficientBalance: true,
@@ -1396,7 +1400,6 @@ export const useProviderBookingManagement =
         await fetchBalance();
         return walletBalance;
       } catch (error) {
-        //console.error("Error fetching wallet balance:", error);
         return 0;
       }
     }, [fetchBalance, walletBalance]);
@@ -1409,6 +1412,36 @@ export const useProviderBookingManagement =
 
       initializeData();
     }, [loadProviderProfile]);
+
+    // Memoized booking update handler
+    const handleBookingsUpdate = useCallback(
+      async (bookings: Booking[]) => {
+        try {
+          // Enrich bookings with client data in parallel
+          const enrichedBookings = await Promise.all(
+            bookings.map((booking) => enrichBookingWithClientData(booking)),
+          );
+
+          setProviderBookings((prevBookings) => {
+            // Skip update if the data is the same
+            if (
+              JSON.stringify(prevBookings) === JSON.stringify(enrichedBookings)
+            ) {
+              return prevBookings;
+            }
+            return enrichedBookings;
+          });
+        } catch (error) {
+          handleBookingError(error, "enrich provider bookings");
+        } finally {
+          setLoadingState("bookings", false);
+        }
+      },
+      [enrichBookingWithClientData, handleBookingError],
+    );
+
+    // Create debounced version of the handler
+    const debouncedBookingsUpdate = useDebounce(handleBookingsUpdate, 300);
 
     // Subscribe to bookings with realtime updates when provider profile is available
     useEffect(() => {
@@ -1427,28 +1460,15 @@ export const useProviderBookingManagement =
       try {
         const providerPrincipal = Principal.fromText(currentProviderId);
 
-        // Subscribe to realtime updates
+        // Subscribe to realtime updates with debounced handler
         const unsubscribe = bookingCanisterService.subscribeToProviderBookings(
           providerPrincipal,
-          async (bookings) => {
-            try {
-              // Enrich bookings with client data in parallel
-              const enrichedBookings = await Promise.all(
-                bookings.map((booking) => enrichBookingWithClientData(booking)),
-              );
-
-              setProviderBookings(enrichedBookings);
-              setLoadingState("bookings", false);
-            } catch (error) {
-              console.error("Error enriching bookings:", error);
-              handleBookingError(error, "enrich provider bookings");
-              setLoadingState("bookings", false);
-            }
-          },
+          debouncedBookingsUpdate,
         );
 
         // Cleanup subscription on unmount or when dependencies change
         return () => {
+          // Clear any pending debounced updates
           unsubscribe();
         };
       } catch (error) {
@@ -1459,7 +1479,7 @@ export const useProviderBookingManagement =
       providerProfile,
       isProviderAuthenticated,
       getCurrentProviderId,
-      enrichBookingWithClientData,
+      debouncedBookingsUpdate,
       setLoadingState,
       clearError,
       handleBookingError,
@@ -1473,7 +1493,6 @@ export const useProviderBookingManagement =
           const newAnalytics = calculateAnalytics();
           setAnalytics(newAnalytics);
         } catch (error) {
-          //console.error("Error calculating analytics:", error);
         } finally {
           setLoadingState("analytics", false);
         }
@@ -1571,14 +1590,48 @@ export const useProviderBookingManagement =
       disputeBooking,
 
       // Individual booking lookup and action functions
-      getBookingById: (bookingId: string) =>
-        providerBookings.find((booking) => booking.id === bookingId) || null,
+      getBookingById: async (bookingId: string) => {
+        try {
+          // First try to find in local state for instant response
+          const localBooking = providerBookings.find(
+            (booking) => booking.id === bookingId,
+          );
+          if (localBooking) {
+            return localBooking;
+          }
+
+          // If not found locally, fetch from backend
+          const booking = await bookingCanisterService.getBooking(bookingId);
+          if (booking) {
+            // Enrich with client data before returning
+            const enrichedBooking = await enrichBookingWithClientData(booking);
+            return enrichedBooking;
+          }
+
+          return null;
+        } catch (error) {
+          return null;
+        }
+      },
       getBookingWithClientData: async (bookingId: string) => {
-        const booking = providerBookings.find(
-          (booking) => booking.id === bookingId,
-        );
-        if (!booking) return null;
-        return await enrichBookingWithClientData(booking);
+        try {
+          // Use getBookingById which now checks backend if not in local state
+          const booking = await (async () => {
+            const localBooking = providerBookings.find(
+              (b) => b.id === bookingId,
+            );
+            if (localBooking) return localBooking;
+
+            const fetchedBooking =
+              await bookingCanisterService.getBooking(bookingId);
+            return fetchedBooking;
+          })();
+
+          if (!booking) return null;
+          return await enrichBookingWithClientData(booking);
+        } catch (error) {
+          return null;
+        }
       },
       acceptBookingById: async (bookingId: string, scheduledDate?: Date) => {
         try {

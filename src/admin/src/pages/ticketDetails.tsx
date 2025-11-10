@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
+import {
+  TicketDetailsHeader,
+  TicketDetailsCard,
+  TicketComments,
+  TicketStatusActions,
+  TicketInfo,
+  ImageAttachmentModal,
+} from "../components";
 
 // Function to parse structured report data (same as ticketInbox)
 const parseReportData = (description: string) => {
@@ -19,6 +27,26 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
 
     let ticket: Ticket;
     if (parsedData) {
+      // Build tags based on source and category
+      const tags = [];
+      if (
+        parsedData.source === "provider_report" ||
+        parsedData.source === "provider_cancellation"
+      ) {
+        tags.push("provider");
+      } else if (
+        parsedData.source === "client_report" ||
+        parsedData.source === "client_cancellation"
+      ) {
+        tags.push("client");
+      }
+
+      if (parsedData.category === "cancellation") {
+        tags.push("cancellation");
+      }
+
+      tags.push("user-report");
+
       // Structured report (new format)
       ticket = {
         id: `REPORT-${report.id}`,
@@ -30,11 +58,9 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         submittedById: report.userId,
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
-        tags: [
-          parsedData.source === "provider_report" ? "provider" : "client",
-          "user-report",
-        ],
+        tags: tags,
         comments: [],
+        attachments: report.attachments || [],
       };
     } else {
       ticket = {
@@ -49,6 +75,7 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         lastUpdated: report.createdAt,
         tags: ["legacy", "user-report"],
         comments: [],
+        attachments: report.attachments || [],
       };
     }
     return ticket;
@@ -61,7 +88,13 @@ interface Ticket {
   title: string;
   description: string;
   status: "open" | "in_progress" | "resolved" | "closed";
-  category: "technical" | "billing" | "account" | "service" | "other";
+  category:
+    | "technical"
+    | "billing"
+    | "account"
+    | "service"
+    | "cancellation"
+    | "other";
   submittedBy: string;
   submittedById: string;
   submittedAt: string;
@@ -69,6 +102,7 @@ interface Ticket {
   lastUpdated: string;
   tags: string[];
   comments?: Comment[];
+  attachments?: string[];
 }
 
 interface Comment {
@@ -106,6 +140,8 @@ const getCategoryColor = (category: string) => {
       return "bg-blue-100 text-blue-800";
     case "service":
       return "bg-yellow-100 text-yellow-800";
+    case "cancellation":
+      return "bg-orange-100 text-orange-800";
     case "other":
       return "bg-gray-100 text-gray-800";
     default:
@@ -123,6 +159,11 @@ export const TicketDetailsPage: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [imageDataUrls, setImageDataUrls] = useState<Record<string, string>>(
+    {},
+  );
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
   // Initialize canister references and refresh data
   useEffect(() => {
@@ -174,6 +215,105 @@ export const TicketDetailsPage: React.FC = () => {
       loadTicket();
     }
   }, [id, backendUsers]);
+
+  // Load images using the media service
+  useEffect(() => {
+    if (ticket && ticket.attachments && ticket.attachments.length > 0) {
+      const loadImages = async () => {
+        setLoadingImages(true);
+        const urls: Record<string, string> = {};
+
+        try {
+          // Import Firestore utilities and media service
+          const { collection, query, where, getDocs } = await import(
+            "firebase/firestore"
+          );
+          const { getFirebaseFirestore } = await import(
+            "../services/firebaseApp"
+          );
+          const { getMediaItem } = await import(
+            "../services/mediaServiceCanister"
+          );
+
+          const firestore = getFirebaseFirestore();
+          for (const attachment of ticket.attachments!) {
+            try {
+              let mediaId = attachment;
+
+              if (
+                attachment.startsWith("http://") ||
+                attachment.startsWith("https://")
+              ) {
+                console.log("Processing legacy URL attachment:", attachment);
+
+                // Query Firestore to find media document with this URL
+                const mediaCollection = collection(firestore, "media");
+                const q = query(
+                  mediaCollection,
+                  where("url", "==", attachment),
+                );
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                  mediaId = querySnapshot.docs[0].id;
+                  console.log(
+                    "Found media ID for legacy URL:",
+                    mediaId,
+                    "URL:",
+                    attachment,
+                  );
+                } else {
+                  console.warn("No media found for URL:", attachment);
+                  // Use URL directly as fallback
+                  urls[attachment] = attachment;
+                  continue;
+                }
+              } else {
+                console.log("Processing media ID:", mediaId);
+              }
+
+              // Get media item which contains the public URL
+              const mediaItem = await getMediaItem(mediaId);
+              console.log("Got media item:", mediaItem);
+
+              if (mediaItem && mediaItem.url) {
+                let imageUrl = mediaItem.url;
+
+                // Add timestamp to prevent caching issues
+                if (!imageUrl.includes("&token=")) {
+                  imageUrl = `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+                }
+
+                console.log("Final image URL:", imageUrl);
+                urls[attachment] = imageUrl;
+                console.log("Successfully loaded image URL for:", attachment);
+              } else {
+                console.warn("Failed to get media item for:", attachment);
+                urls[attachment] =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
+              }
+            } catch (error) {
+              console.error(
+                "Error loading image for attachment:",
+                attachment,
+                error,
+              );
+              urls[attachment] =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
+            }
+          }
+
+          setImageDataUrls(urls);
+        } catch (error) {
+          console.error("Error in image loading process:", error);
+        } finally {
+          setLoadingImages(false);
+        }
+      };
+
+      loadImages();
+    }
+  }, [ticket]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -336,278 +476,55 @@ export const TicketDetailsPage: React.FC = () => {
     );
   }
 
+  console.log("From ticketDetails", ticket);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Ticket #{ticket.id}
-                </h1>
-                <p className="mt-2 text-sm text-gray-600">{ticket.title}</p>
-              </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => navigate("/ticket-inbox")}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
-                  Back to Tickets
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Image Modal */}
+      {modalImage && (
+        <ImageAttachmentModal
+          src={modalImage}
+          onClose={() => setModalImage(null)}
+        />
+      )}
+
+      <TicketDetailsHeader ticketId={ticket.id} ticketTitle={ticket.title} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            {/* Ticket Details */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Details
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(ticket.status)}`}
-                    >
-                      {ticket.status.replace("_", " ").toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <TicketDetailsCard
+              ticket={ticket}
+              imageDataUrls={imageDataUrls}
+              loadingImages={loadingImages}
+              onImageClick={(url) => setModalImage(url)}
+              getStatusColor={getStatusColor}
+            />
 
-              <div className="px-6 py-4">
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap text-gray-700">
-                    {ticket.description}
-                  </p>
-                </div>
-
-                {ticket.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {ticket.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Comments
-                </h2>
-              </div>
-
-              <div className="px-6 py-4">
-                {ticket.comments && ticket.comments.length > 0 ? (
-                  <div className="space-y-4">
-                    {ticket.comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className={`rounded-lg p-4 ${
-                          comment.isInternal
-                            ? "border-l-4 border-blue-400 bg-blue-50"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-900">
-                              {comment.author}
-                            </span>
-                            {comment.isInternal && (
-                              <span className="inline-flex items-center rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                                Internal
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {formatDate(comment.timestamp)}
-                          </span>
-                        </div>
-                        <p className="whitespace-pre-wrap text-sm text-gray-700">
-                          {comment.content}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No comments yet.</p>
-                )}
-
-                {/* Add Comment Form */}
-                <div className="mt-6 border-t border-gray-200 pt-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Add Comment
-                      </label>
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={3}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                        placeholder="Add a comment..."
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={isInternal}
-                          onChange={(e) => setIsInternal(e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">
-                          Internal comment (not visible to user)
-                        </span>
-                      </label>
-
-                      <button
-                        onClick={handleAddComment}
-                        disabled={!newComment.trim()}
-                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Add Comment
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TicketComments
+              comments={ticket.comments}
+              newComment={newComment}
+              isInternal={isInternal}
+              onCommentChange={setNewComment}
+              onInternalChange={setIsInternal}
+              onAddComment={handleAddComment}
+              formatDate={formatDate}
+            />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Status Actions */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
-              </div>
+            <TicketStatusActions
+              status={ticket.status}
+              updatingStatus={updatingStatus}
+              onStatusChange={handleStatusChange}
+            />
 
-              <div className="space-y-3 px-6 py-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Update Status
-                  </label>
-                  <select
-                    value={ticket.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    disabled={updatingStatus}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 disabled:opacity-50"
-                  >
-                    <option value="open">Open</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-
-                {updatingStatus && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-indigo-600"></div>
-                    Updating status...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ticket Info */}
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Ticket Info
-                </h3>
-              </div>
-
-              <div className="space-y-4 px-6 py-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Category
-                  </dt>
-                  <dd className="mt-1">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryColor(ticket.category)}`}
-                    >
-                      {ticket.category.toUpperCase()}
-                    </span>
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Submitted By
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    <Link
-                      to={`/user/${ticket.submittedById}?from=ticket&ticketId=${ticket.id}`}
-                      className="cursor-pointer text-indigo-600 hover:text-indigo-500 hover:underline"
-                    >
-                      {ticket.submittedBy}
-                    </Link>
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Submitted At
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {formatDate(ticket.submittedAt)}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Last Updated
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {formatDate(ticket.lastUpdated)}
-                  </dd>
-                </div>
-
-                {ticket.assignedTo && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">
-                      Assigned To
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {ticket.assignedTo}
-                    </dd>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons card removed - status is now managed via dropdown above */}
+            <TicketInfo
+              ticket={ticket}
+              formatDate={formatDate}
+              getCategoryColor={getCategoryColor}
+            />
           </div>
         </div>
       </main>

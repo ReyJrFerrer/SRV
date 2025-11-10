@@ -10,7 +10,7 @@ import {
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/provider/NavigationBar"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
 import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
@@ -25,7 +25,6 @@ const SettingsPage: React.FC = () => {
     loading: profileLoading,
     switchRole,
     profileImageUrl,
-    refetchImage,
   } = useUserProfile();
 
   // Set the document title when the component mounts
@@ -53,27 +52,24 @@ const SettingsPage: React.FC = () => {
   ];
 
   const [switching, setSwitching] = React.useState(false);
+  const [pwaOpen, setPwaOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const handleSwitchToClient = async () => {
     setSwitching(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        navigate("/client");
-      }
+      await switchRole();
+      navigate("/client/settings");
     } catch (error) {
-      //console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }
   };
 
-  refetchImage();
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="flex items-center justify-center">
-          <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+        <div className="relative flex w-full items-center px-4 py-3">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Settings
           </h1>
         </div>
@@ -139,24 +135,54 @@ const SettingsPage: React.FC = () => {
                   App Settings
                 </h2>
 
-                {/* PWA Install Section */}
+                {/* PWA Install Section (collapsible) */}
                 <div className="mb-6">
-                  <div className="mb-3 flex items-center">
-                    <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">Install App</h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">Install App</h3>
+                    </div>
+                    <button
+                      onClick={() => setPwaOpen((v) => !v)}
+                      aria-expanded={pwaOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {pwaOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <PWAInstallDetailed />
+
+                  {pwaOpen && <PWAInstallDetailed />}
                 </div>
 
-                {/* Notification Settings Section */}
+                {/* Notification Settings Section (collapsible) */}
                 <div>
-                  <div className="mb-3 flex items-center">
-                    <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">
-                      Push Notifications
-                    </h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">
+                        Push Notifications
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setNotifOpen((v) => !v)}
+                      aria-expanded={notifOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {notifOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <NotificationSettingsDetailed />
+
+                  {notifOpen && <NotificationSettingsDetailed />}
                 </div>
               </div>
             </div>

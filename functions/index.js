@@ -55,7 +55,6 @@ const {
   updateUserReputation: updateUserReputationBridge,
   updateProviderReputation,
   processReviewForReputation,
-  getReputationScore,
 } = require("./src/reputation");
 
 // Import Admin Management functions
@@ -75,14 +74,16 @@ const {
   getSystemStats,
   getUserServicesAndBookings,
   getUserServiceCount,
+  getAllUserLockStatuses,
   lockUserAccount,
-  deleteUserAccount,
   updateUserReputation,
   getValidatedCertificates,
   getRejectedCertificates,
   getServicesWithCertificates,
   getPendingCertificateValidations,
   validateCertificate,
+  updateCertificateValidationStatus,
+  autoReactivateSuspendedAccounts,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -102,6 +103,8 @@ const {
   getAllUsers,
   uploadProfilePicture,
   removeProfilePicture,
+  updateUserActiveStatus,
+  validatePhoneNumber,
 } = require("./src/account");
 
 // Import Service Management functions
@@ -179,6 +182,8 @@ const {
   getUserReviews,
   updateReview,
   deleteReview,
+  restoreReview,
+  bulkUpdateReviewStatus,
   calculateProviderRating,
   calculateServiceRating,
   calculateUserAverageRating,
@@ -187,6 +192,9 @@ const {
   flagReview,
   getProviderReviews,
   getServiceReviews,
+  submitProviderReview,
+  getClientProviderReviews,
+  getProviderReviewsByProvider,
 } = require("./src/review");
 
 // Import Feedback Management functions
@@ -228,7 +236,10 @@ const {
   getNotificationStats,
   markAllNotificationsAsRead,
   canReceiveNotification,
+  deleteNotification,
   cleanupNotificationFrequency,
+  storeOneSignalPlayerId,
+  removeOneSignalPlayerId,
 } = require("./src/notification");
 
 // Import Media Management functions
@@ -243,7 +254,6 @@ const {
   getStorageStats,
   validateMediaItems,
   getRemittanceMediaItems,
-  updateCertificateValidationStatus,
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
@@ -266,7 +276,6 @@ exports.initializeReputation = initializeReputation;
 exports.updateUserReputationBridge = updateUserReputationBridge;
 exports.updateProviderReputation = updateProviderReputation;
 exports.processReviewForReputation = processReviewForReputation;
-exports.getReputationScore = getReputationScore;
 
 // Export Commission functions
 exports.calculateCommission = calculateCommission;
@@ -282,6 +291,8 @@ exports.getAllServiceProviders = getAllServiceProviders;
 exports.getAllUsers = getAllUsers;
 exports.uploadProfilePicture = uploadProfilePicture;
 exports.removeProfilePicture = removeProfilePicture;
+exports.updateUserActiveStatus = updateUserActiveStatus;
+exports.validatePhoneNumber = validatePhoneNumber;
 
 
 // Export Service Management functions
@@ -355,6 +366,8 @@ exports.getBookingReviews = getBookingReviews;
 exports.getUserReviews = getUserReviews;
 exports.updateReview = updateReview;
 exports.deleteReview = deleteReview;
+exports.restoreReview = restoreReview;
+exports.bulkUpdateReviewStatus = bulkUpdateReviewStatus;
 exports.calculateProviderRating = calculateProviderRating;
 exports.calculateServiceRating = calculateServiceRating;
 exports.calculateUserAverageRating = calculateUserAverageRating;
@@ -363,6 +376,10 @@ exports.getReviewStatistics = getReviewStatistics;
 exports.flagReview = flagReview;
 exports.getProviderReviews = getProviderReviews;
 exports.getServiceReviews = getServiceReviews;
+exports.submitProviderReview = submitProviderReview;
+exports.getClientProviderReviews = getClientProviderReviews;
+exports.getProviderReviewsByProvider = getProviderReviewsByProvider;
+
 
 // Export Feedback Management Functions
 exports.submitFeedback = submitFeedback;
@@ -398,7 +415,10 @@ exports.removeFCMToken = removeFCMToken;
 exports.getNotificationStats = getNotificationStats;
 exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
 exports.canReceiveNotification = canReceiveNotification;
+exports.deleteNotification = deleteNotification;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
+exports.storeOneSignalPlayerId = storeOneSignalPlayerId;
+exports.removeOneSignalPlayerId = removeOneSignalPlayerId;
 
 // Export Media Management Functions
 exports.uploadMedia = uploadMedia;
@@ -411,7 +431,6 @@ exports.updateMediaMetadata = updateMediaMetadata;
 exports.getStorageStats = getStorageStats;
 exports.validateMediaItems = validateMediaItems;
 exports.getRemittanceMediaItems = getRemittanceMediaItems;
-exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
@@ -430,14 +449,18 @@ exports.getSettings = getSettings;
 exports.getSystemStats = getSystemStats;
 exports.getUserServicesAndBookings = getUserServicesAndBookings;
 exports.getUserServiceCount = getUserServiceCount;
+exports.getAllUserLockStatuses = getAllUserLockStatuses;
 exports.lockUserAccount = lockUserAccount;
-exports.deleteUserAccount = deleteUserAccount;
 exports.updateUserReputation = updateUserReputation;
 exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
+exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
+
+// Export Scheduled Admin Functions
+exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
 
 // Export Admin Authentication Helper
 const {createAdminProfile} = require("./src/adminAuth");

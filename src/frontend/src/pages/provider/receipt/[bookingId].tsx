@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   PrinterIcon,
@@ -6,11 +6,16 @@ import {
   // CheckBadgeIcon removed
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
+import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
+import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 const ReceiptPage: React.FC = () => {
   const navigate = useNavigate();
   const { bookingId } = useParams<{ bookingId: string }>();
   const [searchParams] = useSearchParams();
+  // Prevent navigating back to completion/active pages once on receipt
+  useNoBackNavigation("/provider/bookings");
 
   // Payment details from query params
   const serviceTotal = parseFloat(searchParams.get("price") || "0");
@@ -25,16 +30,33 @@ const ReceiptPage: React.FC = () => {
     estimatedCommission: 0,
   });
 
-  const { getBookingById, loading, checkCommissionValidation } =
-    useProviderBookingManagement();
+  const { checkCommissionValidation } = useProviderBookingManagement();
 
-  // Get booking data from hook
-  const booking = useMemo(() => {
-    if (bookingId && typeof bookingId === "string") {
-      return getBookingById(bookingId);
+  // Use cached booking hook - fetches once, shares across all pages
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  // Redirect if booking doesn't exist or wrong status
+  useEffect(() => {
+    if (!bookingId) {
+      navigate("/provider/bookings", { replace: true });
+      return;
     }
-    return null;
-  }, [bookingId, getBookingById]);
+    // Wait for loading to complete before checking booking
+    if (isLoadingBooking) {
+      return;
+    }
+
+    if (!booking) {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+
+    if (booking.status !== "Completed") {
+      navigate("/provider/bookings", { replace: true });
+      return;
+    }
+  }, [booking, isLoadingBooking, bookingId, navigate]);
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {
@@ -66,7 +88,6 @@ const ReceiptPage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -74,9 +95,11 @@ const ReceiptPage: React.FC = () => {
     validateCommission();
   }, [booking, paymentMethod, checkCommissionValidation]);
 
-  const handleDone = () => {
-    navigate("/provider/bookings?tab=Completed");
+  const handleRateClient = () => {
+    if (bookingId) navigate(`/provider/rate-client/${bookingId}`);
   };
+
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -96,18 +119,11 @@ const ReceiptPage: React.FC = () => {
     }
   };
 
-  if (loading) {
+  // Show loading state while booking is being fetched
+  if (!booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-red-500">
-        Booking details for receipt not found.
       </div>
     );
   }
@@ -245,12 +261,30 @@ const ReceiptPage: React.FC = () => {
             <ShareIcon className="h-5 w-5" /> Share
           </button>
         </div>
-        <button
-          onClick={handleDone}
-          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
-        >
-          Done
-        </button>
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Want to know more about rating clients?
+            </div>
+            <button
+              onClick={() => setShowRatingInfo(true)}
+              className="rounded-md px-3 py-1 text-sm text-blue-600 hover:underline"
+            >
+              About ratings
+            </button>
+          </div>
+          <button
+            onClick={handleRateClient}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
+          >
+            Proceed to Rate Client
+          </button>
+        </div>
+        <ClientRatingInfoModal
+          isOpen={showRatingInfo}
+          onClose={() => setShowRatingInfo(false)}
+          role="provider"
+        />
       </main>
     </div>
   );

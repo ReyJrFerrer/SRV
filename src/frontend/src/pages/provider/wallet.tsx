@@ -11,7 +11,7 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { CurrencyDollarIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { useWallet } from "../../hooks/useWallet";
 import { Transaction } from "../../services/walletCanisterService";
 import { Toaster, toast } from "sonner";
@@ -21,7 +21,7 @@ import {
   checkInvoiceStatus,
 } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { Principal } from "@dfinity/principal";
+import authCanisterService from "../../services/authCanisterService";
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +37,6 @@ const WalletPage: React.FC = () => {
     formatCurrency,
     getTransactionDisplay,
     refreshWalletData,
-    creditWallet,
     loadMoreTransactions,
     isAuthenticated,
   } = useWallet();
@@ -93,10 +92,16 @@ const WalletPage: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated || !identity) return;
 
-    const isOnboarded = localStorage.getItem("provider_onboarded");
-    if (!isOnboarded) {
-      setShowOnboardingModal(true);
-    }
+    const checkOnboardingStatus = async () => {
+      try {
+        const profile = await authCanisterService.getMyProfile();
+        if (profile && !profile.isOnboarded) {
+          setShowOnboardingModal(true);
+        }
+      } catch (error) {}
+    };
+
+    checkOnboardingStatus();
   }, [isAuthenticated, identity]);
 
   // Periodically check for completed payments
@@ -117,7 +122,7 @@ const WalletPage: React.FC = () => {
     setShowTopUpModal(true);
   };
 
-  // Function to check for completed payments and credit wallet
+  // Function to check for completed payments and update UI
   const checkAndCreditCompletedPayments = async () => {
     if (!identity || activeInvoices.size === 0) return;
 
@@ -132,32 +137,32 @@ const WalletPage: React.FC = () => {
             statusResponse.status === "PAID" ||
             statusResponse.status === "SETTLED"
           ) {
-            // Payment completed, credit the wallet
-            const principal = Principal.fromText(
-              identity.getPrincipal().toString(),
-            );
-            const amount = statusResponse.paidAmount || 0;
+            // Payment completed - the backend has already credited the wallet
+            if (statusResponse.credited) {
+              const amount = statusResponse.paidAmount || 0;
 
-            if (amount > 0) {
-              try {
-                // Get payment channel info from the status response
-                const paymentChannel = statusResponse.paymentChannel || "GCash";
-                const description = `Wallet Topup. Transfer from ${paymentChannel}`;
-
-                await creditWallet(
-                  principal,
-                  amount,
-                  paymentChannel,
-                  description,
+              if (statusResponse.alreadyCredited) {
+                // Already credited in a previous check
+                toast.info(
+                  `Payment already processed for ₱${amount.toLocaleString()}`,
                 );
+              } else {
+                // Just credited by the backend
                 toast.success(
                   `Wallet credited with ₱${amount.toLocaleString()}`,
                 );
-                completedInvoices.add(invoiceId);
-              } catch (creditError) {
-                toast.error("Failed to credit wallet. Please try refreshing.");
               }
-            } else {
+
+              completedInvoices.add(invoiceId);
+
+              // Refresh wallet data to show updated balance
+              await refreshWalletData();
+            } else if (statusResponse.creditError) {
+              // Credit failed on backend
+              toast.error(
+                `Payment received but failed to credit wallet: ${statusResponse.creditError}. Please contact support.`,
+              );
+              completedInvoices.add(invoiceId);
             }
           } else if (statusResponse.status === "EXPIRED") {
             // Invoice expired, remove from tracking
@@ -165,9 +170,7 @@ const WalletPage: React.FC = () => {
             toast.warning(
               "A top-up payment has expired. Please create a new top-up if needed.",
             );
-          } else {
           }
-        } else {
         }
       } catch (error) {}
     }
@@ -241,6 +244,28 @@ const WalletPage: React.FC = () => {
 
   const handlePredefinedAmount = (amount: number) => {
     setTopUpAmount(amount.toString());
+  };
+
+  const handleAmountInputChange = (value: string) => {
+    // Allow only numbers by stripping non-digit characters
+    let numericValue = value.replace(/[^0-9]/g, "");
+
+    // Prevent leading zeros, unless the value is "0" itself
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      numericValue = parseInt(numericValue, 10).toString();
+    }
+
+    // Prevent exceeding 50,000
+    if (parseInt(numericValue, 10) > 50000) {
+      numericValue = "50000";
+    }
+
+    // Handle empty or invalid parsing
+    if (numericValue === "NaN") {
+      numericValue = "";
+    }
+
+    setTopUpAmount(numericValue);
   };
 
   const handleRefresh = async () => {
@@ -329,18 +354,20 @@ const WalletPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="mx-auto max-w-md px-4 py-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <div className="flex w-full items-center justify-center px-4 py-3">
+            <h1 className="text-2xl font-extrabold tracking-tight text-black">
+              My Wallet
+            </h1>
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+              className="absolute right-4 rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
           </div>
-        </div>
+        </header>
       </div>
 
       <div className="mx-auto max-w-md px-4 py-6">
@@ -559,7 +586,7 @@ const WalletPage: React.FC = () => {
         )}
 
         {/* Refresh Button */}
-        {transactions.length > 0 && (
+        {/* {transactions.length > 0 && (
           <div className="mt-4 text-center">
             <button
               onClick={handleRefresh}
@@ -569,7 +596,7 @@ const WalletPage: React.FC = () => {
               {transactionLoading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Top-Up Modal */}
@@ -629,13 +656,11 @@ const WalletPage: React.FC = () => {
                     </span>
                     <input
                       id="topup-amount"
-                      type="number"
+                      type="text"
                       value={topUpAmount}
-                      onChange={(e) => setTopUpAmount(e.target.value)}
-                      placeholder="0.00"
+                      onChange={(e) => handleAmountInputChange(e.target.value)}
+                      placeholder="Enter amount"
                       min="100"
-                      max="50000"
-                      step="0.01"
                       className="w-full rounded-lg border border-gray-300 bg-white/80 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
@@ -804,8 +829,7 @@ const WalletPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      <BottomNavigation />
+      {!showOnboardingModal && <BottomNavigation />}
     </div>
   );
 };

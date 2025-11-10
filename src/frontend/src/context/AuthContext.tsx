@@ -15,10 +15,6 @@ import {
 import { getFirebaseAuth, clearICCustomToken } from "../services/firebaseApp";
 import { updateReputationActor } from "../services/reputationCanisterService";
 
-// import {
-//   initializeCanisterReferences,
-//   shouldInitializeCanisters,
-// } from "../services/canisterInitService";
 import {
   useLocationStore,
   type LocationStatus,
@@ -27,6 +23,7 @@ import {
 } from "../store/locationStore";
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
+import authCanisterService from "../services/authCanisterService";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -55,22 +52,21 @@ interface AuthContextType {
   pwaState: PWAState;
   enablePushNotifications: (userId: string) => Promise<boolean>;
   disablePushNotifications: (userId: string) => Promise<boolean>;
+  // Post-login location prompt controls (moved UI to pages that want to render it)
+  postLoginLocationPromptVisible: boolean;
+  requestLocationFromPrompt: () => Promise<void>;
+  skipPostLoginLocationPrompt: () => void;
+  postLoginBlockedModalVisible: boolean;
+  acknowledgePostLoginBlockedModal: () => void;
+  showPostLoginLocationPrompt: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const updateAllActors = (identity: Identity | null) => {
-  // try {
-  //   updateAuthActor(identity);
-  // } catch (error) {
-  //   console.warn("Failed to update auth actor:", error);
-  // }
-
   try {
     updateReputationActor(identity);
-  } catch (error) {
-    console.warn("Failed to update reputation actor:", error);
-  }
+  } catch (error) {}
 };
 
 export const useAuth = () => {
@@ -102,10 +98,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Post-login location prompt state
+  const [postLoginLocationPromptVisible, setPostLoginLocationPromptVisible] =
+    useState(false);
+  const [postLoginBlockedModalVisible, setPostLoginBlockedModalVisible] =
+    useState(false);
+  const [awaitingGeoResult, setAwaitingGeoResult] = useState(false);
 
-  // Initialize location store on mount
+  // Initialize location store on mount (does not auto-request geolocation)
   useEffect(() => {
     locationStore.initialize();
+  }, [locationStore]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "granted") {
+              // Only request if the store doesn't already have an allowed state
+              if (locationStore.locationStatus !== "allowed") {
+                try {
+                  locationStore.requestLocation().catch(() => {});
+                } catch {}
+              }
+            }
+
+            // Listen for permission changes while the app is open
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                try {
+                  if (
+                    p.state === "granted" &&
+                    locationStore.locationStatus !== "allowed"
+                  ) {
+                    locationStore.requestLocation().catch(() => {});
+                  }
+                } catch {}
+              };
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+    return () => {
+      mounted = false;
+    };
   }, [locationStore]);
 
   // Listen to Firebase auth state changes
@@ -113,11 +155,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
-      if (user) {
-        console.log("Firebase user authenticated:", user.uid);
-      } else {
-        console.log("No Firebase user");
-      }
     });
 
     return () => unsubscribe();
@@ -142,13 +179,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       ) {
         try {
           const userId = identity.getPrincipal().toString();
-          const success = await enablePushNotificationsPWA(userId);
-          if (success) {
-            console.log("✅ Auto-enabled push notifications for user:", userId);
-          }
+          await enablePushNotificationsPWA(userId);
         } catch (error) {
           // Silently fail auto-enable - user can still enable manually if desired
-          console.log("ℹ️ Auto-enable push notifications skipped:", error);
         }
       }
     };
@@ -169,6 +202,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     enablePushNotificationsPWA,
   ]);
 
+  // After login, show a friendly modal asking to enable location access (once per session)
+  // Only show the prompt when the permission state is truly unknown ("not_set").
+  // If permission is already "allowed", "denied" or "unsupported", do not prompt.
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated) return;
+
+    const alreadyShown = sessionStorage.getItem(
+      "post_login_location_prompt_shown",
+    );
+    if (!alreadyShown && locationStore.locationStatus === "not_set") {
+      setPostLoginLocationPromptVisible(true);
+      sessionStorage.setItem("post_login_location_prompt_shown", "1");
+    }
+  }, [isLoading, isAuthenticated, locationStore.locationStatus]);
+
+  // Watch for geolocation result after the user chose "Enable location"
+  useEffect(() => {
+    if (!awaitingGeoResult) return;
+    const status = locationStore.locationStatus;
+    if (status === "denied") {
+      setPostLoginBlockedModalVisible(true);
+      setAwaitingGeoResult(false);
+    } else if (status === "allowed" || status === "unsupported") {
+      setAwaitingGeoResult(false);
+    }
+  }, [awaitingGeoResult, locationStore.locationStatus]);
+
+  useEffect(() => {
+    if (!postLoginLocationPromptVisible) return;
+    const status = locationStore.locationStatus;
+    if (status !== "not_set") {
+      setPostLoginLocationPromptVisible(false);
+    }
+  }, [postLoginLocationPromptVisible, locationStore.locationStatus]);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -185,7 +254,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updateAllActors(null);
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "An unknown error occurred");
       } finally {
         setIsLoading(false);
       }
@@ -205,7 +273,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
-            ? `https://id.ai `
+            ? `https://id.ai`
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
 
         onSuccess: async () => {
@@ -213,52 +281,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(true);
           setIdentity(identity);
 
-          console.log("✅ Successfully authenticated with Internet Identity");
-          console.log("Principal:", identity.getPrincipal().toString());
-
           // Update actors (with error handling)
           updateAllActors(identity);
 
           // Get the principal and exchange for Firebase token
           try {
             const principal = identity.getPrincipal().toString();
-            console.log("🔄 Attempting to authenticate with Firebase...");
-
             const result = await signInWithInternetIdentity(principal);
             setFirebaseUser(result.user);
-
-            console.log("✅ Successfully authenticated with Firebase!");
-            console.log("Firebase UID:", result.user.uid);
-
-            // Notify user if they need to create a profile
-            if (result.needsProfile) {
-              console.log("📝 New user detected - profile creation required");
-              console.log("Message:", result.message);
-              // You can show a notification or redirect to profile creation here
-            } else {
-              console.log("👤 User has existing profile");
-            }
-          } catch (fbError) {
-            console.error("❌ Failed to authenticate with Firebase:", fbError);
-            // Don't fail the login if Firebase auth fails
-            // The user is still authenticated with IC
-          }
+            try {
+              await authCanisterService.updateUserActiveStatus(true);
+            } catch (error) {}
+          } catch (fbError) {}
 
           setIsLoading(false);
         },
         onError: (err?: string) => {
-          console.error("❌ Login error:", err);
           setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
-      console.error("❌ Login exception:", e);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Failed to connect to Internet Identity",
-      );
       setIsLoading(false);
     }
   };
@@ -266,16 +309,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     if (!authClient) return;
 
+    // Update user active status to false before logout
+    try {
+      await authCanisterService.updateUserActiveStatus(false);
+    } catch (error) {}
+
     // Clear stored IC custom token
     clearICCustomToken();
 
     // Logout from Firebase
     const auth = getFirebaseAuth();
     try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error("Error signing out from Firebase:", error);
-    }
+      await firebaseSignOut(auth).catch(() => {});
+    } catch (error) {}
 
     // Logout from Internet Identity
     await authClient.logout();
@@ -283,6 +329,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIdentity(null);
     setFirebaseUser(null);
     updateAllActors(null);
+  };
+
+  // Helpers exposed for pages to render the post-login prompt UI
+  const requestLocationFromPrompt = async () => {
+    setPostLoginLocationPromptVisible(false);
+    setAwaitingGeoResult(true);
+    try {
+      await locationStore.requestLocation();
+    } catch {
+      // ignore - store handles errors
+    }
+  };
+
+  const skipPostLoginLocationPrompt = () => {
+    setPostLoginLocationPromptVisible(false);
+    // Show the blocked/manual selection modal so the user can pick an address
+    setPostLoginBlockedModalVisible(true);
+  };
+
+  const acknowledgePostLoginBlockedModal = () => {
+    setPostLoginBlockedModalVisible(false);
+  };
+
+  const showPostLoginLocationPrompt = () => {
+    // Only show the prompt when we truly don't have a permission state.
+    // This prevents callers (e.g. navigation state or other flows) from forcing
+    // the prompt when the user already allowed/denied location.
+    if (locationStore.locationStatus !== "not_set") {
+      return;
+    }
+    try {
+      sessionStorage.setItem("post_login_location_prompt_shown", "1");
+    } catch {}
+    setPostLoginLocationPromptVisible(true);
   };
 
   const value = {
@@ -308,7 +388,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     pwaState,
     enablePushNotifications: enablePushNotificationsPWA,
     disablePushNotifications: disablePushNotificationsPWA,
+    // Post-login prompt controls (UI lives in pages)
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Post-login location prompt UI is rendered by pages (e.g. Home) using
+          the exposed flags and helpers from the context value. */}
+    </AuthContext.Provider>
+  );
 };

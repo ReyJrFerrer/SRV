@@ -7,7 +7,6 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const COLORS = [
@@ -22,20 +21,12 @@ const COLORS = [
 const PLACEHOLDER_COLOR = "#E0E0E0";
 const placeholderData = [{ name: "No Data", value: 100 }];
 
-const BookingStatusPieChart: React.FC = () => {
-  const { analytics, loadingAnalytics } = useProviderBookingManagement();
-
-  // If the data is still loading, display a loading message.
-  if (loadingAnalytics) {
-    return (
-      <div className="flex h-[275px] w-full items-center justify-center rounded-2xl bg-white shadow-inner">
-        <span className="animate-pulse text-lg font-semibold text-blue-400">
-          Loading chart...
-        </span>
-      </div>
-    );
-  }
-
+interface BookingStatusPieChartsProps {
+  analytics: any;
+}
+const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
+  analytics,
+}) => {
   // Check if there is no analytics data at all.
   const hasAnalyticsData =
     analytics &&

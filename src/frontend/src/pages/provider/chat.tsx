@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 
 // Components
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 
 const ProviderChatPage: React.FC = () => {
@@ -30,9 +30,7 @@ const ProviderChatPage: React.FC = () => {
           otherUserImage: otherUserImageUrl,
         },
       });
-    } catch (error) {
-      //console.error("Error handling conversation click:", error);
-    }
+    } catch (error) {}
   };
 
   // Helper for timestamp formatting (accepts string or Date)
@@ -52,9 +50,9 @@ const ProviderChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="flex items-center justify-center">
-          <h1 className="p-1 text-xl font-extrabold text-black sm:text-2xl md:text-2xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
           </h1>
           {/* Add a button for starting a new chat in the future */}
@@ -86,76 +84,90 @@ const ProviderChatPage: React.FC = () => {
           ) : conversations.length > 0 ? (
             <section className="rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100">
               <ul className="divide-y divide-blue-50">
-                {conversations.map((conversationSummary) => {
-                  const conversation = conversationSummary.conversation;
-                  const lastMessage = conversationSummary.lastMessage;
-                  const currentUserId =
-                    identity?.getPrincipal().toString() || "";
-                  const otherUserId = conversationSummary.otherUserId;
-                  const otherUserName =
-                    conversationSummary.otherUserName ||
-                    `User ${otherUserId.slice(0, 8)}...`;
-                  const otherUserImageUrl =
-                    conversationSummary.otherUserImageUrl;
-                  // Get unread count for current user (unreadCount is now an object)
-                  const unreadCount =
-                    conversation.unreadCount[currentUserId] || 0;
+                {conversations
+                  .slice() // copy array to avoid mutating original
+                  .sort((a, b) => {
+                    const aTime = a.lastMessage?.[0]?.createdAt
+                      ? new Date(a.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    const bTime = b.lastMessage?.[0]?.createdAt
+                      ? new Date(b.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    return bTime - aTime;
+                  })
+                  .map((conversationSummary) => {
+                    const conversation = conversationSummary.conversation;
+                    const lastMessage =
+                      conversationSummary.lastMessage?.[0] || undefined;
+                    const currentUserId =
+                      identity?.getPrincipal().toString() || "";
+                    const otherUserId = conversationSummary.otherUserId;
+                    const otherUserName =
+                      conversationSummary.otherUserName ||
+                      `User ${otherUserId.slice(0, 8)}...`;
+                    const otherUserImageUrl =
+                      conversationSummary.otherUserImageUrl;
+                    // Get unread count for current user (unreadCount is now an object)
+                    const unreadCount =
+                      conversation.unreadCount[currentUserId] || 0;
 
-                  return (
-                    <li
-                      key={conversation.id}
-                      onClick={() =>
-                        handleConversationClick(
-                          conversation.id,
-                          otherUserName,
-                          otherUserImageUrl,
-                        )
-                      }
-                      className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
-                        unreadCount > 0 ? "bg-blue-50/60" : ""
-                      }`}
-                    >
-                      <div className="relative h-14 w-14 flex-shrink-0">
-                        <ProfileImage
-                          profilePictureUrl={otherUserImageUrl}
-                          userName={otherUserName}
-                          size="h-14 w-14"
-                          className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
-                        />
-                        {unreadCount > 0 && (
-                          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p
-                            className={`truncate text-base font-semibold ${unreadCount > 0 ? "text-blue-900" : "text-gray-900"}`}
-                          >
-                            {otherUserName}
-                          </p>
-                          <p
-                            className={`ml-2 text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
-                          >
-                            {formatTimestamp(lastMessage?.createdAt)}
-                          </p>
+                    return (
+                      <li
+                        key={conversation.id}
+                        onClick={() =>
+                          handleConversationClick(
+                            conversation.id,
+                            otherUserName,
+                            otherUserImageUrl,
+                          )
+                        }
+                        className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
+                          unreadCount > 0 ? "bg-blue-50/60" : ""
+                        }`}
+                      >
+                        <div className="relative h-14 w-14 flex-shrink-0">
+                          <ProfileImage
+                            profilePictureUrl={otherUserImageUrl}
+                            userName={otherUserName}
+                            size="h-14 w-14"
+                            className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
+                          />
+                          {unreadCount > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                              {unreadCount}
+                            </span>
+                          )}
                         </div>
-                        <div className="mt-1 flex items-start justify-between">
-                          <p
-                            className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
-                          >
-                            {lastMessage?.content || (
-                              <span className="italic text-gray-400">
-                                No messages yet
-                              </span>
-                            )}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p
+                              className={`truncate text-base font-semibold ${unreadCount > 0 ? "text-blue-900" : "text-gray-900"}`}
+                            >
+                              {otherUserName}
+                            </p>
+                            <p
+                              className={`ml-2 text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                            >
+                              {formatTimestamp(lastMessage?.createdAt)}
+                            </p>
+                          </div>
+                          <div className="mt-1 flex items-start justify-between">
+                            <p
+                              className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
+                            >
+                              {lastMessage?.content?.encryptedText ? (
+                                lastMessage.content.encryptedText
+                              ) : (
+                                <span className="italic text-gray-400">
+                                  No messages yet
+                                </span>
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  })}
               </ul>
             </section>
           ) : (

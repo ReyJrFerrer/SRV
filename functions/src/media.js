@@ -29,7 +29,7 @@ function getAuthInfo(context, data) {
 }
 
 // Constants - mirroring media.mo canister
-const MAX_FILE_SIZE = 450000; // 450KB in bytes
+const MAX_FILE_SIZE = 1000000; // 1MB in bytes
 const MAX_REMITTANCE_FILE_SIZE = 1048576; // 1MB in bytes
 const SUPPORTED_CONTENT_TYPES = [
   "image/jpeg",
@@ -79,6 +79,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
     ServiceImage: "services",
     ServiceCertificate: "certificates",
     RemittancePaymentProof: "remittance",
+    ReportAttachment: "reports",
   }[mediaType];
 
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -87,10 +88,19 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 
 /**
  * Upload a media file to Cloud Storage and store metadata in Firestore
- * Mirrors uploadMedia function from media.mo canister
  */
 exports.uploadMedia = functions.https.onCall(async (data, context) => {
-  const {fileName, contentType, mediaType, fileData} = data;
+  const {fileName, contentType, mediaType, fileData} = data.data;
+  // Log incoming data
+  console.log("📥 uploadMedia called with:", {
+    fileName: fileName,
+    fileNameType: typeof fileName,
+    fileNameLength: fileName?.length,
+    contentType: contentType,
+    mediaType: mediaType,
+    fileDataLength: fileData?.length,
+    dataKeys: Object.keys(data),
+  });
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -103,6 +113,11 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
 
   // Validate file name
   if (!fileName || fileName.length === 0 || fileName.length > 255) {
+    console.error("❌ Invalid fileName:", {
+      fileName,
+      fileNameType: typeof fileName,
+      fileNameLength: fileName?.length,
+    });
     throw new functions.https.HttpsError(
       "invalid-argument",
       "File name must be between 1 and 255 characters",
@@ -165,8 +180,17 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
     // Make file publicly accessible (or use signed URLs for private access)
     await file.makePublic();
 
-    // Get public URL
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    // Get public URL - handle both emulator and production
+    let publicUrl;
+    if (process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
+      // Emulator environment - use emulator URL format
+      const encodedPath = encodeURIComponent(filePath);
+      publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media`;
+      console.log("Using emulator storage URL:", publicUrl);
+    } else {
+      // Production environment - use googleapis URL
+      publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    }
 
     // Create media item metadata
     const now = new Date().toISOString();
@@ -213,9 +237,11 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
  * Mirrors getMediaItem function from media.mo canister
  */
 exports.getMediaItem = functions.https.onCall(async (data, _context) => {
-  const {mediaId} = data;
+  console.log("Media ID", data.data);
+  const {mediaId} = data.data || data;
 
   if (!mediaId) {
+    console.log("No media ID");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Media ID is required",
@@ -792,6 +818,7 @@ async function uploadMediaInternal({
     "ServiceImage",
     "ServiceCertificate",
     "RemittancePaymentProof",
+    "ReportAttachment",
   ];
   if (!validMediaTypes.includes(mediaType)) {
     throw new Error(`Invalid media type: ${mediaType}`);

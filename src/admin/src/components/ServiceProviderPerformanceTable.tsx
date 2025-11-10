@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceProviderPerformanceData {
   id: string;
@@ -9,7 +9,7 @@ interface ServiceProviderPerformanceData {
   totalCommission: number;
   completedBookings: number;
   totalBookings: number;
-  status: string;
+  walletBalance: number;
 }
 
 interface ServiceProviderPerformanceTableProps {
@@ -27,8 +27,16 @@ const ServiceProviderPerformanceTable: React.FC<
   onRefresh: _onRefresh,
   showRefresh: _showRefresh = false,
 }) => {
+  const navigate = useNavigate();
+
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
+  };
+
+  const handleRowClick = (providerId: string) => {
+    navigate(`/user/${providerId}/wallet`, {
+      state: { from: "analytics" },
+    });
   };
 
   if (loading) {
@@ -50,17 +58,8 @@ const ServiceProviderPerformanceTable: React.FC<
     <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-blue-100 px-6 py-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          Service Provider Performance
+          Service Provider Records
         </h3>
-        {_showRefresh && (
-          <button
-            onClick={_onRefresh}
-            className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            <ArrowPathIcon className="h-4 w-4" />
-            Refresh
-          </button>
-        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -80,7 +79,7 @@ const ServiceProviderPerformanceTable: React.FC<
                 Completed Bookings
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Status
+                Wallet Balance
               </th>
             </tr>
           </thead>
@@ -96,7 +95,11 @@ const ServiceProviderPerformanceTable: React.FC<
               </tr>
             ) : (
               providers.map((provider) => (
-                <tr key={provider.id} className="hover:bg-blue-50/30">
+                <tr
+                  key={provider.id}
+                  className="cursor-pointer transition-colors hover:bg-blue-50/30"
+                  onClick={() => handleRowClick(provider.id)}
+                >
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
@@ -125,19 +128,8 @@ const ServiceProviderPerformanceTable: React.FC<
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {provider.completedBookings}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        provider.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : provider.status === "inactive"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {provider.status.charAt(0).toUpperCase() +
-                        provider.status.slice(1)}
-                    </span>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                    {formatCurrency(provider.walletBalance)}
                   </td>
                 </tr>
               ))

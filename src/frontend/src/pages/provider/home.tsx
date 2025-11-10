@@ -1,23 +1,104 @@
-import React, { useState, useEffect, useMemo } from "react";
-// Remove Next.js Head import
-import SPHeaderNextjs from "../../components/provider/home page/SPHeader";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
 import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
-import BottomNavigation from "../../components/provider/BottomNavigation";
+import BottomNavigation from "../../components/provider/NavigationBar";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import { useLocationStore } from "../../store/locationStore";
-
-// import PWAInstall from "../../components/PWAInstall";
-// import NotificationSettings from "../../components/NotificationSettings";
+import { useProviderReviews } from "../../hooks/reviewManagement";
+import SPHeader from "../../components/provider/home page/SPHeader";
+import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
+import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
+import { useAuth } from "../../context/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Post-login location prompt helpers
+  const {
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
+  } = useAuth();
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // --- Use Zustand location store for location status ---
   const { locationStatus } = useLocationStore();
+
+  // --- Dismissible location overlay state (must be declared unconditionally) ---
+  const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
+    () => {
+      try {
+        return sessionStorage.getItem("providerDismissedLocationBlock") === "1";
+      } catch {
+        return false;
+      }
+    },
+  );
+
+  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+    useState(false);
+
+  // Check for OneSignal blocking on mount
+  useEffect(() => {
+    const checkOneSignalBlocking = () => {
+      // Check if OneSignal SDK failed to load
+      const oneSignalScript = document.querySelector(
+        'script[src*="OneSignalSDK"]',
+      );
+      if (oneSignalScript) {
+        oneSignalScript.addEventListener("error", () => {
+          setShowOneSignalBlockedModal(true);
+        });
+      }
+
+      // Also check if window.OneSignal is undefined after a delay
+      setTimeout(() => {
+        if (typeof window.OneSignal === "undefined") {
+          setShowOneSignalBlockedModal(true);
+        }
+      }, 5000); // Give it 5 seconds to load
+    };
+
+    checkOneSignalBlocking();
+  }, []);
+
+  // Fallback: Permissions API check for geolocation denied state.
+  const [permissionApiDenied, setPermissionApiDenied] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+      try {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((p: any) => {
+            if (!mounted) return;
+            if (p && p.state === "denied") setPermissionApiDenied(true);
+            if (p && typeof p.onchange === "function") {
+              p.onchange = () => {
+                if (!mounted) return;
+                setPermissionApiDenied(p.state === "denied");
+              };
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Use the service management hook
   const {
@@ -35,10 +116,21 @@ const ProviderHomePage: React.FC = () => {
     bookings,
     loading: bookingsLoading,
     error: bookingsError,
+    //addition of invocations used by Provider stats
+    analytics,
+    getMonthlyRevenue,
+    getBookingCountByDay,
+    getRevenueByPeriod,
   } = useProviderBookingManagement();
 
+  const {
+    analytics: reviewAnalytics,
+    loading: reviewsLoading,
+    error: reviewsError,
+  } = useProviderReviews();
+
   // Only create a legacy provider object for components that still need the old interface
-  const legacyProvider = useMemo(() => {
+  const provider = useMemo(() => {
     if (!userProfile) return null;
 
     const nameParts = userProfile.name.split(" ");
@@ -60,6 +152,15 @@ const ProviderHomePage: React.FC = () => {
   }, [userProfile]);
 
   useEffect(() => {
+    // If navigation state requests the post-login prompt (e.g. create-profile -> provider/home)
+    const shouldShow = (location.state as any)?.postLoginLocationPrompt;
+    if (shouldShow) {
+      showPostLoginLocationPrompt();
+      try {
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch {}
+    }
+
     const loadProviderData = async () => {
       try {
         // Check authentication first
@@ -81,7 +182,6 @@ const ProviderHomePage: React.FC = () => {
 
         // Load provider stats
       } catch (error) {
-        //console.error("Error loading provider data:", error);
       } finally {
         setPageLoading(false);
       }
@@ -159,72 +259,93 @@ const ProviderHomePage: React.FC = () => {
     );
   }
 
-  // --- Show location blocked message if denied (reference: client home.tsx) ---
-  if (locationStatus === "denied") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="relative max-w-lg rounded-2xl bg-white p-8 shadow-xl">
-          {/* Computer guy character at the top */}
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
-            <img
-              src="/images/srv characters (SVG)/tech guy.svg"
-              alt="SRV Computer Guy Character"
-              className="h-24 w-24 rounded-full border-4 border-white bg-blue-100 shadow-lg"
-              style={{ objectFit: "cover" }}
-            />
-          </div>
-          <div className="mt-14">
-            <h2 className="mb-4 text-center text-2xl font-bold text-red-600">
-              Please enable location to use provider services
-            </h2>
-            <p className="mb-4 text-center text-gray-700">
-              Location access is required to use the provider dashboard. Please
-              enable location services in your browser settings.
-            </p>
-            <ul className="mb-6 list-disc pl-6 text-left text-gray-600">
-              <li>
-                <b>Chrome:</b> Click the lock icon in the address bar &gt; Site
-                settings &gt; Location: Allow
-              </li>
-              <li>
-                <b>Firefox:</b> Click the lock icon in the address bar &gt;
-                Permissions &gt; Allow Location Access
-              </li>
-              <li>
-                <b>Safari:</b> Preferences &gt; Websites &gt; Location &gt;
-                Allow
-              </li>
-              <li>
-                <b>Mobile:</b> Enable location in your device settings and
-                browser app permissions
-              </li>
-            </ul>
-            <button
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  if (locationStatus === "denied" && !dismissedLocationBlock) {
+    // We'll render the blocked modal below along with the post-login blocked
+    // modal; don't return early here to avoid duplicate modal instances.
   }
 
   return (
     <>
-      {/* <PWAInstall />
+      {/* Only show the friendly permission prompt when the permission state is unknown */}
+      <LocationPermissionPromptModal
+        visible={postLoginLocationPromptVisible && locationStatus === "not_set"}
+        onEnable={async () => {
+          try {
+            await requestLocationFromPrompt();
+          } catch {}
+        }}
+        onSkip={() => {
+          skipPostLoginLocationPrompt();
+        }}
+        onClose={() => {
+          skipPostLoginLocationPrompt();
+        }}
+      />
 
-      <NotificationSettings /> */}
+      {/* Single blocked modal for both denied state and post-login flow */}
+      {(() => {
+        const visible =
+          (locationStatus === "denied" && !dismissedLocationBlock) ||
+          (permissionApiDenied && !dismissedLocationBlock) ||
+          postLoginBlockedModalVisible;
 
-      <div className="flex min-h-screen flex-col bg-gray-50">
+        const handleBlockedClose = () => {
+          // Always mark dismissed for provider as well so the modal doesn't
+          // immediately reappear after manual save/close.
+          setDismissedLocationBlock(true);
+          try {
+            sessionStorage.setItem("providerDismissedLocationBlock", "1");
+          } catch {}
+
+          if (postLoginBlockedModalVisible) {
+            acknowledgePostLoginBlockedModal();
+          }
+        };
+
+        return (
+          <LocationBlockedModal
+            visible={visible}
+            onClose={handleBlockedClose}
+          />
+        );
+      })()}
+
+      {/* OneSignal Blocked Modal */}
+      {showOneSignalBlockedModal && (
+        <OneSignalBlockedModal
+          onClose={() => setShowOneSignalBlockedModal(false)}
+        />
+      )}
+
+      <div className="w-full max-w-full px-4 pb-16 pt-4">
         {/* Use userProfile directly for SPHeaderNextjs */}
-        <SPHeaderNextjs />
-
-        <main className="flex-grow overflow-y-auto pb-20">
-          <div className="mx-auto max-w-7xl p-4">
+        {/**
+         * Make the scrolling container explicit and pass it to the header
+         * so the mini-header logic follows the correct scroll element.
+         */}
+        <main
+          className="flex-grow overflow-y-auto pb-20"
+          ref={scrollRef as React.RefObject<HTMLDivElement>}
+        >
+          <SPHeader
+            scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
+          />
+          <div className="mx-auto max-w-7xl">
             {/* Use legacyProvider for components that still need the old interface */}
-            {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
+            {provider && (
+              <ProviderStatsNextjs
+                loading={isDataLoading}
+                analytics={analytics}
+                bookingsLoading={bookingsLoading}
+                bookingsError={bookingsError}
+                getMonthlyRevenue={getMonthlyRevenue}
+                getBookingCountByDay={getBookingCountByDay}
+                getRevenueByPeriod={getRevenueByPeriod}
+                reviewAnalytics={reviewAnalytics}
+                reviewsLoading={reviewsLoading}
+                reviewsError={reviewsError}
+              />
+            )}
 
             <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}

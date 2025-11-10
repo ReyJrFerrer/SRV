@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef } from "react";
 import Toast from "../../components/ToastNotifications";
 import { useNavigate } from "react-router-dom";
@@ -10,20 +11,28 @@ import {
   CurrencyEuroIcon,
   CalendarIcon,
   ArrowPathRoundedSquareIcon,
-  ChevronRightIcon, // Added for the switch button
+  ChevronRightIcon,
   InformationCircleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
+import BottomNavigation from "../../components/client/NavigationBar";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import { useLogout } from "../../hooks/logout";
-import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
-import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
+import { useReputation } from "../../hooks/useReputation";
+import { useClientAnalytics } from "../../hooks/useClientAnalytics";
+import useClientRating from "../../hooks/useClientRating";
+import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
+import {
+  ProfileSkeleton,
+  ReputationScoreSkeleton,
+} from "../../components/SkeletonLoader";
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
   reputationDisplay: any;
 }
 
+// SECTION: AboutReputationScoreModal — modal explaining reputation score
 const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   show,
   onClose,
@@ -93,7 +102,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   );
 };
 
-// TrustLevelBadge: Displays the user's trust level badge in the profile reputation section
+// SECTION: TrustLevelBadge — trust level display with info button
 interface TrustLevelBadgeProps {
   trustLevel: string;
   onInfoClick?: () => void;
@@ -193,7 +202,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   );
 };
 
-// TrustLevelInfoModal: Modal popup for badge level information (opened from TrustLevelBadge)
+// SECTION: TrustLevelInfoModal — modal with badge levels information
 const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   show,
   onClose,
@@ -299,7 +308,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   );
 };
 
-// ClientStats: Displays booking and activity summary stats in the profile right column
+// SECTION: ClientStats — booking and activity summary
 const ClientStats: React.FC = () => {
   const {
     loading: analyticsLoading,
@@ -409,7 +418,7 @@ const ClientStats: React.FC = () => {
   );
 };
 
-// ProfilePictureModal: Displays and allows editing/viewing of profile picture in left column
+// SECTION: ProfilePictureModal — profile image with preview modal
 interface ProfilePictureModalProps {
   src: string | null | undefined;
   isLoading: boolean;
@@ -420,7 +429,21 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   isLoading,
 }) => {
   const [showModal, setShowModal] = React.useState(false);
-  // Profile picture modal and trigger (centered, top of left column)
+  const [displaySrc, setDisplaySrc] = React.useState(
+    src || "/default-client.svg",
+  );
+
+  // Update display src only when src is actually loaded (not during loading)
+  React.useEffect(() => {
+    if (src && !isLoading) {
+      setDisplaySrc(src);
+    }
+  }, [src, isLoading]);
+
+  // Check if we have a valid cached/loaded image (data URL or blob URL)
+  const hasValidImage =
+    displaySrc.startsWith("data:") || displaySrc.startsWith("blob:");
+
   return (
     <>
       <div
@@ -433,13 +456,13 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
           if (e.key === "Enter" || e.key === " ") setShowModal(true);
         }}
       >
-        {isLoading ? (
+        {isLoading && !hasValidImage ? (
           <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>
         ) : (
           <img
-            src={src || "/default-client.svg"}
+            src={displaySrc}
             alt="Profile Picture"
             className="h-32 w-32 rounded-full border-4 border-yellow-200 object-cover shadow-lg transition-all duration-200 hover:border-blue-700 focus:border-blue-700"
             tabIndex={-1}
@@ -449,7 +472,6 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
           />
         )}
       </div>
-      {/* Modal: Large profile picture preview (centered overlay) */}
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -457,7 +479,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <img
-              src={src || "/default-client.svg"}
+              src={displaySrc}
               alt="Profile Picture Large"
               className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
               onError={(e) => {
@@ -491,7 +513,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   );
 };
 
-// ClientProfilePage: Main profile view for clients, includes profile info, reputation, stats, and navigation
+// SECTION: ClientProfilePage — main profile view and interactions
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -520,7 +542,7 @@ const ClientProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   // Error states for validation
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
@@ -533,15 +555,20 @@ const ClientProfilePage: React.FC = () => {
   // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
-  // Set page title on mount
+  const { getClientReviewsByUser } = useClientRating();
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
+
   useEffect(() => {
     document.title = "My Profile | SRV";
   }, []);
 
-  // Update name/phone fields when profile changes
   useEffect(() => {
     if (profile) {
       setName(profile.name);
@@ -549,7 +576,36 @@ const ClientProfilePage: React.FC = () => {
     }
   }, [profile]);
 
-  // Handlers for profile editing, image upload, and role switching
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setRatingsError(null);
+        setRatingsLoading(true);
+        const clientId =
+          (profile as any)?.id || (profile as any)?.principal || "";
+        if (!clientId) {
+          setAvgRating(0);
+          setReviewsCount(0);
+          return;
+        }
+        const reviews = await getClientReviewsByUser(clientId);
+        const count = reviews.length;
+        const avg = count
+          ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / count
+          : 0;
+        setReviewsCount(count);
+        setAvgRating(Number(avg.toFixed(1)));
+      } catch (e) {
+        setRatingsError("Failed to load ratings");
+        setAvgRating(0);
+        setReviewsCount(0);
+      } finally {
+        setRatingsLoading(false);
+      }
+    };
+    fetchSummary();
+  }, [profile, getClientReviewsByUser]);
+
   const handleImageUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -561,12 +617,10 @@ const ClientProfilePage: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
-    // Validation logic
     setNameError("");
     setPhoneError("");
     setEditError("");
     let valid = true;
-    // Name: at least 2 words
     const nameTrimmed = name.trim();
     const nameWords = nameTrimmed.split(/\s+/);
     if (!nameTrimmed) {
@@ -576,7 +630,6 @@ const ClientProfilePage: React.FC = () => {
       setNameError("Please enter your full name (first and last).");
       valid = false;
     }
-    // Phone: must be exactly 11 digits and start with '09'
     const phoneTrimmed = phone.trim();
     const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
     if (!phoneTrimmed) {
@@ -593,7 +646,7 @@ const ClientProfilePage: React.FC = () => {
       setEditError("Please fix the errors above before saving.");
       return;
     }
-    const success = await updateProfile({ name, phone, imageFile });
+    const success = await updateProfile({ name, imageFile });
     if (success) {
       setIsEditing(false);
       setImageFile(null);
@@ -622,7 +675,7 @@ const ClientProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       {toast && (
         <Toast
           message={toast.message}
@@ -630,315 +683,335 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="ml-4 text-xl font-bold text-gray-900">My Profile</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+            My Profile
+          </h1>
         </div>
       </header>
 
-      {/* ===================== Main Profile Page Layout ===================== */}
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
-          <div className="flex flex-col space-y-4 lg:col-span-1">
-            {/* Profile Info Card (top left) */}
-            <div className="rounded-xl bg-white p-6 shadow-md">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <ProfilePictureModal
-                    src={previewImage || profileImageUrl}
-                    isLoading={isImageLoading}
-                  />
-                  {isEditing && (
-                    <>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      <button
-                        onClick={handleImageUploadClick}
-                        className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                      >
-                        <CameraIcon className="h-5 w-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Name and phone display or edit fields */}
-                {!isEditing ? (
-                  <>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {profile?.name || "Client Name"}
-                    </h2>
-                    <p className="text-md text-gray-500">
-                      {profile?.phone || "No phone number"}
-                    </p>
-                  </>
-                ) : (
-                  <div className="mt-4 w-full max-w-sm space-y-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => {
-                          setName(e.target.value);
-                          if (nameError) setNameError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {nameError && (
-                        <p className="mt-1 text-sm text-red-500">{nameError}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-left text-sm font-medium text-gray-700"
-                      >
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => {
-                          // Remove spaces from phone number input
-                          const phoneValue = e.target.value.replace(/\s/g, "");
-                          setPhone(phoneValue);
-                          if (phoneError) setPhoneError("");
-                          if (editError) setEditError("");
-                        }}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                      />
-                      {phoneError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {phoneError}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Edit/Save/Cancel Buttons */}
-                <div className="mt-6">
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      <PencilIcon className="mr-2 h-4 w-4" />
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={handleCancelEdit}
-                        className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveChanges}
-                        disabled={loading}
-                        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                      >
-                        {loading ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* Switch to Provider Button (below profile info) */}
-            <div className="rounded-lg bg-yellow-300 shadow-sm">
-              <button
-                onClick={handleSwitchToProvider}
-                disabled={isSwitchingRole}
-                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                  isSwitchingRole
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-blue-600"
-                }`}
-              >
-                <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-6 w-6 ${
-                      isSwitchingRole
-                        ? "animate-spin text-blue-600"
-                        : "text-black group-hover:text-white"
-                    }`}
-                  />
-                  <span className="text-md font-medium text-gray-800 group-hover:text-white">
-                    {isSwitchingRole
-                      ? "Switching Role..."
-                      : "Switch into SRVice Provider"}
-                  </span>
-                </div>
-                {!isSwitchingRole && (
-                  <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
-                )}
-              </button>
-            </div>
-            {/* Desktop Logout Button (bottom of left column) */}
-            <div className="hidden lg:block">
-              <button
-                onClick={logout}
-                className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-
-          {/* --- Right Column: Reputation and Stats --- */}
-          <div className="mt-8 lg:col-span-2 lg:mt-0">
-            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <div className="mb-6 flex items-center justify-center gap-2">
-                <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                  Your Reputation Score
-                </h3>
-                <button
-                  type="button"
-                  aria-label="What is reputation score?"
-                  className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  onClick={() => setShowAboutInfo(true)}
-                >
-                  <InformationCircleIcon className="h-6 w-6 text-blue-500" />
-                </button>
-                <AboutReputationScoreModal
-                  show={showAboutInfo}
-                  onClose={() => setShowAboutInfo(false)}
-                  reputationDisplay={reputationDisplay}
-                />
-              </div>
-              {/* Reputation Score, Trust Level, and About Info */}
-              {reputationLoading ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                      <p className="text-sm text-gray-500">
-                        Loading reputation score...
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : reputationError ? (
-                <div className="flex justify-center">
-                  <div className="flex h-48 w-48 items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-4 text-red-500">
-                        <svg
-                          className="mx-auto h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-medium text-red-600">
-                        {reputationError}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Please check your connection and try again
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="mb-2 flex items-center justify-center gap-2">
-                    <ReputationScore score={reputationScore} />
-                    {/* <button
-                      onClick={forceRefreshReputation}
-                      className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                      title="Refresh reputation score"
-                    >
-                      <ArrowPathRoundedSquareIcon className="h-4 w-4" />
-                    </button> */}
-                  </div>
-                  {/* Trust Level Badge and About Info (right column) */}
-                  {reputationDisplay && (
-                    <>
-                      <div className="flex w-full justify-center">
-                        <TrustLevelBadge
-                          trustLevel={reputationDisplay.level}
-                          onInfoClick={() => setShowBadgeInfo(true)}
-                          infoOpen={showBadgeInfo}
+        {loading || !profile ? (
+          <ProfileSkeleton role="client" />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+            <div className="flex flex-col space-y-4 lg:col-span-1">
+              <div className="rounded-xl bg-white p-6 shadow-md">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <ProfilePictureModal
+                      src={previewImage || profileImageUrl}
+                      isLoading={isImageLoading}
+                    />
+                    {isEditing && (
+                      <>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/png, image/jpeg"
                         />
-                      </div>
-                      <TrustLevelInfoModal
-                        show={showBadgeInfo}
-                        onClose={() => setShowBadgeInfo(false)}
-                      />
-                      <AboutReputationScoreModal
-                        show={showAboutInfo}
-                        onClose={() => setShowAboutInfo(false)}
-                        reputationDisplay={reputationDisplay}
-                      />
+                        <button
+                          onClick={handleImageUploadClick}
+                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
+                        >
+                          <CameraIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {!isEditing ? (
+                    <>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        {profile?.name || "Client Name"}
+                      </h2>
+                      <p className="text-md text-gray-500">
+                        {profile?.phone || "No phone number"}
+                      </p>
                     </>
+                  ) : (
+                    <div className="mt-4 w-full max-w-sm space-y-4">
+                      <div>
+                        <label
+                          htmlFor="name"
+                          className="block text-left text-sm font-medium text-gray-700"
+                        >
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={name}
+                          onChange={(e) => {
+                            setName(e.target.value);
+                            if (nameError) setNameError("");
+                            if (editError) setEditError("");
+                          }}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        />
+                        {nameError && (
+                          <p className="mt-1 text-sm text-red-500">
+                            {nameError}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Phone Number
+                        </label>
+                        <p className="mt-1 text-gray-800">
+                          {profile?.phone || "No phone number"}
+                        </p>
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <p className="text-xs text-blue-800">
+                            Your phone number is linked to your account for
+                            security and cannot be changed here. Please contact
+                            support for assistance if you need to update it.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
+                  <div className="mt-6">
+                    {!isEditing ? (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                      >
+                        <PencilIcon className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </button>
+                    ) : (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveChanges}
+                          disabled={loading}
+                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                          {loading ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-              {/* Client statistics (bottom of right column) */}
-              <div className="mt-8 border-t border-gray-200 pt-8">
-                <ClientStats />
+              </div>
+              <div className="rounded-lg bg-yellow-300 shadow-sm">
+                <button
+                  onClick={handleSwitchToProvider}
+                  disabled={isSwitchingRole}
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                    isSwitchingRole
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:bg-blue-600"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <ArrowPathRoundedSquareIcon
+                      className={`mr-4 h-6 w-6 ${
+                        isSwitchingRole
+                          ? "animate-spin text-blue-600"
+                          : "text-black group-hover:text-white"
+                      }`}
+                    />
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
+                      {isSwitchingRole
+                        ? "Switching Role..."
+                        : "Switch into SRVice Provider"}
+                    </span>
+                  </div>
+                  {!isSwitchingRole && (
+                    <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                  )}
+                </button>
+              </div>
+              <div className="hidden lg:block">
+                <button
+                  onClick={logout}
+                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                >
+                  Log Out
+                </button>
               </div>
             </div>
+            <div className="mt-1 lg:col-span-2 lg:mt-0">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+                <div className="mb-6 flex items-center justify-center gap-2">
+                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
+                    Your Reputation Score
+                  </h3>
+                  <button
+                    type="button"
+                    aria-label="What is reputation score?"
+                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    onClick={() => setShowAboutInfo(true)}
+                  >
+                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                  </button>
+                  <AboutReputationScoreModal
+                    show={showAboutInfo}
+                    onClose={() => setShowAboutInfo(false)}
+                    reputationDisplay={reputationDisplay}
+                  />
+                </div>
+                {reputationLoading ? (
+                  <div className="flex justify-center">
+                    <ReputationScoreSkeleton />
+                  </div>
+                ) : reputationError ? (
+                  <div className="flex justify-center">
+                    <div className="flex h-48 w-48 items-center justify-center">
+                      <div className="text-center">
+                        <div className="mb-4 text-red-500">
+                          <svg
+                            className="mx-auto h-16 w-16"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-red-600">
+                          {reputationError}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Please check your connection and try again
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <ReputationScore score={reputationScore} />
+                    </div>
+                    {reputationDisplay && (
+                      <>
+                        <div className="flex w-full justify-center">
+                          <TrustLevelBadge
+                            trustLevel={reputationDisplay.level}
+                            onInfoClick={() => setShowBadgeInfo(true)}
+                            infoOpen={showBadgeInfo}
+                          />
+                        </div>
+                        <TrustLevelInfoModal
+                          show={showBadgeInfo}
+                          onClose={() => setShowBadgeInfo(false)}
+                        />
+                        <AboutReputationScoreModal
+                          show={showAboutInfo}
+                          onClose={() => setShowAboutInfo(false)}
+                          reputationDisplay={reputationDisplay}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+                <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
+                  <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h4 className="text-lg font-bold text-yellow-700">
+                        Your Ratings
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <StarIcon className="h-6 w-6 text-yellow-500" />
+                        <button
+                          type="button"
+                          aria-label="About ratings"
+                          className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          onClick={() => setShowRatingInfo(true)}
+                        >
+                          <InformationCircleIcon className="h-5 w-5 text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+                    {ratingsLoading ? (
+                      <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                        Loading...
+                      </div>
+                    ) : ratingsError ? (
+                      <div className="py-4 text-sm text-red-500">
+                        {ratingsError}
+                      </div>
+                    ) : (
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <div className="text-3xl font-extrabold text-gray-900">
+                            {avgRating.toFixed(1)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Average rating
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-gray-900">
+                            {reviewsCount}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Reviews received
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => navigate("/client/profile/reviews")}
+                      className="mt-5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                    >
+                      View Reviews & Ratings
+                    </button>
+                  </div>
+                  <div>
+                    <ClientStats />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {editError && (
+              <p className="mt-4 text-center text-red-500">{editError}</p>
+            )}
+            {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+            {reputationError && !error && (
+              <p className="mt-4 text-center text-red-500">
+                Reputation: {reputationError}
+              </p>
+            )}
           </div>
-          {/* Error messages (bottom of grid) */}
-          {editError && (
-            <p className="mt-4 text-center text-red-500">{editError}</p>
-          )}
-          {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-          {reputationError && !error && (
-            <p className="mt-4 text-center text-red-500">
-              Reputation: {reputationError}
-            </p>
-          )}
-          {/* End grid container */}
-        </div>
+        )}
       </main>
-      {/* Mobile Logout Button (bottom of page, only on mobile) */}
-      <div className="mt-8 block w-full px-4 lg:hidden">
-        <button
-          onClick={logout}
-          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-        >
-          Log Out
-        </button>
-      </div>
-      {/* Bottom navigation bar (always visible) */}
       <BottomNavigation />
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="client"
+      />
     </div>
   );
 };
 
-// Reusable component for the reputation score visualization (restored advanced version)
+// SECTION: ReputationScore — radial score visualization
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const getScoreColor = (value: number) => {
     if (value >= 80) return "#2563eb"; // blue-600

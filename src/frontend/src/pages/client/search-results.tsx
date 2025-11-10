@@ -1,3 +1,4 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -5,11 +6,10 @@ import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
-import ServiceListItem from "../../components/client/ServiceListItem";
-import BottomNavigation from "../../components/client/BottomNavigation";
+import ServiceListItem from "../../components/client/home page/ServiceListingCard";
+import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
-
-// Hooks
+import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   useAllServicesWithProviders,
   EnrichedService,
@@ -23,25 +23,20 @@ const SearchResultsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [results, setResults] = useState<EnrichedService[]>([]);
 
-  // --- State for sorting and filtering ---
-  const [showFilters, setShowFilters] = useState(false); // NEW: Toggle for filter visibility
-  // Pending (unapplied) filter state
+  const [showFilters, setShowFilters] = useState(false);
   const [pendingSortBy, setPendingSortBy] = useState("rating");
   const [pendingMaxPrice, setPendingMaxPrice] = useState(0);
   const [pendingMinRating, setPendingMinRating] = useState(0);
-  // Applied filter state
   const [sortBy, setSortBy] = useState("rating");
   const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
 
-  // Sync pending state with applied state when opening filter panel
   useEffect(() => {
     if (showFilters) {
       setPendingSortBy(sortBy);
       setPendingMaxPrice(maxPrice);
       setPendingMinRating(minRating);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showFilters]);
 
   const {
@@ -90,7 +85,6 @@ const SearchResultsPage: React.FC = () => {
       : "SRV | Search Results";
   }, [searchQuery]);
 
-  // --- REFACTORED: Memoized sorting and filtering logic ---
   const sortedAndFilteredResults = useMemo(() => {
     const safeResults = results.map((service) => ({
       ...service,
@@ -129,6 +123,14 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
@@ -164,12 +166,6 @@ const SearchResultsPage: React.FC = () => {
       </header>
 
       <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
-        {loading && (
-          <div className="py-10 text-center text-gray-600">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            Searching...
-          </div>
-        )}
         {error && (
           <div className="py-16 text-center">
             <p className="text-lg text-red-500">
@@ -178,7 +174,7 @@ const SearchResultsPage: React.FC = () => {
           </div>
         )}
 
-        {/* --- Collapsible Filter and Sort Controls --- */}
+        {/* SECTION: Filter and sort controls */}
         {showFilters && !loading && !error && results.length > 0 && (
           <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -225,7 +221,6 @@ const SearchResultsPage: React.FC = () => {
                   className="mt-2 block w-full"
                 />
               </div>
-              {/* Apply Filters button in the same row */}
               <div className="flex justify-end">
                 <button
                   onClick={() => {
@@ -269,21 +264,19 @@ const SearchResultsPage: React.FC = () => {
 
         {!loading && !error && sortedAndFilteredResults.length > 0 && (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
-            {sortedAndFilteredResults.map((service) => (
-              <ServiceListItem
-                key={service.id}
-                service={service}
-                //isGridItem={true}
-                retainMobileLayout={true}
-              />
+            {sortedAndFilteredResults.map((service, idx) => (
+              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                <ServiceListItem
+                  service={service}
+                  serviceData={createServiceData(service)}
+                  retainMobileLayout={true}
+                />
+              </Appear>
             ))}
           </div>
         )}
       </main>
-
-      <div className="lg:hidden">
-        <BottomNavigation />
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

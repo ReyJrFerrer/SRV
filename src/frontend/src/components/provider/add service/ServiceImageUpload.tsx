@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { toast } from "sonner";
 
@@ -16,6 +16,73 @@ interface ServiceImageUploadProps {
 }
 
 const MAX_PDF_SIZE = 450 * 1024; // 450 KB
+
+const FileInput: React.FC<{
+  id: string;
+  accept: string;
+  multiple: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  files: File[];
+  previews: string[];
+  buttonText: string;
+  buttonClass: string;
+  label: string;
+  description: string;
+}> = ({
+  id,
+  accept,
+  multiple,
+  onChange,
+  files,
+  previews,
+  buttonText,
+  buttonClass,
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFiles(Array.from(e.target.files));
+    } else {
+      setSelectedFiles([]);
+    }
+    onChange(e);
+  };
+
+  const hasFiles =
+    files.length > 0 || previews.length > 0 || selectedFiles.length > 0;
+  const displayFiles = files.length > 0 ? files : selectedFiles;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium ${buttonClass}`}
+        >
+          {buttonText}
+        </button>
+        {hasFiles && (
+          <span className="text-sm text-gray-600">
+            {displayFiles.length} file{displayFiles.length !== 1 ? "s" : ""}{" "}
+            selected
+          </span>
+        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          id={id}
+          accept={accept}
+          multiple={multiple}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+    </div>
+  );
+};
 
 const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
   serviceImageFiles,
@@ -80,23 +147,18 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
           Upload images of your past work. High-quality images help attract more
           clients.
         </p>
-        <label
-          htmlFor="serviceImages"
-          className="mb-2 block text-sm font-medium text-gray-700"
-        >
-          Add Service Images
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            type="file"
-            name="serviceImages"
-            id="serviceImages"
-            accept="image/png, image/jpeg, image/gif, image/svg+xml"
-            multiple
-            onChange={onImageFilesChange}
-            className="block w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-200"
-          />
-        </div>
+        <FileInput
+          id="serviceImages"
+          accept="image/png, image/jpeg, image/gif"
+          multiple={true}
+          onChange={onImageFilesChange}
+          files={serviceImageFiles}
+          previews={imagePreviews}
+          buttonText="Choose Service Images"
+          buttonClass="bg-blue-100 text-blue-700 hover:bg-blue-200"
+          label="Service Images"
+          description="Upload images of your past work. High-quality images help attract more clients."
+        />
         {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
             {(serviceImageFiles.length > 0
@@ -150,23 +212,18 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
           Upload images of your certifications or credentials. This helps build
           trust with clients.
         </p>
-        <label
-          htmlFor="certificationImages"
-          className="mb-2 block text-sm font-medium text-gray-700"
-        >
-          Add Certifications
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            type="file"
-            name="certificationImages"
-            id="certificationImages"
-            accept="image/png, image/jpeg, image/gif, image/svg+xml"
-            multiple
-            onChange={onCertificationFilesChange}
-            className="block w-full cursor-pointer rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-yellow-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-yellow-700 hover:file:bg-yellow-200"
-          />
-        </div>
+        <FileInput
+          id="certificationImages"
+          accept="image/png, image/jpeg"
+          multiple={true}
+          onChange={onCertificationFilesChange}
+          files={certificationFiles}
+          previews={certificationPreviews}
+          buttonText="Choose Certification Files"
+          buttonClass="bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+          label="Certifications"
+          description="Upload images of your certifications or credentials. This helps build trust with clients."
+        />
         {(certificationFiles.length > 0 ||
           certificationPreviews.length > 0) && (
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">

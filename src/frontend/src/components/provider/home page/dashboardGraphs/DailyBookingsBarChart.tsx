@@ -9,27 +9,21 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
-const DailyBookingsBarChart: React.FC = () => {
-  const { getBookingCountByDay, loading } = useProviderBookingManagement();
+interface DailyBookingsBarChartProps {
+  getBookingCountByDay: any;
+}
+
+const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
+  getBookingCountByDay,
+}) => {
   const data = getBookingCountByDay();
 
   // Custom formatter for the X-Axis ticks to shorten day names
   const formatDayName = (name: string) => {
     return name.substring(0, 3); // Shortens "Sunday" to "Sun", "Monday" to "Mon", etc.
   };
-
-  if (loading) {
-    return (
-      <div className="flex h-[275px] w-full items-center justify-center rounded-2xl bg-white shadow-inner">
-        <span className="animate-pulse text-lg font-semibold text-blue-400">
-          Loading chart...
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div className="relative flex h-[275px] w-full flex-col rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-4 shadow-inner">

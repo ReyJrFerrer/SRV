@@ -32,7 +32,6 @@ export const useUserProfile = () => {
         const userProfile = await authCanisterService.getMyProfile();
         setProfile(userProfile);
       } catch (err) {
-        //console.error("Failed to fetch profile:", err);
         setError("Could not load your profile.");
       } finally {
         setLoading(false);
@@ -51,7 +50,6 @@ export const useUserProfile = () => {
         await mediaService.uploadProfilePictureWithDescaling(imageFile);
       return updatedProfile;
     } catch (error) {
-      //console.error("Error uploading profile picture:", error);
       throw error;
     }
   };
@@ -68,8 +66,7 @@ export const useUserProfile = () => {
    * @returns A boolean indicating whether the update was successful.
    */
   const updateProfile = async (updatedData: {
-    name: string;
-    phone: string;
+    name: string; // Phone is no longer editable from the profile page
     imageFile?: File | null;
   }) => {
     if (!isAuthenticated) {
@@ -83,24 +80,26 @@ export const useUserProfile = () => {
     try {
       // Handle image upload first if provided
       if (updatedData.imageFile) {
-        const updatedProfileWithImage = await uploadImageToServer(
-          updatedData.imageFile,
-        );
-        if (updatedProfileWithImage) {
-          setProfile(updatedProfileWithImage);
+        try {
+          const updatedProfileWithImage = await uploadImageToServer(
+            updatedData.imageFile,
+          );
+          if (updatedProfileWithImage) {
+            setProfile(updatedProfileWithImage);
+          }
+        } catch (imageError) {
+          throw new Error(
+            "Failed to upload image. It might be too large or in an unsupported format. Please try a different image.",
+          );
         }
       }
 
       // Update name and phone in backend if they're different from current profile
-      const needsUpdate =
-        profile &&
-        (updatedData.name !== profile.name ||
-          updatedData.phone !== profile.phone);
+      const needsUpdate = profile && updatedData.name !== profile.name;
 
       if (needsUpdate) {
         const result = await authCanisterService.updateProfile(
           updatedData.name,
-          updatedData.phone,
         );
 
         if (result) {
@@ -115,7 +114,6 @@ export const useUserProfile = () => {
       return true;
     } catch (err) {
       const errorMessage = (err as Error).message;
-      //console.error("Error updating profile:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {
@@ -148,7 +146,6 @@ export const useUserProfile = () => {
       }
     } catch (err) {
       const errorMessage = (err as Error).message;
-      //console.error("Error switching role:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {
@@ -180,7 +177,6 @@ export const useUserProfile = () => {
       }
     } catch (err) {
       const errorMessage = (err as Error).message;
-      //console.error("Error removing profile picture:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {

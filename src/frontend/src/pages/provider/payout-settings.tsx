@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import BottomNavigation from "../../components/provider/NavigationBar";
 
 const PayoutSettingsPage: React.FC = () => {
   const { identity } = useAuth();
@@ -143,7 +144,6 @@ const PayoutSettingsPage: React.FC = () => {
         );
       }
     } catch (err: any) {
-      console.error("Error setting up payout:", err);
       setError(
         err.message || "Failed to set up payout settings. Please try again.",
       );
@@ -172,19 +172,17 @@ const PayoutSettingsPage: React.FC = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-100">
-        <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-          <div className="flex items-center justify-between px-4">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <div className="relative flex w-full items-center px-4 py-4">
             <button
-              onClick={() => navigate("/provider/settings")}
-              className="flex items-center text-blue-600 hover:text-blue-700"
+              onClick={() => navigate("/provider/home")}
+              className="rounded-full hover:bg-gray-100"
             >
-              <ArrowLeftIcon className="mr-2 h-5 w-5" />
-              Back to Settings
+              <ArrowLeftIcon className="mr-2 h-6 w-6" />
             </button>
-            <h1 className="text-xl font-extrabold text-black">
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
               Complete Onboarding
             </h1>
-            <div className="w-20" /> {/* Spacer */}
           </div>
         </header>
 
@@ -219,24 +217,22 @@ const PayoutSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="flex items-center justify-between px-4">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
           <button
-            onClick={() => navigate("/provider/settings")}
-            className="flex items-center text-blue-600 hover:text-blue-700"
+            onClick={() => navigate("/provider/home")}
+            className="flex items-center text-gray-600 hover:text-blue-700"
           >
-            <ArrowLeftIcon className="mr-2 h-5 w-5" />
-            Back
+            <ArrowLeftIcon className="mr-2 h-6 w-6" />
           </button>
-          <h1 className="text-xl font-extrabold text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-extrabold tracking-tight text-black lg:text-2xl">
             Complete Onboarding
           </h1>
-          <div className="w-16" /> {/* Spacer */}
         </div>
       </header>
 
-      <main className="mx-auto max-w-md p-4">
+      <main className="mx-auto max-w-md p-4 pt-20">
         <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
           <div className="p-6">
             <div className="mb-6 text-center">
@@ -410,6 +406,7 @@ const PayoutSettingsPage: React.FC = () => {
           </div>
         </div>
       </main>
+      <BottomNavigation />
     </div>
   );
 };

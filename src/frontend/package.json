@@ -6,8 +6,10 @@
   "description": "Frontend for IC Vibe application",
   "scripts": {
     "start": "vite --host 0.0.0.0 --port 5173",
-    "build": "tsc && vite build",
-    "test": "vitest run"
+    "build": "tsc && vite build && node ./scripts/generate-version.js",
+    "analyze": "cross-env ANALYZE=true vite build && (test -f dist/stats.html && echo 'Open dist/stats.html to view bundle analysis' || true)",
+    "test": "vitest run",
+    "generate:icons": "node ./scripts/generate-apple-icons.js"
   },
   "dependencies": {
     "@dfinity/auth-client": "^2.4.1",
@@ -28,6 +30,7 @@
     "@tailwindcss/vite": "^4.1.7",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@types/google.maps": "^3.58.1",
     "@types/leaflet": "^1.9.20",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
@@ -35,6 +38,9 @@
     "dotenv": "^16.3.1",
     "jsdom": "^26.1.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "cross-env": "^7.0.3",
+    "sharp": "^0.34.4",
     "tailwindcss": "^4.1.7",
     "vite-plugin-pwa": "^1.1.0",
     "workbox-window": "^7.3.0"

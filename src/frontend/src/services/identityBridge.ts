@@ -6,25 +6,40 @@
  * for Firebase custom tokens.
  */
 
-import { signInWithCustomToken, User } from "firebase/auth";
-import { httpsCallable } from "firebase/functions";
+import { signInWithCustomToken, User, Auth } from "firebase/auth";
+import { httpsCallable, Functions } from "firebase/functions";
 import {
   getFirebaseAuth,
   getFirebaseFunctions,
+  initializeFirebase,
   storeICCustomToken,
 } from "./firebaseApp";
 
-const FIREBASE_PROJECT_ID = "devsrv-rey";
-const FIREBASE_REGION = "us-central1";
+// Cached instances
+let auth: Auth | null = null;
+let functions: Functions | null = null;
 
-// Determine if we're in development mode
-const isDevelopment =
-  import.meta.env.DEV || window.location.hostname === "localhost";
+/**
+ * Ensure Firebase is initialized and return auth instance
+ */
+function ensureAuth(): Auth {
+  if (!auth) {
+    initializeFirebase();
+    auth = getFirebaseAuth();
+  }
+  return auth;
+}
 
-// Use Firebase emulator in development, production URL in production
-const IDENTITY_BRIDGE_URL = isDevelopment
-  ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/${FIREBASE_REGION}/signInWithInternetIdentity`
-  : `https://${FIREBASE_REGION}-${FIREBASE_PROJECT_ID}.cloudfunctions.net/signInWithInternetIdentity`;
+/**
+ * Ensure Firebase is initialized and return functions instance
+ */
+function ensureFunctions(): Functions {
+  if (!functions) {
+    initializeFirebase();
+    functions = getFirebaseFunctions();
+  }
+  return functions;
+}
 
 interface IdentityBridgeResponse {
   success: boolean;
@@ -33,11 +48,6 @@ interface IdentityBridgeResponse {
   hasProfile: boolean;
   needsProfile: boolean;
   message: string;
-}
-
-interface IdentityBridgeError {
-  error: string;
-  details?: string;
 }
 
 interface SignInResult {
@@ -56,51 +66,35 @@ export async function signInWithInternetIdentity(
   principal: string,
 ): Promise<SignInResult> {
   try {
-    console.log("🔗 Calling Identity Bridge for principal:", principal);
+    // Call the Identity Bridge Cloud Function using Firebase SDK
+    const functionsInstance = ensureFunctions();
+    const signInFn = httpsCallable<
+      { principal: string },
+      IdentityBridgeResponse
+    >(functionsInstance, "signInWithInternetIdentity");
 
-    // Call the Identity Bridge Cloud Function
-    const response = await fetch(IDENTITY_BRIDGE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        principal: principal,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData: IdentityBridgeError = await response.json();
-      throw new Error(
-        errorData.details || errorData.error || "Authentication failed",
-      );
-    }
-
-    const data: IdentityBridgeResponse = await response.json();
-
-    console.log("✅ Identity Bridge response:", {
-      hasProfile: data.hasProfile,
-      needsProfile: data.needsProfile,
-      message: data.message,
-    });
+    const result = await signInFn({ principal });
+    const data = result.data;
 
     if (!data.success || !data.customToken) {
-      throw new Error("Invalid response from Identity Bridge");
+      throw new Error("Error signing in with Internet Identity");
     }
 
     // Store the custom token for potential restoration after phone verification
     storeICCustomToken(data.customToken);
 
     // Sign in to Firebase with the custom token
-    const auth = getFirebaseAuth();
-    const userCredential = await signInWithCustomToken(auth, data.customToken);
+    const authInstance = ensureAuth();
+    const userCredential = await signInWithCustomToken(
+      authInstance,
+      data.customToken,
+    );
 
     // CRITICAL: Wait for onAuthStateChanged to fire
     // This ensures the auth state is fully propagated before we return
     await new Promise<void>((resolve) => {
-      const unsubscribe = auth.onAuthStateChanged((user) => {
+      const unsubscribe = authInstance.onAuthStateChanged((user) => {
         if (user && user.uid === userCredential.user.uid) {
-          console.log("✅ Firebase auth state confirmed:", user.uid);
           unsubscribe();
           resolve();
         }
@@ -113,8 +107,6 @@ export async function signInWithInternetIdentity(
       }, 2000);
     });
 
-    console.log("✅ Firebase sign-in successful and auth state ready");
-
     return {
       user: userCredential.user,
       hasProfile: data.hasProfile,
@@ -122,7 +114,6 @@ export async function signInWithInternetIdentity(
       message: data.message,
     };
   } catch (error) {
-    console.error("❌ Error in signInWithInternetIdentity:", error);
     throw error;
   }
 }
@@ -140,8 +131,8 @@ export async function createProfile(
   role: "Client" | "ServiceProvider",
 ): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const createProfileFn = httpsCallable(functions, "createProfile");
+    const functionsInstance = ensureFunctions();
+    const createProfileFn = httpsCallable(functionsInstance, "createProfile");
 
     const result = await createProfileFn({
       name,
@@ -151,7 +142,28 @@ export async function createProfile(
 
     return result.data;
   } catch (error) {
-    console.error("Error creating profile:", error);
+    throw error;
+  }
+}
+
+/**
+ * Call Firebase Cloud Function for validating phone number
+ * @param phone - User's phone number
+ */
+export async function validatePhone(phone: string): Promise<any> {
+  try {
+    const functionsInstance = ensureFunctions();
+    const validatePhoneFn = httpsCallable(
+      functionsInstance,
+      "validatePhoneNumber",
+    );
+
+    const result = await validatePhoneFn({
+      phone,
+    });
+
+    return result.data;
+  } catch (error) {
     throw error;
   }
 }
@@ -163,18 +175,15 @@ export async function createProfile(
  */
 export async function getProfile(userId?: string): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const getProfileFn = httpsCallable(functions, "getProfile");
+    const functionsInstance = ensureFunctions();
+    const getProfileFn = httpsCallable(functionsInstance, "getProfile");
 
     const result = await getProfileFn({
       userId,
     });
 
     return result.data;
-  } catch (error) {
-    console.error("Error getting profile:", error);
-    throw error;
-  }
+  } catch (error) {}
 }
 
 /**
@@ -188,8 +197,8 @@ export async function updateProfile(
   phone?: string,
 ): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const updateProfileFn = httpsCallable(functions, "updateProfile");
+    const functionsInstance = ensureFunctions();
+    const updateProfileFn = httpsCallable(functionsInstance, "updateProfile");
 
     const result = await updateProfileFn({
       name,
@@ -198,7 +207,6 @@ export async function updateProfile(
 
     return result.data;
   } catch (error) {
-    console.error("Error updating profile:", error);
     throw error;
   }
 }
@@ -209,14 +217,13 @@ export async function updateProfile(
  */
 export async function switchUserRole(): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const switchRoleFn = httpsCallable(functions, "switchUserRole");
+    const functionsInstance = ensureFunctions();
+    const switchRoleFn = httpsCallable(functionsInstance, "switchUserRole");
 
     const result = await switchRoleFn({});
 
     return result.data;
   } catch (error) {
-    console.error("Error switching role:", error);
     throw error;
   }
 }
@@ -227,14 +234,16 @@ export async function switchUserRole(): Promise<any> {
  */
 export async function getAllServiceProviders(): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const getProvidersFn = httpsCallable(functions, "getAllServiceProviders");
+    const functionsInstance = ensureFunctions();
+    const getProvidersFn = httpsCallable(
+      functionsInstance,
+      "getAllServiceProviders",
+    );
 
     const result = await getProvidersFn({});
 
     return result.data;
   } catch (error) {
-    console.error("Error getting service providers:", error);
     throw error;
   }
 }
@@ -248,8 +257,11 @@ export async function uploadProfilePicture(
   fileData: string, // base64 encoded
 ): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const uploadPictureFn = httpsCallable(functions, "uploadProfilePicture");
+    const functionsInstance = ensureFunctions();
+    const uploadPictureFn = httpsCallable(
+      functionsInstance,
+      "uploadProfilePicture",
+    );
 
     const result = await uploadPictureFn({
       fileName,
@@ -259,7 +271,6 @@ export async function uploadProfilePicture(
 
     return result.data;
   } catch (error) {
-    console.error("Error uploading profile picture:", error);
     throw error;
   }
 }
@@ -269,14 +280,16 @@ export async function uploadProfilePicture(
  */
 export async function removeProfilePicture(): Promise<any> {
   try {
-    const functions = getFirebaseFunctions();
-    const removePictureFn = httpsCallable(functions, "removeProfilePicture");
+    const functionsInstance = ensureFunctions();
+    const removePictureFn = httpsCallable(
+      functionsInstance,
+      "removeProfilePicture",
+    );
 
     const result = await removePictureFn({});
 
     return result.data;
   } catch (error) {
-    console.error("Error removing profile picture:", error);
     throw error;
   }
 }

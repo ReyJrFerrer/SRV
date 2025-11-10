@@ -1,23 +1,20 @@
-// Chat Conversation Page (Client)
+// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/client/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { ProfileImage } from "../../../components/common/ProfileImage";
 
 const ConversationPage: React.FC = () => {
-  // Default image for provider profile
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
-  // Router and context hooks
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { identity } = useAuth();
-  // Chat state and actions
   const {
     currentConversation,
     messages,
@@ -28,13 +25,11 @@ const ConversationPage: React.FC = () => {
     sendingMessage,
     getUserName,
   } = useChat();
-  // Local state for message input and provider info
   const [messageText, setMessageText] = useState("");
   const [otherUserName, setOtherUserName] = useState<string>("");
   const [otherUserImage, setOtherUserImage] =
     useState<string>(DEFAULT_USER_IMAGE);
 
-  // Set provider name and image from navigation state or profile
   useEffect(() => {
     let isMounted = true;
     if (location.state?.otherUserName) {
@@ -47,7 +42,6 @@ const ConversationPage: React.FC = () => {
     const navImage = location.state?.otherUserImage;
     const isDefault = !navImage || navImage === DEFAULT_USER_IMAGE;
     setOtherUserImage(isDefault ? DEFAULT_USER_IMAGE : navImage);
-    // Fetch provider profile image if needed
     const principalRegex = /^[a-z0-9\-]{27,63}$/i;
     if (isDefault && providerId && principalRegex.test(providerId)) {
       authCanisterService
@@ -69,15 +63,13 @@ const ConversationPage: React.FC = () => {
     };
   }, [location.state, providerId]);
 
-  // Load conversation when conversationId changes
   useEffect(() => {
     const conversationId = location.state?.conversationId || providerId;
     if (conversationId && identity) {
-      loadConversation(conversationId, false);
+      loadConversation(conversationId);
     }
   }, [providerId, location.state?.conversationId, identity, loadConversation]);
 
-  // Update provider name when conversation loads
   useEffect(() => {
     if (currentConversation && identity) {
       const currentUserId = identity.getPrincipal().toString();
@@ -88,14 +80,12 @@ const ConversationPage: React.FC = () => {
 
       getUserName(otherUserId).then(setOtherUserName);
 
-      // Fetch the other user's profile picture if we don't have it or it's the default
       if (otherUserImage === DEFAULT_USER_IMAGE) {
         fetchOtherUserProfile(otherUserId);
       }
     }
   }, [currentConversation, identity, getUserName, otherUserImage]);
 
-  // Function to fetch the other user's profile picture
   const fetchOtherUserProfile = async (userId: string) => {
     try {
       const profile = await authCanisterService.getProfile(userId);
@@ -106,25 +96,19 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImage(profile.profilePicture.imageUrl);
       }
-    } catch (error) {
-      //console.error("Failed to fetch other user's profile:", error);
-      // Silently fail - user will see default avatar
-    }
+    } catch (error) {}
   };
 
-  // Mark messages as read when conversation loads
   useEffect(() => {
     if (currentConversation && messages.length > 0) {
       markAsRead(currentConversation.id);
     }
   }, [currentConversation, messages, markAsRead]);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -145,7 +129,10 @@ const ConversationPage: React.FC = () => {
     } catch {}
   };
 
-  // Format timestamp for display in chat bubbles
+  const handleReportClick = () => {
+    navigate("/client/report");
+  };
+
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
@@ -160,29 +147,25 @@ const ConversationPage: React.FC = () => {
     return date.toLocaleDateString();
   };
 
-  // Check if message is sent by current user
   const isFromCurrentUser = (senderId: string): boolean => {
     if (!identity) return false;
     return senderId === identity.getPrincipal().toString();
   };
 
-  // Error state UI
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
-        {/* Header: Error */}
         <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full p-2 hover:bg-blue-100"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <div className="ml-3">
             <h1 className="text-lg font-bold text-blue-900">Error</h1>
           </div>
         </header>
-        {/* Main: Error message */}
         <main className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <p className="mb-4 text-red-600">{error}</p>
@@ -194,7 +177,6 @@ const ConversationPage: React.FC = () => {
             </button>
           </div>
         </main>
-        {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 z-30 w-full">
           <BottomNavigation />
         </div>
@@ -202,36 +184,54 @@ const ConversationPage: React.FC = () => {
     );
   }
 
-  // Main chat UI
   return (
     <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
-      {/* Header: Provider Info */}
       <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
         <button
           onClick={() => navigate(-1)}
           className="rounded-full p-2 hover:bg-yellow-100"
         >
-          <ArrowLeftIcon className="h-6 w-6 text-blue-700 hover:text-yellow-600" />
+          <ArrowLeftIcon className="h-6 w-6 text-gray-700 hover:text-yellow-600" />
         </button>
-        <div className="ml-3 flex items-center">
-          <div className="relative h-11 w-11">
-            <ProfileImage
-              profilePictureUrl={
-                otherUserImage !== DEFAULT_USER_IMAGE
-                  ? otherUserImage
-                  : undefined
-              }
-              userName={otherUserName}
-              size="h-11 w-11"
-            />
+        <div className="ml-3 flex flex-1 items-center justify-between">
+          <div className="flex items-center">
+            <div className="relative h-11 w-11">
+              <ProfileImage
+                profilePictureUrl={
+                  otherUserImage !== DEFAULT_USER_IMAGE
+                    ? otherUserImage
+                    : undefined
+                }
+                userName={otherUserName}
+                size="h-11 w-11"
+              />
+            </div>
+            <div className="ml-3">
+              <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
+            </div>
           </div>
-          <div className="ml-3">
-            <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
-          </div>
+          <button
+            onClick={handleReportClick}
+            className="group relative flex items-center justify-center rounded-lg bg-gray-100 p-2 text-gray-500 shadow-sm transition-colors hover:bg-red-100 hover:text-red-600"
+            title="Report this user"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </button>
         </div>
       </header>
 
-      {/* Main: Messages Area */}
       <main className="flex-1 space-y-4 overflow-y-auto p-4 pb-32">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -247,7 +247,6 @@ const ConversationPage: React.FC = () => {
                 key={message.id}
                 className={`flex items-end gap-2 ${fromCurrentUser ? "justify-end" : "justify-start"}`}
               >
-                {/* Message sender avatar (if not current user) */}
                 {!fromCurrentUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
@@ -261,7 +260,6 @@ const ConversationPage: React.FC = () => {
                     />
                   </div>
                 )}
-                {/* Message bubble */}
                 <div
                   className={`max-w-xs rounded-2xl px-5 py-3 shadow-sm md:max-w-md lg:max-w-lg ${
                     fromCurrentUser
@@ -271,7 +269,9 @@ const ConversationPage: React.FC = () => {
                   style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                 >
                   <p className="overflow-wrap-anywhere break-words text-base leading-snug">
-                    {message.content}
+                    {typeof message.content === "string"
+                      ? message.content
+                      : message.content.encryptedText}
                   </p>
                   <p
                     className={`mt-1 text-right text-xs ${
@@ -288,8 +288,7 @@ const ConversationPage: React.FC = () => {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Message Input Area */}
-      <div className="sticky bottom-16 left-0 z-30 mb-20 flex w-full flex-col">
+      <div className="sticky bottom-0 left-0 z-30 mb-0 flex w-full flex-col md:bottom-0 md:mb-0">
         <div className="border-t border-gray-200 bg-white p-3 shadow-md">
           <form
             onSubmit={handleSendMessage}
@@ -323,7 +322,6 @@ const ConversationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
       <div className="w-full">
         <BottomNavigation />
       </div>

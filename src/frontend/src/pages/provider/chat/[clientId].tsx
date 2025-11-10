@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/client/BottomNavigation";
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { ProfileImage } from "../../../components/common/ProfileImage";
@@ -16,8 +16,6 @@ const ConversationPage: React.FC = () => {
   const {
     currentConversation,
     messages,
-    backgroundLoading, // Add backgroundLoading state
-    error,
     sendMessage,
     loadConversation,
     markAsRead,
@@ -51,7 +49,7 @@ const ConversationPage: React.FC = () => {
     const conversationId = location.state?.conversationId || clientId;
     if (conversationId && identity) {
       // Use non-silent load for initial conversation loading
-      loadConversation(conversationId, false);
+      loadConversation(conversationId);
     }
   }, [clientId, location.state?.conversationId, identity, loadConversation]);
 
@@ -85,10 +83,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImageUrl(profile.profilePicture.imageUrl);
       }
-    } catch (error) {
-      //console.error("Failed to fetch other user's profile:", error);
-      // Silently fail - user will see default avatar
-    }
+    } catch (error) {}
   };
 
   // Mark messages as read when conversation loads
@@ -124,9 +119,11 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {
-      //console.error("Failed to send message:", error);
-    }
+    } catch (error) {}
+  };
+
+  const handleReportClick = () => {
+    navigate("/provider/report");
   };
 
   // Format timestamp for display
@@ -150,38 +147,6 @@ const ConversationPage: React.FC = () => {
     return senderId === identity.getPrincipal().toString();
   };
 
-  if (error) {
-    return (
-      <div className="flex h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <div className="ml-3">
-            <h1 className="text-lg font-semibold text-gray-900">Error</h1>
-          </div>
-        </header>
-        <main className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <p className="mb-4 text-red-600">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Retry
-            </button>
-          </div>
-        </main>
-        <div className="fixed bottom-0 left-0 z-30 w-full">
-          <BottomNavigation />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
@@ -192,7 +157,7 @@ const ConversationPage: React.FC = () => {
         >
           <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
         </button>
-        <div className="ml-3 flex items-center">
+        <div className="ml-3 flex flex-1 items-center justify-between">
           <div className="relative h-10 w-10">
             <ProfileImage
               profilePictureUrl={otherUserImageUrl}
@@ -200,19 +165,31 @@ const ConversationPage: React.FC = () => {
               size="h-10 w-10"
             />
           </div>
-          <div className="ml-3">
-            <h1 className="text-lg font-semibold text-gray-900">
-              {otherUserName}
-            </h1>
-            <p className="flex items-center text-xs text-gray-500">
-              {currentConversation ? "Active" : "Loading..."}
-              {backgroundLoading && (
-                <span className="ml-2 flex items-center">
-                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500"></span>
-                  <span className="ml-1">Updating...</span>
-                </span>
-              )}
-            </p>
+          <div className="ml-3 flex flex-1 items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {otherUserName}
+              </h1>
+            </div>
+            <button
+              onClick={handleReportClick}
+              className="group relative flex items-center justify-center rounded-lg bg-gray-100 p-2 text-gray-500 shadow-sm transition-colors hover:bg-red-100 hover:text-red-600"
+              title="Report this user"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
@@ -249,7 +226,11 @@ const ConversationPage: React.FC = () => {
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm">
+                    {typeof message.content === "string"
+                      ? message.content
+                      : message.content.encryptedText}
+                  </p>
                   <p
                     className={`mt-1 text-right text-xs ${
                       fromCurrentUser ? "text-blue-100" : "text-gray-400"
@@ -266,7 +247,7 @@ const ConversationPage: React.FC = () => {
       </main>
 
       {/* Message Input */}
-      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3">
+      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3 md:bottom-0">
         <form
           onSubmit={handleSendMessage}
           className="mx-auto flex max-w-3xl items-center gap-3"

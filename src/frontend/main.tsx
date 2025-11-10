@@ -1,11 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { APIProvider } from "@vis.gl/react-google-maps";
 import App from "./src/App";
 import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
+// Local wrapper to provide Google Maps context only where needed
+import { APIProvider } from "@vis.gl/react-google-maps";
+const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  return (
+    <APIProvider apiKey={apiKey} libraries={["places"]}>
+      {children}
+    </APIProvider>
+  );
+};
 
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";
@@ -14,73 +26,159 @@ import {
   ClientRedirect,
   ProviderRedirect,
 } from "./src/components/layout/Redirects";
+import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
 // Auth Pages
-import CreateProfile from "./src/pages/create-profile";
+const CreateProfile = lazy(() => import("./src/pages/create-profile"));
 
 // Client Pages
-import ClientHome from "./src/pages/client/home";
-import ClientChat from "./src/pages/client/chat";
-import SearchResults from "./src/pages/client/search-results";
-import NotificationsPage from "./src/pages/client/notifications";
+const ClientHome = lazy(() => import("./src/pages/client/home"));
+const ClientChat = lazy(() => import("./src/pages/client/chat"));
+const SearchResults = lazy(() => import("./src/pages/client/search-results"));
+const NotificationsPage = lazy(
+  () => import("./src/pages/client/notifications"),
+);
 
 // Client Service Pages
-import ClientServiceViewAll from "./src/pages/client/service/view-all";
-import ClientServiceDetails from "./src/pages/client/service/[id]";
-import ClientServiceReviews from "./src/pages/client/service/reviews/[id]";
+const ClientServiceViewAll = lazy(
+  () => import("./src/pages/client/service/view-all"),
+);
+const ClientServiceDetails = lazy(
+  () => import("./src/pages/client/service/[id]"),
+);
+const ClientServiceReviews = lazy(
+  () => import("./src/pages/client/service/reviews/[id]"),
+);
 
 // Client Booking Pages
-import ClientBookingIndex from "./src/pages/client/booking/index";
-import ClientBookingDetails from "./src/pages/client/booking/[id]";
-import ClientBookingConfirmation from "./src/pages/client/booking/confirmation";
-import ClientPaymentPending from "./src/pages/client/booking/payment-pending";
-import ReceiptPage from "./src/pages/client/booking/receipt/[id]";
-import ClientBookService from "./src/pages/client/book/[id]";
+const ClientBookingIndex = lazy(
+  () => import("./src/pages/client/booking/index"),
+);
+const ClientBookingDetails = lazy(
+  () => import("./src/pages/client/booking/[id]"),
+);
+const ClientBookingConfirmation = lazy(
+  () => import("./src/pages/client/booking/confirmation"),
+);
+const ClientPaymentPending = lazy(
+  () => import("./src/pages/client/booking/payment-pending"),
+);
+const ReceiptPage = lazy(
+  () => import("./src/pages/client/booking/receipt/[id]"),
+);
+const ClientBookService = lazy(() => import("./src/pages/client/book/[id]"));
 
 // Client Category & Review Pages
-import ClientCategory from "./src/pages/client/categories/[slug]";
-import ClientReview from "./src/pages/client/review/[id]";
-import ClientProfilePage from "./src/pages/client/profile";
-import SettingsPageC from "./src/pages/client/settings";
-import TermsAndConditionsPage from "./src/pages/terms";
-import ReportIssuePage from "./src/pages/report";
-import HelpSupportPage from "./src/pages/provider/inside settings/help";
+const ClientCategory = lazy(
+  () => import("./src/pages/client/categories/[slug]"),
+);
+const ClientReview = lazy(() => import("./src/pages/client/review/[id]"));
+const ClientProfilePage = lazy(() => import("./src/pages/client/profile"));
+const ClientProfileReviews = lazy(
+  () => import("./src/pages/client/profile/reviews"),
+);
+const SettingsPageC = lazy(() => import("./src/pages/client/settings"));
+const TermsAndConditionsPage = lazy(() => import("./src/pages/terms"));
+const ReportIssuePage = lazy(() => import("./src/pages/report"));
+const HelpSupportPage = lazy(
+  () => import("./src/pages/provider/inside settings/help"),
+);
 
 // Provider Pages
-import ProviderHome from "./src/pages/provider/home";
-import ProviderBookings from "./src/pages/provider/bookings";
-import ProviderChat from "./src/pages/provider/chat";
-import SettingsPageSP from "./src/pages/provider/settings";
-import ProviderProfilePage from "./src/pages/provider/inside settings/profile";
+const ProviderHome = lazy(() => import("./src/pages/provider/home"));
+const ProviderBookings = lazy(() => import("./src/pages/provider/bookings"));
+const ProviderChat = lazy(() => import("./src/pages/provider/chat"));
+const SettingsPageSP = lazy(() => import("./src/pages/provider/settings"));
+const ProviderProfilePage = lazy(
+  () => import("./src/pages/provider/inside settings/profile"),
+);
 
 // Provider Service Management
-import ProviderServices from "./src/pages/provider/services";
-import ProviderAddService from "./src/pages/provider/services/add";
+const ProviderServices = lazy(() => import("./src/pages/provider/services"));
+const ProviderAddService = lazy(
+  () => import("./src/pages/provider/services/add"),
+);
 
 // Provider Service Details
-import ProviderServiceDetails from "./src/pages/provider/service-details/[id]";
-import ProviderServiceReviews from "./src/pages/provider/service-details/reviews/[id]";
+const ProviderServiceDetails = lazy(
+  () => import("./src/pages/provider/service-details/[id]"),
+);
+const ProviderServiceReviews = lazy(
+  () => import("./src/pages/provider/service-details/reviews/[id]"),
+);
 
 // Provider Booking Management
-import ProviderBookingDetails from "./src/pages/provider/booking/[id]";
-import ProviderActiveService from "./src/pages/provider/active-service/[bookingId]";
-import ProviderCompleteService from "./src/pages/provider/complete-service/[bookingId]";
-import ProviderReceipt from "./src/pages/provider/receipt/[bookingId]";
-import ProviderDirectionsPage from "./src/pages/provider/directions/[bookingId]";
+const ProviderBookingDetails = lazy(
+  () => import("./src/pages/provider/booking/[id]"),
+);
+const ProviderActiveService = lazy(
+  () => import("./src/pages/provider/active-service/[bookingId]"),
+);
+const ProviderCompleteService = lazy(
+  () => import("./src/pages/provider/complete-service/[bookingId]"),
+);
+const ProviderReceipt = lazy(
+  () => import("./src/pages/provider/receipt/[bookingId]"),
+);
+const ProviderDirectionsPage = lazy(
+  () => import("./src/pages/provider/directions/[bookingId]"),
+);
 
 // Provider Review
-import ProviderReview from "./src/pages/provider/review/[id]";
+const ProviderRateClientPage = lazy(
+  () => import("./src/pages/provider/rate-client/[bookingId]"),
+);
+const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
-import ConversationPage from "./src/pages/client/chat/[providerId]";
-import ProviderConversationPage from "./src/pages/provider/chat/[clientId]";
-import NotificationsPageSP from "./src/pages/provider/notifications";
+import { BookingCacheProvider } from "./src/context/BookingCacheContext";
+import oneSignalService from "./src/services/oneSignalService";
+import { initVersionChecker } from "./src/utils/versionChecker";
+
+// Initialize version checker for automatic cache clearing on new deployments
+initVersionChecker();
+
+// Initialize OneSignal when SDK is loaded
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+window.OneSignalDeferred.push(async function (OneSignal) {
+  try {
+    await OneSignal.init({
+      appId: "6ca84c57-1e6b-466d-b792-64df97dea60b",
+      safari_web_id: "web.onesignal.auto.514888af-c9d7-482b-90d4-9de98d872128",
+      allowLocalhostAsSecureOrigin: true, // Enable for local development
+      notifyButton: {
+        enable: false,
+      },
+      // Let OneSignal use default scope "/" for push notifications to work properly
+      // Our custom sw.js will be disabled to avoid conflicts
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+    });
+
+    // Wait a bit to ensure OneSignal is fully ready
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Setup our service wrapper after OneSignal is fully initialized
+    oneSignalService.setupAfterInit();
+  } catch (error) {}
+});
+
+const ConversationPage = lazy(
+  () => import("./src/pages/client/chat/[providerId]"),
+);
+const ProviderConversationPage = lazy(
+  () => import("./src/pages/provider/chat/[clientId]"),
+);
+const NotificationsPageSP = lazy(
+  () => import("./src/pages/provider/notifications"),
+);
 
 // Provider Info Pages
-import ProviderTermsAndConditionsPage from "./src/pages/provider/inside settings/terms";
-import ProviderReportIssuePage from "./src/pages/report";
-import ProviderHelpSupportPage from "./src/pages/provider/help";
+const ProviderTermsAndConditionsPage = lazy(
+  () => import("./src/pages/provider/inside settings/terms"),
+);
+const ProviderReportIssuePage = lazy(() => import("./src/pages/report"));
+const ProviderHelpSupportPage = lazy(() => import("./src/pages/provider/help"));
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";
@@ -102,131 +200,174 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <APIProvider
-        apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
-        libraries={["places"]}
-      >
-        <HashRouter>
-          <ScrollToTop />
-          <AuthProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<App />} />
-              <Route path="/create-profile" element={<CreateProfile />} />
-
-              <Route path="/client" element={<ClientLayout />}>
-                <Route index element={<ClientRedirect />} />
-                <Route path="home" element={<ClientHome />} />
-                <Route path="chat" element={<ClientChat />} />
-                <Route path="chat/:providerId" element={<ConversationPage />} />
-                <Route path="settings" element={<SettingsPageC />} />
-                <Route path="profile" element={<ClientProfilePage />} />
-                <Route path="search-results" element={<SearchResults />} />
-                <Route path="terms" element={<TermsAndConditionsPage />} />
-                <Route path="report" element={<ReportIssuePage />} />
-                <Route path="help" element={<HelpSupportPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-
-                {/* Service Routes */}
+      <HashRouter>
+        <ScrollToTop />
+        <AuthProvider>
+          <BookingCacheProvider>
+            <Suspense fallback={null}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<App />} />
                 <Route
-                  path="service/view-all"
-                  element={<ClientServiceViewAll />}
-                />
-                <Route path="service/:id" element={<ClientServiceDetails />} />
-                <Route
-                  path="service/reviews/:id"
-                  element={<ClientServiceReviews />}
+                  path="/create-profile"
+                  element={
+                    <CreateProfileGuard>
+                      <CreateProfile />
+                    </CreateProfileGuard>
+                  }
                 />
 
-                {/* Booking Routes */}
-                <Route path="booking" element={<ClientBookingIndex />} />
-                <Route path="booking/:id" element={<ClientBookingDetails />} />
-                <Route
-                  path="booking/confirmation"
-                  element={<ClientBookingConfirmation />}
-                />
-                <Route
-                  path="booking/payment-pending"
-                  element={<ClientPaymentPending />}
-                />
-                <Route path="booking/receipt/:id" element={<ReceiptPage />} />
-                <Route path="book/:id" element={<ClientBookService />} />
+                <Route path="/client" element={<ClientLayout />}>
+                  <Route index element={<ClientRedirect />} />
+                  <Route path="home" element={<ClientHome />} />
+                  <Route path="chat" element={<ClientChat />} />
+                  <Route
+                    path="chat/:providerId"
+                    element={<ConversationPage />}
+                  />
+                  <Route path="settings" element={<SettingsPageC />} />
+                  <Route path="profile" element={<ClientProfilePage />} />
+                  <Route
+                    path="profile/reviews"
+                    element={<ClientProfileReviews />}
+                  />
+                  <Route path="search-results" element={<SearchResults />} />
+                  <Route path="terms" element={<TermsAndConditionsPage />} />
+                  <Route path="report" element={<ReportIssuePage />} />
+                  <Route path="help" element={<HelpSupportPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
 
-                {/* Category & Review Routes */}
-                <Route path="categories/:slug" element={<ClientCategory />} />
-                <Route path="review/:id" element={<ClientReview />} />
-              </Route>
+                  {/* Service Routes */}
+                  <Route
+                    path="service/view-all"
+                    element={<ClientServiceViewAll />}
+                  />
+                  <Route
+                    path="service/:id"
+                    element={<ClientServiceDetails />}
+                  />
+                  <Route
+                    path="service/reviews/:id"
+                    element={<ClientServiceReviews />}
+                  />
 
-              {/* Provider Routes with Nested Layout */}
-              <Route path="/provider" element={<ProviderLayout />}>
-                <Route index element={<ProviderRedirect />} />
-                <Route path="home" element={<ProviderHome />} />
-                <Route path="bookings" element={<ProviderBookings />} />
-                <Route path="chat" element={<ProviderChat />} />
-                <Route
-                  path="chat/:clientId"
-                  element={<ProviderConversationPage />}
-                />
-                <Route path="settings" element={<SettingsPageSP />} />
-                <Route path="profile" element={<ProviderProfilePage />} />
-                <Route path="notifications" element={<NotificationsPageSP />} />
-                <Route path="wallet" element={<WalletPage />} />
-                <Route
-                  path="payout-settings"
-                  element={<PayoutSettingsPage />}
-                />
+                  {/* Booking Routes */}
+                  <Route path="booking" element={<ClientBookingIndex />} />
+                  <Route
+                    path="booking/:id"
+                    element={<ClientBookingDetails />}
+                  />
+                  <Route
+                    path="booking/confirmation"
+                    element={<ClientBookingConfirmation />}
+                  />
+                  <Route
+                    path="booking/payment-pending"
+                    element={<ClientPaymentPending />}
+                  />
+                  <Route path="booking/receipt/:id" element={<ReceiptPage />} />
+                  <Route
+                    path="book/:id"
+                    element={
+                      // Scope Google Maps only to booking flow pages that need it
+                      <MapsProviderWrapper>
+                        <ClientBookService />
+                      </MapsProviderWrapper>
+                    }
+                  />
 
-                {/* Service Management Routes */}
-                <Route path="services" element={<ProviderServices />} />
-                <Route path="services/add" element={<ProviderAddService />} />
+                  {/* Category & Review Routes */}
+                  <Route path="categories/:slug" element={<ClientCategory />} />
+                  <Route path="review/:id" element={<ClientReview />} />
+                </Route>
 
-                {/* Service Details Routes */}
-                <Route
-                  path="service-details/:id"
-                  element={<ProviderServiceDetails />}
-                />
-                <Route
-                  path="service-details/reviews/:id"
-                  element={<ProviderServiceReviews />}
-                />
+                {/* Provider Routes with Nested Layout */}
+                <Route path="/provider" element={<ProviderLayout />}>
+                  <Route index element={<ProviderRedirect />} />
+                  <Route path="home" element={<ProviderHome />} />
+                  <Route path="bookings" element={<ProviderBookings />} />
+                  <Route path="chat" element={<ProviderChat />} />
+                  <Route
+                    path="chat/:clientId"
+                    element={<ProviderConversationPage />}
+                  />
+                  <Route path="settings" element={<SettingsPageSP />} />
+                  <Route path="profile" element={<ProviderProfilePage />} />
+                  <Route
+                    path="notifications"
+                    element={<NotificationsPageSP />}
+                  />
+                  <Route path="wallet" element={<WalletPage />} />
+                  <Route
+                    path="payout-settings"
+                    element={<PayoutSettingsPage />}
+                  />
 
-                {/* Booking Management Routes */}
-                <Route
-                  path="booking/:id"
-                  element={<ProviderBookingDetails />}
-                />
-                <Route
-                  path="active-service/:bookingId"
-                  element={<ProviderActiveService />}
-                />
-                <Route
-                  path="directions/:bookingId"
-                  element={<ProviderDirectionsPage />}
-                />
-                <Route
-                  path="complete-service/:bookingId"
-                  element={<ProviderCompleteService />}
-                />
-                <Route
-                  path="receipt/:bookingId"
-                  element={<ProviderReceipt />}
-                />
+                  {/* Service Management Routes */}
+                  <Route path="services" element={<ProviderServices />} />
+                  <Route path="services/add" element={<ProviderAddService />} />
 
-                {/* Review Routes */}
-                <Route path="review/:id" element={<ProviderReview />} />
+                  {/* Service Details Routes */}
+                  <Route
+                    path="service-details/:id"
+                    element={<ProviderServiceDetails />}
+                  />
+                  <Route
+                    path="service-details/reviews/:id"
+                    element={<ProviderServiceReviews />}
+                  />
 
-                {/* Provider Info Pages */}
-                <Route
-                  path="terms"
-                  element={<ProviderTermsAndConditionsPage />}
-                />
-                <Route path="report" element={<ProviderReportIssuePage />} />
-                <Route path="help" element={<ProviderHelpSupportPage />} />
-              </Route>
-            </Routes>
-          </AuthProvider>
-        </HashRouter>
-      </APIProvider>
+                  {/* Booking Management Routes */}
+                  <Route
+                    path="booking/:id"
+                    element={
+                      // Provider booking details uses interactive Map + geocoding
+                      <MapsProviderWrapper>
+                        <ProviderBookingDetails />
+                      </MapsProviderWrapper>
+                    }
+                  />
+                  <Route
+                    path="active-service/:bookingId"
+                    element={<ProviderActiveService />}
+                  />
+                  <Route
+                    path="directions/:bookingId"
+                    element={<ProviderDirectionsPage />}
+                  />
+                  <Route
+                    path="complete-service/:bookingId"
+                    element={<ProviderCompleteService />}
+                  />
+                  <Route
+                    path="receipt/:bookingId"
+                    element={<ProviderReceipt />}
+                  />
+
+                  {/* Rate Client after receipt */}
+                  <Route
+                    path="rate-client/:bookingId"
+                    element={<ProviderRateClientPage />}
+                  />
+
+                  {/* Review Routes */}
+                  <Route path="review/:id" element={<ProviderReview />} />
+
+                  {/* Provider Info Pages */}
+                  <Route
+                    path="terms"
+                    element={<ProviderTermsAndConditionsPage />}
+                  />
+                  <Route path="report" element={<ProviderReportIssuePage />} />
+                  <Route path="help" element={<ProviderHelpSupportPage />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </BookingCacheProvider>
+        </AuthProvider>
+      </HashRouter>
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
+// end

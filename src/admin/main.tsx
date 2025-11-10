@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./src/App";
 import ScrollToTop from "./src/components/ScrollToTop";
 import "./src/index.css";
+import { initVersionChecker } from "./src/utils/versionChecker";
+
+// Initialize version checker for automatic cache clearing on new deployments
+initVersionChecker();
 
 // Create a client for React Query
 const queryClient = new QueryClient({

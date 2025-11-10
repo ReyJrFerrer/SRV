@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
-  ClockIcon,
   CheckCircleIcon,
   StarIcon,
   ChartBarIcon,
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
-import { useProviderReviews } from "../../../../hooks/reviewManagement";
-
 // Import your new chart components
-import BookingStatusPieChart from "./BookingStatusPieChart";
-import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
-import DailyBookingsBarChart from "./DailyBookingsBarChart";
+const BookingStatusPieChart = React.lazy(
+  () => import("./BookingStatusPieChart"),
+);
+const MonthlyRevenueLineChart = React.lazy(
+  () => import("./MonthlyRevenueLineChart"),
+);
+const DailyBookingsBarChart = React.lazy(
+  () => import("./DailyBookingsBarChart"),
+);
 import CustomerRatingStars from "./CustomerRatingStars";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../../../hooks/useWallet";
@@ -21,11 +23,29 @@ import { useWallet } from "../../../../hooks/useWallet";
 interface ProviderStatsProps {
   className?: string;
   loading?: boolean;
+  analytics: any;
+  bookingsLoading: any;
+  bookingsError: any;
+  getMonthlyRevenue: any;
+  getBookingCountByDay: any;
+  getRevenueByPeriod: any;
+  reviewAnalytics: any;
+  reviewsLoading: any;
+  reviewsError: any;
 }
 
 const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
+  analytics,
+  bookingsLoading,
+  bookingsError,
+  getMonthlyRevenue,
+  getBookingCountByDay,
+  getRevenueByPeriod,
+  reviewAnalytics,
+  reviewsLoading,
+  reviewsError,
 }) => {
   const { balance, fetchBalance } = useWallet();
 
@@ -38,23 +58,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const handleRefreshBalance = async () => {
     try {
       await fetchBalance();
-    } catch (error) {
-      console.error("Failed to refresh balance:", error);
-    }
+    } catch (error) {}
   };
-
-  const {
-    analytics,
-    loading: bookingLoading,
-    getRevenueByPeriod,
-    error,
-  } = useProviderBookingManagement();
-
-  const {
-    analytics: reviewAnalytics,
-    loading: reviewsLoading,
-    error: reviewsError,
-  } = useProviderReviews();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -67,8 +72,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isLoading = externalLoading || bookingLoading || reviewsLoading;
-  const hasError = error || reviewsError;
+  const isLoading = externalLoading || bookingsLoading || reviewsLoading;
+  const hasError = bookingsError || reviewsError;
 
   const ratingData = React.useMemo(() => {
     if (reviewAnalytics) {
@@ -89,12 +94,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         title: "Earnings This Month",
         value: "₱0.00",
         icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-        bgColor: "bg-[#4068F4]",
-      },
-      {
-        title: "Pending Payout",
-        value: "₱0.00",
-        icon: <ClockIcon className="h-6 w-6 text-white" />,
         bgColor: "bg-[#4068F4]",
       },
       {
@@ -139,19 +138,12 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
     try {
       const monthlyRevenue = getRevenueByPeriod("month");
-      const pendingPayout = analytics.expectedRevenue || 0;
 
       return [
         {
           title: "Earnings This Month",
           value: `₱${monthlyRevenue.toFixed(2)}`,
           icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-          bgColor: "bg-[#4068F4]",
-        },
-        {
-          title: "Pending Payout",
-          value: `₱${pendingPayout.toFixed(2)}`,
-          icon: <ClockIcon className="h-6 w-6 text-white" />,
           bgColor: "bg-[#4068F4]",
         },
         {
@@ -182,7 +174,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         },
       ];
     } catch (err) {
-      //console.error("Error calculating stats:", err);
       return defaultStats;
     }
   }, [analytics, getRevenueByPeriod, ratingData]);
@@ -266,16 +257,39 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       ) : (
         <>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <BookingStatusPieChart />
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <BookingStatusPieChart analytics={analytics} />
+            </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <MonthlyRevenueLineChart />
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <MonthlyRevenueLineChart
+                analytics={analytics}
+                getMonthlyRevenue={getMonthlyRevenue}
+              />
+            </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <DailyBookingsBarChart />
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <DailyBookingsBarChart
+                getBookingCountByDay={getBookingCountByDay}
+              />
+            </Suspense>
           </div>
           <div className="flex h-80 items-center justify-center rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <CustomerRatingStars />
+            <CustomerRatingStars analytics={ratingData} />
           </div>
         </>
       )}
@@ -338,7 +352,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats: {error || reviewsError || "Unknown error"}
+            Error loading stats:{" "}
+            {bookingsError || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>
@@ -347,7 +362,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="mb-6 pt-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
+      <h1 className="my-6 text-2xl font-extrabold tracking-tight text-blue-900 sm:text-3xl md:text-3xl">
         Dashboard
       </h1>
 

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   ArrowLeftIcon,
-  ArrowPathIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon as ExclamationTriangleOutlineIcon,
   WrenchScrewdriverIcon,
@@ -28,6 +27,26 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
 
     let ticket: Ticket;
     if (parsedData) {
+      // Build tags based on source and category
+      const tags = [];
+      if (
+        parsedData.source === "provider_report" ||
+        parsedData.source === "provider_cancellation"
+      ) {
+        tags.push("provider");
+      } else if (
+        parsedData.source === "client_report" ||
+        parsedData.source === "client_cancellation"
+      ) {
+        tags.push("client");
+      }
+
+      if (parsedData.category === "cancellation") {
+        tags.push("cancellation");
+      }
+
+      tags.push("user-report");
+
       ticket = {
         id: `REPORT-${report.id}`,
         title: parsedData.title,
@@ -38,10 +57,7 @@ const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
         submittedById: report.userId,
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
-        tags: [
-          parsedData.source === "provider_report" ? "provider" : "client",
-          "user-report",
-        ],
+        tags: tags,
       };
     } else {
       ticket = {
@@ -67,7 +83,13 @@ interface Ticket {
   title: string;
   description: string;
   status: "open" | "in_progress" | "resolved" | "closed";
-  category: "technical" | "billing" | "account" | "service" | "other";
+  category:
+    | "technical"
+    | "billing"
+    | "account"
+    | "service"
+    | "cancellation"
+    | "other";
   submittedBy: string;
   submittedById: string; // User ID for navigation
   submittedAt: string;
@@ -103,6 +125,8 @@ const getCategoryColor = (category: string) => {
       return "bg-blue-100 text-blue-800";
     case "service":
       return "bg-yellow-100 text-yellow-800";
+    case "cancellation":
+      return "bg-orange-100 text-orange-800";
     case "other":
       return "bg-gray-100 text-gray-800";
     default:
@@ -193,8 +217,7 @@ export const TicketInboxPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
-  const [loading, setLoading] = useState(false);
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [, setLoadingReports] = useState(false);
 
   // Mobile bottom action bar visibility
   const [showMobileBar, setShowMobileBar] = useState(false);
@@ -292,26 +315,6 @@ export const TicketInboxPage: React.FC = () => {
     setFilteredTickets(filtered);
   }, [tickets, searchTerm, statusFilter, categoryFilter, sortBy]);
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      // Refresh users first
-      await refreshUsers();
-
-      if (backendUsers.length > 0) {
-        // Load real reports only (removed mock tickets)
-        const reportTickets = await loadReportsAsTickets();
-
-        setTickets(reportTickets);
-        setFilteredTickets(reportTickets);
-      }
-    } catch (error) {
-      console.error("Error refreshing tickets:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleViewTicket = (ticket: Ticket) => {
     navigate(`/ticket/${ticket.id}`);
   };
@@ -343,16 +346,6 @@ export const TicketInboxPage: React.FC = () => {
               </div>
               <div className="ml-0 flex w-full flex-row gap-2 sm:ml-4 sm:w-auto sm:space-x-4">
                 <button
-                  onClick={handleRefresh}
-                  disabled={loading || loadingReports}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
-                  />
-                  {loadingReports ? "Loading Reports..." : "Refresh"}
-                </button>
-                <button
                   onClick={() => navigate("/dashboard")}
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
                 >
@@ -375,16 +368,6 @@ export const TicketInboxPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={loading || loadingReports}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              <ArrowPathIcon
-                className={`mr-2 h-4 w-4 ${loading || loadingReports ? "animate-spin" : ""}`}
-              />
-              {loadingReports ? "Loading Reports..." : "Refresh"}
-            </button>
             <button
               onClick={() => navigate("/dashboard")}
               className="inline-flex flex-1 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2"
@@ -545,6 +528,7 @@ export const TicketInboxPage: React.FC = () => {
                   <option value="billing">Billing</option>
                   <option value="account">Account</option>
                   <option value="service">Service</option>
+                  <option value="cancellation">Cancellation</option>
                   <option value="other">Other</option>
                 </select>
               </div>

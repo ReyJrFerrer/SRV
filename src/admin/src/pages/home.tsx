@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { ArrowPathIcon, UserIcon } from "@heroicons/react/24/outline";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -13,6 +13,14 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import {
+  countActiveServiceProviders,
+  calculateDashboardStats,
+  generateBookingsChartData,
+  generateRevenueChartData,
+  type Period,
+} from "../utils/homeUtils";
+import { getFeedbackStats } from "../services/adminServiceCanister";
 
 export const AdminHomePage: React.FC = () => {
   const {
@@ -28,7 +36,6 @@ export const AdminHomePage: React.FC = () => {
     // Action functions
     getServicesWithCertificates,
     getReportsFromFeedbackCanister,
-    refreshAll,
   } = useAdmin();
 
   // Mobile bottom action bar visibility
@@ -42,174 +49,54 @@ export const AdminHomePage: React.FC = () => {
   // Reports for pending tickets
   const [reports, setReports] = useState<any[]>([]);
 
+  // Feedback stats
+  const [feedbackStats, setFeedbackStats] = useState<{
+    averageRating: number;
+    totalFeedback: number;
+  } | null>(null);
+
   // Calculate active service providers count from users with ServiceProvider role
-  const activeServiceProvidersCount =
-    users?.filter((user: any) => {
-      if (typeof user.activeRole === "string") {
-        return user.activeRole === "ServiceProvider";
-      } else if (user.activeRole && typeof user.activeRole === "object") {
-        return "ServiceProvider" in user.activeRole;
-      }
-      return false;
-    }).length || 0;
+  const activeServiceProvidersCount = useMemo(() => {
+    return countActiveServiceProviders(users || []);
+  }, [users]);
 
   // Calculate booking counts from system stats
   const totalBookings = systemStats?.totalBookings || 0;
 
-  // Calculate settled bookings with fallback to systemStats when bookings array is empty
-  const settledBookings =
-    bookings && bookings.length > 0
-      ? bookings.filter(
-          (booking) =>
-            booking.status?.toLowerCase() === "completed" ||
-            booking.status?.toLowerCase() === "settled",
-        ).length
-      : systemStats?.settledBookings || 0;
-
   // Calculate dashboard stats from current data
-  const dashboardStats = {
-    totalServiceProviders: activeServiceProvidersCount,
-    totalPendingValidations: servicesWithCertificates.reduce(
-      (total, service) => total + (service.certificateUrls?.length || 0),
-      0,
-    ),
-    totalPendingTickets: reports.filter(
-      (report) => !report.status || report.status === "open",
-    ).length,
-    totalAdminUsers: systemStats?.adminUsers || 0,
-    totalBookings: totalBookings,
-    settledBookings: settledBookings,
-  };
+  const dashboardStats = useMemo(() => {
+    return calculateDashboardStats(
+      activeServiceProvidersCount,
+      servicesWithCertificates,
+      reports,
+      systemStats,
+      totalBookings,
+      feedbackStats,
+    );
+  }, [
+    activeServiceProvidersCount,
+    servicesWithCertificates,
+    reports,
+    systemStats,
+    totalBookings,
+    feedbackStats,
+  ]);
 
   // Charts: period filter
-  type Period = "7d" | "30d" | "90d";
   const [period, setPeriod] = useState<Period>("7d");
   const lineData = useMemo(() => {
-    const today = new Date();
-    const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const chartData = [];
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const formattedDate = date
-        .toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-        .toUpperCase()
-        .replace(" ", ". ");
-
-      let count = 0;
-
-      // Count bookings for this specific date
-      if (bookings && bookings.length > 0) {
-        const dateStr = date.toISOString().slice(0, 10);
-        count = bookings.filter((booking) => {
-          let bookingDateStr;
-          if (booking.createdAt instanceof Date) {
-            bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === "string") {
-            bookingDateStr = booking.createdAt.slice(0, 10);
-          } else {
-            return false;
-          }
-          return bookingDateStr === dateStr;
-        }).length;
-      } else if (i === 0) {
-        count = totalBookings;
-      }
-
-      chartData.push({
-        date: formattedDate,
-        count,
-        fullDate: date.toISOString().slice(0, 10),
-      });
-    }
-
-    return chartData;
+    return generateBookingsChartData(bookings || [], totalBookings, period);
   }, [bookings, totalBookings, period]);
 
   // Revenue per Day chart data with vertical grids
   const revenueLineData = useMemo(() => {
-    // Generate dynamic date range based on selected period
-    const today = new Date();
-    const daysToShow = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-    const chartData = [];
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const formattedDate = date
-        .toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-        .toUpperCase()
-        .replace(" ", ". ");
-
-      let revenue = 0;
-      let commission = 0;
-
-      // Calculate revenue for this specific date
-      if (bookings && bookings.length > 0) {
-        const dateStr = date.toISOString().slice(0, 10);
-
-        // Calculate revenue from completed bookings
-        revenue = bookings
-          .filter((booking) => {
-            let bookingDateStr;
-            if (booking.createdAt instanceof Date) {
-              bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-            } else if (typeof booking.createdAt === "string") {
-              bookingDateStr = booking.createdAt.slice(0, 10);
-            } else {
-              return false;
-            }
-            return (
-              bookingDateStr === dateStr &&
-              (booking.status === "Completed" || booking.status === "Settled")
-            );
-          })
-          .reduce((sum, booking) => sum + (booking.price || 0), 0);
-
-        // Calculate commission from commission transactions
-        if (commissionTransactions && commissionTransactions.length > 0) {
-          commission = commissionTransactions
-            .filter((transaction) => {
-              const transactionDateStr = transaction.timestamp
-                .toISOString()
-                .slice(0, 10);
-              return transactionDateStr === dateStr;
-            })
-            .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-        }
-      } else if (i === 0) {
-        // If no bookings data, show totals on today
-        revenue = systemStats?.totalRevenue || 0;
-        commission = systemStats?.totalCommission || 0;
-      }
-
-      chartData.push({
-        date: formattedDate,
-        revenue,
-        commission,
-        fullDate: date.toISOString().slice(0, 10),
-      });
-    }
-
-    return chartData;
-  }, [
-    bookings,
-    commissionTransactions,
-    systemStats?.totalRevenue,
-    systemStats?.totalCommission,
-    period,
-  ]);
-
-  useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
+    return generateRevenueChartData(
+      bookings || [],
+      commissionTransactions || [],
+      systemStats,
+      period,
+    );
+  }, [bookings, commissionTransactions, systemStats, period]);
 
   // Load services with certificates for pending validations count
   useEffect(() => {
@@ -237,6 +124,22 @@ export const AdminHomePage: React.FC = () => {
     loadReports();
   }, [getReportsFromFeedbackCanister]);
 
+  // Load feedback stats
+  useEffect(() => {
+    const loadFeedbackStats = async () => {
+      try {
+        const stats = await getFeedbackStats();
+        setFeedbackStats({
+          averageRating: stats.averageRating || 0,
+          totalFeedback: stats.totalFeedback || 0,
+        });
+      } catch (error) {
+        console.error("Error loading feedback stats:", error);
+      }
+    };
+    loadFeedbackStats();
+  }, []);
+
   // Toggle mobile bottom bar when header scrolls out of view
   useEffect(() => {
     const onScroll = () => {
@@ -246,12 +149,6 @@ export const AdminHomePage: React.FC = () => {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const isRefreshing =
-    loading.systemStats ||
-    loading.serviceProviders ||
-    loading.services ||
-    loading.bookings;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gray-50">
@@ -279,17 +176,6 @@ export const AdminHomePage: React.FC = () => {
                 </div>
               </div>
               <div className="ml-0 flex w-full min-w-0 flex-row flex-wrap gap-2 sm:ml-4 sm:w-auto sm:min-w-[unset] sm:flex-nowrap sm:space-x-4">
-                {/* Refresh button (header) */}
-                <button
-                  onClick={refreshAll}
-                  disabled={isRefreshing}
-                  className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
-                >
-                  <ArrowPathIcon
-                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </button>
                 <Link
                   to="/analytics"
                   className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
@@ -508,14 +394,6 @@ export const AdminHomePage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row items-stretch gap-2">
-            <button
-              onClick={refreshAll}
-              disabled={isRefreshing}
-              className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 disabled:opacity-50"
-            >
-              <ArrowPathIcon className="mr-2 h-4 w-4" />
-              Refresh
-            </button>
             <Link
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"

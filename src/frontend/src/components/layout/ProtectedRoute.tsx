@@ -37,7 +37,6 @@ export default function ProtectedRoute({
 
           // Check if account is suspended
           if (profile.locked) {
-            console.log("Account is suspended, showing suspension modal");
             setShowSuspensionModal(true);
             return;
           }
@@ -52,7 +51,6 @@ export default function ProtectedRoute({
             return;
           }
         } catch (error) {
-          //console.error("Error checking user role:", error);
           navigate("/");
         }
       }
@@ -81,7 +79,11 @@ export default function ProtectedRoute({
       {children}
       <SuspensionModal
         isOpen={showSuspensionModal}
-        onClose={() => setShowSuspensionModal(false)}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          // Mark that we've handled the suspension modal
+          sessionStorage.setItem("hasShownSuspensionModal", "true");
+        }}
       />
     </>
   );

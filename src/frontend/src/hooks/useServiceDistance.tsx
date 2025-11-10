@@ -184,12 +184,7 @@ export const useBulkServiceDistance = (
               location,
               service.location,
             );
-          } catch (err) {
-            // //console.warn(
-            //   `Failed to calculate distance for service ${service.id}:`,
-            //   err,
-            // );
-          }
+          } catch (err) {}
         }
       });
 

@@ -1,12 +1,18 @@
+// SECTION: Imports — dependencies for this page
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { toast, Toaster } from "sonner";
-import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
-import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
+import { Toaster, toast } from "sonner";
+import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
+import BottomNavigation from "../../../components/client/NavigationBar";
+import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {
   useBookingManagement,
   EnhancedBooking,
-} from "../../../hooks/bookingManagement"; // Adjust path as needed
+} from "../../../hooks/bookingManagement";
+import Appear from "../../../components/common/pageFlowImprovements/Appear";
+import { BookingListSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
+import { useReviewManagement } from "../../../hooks/reviewManagement";
+import { useReputation } from "../../../hooks/useReputation";
 import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
@@ -35,15 +41,17 @@ const TAB_ITEMS: BookingStatusTab[] = [
 const MyBookingsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const bookingManagement = useBookingManagement();
+  const { getServiceReviews, calculateServiceRating } = useReviewManagement({
+    autoLoadUserReviews: false,
+  });
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [cancellingBooking, setCancellingBooking] =
+    useState<EnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Effect to sync the active tab with the URL query parameter
   useEffect(() => {
     const queryTab = searchParams.get("tab");
     if (queryTab && typeof queryTab === "string") {
@@ -53,7 +61,6 @@ const MyBookingsPage: React.FC = () => {
       if (TAB_ITEMS.includes(upperCaseQueryTab)) {
         setActiveTab(upperCaseQueryTab);
       } else {
-        // If the tab in the URL is invalid, reset to 'all'
         setSearchParams({ tab: "all" });
       }
     } else {
@@ -61,7 +68,6 @@ const MyBookingsPage: React.FC = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  // Set the document title
   useEffect(() => {
     document.title = "My Bookings | SRV";
   }, []);
@@ -88,7 +94,7 @@ const MyBookingsPage: React.FC = () => {
         ALL: [],
         PENDING: ["Requested", "Pending"],
         CONFIRMED: ["Accepted", "Confirmed"],
-        IN_PROGRESS: ["InProgress", "In_Progress"],
+        IN_PROGRESS: ["In Progress", "In_Progress"],
         COMPLETED: ["Completed"],
         CANCELLED: ["Cancelled", "Declined"],
       };
@@ -138,6 +144,77 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
+    if (activeTab === "ALL") {
+      const toLower = (s?: string) => (s || "").toLowerCase();
+
+      const inProgress = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "in progress" || s === "in_progress" || s === "inprogress";
+      });
+
+      const confirmed = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "accepted" || s === "confirmed";
+      });
+
+      const pending = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "requested" || s === "pending";
+      });
+
+      const completed = processedBookings.filter(
+        (b) => toLower(b.status) === "completed",
+      );
+
+      const cancelled = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "cancelled" || s === "declined";
+      });
+
+      const others = processedBookings.filter((b) => {
+        const s = toLower(b.status);
+        return (
+          s !== "in progress" &&
+          s !== "in_progress" &&
+          s !== "inprogress" &&
+          s !== "accepted" &&
+          s !== "confirmed" &&
+          s !== "requested" &&
+          s !== "pending" &&
+          s !== "completed" &&
+          s !== "cancelled" &&
+          s !== "declined"
+        );
+      });
+
+      const getBookingTime = (b: EnhancedBooking) => {
+        try {
+          return new Date(b.requestedDate || b.createdAt).getTime() || 0;
+        } catch (err) {
+          return 0;
+        }
+      };
+
+      const sortByDateDesc = (arr: EnhancedBooking[]) =>
+        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+
+      sortByDateDesc(inProgress);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(pending);
+      sortByDateDesc(completed);
+      sortByDateDesc(cancelled);
+      sortByDateDesc(others);
+
+      return [
+        ...inProgress,
+        ...confirmed,
+        ...pending,
+        ...completed,
+        ...cancelled,
+        ...others,
+      ];
+    }
+
     return processedBookings;
   }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
 
@@ -164,6 +241,93 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
+  const [serviceStatsMap, setServiceStatsMap] = useState<
+    Record<
+      string,
+      {
+        averageRating: number | null;
+        reviews: any[];
+        loading: boolean;
+        reputation?: {
+          trustScore: number;
+          trustLevel: string;
+          completedBookings: number;
+        } | null;
+      }
+    >
+  >({});
+
+  const { fetchUserReputation } = useReputation();
+
+  useEffect(() => {
+    const fetchStatsForServices = async () => {
+      const serviceIds = Array.from(
+        new Set(
+          filteredBookings.map((b) => b.serviceId).filter(Boolean) as string[],
+        ),
+      );
+
+      const mapCopy = { ...serviceStatsMap };
+      const toFetch = serviceIds.filter((id) => !mapCopy[id]);
+      if (toFetch.length === 0) return;
+
+      await Promise.all(
+        toFetch.map(async (serviceId) => {
+          try {
+            const booking = filteredBookings.find(
+              (b) => b.serviceId === serviceId,
+            );
+
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: true,
+              reputation: null,
+            };
+
+            const [avgRating, reviews] = await Promise.all([
+              calculateServiceRating(serviceId),
+              getServiceReviews(serviceId),
+            ]);
+
+            let reputation = null;
+            if (booking?.providerProfile?.id) {
+              try {
+                const rep = await fetchUserReputation(
+                  booking.providerProfile.id,
+                );
+                if (rep) {
+                  reputation = {
+                    trustScore: rep.trustScore,
+                    trustLevel: rep.trustLevel,
+                    completedBookings: rep.completedBookings,
+                  };
+                }
+              } catch (err) {}
+            }
+
+            mapCopy[serviceId] = {
+              averageRating: avgRating ?? null,
+              reviews: Array.isArray(reviews) ? reviews : [],
+              loading: false,
+              reputation,
+            };
+          } catch (err) {
+            mapCopy[serviceId] = {
+              averageRating: null,
+              reviews: [],
+              loading: false,
+            };
+          }
+        }),
+      );
+
+      setServiceStatsMap(mapCopy);
+    };
+
+    if (filteredBookings.length > 0) fetchStatsForServices();
+  }, [filteredBookings]);
+
   const getBookingCountForTab = (tab: BookingStatusTab) => {
     if (!bookingManagement.bookings) return 0;
     if (tab === "ALL") return bookingManagement.bookings.length;
@@ -171,7 +335,7 @@ const MyBookingsPage: React.FC = () => {
       ALL: [],
       PENDING: ["Requested", "Pending"],
       CONFIRMED: ["Accepted", "Confirmed"],
-      IN_PROGRESS: ["InProgress", "In_Progress"],
+      IN_PROGRESS: ["In Progress", "In_Progress"],
       COMPLETED: ["Completed"],
       CANCELLED: ["Cancelled", "Declined"],
     };
@@ -186,24 +350,18 @@ const MyBookingsPage: React.FC = () => {
     ).length;
   };
 
-  const handleCancelBookingOnListPage = async (bookingId: string) => {
-    // Show confirmation dialog instead of alert
-    setBookingToCancel(bookingId);
-    setShowCancelConfirm(true);
-  };
-
-  // New function to handle the actual cancellation after confirmation
-  const handleConfirmCancellation = async () => {
-    if (!bookingToCancel) return;
-
+  const handleCancelBooking = async (reason: string) => {
+    if (!cancellingBooking) return;
     setIsCancelling(true);
     try {
-      await bookingManagement.updateBookingStatus(bookingToCancel, "Cancelled");
-      toast.success("Booking has been cancelled successfully.");
-      setShowCancelConfirm(false);
-      setBookingToCancel(null);
+      await bookingManagement.updateBookingStatus(
+        cancellingBooking.id,
+        "Cancelled",
+        reason,
+      );
+      toast.success("Booking has been cancelled.");
+      setCancellingBooking(null);
     } catch (error) {
-      //console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking. Please try again.");
     } finally {
       setIsCancelling(false);
@@ -212,19 +370,19 @@ const MyBookingsPage: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Bookings
           </h1>
         </div>
       </header>
 
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
-        {/* Search/Filter Bar */}
-        <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-          <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-            <nav className="flex space-x-1 rounded-full p-1">
+        {/* SECTION: Search and filter bar */}
+        <div className="mb-5 border-gray-200 bg-white">
+          <div className="flex justify-start overflow-x-auto whitespace-nowrap sm:justify-center">
+            <nav className="flex space-x-4 overflow-x-auto border-b border-gray-200 px-4 py-3">
               {TAB_ITEMS.map((tab) => (
                 <button
                   key={tab}
@@ -281,10 +439,7 @@ const MyBookingsPage: React.FC = () => {
           style={{ minHeight: "calc(100vh - 180px)" }}
         >
           {bookingManagement.loading ? (
-            <div className="py-16 text-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-500">Loading bookings...</p>
-            </div>
+            <BookingListSkeleton count={6} />
           ) : bookingManagement.error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
               <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
@@ -309,13 +464,31 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
-                    {sameDayBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {sameDayBookings.map((booking, idx) => (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={handleCancelBookingOnListPage}
+                          onCancelClick={setCancellingBooking}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
+                          }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>
@@ -329,22 +502,40 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking) => (
-                      <div key={booking.id}>
+                    {scheduledBookings.map((booking, idx) => (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
                         <ClientBookingItemCard
                           booking={booking}
-                          onCancelBooking={handleCancelBookingOnListPage}
+                          onCancelClick={setCancellingBooking}
+                          averageRating={
+                            serviceStatsMap[booking.serviceId || ""]
+                              ?.averageRating
+                          }
+                          reviewCount={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                              .length ?? 0
+                          }
+                          reviews={
+                            serviceStatsMap[booking.serviceId || ""]?.reviews
+                          }
+                          reputation={
+                            serviceStatsMap[booking.serviceId || ""]?.reputation
+                          }
                         />
-                      </div>
+                      </Appear>
                     ))}
                   </div>
                 </section>
               )}
             </div>
           ) : (
-            <div className="mt-4 rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
+            <div className="rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
               <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-              <p className="text-lg text-gray-500">
+              <p className="px-3 text-lg text-gray-500">
                 No bookings found with the current filters.
               </p>
             </div>
@@ -356,39 +547,17 @@ const MyBookingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Cancel Booking Confirmation Dialog */}
-      {showCancelConfirm && bookingToCancel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Cancel Booking?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone and you may be charged a cancellation fee.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => {
-                  setShowCancelConfirm(false);
-                  setBookingToCancel(null);
-                }}
-                disabled={isCancelling}
-              >
-                Keep Booking
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={handleConfirmCancellation}
-                disabled={isCancelling}
-              >
-                {isCancelling ? "Cancelling..." : "Cancel Booking"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CancelWithReasonButton
+        show={!!cancellingBooking}
+        isSubmitting={isCancelling}
+        onSubmit={handleCancelBooking}
+        onCancel={() => setCancellingBooking(null)}
+        confirmTitle="Cancel Booking?"
+        confirmDescription="Please let us know why you're cancelling this booking."
+        textareaLabel="Reason for cancellation"
+        submitText={isCancelling ? "Cancelling..." : "Submit Cancellation"}
+        cancelText="Back"
+      />
 
       <Toaster position="top-center" richColors />
     </>
