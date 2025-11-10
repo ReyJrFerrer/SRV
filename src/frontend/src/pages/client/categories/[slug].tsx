@@ -59,10 +59,9 @@ const CategoryPage: React.FC = () => {
   const allServicesHook = useAllServicesWithProviders();
   const categoryServicesHook = useServicesByCategory(categoryId);
 
-  const {
-    services,
-    error: servicesError,
-  } = isAllServices ? allServicesHook : categoryServicesHook;
+  const { services, error: servicesError } = isAllServices
+    ? allServicesHook
+    : categoryServicesHook;
 
   useEffect(() => {
     document.title = category ? `${category.name} | SRV` : "Category | SRV";
@@ -255,19 +254,17 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
 
- 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {sortedAndFilteredServices.map((service, idx) => (
-              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem
-                  service={service}
-                  serviceData={createServiceData(service)}
-                  retainMobileLayout={true}
-                />
-              </Appear>
-            ))}
-          </div>
-   
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          {sortedAndFilteredServices.map((service, idx) => (
+            <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+              <ServiceListItem
+                service={service}
+                serviceData={createServiceData(service)}
+                retainMobileLayout={true}
+              />
+            </Appear>
+          ))}
+        </div>
       </div>
 
       <BottomNavigation />
