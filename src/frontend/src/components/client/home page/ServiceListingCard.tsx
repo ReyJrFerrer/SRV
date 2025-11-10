@@ -6,10 +6,7 @@ import {
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
 import { EnrichedService } from "../../../hooks/serviceInformation";
-import {
-  useServiceImages,
-  useUserImage,
-} from "../../../hooks/useMediaLoader";
+import { useServiceImages, useUserImage } from "../../../hooks/useMediaLoader";
 
 // Enhanced service data interface with all fetched information
 export interface EnhancedServiceData {
@@ -105,7 +102,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     // Extract loaded image data URLs
     const loadedServiceImages =
-      serviceImages?.map((img) => img.dataUrl).filter((url): url is string => !!url && url.length > 0) || [];
+      serviceImages
+        ?.map((img) => img.dataUrl)
+        .filter((url): url is string => !!url && url.length > 0) || [];
 
     // Use the passed service data
     const { isVerified, averageRating, totalReviews } = serviceData;
@@ -246,7 +245,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         img.onload = null;
         img.onerror = null;
       };
-    }, [loadedServiceImages, userImageUrl, service.category?.slug, isLoadingImages]);
+    }, [
+      loadedServiceImages,
+      userImageUrl,
+      service.category?.slug,
+      isLoadingImages,
+    ]);
 
     // Show skeleton while data is loading (after all hooks)
     if (isLoadingImages) {
