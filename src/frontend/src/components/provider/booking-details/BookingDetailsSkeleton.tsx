@@ -48,7 +48,7 @@ const BookingDetailsSkeleton: React.FC = () => {
         {/* Service Details Skeleton - matches ServiceDetailsCard */}
         <div className="min-w-[320px] flex-1 animate-pulse rounded-2xl bg-white p-6 shadow-lg">
           <div className="mb-3 h-6 w-32 rounded bg-gray-300"></div>
-          
+
           {/* Service Name */}
           <div className="mb-2 flex items-start gap-2">
             <BriefcaseIcon className="h-5 w-5 text-gray-400" />
@@ -110,7 +110,7 @@ const BookingDetailsSkeleton: React.FC = () => {
 
       {/* Progress Section Skeleton - matches BookingProgressSection */}
       <section className="my-4 flex animate-pulse flex-col items-center rounded-2xl bg-white p-4 shadow">
-        <div className="mb-3 ml-5 mt-1 h-6 w-40 rounded bg-gray-300 self-start"></div>
+        <div className="mb-3 ml-5 mt-1 h-6 w-40 self-start rounded bg-gray-300"></div>
         <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">
           {[1, 2, 3, 4].map((idx) => (
             <React.Fragment key={idx}>
@@ -133,13 +133,13 @@ const BookingDetailsSkeleton: React.FC = () => {
           <div className="h-6 w-40 rounded bg-gray-300"></div>
         </div>
         <div className="mb-2 h-3 w-3/4 rounded bg-gray-300"></div>
-        
+
         {/* Map container */}
         <div className="relative mb-3 h-64 overflow-hidden rounded-lg bg-gray-300"></div>
-        
+
         {/* Location text */}
         <div className="mt-2 h-6 w-full rounded bg-gray-300"></div>
-        
+
         {/* Buttons */}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <div className="h-10 flex-1 rounded-lg bg-gray-300"></div>
